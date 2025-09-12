@@ -34,7 +34,7 @@ from bluemira.base.look_and_feel import (
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_polygon
 from bluemira.magnets.utils import reciprocal_summation, summation
-from bluemira.magnets.winding_pack import WindingPack, create_wp_from_dict
+from bluemira.magnets.winding_pack import WindingPack
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 if TYPE_CHECKING:
@@ -712,44 +712,9 @@ class CaseTF(ABC):
             "dy_ps": self.dy_ps,
             "dy_vault": self.dy_vault,
             "theta_TF": self.geometry.variables.theta_TF.value,
-            "mat_case": self.mat_case.name,  # Assume Material has 'name' attribute
+            "mat_case": self.mat_case,
             "WPs": [wp.to_dict() for wp in self.WPs],
-            # Assume each WindingPack implements to_dict()
         }
-
-    @classmethod
-    def from_dict(cls, case_dict: dict, name: str | None = None) -> CaseTF:
-        """
-        Deserialise a BaseCaseTF instance from a dictionary.
-
-        Parameters
-        ----------
-        case_dict:
-            Dictionary containing serialised TF case data.
-        name:
-            Optional name override for the new instance.
-
-        Returns
-        -------
-        :
-            Reconstructed TF case instance.
-
-        Raises
-        ------
-        ValueError
-            If the 'name_in_registry' field does not match this class.
-        """
-        WPs = [create_wp_from_dict(wp_dict) for wp_dict in case_dict["WPs"]]  # noqa:N806
-
-        return cls(
-            Ri=case_dict["Ri"],
-            dy_ps=case_dict["dy_ps"],
-            dy_vault=case_dict["dy_vault"],
-            theta_TF=case_dict["theta_TF"],
-            mat_case=case_dict["mat_case"],
-            WPs=WPs,
-            name=name or case_dict.get("name"),
-        )
 
     def __str__(self) -> str:
         """
@@ -1263,45 +1228,3 @@ class TrapezoidalCaseTF(CaseTF):
         # bluemira_print(f"sigma: {sigma}, allowable_sigma: {allowable_sigma},
         # diff: {sigma - allowable_sigma}")
         return abs(sigma - allowable_sigma)
-
-
-def create_case_tf_from_dict(
-    case_dict: dict,
-    name: str | None = None,
-) -> CaseTF:
-    """
-    Factory function to create a CaseTF (or subclass) from a serialised dictionary.
-
-    Parameters
-    ----------
-    case_dict:
-        Serialised case dictionary, must include 'name_in_registry' field.
-    name:
-        Name to assign to the created case. If None, uses the name in the dictionary.
-
-    Returns
-    -------
-    :
-        A fully instantiated CaseTF (or subclass) object.
-
-    Raises
-    ------
-    ValueError
-        If no class is registered with the given name_in_registry.
-    """
-    name_in_registry = case_dict.get("name_in_registry")
-    if name_in_registry is None:
-        raise ValueError("CaseTF dictionary must include 'name_in_registry' field.")
-
-    case_cls = CASETF_REGISTRY.get(name_in_registry)
-    if case_cls is None:
-        available = list(CASETF_REGISTRY.keys())
-        raise ValueError(
-            f"No registered CaseTF class with name_in_registry '{name_in_registry}'. "
-            f"Available: {available}"
-        )
-
-    return case_cls.from_dict(
-        name=name,
-        case_dict=case_dict,
-    )

@@ -16,15 +16,8 @@ import numpy as np
 from matproplib import OperationalConditions
 from scipy.integrate import solve_ivp
 
-from bluemira.base.look_and_feel import (
-    bluemira_debug,
-    bluemira_warn,
-)
-from bluemira.magnets.strand import (
-    Strand,
-    SuperconductingStrand,
-    create_strand_from_dict,
-)
+from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.magnets.utils import reciprocal_summation, summation
 
 if TYPE_CHECKING:
@@ -38,13 +31,7 @@ class ABCCable(ABC):
     Defines the general structure and common methods for cables
     composed of superconducting and stabiliser strands.
 
-    Notes
-    -----
-    - This class is abstract and cannot be instantiated directly.
-    - Subclasses must define `dx`, `dy`, `Kx`, `Ky`, and `from_dict`.
     """
-
-    _name_in_registry_: str | None = None  # Abstract base classes should NOT register
 
     def __init__(
         self,
@@ -485,68 +472,6 @@ class ABCCable(ABC):
             **{k: getattr(k)() for k in self._props},
         }
 
-    @classmethod
-    def from_dict(
-        cls,
-        cable_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> ABCCable:
-        """
-        Deserialise a cable instance from a dictionary.
-
-        Parameters
-        ----------
-        cable_dict:
-            Dictionary containing serialised cable data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        :
-            Instantiated cable object.
-
-        Raises
-        ------
-        ValueError
-            If name_in_registry mismatch or duplicate instance name.
-        """
-        name_in_registry = cable_dict.pop("name_in_registry", None)
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
-        # Deserialise strands
-        sc_strand_data = cable_dict.pop("sc_strand")
-        if isinstance(sc_strand_data, Strand):
-            sc_strand = sc_strand_data
-        else:
-            sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
-
-        stab_strand_data = cable_dict.pop("stab_strand")
-        if isinstance(stab_strand_data, Strand):
-            stab_strand = stab_strand_data
-        else:
-            stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
-
-        # how to resolve this with ParameterFrame?
-        return cls(
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=cable_dict.pop("n_sc_strand"),
-            n_stab_strand=cable_dict.pop("n_stab_strand"),
-            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
-            void_fraction=cable_dict.pop("void_fraction"),
-            cos_theta=cable_dict.pop("cos_theta"),
-            name=name or cable_dict.pop("name", None),
-            **cable_dict,
-        )
-
 
 class RectangularCable(ABCCable):
     """
@@ -555,8 +480,6 @@ class RectangularCable(ABCCable):
     The x-dimension is provided directly. The y-dimension is derived based on
     the total area and x-dimension.
     """
-
-    _name_in_registry_ = "RectangularCable"
 
     def __init__(
         self,
@@ -682,111 +605,6 @@ class RectangularCable(ABCCable):
         })
         return data
 
-    @classmethod
-    def from_dict(
-        cls,
-        cable_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> RectangularCable:
-        """
-        Deserialise a RectangularCable from a dictionary.
-
-        Behavior:
-        - If both 'dx' and 'aspect_ratio' are provided, a warning is issued and
-        aspect_ratio is applied.
-        - If only 'aspect_ratio' is provided, dx and dy are calculated accordingly.
-        - If only 'dx' is provided, it is used as-is.
-        - If neither is provided, raises a ValueError.
-
-        Parameters
-        ----------
-        cable_dict:
-            Dictionary containing serialised cable data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        :
-            Instantiated rectangular cable object.
-
-        Raises
-        ------
-        ValueError
-            If neither 'dx' nor 'aspect_ratio' is provided.
-        """
-        name_in_registry = cable_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
-        # Deserialise strands
-        sc_strand_data = cable_dict.pop("sc_strand")
-        if isinstance(sc_strand_data, Strand):
-            sc_strand = sc_strand_data
-        else:
-            sc_strand = create_strand_from_dict(strand_dict=sc_strand_data)
-
-        stab_strand_data = cable_dict.pop("stab_strand")
-        if isinstance(stab_strand_data, Strand):
-            stab_strand = stab_strand_data
-        else:
-            stab_strand = create_strand_from_dict(strand_dict=stab_strand_data)
-
-        # Geometry parameters
-        dx = cable_dict.pop("dx", None)
-        aspect_ratio = cable_dict.pop("aspect_ratio")
-
-        if dx is not None and aspect_ratio is not None:
-            bluemira_warn(
-                "Both 'dx' and 'aspect_ratio' specified. Aspect ratio will override dx "
-                "after creation."
-            )
-
-        if aspect_ratio is not None and dx is None:
-            # Default dx if only aspect ratio is provided. It will be recalculated at
-            # the end when set_aspect_ratio is called
-            dx = 0.01
-
-        if dx is None:
-            raise ValueError(
-                "Serialised RectangularCable must include at least 'dx' or "
-                "'aspect_ratio'."
-            )
-
-        # Base cable parameters
-        n_sc_strand = cable_dict.pop("n_sc_strand")
-        n_stab_strand = cable_dict.pop("n_stab_strand")
-        d_cooling_channel = cable_dict.pop("d_cooling_channel")
-        void_fraction = cable_dict.pop("void_fraction")
-        cos_theta = cable_dict.pop("cos_theta")
-
-        # how to handle with parameterframe?
-        # Create cable
-        cable = cls(
-            dx=dx,
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=n_sc_strand,
-            n_stab_strand=n_stab_strand,
-            d_cooling_channel=d_cooling_channel,
-            void_fraction=void_fraction,
-            cos_theta=cos_theta,
-            name=name or cable_dict.pop("name", None),
-            **cable_dict,
-        )
-
-        # Adjust aspect ratio if needed
-        if aspect_ratio is not None:
-            cable.set_aspect_ratio(aspect_ratio)
-
-        return cable
-
 
 class SquareCable(ABCCable):
     """
@@ -794,8 +612,6 @@ class SquareCable(ABCCable):
 
     Both dx and dy are derived from the total cross-sectional area.
     """
-
-    _name_in_registry_ = "SquareCable"
 
     def __init__(
         self,
@@ -896,60 +712,6 @@ class SquareCable(ABCCable):
             Homogenised stiffness in the y-direction [Pa].
         """
         return self.E(op_cond)
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Serialise the SquareCable.
-
-        Returns
-        -------
-        :
-            Serialised dictionary.
-        """
-        return super().to_dict()
-
-    @classmethod
-    def from_dict(
-        cls,
-        cable_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> SquareCable:
-        """
-        Deserialise a SquareCable from a dictionary.
-
-        Parameters
-        ----------
-        cable_dict:
-            Dictionary containing serialised cable data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        :
-            Instantiated square cable.
-
-        Raises
-        ------
-        ValueError
-            If unique_name is False and a duplicate name is detected in the instance
-            cache.
-        """
-        sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
-        stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
-
-        # how to handle this?
-        return cls(
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=cable_dict.pop("n_sc_strand"),
-            n_stab_strand=cable_dict.pop("n_stab_strand"),
-            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
-            void_fraction=cable_dict.pop("void_fraction"),
-            cos_theta=cable_dict.pop("cos_theta"),
-            name=name or cable_dict.pop("name", None),
-        )
 
 
 class RoundCable(ABCCable):
@@ -1117,57 +879,3 @@ class RoundCable(ABCCable):
         if show:
             plt.show()
         return ax
-
-    def to_dict(self) -> dict[str, Any]:
-        """
-        Serialise the RoundCable.
-
-        Returns
-        -------
-        :
-            Serialised dictionary.
-        """
-        return super().to_dict()
-
-    @classmethod
-    def from_dict(
-        cls,
-        cable_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> RoundCable:
-        """
-        Deserialise a RoundCable from a dictionary.
-
-        Parameters
-        ----------
-        cable_dict:
-            Dictionary containing serialised cable data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        :
-            Instantiated square cable.
-
-        Raises
-        ------
-        ValueError
-            If unique_name is False and a duplicate name is detected in the instance
-            cache.
-        """
-        sc_strand = create_strand_from_dict(strand_dict=cable_dict.pop("sc_strand"))
-        stab_strand = create_strand_from_dict(strand_dict=cable_dict.pop("stab_strand"))
-
-        return cls(
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=cable_dict.pop("n_sc_strand"),
-            n_stab_strand=cable_dict.pop("n_stab_strand"),
-            d_cooling_channel=cable_dict.pop("d_cooling_channel"),
-            void_fraction=cable_dict.pop("void_fraction"),
-            cos_theta=cable_dict.pop("cos_theta"),
-            name=name or cable_dict.pop("name", None),
-            **cable_dict,
-        )

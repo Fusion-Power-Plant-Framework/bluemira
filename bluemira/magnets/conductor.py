@@ -126,65 +126,13 @@ class Conductor:
         return {
             "name": self.name,
             "cable": self.cable.to_dict(),
-            "mat_jacket": self.mat_jacket.name,
-            "mat_ins": self.mat_ins.name,
+            "mat_jacket": self.mat_jacket,
+            "mat_ins": self.mat_ins,
             "dx_jacket": self.dx_jacket,
             "dy_jacket": self.dy_jacket,
             "dx_ins": self.dx_ins,
             "dy_ins": self.dy_ins,
         }
-
-    @classmethod
-    def from_dict(
-        cls,
-        conductor_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> Conductor:
-        """
-        Deserialise a Conductor instance from a dictionary.
-
-        Parameters
-        ----------
-        conductor_dict:
-            Dictionary containing serialised conductor data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        :
-            A fully reconstructed Conductor instance.
-
-        Raises
-        ------
-        ValueError
-            If the 'name_in_registry' field does not match the expected class
-            registration name,
-            or if the name already exists and unique_name is False.
-        """
-        # Deserialise cable
-        cable = create_cable_from_dict(
-            cable_dict=conductor_dict["cable"],
-        )
-
-        # Resolve jacket material
-        mat_jacket = conductor_dict["mat_jacket"]
-
-        # Resolve insulation material
-        mat_ins = conductor_dict["mat_ins"]
-
-        # Instantiate
-        return cls(
-            cable=cable,
-            mat_jacket=mat_jacket,
-            mat_ins=mat_ins,
-            dx_jacket=conductor_dict["dx_jacket"],
-            dy_jacket=conductor_dict["dy_jacket"],
-            dx_ins=conductor_dict["dx_ins"],
-            dy_ins=conductor_dict["dy_ins"],
-            name=name or conductor_dict.get("name"),
-        )
 
     def erho(self, op_cond: OperationalConditions) -> float:
         """
@@ -722,93 +670,3 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
             "dx_jacket": self.dx_jacket,
             "dx_ins": self.dx_ins,
         }
-
-    @classmethod
-    def from_dict(
-        cls,
-        conductor_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> SymmetricConductor:
-        """
-        Deserialise a SymmetricConductor instance from a dictionary.
-
-        Parameters
-        ----------
-        conductor_dict:
-            Dictionary containing serialised conductor data.
-        name:
-            Name for the new instance.
-
-        Returns
-        -------
-        :
-            A fully reconstructed SymmetricConductor instance.
-
-        Raises
-        ------
-        ValueError
-            If the 'name_in_registry' does not match the expected registration name.
-        """
-        # Deserialise cable
-        cable = create_cable_from_dict(
-            cable_dict=conductor_dict["cable"],
-        )
-
-        # Resolve jacket material
-        mat_jacket = conductor_dict["mat_jacket"]
-
-        # Resolve insulation material
-        mat_ins = conductor_dict["mat_ins"]
-
-        # Instantiate
-        return cls(
-            cable=cable,
-            mat_jacket=mat_jacket,
-            mat_ins=mat_ins,
-            dx_jacket=conductor_dict["dx_jacket"],
-            dx_ins=conductor_dict["dx_ins"],
-            name=name or conductor_dict.get("name"),
-        )
-
-
-def create_conductor_from_dict(
-    conductor_dict: dict,
-    name: str | None = None,
-) -> Conductor:
-    """
-    Factory function to create a Conductor (or subclass) from a serialised dictionary.
-
-    Parameters
-    ----------
-    conductor_dict:
-        Serialised conductor dictionary, must include 'name_in_registry' field.
-    name:
-        Name to assign to the created conductor. If None, uses the name in the
-        dictionary.
-
-    Returns
-    -------
-    :
-        A fully instantiated Conductor (or subclass) object.
-
-    Raises
-    ------
-    ValueError
-        If no class is registered with the given name_in_registry.
-    """
-    name_in_registry = conductor_dict.get("name_in_registry")
-    if name_in_registry is None:
-        raise ValueError("Conductor dictionary must include 'name_in_registry' field.")
-
-    conductor_cls = CONDUCTOR_REGISTRY.get(name_in_registry)
-    if conductor_cls is None:
-        available = list(CONDUCTOR_REGISTRY.keys())
-        raise ValueError(
-            f"No registered conductor class with name_in_registry '{name_in_registry}'. "
-            f"Available: {available}"
-        )
-
-    return conductor_cls.from_dict(
-        name=name,
-        conductor_dict=conductor_dict,
-    )

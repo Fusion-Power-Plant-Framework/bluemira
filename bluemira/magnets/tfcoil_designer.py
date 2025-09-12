@@ -130,7 +130,7 @@ class DerivedTFCoilXYDesignerParams:
     t_z: float
     T_op: float
     s_y: float
-    n_cond: float
+    n_cond: int
     min_gap_x: float
     I_fun: Callable[[float], float]
     B_fun: Callable[[float], float]
@@ -304,7 +304,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
     ):
         super().__init__(params=params, build_config=build_config)
 
-    def _derived_values(self, op_config):
+    def _derived_values(self, op_config: OptimisationConfig):
         # Needed params that are calculated using the base params
         R0 = self.params.R0.value
         n_TF = self.params.n_TF.value
@@ -379,7 +379,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         # param frame optimisation stuff?
         cable = self.optimise_cable_n_stab_ths(
-            self._make_cable(n_WPs, WP_i=0),
+            self._make_cable(n_wp, WP_i=0),
             t0=optimisation_params.t0,
             tf=optimisation_params.Tau_discharge,
             initial_temperature=derived_params.T_op,
@@ -672,7 +672,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             )
 
             debug_msg.append(f"before optimisation: case dy_vault = {case.dy_vault}")
-            result = self.optimise_vault_radial_thickness(
+            case_dy_vault_result = self.optimise_vault_radial_thickness(
                 case,
                 pm=pm,
                 fz=fz,
@@ -687,7 +687,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
             case.dy_vault = (
                 1 - damping_factor
-            ) * case_dy_vault0 + damping_factor * result.x
+            ) * case_dy_vault0 + damping_factor * case_dy_vault_result.x
 
             delta_case_dy_vault = abs(case.dy_vault - case_dy_vault0)
             err_dy_vault = delta_case_dy_vault / case.dy_vault
@@ -888,10 +888,8 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
                     "Material data must be a Material instance, not a string - "
                     "TEMPORARY."
                 )
-            material_obj = material_data
-
             material_mix.append(
-                MaterialFraction(material=material_obj, fraction=m["fraction"])
+                MaterialFraction(material=material_data, fraction=m["fraction"])
             )
         return stab_strand_cls(
             materials=material_mix,
@@ -963,14 +961,12 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             ),
         )
 
-    def _make_conductor(self, cable, n_WPs, WP_i=0):
+    def _make_conductor(self, cable, n_wp, WP_i=0):
         # current functionality requires conductors are the same for both WPs
         # in future allow for different conductor objects so can vary cable and strands
         # between the sets of the winding pack?
         conductor_config = self.build_config.get("conductor")
-        conductor_params = self._check_arrays_match(
-            n_WPs, conductor_config.get("params")
-        )
+        conductor_params = self._check_arrays_match(n_wp, conductor_config.get("params"))
 
         return self._make_conductor_cls(cable, WP_i, conductor_config, conductor_params)
 

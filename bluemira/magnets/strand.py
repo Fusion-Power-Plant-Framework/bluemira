@@ -26,7 +26,6 @@ from bluemira.base.look_and_feel import bluemira_error
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
-from bluemira.utilities.tools import get_class_from_module
 
 
 class Strand:
@@ -292,73 +291,7 @@ class Strand:
             ],
         }
 
-    @classmethod
-    def from_dict(
-        cls,
-        strand_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> Strand:
-        """
-        Deserialise a Strand instance from a dictionary.
 
-        Parameters
-        ----------
-        strand_dict:
-            Dictionary containing serialised strand data.
-        name:
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        Strand
-            A new instantiated Strand object.
-
-        Raises
-        ------
-        TypeError
-            If the materials in the dictionary are not valid MaterialFraction instances.
-        ValueError
-            If the name_in_registry in the dictionary does not match the expected
-            class registration name.
-        """
-        # Validate registration name
-        name_in_registry = strand_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. "
-                f"Expected '{expected_name_in_registry}'."
-            )
-
-        # Deserialise materials
-        material_mix = []
-        for m in strand_dict["materials"]:
-            material_data = m["material"]
-            if isinstance(material_data, str):
-                raise TypeError(
-                    "Material data must be a Material instance, not a string - "
-                    "TEMPORARY."
-                )
-            material_obj = material_data
-
-            material_mix.append(
-                MaterialFraction(material=material_obj, fraction=m["fraction"])
-            )
-        # resolve
-        return cls(
-            materials=material_mix,
-            operating_temperature=strand_dict.get("operating_temperature"),
-            d_strand=strand_dict.get("d_strand"),
-            name=name or strand_dict.get("name"),
-        )
-
-
-# ------------------------------------------------------------------------------
-# SuperconductingStrand Class
-# ------------------------------------------------------------------------------
 class SuperconductingStrand(Strand):
     """
     Represents a superconducting strand with a circular cross-section.
@@ -368,8 +301,6 @@ class SuperconductingStrand(Strand):
 
     Automatically registered using the RegistrableMeta metaclass.
     """
-
-    _name_in_registry_ = "SuperconductingStrand"
 
     def __init__(
         self,
@@ -538,29 +469,3 @@ class SuperconductingStrand(Strand):
             plt.show()
 
         return ax
-
-
-def create_strand_from_dict(
-    strand_dict: dict[str, Any],
-    name: str | None = None,
-):
-    """
-    Factory function to create a Strand or its subclass from a serialised dictionary.
-
-    Parameters
-    ----------
-    strand_dict:
-        Dictionary with serialised strand data. Must include a 'name_in_registry' field
-        corresponding to a registered class.
-    name:
-        If given, overrides the name from the dictionary.
-
-    Returns
-    -------
-    Strand
-        An instance of the appropriate Strand subclass.
-
-    """
-    return get_class_from_module(
-        strand_dict.pop("class"), default_module="bluemira.magnets.strand"
-    ).from_dict(name=name, strand_dict=strand_dict)
