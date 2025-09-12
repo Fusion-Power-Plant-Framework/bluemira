@@ -784,7 +784,9 @@ def brute_force_toroidal_harmonic_approximation(
 
     true_coilset_psi, fixed_psi = _separate_psi_contributions(eq, th_params)
 
-    mask = _get_plasma_mask(eq, th_params, plasma_mask, psi_norm)
+    mask = _get_plasma_mask(
+        eq=eq, th_params=th_params, psi_norm=psi_norm, plasma_mask=plasma_mask
+    )
 
     dof_id = np.arange(0, 2 * max_harmonic_mode)
     mode_values = np.tile(np.arange(max_harmonic_mode), 2)

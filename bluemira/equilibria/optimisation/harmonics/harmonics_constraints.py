@@ -208,7 +208,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
     ):
         self.constraint_type = constraint_type
         if isinstance(tolerance, float):
-            tolerance *= np.ones(len(ref_harmonics_cos) + len(ref_harmonics_sin))
+            tolerance *= np.ones(
+                len(ref_harmonics_cos_amplitudes) + len(ref_harmonics_sin_amplitudes)
+            )
         else:
             tolerance = 1e-3 * np.append(
                 ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
@@ -306,8 +308,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         return coil_toroidal_harmonic_amplitude_matrix(
             input_coils=coilset,
             th_params=self.th_params,
-            cos_degrees_chosen=self.cos_degrees_chosen,
-            sin_degrees_chosen=self.sin_degrees_chosen,
+            cos_m_chosen=self.cos_degrees_chosen,
+            sin_m_chosen=self.sin_degrees_chosen,
         )
 
     def evaluate(
