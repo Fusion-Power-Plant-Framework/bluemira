@@ -198,7 +198,8 @@ def toroidal_harmonic_grid_and_coil_setup(
 
     Use the LCFS to find the region over which to approximate psi using TH.
     Find the coils located outside this region, which can be used in the TH
-    approximation, and find the coils located inside this region.
+    approximation, and find the coils located inside this region which need to be held
+    fixed.
 
     Parameters
     ----------
@@ -423,13 +424,12 @@ def toroidal_harmonic_approximate_psi(
     th_params: ToroidalHarmonicsParams,
     cos_m_chosen: np.ndarray | None = None,
     sin_m_chosen: np.ndarray | None = None,
-    # TODO @clmould: add different ways to set th grid size
-    # e.g. limit_type: TH_GRID_LIMIT = TH_GRID_LIMIT.LCFS or TH_GRID_LIMIT.COILSET
-    # 3870
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Approximate psi using toroidal harmonic amplitudes for the specified cos and sin
     poloidal mode numbers (m) as calculated in coil_toroidal_harmonic_amplitude_matrix.
+
+    coil_toroidal_harmonic_amplitude_matrix returns Am_cos and Am_sin, which we use here.
 
     ..math::
         A_{m} = \\frac{\\mu_{0} I_{c}}{2^{5/2}} \\frac{(2m+1)!!}{2^m m!}
@@ -698,9 +698,9 @@ class ToroidalHarmonicsSelectionResult:
     """
 
     cos_m: np.ndarray
-    """Selected cosine toroidal mode numbers"""
+    """Selected cosine poloidal mode numbers"""
     sin_m: np.ndarray
-    """Selected sine toroidal mode numbers"""
+    """Selected sine poloidal mode numbers"""
     cos_amplitudes: np.ndarray
     """Selected cosine toroidal harmonic amplitudes"""
     sin_amplitudes: np.ndarray
