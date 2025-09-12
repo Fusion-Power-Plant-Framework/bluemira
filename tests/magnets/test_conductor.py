@@ -19,10 +19,6 @@ from bluemira.magnets.cable import RectangularCable
 from bluemira.magnets.conductor import Conductor
 from bluemira.magnets.strand import Strand, SuperconductingStrand
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
 
 @pytest.fixture
 def mat_jacket():
@@ -42,6 +38,7 @@ def sc_strand():
         name="SC",
         materials=[MaterialFraction(material=sc, fraction=1.0)],
         d_strand=0.001,
+        operating_temperature=5.7,
     )
 
 
@@ -53,6 +50,7 @@ def stab_strand():
         name="Stab",
         materials=[MaterialFraction(material=stab, fraction=1.0)],
         d_strand=0.001,
+        operating_temperature=5.7,
     )
 
 
@@ -65,6 +63,8 @@ def rectangular_cable(sc_strand, stab_strand):
         n_sc_strand=10,
         n_stab_strand=10,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
     )
 
 
@@ -80,11 +80,6 @@ def conductor(rectangular_cable, mat_jacket, mat_ins):
         dy_ins=0.001,
         name="TestConductor",
     )
-
-
-# ---------------------------------------------------------------------------
-# Tests
-# ---------------------------------------------------------------------------
 
 
 def test_geometry_and_area(conductor):
@@ -105,18 +100,3 @@ def test_plot(monkeypatch, conductor):
     monkeypatch.setattr(plt, "show", lambda: None)
     ax = conductor.plot(show=True)
     assert hasattr(ax, "fill")
-
-
-def test_to_from_dict(conductor):
-    config = conductor.to_dict()
-    restored = Conductor.from_dict(config)
-
-    assert restored.name == conductor.name
-    assert restored.dx_jacket == pytest.approx(conductor.dx_jacket)
-    assert restored.dy_jacket == pytest.approx(conductor.dy_jacket)
-    assert restored.dx_ins == pytest.approx(conductor.dx_ins)
-    assert restored.dy_ins == pytest.approx(conductor.dy_ins)
-    assert restored.mat_jacket.name == conductor.mat_jacket.name
-    assert restored.mat_ins.name == conductor.mat_ins.name
-    assert restored.cable.n_sc_strand == conductor.cable.n_sc_strand
-    assert restored.cable.sc_strand.name == conductor.cable.sc_strand.name

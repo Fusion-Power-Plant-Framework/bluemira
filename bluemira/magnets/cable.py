@@ -17,11 +17,12 @@ from matproplib import OperationalConditions
 from scipy.integrate import solve_ivp
 
 from bluemira.base.look_and_feel import bluemira_debug
-from bluemira.magnets.strand import Strand, SuperconductingStrand
 from bluemira.magnets.utils import reciprocal_summation, summation
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from bluemira.magnets.strand import Strand, SuperconductingStrand
 
 
 class ABCCable(ABC):
@@ -91,11 +92,13 @@ class ABCCable(ABC):
         youngs_modulus: Callable[[Any, OperationalConditions], float] | float | None = (
             props.pop("E", None)
         )
+
+        def ym(op_cond):
+            raise NotImplementedError("E for Cable is not implemented.")
+
         if "E" not in vars(type(self)):
             if youngs_modulus is None:
-
-                def youngs_modulus(op_cond):
-                    raise NotImplementedError("E for Cable is not implemented.")
+                youngs_modulus = ym
 
             self.E = (
                 youngs_modulus
@@ -108,7 +111,7 @@ class ABCCable(ABC):
         for k, v in props.items():
             setattr(self, k, v if callable(v) else lambda *arg, v=v, **kwargs: v)  # noqa: ARG005
         self._props = list(props.keys()) + (
-            [] if "E" in vars(type(self)) or youngs_modulus is None else ["E"]
+            [] if "E" in vars(type(self)) or youngs_modulus == ym else ["E"]
         )
 
     @property
@@ -355,7 +358,12 @@ class ABCCable(ABC):
         """Total equivalent stiffness along y-axis"""
 
     def plot(
-        self, xc: float = 0, yc: float = 0, *, show: bool = False, ax=plt.Axes | None
+        self,
+        xc: float = 0,
+        yc: float = 0,
+        *,
+        show: bool = False,
+        ax: plt.Axes | None = None,
     ):
         """
         Plot a schematic view of the cable cross-section.
@@ -451,7 +459,7 @@ class ABCCable(ABC):
             f"n stab strand: {self.n_stab_strand}"
         )
 
-    def to_dict(self) -> dict[str, str | float | int | dict[str, Any]]:
+    def to_dict(self, op_cond) -> dict[str, str | float | int | dict[str, Any]]:
         """
         Serialise the cable instance to a dictionary.
 
@@ -469,7 +477,7 @@ class ABCCable(ABC):
             "cos_theta": self.cos_theta,
             "sc_strand": self.sc_strand.to_dict(),
             "stab_strand": self.stab_strand.to_dict(),
-            **{k: getattr(k)() for k in self._props},
+            **{k: getattr(self, k)(op_cond) for k in self._props},
         }
 
 
@@ -589,7 +597,7 @@ class RectangularCable(ABCCable):
         """
         return self.E(op_cond) * self.dx / self.dy
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, op_cond) -> dict[str, Any]:
         """
         Serialise the rectangular cable into a dictionary.
 
@@ -598,7 +606,7 @@ class RectangularCable(ABCCable):
         :
             Dictionary including rectangular cable parameters.
         """
-        data = super().to_dict()
+        data = super().to_dict(op_cond)
         data.update({
             "dx": self.dx,
             "aspect_ratio": self.aspect_ratio,

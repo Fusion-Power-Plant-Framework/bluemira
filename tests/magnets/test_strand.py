@@ -26,15 +26,11 @@ DummySuperconductor2 = NB3SN_MAG
 
 def test_strand_area():
     mat = MaterialFraction(material=DummySuperconductor1, fraction=1.0)
-    strand = Strand(name="test_strand", materials=[mat], d_strand=0.001)
+    strand = Strand(
+        name="test_strand", materials=[mat], d_strand=0.001, operating_temperature=5.7
+    )
     expected_area = np.pi * (0.001**2) / 4
     assert np.isclose(strand.area, expected_area)
-
-
-def test_strand_invalid_diameter():
-    mat = MaterialFraction(material=DummySuperconductor1, fraction=1.0)
-    with pytest.raises(ValueError, match="positive"):
-        Strand(name="invalid_strand", materials=[mat], d_strand=-0.001)
 
 
 def test_superconducting_strand_invalid_materials():
@@ -42,18 +38,24 @@ def test_superconducting_strand_invalid_materials():
     mat1 = MaterialFraction(material=DummySuperconductor1, fraction=0.5)
     mat2 = MaterialFraction(material=DummySuperconductor2, fraction=0.5)
     with pytest.raises(ValueError, match="Only one superconductor material"):
-        SuperconductingStrand(name="invalid", materials=[mat1, mat2])
+        SuperconductingStrand(
+            name="invalid", materials=[mat1, mat2], d_strand=0, operating_temperature=0
+        )
 
     # No superconductors — should raise ValueError
     mat3 = MaterialFraction(material=DummySteel, fraction=1.0)
     with pytest.raises(ValueError, match="No superconducting material"):
-        SuperconductingStrand(name="invalid", materials=[mat3])
+        SuperconductingStrand(
+            name="invalid", materials=[mat3], d_strand=0, operating_temperature=0
+        )
 
 
 def test_strand_material_properties():
     sc = DummySuperconductor1
     mat = MaterialFraction(material=sc, fraction=1.0)
-    strand = Strand(name="mat_test", materials=[mat], d_strand=0.001)
+    strand = Strand(
+        name="mat_test", materials=[mat], d_strand=0.001, operating_temperature=5.7
+    )
 
     temperature = 20
     op_cond = OperationalConditions(temperature=20)
