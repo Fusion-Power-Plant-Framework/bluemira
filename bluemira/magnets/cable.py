@@ -694,6 +694,7 @@ class SquareCable(ABCCable):
         :
             Homogenised stiffness in the x-direction [Pa].
         """
+        # TODO possible reason for floating point difference
         return self.E(op_cond)
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -711,6 +712,7 @@ class SquareCable(ABCCable):
         :
             Homogenised stiffness in the y-direction [Pa].
         """
+        # TODO possible reason for floating point difference
         return self.E(op_cond)
 
 
@@ -800,6 +802,7 @@ class RoundCable(ABCCable):
         :
             Equivalent stiffness in the x-direction [Pa].
         """
+        # TODO possible reason for floating point difference
         return self.E(op_cond)
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -821,6 +824,7 @@ class RoundCable(ABCCable):
         :
             Equivalent stiffness in the y-direction [Pa].
         """
+        # TODO possible reason for floating point difference
         return self.E(op_cond)
 
     def plot(

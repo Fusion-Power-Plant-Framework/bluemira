@@ -46,7 +46,7 @@ if TYPE_CHECKING:
 
 def _dx_at_radius(radius: float, rad_theta: float) -> float:
     """
-    Compute the toroidal half-width at a given radial position.
+    Compute the toroidal width at a given radial position.
 
     Parameters
     ----------
@@ -645,11 +645,11 @@ class CaseTF(ABC):
         n_conductors:
             Number of conductors to allocate.
         dx_WP:
-            Available toroidal half-width for the winding pack [m].
+            Available toroidal width for the winding pack [m].
         dx_cond:
-            Toroidal half-width of a single conductor [m].
+            Toroidal width of a single conductor [m].
         dy_cond:
-            Radial half-height of a single conductor [m].
+            Radial height of a single conductor [m].
         layout:
             Layout type:
             - "auto"    : no constraints
@@ -893,6 +893,7 @@ class TrapezoidalCaseTF(CaseTF):
         :
             Total equivalent radial stiffness of the TF case [Pa].
         """
+        # TODO possible reason for floating point difference
         kx_lat = self.Kx_lat(op_cond)
         temp = [
             reciprocal_summation([
@@ -984,6 +985,7 @@ class TrapezoidalCaseTF(CaseTF):
         :
             Total equivalent toroidal stiffness of the TF case [Pa].
         """
+        # TODO possible reason for floating point difference
         ky_lat = self.Ky_lat(op_cond)
         temp = [
             summation([

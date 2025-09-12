@@ -574,8 +574,7 @@ class Conductor:
         )
 
 
-class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set up
-    #         conductor with dx = dy and don't duplicate?
+class SymmetricConductor(Conductor):
     """
     Representation of a symmetric conductor in which both jacket and insulator
     mantain a constant thickness (i.e. dy_jacket = dx_jacket and dy_ins = dx_ins).
@@ -624,13 +623,13 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         )
 
     @property
-    def dy_jacket(self):
+    def dy_jacket(self) -> float:
         """
         y-thickness of the jacket [m].
 
         Returns
         -------
-        float
+        :
 
         Notes
         -----
@@ -639,13 +638,13 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
         return self.dx_jacket
 
     @property
-    def dy_ins(self):
+    def dy_ins(self) -> float:
         """
         y-thickness of the insulator [m].
 
         Returns
         -------
-        float
+        :
 
         Notes
         -----
@@ -659,7 +658,7 @@ class SymmetricConductor(Conductor):  # jm -    actually worthwhile or just set 
 
         Returns
         -------
-        dict
+        :
             Dictionary with serialised symmetric conductor data.
         """
         return {
