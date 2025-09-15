@@ -10,7 +10,6 @@ This involves the design and optimisation of each module: strand, cable,
 conductor, winding pack and casing.
 """
 
-import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
@@ -88,8 +87,8 @@ config = {
         "layout": "auto",
         "wp_reduction_factor": 0.75,
         "n_layers_reduction": 4,
-        "bounds_cond_jacket": np.array([1e-5, 0.2]),
-        "bounds_dy_vault": np.array([0.1, 2]),
+        "bounds_cond_jacket": (1e-5, 0.2),
+        "bounds_dy_vault": (0.1, 2),
         "max_niter": 100,
         "eps": 1e-6,
     },

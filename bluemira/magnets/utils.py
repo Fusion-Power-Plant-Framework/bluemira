@@ -52,7 +52,7 @@ def reciprocal_summation(arr: Sequence[float]) -> float:
     -----
     Y = [sum(1/x1 + 1/x2 + 1/x3 ...)]^-1
     """
-    return (np.sum((1 / element) for element in arr)) ** -1
+    return (np.sum(1 / np.array(arr))) ** -1
 
 
 def delayed_exp_func(

@@ -239,12 +239,12 @@ class CaseTF(ABC):
 
     def __init__(
         self,
-        Ri: float,
+        Ri: float,  # noqa: N803
         theta_TF: float,
         dy_ps: float,
         dy_vault: float,
         mat_case: Material,
-        WPs: list[WindingPack],  # noqa: N803
+        wps: list[WindingPack],
         geometry: GeometryParameterisation,
         name: str = "BaseCaseTF",
     ):
@@ -263,7 +263,7 @@ class CaseTF(ABC):
             Radial thickness of the vault support region [m].
         mat_case:
             Structural material assigned to the TF coil case.
-        WPs:
+        wps:
             List of winding pack objects embedded inside the TF case.
         name:
             String identifier for the TF coil case instance (default is "BaseCaseTF").
@@ -274,41 +274,10 @@ class CaseTF(ABC):
         self.dy_ps = dy_ps
         self.dy_vault = dy_vault
         self.mat_case = mat_case
-        self.WPs = WPs
+        self.wps = wps
         self.name = name
         # sets Rk
         self.update_dy_vault(self.dy_vault)
-
-    @property
-    def name(self) -> str:
-        """
-        Name identifier of the TF case.
-
-        Returns
-        -------
-        :
-            Human-readable label for the coil case instance.
-        """
-        return self._name
-
-    @name.setter
-    def name(self, value: str):
-        """
-        Set the name of the TF case.
-
-        Parameters
-        ----------
-        value:
-            Case name.
-
-        Raises
-        ------
-        TypeError
-            If value is not a string.
-        """
-        if not isinstance(value, str):
-            raise TypeError("name must be a string.")
-        self._name = value
 
     @property
     def rad_theta(self) -> float:
@@ -381,7 +350,7 @@ class CaseTF(ABC):
         self._mat_case = value
 
     @property
-    def WPs(self) -> list[WindingPack]:  # noqa: N802
+    def wps(self) -> list[WindingPack]:
         """
         List of winding pack (WP) objects embedded inside the TF case.
 
@@ -390,10 +359,10 @@ class CaseTF(ABC):
         :
             Winding pack instances composing the internal coil layout.
         """
-        return self._WPs
+        return self._wps
 
-    @WPs.setter
-    def WPs(self, value: list[WindingPack]):  # noqa: N802
+    @wps.setter
+    def wps(self, value: list[WindingPack]):
         """
         Set the winding pack objects list.
 
@@ -408,10 +377,10 @@ class CaseTF(ABC):
             If value is not a list of WindingPack instances.
         """
         if not isinstance(value, list):
-            raise TypeError("WPs must be a list of WindingPack objects.")
+            raise TypeError("wps must be a list of WindingPack objects.")
         if not all(isinstance(wp, WindingPack) for wp in value):
-            raise TypeError("All elements of WPs must be WindingPack instances.")
-        self._WPs = value
+            raise TypeError("All elements of wps must be WindingPack instances.")
+        self._wps = value
 
         # fix dy_vault (this will recalculate Rk)
         self.update_dy_vault(self.dy_vault)
@@ -432,7 +401,7 @@ class CaseTF(ABC):
     @property
     def n_conductors(self) -> int:
         """Total number of conductors in the winding pack."""
-        return sum(w.n_conductors for w in self.WPs)
+        return sum(w.n_conductors for w in self.wps)
 
     @property
     def dy_wp_i(self) -> np.ndarray:
@@ -443,9 +412,9 @@ class CaseTF(ABC):
         -------
         :
             Array containing the radial thickness [m] of each Winding Pack.
-            Each element corresponds to one WP in the self.WPs list.
+            Each element corresponds to one WP in the self.wps list.
         """
-        return np.array([wp.dy for wp in self.WPs])
+        return np.array([wp.dy for wp in self.wps])
 
     @property
     def dy_wp_tot(self) -> float:
@@ -476,8 +445,8 @@ class CaseTF(ABC):
         else:
             result = result_initial - dy_wp_cumsum[:-1]
 
-        if len(result) != len(self.WPs):
-            bluemira_error(f"Mismatch: {len(result)} R_wp_i vs {len(self.WPs)} WPs!")
+        if len(result) != len(self.wps):
+            bluemira_error(f"Mismatch: {len(result)} R_wp_i vs {len(self.wps)} wps!")
 
         return result
 
@@ -514,7 +483,7 @@ class CaseTF(ABC):
             Default is `False`.
         homogenised:
             If `True`, plots winding packs as homogenised blocks.
-            If `False`, plots individual conductors inside WPs.
+            If `False`, plots individual conductors inside wps.
             Default is `False`.
 
         Returns
@@ -529,7 +498,7 @@ class CaseTF(ABC):
         self.geometry.plot(ax=ax)
 
         # Plot winding packs
-        for i, wp in enumerate(self.WPs):
+        for i, wp in enumerate(self.wps):
             xc_wp = 0.0
             yc_wp = self.R_wp_i[i] - wp.dy / 2
             ax = wp.plot(xc=xc_wp, yc=yc_wp, ax=ax, homogenised=homogenised)
@@ -565,7 +534,7 @@ class CaseTF(ABC):
         :
             Combined area of the winding packs [m²].
         """
-        return np.sum([w.area for w in self.WPs])
+        return np.sum([w.area for w in self.wps])
 
     @property
     def area_wps_jacket(self) -> float:
@@ -575,9 +544,9 @@ class CaseTF(ABC):
         Returns
         -------
         :
-            Combined area of conductor jackets in all WPs [m²].
+            Combined area of conductor jackets in all wps [m²].
         """
-        return np.sum([w.jacket_area for w in self.WPs])
+        return np.sum([w.jacket_area for w in self.wps])
 
     @property
     def area_jacket_total(self) -> float:
@@ -586,7 +555,7 @@ class CaseTF(ABC):
 
         - The case jacket area (structural material surrounding the winding packs).
         - The conductor jackets area (jackets enclosing the individual conductors
-        inside the WPs).
+        inside the wps).
 
         Returns
         -------
@@ -617,7 +586,7 @@ class CaseTF(ABC):
         n_conductors:
             Total number of conductors to distribute.
         wp_reduction_factor:
-            Fractional reduction of available toroidal space for WPs.
+            Fractional reduction of available toroidal space for wps.
         min_gap_x:
             Minimum gap between the WP and the case boundary in toroidal direction [m].
         n_layers_reduction:
@@ -713,7 +682,7 @@ class CaseTF(ABC):
             "dy_vault": self.dy_vault,
             "theta_TF": self.geometry.variables.theta_TF.value,
             "mat_case": self.mat_case,
-            "WPs": [wp.to_dict() for wp in self.WPs],
+            "wps": [wp.to_dict() for wp in self.wps],
         }
 
     def __str__(self) -> str:
@@ -733,7 +702,7 @@ class CaseTF(ABC):
             f"  - dy_vault: {self.dy_vault:.3f} m\n"
             f"  - theta_TF: {self.geometry.variables.theta_TF.value:.2f}°\n"
             f"  - Material: {self.mat_case.name}\n"
-            f"  - Winding Packs: {len(self.WPs)} packs\n"
+            f"  - Winding Packs: {len(self.wps)} packs\n"
         )
 
 
@@ -745,15 +714,15 @@ class TrapezoidalCaseTF(CaseTF):
 
     def __init__(
         self,
-        Ri: float,
+        Ri: float,  # noqa: N803
         theta_TF: float,
         dy_ps: float,
         dy_vault: float,
         mat_case: Material,
-        WPs: list[WindingPack],  # noqa: N803
+        wps: list[WindingPack],
         name: str = "TrapezoidalCaseTF",
     ):
-        self._check_WPs(WPs)
+        self._check_wps(wps)
 
         geom = TrapezoidalGeometry()
         super().__init__(
@@ -762,22 +731,22 @@ class TrapezoidalCaseTF(CaseTF):
             dy_ps=dy_ps,
             dy_vault=dy_vault,
             mat_case=mat_case,
-            WPs=WPs,
+            wps=wps,
             name=name,
             geometry=geom,
         )
 
-    def _check_WPs(  # noqa: PLR6301, N802
+    def _check_wps(  # noqa: PLR6301
         self,
-        WPs: list[WindingPack],  # noqa:N803
+        wps: list[WindingPack],
     ):
         """
-        Validate that the provided winding packs (WPs) are non-empty and share the
+        Validate that the provided winding packs (wps) are non-empty and share the
         same conductor.
 
         Parameters
         ----------
-        WPs:
+        wps:
             List of winding pack objects to validate.
 
         Raises
@@ -787,15 +756,15 @@ class TrapezoidalCaseTF(CaseTF):
         ValueError
             If winding packs have different conductor instances.
         """
-        if not WPs:
+        if not wps:
             raise ValueError("At least one non-empty winding pack must be provided.")
 
-        first_conductor = WPs[0].conductor
-        for i, wp in enumerate(WPs[1:], start=1):
+        first_conductor = wps[0].conductor
+        for i, wp in enumerate(wps[1:], start=1):
             if wp.conductor is not first_conductor:
                 bluemira_warn(
                     f"[Winding pack at index {i} uses a different conductor object "
-                    f"than the first one. This module requires all WPs to "
+                    f"than the first one. This module requires all wps to "
                     f"share the same conductor instance."
                     f"Please verify the inputs or unify the conductor assignment."
                 )
@@ -851,9 +820,9 @@ class TrapezoidalCaseTF(CaseTF):
         """
         dx_lat = np.array([
             (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self.rad_theta / 2) - w.dx / 2
-            for i, w in enumerate(self.WPs)
+            for i, w in enumerate(self.wps)
         ])
-        dy_lat = np.array([w.dy for w in self.WPs])
+        dy_lat = np.array([w.dy for w in self.wps])
         return self.mat_case.youngs_modulus(op_cond) * dy_lat / dx_lat
 
     def Kx_vault(self, op_cond: OperationalConditions) -> float:  # noqa: N802
@@ -901,7 +870,7 @@ class TrapezoidalCaseTF(CaseTF):
                 w.Kx(op_cond),
                 kx_lat[i],
             ])
-            for i, w in enumerate(self.WPs)
+            for i, w in enumerate(self.wps)
         ]
         return summation([self.Kx_ps(op_cond), self.Kx_vault(op_cond), *temp])
 
@@ -943,9 +912,9 @@ class TrapezoidalCaseTF(CaseTF):
         dx_lat = np.array([
             (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self._rad_theta / 2)
             - w.dx / 2
-            for i, w in enumerate(self.WPs)
+            for i, w in enumerate(self.wps)
         ])
-        dy_lat = np.array([w.dy for w in self.WPs])
+        dy_lat = np.array([w.dy for w in self.wps])
         return self.mat_case.youngs_modulus(op_cond) * dx_lat / dy_lat
 
     def Ky_vault(self, op_cond: OperationalConditions):  # noqa: N802
@@ -993,7 +962,7 @@ class TrapezoidalCaseTF(CaseTF):
                 w.Ky(op_cond),
                 ky_lat[i],
             ])
-            for i, w in enumerate(self.WPs)
+            for i, w in enumerate(self.wps)
         ]
         return reciprocal_summation([self.Ky_ps(op_cond), self.Ky_vault(op_cond), *temp])
 
@@ -1006,7 +975,7 @@ class TrapezoidalCaseTF(CaseTF):
         layout: str = "auto",
     ):
         """
-        Rearrange the total number of conductors into winding packs (WPs)
+        Rearrange the total number of conductors into winding packs
         within the TF coil case geometry using enforce_wp_layout_rules.
 
         Parameters
@@ -1014,7 +983,7 @@ class TrapezoidalCaseTF(CaseTF):
         n_conductors:
             Total number of conductors to be allocated.
         wp_reduction_factor:
-            Fractional reduction of the total available toroidal space for WPs.
+            Fractional reduction of the total available toroidal space for winding packs.
         min_gap_x:
             Minimum allowable toroidal gap between WP and boundary [m].
         n_layers_reduction:
@@ -1028,7 +997,7 @@ class TrapezoidalCaseTF(CaseTF):
             If there is not enough space to allocate all the conductors.
         """
         debug_msg = ["Method rearrange_conductors_in_wp"]
-        conductor = self.WPs[0].conductor
+        conductor = self.wps[0].conductor
         R_wp_i = self.R_wp_i[0]  # noqa: N806
 
         dx_WP = self.dx_i * wp_reduction_factor  # noqa: N806
@@ -1042,10 +1011,10 @@ class TrapezoidalCaseTF(CaseTF):
             f"n_conductors = {n_conductors}",
         ])
 
-        WPs = []  # noqa: N806
+        wps = []
         # number of conductors to be allocated
         remaining_conductors = n_conductors
-        # maximum number of winding packs in WPs
+        # maximum number of winding packs in wps
         i_max = 50
         n_layers_max = 0
         for i in range(i_max):
@@ -1064,7 +1033,7 @@ class TrapezoidalCaseTF(CaseTF):
                 )
 
             if n_layers_max >= remaining_conductors:
-                WPs.append(
+                wps.append(
                     WindingPack(conductor=conductor, nx=remaining_conductors, ny=1)
                 )
                 remaining_conductors = 0
@@ -1095,16 +1064,16 @@ class TrapezoidalCaseTF(CaseTF):
 
                 if n_layers_max * n_turns_max > remaining_conductors:
                     n_turns_max -= 1
-                    WPs.append(
+                    wps.append(
                         WindingPack(conductor=conductor, nx=n_layers_max, ny=n_turns_max)
                     )
                     remaining_conductors -= n_layers_max * n_turns_max
-                    WPs.append(
+                    wps.append(
                         WindingPack(conductor=conductor, nx=remaining_conductors, ny=1)
                     )
                     remaining_conductors = 0
                 else:
-                    WPs.append(
+                    wps.append(
                         WindingPack(conductor=conductor, nx=n_layers_max, ny=n_turns_max)
                     )
                     remaining_conductors -= n_layers_max * n_turns_max
@@ -1123,7 +1092,7 @@ class TrapezoidalCaseTF(CaseTF):
                     break
 
         bluemira_debug("\n".join(debug_msg))
-        self.WPs = WPs
+        self.wps = wps
 
         # just a final check
         if self.n_conductors != n_conductors:

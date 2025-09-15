@@ -147,9 +147,9 @@ class ABCCable(ABC):
             Averaged mass density in kg/m³.
         """
         return (
-            self.sc_strand.rho(op_cond) * self.area_sc
-            + self.stab_strand.rho(op_cond) * self.area_stab
-        ) / (self.area_sc + self.area_stab)
+            self.sc_strand.rho(op_cond) * self.area_sc_region
+            + self.stab_strand.rho(op_cond) * self.area_stab_region
+        ) / (self.area_sc_region + self.area_stab_region)
 
     def erho(self, op_cond: OperationalConditions) -> float:
         """
@@ -168,8 +168,8 @@ class ABCCable(ABC):
             resistivity [Ohm m]
         """
         resistances = np.array([
-            self.sc_strand.erho(op_cond) / self.area_sc,
-            self.stab_strand.erho(op_cond) / self.area_stab,
+            self.sc_strand.erho(op_cond) / self.area_sc_region,
+            self.stab_strand.erho(op_cond) / self.area_stab_region,
         ])
         res_tot = reciprocal_summation(resistances)
         return res_tot * self.area
@@ -191,28 +191,30 @@ class ABCCable(ABC):
             Specific heat capacity [J/K/m]
         """
         weighted_specific_heat = np.array([
-            self.sc_strand.Cp(op_cond) * self.area_sc * self.sc_strand.rho(op_cond),
+            self.sc_strand.Cp(op_cond)
+            * self.area_sc_region
+            * self.sc_strand.rho(op_cond),
             self.stab_strand.Cp(op_cond)
-            * self.area_stab
+            * self.area_stab_region
             * self.stab_strand.rho(op_cond),
         ])
         return summation(weighted_specific_heat) / (
-            self.area_sc * self.sc_strand.rho(op_cond)
-            + self.area_stab * self.stab_strand.rho(op_cond)
+            self.area_sc_region * self.sc_strand.rho(op_cond)
+            + self.area_stab_region * self.stab_strand.rho(op_cond)
         )
 
     @property
-    def area_stab(self) -> float:
+    def area_stab_region(self) -> float:
         """Area of the stabiliser region"""
         return self.stab_strand.area * self.n_stab_strand
 
     @property
-    def area_sc(self) -> float:
+    def area_sc_region(self) -> float:
         """Area of the superconductor region"""
         return self.sc_strand.area * self.n_sc_strand
 
     @property
-    def area_cc(self) -> float:
+    def area_cooling_channel(self) -> float:
         """Area of the cooling channel"""
         return self.d_cooling_channel**2 / 4 * np.pi
 
@@ -220,8 +222,8 @@ class ABCCable(ABC):
     def area(self) -> float:
         """Area of the cable considering the void fraction"""
         return (
-            self.area_sc + self.area_stab
-        ) / self.void_fraction / self.cos_theta + self.area_cc
+            self.area_sc_region + self.area_stab_region
+        ) / self.void_fraction / self.cos_theta + self.area_cooling_channel
 
     def _heat_balance_model_cable(
         self,
@@ -270,8 +272,8 @@ class ABCCable(ABC):
         t0: float,
         tf: float,
         initial_temperature: float,
-        B_fun: Callable,
-        I_fun: Callable,  # noqa: N803
+        B_fun: Callable[[float], float],
+        I_fun: Callable[[float], float],  # noqa: N803
     ):
         solution = solve_ivp(
             self._heat_balance_model_cable,
@@ -348,7 +350,6 @@ class ABCCable(ABC):
         # diff = abs(final_temperature - target_temperature)
         return abs(final_temperature - target_temperature)
 
-    # OD homogenised structural properties
     @abstractmethod
     def Kx(self, op_cond: OperationalConditions):  # noqa: N802
         """Total equivalent stiffness along x-axis"""
@@ -556,13 +557,11 @@ class RectangularCable(ABCCable):
         """Cable dimension in the y direction [m]"""
         return self.area / self.dx
 
-    # Decide if this function shall be a setter.
-    # Defined as "normal" function to underline that it modifies dx.
-    def set_aspect_ratio(self, value: float):
+    @ABCCable.aspect_ratio.setter
+    def aspect_ratio(self, value: float):
         """Modify dx in order to get the given aspect ratio"""
         self.dx = np.sqrt(value * self.area)
 
-    # OD homogenised structural properties
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the total equivalent stiffness along the x-axis.
@@ -578,7 +577,7 @@ class RectangularCable(ABCCable):
         :
             Homogenised stiffness in the x-direction [Pa].
         """
-        return self.E(op_cond) * self.dy / self.dx
+        return self.E(op_cond) / self.aspect_ratio
 
     def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
@@ -595,7 +594,7 @@ class RectangularCable(ABCCable):
         :
             Homogenised stiffness in the y-direction [Pa].
         """
-        return self.E(op_cond) * self.dx / self.dy
+        return self.E(op_cond) * self.aspect_ratio
 
     def to_dict(self, op_cond) -> dict[str, Any]:
         """
@@ -614,7 +613,7 @@ class RectangularCable(ABCCable):
         return data
 
 
-class SquareCable(ABCCable):
+class SquareCable(RectangularCable):
     """
     Cable with a square cross-section.
 
@@ -686,42 +685,16 @@ class SquareCable(ABCCable):
         """Cable dimension in the y direction [m]"""
         return self.dx
 
-    # OD homogenised structural properties
-    def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
+    @property
+    def aspect_ratio(self):
         """
-        Compute the total equivalent stiffness along the x-axis.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Homogenised stiffness in the x-direction [Pa].
+        Compute the aspect ratio of the cable cross-section.
         """
-        # TODO possible reason for floating point difference
-        return self.E(op_cond)
+        return 1
 
-    def Ky(self, op_cond: OperationalConditions) -> float:  # noqa: N802
-        """
-        Compute the total equivalent stiffness along the y-axis.
-
-        Parameters
-        ----------
-        op_cond:
-            Operational conditions including temperature, magnetic field, and strain
-            at which to calculate the material property.
-
-        Returns
-        -------
-        :
-            Homogenised stiffness in the y-direction [Pa].
-        """
-        # TODO possible reason for floating point difference
-        return self.E(op_cond)
+    @aspect_ratio.setter
+    def aspect_ratio(self, _: Any):
+        raise AttributeError(f"Aspect Ratio cannot be set on {type(self)}")
 
 
 class RoundCable(ABCCable):
@@ -788,9 +761,8 @@ class RoundCable(ABCCable):
         """Cable dimension in the y direction [m] (i.e. cable's diameter)"""
         return self.dx
 
-    # OD homogenised structural properties
-    # A structural analysis should be performed to check how much the rectangular
-    #  approximation is fine also for the round cable.
+    # TODO: A structural analysis should be performed to check how much the rectangular
+    #       approximation is fine also for the round cable.
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
         Compute the equivalent stiffness of the cable along the x-axis.

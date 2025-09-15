@@ -303,9 +303,8 @@ bluemira_print(f"cable area: {cable.area}")
 # ***Change cable aspect ratio***
 # %%
 aspect_ratio = 1.2
-cable.set_aspect_ratio(
-    aspect_ratio
-)  # This adjusts the cable dimensions while maintaining the total cross-sectional area.
+# This adjusts the cable dimensions while maintaining the total cross-sectional area.
+cable.aspect_ratio = aspect_ratio
 cable.plot(0, 0, show=True)
 bluemira_print(f"cable area: {cable.area}")
 
@@ -435,7 +434,7 @@ case = TrapezoidalCaseTF(
     dy_vault=0.7,
     theta_TF=360 / n_TF,
     mat_case=SS316_LN_MAG,
-    WPs=[wp1],
+    wps=[wp1],
 )
 
 print(f"pre-wp reduction factor: {wp_reduction_factor}")
@@ -497,7 +496,7 @@ if show:
 
     ax.plot([-scalex[0] * case.dx_i, -case.dx_i / 2], [case.Ri, case.Ri], "k:")
 
-    for i in range(len(case.WPs)):
+    for i in range(len(case.wps)):
         ax.plot(
             [-scalex[0] * case.dx_i, -case.dx_i / 2],
             [case.R_wp_i[i], case.R_wp_i[i]],

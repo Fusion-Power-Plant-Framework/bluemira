@@ -24,7 +24,7 @@ case_tf_dict = {
     "dy_vault": 0.4529579163961617,
     "theta_TF": 22.5,
     "mat_case": SS316_LN_MAG,
-    "WPs": [
+    "wps": [
         {
             "name_in_registry": "WindingPack",
             "name": "WindingPack",
@@ -156,10 +156,10 @@ max_niter = 100
 err = 1e-6
 
 # optimize number of stabilizer strands
-sc_strand = case_tf.WPs[0].conductor.cable.sc_strand
+sc_strand = case_tf.wps[0].conductor.cable.sc_strand
 op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
 Ic_sc = sc_strand.Ic(op_cond)
-case_tf.WPs[0].conductor.cable.n_sc_strand = int(np.ceil(Iop / Ic_sc))
+case_tf.wps[0].conductor.cable.n_sc_strand = int(np.ceil(Iop / Ic_sc))
 
 from bluemira.magnets.utils import delayed_exp_func
 
@@ -177,7 +177,7 @@ B_fun = delayed_exp_func(B_TF_i, Tau_discharge, t_delay)
 import time
 
 t = time.time()
-case_tf.WPs[0].conductor.cable.optimize_n_stab_ths(
+case_tf.wps[0].conductor.cable.optimize_n_stab_ths(
     t0,
     tf,
     T_for_hts,
@@ -230,7 +230,7 @@ if show:
         [-scalex[0] * case_tf.dx_i, -case_tf.dx_i / 2], [case_tf.Ri, case_tf.Ri], "k:"
     )
 
-    for i in range(len(case_tf.WPs)):
+    for i in range(len(case_tf.wps)):
         ax.plot(
             [-scalex[0] * case_tf.dx_i, -case_tf.dx_i / 2],
             [case_tf.R_wp_i[i], case_tf.R_wp_i[i]],
@@ -255,8 +255,8 @@ if show:
 bluemira_print("Convergence should be: 9.020308301268381e-07 after 11 iterations")
 
 op_cond = OperationalConditions(temperature=T_op, magnetic_field=B_TF_i, strain=0.0055)
-I_sc = case_tf.WPs[0].conductor.cable.sc_strand.Ic(op_cond)
-I_max = I_sc * case_tf.WPs[0].conductor.cable.n_sc_strand
+I_sc = case_tf.wps[0].conductor.cable.sc_strand.Ic(op_cond)
+I_max = I_sc * case_tf.wps[0].conductor.cable.n_sc_strand
 I_TF_max = I_max * case_tf.n_conductors
 print(I_max)
 print(I_TF_max)

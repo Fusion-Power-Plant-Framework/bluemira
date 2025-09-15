@@ -61,9 +61,9 @@ def test_geometry_and_area(cable):
     assert cable.dy > 0
     assert cable.area > 0
     assert cable.aspect_ratio > 0
-    assert cable.area_cc > 0
-    assert cable.area_stab > 0
-    assert cable.area_sc > 0
+    assert cable.area_cooling_channel > 0
+    assert cable.area_stab_region > 0
+    assert cable.area_sc_region > 0
 
 
 def test_material_properties(cable):
