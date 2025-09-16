@@ -560,7 +560,7 @@ class RectangularCable(ABCCable):
     @ABCCable.aspect_ratio.setter
     def aspect_ratio(self, value: float):
         """Modify dx in order to get the given aspect ratio"""
-        self.dx = np.sqrt(value * self.area)
+        self._dx = np.sqrt(value * self.area)
 
     def Kx(self, op_cond: OperationalConditions) -> float:  # noqa: N802
         """
