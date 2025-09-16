@@ -33,12 +33,13 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    _get_plasma_mask,
+    brute_force_toroidal_harmonic_approximation,
     coil_toroidal_harmonic_amplitude_matrix,
     f_hypergeometric,
     legendre_p,
     legendre_q,
     toroidal_harmonic_approximate_psi,
-    brute_force_toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -939,28 +940,40 @@ class TestRegressionTH:
             Path(TEST_PATH, "eqref_OOB.json").as_posix(),
             from_cocos=7,
         )
+        cls.eq_cc_set = deepcopy(cls.eq)
+        cls.eq_cc_set.coilset.control = cls.eq.coilset.get_coiltype("PF").name
         cls.R_0, cls.Z_0 = cls.eq.effective_centre()
         cls.test_th_params = toroidal_harmonic_grid_and_coil_setup(
             eq=cls.eq, R_0=cls.R_0, Z_0=cls.Z_0
         )
-        cls.cos_degrees = np.array([0, 1, 2, 3])
-        cls.sin_degrees = np.array([2, 4])
+        cls.test_cc_th_params = toroidal_harmonic_grid_and_coil_setup(
+            eq=cls.eq_cc_set, R_0=cls.R_0, Z_0=cls.Z_0
+        )
+        cls.cos_m = np.array([0, 1, 2, 3])
+        cls.sin_m = np.array([2, 4])
         cls.psi_norm = 0.95
 
-    def test_toroidal_harmonic_grid_and_coil_setup(self):
-        expected_th_number_of_coils = len(self.eq.coilset.name)
+    @pytest.mark.parametrize("cc_all", [True, False])
+    def test_toroidal_harmonic_grid_and_coil_setup(self, cc_all):
+        expected_th_number_of_coils = 11 if cc_all else 6
         expected_shape = (150, 200)
-        assert self.test_th_params.R_0 == self.R_0
-        assert self.test_th_params.Z_0 == self.Z_0
+        eq = self.eq if cc_all else self.eq_cc_set
+        th_params = self.test_th_params if cc_all else self.test_cc_th_params
 
-        assert np.shape(self.test_th_params.R) == expected_shape
-        assert np.shape(self.test_th_params.Z) == expected_shape
+        assert len(th_params.sigma_c) == expected_th_number_of_coils
+        assert len(th_params.th_coil_names) == expected_th_number_of_coils
 
-        assert len(self.eq.coilset.x) == expected_th_number_of_coils
-        assert self.eq.coilset.x == pytest.approx(self.test_th_params.R_coils)
+        assert th_params.R_0 == self.R_0
+        assert th_params.Z_0 == self.Z_0
 
-        assert len(self.eq.coilset.z) == expected_th_number_of_coils
-        assert self.eq.coilset.z == pytest.approx(self.test_th_params.Z_coils)
+        assert np.shape(th_params.R) == expected_shape
+        assert np.shape(th_params.Z) == expected_shape
+
+        assert len(eq.coilset.get_control_coils().x) == expected_th_number_of_coils
+        assert eq.coilset.get_control_coils().x == pytest.approx(th_params.R_coils)
+
+        assert len(eq.coilset.get_control_coils().z) == expected_th_number_of_coils
+        assert eq.coilset.get_control_coils().z == pytest.approx(th_params.Z_coils)
 
         # fmt: off
         expected_tau = [1.15773453, 1.18171853, 1.20570252, 1.22968651, 1.2536705,
@@ -976,7 +989,7 @@ class TestRegressionTH:
        2.35693406, 2.38091805, 2.40490204, 2.42888603, 2.45287003,
        2.47685402, 2.50083801, 2.524822, 2.54880599, 2.57278998,
        2.59677397, 2.62075796, 2.64474195, 2.66872594, 2.69270993,
-       2.71669392, 2.74067791, 2.7646619 , 2.78864589, 2.81262988,
+       2.71669392, 2.74067791, 2.7646619, 2.78864589, 2.81262988,
        2.83661387, 2.86059786, 2.88458186, 2.90856585, 2.93254984,
        2.95653383, 2.98051782, 3.00450181, 3.0284858, 3.05246979,
        3.07645378, 3.10043777, 3.12442176, 3.14840575, 3.17238974,
@@ -991,9 +1004,9 @@ class TestRegressionTH:
        4.15573336, 4.17971735, 4.20370134, 4.22768533, 4.25166932,
        4.27565331, 4.2996373, 4.32362129, 4.34760528, 4.37158927,
        4.39557326, 4.41955725, 4.44354124, 4.46752523, 4.49150922,
-       4.51549321, 4.5394772, 4.5634612 , 4.58744519, 4.61142918,
+       4.51549321, 4.5394772, 4.5634612, 4.58744519, 4.61142918,
        4.63541317, 4.65939716, 4.68338115, 4.70736514, 4.73134913,
-       4.75533312, 4.77931711, 4.8033011 , 4.82728509, 4.85126908,
+       4.75533312, 4.77931711, 4.8033011, 4.82728509, 4.85126908,
        4.87525307, 4.89923706, 4.92322105, 4.94720504, 4.97118903,
        4.99517303, 5.01915702, 5.04314101, 5.067125, 5.09110899,
        5.11509298, 5.13907697, 5.16306096, 5.18704495, 5.21102894,
@@ -1005,8 +1018,8 @@ class TestRegressionTH:
        5.8346127, 5.85859669, 5.88258068, 5.90656467, 5.93054866]
         # fmt: on
 
-        np.testing.assert_array_almost_equal(expected_tau, self.test_th_params.tau[0])
-        assert np.shape(self.test_th_params.tau) == expected_shape
+        np.testing.assert_array_almost_equal(expected_tau, th_params.tau[0])
+        assert np.shape(th_params.tau) == expected_shape
 
         # fmt: off
         expected_sigma = [-3.14159265, -3.09942362, -3.0572546, -3.01508557, -2.97291654,
@@ -1026,14 +1039,14 @@ class TestRegressionTH:
        -0.18976063, -0.1475916, -0.10542257, -0.06325354, -0.02108451,
         0.02108451, 0.06325354, 0.10542257, 0.1475916, 0.18976063,
         0.23192966, 0.27409869, 0.31626772, 0.35843675, 0.40060577,
-        0.4427748 , 0.48494383, 0.52711286, 0.56928189, 0.61145092,
+        0.4427748, 0.48494383, 0.52711286, 0.56928189, 0.61145092,
         0.65361995, 0.69578898, 0.73795801, 0.78012703, 0.82229606,
         0.86446509, 0.90663412, 0.94880315, 0.99097218, 1.03314121,
         1.07531024, 1.11747927, 1.15964829, 1.20181732, 1.24398635,
         1.28615538, 1.32832441, 1.37049344, 1.41266247, 1.4548315,
         1.49700053, 1.53916956, 1.58133858, 1.62350761, 1.66567664,
         1.70784567, 1.7500147, 1.79218373, 1.83435276, 1.87652179,
-        1.91869082, 1.96085984, 2.00302887, 2.0451979 , 2.08736693,
+        1.91869082, 1.96085984, 2.00302887, 2.0451979, 2.08736693,
         2.12953596, 2.17170499, 2.21387402, 2.25604305, 2.29821208,
         2.3403811, 2.38255013, 2.42471916, 2.46688819, 2.50905722,
         2.55122625, 2.59339528, 2.63556431, 2.67773334, 2.71990236,
@@ -1041,58 +1054,79 @@ class TestRegressionTH:
         2.97291654, 3.01508557, 3.0572546, 3.09942362, 3.14159265]
 
         # fmt: on
-        np.testing.assert_array_almost_equal(
-            expected_sigma, self.test_th_params.sigma[:, 0]
+        np.testing.assert_array_almost_equal(expected_sigma, th_params.sigma[:, 0])
+        assert np.shape(th_params.sigma) == expected_shape
+
+        expected_tau_c = (
+            [
+                0.54743133,
+                0.91207134,
+                1.02497178,
+                1.05937582,
+                0.87854201,
+                0.49935848,
+                0.29062942,
+                0.41637489,
+                0.5559156,
+                0.41855603,
+                0.29235689,
+            ]
+            if cc_all
+            else [
+                0.54743133,
+                0.91207134,
+                1.02497178,
+                1.05937582,
+                0.87854201,
+                0.49935848,
+            ]
         )
-        assert np.shape(self.test_th_params.sigma) == expected_shape
 
-        expected_tau_c = [
-            0.54743133,
-            0.91207134,
-            1.02497178,
-            1.05937582,
-            0.87854201,
-            0.49935848,
-            0.29062942,
-            0.41637489,
-            0.5559156,
-            0.41855603,
-            0.29235689,
-        ]
-        np.testing.assert_array_almost_equal(expected_tau_c, self.test_th_params.tau_c)
-        assert len(self.test_th_params.tau_c) == expected_th_number_of_coils
-        expected_sigma_c = [
-            1.31418168,
-            0.7621819,
-            0.23862408,
-            -0.2691331,
-            -0.80828933,
-            -1.28074456,
-            1.6158092,
-            2.08653842,
-            3.13527895,
-            -2.09555349,
-            -1.62195238,
-        ]
-        np.testing.assert_array_almost_equal(
-            expected_sigma_c, self.test_th_params.sigma_c
+        np.testing.assert_array_almost_equal(expected_tau_c, th_params.tau_c)
+        assert len(th_params.tau_c) == expected_th_number_of_coils
+
+        expected_sigma_c = (
+            [
+                1.31418168,
+                0.7621819,
+                0.23862408,
+                -0.2691331,
+                -0.80828933,
+                -1.28074456,
+                1.6158092,
+                2.08653842,
+                3.13527895,
+                -2.09555349,
+                -1.62195238,
+            ]
+            if cc_all
+            else [
+                1.31418168,
+                0.7621819,
+                0.23862408,
+                -0.2691331,
+                -0.80828933,
+                -1.28074456,
+            ]
         )
-        assert len(self.test_th_params.sigma_c) == expected_th_number_of_coils
 
-        assert len(self.test_th_params.th_coil_names) == expected_th_number_of_coils
+        np.testing.assert_array_almost_equal(expected_sigma_c, th_params.sigma_c)
 
-    def test_coil_toroidal_harmonic_amplitude_matrix(self):
+    @pytest.mark.parametrize("cc_all", [True, False])
+    def test_coil_toroidal_harmonic_amplitude_matrix(self, cc_all):
+        eq = self.eq if cc_all else self.eq_cc_set
+        th_params = self.test_th_params if cc_all else self.test_cc_th_params
         test_Am_cos, test_Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
-            input_coils=self.eq.coilset,
-            th_params=self.test_th_params,
-            cos_degrees_chosen=self.cos_degrees,
-            sin_degrees_chosen=self.sin_degrees,
+            input_coils=eq.coilset,
+            th_params=th_params,
+            cos_m_chosen=self.cos_m,
+            sin_m_chosen=self.sin_m,
         )
-        expected_cos_shape = (len(self.cos_degrees), len(self.eq.coilset.name))
-        expected_sin_shape = (len(self.sin_degrees), len(self.eq.coilset.name))
+        expected_cos_shape = (len(self.cos_m), 11 if cc_all else 6)
+        expected_sin_shape = (len(self.sin_m), 11 if cc_all else 6)
 
         # fmt: off
-        expected_Am_cos = np.array([[3.56396716e-08, 1.13470959e-07,1.58806895e-07,  # noqa: N806
+        expected_Am_cos = np.array([[3.56396716e-08, 1.13470959e-07, 1.58806895e-07,  # noqa: N806
          1.63547008e-07, 1.05077598e-07, 3.05896343e-08,
          9.03590421e-09, 1.54525917e-08, 2.37410318e-08,
          1.55733032e-08, 9.11630279e-09],
@@ -1108,13 +1142,15 @@ class TestRegressionTH:
          7.28802461e-07, -3.75991626e-07, -6.69497567e-08,
          2.92230837e-09, 4.08398396e-08, -7.22623580e-08,
          4.12497200e-08, 3.35139782e-09]])
+        if not cc_all:
+            expected_Am_cos = expected_Am_cos[:, :6]  # noqa: N806
         # fmt: on
 
         np.testing.assert_array_almost_equal(test_Am_cos, expected_Am_cos)
         assert np.shape(test_Am_cos) == expected_cos_shape
 
         # fmt: off
-        expected_Am_sin = np.array([[ 3.79946851e-08, 3.14970654e-07, 2.23323725e-07,  # noqa: N806
+        expected_Am_sin = np.array([[3.79946851e-08, 3.14970654e-07, 2.23323725e-07,  # noqa: N806
         -2.64832640e-07, -2.83902429e-07, -3.55337811e-08,
         -1.58848333e-09, -2.70834275e-08, -6.53828975e-10,
          2.76095960e-08, 1.82152436e-09],
@@ -1122,123 +1158,122 @@ class TestRegressionTH:
         -2.04990408e-06, 8.51665739e-08, 1.09780324e-07,
          4.69448814e-09, 4.65830266e-08, -2.59963682e-09,
         -4.61605764e-08, -5.38443604e-09]])
+        if not cc_all:
+            expected_Am_sin = expected_Am_sin[:, :6]  # noqa: N806
         # fmt: on
 
         np.testing.assert_array_almost_equal(test_Am_sin, expected_Am_sin)
         assert np.shape(test_Am_sin) == expected_sin_shape
 
-    def test_toroidal_harmonic_approximate_psi(self):
+    @pytest.mark.parametrize("cc_all", [True, False])
+    def test_toroidal_harmonic_approximate_psi(self, cc_all):
+        eq = self.eq if cc_all else self.eq_cc_set
+        th_params = self.test_th_params if cc_all else self.test_cc_th_params
         test_approx_coilset_psi, test_Am_cos, test_Am_sin = (  # noqa: N806
             toroidal_harmonic_approximate_psi(
-                eq=self.eq,
-                th_params=self.test_th_params,
-                cos_degrees_chosen=self.cos_degrees,
-                sin_degrees_chosen=self.sin_degrees,
+                eq=eq,
+                th_params=th_params,
+                cos_m_chosen=self.cos_m,
+                sin_m_chosen=self.sin_m,
             )
         )
         expected_psi_shape = (150, 200)
+        mask = _get_plasma_mask(
+            eq=eq, th_params=th_params, psi_norm=0.90, plasma_mask=True
+        )
 
         # fmt: off
-        # Large array so test first entry is as expected
-        expected_coilset_psi = np.array([-24.65091628, -24.8034873, -24.95459247,
-        -25.10455675,
-       -25.25366744, -25.40217676, -25.55030437, -25.69823978,
-       -25.84614462, -25.99415484, -26.14238278, -26.29091918,
-       -26.43983498, -26.58918317, -26.73900039, -26.8893085 ,
-       -27.04011609, -27.19141979, -27.34320564, -27.49545018,
-       -27.64812167, -27.80118106, -27.95458298, -28.10827661,
-       -28.26220653, -28.41631345, -28.57053491, -28.72480593,
-       -28.87905958, -29.03322754, -29.18724052, -29.34102877,
-       -29.49452243, -29.64765192, -29.80034821, -29.95254317,
-       -30.10416975, -30.25516227, -30.40545659, -30.55499024,
-       -30.70370264, -30.85153517, -30.99843129, -31.14433662,
-       -31.28919904, -31.43296869, -31.57559805, -31.71704196,
-       -31.85725762, -31.99620462, -32.13384488, -32.27014273,
-       -32.40506479, -32.53858, -32.67065959, -32.801277,
-       -32.93040785, -33.05802994, -33.18412313, -33.30866931,
-       -33.43165238, -33.55305813, -33.67287422, -33.79109012,
-       -33.90769701, -34.02268778, -34.1360569, -34.24780039,
-       -34.35791576, -34.46640195, -34.57325924, -34.67848921,
-       -34.7820947, -34.88407968, -34.98444928, -35.08320967,
-       -35.18036802, -35.27593247, -35.36991203, -35.46231656,
-       -35.55315672, -35.6424439, -35.7301902, -35.81640835,
-       -35.9011117, -35.98431415, -36.06603011, -36.1462745,
-       -36.22506265, -36.3024103, -36.37833357, -36.45284889,
-       -36.52597301, -36.59772293, -36.66811591, -36.7371694 ,
-       -36.80490105, -36.87132865, -36.93647012, -37.00034351,
-       -37.06296693, -37.12435857, -37.18453665, -37.24351943,
-       -37.30132516, -37.35797209, -37.41347844, -37.46786239,
-       -37.52114205, -37.57333548, -37.62446065, -37.67453542,
-       -37.72357757, -37.77160474, -37.81863447, -37.86468413,
-       -37.90977098, -37.95391212, -37.99712449, -38.03942486,
-       -38.08082984, -38.12135586, -38.16101916, -38.19983582,
-       -38.23782171, -38.27499251, -38.31136372, -38.34695061,
-       -38.38176829, -38.41583163, -38.44915531, -38.48175381,
-       -38.5136414, -38.54483213, -38.57533986, -38.60517822,
-       -38.63436063, -38.66290033, -38.69081032, -38.71810341,
-       -38.74479218, -38.77088903, -38.79640613, -38.82135546,
-       -38.84574878, -38.86959766, -38.89291347, -38.91570737,
-       -38.93799033, -38.95977312, -38.98106631, -39.00188029,
-       -39.02222524, -39.04211118, -39.06154791, -39.08054507,
-       -39.09911212, -39.11725831, -39.13499275, -39.15232434,
-       -39.16926184, -39.18581382, -39.20198868, -39.21779466,
-       -39.23323983, -39.24833212, -39.26307928, -39.27748891,
-       -39.29156846, -39.30532522, -39.31876634, -39.33189881,
-       -39.34472951, -39.35726514, -39.36951228, -39.38147737,
-       -39.39316671, -39.40458647, -39.41574271, -39.42664134,
-       -39.43728814, -39.44768879, -39.45784883, -39.4677737,
-       -39.4774687, -39.48693904, -39.49618981, -39.50522597,
-       -39.51405242, -39.5226739, -39.53109507, -39.53932051,
-       -39.54735468, -39.55520192, -39.56286652, -39.57035264,
-       -39.57766437, -39.58480571, -39.59178055, -39.59859271])
+        # Large array so test subset within LCFS is as expected
+        expected_coilset_psi = np.array([
+            -24.65091628, -24.8034873, -24.95459247, -25.10455675,
+            -25.25366744, -25.40217676, -25.55030437, -25.69823978,
+            -25.84614462, -25.99415484, -26.14238278, -26.29091918,
+            -26.43983498, -26.58918317, -26.73900039, -26.8893085,
+            -27.04011609, -27.19141979, -27.34320564, -27.49545018,
+            -27.64812167, -27.80118106, -27.95458298, -28.10827661,
+            -28.26220653, -28.41631345, -28.57053491, -28.72480593,
+            -28.87905958, -29.03322754, -29.18724052, -29.34102877,
+            -29.49452243, -29.64765192, -29.80034821, -29.95254317,
+            -30.10416975, -30.25516227, -30.40545659, -30.55499024,
+            -30.70370264, -30.85153517, -30.99843129, -31.14433662,
+            -31.28919904, -31.43296869, -31.57559805, -31.71704196,
+            -31.85725762, -31.99620462, -32.13384488, -32.27014273,
+            -32.40506479, -32.53858, -32.67065959, -32.801277,
+            -32.93040785, -33.05802994, -33.18412313, -33.30866931,
+            -33.43165238, -33.55305813, -33.67287422, -33.79109012,
+            -33.90769701, -34.02268778, -34.1360569, -34.24780039,
+            -34.35791576, -34.46640195, -34.57325924, -34.67848921,
+            -34.7820947, -34.88407968, -34.98444928, -35.08320967,
+            -35.18036802, -35.27593247, -35.36991203, -35.46231656,
+            -35.55315672, -35.6424439, -35.7301902, -35.81640835,
+            -35.9011117, -35.98431415, -36.06603011, -36.1462745,
+            -36.22506265, -36.3024103, -36.37833357, -36.45284889,
+            -36.52597301, -36.59772293, -36.66811591, -36.7371694,
+            -36.80490105, -36.87132865, -36.93647012, -37.00034351,
+            -37.06296693, -37.12435857, -37.18453665, -37.24351943,
+            -37.30132516, -37.35797209, -37.41347844, -37.46786239,
+            -37.52114205, -37.57333548, -37.62446065, -37.67453542,
+            -37.72357757, -37.77160474, -37.81863447, -37.86468413,
+            -37.90977098, -37.95391212, -37.99712449, -38.03942486,
+            -38.08082984, -38.12135586, -38.16101916, -38.19983582,
+            -38.23782171, -38.27499251, -38.31136372, -38.34695061,
+            -38.38176829, -38.41583163, -38.44915531, -38.48175381,
+            -38.5136414, -38.54483213, -38.57533986, -38.60517822,
+            -38.63436063, -38.66290033, -38.69081032, -38.71810341,
+            -38.74479218, -38.77088903, -38.79640613, -38.82135546,
+            -38.84574878, -38.86959766, -38.89291347, -38.91570737,
+            -38.93799033, -38.95977312, -38.98106631, -39.00188029,
+            -39.02222524, -39.04211118, -39.06154791, -39.08054507,
+            -39.09911212, -39.11725831, -39.13499275, -39.15232434,
+            -39.16926184, -39.18581382, -39.20198868, -39.21779466,
+            -39.23323983, -39.24833212, -39.26307928, -39.27748891,
+            -39.29156846, -39.30532522, -39.31876634, -39.33189881,
+            -39.34472951, -39.35726514, -39.36951228, -39.38147737,
+            -39.39316671, -39.40458647, -39.41574271, -39.42664134,
+            -39.43728814, -39.44768879, -39.45784883, -39.4677737,
+            -39.4774687, -39.48693904, -39.49618981, -39.50522597,
+            -39.51405242, -39.5226739, -39.53109507, -39.53932051,
+            -39.54735468, -39.55520192, -39.56286652, -39.57035264,
+            -39.57766437, -39.58480571, -39.59178055, -39.59859271
+        ])
         # fmt: on
 
-        np.testing.assert_array_almost_equal(
-            test_approx_coilset_psi[0], expected_coilset_psi
+        # Note R and Z positions at [149, :] chosen and then masked to get a
+        # subset of grid values to test that are within the LCFS
+        # (i.e., where we are tring to get a good approximation).
+        if not cc_all:
+            non_cc = self.eq.coilset.get_coiltype("CS").psi(th_params.R, th_params.Z)
+            expected_coilset_psi -= non_cc[149, :]
+
+        np.testing.assert_allclose(
+            test_approx_coilset_psi[149, :] * mask[149, :],
+            expected_coilset_psi * mask[149, :],
+            rtol=2e-2,
         )
         assert np.shape(test_approx_coilset_psi) == expected_psi_shape
 
-        expected_Am_cos = [-4.23864252, -3.58288708, -10.51447447, -11.673279]  # noqa: N806
+        expected_Am_cos = (  # noqa: N806
+            [-4.23864252, -3.58288708, -10.51447447, -11.673279]
+            if cc_all
+            else [-2.67549703, -5.30120682, -9.69272712, -12.50976612]
+        )
 
         np.testing.assert_array_almost_equal(test_Am_cos, expected_Am_cos)
-        assert np.shape(test_Am_cos) == (len(self.cos_degrees),)
+        assert np.shape(test_Am_cos) == (len(self.cos_m),)
 
-        expected_Am_sin = [0.19437508, 12.28756463]  # noqa: N806
+        expected_Am_sin = (  # noqa: N806
+            [0.19437508, 12.28756463] if cc_all else [0.27944301, 11.93858154]
+        )
 
         np.testing.assert_array_almost_equal(test_Am_sin, expected_Am_sin)
-        assert np.shape(test_Am_sin) == (len(self.sin_degrees),)
+        assert np.shape(test_Am_sin) == (len(self.sin_m),)
 
     def test_toroidal_harmonic_approximation(self):
-        (
-            test_error,
-            test_combo,
-            test_cos_degrees,
-            test_sin_degrees,
-            test_total_psi,
-            test_vacuum_psi,
-            test_cos_amplitudes,
-            test_sin_amplitudes,
-            test_th_parameters,
-        ) = brute_force_toroidal_harmonic_approximation(
-            eq=self.eq,
-            psi_norm=0.95,
-            max_error_value=0.1,
-            tol=0.005,
-        )
-        assert test_error < 0.1
-
-        assert len(test_combo) == len(test_cos_degrees) + len(test_sin_degrees)
+        n_degrees_of_freedom = 6
+        max_harmonic_mode = 5
 
         expected_cos_degrees = np.array([0, 1, 2, 3, 4])
-
         expected_sin_degrees = np.array([3])
-
-        np.testing.assert_array_almost_equal(test_cos_degrees, expected_cos_degrees)
-        assert np.shape(test_cos_degrees) == (len(expected_cos_degrees),)
-
-        np.testing.assert_array_almost_equal(test_sin_degrees, expected_sin_degrees)
-        assert np.shape(test_sin_degrees) == (len(expected_sin_degrees),)
-
         expected_cos_amplitudes = np.array([
             -4.23864252,
             -3.58288708,
@@ -1246,129 +1281,41 @@ class TestRegressionTH:
             -11.673279,
             -14.26727472,
         ])
-
         expected_sin_amplitudes = np.array([3.15627377])
 
-        np.testing.assert_almost_equal(test_cos_amplitudes, expected_cos_amplitudes)
+        result = brute_force_toroidal_harmonic_approximation(
+            eq=self.eq,
+            th_params=self.test_th_params,
+            psi_norm=self.psi_norm,
+            n_degrees_of_freedom=n_degrees_of_freedom,
+            max_harmonic_mode=max_harmonic_mode,
+            plasma_mask=True,
+        )
+        mask = _get_plasma_mask(
+            eq=self.eq,
+            th_params=self.test_th_params,
+            psi_norm=self.psi_norm,
+            plasma_mask=True,
+        )
 
-        np.testing.assert_almost_equal(test_sin_amplitudes, expected_sin_amplitudes)
+        assert result.error < 10
+        assert len(result.cos_m) + len(result.sin_m) == n_degrees_of_freedom
+        np.testing.assert_array_almost_equal(result.cos_m, expected_cos_degrees)
+        np.testing.assert_array_almost_equal(result.sin_m, expected_sin_degrees)
+        assert np.max(np.append(result.cos_m, result.sin_m)) <= max_harmonic_mode
 
-        expected_psi_shape = (150, 200)
+        np.testing.assert_almost_equal(result.cos_amplitudes, expected_cos_amplitudes)
+        np.testing.assert_almost_equal(result.sin_amplitudes, expected_sin_amplitudes)
 
-        # fmt: off
-        # Large array so test first entry is as expected
-        expected_total_psi = [-7.42786698e+00, -7.00565703e+00, -6.57475508e+00,
-        -6.13613919e+00,
-       -5.69064424e+00, -5.23902040e+00, -4.78191068e+00, -4.31990038e+00,
-       -3.85349764e+00, -3.38317083e+00, -2.90933447e+00, -2.43237176e+00,
-       -1.95261890e+00, -1.47040264e+00, -9.86037106e-01, -4.99802036e-01,
-       -1.18794977e-02, 4.77513462e-01, 9.67935797e-01, 1.45888483e+00,
-        1.94979079e+00, 2.44005606e+00, 2.92907582e+00, 3.41621741e+00,
-        3.90087637e+00, 4.38243504e+00, 4.86030380e+00, 5.33391684e+00,
-        5.80272087e+00, 6.26620753e+00, 6.72389105e+00, 7.17531911e+00,
-        7.62008355e+00, 8.05780419e+00, 8.48814017e+00, 8.91079128e+00,
-        9.32548920e+00, 9.73200230e+00, 1.01301352e+01, 1.05197248e+01,
-        1.09006393e+01, 1.12727772e+01, 1.16360664e+01, 1.19904617e+01,
-        1.23359412e+01, 1.26725066e+01, 1.30001828e+01, 1.33190132e+01,
-        1.36290573e+01, 1.39303921e+01, 1.42231111e+01, 1.45073191e+01,
-        1.47831312e+01, 1.50506738e+01, 1.53100841e+01, 1.55615062e+01,
-        1.58050892e+01, 1.60409879e+01, 1.62693639e+01, 1.64903823e+01,
-        1.67042102e+01, 1.69110164e+01, 1.71109713e+01, 1.73042477e+01,
-        1.74910187e+01, 1.76714565e+01, 1.78457324e+01, 1.80140163e+01,
-        1.81764780e+01, 1.83332857e+01, 1.84846052e+01, 1.86306000e+01,
-        1.87714309e+01, 1.89072559e+01, 1.90382309e+01, 1.91645090e+01,
-        1.92862399e+01, 1.94035702e+01, 1.95166432e+01, 1.96255989e+01,
-        1.97305738e+01, 1.98317014e+01, 1.99291119e+01, 2.00229320e+01,
-        2.01132850e+01, 2.02002908e+01, 2.02840660e+01, 2.03647237e+01,
-        2.04423738e+01, 2.05171232e+01, 2.05890752e+01, 2.06583304e+01,
-        2.07249860e+01, 2.07891362e+01, 2.08508721e+01, 2.09102822e+01,
-        2.09674518e+01, 2.10224634e+01, 2.10753971e+01, 2.11263298e+01,
-        2.11753363e+01, 2.12224884e+01, 2.12678559e+01, 2.13115057e+01,
-        2.13535028e+01, 2.13939096e+01, 2.14327864e+01, 2.14701913e+01,
-        2.15061804e+01, 2.15408078e+01, 2.15741254e+01, 2.16061836e+01,
-        2.16370305e+01, 2.16667128e+01, 2.16952752e+01, 2.17227609e+01,
-        2.17492115e+01, 2.17746668e+01, 2.17991654e+01, 2.18227443e+01,
-        2.18454391e+01, 2.18672840e+01, 2.18883121e+01, 2.19085549e+01,
-        2.19280430e+01, 2.19468056e+01, 2.19648709e+01, 2.19822661e+01,
-        2.19990171e+01, 2.20151488e+01, 2.20306855e+01, 2.20456501e+01,
-        2.20600648e+01, 2.20739510e+01, 2.20873292e+01, 2.21002189e+01,
-        2.21126392e+01, 2.21246082e+01, 2.21361433e+01, 2.21472612e+01,
-        2.21579781e+01, 2.21683095e+01, 2.21782701e+01, 2.21878742e+01,
-        2.21971355e+01, 2.22060672e+01, 2.22146818e+01, 2.22229916e+01,
-        2.22310081e+01, 2.22387425e+01, 2.22462056e+01, 2.22534076e+01,
-        2.22603585e+01, 2.22670678e+01, 2.22735446e+01, 2.22797976e+01,
-        2.22858353e+01, 2.22916659e+01, 2.22972969e+01, 2.23027359e+01,
-        2.23079902e+01, 2.23130664e+01, 2.23179713e+01, 2.23227112e+01,
-        2.23272922e+01, 2.23317201e+01, 2.23360006e+01, 2.23401390e+01,
-        2.23441406e+01, 2.23480104e+01, 2.23517531e+01, 2.23553734e+01,
-        2.23588757e+01, 2.23622642e+01, 2.23655430e+01, 2.23687160e+01,
-        2.23717871e+01, 2.23747598e+01, 2.23776377e+01, 2.23804241e+01,
-        2.23831223e+01, 2.23857352e+01, 2.23882660e+01, 2.23907175e+01,
-        2.23930924e+01, 2.23953935e+01, 2.23976232e+01, 2.23997840e+01,
-        2.24018783e+01, 2.24039084e+01, 2.24058764e+01, 2.24077845e+01,
-        2.24096347e+01, 2.24114289e+01, 2.24131691e+01, 2.24148570e+01,
-        2.24164944e+01, 2.24180829e+01, 2.24196242e+01, 2.24211199e+01]
-        # fmt: on
-
-        np.testing.assert_array_almost_equal(test_total_psi[0], expected_total_psi)
-        assert np.shape(test_total_psi) == expected_psi_shape
-
-        # fmt: off
-        # Large array so test first entry is as expected
-        expected_vacuum_psi = [-26.57176664, -26.56162327, -26.5634907, -26.57661325,
-       -26.60027995, -26.63382147, -26.67660713, -26.72804222,
-       -26.78756551, -26.85464693, -26.92878546, -27.00950721,
-       -27.09636355, -27.18892956, -27.28680243, -27.38960012,
-       -27.49696007, -27.60853801, -27.7240069, -27.84305594,
-       -27.96538963, -28.09072697, -28.21880064, -28.34935632,
-       -28.482152, -28.6169574, -28.75355337, -28.89173139,
-       -29.03129304, -29.17204961, -29.31382158, -29.45643832,
-       -29.59973762, -29.74356541, -29.88777537, -30.03222868,
-       -30.17679362, -30.32134542, -30.46576585, -30.60994307,
-       -30.75377133, -30.89715076, -31.03998711, -31.18219158,
-       -31.32368057, -31.46437549, -31.60420261, -31.74309278,
-       -31.88098136, -32.01780794, -32.15351626, -32.28805398,
-       -32.42137256, -32.5534271 , -32.68417618, -32.81358172,
-       -32.94160884, -33.06822573, -33.19340351, -33.31711611,
-       -33.43934013, -33.56005476, -33.6792416, -33.79688461,
-       -33.91296996, -34.02748594, -34.14042286, -34.25177294,
-       -34.36153023, -34.46969049, -34.57625114, -34.68121115,
-       -34.78457095, -34.88633235, -34.98649849, -35.08507374,
-       -35.18206364, -35.27747481, -35.3713149, -35.46359255,
-       -35.55431727, -35.64349942, -35.73115018, -35.81728141,
-       -35.90190569, -35.98503621, -36.06668676, -36.14687164,
-       -36.22560566, -36.30290408, -36.37878257, -36.45325716,
-       -36.52634424, -36.59806048, -36.66842282, -36.73744845,
-       -36.80515477, -36.87155932, -36.93667985, -37.00053418,
-       -37.06314028, -37.12451617, -37.18467993, -37.24364968,
-       -37.30144357, -37.35807974, -37.4135763, -37.46795134,
-       -37.52122292, -37.57340899, -37.62452747, -37.67459616,
-       -37.72363278, -37.77165493, -37.81868008, -37.86472559,
-       -37.90980867, -37.95394638, -37.99715563, -38.03945316,
-       -38.08085556, -38.12137924, -38.16104041, -38.19985514,
-       -38.23783927, -38.27500847, -38.31137822, -38.34696379,
-       -38.38178027, -38.41584251, -38.4491652 , -38.48176281,
-       -38.51364957, -38.54483956, -38.57534661, -38.60518435,
-       -38.63436621, -38.6629054, -38.69081493, -38.71810759,
-       -38.74479599, -38.77089249, -38.79640927, -38.82135831,
-       -38.84575137, -38.86960002, -38.89291561, -38.91570932,
-       -38.9379921 , -38.95977472, -38.98106777, -39.00188161,
-       -39.02222645, -39.04211227, -39.06154891, -39.08054598,
-       -39.09911294, -39.11725906, -39.13499343, -39.15232496,
-       -39.1692624, -39.18581433, -39.20198914, -39.21779508,
-       -39.23324021, -39.24833247, -39.2630796, -39.2774892,
-       -39.29156872, -39.30532545, -39.31876655, -39.33189901,
-       -39.34472969, -39.3572653 , -39.36951243, -39.3814775,
-       -39.39316683, -39.40458658, -39.41574281, -39.42664143,
-       -39.43728822, -39.44768886, -39.4578489, -39.46777376,
-       -39.47746876, -39.48693909, -39.49618985, -39.50522602,
-       -39.51405245, -39.52267393, -39.53109511, -39.53932054,
-       -39.5473547, -39.55520194, -39.56286654, -39.57035266,
-       -39.57766439, -39.58480572, -39.59178056, -39.59859272]
-        # fmt: on
-
-        np.testing.assert_array_almost_equal(test_vacuum_psi[0], expected_vacuum_psi)
-        assert np.shape(test_vacuum_psi) == expected_psi_shape
+        np.testing.assert_allclose(
+            self.eq.plasma.psi(self.test_th_params.R, self.test_th_params.Z),
+            result.fixed_psi,
+        )
+        np.testing.assert_allclose(
+            self.eq.coilset.psi(self.test_th_params.R, self.test_th_params.Z) * mask,
+            result.coilset_psi * mask,
+            rtol=0.1,
+        )
 
     def test_ToroidalHarmonicConstraint(self):
         test_cos_degrees = np.array([0, 1, 2, 3, 4])
@@ -1400,12 +1347,12 @@ class TestRegressionTH:
             test_constraint_class_equality.tolerance,
             np.abs(
                 np.array([
-                    test_cos_degrees[0] * 1e-3,
-                    test_cos_degrees[1] * 1e-3,
-                    test_cos_degrees[2] * 1e-3,
-                    test_cos_degrees[3] * 1e-3,
-                    test_cos_degrees[4] * 1e-3,
-                    test_sin_degrees[0] * 1e-3,
+                    test_cos_amplitudes[0] * 1e-3,
+                    test_cos_amplitudes[1] * 1e-3,
+                    test_cos_amplitudes[2] * 1e-3,
+                    test_cos_amplitudes[3] * 1e-3,
+                    test_cos_amplitudes[4] * 1e-3,
+                    test_sin_amplitudes[0] * 1e-3,
                 ])
             ),
             strict=False,
@@ -1442,14 +1389,10 @@ class TestRegressionTH:
         assert len(test_eval_cos) == len(test_cos_amplitudes) * 2
         assert len(test_eval_sin) == len(test_sin_amplitudes) * 2
 
-        # TODO test with cos empty and with sin empty and check it returns the correct
-        # size stuff
-
     # This test currently does not pass:
     def test_ToroidalHarmonicConstraintFunction(self):
         cos_degrees = np.array([0, 1, 2, 3, 4])
         sin_degrees = np.array([3])
-        # TODO try with coil_toroidal_harmonic_amplitude_matrix
         cos_amplitudes = np.array([
             -4.23864252,
             -3.58288708,
@@ -1458,11 +1401,11 @@ class TestRegressionTH:
             -14.26727472,
         ])
         sin_amplitudes = np.array([3.15627377])
-        cur_expand_mat = self.eq.coilset._opt_currents_expand_mat
 
-        ref_vector = cur_expand_mat @ np.ones(len(self.eq.coilset.name))
+        # Vector of currents in MA for arg in constraint function
+        vector = self.eq.coilset.current * 1e-6
 
-        ref_constraint_class = ToroidalHarmonicConstraint(
+        constraint_class = ToroidalHarmonicConstraint(
             ref_harmonics_cos=cos_degrees,
             ref_harmonics_sin=sin_degrees,
             ref_harmonics_cos_amplitudes=cos_amplitudes,
@@ -1471,37 +1414,34 @@ class TestRegressionTH:
             tolerance=None,
             constraint_type="equality",
         )
-        ref_constraint_class.prepare(self.eq)
+        constraint_class.prepare(self.eq)
 
-        ref_result_cos = ref_constraint_class._args["a_mat_cos"] @ ref_vector
-        ref_result_sin = ref_constraint_class._args["a_mat_sin"] @ ref_vector
-        ref_amplitudes = np.append(
-            ref_result_cos - ref_constraint_class._args["b_vec_cos"],
-            ref_result_sin - ref_constraint_class._args["b_vec_sin"],
+        result_cos = constraint_class._args["a_mat_cos"] @ self.eq.coilset.current
+        result_sin = constraint_class._args["a_mat_sin"] @ self.eq.coilset.current
+        ref_function_result = np.append(
+            result_cos - constraint_class._args["b_vec_cos"],
+            result_sin - constraint_class._args["b_vec_sin"],
             axis=0,
         )
+
         test_constraint_function = ToroidalHarmonicConstraintFunction(
-            a_mat_cos=ref_constraint_class._args["a_mat_cos"],
-            a_mat_sin=ref_constraint_class._args["a_mat_sin"],
-            b_vec_cos=ref_constraint_class._args["b_vec_cos"],
-            b_vec_sin=ref_constraint_class._args["b_vec_sin"],
-            scale=ref_constraint_class._args["scale"],
-            value=ref_constraint_class._args["value"],
+            a_mat_cos=constraint_class._args["a_mat_cos"],
+            a_mat_sin=constraint_class._args["a_mat_sin"],
+            b_vec_cos=constraint_class._args["b_vec_cos"],
+            b_vec_sin=constraint_class._args["b_vec_sin"],
+            scale=constraint_class._args["scale"],
+            value=constraint_class._args["value"],
         )
 
-        test_returned_amplitudes = test_constraint_function.f_constraint(ref_vector)
+        test_result = test_constraint_function.f_constraint(vector)
 
         for fc, res in zip(
-            test_returned_amplitudes,
-            ref_amplitudes,
+            test_result,
+            ref_function_result,
             strict=False,
         ):
-            assert fc == res
+            assert fc == pytest.approx(res)
 
-        vector = self.eq.coilset.current
         assert test_constraint_function.df_constraint(vector) == pytest.approx(
             approx_derivative(test_constraint_function.f_constraint, vector)
         )
-
-        # TODO @clmould test with cos empty and with sin empty and check it returns the correct
-        # size stuff
