@@ -22,7 +22,6 @@ from bluemira.balance_of_plant.steady_state import (
     CoolantPumping,
     H2OPumping,
     HePumping,
-    NeutronPowerStrategy,
     ParasiticLoadStrategy,
     PowerCycleEfficiencyCalc,
     PredeterminedEfficiency,
@@ -64,9 +63,7 @@ class SteadyStatePowerCycleParams(ParameterFrame):
     P_rad: Parameter[float]
     P_hcd_ss: Parameter[float]
     P_hcd_ss_el: Parameter[float]
-    vvpfrac: Parameter[float]
-    e_mult: Parameter[float]
-    e_decay_mult: Parameter[float]
+
     f_core_rad_fw: Parameter[float]
     f_sol_rad: Parameter[float]
     f_sol_rad_fw: Parameter[float]
@@ -133,7 +130,6 @@ class SteadyStatePowerCycleSetup(Task):
         self,
     ) -> tuple[
         RadChargedPowerStrategy,
-        NeutronPowerStrategy,
         CoolantPumping,
         H2OPumping,
         PowerCycleEfficiencyCalc,
@@ -146,8 +142,6 @@ class SteadyStatePowerCycleSetup(Task):
         -------
         rad_sep_strat:
             Radiative charge power strategy
-        neutron_power_strat:
-            Neutron power strategy
         blanket_pump_strat
             Blanket pumping strategy
         divertor_pump_strat:
@@ -159,15 +153,7 @@ class SteadyStatePowerCycleSetup(Task):
         """
         self.params = make_parameter_frame(self.params, SteadyStatePowerCycleParams)
         params = self.params  # avoid constant 'self' lookup
-        # TODO: Get remaining hard-coded values hooked up
-        neutron_power_strat = NeutronPowerStrategy(
-            f_blanket=0.9,
-            f_divertor=0.05,
-            f_vessel=params.vvpfrac.value,  # TODO: Change this parameter name
-            f_other=0.01,
-            energy_multiplication=params.e_mult.value,
-            decay_multiplication=params.e_decay_mult.value,
-        )
+
         rad_sep_strat = RadChargedPowerStrategy(
             f_core_rad_fw=params.f_core_rad_fw.value,
             f_sol_rad=params.f_sol_rad.value,
@@ -204,7 +190,6 @@ class SteadyStatePowerCycleSetup(Task):
         parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
         return (
             rad_sep_strat,
-            neutron_power_strat,
             blanket_pump_strat,
             divertor_pump_strat,
             bop_cycle,
