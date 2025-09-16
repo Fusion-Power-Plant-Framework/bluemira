@@ -532,6 +532,7 @@ class PicardIterator:
                 "EQUILIBRIA G-S unable to find converged value after"
                 f" {self.i} iterations."
             )
+            self.diagnostic_plotting.make_gif()
         self._teardown()
         return self.result
 
