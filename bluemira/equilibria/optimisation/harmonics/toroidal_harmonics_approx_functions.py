@@ -153,7 +153,7 @@ def legendre_q(lam, mu, x, n_max=20):
     if isinstance(legQ, np.float64):
         if x == 1:
             legQ = np.inf  # noqa: N806
-    elif len(np.shape(legQ)) >= 2:  # noqa: PLR2004
+    elif len(np.shape(legQ)) > 2:  # noqa: PLR2004
         legQ[:, x == 1] = np.inf
     else:
         legQ[x == 1] = np.inf
