@@ -8,8 +8,11 @@
 Paris Law fatigue model with FE-inspired analytical crack propagation
 """
 
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass
+from typing import Final
 
 import numpy as np
 
@@ -87,7 +90,7 @@ def _boundary_correction_factor(
 
     Returns
     -------
-    float
+    :
         Boundary correction factor F.
     """
     return (m1 + m2 * a_d_t**2 + m3 * a_d_t**4) * g * f_phi * f_w
@@ -99,7 +102,7 @@ def _bending_correction_factor(h1: float, h2: float, p: float, phi: float) -> fl
 
     Returns
     -------
-    float
+    :
         Bending correction factor.
     """
     return h1 + (h2 - h1) * np.sin(phi) ** p
@@ -111,7 +114,7 @@ def _ellipse_shape_factor(ratio: float) -> float:
 
     Returns
     -------
-    float
+    :
         Shape factor Q.
     """
     return 1.0 + 1.464 * ratio**1.65
@@ -123,7 +126,7 @@ def _angular_location_correction(a: float, c: float, phi: float) -> float:
 
     Returns
     -------
-    float
+    :
         Angular correction factor f_phi.
     """
     if a <= c:
@@ -137,7 +140,7 @@ def _finite_width_correction(a_d_t: float, c: float, w: float) -> float:
 
     Returns
     -------
-    float
+    :
         Finite width correction factor.
     """
     return 1.0 / np.sqrt(np.cos(np.sqrt(a_d_t) * np.pi * c / (2 * w)))  # (11)
@@ -155,20 +158,18 @@ class Crack(abc.ABC):
         Crack width along the plate length direction
     """
 
-    alpha = None
-
-    def __init__(self, depth: float, width: float):
-        self.depth = depth  # a
-        self.width = width  # c
+    def __init__(self, depth, width):
+        self.depth = depth
+        self.width = width
 
     @classmethod
-    def from_area(cls, area: float, aspect_ratio: float):
+    def from_area(cls, area: float, aspect_ratio: float) -> Crack:
         """
         Instatiate a crack from an area and aspect ratio
 
         Returns
         -------
-        Crack
+        :
             New instance of the crack geometry.
         """
         depth = np.sqrt(area / (cls.alpha * np.pi * aspect_ratio))
@@ -182,10 +183,14 @@ class Crack(abc.ABC):
 
         Returns
         -------
-        float
+        :
             Area [m²].
         """
         return self.alpha * np.pi * self.depth * self.width
+
+    @property
+    @abc.abstractmethod
+    def alpha(self) -> float: ...
 
     @abc.abstractmethod
     def stress_intensity_factor(
@@ -215,7 +220,7 @@ class QuarterEllipticalCornerCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 0.25
+    alpha: Final[float] = 0.25
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,
@@ -249,7 +254,8 @@ class QuarterEllipticalCornerCrack(Crack):
 
         Returns
         -------
-        Stress intensity factor
+        :
+            Stress intensity factor
 
         Notes
         -----
@@ -315,7 +321,7 @@ class SemiEllipticalSurfaceCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 0.5
+    alpha: Final[float] = 0.5
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,
@@ -349,7 +355,8 @@ class SemiEllipticalSurfaceCrack(Crack):
 
         Returns
         -------
-        Stress intensity factor
+        :
+            Stress intensity factor
 
         Notes
         -----
@@ -406,7 +413,7 @@ class EllipticalEmbeddedCrack(Crack):
         Crack width along the plate length direction
     """
 
-    alpha = 1.0
+    alpha: Final[float] = 1.0
 
     def stress_intensity_factor(  # noqa: PLR6301
         self,
@@ -440,7 +447,8 @@ class EllipticalEmbeddedCrack(Crack):
 
         Returns
         -------
-        Stress intensity factor
+        :
+            Stress intensity factor
 
         Notes
         -----
@@ -495,7 +503,8 @@ def calculate_n_pulses(
 
     Returns
     -------
-    Number of plasma pulses
+    :
+        Number of plasma pulses
 
     Notes
     -----

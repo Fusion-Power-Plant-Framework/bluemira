@@ -6,12 +6,14 @@
 
 """Utils for magnets"""
 
+from collections.abc import Callable, Sequence
+
 import numpy as np
 
 
-def serie_r(arr: list | np.ndarray):
+def summation(arr: Sequence[float]) -> float:
     """
-    Compute the serie (as for resistance)
+    Compute the simple summation of the series
 
     Parameters
     ----------
@@ -21,69 +23,41 @@ def serie_r(arr: list | np.ndarray):
 
     Returns
     -------
-    Result: float
+    :
+        the resulting summation
+
+    Notes
+    -----
+    Y = sum(x1...xn)
     """
     return np.sum(arr)
 
 
-def parall_r(arr: list | np.ndarray):
+def reciprocal_summation(arr: Sequence[float]) -> float:
     """
-    Compute the parallel (as for resistance)
+    Compute the inverse of the summation of a reciprocal series
 
     Parameters
     ----------
     arr:
-        list or numpy array containing the elements on which the parallel
-        shall be calculated
+        list or numpy array containing the elements on which the serie shall
+        be calculated
 
     Returns
     -------
-    Result: float
+    :
+        resulting summation
+
+    Notes
+    -----
+    Y = [sum(1/x1 + 1/x2 + 1/x3 ...)]^-1
     """
-    out = 0
-    for i in range(len(arr)):
-        out += 1 / arr[i]
-    return out**-1
+    return (np.sum(1 / np.array(arr))) ** -1
 
 
-def serie_k(arr: list | np.ndarray):
-    """
-    Compute the serie (as for spring)
-
-    Parameters
-    ----------
-    arr:
-        list or numpy array containing the elements on which the serie
-        shall be calculated
-
-    Returns
-    -------
-    Result: float
-    """
-    out = 0
-    for i in range(len(arr)):
-        out += 1 / arr[i]
-    return out**-1
-
-
-def parall_k(arr: list | np.ndarray):
-    """
-    Compute the parallel (as for spring)
-
-    Parameters
-    ----------
-    arr:
-        list or numpy array containing the elements on which the parallel
-        shall be calculated
-
-    Returns
-    -------
-    Result: float
-    """
-    return np.sum(arr)
-
-
-def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
+def delayed_exp_func(
+    x0: float, tau: float, t_delay: float = 0
+) -> Callable[[float], float]:
     """
     Delayed Exponential function
 
@@ -91,16 +65,17 @@ def delayed_exp_func(x0: float, tau: float, t_delay: float = 0):
 
     Parameters
     ----------
-    x0: float
+    x0:
         initial value
-    tau: float
+    tau:
         characteristic time constant
-    t_delay: float
+    t_delay:
         delay time
 
     Returns
     -------
-    A Callable - exponential function
+    :
+        An exponential function
 
     """
 

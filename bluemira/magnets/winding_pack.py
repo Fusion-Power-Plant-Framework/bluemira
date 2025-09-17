@@ -6,66 +6,59 @@
 
 """Winding pack module"""
 
-from typing import Any, ClassVar
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
 from matproplib import OperationalConditions
 
-from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
-from bluemira.magnets.registry import RegistrableMeta
-
-# Global registries
-WINDINGPACK_REGISTRY = {}
+from bluemira.magnets.conductor import Conductor
 
 
-class WindingPack(metaclass=RegistrableMeta):
+class WindingPack:
     """
     Represents a winding pack composed of a grid of conductors.
 
     Attributes
     ----------
-    conductor : Conductor
+    conductor:
         The base conductor type used in the winding pack.
-    nx : int
+    nx:
         Number of conductors along the x-axis.
-    ny : int
+    ny:
         Number of conductors along the y-axis.
     """
-
-    _registry_: ClassVar[dict] = WINDINGPACK_REGISTRY
-    _name_in_registry_: ClassVar[str] = "WindingPack"
 
     def __init__(
         self, conductor: Conductor, nx: int, ny: int, name: str = "WindingPack"
     ):
         """
-        Initialize a WindingPack instance.
+        Initialise a WindingPack instance.
 
         Parameters
         ----------
-        conductor : Conductor
+        conductor:
             The conductor instance.
-        nx : int
-            Number of conductors along the x-direction.
-        ny : int
-            Number of conductors along the y-direction.
-        name : str, optional
+        nx:
+            Number of conductors along the x-axis.
+        ny:
+            Number of conductors along the y-axis.
+        name:
             Name of the winding pack instance.
         """
         self.conductor = conductor
-        self.nx = int(nx)
-        self.ny = int(ny)
+        self.nx = nx
+        self.ny = ny
         self.name = name
 
     @property
     def dx(self) -> float:
-        """Return the total width of the winding pack [m]."""
+        """Return the width of the winding pack [m]."""
         return self.conductor.dx * self.nx
 
     @property
     def dy(self) -> float:
-        """Return the total height of the winding pack [m]."""
+        """Return the height of the winding pack [m]."""
         return self.conductor.dy * self.ny
 
     @property
@@ -89,13 +82,13 @@ class WindingPack(metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Stiffness along the x-axis [N/m].
         """
         return self.conductor.Kx(op_cond) * self.ny / self.nx
@@ -106,13 +99,13 @@ class WindingPack(metaclass=RegistrableMeta):
 
         Parameters
         ----------
-        op_cond: OperationalConditions
+        op_cond:
             Operational conditions including temperature, magnetic field, and strain
             at which to calculate the material property.
 
         Returns
         -------
-        float
+        :
             Stiffness along the y-axis [N/m].
         """
         return self.conductor.Ky(op_cond) * self.nx / self.ny
@@ -123,28 +116,28 @@ class WindingPack(metaclass=RegistrableMeta):
         yc: float = 0,
         *,
         show: bool = False,
-        ax=None,
-        homogenized: bool = True,
-    ):
+        ax: plt.Axes | None = None,
+        homogenised: bool = True,
+    ) -> plt.Axes:
         """
         Plot the winding pack geometry.
 
         Parameters
         ----------
-        xc : float
+        xc:
             Center x-coordinate [m].
-        yc : float
+        yc:
             Center y-coordinate [m].
-        show : bool, optional
+        show:
             If True, immediately show the plot.
-        ax : matplotlib.axes.Axes, optional
+        ax:
             Axes object to draw on.
-        homogenized : bool, optional
+        homogenised:
             If True, plot as a single block. Otherwise, plot individual conductors.
 
         Returns
         -------
-        matplotlib.axes.Axes
+        :
             Axes object containing the plot.
         """
         if ax is None:
@@ -164,7 +157,7 @@ class WindingPack(metaclass=RegistrableMeta):
         ax.fill(points_ext[:, 0], points_ext[:, 1], "gold", snap=False)
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
-        if not homogenized:
+        if not homogenised:
             for i in range(self.nx):
                 for j in range(self.ny):
                     xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx
@@ -175,116 +168,18 @@ class WindingPack(metaclass=RegistrableMeta):
             plt.show()
         return ax
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """
-        Serialize the WindingPack to a dictionary.
+        Serialise the WindingPack to a dictionary.
 
         Returns
         -------
-        dict
-            Serialized dictionary of winding pack attributes.
+        :
+            Serialised dictionary of winding pack attributes.
         """
         return {
-            "name_in_registry": getattr(
-                self, "_name_in_registry_", self.__class__.__name__
-            ),
             "name": self.name,
             "conductor": self.conductor.to_dict(),
             "nx": self.nx,
             "ny": self.ny,
         }
-
-    @classmethod
-    def from_dict(
-        cls,
-        windingpack_dict: dict[str, Any],
-        name: str | None = None,
-    ) -> "WindingPack":
-        """
-        Deserialize a WindingPack from a dictionary.
-
-        Parameters
-        ----------
-        windingpack_dict : dict
-            Serialized winding pack dictionary.
-        name : str
-            Name for the new instance. If None, attempts to use the 'name' field from
-            the dictionary.
-
-        Returns
-        -------
-        WindingPack
-            Reconstructed WindingPack instance.
-
-        Raises
-        ------
-        ValueError
-            If 'name_in_registry' does not match the expected class.
-        """
-        # Validate name_in_registry
-        name_in_registry = windingpack_dict.get("name_in_registry")
-        expected_name_in_registry = getattr(cls, "_name_in_registry_", cls.__name__)
-
-        if name_in_registry != expected_name_in_registry:
-            raise ValueError(
-                f"Cannot create {cls.__name__} from dictionary with name_in_registry "
-                f"'{name_in_registry}'. Expected '{expected_name_in_registry}'."
-            )
-
-        # Deserialize conductor
-        conductor = create_conductor_from_dict(
-            conductor_dict=windingpack_dict["conductor"],
-            name=None,
-        )
-
-        return cls(
-            conductor=conductor,
-            nx=windingpack_dict["nx"],
-            ny=windingpack_dict["ny"],
-            name=name or windingpack_dict.get("name"),
-        )
-
-
-def create_wp_from_dict(
-    windingpack_dict: dict[str, Any],
-    name: str | None = None,
-) -> WindingPack:
-    """
-    Factory function to create a WindingPack or its subclass from a serialized
-    dictionary.
-
-    Parameters
-    ----------
-    windingpack_dict : dict
-        Dictionary containing serialized winding pack data.
-        Must include a 'name_in_registry' field matching a registered class.
-    name : str, optional
-        Optional name override for the reconstructed WindingPack.
-
-    Returns
-    -------
-    WindingPack
-        An instance of the appropriate WindingPack subclass.
-
-    Raises
-    ------
-    ValueError
-        If 'name_in_registry' is missing from the dictionary.
-        If no matching registered class is found.
-    """
-    name_in_registry = windingpack_dict.get("name_in_registry")
-    if name_in_registry is None:
-        raise ValueError(
-            "Serialized winding pack dictionary must contain a 'name_in_registry' field."
-        )
-
-    cls = WINDINGPACK_REGISTRY.get(name_in_registry)
-    if cls is None:
-        available = ", ".join(WINDINGPACK_REGISTRY.keys())
-        raise ValueError(
-            f"No registered winding pack class with registration name '"
-            f"{name_in_registry}'. "
-            f"Available: {available}."
-        )
-
-    return cls.from_dict(windingpack_dict=windingpack_dict, name=name)

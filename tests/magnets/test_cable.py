@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from eurofusion_materials.library.magnet_branch_mats import (
@@ -15,17 +14,12 @@ from eurofusion_materials.library.magnet_branch_mats import (
 from matproplib import OperationalConditions
 from matproplib.material import MaterialFraction
 
-from bluemira.magnets.cable import (
-    DummyRoundCableLTS,
-    DummySquareCableLTS,
-    RectangularCable,
-)
+from bluemira.magnets.cable import RectangularCable, RoundCable, SquareCable
 from bluemira.magnets.strand import Strand, SuperconductingStrand
+from bluemira.magnets.tfcoil_designer import TFCoilXYDesigner
 
 DummySteel = SS316_LN_MAG
 DummySuperconductor = NB3SN_MAG
-
-# -- Pytest Fixtures ----------------------------------------------------------
 
 
 @pytest.fixture
@@ -34,6 +28,7 @@ def sc_strand():
         name="SC",
         materials=[MaterialFraction(material=DummySuperconductor, fraction=1.0)],
         d_strand=0.001,
+        operating_temperature=5.7,
     )
 
 
@@ -43,6 +38,7 @@ def stab_strand():
         name="Stab",
         materials=[MaterialFraction(material=DummySteel, fraction=1.0)],
         d_strand=0.001,
+        operating_temperature=5.7,
     )
 
 
@@ -55,10 +51,9 @@ def cable(sc_strand, stab_strand):
         n_sc_strand=10,
         n_stab_strand=20,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
     )
-
-
-# -- Core Cable Tests ---------------------------------------------------------
 
 
 def test_geometry_and_area(cable):
@@ -66,9 +61,9 @@ def test_geometry_and_area(cable):
     assert cable.dy > 0
     assert cable.area > 0
     assert cable.aspect_ratio > 0
-    assert cable.area_cc > 0
-    assert cable.area_stab > 0
-    assert cable.area_sc > 0
+    assert cable.area_cooling_channel > 0
+    assert cable.area_stab_region > 0
+    assert cable.area_sc_region > 0
 
 
 def test_material_properties(cable):
@@ -86,8 +81,7 @@ def test_str_output(cable):
     assert "stab strand" in summary
 
 
-def test_plot(monkeypatch, cable):
-    monkeypatch.setattr(plt, "show", lambda: None)
+def test_plot(cable):
     ax = cable.plot(show=True)
     assert hasattr(ax, "fill")
 
@@ -103,7 +97,7 @@ def test_temperature_evolution(cable):
     assert result.success
 
 
-def test_optimize_n_stab_ths(monkeypatch, sc_strand, stab_strand):
+def test_optimise_n_stab_ths(sc_strand, stab_strand):
     cable = RectangularCable(
         dx=0.01,
         sc_strand=sc_strand,
@@ -111,8 +105,9 @@ def test_optimize_n_stab_ths(monkeypatch, sc_strand, stab_strand):
         n_sc_strand=10,
         n_stab_strand=5,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
     )
-    monkeypatch.setattr(plt, "show", lambda: None)
 
     def B_fun(t):  # noqa: ARG001
         return 5
@@ -120,7 +115,8 @@ def test_optimize_n_stab_ths(monkeypatch, sc_strand, stab_strand):
     def I_fun(t):  # noqa: ARG001
         return 1000
 
-    result = cable.optimize_n_stab_ths(
+    result = TFCoilXYDesigner.optimise_cable_n_stab_ths(
+        cable,
         t0=0,
         tf=0.1,
         initial_temperature=20,
@@ -129,49 +125,29 @@ def test_optimize_n_stab_ths(monkeypatch, sc_strand, stab_strand):
         I_fun=I_fun,
         bounds=(1, 100),
     )
-    assert result.success
-
-
-def test_invalid_parameters(sc_strand, stab_strand):
-    with pytest.raises(ValueError, match="dx must be positive"):
-        RectangularCable(
-            dx=-0.01,
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=10,
-            n_stab_strand=5,
-            d_cooling_channel=0.001,
-        )
-
-    with pytest.raises(ValueError, match="void_fraction must be between 0 and 1"):
-        RectangularCable(
-            dx=0.01,
-            sc_strand=sc_strand,
-            stab_strand=stab_strand,
-            n_sc_strand=10,
-            n_stab_strand=5,
-            d_cooling_channel=0.001,
-            void_fraction=1.5,
-        )
-
-
-# -- Square & Round Cable Types -----------------------------------------------
+    assert result.solution.success
 
 
 def test_square_and_round_cables(sc_strand, stab_strand):
-    square = DummySquareCableLTS(
+    square = SquareCable(
         sc_strand=sc_strand,
         stab_strand=stab_strand,
         n_sc_strand=5,
         n_stab_strand=5,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
+        E=0.1e9,
     )
-    round_ = DummyRoundCableLTS(
+    round_ = RoundCable(
         sc_strand=sc_strand,
         stab_strand=stab_strand,
         n_sc_strand=5,
         n_stab_strand=5,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
+        E=0.1e9,
     )
     dummy_op_cond = OperationalConditions(temperature=4.0)
     assert square.dx > 0
@@ -191,7 +167,7 @@ def test_square_and_round_cables(sc_strand, stab_strand):
     assert np.isclose(round_.Ky(dummy_op_cond), round_.E(dummy_op_cond), rtol=1e-8)
 
 
-def test_cable_to_from_dict(sc_strand, stab_strand):
+def test_cable_to_dict(sc_strand, stab_strand):
     # Create a RectangularCable for testing
     cable_original = RectangularCable(
         dx=0.01,
@@ -200,24 +176,11 @@ def test_cable_to_from_dict(sc_strand, stab_strand):
         n_sc_strand=10,
         n_stab_strand=5,
         d_cooling_channel=0.001,
+        void_fraction=0.725,
+        cos_theta=0.97,
     )
 
     # Convert to dictionary
-    cable_dict = cable_original.to_dict()
+    cable_dict = cable_original.to_dict(OperationalConditions(temperature=5))
 
-    # Reconstruct from dictionary
-    cable_reconstructed = RectangularCable.from_dict(cable_dict)
-
-    # Verify key attributes match
-    assert cable_original.n_sc_strand == cable_reconstructed.n_sc_strand
-    assert cable_original.n_stab_strand == cable_reconstructed.n_stab_strand
-    assert cable_original.dx == pytest.approx(cable_reconstructed.dx)
-    assert cable_original.d_cooling_channel == pytest.approx(
-        cable_reconstructed.d_cooling_channel
-    )
-    assert cable_original.void_fraction == pytest.approx(
-        cable_reconstructed.void_fraction
-    )
-    assert cable_original.cos_theta == pytest.approx(cable_reconstructed.cos_theta)
-    assert cable_original.sc_strand.name == cable_reconstructed.sc_strand.name
-    assert cable_original.stab_strand.name == cable_reconstructed.stab_strand.name
+    assert cable_dict["n_sc_strand"] == 10
