@@ -212,29 +212,30 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
         # TODO: This is confusing absolute and relative tolerances, and complicates implementation
         if isinstance(tolerance, float):
-            tolerance *= np.ones(len(self))
+            self.tolerance = tolerance * np.ones(len(self))
         else:
-            tolerance = 1e-3 * np.append(
+            # TODO: This case is now improperly handled for inequalities
+            self.tolerance = 1e-3 * np.append(
                 ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
-            tolerance = np.abs(tolerance)
+            self.tolerance = np.abs(self.tolerance)
 
         if constraint_type == "equality":
-            self.tolerance = tolerance
             self.target_harmonics_cos = ref_harmonics_cos_amplitudes
             self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
-            # TODO: I don't think this has been properly formulated
-            self.tolerance = np.zeros(len(self))
             self.target_harmonics_cos = np.append(
-                ref_harmonics_cos_amplitudes + tolerance, ref_harmonics_cos_amplitudes - tolerance, axis=0
+                ref_harmonics_cos_amplitudes * (1.0 + tolerance),
+                ref_harmonics_cos_amplitudes * (1.0 - tolerance),
+                axis=0,
             )
             self.target_harmonics_sin = np.append(
-                ref_harmonics_sin_amplitudes + tolerance, ref_harmonics_sin_amplitudes - tolerance, axis=0
+                ref_harmonics_sin_amplitudes * (1.0 + tolerance),
+                ref_harmonics_sin_amplitudes * (1.0 - tolerance),
+                axis=0,
             )
-            # TODO: See e.g. here (later)
-            # self._args["b_vec_cos"][2:] *= -1
-            # self._args["b_vec_sin"][2:] *= -1
+            # Set the optimiser tolerances to 0.0 (they are included in the b_target)
+            self.tolerance = np.zeros(len(self))
 
         self.th_params = th_params
 

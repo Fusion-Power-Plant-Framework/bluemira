@@ -104,9 +104,6 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
 
-        if self.constraint_type == "inequality":
-            currents = np.tile(currents, 2)
-
         if self.cos_empty:
             result_cos = []
         else:
@@ -117,9 +114,7 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         else:
             result_sin = self.a_mat_sin @ currents - self.b_vec_sin
 
-
         return np.append(result_cos, result_sin, axis=0)
-        
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""  # noqa: DOC201
