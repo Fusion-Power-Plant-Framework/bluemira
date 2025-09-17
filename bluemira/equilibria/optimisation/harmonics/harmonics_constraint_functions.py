@@ -99,31 +99,11 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
 
         self.cos_empty = len(b_vec_cos) == 0
         self.sin_empty = len(b_vec_sin) == 0
-        # print("In __init__ of ToroidalHarmonicConstraintFunction")
-        # print(f"a_mat_cos = {self.a_mat_cos}")
-        # print(f"a_mat_sin = {self.a_mat_sin}")
-        # print(f"b_vec_cos = {self.b_vec_cos}")
-        # print(f"b_vec_sin = {self.b_vec_sin}")
-        # print(f"value = {self.value}")
-        # print(f"scale = {self.scale}")
-        # print(f"name = {self.name}")
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
-        # currents = np.array([
-        #     6124296.34922996,
-        #     -4023488.65084202,
-        #     -6999062.3598625,
-        #     -10893402.00527329,
-        #     -3223584.36167449,
-        #     25975901.95919058,
-        #     14169552.65907129,
-        #     -18605840.14157257,
-        #     -33974724.07681966,
-        #     -19160081.37992439,
-        #     -32764488.39904289,
-        # ])
+
         if self.cos_empty:
             result_cos = []
         else:
@@ -135,20 +115,6 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         else:
             result_sin = self.a_mat_sin @ currents
             result_sin -= self.b_vec_sin + self.value
-
-        # print("In f_constraint of ToroidalHarmonicConstraintFunction")
-        # print(f"a_mat_cos = {self.a_mat_cos}")
-        # print(f"a_mat_sin = {self.a_mat_sin}")
-        # print(f"b_vec_cos = {self.b_vec_cos}")
-        # print(f"b_vec_sin = {self.b_vec_sin}")
-        # print(f"value = {self.value}")
-        # print(f"scale = {self.scale}")
-        # print(f"name = {self.name}")
-        # print(f"result_cos = {result_cos}")
-        # print(f"result_sin = {result_sin}")
-
-        # print(f"vector = {vector}")
-        # print(f"currents = {currents}")
 
         return np.append(result_cos, result_sin, axis=0)
 
