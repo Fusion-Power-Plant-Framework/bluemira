@@ -226,6 +226,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_cos = ref_harmonics_cos_amplitudes
             self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
+            # TODO: I don't think this has been properly formulated
             self.tolerance = np.append(tolerance, tolerance, axis=0)
             self.target_harmonics_cos = np.append(
                 ref_harmonics_cos_amplitudes, ref_harmonics_cos_amplitudes, axis=0
@@ -233,14 +234,17 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_sin = np.append(
                 ref_harmonics_sin_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
+            # TODO: See e.g. here (later)
+            self._args["b_vec_cos"][2:] *= -1
+            self._args["b_vec_sin"][2:] *= -1
 
         self.th_params = th_params
 
         self._args = {
             "a_mat_cos": None,
             "a_mat_sin": None,
-            "b_vec_cos": None,
-            "b_vec_sin": None,
+            "b_vec_cos": self.target_harmonics_cos,
+            "b_vec_sin": self.target_harmonics_sin,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -262,6 +266,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         ValueError
             Constraint requires fixed coils
         """
+        # TODO: This warning is either not raised appropriately, or is not properly
+        # worded.
         if len(equilibrium.coilset.control) != len(self.th_params.th_coil_names):
             bluemira_warn(
                 "You are using too many control coils in your optimisation problem."
@@ -275,23 +281,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
-            equilibrium.coilset
-        )
-
-        cos_evaluated, sin_evaluated = self.evaluate(equilibrium)
-
-        self._args["b_vec_cos"] = self.target_harmonics_cos - cos_evaluated
-        self._args["b_vec_sin"] = self.target_harmonics_sin - sin_evaluated
-        if self.constraint_type == "inequality":
-            self._args["a_mat_cos"] = np.append(
-                self._args["a_mat_cos"], -1 * self._args["a_mat_cos"], axis=0
+        if self._args["a_mat_cos"] is None:
+            self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
+                equilibrium.coilset
             )
-            self._args["a_mat_sin"] = np.append(
-                self._args["a_mat_sin"], -1 * self._args["a_mat_sin"], axis=0
-            )
-            self._args["b_vec_cos"][2:] *= -1
-            self._args["b_vec_sin"][2:] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
@@ -305,12 +298,15 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # TH coefficients from function of the current distribution outside of the region
         # containing the plasma, i.e., LCFS
         # N.B., cannot use coil located within LCFS as part of this method.
-        return coil_toroidal_harmonic_amplitude_matrix(
+        am_cos, am_sin = coil_toroidal_harmonic_amplitude_matrix(
             input_coils=coilset,
             th_params=self.th_params,
             cos_m_chosen=self.cos_degrees_chosen,
             sin_m_chosen=self.sin_degrees_chosen,
         )
+        if self.constraint_type == "equality":
+            return am_cos, am_sin
+        return np.append(am_cos, -1 * am_cos, axis=0), np.append(am_sin, -am_sin, axis=0)
 
     def evaluate(
         self, _eq: Equilibrium
