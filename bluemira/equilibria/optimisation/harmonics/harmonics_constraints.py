@@ -235,8 +235,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
                 ref_harmonics_sin_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
             # TODO: See e.g. here (later)
-            self._args["b_vec_cos"][2:] *= -1
-            self._args["b_vec_sin"][2:] *= -1
+            # self._args["b_vec_cos"][2:] *= -1
+            # self._args["b_vec_sin"][2:] *= -1
 
         self.th_params = th_params
 
@@ -281,10 +281,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        if self._args["a_mat_cos"] is None:
-            self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
-                equilibrium.coilset
-            )
+        # if self._args["a_mat_cos"] is None:
+        self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
+            equilibrium.coilset
+        )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
