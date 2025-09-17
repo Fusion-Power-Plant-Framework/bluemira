@@ -206,20 +206,18 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         tolerance: float | None = None,
         constraint_type: str = "equality",
     ):
+        self.cos_degrees_chosen = ref_harmonics_cos
+        self.sin_degrees_chosen = ref_harmonics_sin
         self.constraint_type = constraint_type
+
+        # TODO: This is confusing absolute and relative tolerances, and complicates implementation
         if isinstance(tolerance, float):
-            tolerance *= np.ones(
-                len(ref_harmonics_cos_amplitudes) + len(ref_harmonics_sin_amplitudes)
-            )
+            tolerance *= np.ones(len(self))
         else:
             tolerance = 1e-3 * np.append(
                 ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
             tolerance = np.abs(tolerance)
-        self.tolerance = tolerance
-
-        self.cos_degrees_chosen = ref_harmonics_cos
-        self.sin_degrees_chosen = ref_harmonics_sin
 
         if constraint_type == "equality":
             self.tolerance = tolerance
@@ -227,12 +225,12 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
             # TODO: I don't think this has been properly formulated
-            self.tolerance = np.append(tolerance, tolerance, axis=0)
+            self.tolerance = np.zeros(len(self))
             self.target_harmonics_cos = np.append(
-                ref_harmonics_cos_amplitudes, ref_harmonics_cos_amplitudes, axis=0
+                ref_harmonics_cos_amplitudes + tolerance, ref_harmonics_cos_amplitudes - tolerance, axis=0
             )
             self.target_harmonics_sin = np.append(
-                ref_harmonics_sin_amplitudes, ref_harmonics_sin_amplitudes, axis=0
+                ref_harmonics_sin_amplitudes + tolerance, ref_harmonics_sin_amplitudes - tolerance, axis=0
             )
             # TODO: See e.g. here (later)
             # self._args["b_vec_cos"][2:] *= -1
@@ -306,7 +304,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         )
         if self.constraint_type == "equality":
             return am_cos, am_sin
-        return np.append(am_cos, -1 * am_cos, axis=0), np.append(am_sin, -am_sin, axis=0)
+        return np.append(am_cos, -am_cos, axis=0), np.append(am_sin, -am_sin, axis=0)
 
     def evaluate(
         self, _eq: Equilibrium
@@ -343,3 +341,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
                 (centre_R, centre_Z), radius, ec="orange", fill=True, fc="orange"
             )
         )
+
+    def __len__(self):
+        n = len(self.cos_degrees_chosen) + len(self.sin_degrees_chosen)
+        if self.constraint_type == "equality":
+            return n
+        return 2 * n
