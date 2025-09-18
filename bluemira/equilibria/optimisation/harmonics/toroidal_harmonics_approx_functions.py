@@ -287,6 +287,10 @@ def toroidal_harmonic_grid_and_coil_setup(
     )
 
 
+# TODO create one of these fns, one for cos and one for sin, to use
+# where necessary?
+# have a switch for cos/sin so can call the same fn? or have 2
+# separate fns
 def coil_toroidal_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     th_params: ToroidalHarmonicsParams,
@@ -387,7 +391,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
 
     if cos_empty:
         # cos_m_chosen is None
-        Am_cos = []  # noqa: N806
+        Am_cos = None  # noqa: N806
     else:
         currents2harmonics_cos[:, :] = (
             (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
@@ -403,7 +407,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
 
     if sin_empty:
         # sin_m_chosen is None
-        Am_sin = []  # noqa: N806
+        Am_sin = None  # noqa: N806
     else:
         currents2harmonics_sin[:, :] = (
             (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
