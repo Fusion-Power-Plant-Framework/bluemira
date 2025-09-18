@@ -205,6 +205,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         th_params: ToroidalHarmonicsParams,
         tolerance: float | None = None,
         constraint_type: str = "equality",
+        weights: float | np.ndarray = 1.0,
     ):
         self.constraint_type = constraint_type
         if isinstance(tolerance, float):
@@ -235,12 +236,13 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             )
 
         self.th_params = th_params
-
+        self.target_value = np.append(
+            ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
+        )
+        self.weights = weights
         self._args = {
-            "a_mat_cos": None,
-            "a_mat_sin": None,
-            "b_vec_cos": None,
-            "b_vec_sin": None,
+            "a_mat": None,
+            "b_vec": None,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -275,23 +277,18 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        self._args["a_mat_cos"], self._args["a_mat_sin"] = self.control_response(
-            equilibrium.coilset
+        self._args["a_mat"] = self.control_response(equilibrium.coilset)
+
+        evaluated = self.evaluate(equilibrium)
+
+        self._args["b_vec"] = np.append(
+            self.target_harmonics_cos, self.target_harmonics_sin, axis=0
         )
-
-        cos_evaluated, sin_evaluated = self.evaluate(equilibrium)
-
-        self._args["b_vec_cos"] = self.target_harmonics_cos - cos_evaluated
-        self._args["b_vec_sin"] = self.target_harmonics_sin - sin_evaluated
         if self.constraint_type == "inequality":
-            self._args["a_mat_cos"] = np.append(
-                self._args["a_mat_cos"], -1 * self._args["a_mat_cos"], axis=0
+            self._args["a_mat"] = np.append(
+                self._args["a_mat"], -1 * self._args["a_mat"], axis=0
             )
-            self._args["a_mat_sin"] = np.append(
-                self._args["a_mat_sin"], -1 * self._args["a_mat_sin"], axis=0
-            )
-            self._args["b_vec_cos"][2:] *= -1
-            self._args["b_vec_sin"][2:] *= -1
+            self._args["b_vec"][2:] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
@@ -305,12 +302,17 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         # TH coefficients from function of the current distribution outside of the region
         # containing the plasma, i.e., LCFS
         # N.B., cannot use coil located within LCFS as part of this method.
-        return coil_toroidal_harmonic_amplitude_matrix(
+        a_cos, a_sin = coil_toroidal_harmonic_amplitude_matrix(
             input_coils=coilset,
             th_params=self.th_params,
             cos_m_chosen=self.cos_degrees_chosen,
             sin_m_chosen=self.sin_degrees_chosen,
         )
+        if a_cos is None:
+            return a_sin
+        if a_sin is None:
+            return a_cos
+        return np.append(a_cos, a_sin, axis=0)
 
     def evaluate(
         self, _eq: Equilibrium
@@ -318,9 +320,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
-        return np.zeros(len(self.target_harmonics_cos)), np.zeros(
-            len(self.target_harmonics_sin)
-        )
+        return np.zeros(len(self.target_harmonics_cos) + len(self.target_harmonics_sin))
 
     def f_constraint(self) -> ToroidalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
@@ -330,7 +330,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def plot(self, ax=None):
         """
-        Plot the constraint onto an Axes.
+        Plot the constrained region onto an Axes.
         """
         if ax is None:
             _, ax = plt.subplots()
@@ -347,3 +347,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
                 (centre_R, centre_Z), radius, ec="orange", fill=True, fc="orange"
             )
         )
+
+    def __len__(self) -> int:
+        """
+        Length of TH constraint.
+        """  # noqa: DOC201
+        return len(self.target_harmonics_cos) + len(self.target_harmonics_sin)
