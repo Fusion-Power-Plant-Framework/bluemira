@@ -34,6 +34,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     _get_plasma_mask,
+    _set_n_degrees_of_freedom,
     brute_force_toroidal_harmonic_approximation,
     coil_toroidal_harmonic_amplitude_matrix,
     f_hypergeometric,
@@ -1111,6 +1112,7 @@ class TestRegressionTH:
         )
 
         np.testing.assert_array_almost_equal(expected_sigma_c, th_params.sigma_c)
+        assert len(th_params.sigma_c) == expected_th_number_of_coils
 
     @pytest.mark.parametrize("cc_all", [True, False])
     def test_coil_toroidal_harmonic_amplitude_matrix(self, cc_all):
@@ -1240,7 +1242,7 @@ class TestRegressionTH:
 
         # Note R and Z positions at [149, :] chosen and then masked to get a
         # subset of grid values to test that are within the LCFS
-        # (i.e., where we are tring to get a good approximation).
+        # (i.e., where we are trying to get a good approximation).
         if not cc_all:
             non_cc = self.eq.coilset.get_coiltype("CS").psi(th_params.R, th_params.Z)
             expected_coilset_psi -= non_cc[149, :]
@@ -1272,8 +1274,8 @@ class TestRegressionTH:
         n_degrees_of_freedom = 6
         max_harmonic_mode = 5
 
-        expected_cos_degrees = np.array([0, 1, 2, 3, 4])
-        expected_sin_degrees = np.array([3])
+        expected_cos_modes = np.array([0, 1, 2, 3, 4])
+        expected_sin_modes = np.array([3])
         expected_cos_amplitudes = np.array([
             -4.23864252,
             -3.58288708,
@@ -1301,8 +1303,8 @@ class TestRegressionTH:
 
         assert result.error < 10
         assert len(result.cos_m) + len(result.sin_m) == n_degrees_of_freedom
-        np.testing.assert_array_almost_equal(result.cos_m, expected_cos_degrees)
-        np.testing.assert_array_almost_equal(result.sin_m, expected_sin_degrees)
+        np.testing.assert_array_almost_equal(result.cos_m, expected_cos_modes)
+        np.testing.assert_array_almost_equal(result.sin_m, expected_sin_modes)
         assert np.max(np.append(result.cos_m, result.sin_m)) <= max_harmonic_mode
 
         np.testing.assert_almost_equal(result.cos_amplitudes, expected_cos_amplitudes)
@@ -1319,8 +1321,8 @@ class TestRegressionTH:
         )
 
     def test_ToroidalHarmonicConstraint(self):
-        test_cos_degrees = np.array([0, 1, 2, 3, 4])
-        test_sin_degrees = np.array([3])
+        test_cos_modes = np.array([0, 1, 2, 3, 4])
+        test_sin_modes = np.array([3])
         test_cos_amplitudes = np.array([
             -4.23864252,
             -3.58288708,
@@ -1331,8 +1333,8 @@ class TestRegressionTH:
         test_sin_amplitudes = np.array([3.15627377])
 
         test_constraint_class_equality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_degrees,
-            ref_harmonics_sin=test_sin_degrees,
+            ref_harmonics_cos=test_cos_modes,
+            ref_harmonics_sin=test_sin_modes,
             ref_harmonics_cos_amplitudes=test_cos_amplitudes,
             ref_harmonics_sin_amplitudes=test_sin_amplitudes,
             th_params=self.test_th_params,
@@ -1342,8 +1344,8 @@ class TestRegressionTH:
 
         assert test_constraint_class_equality.constraint_type == "equality"
         assert len(test_constraint_class_equality.tolerance) == len(
-            test_cos_degrees
-        ) + len(test_sin_degrees)
+            test_cos_modes
+        ) + len(test_sin_modes)
         for test_tol, ref_tol in zip(
             test_constraint_class_equality.tolerance,
             np.abs(
@@ -1361,8 +1363,8 @@ class TestRegressionTH:
             assert test_tol == ref_tol
 
         test_constraint_class_inequality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_degrees,
-            ref_harmonics_sin=test_sin_degrees,
+            ref_harmonics_cos=test_cos_modes,
+            ref_harmonics_sin=test_sin_modes,
             ref_harmonics_cos_amplitudes=test_cos_amplitudes,
             ref_harmonics_sin_amplitudes=test_sin_amplitudes,
             th_params=self.test_th_params,
@@ -1373,7 +1375,7 @@ class TestRegressionTH:
         # Multiply by 2 because inequality constraint is equivalent to 2 equality
         # constraints combined
         assert len(test_constraint_class_inequality.tolerance) == 2 * (
-            len(test_cos_degrees) + len(test_sin_degrees)
+            len(test_cos_modes) + len(test_sin_modes)
         )
 
         for test_name, ref_name in zip(
@@ -1392,8 +1394,8 @@ class TestRegressionTH:
 
     # This test currently does not pass:
     def test_ToroidalHarmonicConstraintFunction(self):
-        cos_degrees = np.array([0, 1, 2, 3, 4])
-        sin_degrees = np.array([3])
+        cos_modes = np.array([0, 1, 2, 3, 4])
+        sin_modes = np.array([3])
         cos_amplitudes = np.array([
             -4.23864252,
             -3.58288708,
@@ -1407,8 +1409,8 @@ class TestRegressionTH:
         vector = self.eq.coilset.current * 1e-6
 
         constraint_class = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=cos_degrees,
-            ref_harmonics_sin=sin_degrees,
+            ref_harmonics_cos=cos_modes,
+            ref_harmonics_sin=sin_modes,
             ref_harmonics_cos_amplitudes=cos_amplitudes,
             ref_harmonics_sin_amplitudes=sin_amplitudes,
             th_params=self.test_th_params,
@@ -1446,3 +1448,30 @@ class TestRegressionTH:
         assert test_constraint_function.df_constraint(vector) == pytest.approx(
             approx_derivative(test_constraint_function.f_constraint, vector)
         )
+
+    @pytest.mark.parametrize(
+        ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
+        [
+            # Case where max_n_dof is hit
+            (5, 5, 4, 4),
+            # Case where 2 * max_harmonic_mode is hit
+            (5, 2, 5, 4),
+            # Case where everything OK
+            (5, 5, 10, 5),
+            # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
+            (10, 4, 9, 8),
+            # Case where n_dof is not specified and defaults to max
+            (None, 5, 9, 9),
+            # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
+            (None, 4, 9, 8),
+        ],
+    )
+    def test_th_n_dof_limits(
+        self,
+        n_dof: int | None,
+        max_harmonic_mode: int,
+        max_n_dof: int,
+        expected_dof: int,
+    ):
+        n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
+        assert n_dof == expected_dof
