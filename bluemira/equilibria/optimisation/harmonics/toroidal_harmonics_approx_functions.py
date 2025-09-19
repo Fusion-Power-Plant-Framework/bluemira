@@ -710,11 +710,14 @@ def _get_plasma_mask(
     return mask
 
 
-def toroidal_harmonics_to_collocation(
-    collocation: Collocation, th_params: ToroidalHarmonicsParams, n_allowed: int
+def toroidal_harmonics_to_positions(
+    th_params: ToroidalHarmonicsParams,
+    n_allowed: int,
+    collocation: Collocation | None = None,
 ) -> np.ndarray:
     """
-    Matrix for collocation psi fitting
+    Matrix for collocation psi fitting or psi calculation across
+    grid with known amplitude values.
 
     Returns
     -------
@@ -728,46 +731,76 @@ def toroidal_harmonics_to_collocation(
     EquilibriaError
         If there are too few collocation points used.
     """
-    if n_allowed > len(collocation.x):
+    x = th_params.R if collocation is None else collocation.x
+    z = th_params.Z if collocation is None else collocation.z
+
+    if n_allowed > len(x):
         raise EquilibriaError(
-            "You must have more collocation points than chosen  degrees "
-            "when sampling psi. Please add more collocation points."
+            "You must have more x-z points than chosen poloidal modes when sampling psi."
         )
 
     collocation_tau, collocation_sigma = cylindrical_to_toroidal(
-        th_params.R_0, th_params.Z_0, collocation.x, collocation.z
+        th_params.R_0, th_params.Z_0, x, z
     )
 
     Delta = np.cosh(collocation_tau) - np.cos(collocation_sigma)  # noqa: N806
     # Get sigma values for the grid
-    sigma_mult_degree = [m * collocation_sigma for m in range(n_allowed)]
+    sigma_mult_mode = [m * collocation_sigma for m in range(n_allowed)]
 
     epsilon = 2 * np.ones(n_allowed)
     epsilon[0] = 1
     factorial_m = np.array([factorial(m) for m in range(n_allowed)])
-    degrees = np.arange(0, n_allowed)[:, None]
+
+    if collocation is not None:
+        modes = np.arange(0, n_allowed)[:, None]
+
+        # Need term to calculate psi from A
+        # \psi = A * R_0 * sinh(\tau) / Delta
+        psi_conversion_term = th_params.R_0 * np.sinh(collocation_tau) / Delta
+
+        harmonics2collocation_cos = (
+            epsilon[:, None]
+            * factorial_m[:, None]
+            * np.sqrt(2 / np.pi)
+            * np.sqrt(Delta[None, :])
+            * legendre_q(modes - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :]
+            * np.cos(sigma_mult_mode)[:, :]
+            * psi_conversion_term[None, :]
+        )
+        harmonics2collocation_sin = (
+            epsilon[:, None]
+            * factorial_m[:, None]
+            * np.sqrt(2 / np.pi)
+            * np.sqrt(Delta[None, :])
+            * legendre_q(modes - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :]
+            * np.sin(sigma_mult_mode)[:, :]
+            * psi_conversion_term[None, :]
+        )
+        return harmonics2collocation_cos, harmonics2collocation_sin
+
+    modes = np.arange(0, n_allowed)[:, None, None]
 
     # Need term to calculate psi from A
     # \psi = A * R_0 * sinh(\tau) / Delta
     psi_conversion_term = th_params.R_0 * np.sinh(collocation_tau) / Delta
 
     harmonics2collocation_cos = (
-        epsilon[:, None]
-        * factorial_m[:, None]
+        epsilon[:, None, None]
+        * factorial_m[:, None, None]
         * np.sqrt(2 / np.pi)
-        * np.sqrt(Delta[None, :])
-        * legendre_q(degrees - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :]
-        * np.cos(sigma_mult_degree)[:, :]
-        * psi_conversion_term[None, :]
+        * np.sqrt(Delta[None, :, :])
+        * legendre_q(modes - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :, :]
+        * np.cos(sigma_mult_mode)[:, :, :]
+        * psi_conversion_term[None, :, :]
     )
     harmonics2collocation_sin = (
-        epsilon[:, None]
-        * factorial_m[:, None]
+        epsilon[:, None, None]
+        * factorial_m[:, None, None]
         * np.sqrt(2 / np.pi)
-        * np.sqrt(Delta[None, :])
-        * legendre_q(degrees - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :]
-        * np.sin(sigma_mult_degree)[:, :]
-        * psi_conversion_term[None, :]
+        * np.sqrt(Delta[None, :, :])
+        * legendre_q(modes - 1 / 2, 1, np.cosh(collocation_tau), n_max=30)[:, :, :]
+        * np.sin(sigma_mult_mode)[:, :, :]
+        * psi_conversion_term[None, :, :]
     )
     return harmonics2collocation_cos, harmonics2collocation_sin
 
@@ -791,11 +824,19 @@ class ToroidalHarmonicsSelectionResult:
     sin_amplitudes_from_psi_fit: np.ndarray
     """Selected sine toroidal harmonic amplitudes from psi fitting"""
     error: float
-    """Error of L2 norm when comparing approximated coilset psi to desired coilset psi"""
+    """Error of L2 norm when comparing approximated
+    coilset psi to desired coilset psi"""
+    error_cl: float
+    """Error of L2 norm when comparing approximated coilset psi
+    (from collocation method) to desired coilset psi"""
     coilset_psi: np.ndarray
     """Approximated coilset psi"""
     fixed_psi: np.ndarray
     """Background (fixed) psi"""
+    coilset_cl_psi: np.ndarray
+    """Approximated coilset psi fro collocation method"""
+    th_params: ToroidalHarmonicsParams
+    """Set up info"""
 
 
 def brute_force_toroidal_harmonic_approximation(
@@ -806,6 +847,7 @@ def brute_force_toroidal_harmonic_approximation(
     max_harmonic_mode: int = 5,
     *,
     plasma_mask: bool = False,
+    cl: bool = False,
 ) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients for a given
@@ -884,6 +926,7 @@ def brute_force_toroidal_harmonic_approximation(
     mode_values = np.tile(np.arange(max_harmonic_mode), 2)
 
     error = np.inf
+    error_cl = np.inf
 
     for c in combinations(dof_id, n_degrees_of_freedom):
         mode_id = np.array(c)
@@ -902,11 +945,11 @@ def brute_force_toroidal_harmonic_approximation(
         # true coilset psi
         error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
 
-        harmonics2collocation_cos, harmonics2collocation_sin, _ = (
-            toroidal_harmonics_to_collocation(
-                collocation=collocation,
+        harmonics2collocation_cos, harmonics2collocation_sin = (
+            toroidal_harmonics_to_positions(
                 th_params=th_params,
                 n_allowed=n_degrees_of_freedom,
+                collocation=collocation,
             )
         )
         harmonics2collocation_cos = harmonics2collocation_cos[
@@ -924,13 +967,34 @@ def brute_force_toroidal_harmonic_approximation(
             harmonics2collocation.T, collocation_psi, rcond=None
         )
 
+        harmonics2grid_cos, harmonics2grid_sin = toroidal_harmonics_to_positions(
+            th_params=th_params,
+            n_allowed=n_degrees_of_freedom,
+        )
+        harmonics2grid_cos = harmonics2grid_cos[mode_id < max_harmonic_mode, :]
+        harmonics2grid_sin = harmonics2grid_sin[mode_id >= max_harmonic_mode, :]
+
+        psi_from_fit_to_collocation_points = (
+            harmonics2grid_cos.T @ psi_harmonic_amplitudes[mode_id < max_harmonic_mode]
+            + harmonics2grid_sin.T
+            @ psi_harmonic_amplitudes[mode_id >= max_harmonic_mode]
+        )
+
+        error_cl_new = np.linalg.norm(
+            mask * (psi_from_fit_to_collocation_points.T - true_coilset_psi)
+        )
+
         # If the new error is less than the previously lowest error, then select the
         # current combination of poloidal mode numbers (m), amplitudes and associated psi
-        if error_new < error:
+        condition = error_cl_new < error_cl if cl else error_new < error
+
+        if condition:
             error = error_new
+            error_cl = error_cl_new
             cos_m = cos_m_chosen
             sin_m = sin_m_chosen
             coilset_psi = approximate_coilset_psi
+            coilset_cl_psi = psi_from_fit_to_collocation_points
             cos_amplitudes = cos_amps
             sin_amplitudes = sin_amps
             cos_amplitudes_from_psi_fit = psi_harmonic_amplitudes[
@@ -948,8 +1012,11 @@ def brute_force_toroidal_harmonic_approximation(
         cos_amplitudes_from_psi_fit=cos_amplitudes_from_psi_fit,
         sin_amplitudes_from_psi_fit=sin_amplitudes_from_psi_fit,
         error=error,
+        error_cl=error_cl_new,
         coilset_psi=coilset_psi,
         fixed_psi=fixed_psi,
+        coilset_cl_psi=coilset_cl_psi,
+        th_params=th_params,
     )
 
 
