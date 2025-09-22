@@ -56,7 +56,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bmaxtfrp",
+        "name": "b_tf_inboard_peak_with_ripple",
         "send": false,
         "recv": false,
         "unit": "T"
@@ -88,7 +88,7 @@
     "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "mapping": {
       "PROCESS": {
-        "name": "gamma",
+        "name": "ejima_coeff",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -194,7 +194,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pinjmw",
+        "name": "p_hcd_injected_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -213,7 +213,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pbrempv*vol",
+        "name": "pbrempv*plasma_volume",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -232,7 +232,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pnetelin",
+        "name": "p_plant_electric_net_required_mw",
         "out_name": "pnetelmw",
         "send": true,
         "recv": true,
@@ -247,7 +247,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "powfmw",
+        "name": "p_fusion_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -266,7 +266,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pdd",
+        "name": "p_dd_total_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -285,7 +285,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pdt",
+        "name": "dt_power",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -304,7 +304,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pinjalw",
+        "name": "p_hcd_injected_max",
         "send": true,
         "recv": false,
         "unit": "MW"
@@ -349,7 +349,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pradmw",
+        "name": "p_plasma_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -368,7 +368,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pcoreradmw",
+        "name": "p_plasma_inner_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -382,7 +382,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pedgeradmw",
+        "name": "p_plasma_outer_rad_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -396,7 +396,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "pdivt",
+        "name": "p_plasma_separatrix_mw",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -421,7 +421,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "psyncpv*vol",
+        "name": "pden_plasma_sync_mw*vol",
         "send": false,
         "recv": true,
         "unit": "MW"
@@ -461,7 +461,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "estotftgj",
+        "name": "e_tf_magnetic_stored_total_gj",
         "send": false,
         "recv": true,
         "unit": "GJ"
@@ -475,7 +475,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "cpttf",
+        "name": "c_tf_turn",
         "send": false,
         "recv": true,
         "unit": "A"
@@ -503,7 +503,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ztot",
+        "name": "res_tf_system_total",
         "send": false,
         "recv": true,
         "unit": "ohm"
@@ -517,7 +517,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tflegres",
+        "name": "res_tf_leg",
         "send": false,
         "recv": true,
         "unit": "ohm"
@@ -536,7 +536,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ripmax",
+        "name": "ripple_b_tf_plasma_edge_max",
         "send": true,
         "recv": false,
         "unit": "%"
@@ -571,7 +571,7 @@
     "source": "Calculated",
     "mapping": {
       "PROCESS": {
-        "name": "vol",
+        "name": "plasma_volume",
         "send": false,
         "recv": false,
         "unit": "m^3"
@@ -623,7 +623,7 @@
     "source": "HCPB classic",
     "mapping": {
       "PROCESS": {
-        "name": "emult",
+        "name": "f_p_blkt_multiplication",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -707,7 +707,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "betap",
+        "name": "beta_poloidal",
         "send": false,
         "recv": true,
         "unit": "dimensionless"
@@ -921,7 +921,7 @@
     "description": "Check units!",
     "mapping": {
       "PROCESS": {
-        "name": "etanbi",
+        "name": "eta_beam_injector_wall_plug",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -941,7 +941,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bootipf",
+        "name": "f_c_plasma_bootstrap",
         "send": false,
         "recv": true,
         "unit": "dimensionless"
@@ -1169,7 +1169,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "gapoh",
+        "name": "dr_cs_tf_gap",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -1219,7 +1219,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tftsgap",
+        "name": "dr_tf_shld_gap",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -1239,7 +1239,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "vvblgap",
+        "name": "dr_shld_blkt_gap",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -1259,7 +1259,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "gapds",
+        "name": "dr_shld_vv_gap_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -1279,7 +1279,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "h_cp_top",
+        "name": "z_cp_top",
         "send": false,
         "recv": false,
         "unit": "m"
@@ -1299,7 +1299,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "hmax",
+        "name": "z_tf_inside_half",
         "send": false,
         "recv": false,
         "unit": "m"
@@ -1375,7 +1375,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "rli",
+        "name": "ind_plasma_internal_norm",
         "send": false,
         "recv": false,
         "unit": "dimensionless"
@@ -1439,7 +1439,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "n_tf",
+        "name": "n_tf_coils",
         "send": true,
         "recv": false,
         "unit": "dimensionless"
@@ -1596,7 +1596,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bore",
+        "name": "dr_bore",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -1839,7 +1839,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "taueff",
+        "name": "t_energy_confinement",
         "send": false,
         "recv": true,
         "unit": "s"
@@ -1858,7 +1858,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tburn",
+        "name": "t_burn",
         "send": false,
         "recv": false,
         "unit": "s"
@@ -1885,7 +1885,7 @@
     "description": "Including insulation",
     "mapping": {
       "PROCESS": {
-        "name": "wwp1",
+        "name": "dx_tf_wp_primary_toroidal",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -1900,7 +1900,7 @@
     "description": "Including insulation",
     "mapping": {
       "PROCESS": {
-        "name": "dr_tf_wp",
+        "name": "dr_tf_wp_with_insulation",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -1944,7 +1944,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "blnkith",
+        "name": "dr_blkt_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -1964,7 +1964,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "blnkoth",
+        "name": "dr_blkt_outboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -1984,7 +1984,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ddwex",
+        "name": "dr_cryostat",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2004,7 +2004,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "ohcth",
+        "name": "dr_cs",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2054,7 +2054,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "fwith",
+        "name": "dr_fw_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2068,7 +2068,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "fwoth",
+        "name": "dr_fw_outboard",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2185,7 +2185,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldlth",
+        "name": "dz_shld_lower",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2200,7 +2200,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldith",
+        "name": "dr_shld_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -2215,7 +2215,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldoth",
+        "name": "dr_shld_outboard",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2230,7 +2230,7 @@
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
     "mapping": {
       "PROCESS": {
-        "name": "shldtth",
+        "name": "dz_shld_upper",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2244,7 +2244,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "scrapli",
+        "name": "dr_fw_plasma_gap_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -2258,7 +2258,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "scraplo",
+        "name": "dr_fw_plasma_gap_outboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -2284,7 +2284,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "casthi",
+        "name": "dr_tf_plasma_case",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2298,7 +2298,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tfcth",
+        "name": "dr_tf_inboard",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2312,7 +2312,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tinstf",
+        "name": "dx_tf_wp_insulation",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2327,7 +2327,7 @@
     "description": "Backfilled with epoxy resin (impregnation). This is an average value; can be less or more due to manufacturing tolerances",
     "mapping": {
       "PROCESS": {
-        "name": "tfinsgap",
+        "name": "dx_tf_wp_insertion_gap",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2341,7 +2341,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "thkcas",
+        "name": "dr_tf_nose_case",
         "send": false,
         "recv": true,
         "unit": "m"
@@ -2361,7 +2361,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "tfthko",
+        "name": "dr_tf_outboard",
         "send": false,
         "recv": false,
         "unit": "m"
@@ -2375,7 +2375,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "casths",
+        "name": "dx_tf_side_case_min",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2403,7 +2403,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "thshield",
+        "name": "dr_shld_thermal_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -2417,7 +2417,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_bot",
+        "name": "dz_vv_lower",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2431,7 +2431,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_in",
+        "name": "dr_vv_inboard",
         "send": true,
         "recv": true,
         "unit": "m"
@@ -2445,7 +2445,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_out",
+        "name": "dr_vv_outboard",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2459,7 +2459,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "d_vv_top",
+        "name": "dz_vv_upper",
         "send": true,
         "recv": false,
         "unit": "m"
@@ -2473,7 +2473,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "vburn",
+        "name": "v_plasma_loop_burn",
         "send": false,
         "recv": true,
         "unit": "V"

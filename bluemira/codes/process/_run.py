@@ -70,8 +70,7 @@ class Run(CodesTask):
         """
         self._run_process()
 
-    @staticmethod
-    def flush_callable(line: str) -> bool:
+    def flush_callable(self, line: str) -> bool:
         """
         Returns
         -------
@@ -81,8 +80,10 @@ class Run(CodesTask):
         try:
             int(line.split("|", 1)[0])
         except ValueError:
+            self._progress.stop()
             return False
         else:
+            self._progress.start()
             return True
 
     def flush_printer(self, line: str):

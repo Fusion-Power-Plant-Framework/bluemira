@@ -167,7 +167,7 @@ class Impurities(IntEnum):
         :
             The variable string for impurity fraction
         """
-        return f"fimp({self.value:02})"
+        return f"f_nd_impurity_electrons({self.value:02})"
 
     def read_impurity_files(
         self, filetype: Sequence[Literal["lz", "z2", "z"]]

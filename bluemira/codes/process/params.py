@@ -128,12 +128,18 @@ class ProcessSolverParams(MappedParameterFrame):
     eta_ecrh: Parameter[float]
     """Electron cyclotron resonce heating wallplug efficiency [dimensionless]"""
 
-    gamma_ecrh: Parameter[float]
+    eta_cd_norm_ecrh: Parameter[float]
     """Electron cyclotron resonce heating current drive efficiency [TODO: UNITS!]"""
 
     # Out parameters
     B_0: Parameter[float]
     """Toroidal field at R_0 [tesla]."""
+
+    B_cs_peak_flat_top_end: Parameter[float]
+    """Peak poloidal field in the CS at the end of flat-top [T]"""
+
+    B_cs_peak_pulse_start: Parameter[float]
+    """Peak poloidal field in the CS at the start of a pulse [T]"""
 
     beta_p: Parameter[float]
     """Ratio of plasma pressure to poloidal magnetic pressure [dimensionless]."""
@@ -157,6 +163,9 @@ class ProcessSolverParams(MappedParameterFrame):
 
     I_p: Parameter[float]
     """Plasma current [megaampere]."""
+
+    j_cs_critical: Parameter[float]
+    """Maximum allowable current density in the central solenoid [A/m**2]"""
 
     kappa_95: Parameter[float]
     """95th percentile plasma elongation [dimensionless]."""
@@ -322,7 +331,7 @@ class ProcessSolverParams(MappedParameterFrame):
     f_ni: Parameter[float]
     """Non-inductive current drive fraction [dimensionless]."""
 
-    h_cp_top: Parameter[float]
+    z_cp_top: Parameter[float]
     """Height of the TF coil inboard Tapered section end [meter]."""
 
     h_tf_max_in: Parameter[float]
