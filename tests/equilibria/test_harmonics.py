@@ -1469,3 +1469,4 @@ class TestRegressionTH:
 
 
 # TODO add tests for collocation points
+# TODO expand legendreQ test to cover all cases

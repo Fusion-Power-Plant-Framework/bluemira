@@ -143,6 +143,11 @@ def legendre_q(lam, mu, x, n_max=20):
     -------
     legQ:
         value of legendreQ.
+
+    Raises
+    ------
+    EquilibriaError
+        If too many dimensions are input.
     """
     a = 1 / 2 * (lam + mu) + 1
     b = 1 / 2 * (lam + mu + 1)
@@ -155,13 +160,31 @@ def legendre_q(lam, mu, x, n_max=20):
         * F_sum
     )
 
-    if isinstance(legQ, np.float64):
+    # Singular at x=1. As x->1 we expect F_sum->inf, so we account for this here
+    if isinstance(legQ, float):
         if x == 1:
-            legQ = np.inf  # noqa: N806
-    elif len(np.shape(legQ)) > 2:  # noqa: PLR2004
-        legQ[:, x == 1] = np.inf
-    elif len(np.shape(legQ)) == 1:
-        legQ[x == 1] = np.inf
+            return np.inf
+        return legQ
+
+    dims = len(np.shape(legQ))
+    if dims == 1:
+        # one mode, multiple x
+        if isinstance(c, float):
+            legQ[x == 1] = np.inf
+        # multiple mode, one x
+        elif x == 1:
+            legQ[:] = np.inf
+    elif dims <= 3:
+        # one mode, multiple x
+        if isinstance(c, float):
+            legQ[x == 1] = np.inf
+        # multiple modes, multiple x
+        else:
+            legQ[:, x == 1] = np.inf
+    else:
+        raise EquilibriaError(
+            "You have too many dimensions. We are expecting position information as a float, array or grid."
+        )
     return legQ
 
 
