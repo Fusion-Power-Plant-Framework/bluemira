@@ -1048,6 +1048,8 @@ def plot_toroidal_harmonic_approximation(
     th_params: ToroidalHarmonicsParams,
     result: ToroidalHarmonicsSelectionResult,
     psi_norm: float = 0.95,
+    *,
+    cl: bool = False,
 ):
     """
     Plot the toroidal harmonic approximation of the coilset psi and the bluemira
@@ -1072,13 +1074,14 @@ def plot_toroidal_harmonic_approximation(
     f, ax:
         The Matplotlib figure and axis
     """
+    coilset_psi = result.coilset_cl_psi.T if cl else result.coilset_psi
     original_fs = (
         eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
     )
     approx_fs = find_flux_surf(
         th_params.R,
         th_params.Z,
-        result.coilset_psi + result.fixed_psi,
+        coilset_psi + result.fixed_psi,
         psi_norm,
         *eq.get_OX_points(),
     )
@@ -1096,7 +1099,7 @@ def plot_toroidal_harmonic_approximation(
     ax.contour(
         th_params.R,
         th_params.Z,
-        result.coilset_psi,
+        coilset_psi,
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
         colors="red",
         linewidths=1,
