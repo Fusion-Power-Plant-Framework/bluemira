@@ -834,7 +834,7 @@ class ToroidalHarmonicsSelectionResult:
     fixed_psi: np.ndarray
     """Background (fixed) psi"""
     coilset_cl_psi: np.ndarray
-    """Approximated coilset psi fro collocation method"""
+    """Approximated coilset psi from collocation method"""
     th_params: ToroidalHarmonicsParams
     """Set up info"""
 
