@@ -146,15 +146,15 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
     clean:
         Delete figures after completion?
     """
-    find_digit = re.compile(r"(\\d+)")
+    find_digit = re.compile(r"(\d+)")
 
     ims = sorted(
         [
-            Path(folder, filename)
+            filename
             for filename in Path(folder).iterdir()
-            if str(filename).startswith(figname) and str(filename).endswith(file_format)
+            if filename.name.startswith(figname) and filename.name.endswith(file_format)
         ],
-        key=lambda x: int(find_digit.findall(x)[-1]),
+        key=lambda x: int(find_digit.findall(x.name)[-1]),
     )
     imageio.mimsave(
         Path(folder, f"{figname}.gif"),

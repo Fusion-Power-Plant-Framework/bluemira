@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import try_get_bluemira_path
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -305,16 +306,20 @@ class PicardDiagnosticOptions:
     gif: bool = False
     plot_name: str = "default_0"
     figure_folder: str | PathLike | None = None
+    file_format: str = "svg"
 
     # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
     # 3806
     def __post_init__(self):
         """Post init folder definition"""
         if self.figure_folder is None:
-            figure_folder = try_get_bluemira_path(
+            self.figure_folder = try_get_bluemira_path(
                 "", subfolder="generated_data", allow_missing=not self.gif
             )
-        self.figure_folder = figure_folder
+
+        if self.gif and self.file_format == "svg":
+            bluemira_warn("Cannot create gif from svgs saving figures as pngs")
+            self.file_format = "png"
 
         if self.plot is PicardDiagnostic.NO_PLOT:
 
@@ -338,7 +343,7 @@ class PicardDiagnosticOptions:
     def make_gif(self):
         """Make gif of iterator plot"""
         if self.gif:
-            make_gif(self.figure_folder, self.plot_name)
+            make_gif(self.figure_folder, self.plot_name, file_format=self.file_format)
 
     def update_figure(self, eq: Equilibrium, convergence: ConvergenceCriterion, i: int):
         """
@@ -357,4 +362,5 @@ class PicardDiagnosticOptions:
             save=self.gif,
             folder=self.figure_folder,
             dpi=DPI_GIF,
+            file_format=self.file_format,
         )
