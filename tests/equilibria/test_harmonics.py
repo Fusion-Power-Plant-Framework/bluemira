@@ -1385,12 +1385,10 @@ class TestRegressionTH:
         ):
             assert test_name == ref_name
 
-        test_eval_cos, test_eval_sin = test_constraint_class_inequality.evaluate(self.eq)
+        test_eval_fn = test_constraint_class_inequality.evaluate(self.eq)
 
-        assert all(test_eval_cos == 0)
-        assert all(test_eval_sin == 0)
-        assert len(test_eval_cos) == len(test_cos_amplitudes) * 2
-        assert len(test_eval_sin) == len(test_sin_amplitudes) * 2
+        assert all(test_eval_fn == 0)
+        assert len(test_eval_fn) == 2 * (len(test_cos_modes) + len(test_sin_modes))
 
     # This test currently does not pass:
     def test_ToroidalHarmonicConstraintFunction(self):
@@ -1419,19 +1417,12 @@ class TestRegressionTH:
         )
         constraint_class.prepare(self.eq)
 
-        result_cos = constraint_class._args["a_mat_cos"] @ self.eq.coilset.current
-        result_sin = constraint_class._args["a_mat_sin"] @ self.eq.coilset.current
-        ref_function_result = np.append(
-            result_cos - constraint_class._args["b_vec_cos"],
-            result_sin - constraint_class._args["b_vec_sin"],
-            axis=0,
-        )
+        result = constraint_class._args["a_mat"] @ self.eq.coilset.current
+        ref_function_result = result - constraint_class._args["b_vec"]
 
         test_constraint_function = ToroidalHarmonicConstraintFunction(
-            a_mat_cos=constraint_class._args["a_mat_cos"],
-            a_mat_sin=constraint_class._args["a_mat_sin"],
-            b_vec_cos=constraint_class._args["b_vec_cos"],
-            b_vec_sin=constraint_class._args["b_vec_sin"],
+            a_mat=constraint_class._args["a_mat"],
+            b_vec=constraint_class._args["b_vec"],
             scale=constraint_class._args["scale"],
             value=constraint_class._args["value"],
         )
@@ -1475,3 +1466,6 @@ class TestRegressionTH:
     ):
         n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
         assert n_dof == expected_dof
+
+
+# TODO add tests for collocation points
