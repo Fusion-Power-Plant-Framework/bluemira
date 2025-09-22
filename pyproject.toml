@@ -18,7 +18,7 @@ dependencies = [
     "anytree>=2.5",
     "asteval>=1.0",
     "Babel>=2.17",
-    "click>=8.0",
+    "click>=8.0,!=8.3.0",
     "contourpy>=1.0",
     "CoolProp>=6.5",
     "eqdsk>=0.5.0, <0.6.0",
