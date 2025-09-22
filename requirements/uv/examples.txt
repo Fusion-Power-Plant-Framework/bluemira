@@ -171,7 +171,7 @@ kiwisolver==1.4.9
     # via matplotlib
 lark==1.2.2
     # via rfc3987-syntax
-llvmlite==0.44.0
+llvmlite==0.45.0
     # via numba
 markdown-it-py==4.0.0
     # via
@@ -226,7 +226,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numba==0.61.2
+numba==0.62.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
