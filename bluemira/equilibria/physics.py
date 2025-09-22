@@ -20,7 +20,7 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.equilibria.find import in_plasma, in_zone
+from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 if TYPE_CHECKING:
@@ -435,7 +435,6 @@ class EqSummary(ParameterFrame):
     li_3: Parameter[float]
     V: Parameter[float]
     beta_p: Parameter[float]
-    beta_p_95: Parameter[float]
     q_95: Parameter[float]
     kappa_95: Parameter[float]
     delta_95: Parameter[float]
@@ -467,12 +466,10 @@ class EqSummary(ParameterFrame):
         energy = calc_energy(eq)
         li_true = _calc_Li_from_energy(energy, I_p)
         pressure_map = eq.pressure_map()
-        pressure_map_95 = eq.pressure_map(0.95)
         Bp = eq.Bp()
         mask = in_plasma(
             eq.x, eq.z, eq.psi(), o_points=eq._o_points, x_points=eq._x_points
         )
-        mask_95 = in_zone(eq.x, eq.z, f95.coords.xz.T)
 
         if is_double_null:
             kappa_95 = f95.kappa
@@ -512,12 +509,6 @@ class EqSummary(ParameterFrame):
             beta_p=Parameter(
                 "beta_p",
                 calc_beta_p(pressure_map, Bp, mask, eq.x, eq.dx, eq.dz),
-                "",
-                eq_name,
-            ),
-            beta_p_95=Parameter(
-                "beta_p_95",
-                calc_beta_p(pressure_map_95, Bp, mask_95, eq.x, eq.dx, eq.dz),
                 "",
                 eq_name,
             ),
