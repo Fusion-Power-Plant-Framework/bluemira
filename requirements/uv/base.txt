@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.6.1
+blosc2==3.8.0
     # via tables
 certifi==2025.8.3
     # via requests
@@ -24,7 +24,7 @@ contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.0.0
+coolprop==7.1.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
@@ -34,27 +34,27 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.0
+fonttools==4.60.0
     # via matplotlib
 fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.14.0
+gmsh==4.14.1
     # via bluemira (pyproject.toml)
 idna==3.10
     # via requests
 imageio==2.37.0
     # via bluemira (pyproject.toml)
-joblib==1.5.1
+joblib==1.5.2
     # via scikit-learn
 kiwisolver==1.4.9
     # via matplotlib
-llvmlite==0.44.0
+llvmlite==0.45.0
     # via numba
-markdown-it-py==3.0.0
+markdown-it-py==4.0.0
     # via rich
-matplotlib==3.10.5
+matplotlib==3.10.6
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
@@ -72,13 +72,13 @@ neutronics-material-maker==1.2.1
     # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
-numba==0.61.2
+numba==0.62.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
 numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787
     # via bluemira (pyproject.toml)
-numexpr==2.11.0
+numexpr==2.12.1
     # via
     #   blosc2
     #   tables
@@ -106,7 +106,7 @@ packaging==25.0
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.3.1
+pandas==2.3.2
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
@@ -117,7 +117,7 @@ pillow==11.3.0
     #   pyvista
 pint==0.24.4
     # via bluemira (pyproject.toml)
-platformdirs==4.3.8
+platformdirs==4.4.0
     # via
     #   blosc2
     #   pint
@@ -130,13 +130,13 @@ py-cpuinfo==9.0.0
     #   tables
 pyclipper==1.3.0.post6
     # via bluemira (pyproject.toml)
-pydantic==2.11.7
+pydantic==2.11.9
     # via bluemira (pyproject.toml)
 pydantic-core==2.33.2
     # via pydantic
 pygments==2.19.2
     # via rich
-pyparsing==3.2.3
+pyparsing==3.2.5
     # via
     #   matplotlib
     #   periodictable
@@ -146,9 +146,9 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.0
+pyvista==0.46.3
     # via bluemira (pyproject.toml)
-requests==2.32.4
+requests==2.32.5
     # via
     #   blosc2
     #   pooch
@@ -156,14 +156,14 @@ rich==14.1.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-scikit-learn==1.7.1
+scikit-learn==1.7.2
     # via bluemira (pyproject.toml)
 scipy==1.15.3
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.10.1
+scooby==0.10.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
@@ -177,7 +177,7 @@ threadpoolctl==3.6.0
     # via scikit-learn
 typeguard==4.4.4
     # via bluemira (pyproject.toml)
-typing-extensions==4.14.1
+typing-extensions==4.15.0
     # via
     #   flexcache
     #   flexparser

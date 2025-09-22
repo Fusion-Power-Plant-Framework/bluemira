@@ -18,7 +18,7 @@ dependencies = [
     "anytree>=2.5",
     "asteval>=1.0",
     "Babel>=2.17",
-    "click>=8.0",
+    "click>=8.0,!=8.3.0",
     "contourpy>=1.0",
     "CoolProp>=6.5",
     "eqdsk>=0.5.0, <0.6.0",
@@ -66,7 +66,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.12.8",
+    "ruff==0.13.1",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -76,10 +76,10 @@ dev = [
 examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.61.2",
+    "numba==0.62.0",
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy==1.26.4",
-    "matplotlib==3.10.5",
+    "matplotlib==3.10.6",
     "scipy==1.15.3",
     "vtk==9.3.1",  # needed for uv resolution
 ]
