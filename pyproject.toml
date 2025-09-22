@@ -88,7 +88,7 @@ conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 openmc = ["openmc>=0.14.0", "openmc_data==2.3.1"]
 process = ["process==3.1.0"]
 polyscope = ["polyscope"]
-radiation = ["cherab"]
+radiation = ["cherab>=1.5"]
 dagmc = [
     "cgal>=6.0.1",
     "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
