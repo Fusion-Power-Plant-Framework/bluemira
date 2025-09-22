@@ -585,6 +585,9 @@ class BetaIpProfile(Profile):
     \t:math:`d{\\Omega}`\n
 
     \t:math:`{\\beta}_{p}=\\dfrac{\\langle p({\\beta_{0}})\\rangle}{\\langle B_{p}^{2}\\rangle_{\\psi_{a}}/2\\mu_{0}}`
+
+    Please be careful, the beta_p approximation used here is less good for higher elongation plasmas,
+    see calc_beta_p_approx.
     """  # noqa: W505, E501
 
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
