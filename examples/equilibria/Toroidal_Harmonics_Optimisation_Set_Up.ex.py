@@ -102,18 +102,20 @@ result = brute_force_toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
     psi_norm=psi_norm,
-    n_degrees_of_freedom=5,
-    max_harmonic_mode=6,
+    n_degrees_of_freedom=6,
+    max_harmonic_mode=5,
     plasma_mask=True,
     cl=True,
 )
 
-
+# %%
 # print info
 print(f"cos modes used = {result.cos_m}")
 print(f"sin modes used = {result.sin_m}")
 # plot to compare th approx psi to bm psi
-f, ax = plot_toroidal_harmonic_approximation(eq, th_params, result, psi_norm)
+f, ax = plot_toroidal_harmonic_approximation(
+    eq=eq, th_params=th_params, result=result, psi_norm=psi_norm, cl=True
+)
 ax.set_title("Brute force + grid approximation")
 plt.show()
 # %% [markdown]
