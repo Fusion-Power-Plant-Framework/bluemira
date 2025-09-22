@@ -24,7 +24,7 @@ contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.0.0
+coolprop==7.1.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
@@ -34,7 +34,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.59.2
+fonttools==4.60.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -136,7 +136,7 @@ pydantic-core==2.33.2
     # via pydantic
 pygments==2.19.2
     # via rich
-pyparsing==3.2.4
+pyparsing==3.2.5
     # via
     #   matplotlib
     #   periodictable
@@ -163,7 +163,7 @@ scipy==1.15.3
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.10.1
+scooby==0.10.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
