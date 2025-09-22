@@ -52,7 +52,7 @@ class MappedParameterFrame(ParameterFrame):
         new_param_dict = {}
         for bm_map_name, param_map in cls._mappings.items():
             new_param_dict[bm_map_name] = {
-                "value": data.get(param_map.name, None),
+                "value": data.get(param_map.name),
                 "unit": param_map.unit,
                 "source": source,
             }
