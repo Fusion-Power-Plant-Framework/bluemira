@@ -313,7 +313,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
-        return np.zeros(len(self.target_harmonics_cos) + len(self.target_harmonics_sin))
+        return np.zeros(len(self))
 
     def f_constraint(self) -> ToroidalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
