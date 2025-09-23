@@ -279,8 +279,6 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
-        evaluated = self.evaluate(equilibrium)
-
         self._args["b_vec"] = np.append(
             self.target_harmonics_cos, self.target_harmonics_sin, axis=0
         )
