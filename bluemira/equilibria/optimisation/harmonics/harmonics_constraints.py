@@ -277,12 +277,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        self._args["a_mat"] = self.control_response(equilibrium.coilset)
-
-        if self.constraint_type == "inequality":
-            self._args["a_mat"] = np.append(
-                self._args["a_mat"], -1 * self._args["a_mat"], axis=0
-            )
+        if self._args["a_mat"] is None:
+            self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
@@ -306,7 +302,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             return a_sin
         if a_sin is None:
             return a_cos
-        return np.append(a_cos, a_sin, axis=0)
+        a_mat = np.append(a_cos, a_sin, axis=0)
+        if self.constraint_type == "inequality":
+            a_mat = np.append(a_mat, -a_mat, axis=0)
+        return a_mat
 
     def evaluate(
         self, _eq: Equilibrium
