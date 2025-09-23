@@ -242,7 +242,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         self.weights = weights
         self._args = {
             "a_mat": None,
-            "b_vec": None,
+            "b_vec": self.target_value,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -279,14 +279,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
-        self._args["b_vec"] = np.append(
-            self.target_harmonics_cos, self.target_harmonics_sin, axis=0
-        )
         if self.constraint_type == "inequality":
             self._args["a_mat"] = np.append(
                 self._args["a_mat"], -1 * self._args["a_mat"], axis=0
             )
-            self._args["b_vec"][2:] *= -1
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
