@@ -227,6 +227,9 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_cos = ref_harmonics_cos_amplitudes
             self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
+            # target_harmonics_cos and target_harmonics_sin are combined here
+            # but we no not rename the variables, to reduce unnecessary line
+            # additions
             self.target_harmonics_cos = np.append(
                 ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
