@@ -160,7 +160,6 @@ th_constraint = ToroidalHarmonicConstraint(
     ref_harmonics_cos=Am_cos,
     ref_harmonics_sin=Am_sin,
     th_params=th_params,
-    tolerance=1e-3,
     constraint_type="equality",
 )
 

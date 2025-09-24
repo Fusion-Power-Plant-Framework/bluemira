@@ -1398,7 +1398,8 @@ class TestRegressionTH:
             ref_harmonics_cos=ref_harmonics_cos,
             ref_harmonics_sin=ref_harmonics_sin,
             th_params=th_params,
-            tolerance=None,
+            relative_tolerance_cos=1e-3,
+            relative_tolerance_sin=1e-3,
             constraint_type="equality",
         )
 
@@ -1425,12 +1426,12 @@ class TestRegressionTH:
         ):
             assert test_tol == ref_tol
 
-        tolerance = 0.0
         test_constraint_class = ToroidalHarmonicConstraint(
             ref_harmonics_cos=ref_harmonics_cos,
             ref_harmonics_sin=ref_harmonics_sin,
             th_params=th_params,
-            tolerance=tolerance,
+            relative_tolerance_cos=0.0,
+            relative_tolerance_sin=0.0,
             constraint_type="equality",
         )
         assert len(test_constraint_class.tolerance) == len(ref_harmonics_cos) + len(

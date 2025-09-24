@@ -201,31 +201,31 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         ref_harmonics_cos: npt.NDArray[np.float64],
         ref_harmonics_sin: npt.NDArray[np.float64],
         th_params: ToroidalHarmonicsParams,
-        tolerance: float | None = None,
+        relative_tolerance_cos: float | npt.NDArray[np.float64] = 1e-3,
+        relative_tolerance_sin: float | npt.NDArray[np.float64] = 1e-3,
         constraint_type: str = "equality",
     ):
         self.constraint_type = constraint_type
-        if isinstance(tolerance, float):
-            tolerance *= np.ones(len(ref_harmonics_cos) + len(ref_harmonics_sin))
-        else:
-            tolerance = 1e-3 * np.append(ref_harmonics_cos, ref_harmonics_sin, axis=0)
-            tolerance = np.abs(tolerance)
-        self.tolerance = tolerance
+        tolerance_cos = np.abs(relative_tolerance_cos * ref_harmonics_cos)
+        tolerance_sin = np.abs(relative_tolerance_sin * ref_harmonics_sin)
+        tolerance = np.append(tolerance_cos, tolerance_sin, axis=0)
+        self.cos_degrees_chosen = ref_harmonics_cos
+        self.sin_degrees_chosen = ref_harmonics_sin
 
         self.max_degree = len(ref_harmonics_cos)
 
         if constraint_type == "equality":
-            self.tolerance = tolerance
             self.target_harmonics_cos = ref_harmonics_cos
             self.target_harmonics_sin = ref_harmonics_sin
+            self.tolerance = tolerance
         else:
-            self.tolerance = np.append(tolerance, tolerance, axis=0)
             self.target_harmonics_cos = np.append(
                 ref_harmonics_cos, ref_harmonics_cos, axis=0
             )
             self.target_harmonics_sin = np.append(
                 ref_harmonics_sin, ref_harmonics_sin, axis=0
             )
+            self.tolerance = np.tile(tolerance, 2)
 
         self.th_params = th_params
 
