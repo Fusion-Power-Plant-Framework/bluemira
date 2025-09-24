@@ -16,6 +16,7 @@ import functools
 import inspect
 import json
 from collections.abc import Callable, Iterable, Sequence
+from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
@@ -32,7 +33,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.constants import D_TOLERANCE
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -2306,3 +2307,52 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     angle = np.array(np.arctan2(det, dot))
     angle[angle < 0] += 2 * np.pi
     return np.degrees(angle)
+
+
+# ======================================================================================
+# Tool to split an open wire at given coords on the wire
+# ======================================================================================
+def split_open_wire_at_coords(
+    wire: BluemiraWire,
+    coords: Coordinates,
+    tolerance: float = EPS_FREECAD,
+) -> list[BluemiraWire]:
+    """
+    Split an open wire at coords and return segments.
+
+    Does not work properly for closed wire, based on
+    the starting point of the wire
+
+    Returns
+    -------
+    list[BluemiraWire]
+        list of splitted wires
+
+    Raises
+    ------
+    GeometryError
+        if wire cutting goes wrong
+    """
+    segments = []
+    wire_to_cut = deepcopy(wire)
+
+    for coord in coords.T:
+        wire_1, wire_2 = split_wire(wire_to_cut, coord, tolerance)
+
+        if not wire_1 or not wire_2:
+            wire_to_cut = wire_1 or wire_2
+            if not wire_to_cut:
+                raise GeometryError("Splitting Wire Went Wrong!")
+            # Cutting at start/end points, continue
+        else:
+            # Append the shorter wire and update wire_to_cut
+            shorter_wire, longer_wire = (
+                (wire_1, wire_2) if wire_1.length < wire_2.length else (wire_2, wire_1)
+            )
+            segments.append(shorter_wire)
+            wire_to_cut = longer_wire
+
+    segments.append(wire_to_cut)
+    return sorted(
+        segments, key=lambda wire: max(v[2] for v in wire.vertexes.T), reverse=True
+    )
