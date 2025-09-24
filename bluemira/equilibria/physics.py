@@ -597,6 +597,7 @@ def calc_beta_p(eq: Equilibrium) -> float:
         eq.pressure_map(PSI_NORM),
         eq.Bp(),
         eq._get_core_mask(PSI_NORM),
+        eq.x,
         eq.dx,
         eq.dz,
     )
@@ -625,7 +626,7 @@ def calc_beta_p_approximate(eq: Equilibrium) -> float:
     Ratio of plasma to poloidal magnetic pressure
     """
     return _calc_beta_p_approx(
-        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.dx, eq.dz, eq.profiles.I_p
+        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles.I_p
     )
 
 
@@ -708,7 +709,7 @@ def _calc_beta_p_approx(
     -------
     Ratio of plasma to poloidal magnetic pressure
     """
-    p_avg = calc_p_average(pressure_map, fs, x, dx, dz)
+    p_avg = _calc_p_average(pressure_map, fs, x, dx, dz)
     Bp = MU_0 * I_p / fs.length
     return 2 * MU_0 * p_avg / Bp**2
 
