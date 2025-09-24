@@ -149,6 +149,7 @@ current_opt_problem = TikhonovCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
+    constraints=[],
 )
 
 
