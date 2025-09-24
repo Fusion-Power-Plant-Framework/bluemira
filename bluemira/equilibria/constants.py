@@ -16,6 +16,10 @@ PSI_NORM_TOL = 1e-2
 #     Used as a convergence criterion for Picard iterations
 PSI_REL_TOL = 2e-3
 
+# Default psi_norm value [n. a.]
+#    Used in flux surface finding and masking functions.
+PSI_NORM = 1.0
+
 # Absolute tolerance on position [m]
 #     Used to determine whether O- and X-points are the "same"
 #     Used as an offset to determine if a point is "on" the edge of a coil

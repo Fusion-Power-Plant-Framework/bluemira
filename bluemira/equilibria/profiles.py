@@ -34,7 +34,7 @@ from bluemira.equilibria.find import (
     o_point_fallback_calculator,
 )
 from bluemira.equilibria.grid import integrate_dx_dz
-from bluemira.equilibria.physics import calc_beta_p_approx
+from bluemira.equilibria.physics import _calc_beta_p_approx
 from bluemira.equilibria.plotting import ProfilePlotter
 
 if TYPE_CHECKING:
@@ -587,7 +587,7 @@ class BetaIpProfile(Profile):
     \t:math:`{\\beta}_{p}=\\dfrac{\\langle p({\\beta_{0}})\\rangle}{\\langle B_{p}^{2}\\rangle_{\\psi_{a}}/2\\mu_{0}}`
 
     Please be careful, the beta_p approximation used here is less good for higher elongation plasmas,
-    see calc_beta_p_approx.
+    see _calc_beta_p_approx.
     """  # noqa: W505, E501
 
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
@@ -644,7 +644,7 @@ class BetaIpProfile(Profile):
         Note
         ----
         Please be careful, the beta_p approximation used here is not good for high elongation plasmas,
-        see calc_beta_p_approx.
+        see _calc_beta_p_approx.
         """  # noqa: W505, E501, DOC201
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
@@ -673,7 +673,7 @@ class BetaIpProfile(Profile):
             lcfs, _ = find_LCFS_separatrix(
                 x, z, psi, o_points=o_points, x_points=x_points
             )
-            beta_p_actual = calc_beta_p_approx(
+            beta_p_actual = _calc_beta_p_approx(
                 pfunc, lcfs, x, self.dx, self.dz, self.I_p
             )
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0

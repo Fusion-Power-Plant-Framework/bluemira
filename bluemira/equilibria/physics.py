@@ -20,6 +20,7 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.equilibria.constants import PSI_NORM
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
@@ -210,16 +211,75 @@ def calc_dx_sep(eq: Equilibrium) -> float:
 def calc_volume(fs: Coordinates) -> float:
     """
     Calculates plasma volume [m^3]
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    fs:
+        Closed flux surface
+
+    Returns
+    -------
+        Plasma volume within closed flux surface
+
+    """
     return revolved_volume(*fs.xz)
 
 
-def _calc_Bp2_int(Bp, mask, x, dx, dz):
+def _calc_Bp2_int(
+    Bp: npt.NDArray[np.float64],
+    mask: npt.NDArray[np.float64] | None,
+    x: npt.NDArray[np.float64],
+    dx: npt.NDArray[np.float64],
+    dz: npt.NDArray[np.float64],
+) -> float:
+    """
+    Calculates the volume integral of the poloidal field squared.
+
+    Parameters
+    ----------
+    Bp:
+        Poloidal field at x and z-coordinates
+    mask:
+        Mask for chosen closed flux surface
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+
+    Returns
+    -------
+        volume integral (masked if chosen)
+    """
     Bp2 = Bp**2 if mask is None else Bp**2 * mask
     return volume_integral(Bp2, x, dx, dz)
 
 
-def _calc_p_int(p, x, dx, dz):
+def _calc_p_int(
+    p: npt.NDArray[np.float64],
+    x: npt.NDArray[np.float64],
+    dx: npt.NDArray[np.float64],
+    dz: npt.NDArray[np.float64],
+) -> float:
+    """
+    Calculates the volume integral of plasma pressure.
+
+    Parameters
+    ----------
+    p:
+        Plasma pressure
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+
+    Returns
+    -------
+        volume integral
+    """
     return volume_integral(p, x, dx, dz)
 
 
@@ -228,7 +288,16 @@ def calc_energy(eq: Equilibrium) -> float:
     Calculates the stored poloidal magnetic energy in the plasma [J]
 
     \t:math:`W=\\dfrac{LI^2}{2}`
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    eq:
+        The Equilibrium object for which to calculate stored energy
+
+    Returns
+    -------
+        Stored poloidal magnetic energy
+    """
     return _calc_Bp2_int(
         Bp=eq.Bp(),
         mask=in_plasma(eq.x, eq.z, eq.psi()),
@@ -238,7 +307,21 @@ def calc_energy(eq: Equilibrium) -> float:
     ) / (2 * MU_0)
 
 
-def _calc_Li_from_energy(p_energy, i_p) -> float:
+def _calc_Li_from_energy(p_energy: float, i_p: float) -> float:
+    """
+    Calculates the internal inductance of the plasma [H]
+
+    Parameters
+    ----------
+    p_energy:
+        Poloidal magnetic energy
+    i_p:
+        Plasma current
+
+    Returns
+    -------
+        Internal inductance of the plasma
+    """
     return 2 * p_energy / i_p**2
 
 
@@ -247,12 +330,37 @@ def calc_Li(eq: Equilibrium) -> float:
     Calculates the internal inductance of the plasma [H]
 
     \t:math:`L_i=\\dfrac{2W}{I_{p}^{2}}`
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    eq:
+        The Equilibrium object for which to calculate internal inductance
+
+    Returns
+    -------
+        Internal inductance of the plasma
+    """
     p_energy = calc_energy(eq)
     return _calc_Li_from_energy(p_energy, eq.profiles.I_p)
 
 
-def _calc_li_from_Li(big_li, R_0):
+def _calc_li_from_Li(big_li: float, R_0: float) -> float:
+    """
+    Calculates the normalised internal inductance of the plasma
+
+    \t:math:`l_i=\\dfrac{2L_i}{\\mu_{0}R_{0}}`
+
+    Parameters
+    ----------
+    big_li:
+        Internal inductance of plasma
+    R_0:
+        Major Radius
+
+    Returns
+    -------
+        Normalised internal inductance of the plasma
+    """
     return 2 * big_li / (MU_0 * R_0)
 
 
@@ -261,7 +369,16 @@ def calc_li(eq: Equilibrium) -> float:
     Calculates the normalised internal inductance of the plasma
 
     \t:math:`l_i=\\dfrac{2L_i}{\\mu_{0}R_{0}}`
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    eq:
+        The Equilibrium object for which to calculate internal inductance
+
+    Returns
+    -------
+        Normalised internal inductance of the plasma
+    """
     li = calc_Li(eq)
     return _calc_li_from_Li(li, eq._R_0)
 
@@ -279,7 +396,16 @@ def calc_li3(eq: Equilibrium) -> float:
     \t:math:`\\langle B_p^2\\rangle=\\dfrac{1}{V}\\int B_p^2dV`
 
     where: Bp is the poloidal magnetic field and V is the plasma volume
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    eq:
+        The Equilibrium object for which to calculate internal inductance
+
+    Returns
+    -------
+        Approximate normalised internal inductance of the plasma
+    """
     return _calc_li3minargs(
         eq.x, eq.z, eq.psi(), eq.Bp(), eq.profiles.R_0, eq.profiles.I_p, eq.dx, eq.dz
     )
@@ -304,19 +430,42 @@ def _calc_li3minargs(
     \t:math:`\\dfrac{2 B_{p, average}}{R_{0} (\\mu_{0} I_{p})**2}`
 
     Used in the optimisation of the plasma profiles.
-    """  # noqa: DOC201
+
+    Parameters
+    ----------
+    x:
+        X-coordinates
+    z:
+        Z-coordinates
+    psi:
+        The poloidal magnetic flux map [V.s/rad]
+    Bp:
+        Poloidal field at x and z-coordinates
+    R_0:
+        Major radius
+    I_p:
+        Plasma current
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+    mask:
+        Mask for chosen closed flux surface
+    o_points:
+        O-points to use to calculate psinorm
+    x_points:
+        X-points to use to calculate psinorm
+
+    Returns
+    -------
+        Approximate normalised internal inductance of the plasma
+    """
     if mask is None:
         mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
     return 2 * _calc_Bp2_int(Bp, mask, x, dx, dz) / (R_0 * (MU_0 * I_p) ** 2)
 
 
-def calc_p_average(
-    pressure_map: npt.NDArray,
-    fs: Coordinates,
-    x,
-    dx,
-    dz,
-) -> float:
+def calc_p_average(eq: Equilibrium) -> float:
     """
     Calculate the average plasma pressure.
 
@@ -331,18 +480,49 @@ def calc_p_average(
     -------
     The average plasma pressure [Pa]
     """
+    return _calc_p_average(
+        eq.pressure_map(PSI_NORM),
+        eq.get_LCFS(),
+        eq.x,
+        eq.dz,
+        eq.dz,
+    )
+
+
+def _calc_p_average(
+    pressure_map: npt.NDArray,
+    fs: npt.NDArray[np.float64],
+    x: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
+) -> float:
+    """
+    Calculate the average plasma pressure.
+
+    \t:math:`\\langle p \\rangle = \\dfrac{1}{V_{p}}\\int \\mathbf{p}dxdz`:
+
+    Parameters
+    ----------
+    pressure_map:
+        Pressure at normalised psi values within chosen closed flux surface
+    fs:
+        Coordinates of the chosen closed flux surface
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+
+    Returns
+    -------
+    The average plasma pressure [Pa]
+    """
     v_plasma = calc_volume(fs)
     return _calc_p_int(pressure_map, x, dx, dz) / v_plasma
 
 
-def calc_beta_t(
-    pressure_map: npt.NDArray,
-    fs: Coordinates,
-    x,
-    dx,
-    dz,
-    B_0,
-) -> float:
+def calc_beta_t(eq: Equilibrium) -> float:
     """
     Calculate the ratio of plasma pressure to toroidal magnetic pressure.
 
@@ -357,19 +537,48 @@ def calc_beta_t(
     -------
     Ratio of plasma to toroidal magnetic pressure
     """
-    p_avg = calc_p_average(pressure_map, fs, x, dx, dz)
-    # return 2 * MU_0 * p_avg / profiles._B_0**2
+    return _calc_beta_t(
+        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles._B_0
+    )
+
+
+def _calc_beta_t(
+    pressure_map: npt.NDArray[np.float64],
+    fs: npt.NDArray[np.float64],
+    x: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
+    B_0: float,
+) -> float:
+    """
+    Calculate the ratio of plasma pressure to toroidal magnetic pressure.
+
+    \t:math:`\\beta_t = \\dfrac{2\\mu_0\\langle p \\rangle}{B_t^2}`
+
+    Parameters
+    ----------
+    pressure_map:
+        Pressure at normalised psi values within chosen closed flux surface
+    fs:
+        Coordinates of the chosen closed flux surface
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+    B_0:
+        Toroidal field at reactor major radius [T]
+
+    Returns
+    -------
+    Ratio of plasma to toroidal magnetic pressure
+    """
+    p_avg = _calc_p_average(pressure_map, fs, x, dx, dz)
     return 2 * MU_0 * p_avg / B_0**2
 
 
-def calc_beta_p(
-    pressure_map: npt.NDArray,
-    Bp,
-    mask,
-    x,
-    dx,
-    dz,
-) -> float:
+def calc_beta_p(eq: Equilibrium) -> float:
     """
     Calculate the ratio of plasma pressure to poloidal magnetic pressure
 
@@ -384,19 +593,16 @@ def calc_beta_p(
     -------
     Ratio of plasma to magnetic pressure
     """
-    p_int = _calc_p_int(pressure_map, x, dx, dz)
-    Bp2_int = _calc_Bp2_int(Bp, mask, x, dx, dz)
-    return 2 * MU_0 * p_int / Bp2_int
+    return _calc_beta_p(
+        eq.pressure_map(PSI_NORM),
+        eq.Bp(),
+        eq._get_core_mask(PSI_NORM),
+        eq.dx,
+        eq.dz,
+    )
 
 
-def calc_beta_p_approx(
-    pressure_map: npt.NDArray,
-    fs: Coordinates,
-    x,
-    dx,
-    dz,
-    I_p,
-) -> float:
+def calc_beta_p_approximate(eq: Equilibrium) -> float:
     """
     Calculate the ratio of plasma pressure to magnetic pressure. This is
     following the definitions of Friedberg, Ideal MHD, pp. 68-69, which is an
@@ -413,6 +619,90 @@ def calc_beta_p_approx(
     ----------
     eq:
         The Equilibrium object for which to calculate beta_p
+
+    Returns
+    -------
+    Ratio of plasma to poloidal magnetic pressure
+    """
+    return _calc_beta_p_approx(
+        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.dx, eq.dz, eq.profiles.I_p
+    )
+
+
+def _calc_beta_p(
+    pressure_map: npt.NDArray[np.float64],
+    Bp: npt.NDArray[np.float64],
+    mask: npt.NDArray[np.float64],
+    x: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
+) -> float:
+    """
+    Calculate the ratio of plasma pressure to poloidal magnetic pressure
+
+    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
+
+    Parameters
+    ----------
+    pressure_map:
+        Pressure at normalised psi values within chosen closed flux surface
+    fs:
+        Coordinates of the chosen closed flux surface
+    Bp:
+        Poloidal field at x and z-coordinates
+    mask:
+        Mask for chosen closed flux surface
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+
+    Returns
+    -------
+    Ratio of plasma to magnetic pressure
+    """
+    p_int = _calc_p_int(pressure_map, x, dx, dz)
+    Bp2_int = _calc_Bp2_int(Bp, mask, x, dx, dz)
+    return 2 * MU_0 * p_int / Bp2_int
+
+
+def _calc_beta_p_approx(
+    pressure_map: npt.NDArray[np.float64],
+    fs: npt.NDArray[np.float64],
+    x: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
+    I_p: float,
+) -> float:
+    """
+    Calculate the ratio of plasma pressure to magnetic pressure. This is
+    following the definitions of Friedberg, Ideal MHD, pp. 68-69, which is an
+    approximation.
+
+    \t:math:`\\beta_p = \\dfrac{2\\mu_0\\langle p \\rangle}{B_p^2}`
+
+    Note
+    ----
+    Be careful, this approximation is not good for high elongation plasmas,
+    try comparing to calc_beta_p before using.
+
+
+    Parameters
+    ----------
+    pressure_map:
+        Pressure at normalised psi values within chosen closed flux surface
+    fs:
+        Coordinates of the chosen closed flux surface
+    x:
+        X-coordinates
+    dx:
+        Discretisation size in the x-coordinate
+    dz:
+        Discretisation size in the z-coordinate
+    I_p:
+        Plasma current
 
     Returns
     -------
@@ -465,11 +755,6 @@ class EqSummary(ParameterFrame):
         R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
         energy = calc_energy(eq)
         li_true = _calc_Li_from_energy(energy, I_p)
-        pressure_map = eq.pressure_map()
-        Bp = eq.Bp()
-        mask = in_plasma(
-            eq.x, eq.z, eq.psi(), o_points=eq._o_points, x_points=eq._x_points
-        )
 
         if is_double_null:
             kappa_95 = f95.kappa
@@ -508,7 +793,7 @@ class EqSummary(ParameterFrame):
             ),
             beta_p=Parameter(
                 "beta_p",
-                calc_beta_p(pressure_map, Bp, mask, eq.x, eq.dx, eq.dz),
+                calc_beta_p(eq),
                 "",
                 eq_name,
             ),

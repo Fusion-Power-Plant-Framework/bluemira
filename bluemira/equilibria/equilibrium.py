@@ -27,7 +27,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
-from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM, PSI_NORM_TOL
 from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -1666,20 +1666,33 @@ class Equilibrium(CoilSetMHDState):
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
-    def pressure_map(self, pn=None) -> npt.NDArray[np.float64]:
+    def pressure_map(self, pn=PSI_NORM) -> npt.NDArray[np.float64]:
         """
+        Parameters
+        ----------
+        pn:
+            The normalised psi value for masking.
+            Values outside the closed pn flux surface will be masked.
+            Default is pn=1, i.e., the LCFS.
+
         Returns
         -------
         :
             Plasma pressure map.
         """
         mask = self._get_core_mask(pn)
-        pn_max = 1 if pn is None else pn
-        p = self.pressure(np.clip(self.psi_norm(), 0, pn_max))
+        p = self.pressure(np.clip(self.psi_norm(), 0, 1))
         return p * mask
 
-    def _get_core_mask(self, pn=None) -> npt.NDArray[np.float64]:
+    def _get_core_mask(self, pn=PSI_NORM) -> npt.NDArray[np.float64]:
         """
+        Parameters
+        ----------
+        pn:
+            The normalised psi value for masking.
+            Values outside the closed pn flux surface will be masked.
+            Default is pn=1, i.e., the LCFS.
+
         Returns
         -------
         :
