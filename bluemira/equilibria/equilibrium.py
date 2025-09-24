@@ -1666,7 +1666,7 @@ class Equilibrium(CoilSetMHDState):
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
-    def pressure_map(self, pn=PSI_NORM) -> npt.NDArray[np.float64]:
+    def pressure_map(self, pn: float =PSI_NORM) -> npt.NDArray[np.float64]:
         """
         Parameters
         ----------
@@ -1684,7 +1684,7 @@ class Equilibrium(CoilSetMHDState):
         p = self.pressure(np.clip(self.psi_norm(), 0, 1))
         return p * mask
 
-    def _get_core_mask(self, pn=PSI_NORM) -> npt.NDArray[np.float64]:
+    def _get_core_mask(self, pn: float =PSI_NORM) -> npt.NDArray[np.float64]:
         """
         Parameters
         ----------
