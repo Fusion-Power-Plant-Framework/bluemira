@@ -227,17 +227,17 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_cos = ref_harmonics_cos_amplitudes
             self.target_harmonics_sin = ref_harmonics_sin_amplitudes
         else:
-            self.tolerance = np.append(tolerance, tolerance, axis=0)
             self.target_harmonics_cos = np.append(
-                ref_harmonics_cos_amplitudes, ref_harmonics_cos_amplitudes, axis=0
+                ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
-            self.target_harmonics_sin = np.append(
-                ref_harmonics_sin_amplitudes, ref_harmonics_sin_amplitudes, axis=0
+            self.target_harmonics_sin = -np.append(
+                ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
             )
+            self.tolerance = np.tile(tolerance, 2)
 
         self.th_params = th_params
         self.target_value = np.append(
-            ref_harmonics_cos_amplitudes, ref_harmonics_sin_amplitudes, axis=0
+            self.target_harmonics_cos, self.target_harmonics_sin, axis=0
         )
         self.weights = weights
         self._args = {

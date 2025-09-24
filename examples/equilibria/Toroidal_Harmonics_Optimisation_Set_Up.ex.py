@@ -130,7 +130,7 @@ th_constraint = ToroidalHarmonicConstraint(
     ref_harmonics_sin_amplitudes=result.sin_amplitudes_from_psi_fit,
     constraint_type="equality",
     th_params=th_params,
-    # tolerance=1e-2,
+    tolerance=1e-2,
 )
 
 eq.coilset.control = list(th_params.th_coil_names)
@@ -144,11 +144,12 @@ th_current_opt_eq = deepcopy(eq)
 current_opt_problem = TikhonovCurrentCOP(
     th_current_opt_eq,
     targets=MagneticConstraintSet([th_constraint]),
-    gamma=1e-12,
+    gamma=1e12,
     opt_algorithm=Algorithm.SLSQP,
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
+    constraints=[th_constraint],
 )
 
 
