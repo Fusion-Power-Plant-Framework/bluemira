@@ -174,7 +174,7 @@ def legendre_q(lam, mu, x, n_max=20):
         # multiple mode, one x
         elif x == 1:
             legQ[:] = np.inf
-    elif dims <= 3:
+    elif dims <= 3:  # noqa: PLR2004
         # one mode, multiple x
         if isinstance(c, float):
             legQ[x == 1] = np.inf
@@ -183,7 +183,8 @@ def legendre_q(lam, mu, x, n_max=20):
             legQ[:, x == 1] = np.inf
     else:
         raise EquilibriaError(
-            "You have too many dimensions. We are expecting position information as a float, array or grid."
+            "You have too many dimensions. We are expecting position information as a "
+            "float, array or grid."
         )
     return legQ
 
@@ -315,10 +316,6 @@ def toroidal_harmonic_grid_and_coil_setup(
     )
 
 
-# TODO create one of these fns, one for cos and one for sin, to use
-# where necessary?
-# have a switch for cos/sin so can call the same fn? or have 2
-# separate fns
 def coil_toroidal_harmonic_amplitude_matrix(
     input_coils: CoilSet,
     th_params: ToroidalHarmonicsParams,
@@ -737,7 +734,7 @@ def toroidal_harmonics_to_positions(
     th_params: ToroidalHarmonicsParams,
     n_allowed: int,
     collocation: Collocation | None = None,
-) -> np.ndarray:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Matrix for collocation psi fitting or psi calculation across
     grid with known amplitude values.
@@ -858,6 +855,8 @@ class ToroidalHarmonicsSelectionResult:
     """Background (fixed) psi"""
     coilset_cl_psi: np.ndarray
     """Approximated coilset psi from collocation method"""
+    true_unfixed_psi: np.ndarray
+    """Bluemira psi for toroidal harmonic coils"""
     th_params: ToroidalHarmonicsParams
     """Set up info"""
 
@@ -1035,10 +1034,11 @@ def brute_force_toroidal_harmonic_approximation(
         cos_amplitudes_from_psi_fit=cos_amplitudes_from_psi_fit,
         sin_amplitudes_from_psi_fit=sin_amplitudes_from_psi_fit,
         error=error,
-        error_cl=error_cl_new,
+        error_cl=error_cl,
         coilset_psi=coilset_psi,
         fixed_psi=fixed_psi,
         coilset_cl_psi=coilset_cl_psi,
+        true_unfixed_psi=true_coilset_psi,
         th_params=th_params,
     )
 
