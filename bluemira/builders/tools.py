@@ -42,7 +42,7 @@ from bluemira.geometry.tools import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from physical_materials.material import Material
+    from matproplib.material import Material
 
     from bluemira.base.components import ComponentT
     from bluemira.geometry.base import BluemiraGeoT

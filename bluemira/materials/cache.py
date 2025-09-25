@@ -14,10 +14,13 @@ import copy
 from typing import TYPE_CHECKING, ClassVar
 
 from matproplib.library.fluids import Void
-from matproplib.materail import Material
+
+from bluemira.materials.error import MaterialsError
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from matproplib.materail import Material
 
 vacuum_void = Void(name="Vacuum")
 

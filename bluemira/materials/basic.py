@@ -88,3 +88,6 @@ CONCRETE = material(
     ),
 )
 """Typical concrete properties at room temperature"""
+
+
+vacuum_void = Void()

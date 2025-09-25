@@ -38,6 +38,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
+from bluemira.materials.basic import vacuum_void
 
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
