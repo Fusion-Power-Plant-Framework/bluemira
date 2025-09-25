@@ -7,43 +7,59 @@
 
 import numpy as np
 import openmc
+from openmc_plasma_source import tokamak_source
 
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
-from bluemira.radiation_transport.error import SourceError
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
-try:
-    from pps_isotropic.source import create_parametric_plasma_source
 
-    PPS_ISO_INSTALLED = True
-except ImportError:
-    PPS_ISO_INSTALLED = False
+def make_tokamak_source(
+    source_parameters: PlasmaSourceParameters,
+) -> list[openmc.Source]:
+    """Make a tokamak neutron source using a PlasmaSourceParameters.
+    Some parameters are hard coded, while the rest are rest in from the params.json
+    and stored in the PlasmaSourceParameters
 
+    Parameters
+    ----------
+    source_parameters:
+        PlasmaSourceParameters
 
-def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
-    """Make a plasma source
+    Returns
+    -------
+    source: openmc.Source
+        D-T fusion source for OpenMC
 
-    Raises
-    ------
-    SourceError
-        Source not found
-    """  # noqa: DOC201
-    if not PPS_ISO_INSTALLED:
-        raise SourceError("pps_isotropic installation not found")
-    return create_parametric_plasma_source(
+    Notes
+    -----
+    The same source material referenced by openmc_plasma_source is used:
+    .. doi:: 10.1016/j.fusengdes.2012.02.025
+      :title: Fausser et al, 'Tokamak D-T neutron source models for different
+              plasma physics confinement modes', Fus. Eng. and Design,
+    """
+    return tokamak_source(
         # tokamak geometry
-        major_r=source_parameters.plasma_physics_units.major_radius,
-        minor_r=source_parameters.plasma_physics_units.minor_radius,
-        elongation=source_parameters.plasma_physics_units.elongation,
-        triangularity=source_parameters.plasma_physics_units.triangularity,
-        # plasma geometry
-        peaking_factor=source_parameters.plasma_physics_units.peaking_factor,
-        temperature=source_parameters.plasma_physics_units.temperature,
-        radial_shift=source_parameters.plasma_physics_units.shaf_shift,
-        vertical_shift=source_parameters.plasma_physics_units.vertical_shift,
-        # plasma type
-        mode="DT",
+        major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
+        minor_radius=raw_uc(source_parameters.minor_radius, "m", "cm"),
+        elongation=source_parameters.elongation,
+        triangularity=source_parameters.triangularity,
+        mode="H",
+        # plasma geometry: ion stuff
+        ion_density_centre=source_parameters.ion_density_core,
+        ion_density_pedestal=source_parameters.ion_density_ped,
+        ion_density_peaking_factor=source_parameters.ion_density_alpha,
+        ion_density_separatrix=source_parameters.ion_density_sep,
+        ion_temperature_centre=source_parameters.ion_temperature_core,
+        ion_temperature_pedestal=source_parameters.ion_temperature_ped,
+        ion_temperature_separatrix=source_parameters.ion_temperature_sep,
+        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,
+        ion_temperature_beta=source_parameters.ion_temperature_beta,
+        # shaping
+        shafranov_factor=source_parameters.shaf_shift,
+        pedestal_radius=source_parameters.pedestal_radius,
+        # plasma composition
+        fuel={"D": 0.5, "T": 0.5},
     )
 
 
