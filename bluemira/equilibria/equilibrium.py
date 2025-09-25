@@ -27,7 +27,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
-from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM, PSI_NORM_TOL
 from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -50,7 +50,7 @@ from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import (
     EqSummary,
-    calc_li3minargs,
+    _calc_li3minargs,
     calc_psi_norm,
 )
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
@@ -1446,7 +1446,7 @@ class Equilibrium(CoilSetMHDState):
 
             plasma_psi = self._solver(rhs)
             self._update_plasma(plasma_psi, jtor_opt)
-            li = calc_li3minargs(
+            li = _calc_li3minargs(
                 self.x,
                 self.z,
                 self.psi(),
@@ -1666,28 +1666,47 @@ class Equilibrium(CoilSetMHDState):
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
-    def pressure_map(self) -> npt.NDArray[np.float64]:
+    def pressure_map(self, pn: float = PSI_NORM) -> npt.NDArray[np.float64]:
         """
+        Parameters
+        ----------
+        pn:
+            The normalised psi value for masking.
+            Values outside the closed pn flux surface will be masked.
+            Default is pn=1, i.e., the LCFS.
+
         Returns
         -------
         :
             Plasma pressure map.
         """
-        mask = self._get_core_mask()
+        mask = self._get_core_mask(pn)
         p = self.pressure(np.clip(self.psi_norm(), 0, 1))
         return p * mask
 
-    def _get_core_mask(self) -> npt.NDArray[np.float64]:
+    def _get_core_mask(self, pn: float = PSI_NORM) -> npt.NDArray[np.float64]:
         """
+        Parameters
+        ----------
+        pn:
+            The normalised psi value for masking.
+            Values outside the closed pn flux surface will be masked.
+            Default is pn=1, i.e., the LCFS.
+
         Returns
         -------
         :
             A 2-D masking array for the plasma core.
         """
         o_points, x_points = self.get_OX_points()
-        return in_plasma(
-            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+        if pn is None:
+            return in_plasma(
+                self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+            )
+        zone = self.get_flux_surface(
+            pn, self.psi(), o_points=o_points, x_points=x_points
         )
+        return in_zone(self.x, self.z, zone.xz.T)
 
     def q(
         self,
