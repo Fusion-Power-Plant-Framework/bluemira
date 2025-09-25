@@ -599,7 +599,10 @@ class EquilibriumPlotterMixin:
             zorder=Zorder.PLASMACURRENT.value,
         )
         if smooth:
-            smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
+            try:
+                smooth_contour_fill(self.ax, cont, self.eq.get_LCFS())
+            except EquilibriaError:
+                bluemira_warn("Unable to find lcfs")
 
 
 class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):

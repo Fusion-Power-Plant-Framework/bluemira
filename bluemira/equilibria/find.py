@@ -582,12 +582,20 @@ def find_flux_surfs(
     -------
     :
         The coordinates of the loops that was found
+
+    Raises
+    ------
+    EquilibriaError
+        If equilibria solve failed
     """
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    _xo, _zo, psio = o_points[0]
-    __, __, psix = x_points[0]
+    psio = o_points[0].psi
+    try:
+        psix = x_points[0].psi
+    except IndexError as ie:
+        raise EquilibriaError("Unable to find x_point") from ie
     psinormed = psio - psinorm * (psio - psix)
     return get_contours(x, z, psi, floatify(psinormed))
 
