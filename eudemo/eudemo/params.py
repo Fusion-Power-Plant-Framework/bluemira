@@ -151,9 +151,15 @@ class EUDEMOReactorParams(ParameterFrame):
     fw_psi_n: Parameter[float]
 
     # Divertor silhouette
-    div_type: Parameter[str]
-    div_Ltarg: Parameter[float]  # noqa: N815
-    div_open: Parameter[bool]
+    div_Ltarg_ib: Parameter[float]  # noqa: N815
+    div_Ltarg_ob: Parameter[float]  # noqa: N815
+    strike_loc_ib: Parameter[float]
+    strike_loc_ib: Parameter[float]
+    div_targ_angle_ib: Parameter[float]
+    div_targ_angle_ob: Parameter[float]
+    div_targ_type_ib: Parameter[str]
+    div_targ_type_ob: Parameter[str]
+    div_baffle_type: Parameter[str]
 
     # Remote maintenance
     c_rm: Parameter[float]

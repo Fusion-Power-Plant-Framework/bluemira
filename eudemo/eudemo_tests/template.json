@@ -821,10 +821,28 @@
     "unit": "m",
     "source": "Input"
   },
-  "div_Ltarg": {
-    "name": "Divertor target length",
+  "div_Ltarg_ib": {
+    "name": "Divertor target inboard length",
     "value": 0.5,
     "unit": "m",
+    "source": "Input"
+  },
+  "div_Ltarg_ob": {
+    "name": "Divertor target outboard length",
+    "value": 0.5,
+    "unit": "m",
+    "source": "Input"
+  },
+  "strike_loc_ib": {
+    "name": "Divertor target strike point location, fraction of length from PFR side",
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input"
+  },
+  "strike_loc_ob": {
+    "name": "Divertor target outboard length, fraction of length from PFR side",
+    "value": 0.5,
+    "unit": "dimensionless",
     "source": "Input"
   },
   "div_dpa": {
@@ -839,9 +857,9 @@
     "unit": "\u00b0",
     "source": "Input"
   },
-  "div_open": {
-    "name": "Divertor open/closed configuration",
-    "value": false,
+  "div_baffle_type": {
+    "name": "Divertor baffle configuration (arc shaped, leg flux shaped, open)",
+    "value": "circle_baffle",
     "unit": "dimensionless",
     "source": "Input"
   },
