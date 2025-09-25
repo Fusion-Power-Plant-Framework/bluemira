@@ -18,9 +18,11 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import make_circle, make_polygon
-from bluemira.materials.material import Void
+from bluemira.materials import Void
 
 REACTOR_NAME = "My Reactor"
+
+test_void = Void(name="test")
 
 
 class TFCoil(ComponentManager):
@@ -123,7 +125,7 @@ class TestReactor:
 
         reactor.plasma.component().get_component(dim).get_component(
             "LCFS"
-        ).material = Void("test")
+        ).material = test_void
 
         with patch("bluemira.display.displayer.show_cad") as mock_show:
             if material_filter:
@@ -221,7 +223,7 @@ class TestComponentMananger:
     def test_show_cad_ignores_void_by_default(self, dim, material_filter):
         p_comp = deepcopy(self.p_comp)
 
-        p_comp.get_component(dim).get_component("LCFS").material = Void("test")
+        p_comp.get_component(dim).get_component("LCFS").material = test_void
 
         plasma = Plasma(p_comp)
 
