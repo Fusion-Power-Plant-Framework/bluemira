@@ -368,7 +368,11 @@ plt.pause(PLT_PAUSE)
 sof_summary = sof.analyse_plasma()
 eof_summary = eof.analyse_plasma()
 
-bluemira_print(f"SOF: beta_p: {sof_summary.beta_p:.2f} l_i: {sof_summary.li_3:.2f}")
-bluemira_print(f"EOF: beta_p: {eof_summary.beta_p:.2f} l_i: {eof_summary.li_3:.2f}")
+bluemira_print(
+    f"SOF: beta_p: {sof_summary.beta_p.value:.2f} l_i: {sof_summary.li_3.value:.2f}"
+)
+bluemira_print(
+    f"EOF: beta_p: {eof_summary.beta_p.value:.2f} l_i: {eof_summary.li_3.value:.2f}"
+)
 
 plt.show(block=True)
