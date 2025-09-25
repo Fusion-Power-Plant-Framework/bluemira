@@ -166,7 +166,6 @@ select = ["ALL"]
 ignore = [
     "ANN",     # type annotations
     "EM",      # string in error messages
-    "PD901",   # Pandas df variable name
     "B019",    # using cache memory leaks
     "COM812",  # enforce trailing comma, disagrees with black/ruff format
     "D200",    # docs stuff

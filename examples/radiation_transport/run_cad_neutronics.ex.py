@@ -72,7 +72,8 @@ dagmc_univ = openmc.DAGMCUniverse(
 with open(meta_data_path) as meta_file:
     bom = json.load(meta_file)["bom"]
 openmc_mats = [
-    get_cached_material(mat_name).to_openmc_material(temperature=294) for mat_name in bom
+    get_cached_material(mat_name).convert("openmc", op_cond={"temperature": 294})
+    for mat_name in bom
 ]
 
 # load DAG model
