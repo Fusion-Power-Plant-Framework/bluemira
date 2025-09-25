@@ -159,12 +159,18 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
         self.targets(self.eq, I_not_dI=True, fixed_coils=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
+        # Get the optimisation currents expansion matrix.
+        currents_expand_mat = self.eq.coilset._opt_currents_expand_mat
+        # If it is not None then, use to convert the optimisable
+        # currents to the full set of currents in the CoilSet.
+        if currents_expand_mat is not None:
+            a_mat = a_mat @ currents_expand_mat  # nlopt read only  # noqa: PLR6104
+
         objective = RegularisedLsqObjective(
             scale=self.scale,
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
-            currents_expand_mat=self.coilset._opt_currents_expand_mat,
         )
         return objective.f_objective(opt_currents)
 
