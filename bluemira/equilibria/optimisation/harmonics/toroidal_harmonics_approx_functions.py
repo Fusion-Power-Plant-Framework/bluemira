@@ -297,6 +297,7 @@ def toroidal_harmonic_grid_and_coil_setup(
     else:
         th_coil_names = c_names.tolist()
 
+    # TODO check if modifying the eq object here is acceptable
     eq.coilset.control = th_coil_names
     R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
@@ -1103,6 +1104,20 @@ def plot_toroidal_harmonic_approximation(
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
         colors="red",
         linewidths=1,
+    )
+    ax.plot(
+        [9, 9],
+        [-5, -5],
+        color="red",
+        lw=1,
+        label="TH coilset psi",
+    )
+    ax.plot(
+        [9, 9],
+        [-5.25, -5.25],
+        color="black",
+        lw=1,
+        label="BM coilset psi",
     )
 
     ax.plot(
