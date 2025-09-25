@@ -8,3 +8,7 @@
 """
 Module-level functionality for materials.
 """
+
+from bluemira.materials.basic import Void
+
+__all__ = ["Void"]
