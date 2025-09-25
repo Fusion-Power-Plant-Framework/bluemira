@@ -933,6 +933,47 @@ def test_legendre_q_function():
         test_leg_q_array_values, expected_leg_q_array_values
     )
 
+    # test the different cases in the if block are calculated as expected
+    # testing legQ is float and x==1, so expect legQ to be set to inf
+    test_result = legendre_q(2, 2, 1)
+    assert test_result == np.inf
+
+    # testing legQ is float and x!=1, so returned legQ should not be inf
+    test_result = legendre_q(2, 2, 2)
+    assert test_result != np.inf
+
+    # one mode, multiple x, check that the entry where x==1 is inf and the
+    # entry where x==2 is not inf
+    test_result = legendre_q(2, 2, np.array([1, 2]))
+    assert test_result[0] == np.inf
+    assert test_result[1] != np.inf
+
+    # multiple modes, one x, x==1, check legQ is all np.inf
+    test_result = legendre_q(np.array([1, 2]), 2, 1)
+    assert all(test_result == np.inf)
+
+    # multiple modes, one x, x!=1, check legQ is not all np.inf
+    test_result = legendre_q(np.array([1, 2]), 2, 2)
+    assert all(test_result != np.inf)
+
+    # one mode, multiple x
+    test_result = legendre_q(1, 2, np.array([1, 2]))
+    assert test_result[0] == np.inf
+    assert test_result[1] != np.inf
+
+    # multiple modes, multiple x
+    # grid coordinates
+    test_result = legendre_q(
+        np.array([1, 2])[:, None, None], 2, np.array([[1, 2], [3, 4]])
+    )
+    assert all(test_result[:, 0, 0] == np.inf)
+    assert all(test_result[:, 1, 0] != np.inf)
+
+    # array coordinates
+    test_result = legendre_q(np.array([1, 2])[:, None], 2, np.array([1, 2]))
+    assert all(test_result[:, 0] == np.inf)
+    assert all(test_result[:, 1] != np.inf)
+
 
 class TestRegressionTH:
     @classmethod
@@ -1469,4 +1510,3 @@ class TestRegressionTH:
 
 
 # TODO add tests for collocation points
-# TODO expand legendreQ test to cover all cases
