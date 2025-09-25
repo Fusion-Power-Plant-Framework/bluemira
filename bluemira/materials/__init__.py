@@ -9,20 +9,6 @@
 Module-level functionality for materials.
 """
 
-# from bluemira.materials.cache import MaterialCache
-# from bluemira.materials.basic import (
-#     BePebbleBed,
-#     NbSnSuperconductor,
-#     NbTiSuperconductor,
-#     Plasma,
-#     Void,
-# )
+from bluemira.materials.basic import Void
 
-__all__ = [
-    "BePebbleBed",
-    "MaterialCache",
-    "NbSnSuperconductor",
-    "NbTiSuperconductor",
-    "Plasma",
-    "Void",
-]
+__all__ = ["Void"]
