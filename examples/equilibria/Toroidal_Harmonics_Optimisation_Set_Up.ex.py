@@ -34,7 +34,7 @@ Usage of the 'brute_force_toroidal_harmonic_approximation' function.
 #
 
 # %% [markdown]
-# ### Imports
+# ## Imports
 
 # %%
 from copy import deepcopy
@@ -89,7 +89,7 @@ plt.show()
 
 
 # %%[markdown]
-# ### Setup
+# ## Setup
 
 # Find TH approximation of coilset contribution to the core
 # plasma region.
@@ -125,7 +125,7 @@ f, ax = plot_toroidal_harmonic_approximation(
 ax.set_title("Comparison of bluemira coilset psi to TH approx.")
 plt.show()
 # %% [markdown]
-# ### Use in Optimisation Problem
+# ## Use in Optimisation Problem
 # We can use the amplitudes for each of our approximation poloidal modes
 # as constraints or targets. In the following example, we do both.
 # In this example, we are merely attempting to preserve an equilibrium
