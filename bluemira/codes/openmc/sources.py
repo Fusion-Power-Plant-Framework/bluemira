@@ -51,23 +51,30 @@ def make_tokamak_source(
         Fusion source for OpenMC
     """
     rho_profile = np.linspace(0, 1, 50)
+    temperature_profile = ParabolicPedestalProfile(
+        source_parameters.electron_temperature_core,
+        source_parameters.electron_temperature_ped,
+        source_parameters.electron_temperature_sep,
+        source_parameters.electron_temperature_alpha,
+        source_parameters.electron_temperature_beta,
+        source_parameters.rho_pedestal,
+    )
+    temperature_profile.set_scale(source_parameters.ie_temperature_ratio)
+
+    density_profile = ParabolicPedestalProfile(
+        source_parameters.electron_density_core,
+        source_parameters.electron_density_ped,
+        source_parameters.electron_density_sep,
+        source_parameters.electron_density_alpha,
+        2.0,  # Hard-coded as 2.0 in PROCESS
+        source_parameters.rho_pedestal,
+    )
+    density_profile.set_scale(
+        source_parameters.va_fuel_ion_density / source_parameters.va_electron_density
+    )
     transport = TransportInformation.from_parameterisations(
-        ion_temperature_profile=ParabolicPedestalProfile(
-            source_parameters.electron_temperature_core,
-            source_parameters.electron_temperature_ped,
-            source_parameters.electron_temperature_sep,
-            source_parameters.electron_temperature_alpha,
-            source_parameters.electron_temperature_beta,
-            source_parameters.rho_pedestal,
-        ),
-        fuel_density_profile=ParabolicPedestalProfile(
-            source_parameters.electron_density_core,
-            source_parameters.electron_density_ped,
-            source_parameters.electron_density_sep,
-            source_parameters.electron_density_alpha,
-            2.0,  # Hard-coded as 2.0 in PROCESS
-            source_parameters.rho_pedestal,
-        ),
+        ion_temperature_profile=temperature_profile,
+        fuel_density_profile=density_profile,
         rho_profile=rho_profile,
         fuel_composition=FractionalFuelComposition(D=0.5, T=0.5),
     )
