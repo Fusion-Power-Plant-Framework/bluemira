@@ -303,11 +303,11 @@ def toroidal_harmonic_grid_and_coil_setup(
     # Using approximate value for d2_min and tau_max to avoid infinities and divide by 0
     # errors
     # From the toroidal coordinate transform functions we have that
-    # $\tau = \ln \frac{d_1}{d_2}$, $d_1^2 = (R + R_0)^2 + (z - z_0)^2$, and
-    # $d_2^2 = (R - R_0)^2 + (z - z_0)^2$
+    # $\tau = \ln \frac{d_1}{d_2}$, $d_1^2 = (R + R_0)^2 + (Z - Z_0)^2$, and
+    # $d_2^2 = (R - R_0)^2 + (Z - Z_0)^2$
     # We want to approximate the maximum value of tau and the minimum value of d_2.
     # The maximum value of tau occurs when d_1 is at its maximum value and d_2 is at its
-    # minimum value. d_1 is largest at the focus, where R = R_0 and z = z_0, and so from
+    # minimum value. d_1 is largest at the focus, where R = R_0 and Z = Z_0, and so from
     # the relation above we have that d2_max = 2 * R_0. This gives us that
     # tau_max = ln(2 * R_0 / d2_min). d_2 is smallest at the focus, and this would give
     # d_2 = 0. However, this would lead to a divide by 0 error in calculating tau_max
