@@ -66,7 +66,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.13.1",
+    "ruff==0.13.2",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -166,7 +166,6 @@ select = ["ALL"]
 ignore = [
     "ANN",     # type annotations
     "EM",      # string in error messages
-    "PD901",   # Pandas df variable name
     "B019",    # using cache memory leaks
     "COM812",  # enforce trailing comma, disagrees with black/ruff format
     "D200",    # docs stuff
@@ -364,6 +363,7 @@ ignore-names = [
 "tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
+"scripts/openmc_data_download/*" = ["ASYNC240"]
 
 # TODO future removal
 "bluemira/structural/*" = ["DOC201"]  # 22
