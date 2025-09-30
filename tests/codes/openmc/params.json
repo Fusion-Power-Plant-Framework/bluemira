@@ -59,6 +59,25 @@
     "source": "Input",
     "long_name": "Separatrix plasma electron density"
   },
+  "T_ie_ratio": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of ion to electron temperature."
+
+  },
+  "n_i_fuel": {
+    "value": 0.8e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Fuel ion density (volume-averaged)"
+  },
+  "n_e": {
+    "value": 1e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Volume-averaged electron density"
+  },
   "T_profile_alpha": {
     "value": 1.45,
     "unit": "dimensionless",
