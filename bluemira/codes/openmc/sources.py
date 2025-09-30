@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import openmc
-from openmc_plasma_source import tokamak_source
 from tokamak_neutron_source import (
     TokamakNeutronSource,
     FluxMap,

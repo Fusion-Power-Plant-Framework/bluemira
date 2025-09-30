@@ -46,24 +46,33 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         towards the outboard radial direction.
     """
 
+    """Major Radius"""
+    R_0: Parameter[float]
+    """Aspect ratio"""
+    A: Parameter[float]
     """Pedestal location in normalized (minor) radius"""
     profile_rho_ped: Parameter[float]
 
+    """Plasma elongation"""
+    kappa: Parameter[float]
+    """Plasma triangularity"""
+    delta: Parameter[float]
     """Reactor power"""
     reactor_power: Parameter[float]
-
     """ion density profile descriptors"""
     n_profile_alpha: Parameter[float]
     n_e_core: Parameter[float]
     n_e_ped: Parameter[float]
     n_e_sep: Parameter[float]
-
     """temperature profile descriptors"""
     T_profile_alpha: Parameter[float]
     T_profile_beta: Parameter[float]
     T_e_core: Parameter[float]
     T_e_ped: Parameter[float]
     T_e_sep: Parameter[float]
+
+    """Shafranov shift"""
+    shaf_shift: Parameter[float]
 
 
 @dataclass(frozen=True)
@@ -93,9 +102,9 @@ class PlasmaSourceParameters:
 
     ion_temperature_alpha: float  # [dimensionless]
     ion_temperature_beta: float  # [dimensionless]
-    ion_temperature_core: float  # [keV]
-    ion_temperature_ped: float  # [keV]
-    ion_temperature_sep: float  # [keV]
+    ion_temperature_core: float  # [eV]
+    ion_temperature_ped: float  # [eV]
+    ion_temperature_sep: float  # [eV]
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
