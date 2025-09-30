@@ -41,39 +41,39 @@ def test_neutronics_reactor_power():
 
 
 def test_density_profile_alpha_exponent():
-    assert pms_params.ion_density_alpha == 1.0  # [dimensionless]
+    assert pms_params.electron_density_alpha == 1.0  # [dimensionless]
 
 
 def test_core_plasma_electron_density():
-    assert pms_params.ion_density_core == 1.5e20  # [1/m^3]
+    assert pms_params.electron_density_core == 1.5e20  # [1/m^3]
 
 
 def test_pedestal_plasma_electron_density():
-    assert pms_params.ion_density_ped == 8e19  # [1/m^3]
+    assert pms_params.electron_density_ped == 8e19  # [1/m^3]
 
 
 def test_separatrix_plasma_electron_density():
-    assert pms_params.ion_density_sep == 3e19  # [1/m^3]
+    assert pms_params.electron_density_sep == 3e19  # [1/m^3]
 
 
 def test_temperature_profile_alpha_exponent():
-    assert pms_params.ion_temperature_alpha == 1.45  # [dimensionless]
+    assert pms_params.electron_temperature_alpha == 1.45  # [dimensionless]
 
 
 def test_temperature_profile_beta_exponent():
-    assert pms_params.ion_temperature_beta == 2.0  # [dimensionless]
+    assert pms_params.electron_temperature_beta == 2.0  # [dimensionless]
 
 
 def test_core_plasma_electron_temperature():
-    assert pms_params.ion_temperature_core == 20000.0  # [eV]
+    assert pms_params.electron_temperature_core == 20000.0  # [eV]
 
 
 def test_pedestal_plasma_electron_temperature():
-    assert pms_params.ion_temperature_ped == 5500.0  # [eV]
+    assert pms_params.electron_temperature_ped == 5500.0  # [eV]
 
 
 def test_separatrix_plasma_electron_temperature():
-    assert pms_params.ion_temperature_sep == 100.0  # [eV]
+    assert pms_params.electron_temperature_sep == 100.0  # [eV]
 
 
 

@@ -53,18 +53,18 @@ def make_tokamak_source(
     rho_profile = np.linspace(0, 1, 50)
     transport = TransportInformation.from_parameterisations(
         ion_temperature_profile=ParabolicPedestalProfile(
-            source_parameters.ion_temperature_core,
-            source_parameters.ion_temperature_ped,
-            source_parameters.ion_temperature_sep,
-            source_parameters.ion_temperature_alpha,
-            source_parameters.ion_temperature_beta,
+            source_parameters.electron_temperature_core,
+            source_parameters.electron_temperature_ped,
+            source_parameters.electron_temperature_sep,
+            source_parameters.electron_temperature_alpha,
+            source_parameters.electron_temperature_beta,
             source_parameters.rho_pedestal,
         ),
         fuel_density_profile=ParabolicPedestalProfile(
-            source_parameters.ion_density_core,
-            source_parameters.ion_density_ped,
-            source_parameters.ion_density_sep,
-            source_parameters.ion_density_alpha,
+            source_parameters.electron_density_core,
+            source_parameters.electron_density_ped,
+            source_parameters.electron_density_sep,
+            source_parameters.electron_density_alpha,
             2.0,  # Hard-coded as 2.0 in PROCESS
             source_parameters.rho_pedestal,
         ),

@@ -71,6 +71,13 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     T_e_ped: Parameter[float]
     T_e_sep: Parameter[float]
 
+    T_ie_ratio: Parameter[float]
+    """Ion to electron temperature ratio (volume-averaged)."""
+    n_i_fuel: Parameter[float]
+    """Volume-averaged fuel ion density [1/metre **3]."""
+    n_e: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+
     """Shafranov shift"""
     shaf_shift: Parameter[float]
 
@@ -86,52 +93,60 @@ class PlasmaSourceParameters:
     ----------
     reactor_power:
         total reactor (thermal) power when operating at 100%
-
-    shaf_shift:
-        Shafranov shift shift of the centre of flux surfaces, i.e.
-        mean(min radius, max radius) of the LCFS, towards the outboard radial direction.
     """
 
     rho_pedestal: float  # [dimensionless]
     reactor_power: float  # [W]
 
-    ion_density_alpha: float  # [dimensionless]
-    ion_density_core: float  # [1/m^3]
-    ion_density_ped: float  # [1/m^3]
-    ion_density_sep: float  # [1/m^3]
+    electron_density_alpha: float  # [dimensionless]
+    electron_density_core: float  # [1/m^3]
+    electron_density_ped: float  # [1/m^3]
+    electron_density_sep: float  # [1/m^3]
 
-    ion_temperature_alpha: float  # [dimensionless]
-    ion_temperature_beta: float  # [dimensionless]
-    ion_temperature_core: float  # [eV]
-    ion_temperature_ped: float  # [eV]
-    ion_temperature_sep: float  # [eV]
+    electron_temperature_alpha: float  # [dimensionless]
+    electron_temperature_beta: float  # [dimensionless]
+    electron_temperature_core: float  # [eV]
+    electron_temperature_ped: float  # [eV]
+    electron_temperature_sep: float  # [eV]
+
+    ie_temperature_ratio: Parameter[float]
+    """Ion to electron temperature ratio (volume-averaged)."""
+    va_fuel_ion_density: Parameter[float]
+    """Volume-averaged fuel ion density [1/metre **3]."""
+    va_electron_density: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre ** 3]."""
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
     _unit: ClassVar[Mapping[str, str]] = MappingProxyType({
         "rho_pedestal": "1",
         "reactor_power": "W",
-        "ion_density_alpha": "1",
-        "ion_density_core": "1/m^3",
-        "ion_density_ped": "1/m^3",
-        "ion_density_sep": "1/m^3",
-        "ion_temperature_alpha": "1",
-        "ion_temperature_beta": "1",
-        "ion_temperature_core": "keV",
-        "ion_temperature_ped": "keV",
-        "ion_temperature_sep": "keV",
+        "electron_density_alpha": "1",
+        "electron_density_core": "1/m^3",
+        "electron_density_ped": "1/m^3",
+        "electron_density_sep": "1/m^3",
+        "electron_temperature_alpha": "1",
+        "electron_temperature_beta": "1",
+        "electron_temperature_core": "keV",
+        "electron_temperature_ped": "keV",
+        "electron_temperature_sep": "keV",
+        "va_electron_density": "1/m^3",
+        "va_fuel_ion_density": "1/m^3",
     })
     _mapping: ClassVar[Mapping[str, str]] = MappingProxyType({
         "rho_pedestal": "profile_rho_ped",
-        "ion_density_alpha": "n_profile_alpha",
-        "ion_density_core": "n_e_core",
-        "ion_density_ped": "n_e_ped",
-        "ion_density_sep": "n_e_sep",
-        "ion_temperature_alpha": "T_profile_alpha",
-        "ion_temperature_beta": "T_profile_beta",
-        "ion_temperature_core": "T_e_core",
-        "ion_temperature_ped": "T_e_ped",
-        "ion_temperature_sep": "T_e_sep",
+        "electron_density_alpha": "n_profile_alpha",
+        "electron_density_core": "n_e_core",
+        "electron_density_ped": "n_e_ped",
+        "electron_density_sep": "n_e_sep",
+        "electron_temperature_alpha": "T_profile_alpha",
+        "electron_temperature_beta": "T_profile_beta",
+        "electron_temperature_core": "T_e_core",
+        "electron_temperature_ped": "T_e_ped",
+        "electron_temperature_sep": "T_e_sep",
+        "va_electron_density": "n_e",
+        "va_fuel_ion_density": "n_i_fuel",
+
     })
 
     @classmethod
