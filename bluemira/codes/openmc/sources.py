@@ -11,7 +11,14 @@ from typing import TYPE_CHECKING
 import numpy as np
 import openmc
 from openmc_plasma_source import tokamak_source
-from tokamak_neutron_source import TokamakNeutronSource
+from tokamak_neutron_source import (
+    TokamakNeutronSource,
+    FluxMap,
+    TransportInformation,
+    FractionalFuelComposition,
+    Reactions,
+)
+from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
@@ -20,48 +27,60 @@ from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 if TYPE_CHECKING:
     from eqdsk import EQDSKInterface
 
+
 def make_tokamak_source(
     eq: EQDSKInterface,
+    source_parameters: PlasmaSourceParameters,
+    cell_side_length: float = 0.1,
 ) -> list[openmc.Source]:
-    """Make a tokamak neutron source using a PlasmaSourceParameters.
-    Some parameters are hard coded, while the rest are rest in from the params.json
-    and stored in the PlasmaSourceParameters
+    """
+    Make a tokamak neutron source using an equilibrium and PlasmaSourceParameters
+    for PROCESS parabolic-pedestal profiles.
 
     Parameters
     ----------
+    eq:
+        Equilibrium description
     source_parameters:
         PlasmaSourceParameters
+    cell_side_length:
+        The dimension of the squares with which to discretise the neutron source
 
     Returns
     -------
-    source: openmc.Source
+    source:
         Fusion source for OpenMC
     """
-    source = TokamakNeutronSource()
-    return source.to_open_mc()
-    return tokamak_source(
-        # tokamak geometry
-        major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
-        minor_radius=raw_uc(source_parameters.minor_radius, "m", "cm"),
-        elongation=source_parameters.elongation,
-        triangularity=source_parameters.triangularity,
-        mode="H",
-        # plasma geometry: ion stuff
-        ion_density_centre=source_parameters.ion_density_core,
-        ion_density_pedestal=source_parameters.ion_density_ped,
-        ion_density_peaking_factor=source_parameters.ion_density_alpha,
-        ion_density_separatrix=source_parameters.ion_density_sep,
-        ion_temperature_centre=source_parameters.ion_temperature_core,
-        ion_temperature_pedestal=source_parameters.ion_temperature_ped,
-        ion_temperature_separatrix=source_parameters.ion_temperature_sep,
-        ion_temperature_peaking_factor=source_parameters.ion_density_alpha,
-        ion_temperature_beta=source_parameters.ion_temperature_beta,
-        # shaping
-        shafranov_factor=source_parameters.shaf_shift,
-        pedestal_radius=source_parameters.pedestal_radius,
-        # plasma composition
-        fuel={"D": 0.5, "T": 0.5},
+    rho_profile = np.linspace(0, 1, 50)
+    transport = TransportInformation.from_parameterisations(
+        ion_temperature_profile=ParabolicPedestalProfile(
+            source_parameters.ion_temperature_core,
+            source_parameters.ion_temperature_ped,
+            source_parameters.ion_temperature_sep,
+            source_parameters.ion_temperature_alpha,
+            source_parameters.ion_temperature_beta,
+            source_parameters.rho_pedestal,
+        ),
+        fuel_density_profile=ParabolicPedestalProfile(
+            source_parameters.ion_density_core,
+            source_parameters.ion_density_ped,
+            source_parameters.ion_density_sep,
+            source_parameters.ion_density_alpha,
+            2.0,  # Hard-coded as 2.0 in PROCESS
+            source_parameters.rho_pedestal,
+        ),
+        rho_profile=rho_profile,
+        fuel_composition=FractionalFuelComposition(D=0.5, T=0.5),
     )
+    flux_map = FluxMap.from_eqdsk(eq)
+
+    source = TokamakNeutronSource(
+        transport,
+        flux_map,
+        source_type=[Reactions.D_T, Reactions.D_D],
+        cell_side_length=cell_side_length,
+    )
+    return source.to_openmc_source()
 
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:

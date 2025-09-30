@@ -48,7 +48,7 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
 
     """Pedestal location in normalized (minor) radius"""
     profile_rho_ped: Parameter[float]
-    
+
     """Reactor power"""
     reactor_power: Parameter[float]
 
@@ -93,9 +93,9 @@ class PlasmaSourceParameters:
 
     ion_temperature_alpha: float  # [dimensionless]
     ion_temperature_beta: float  # [dimensionless]
-    ion_temperature_core: float  # [eV]
-    ion_temperature_ped: float  # [eV]
-    ion_temperature_sep: float  # [eV]
+    ion_temperature_core: float  # [keV]
+    ion_temperature_ped: float  # [keV]
+    ion_temperature_sep: float  # [keV]
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
@@ -108,9 +108,9 @@ class PlasmaSourceParameters:
         "ion_density_sep": "1/m^3",
         "ion_temperature_alpha": "1",
         "ion_temperature_beta": "1",
-        "ion_temperature_core": "eV",
-        "ion_temperature_ped": "eV",
-        "ion_temperature_sep": "eV",
+        "ion_temperature_core": "keV",
+        "ion_temperature_ped": "keV",
+        "ion_temperature_sep": "keV",
     })
     _mapping: ClassVar[Mapping[str, str]] = MappingProxyType({
         "rho_pedestal": "profile_rho_ped",
