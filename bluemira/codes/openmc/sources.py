@@ -5,17 +5,23 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Neutronics sources"""
 
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import numpy as np
 import openmc
 from openmc_plasma_source import tokamak_source
+from tokamak_neutron_source import TokamakNeutronSource
 
 from bluemira.base.constants import raw_uc
 from bluemira.codes.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
+if TYPE_CHECKING:
+    from eqdsk import EQDSKInterface
 
 def make_tokamak_source(
-    source_parameters: PlasmaSourceParameters,
+    eq: EQDSKInterface,
 ) -> list[openmc.Source]:
     """Make a tokamak neutron source using a PlasmaSourceParameters.
     Some parameters are hard coded, while the rest are rest in from the params.json
@@ -29,15 +35,10 @@ def make_tokamak_source(
     Returns
     -------
     source: openmc.Source
-        D-T fusion source for OpenMC
-
-    Notes
-    -----
-    The same source material referenced by openmc_plasma_source is used:
-    .. doi:: 10.1016/j.fusengdes.2012.02.025
-      :title: Fausser et al, 'Tokamak D-T neutron source models for different
-              plasma physics confinement modes', Fus. Eng. and Design,
+        Fusion source for OpenMC
     """
+    source = TokamakNeutronSource()
+    return source.to_open_mc()
     return tokamak_source(
         # tokamak geometry
         major_radius=raw_uc(source_parameters.major_radius, "m", "cm"),
