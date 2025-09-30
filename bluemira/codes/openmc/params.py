@@ -146,7 +146,6 @@ class PlasmaSourceParameters:
         "electron_temperature_sep": "T_e_sep",
         "va_electron_density": "n_e",
         "va_fuel_ion_density": "n_i_fuel",
-
     })
 
     @classmethod
