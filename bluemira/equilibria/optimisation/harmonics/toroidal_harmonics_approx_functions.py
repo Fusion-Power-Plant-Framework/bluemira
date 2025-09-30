@@ -9,6 +9,7 @@ A collection of functions used to approximate toroidal harmonics.
 """
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from itertools import combinations
 from math import factorial
 
@@ -199,6 +200,8 @@ class ToroidalHarmonicsParams:
     """R coordinate of the focus point in cylindrical coordinates"""
     Z_0: float
     """Z coordinate of the focus point in cylindrical coordinates"""
+    min_tau: float
+    """The minimum tau for the toroidal coordinate approximation region"""
     R: np.ndarray
     """R coordinates of the grid in cylindrical coordinates"""
     Z: np.ndarray
@@ -219,8 +222,22 @@ class ToroidalHarmonicsParams:
     """names of coils to use with TH approximation (always outside the LCFS tau limit)"""
 
 
+class TauLimit(Enum):
+    """
+    TauLimit Enum
+    """
+
+    LCFS = auto()
+    COIL = auto()
+    MANUAL = auto()
+
+
 def toroidal_harmonic_grid_and_coil_setup(
-    eq: Equilibrium, R_0: float, Z_0: float, radius: float | None = None
+    eq: Equilibrium,
+    R_0: float,
+    Z_0: float,
+    tau_limit=TauLimit.LCFS,
+    min_tau_value: float | None = None,
 ) -> ToroidalHarmonicsParams:
     """
     Set up the grid and coils to be used in toroidal harmonic approximation.
@@ -235,25 +252,53 @@ def toroidal_harmonic_grid_and_coil_setup(
     eq:
         Starting equilibrium to use in our approximation
     R_0:
-        R coordinate of the focus point in cylindrical coordinates
+        R coordinate of the toroidal focus point in cylindrical coordinates
     Z_0:
-        Z coordinate of the focus point in cylindrical coordinates
+        Z coordinate of the toroidal focus point in cylindrical coordinates
+    min_tau_value:
+        The minimum tau for the toroidal coordinate approximation region,
+        lower min tau means a larger region of space (maximum tau is at focus)
 
     Returns
     -------
     ToroidalHarmonicsParams:
         Dataclass holding necessary parameters for the TH approximation
+
+    Raises
+    ------
+    EquilibriaError
+        If MANUAL tau_limit is specified but no min_tau_value chosen.
     """
+    # Get coil coordinates in toroidal coordinates
+    R_coils = eq.coilset.x  # noqa: N806
+    Z_coils = eq.coilset.z  # noqa: N806
+    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_coils, Z=Z_coils)
+    R_corners = np.concatenate((  # noqa: N806
+        R_coils + eq.coilset.dx,
+        R_coils - eq.coilset.dx,
+        R_coils + eq.coilset.dx,
+        R_coils - eq.coilset.dx,
+    ))
+    Z_corners = np.concatenate((  # noqa: N806
+        Z_coils - eq.coilset.dz,
+        Z_coils - eq.coilset.dz,
+        Z_coils + eq.coilset.dz,
+        Z_coils + eq.coilset.dz,
+    ))
+    tau_corners, _ = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_corners, Z=Z_corners)
     # Find region over which to approximate psi using TH by finding LCFS tau limit
-    if radius is None:
+    if tau_limit is TauLimit.LCFS:
         lcfs = eq.get_LCFS()
-        lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=lcfs.x, Z=lcfs.z)
-        tau_lcfs_limit = np.min(lcfs_tau)
+        lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=lcfs.x, Z=lcfs.z)
+        min_tau = np.min(lcfs_tau)
+    elif tau_limit is TauLimit.COIL:
+        min_tau = np.max(tau_corners)
     else:
-        x_points = np.array([R_0 - radius, R_0, R_0 + radius, R_0])
-        z_points = np.array([0, radius, 0, -radius])
-        circle_tau, _ = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_points, Z=z_points)
-        tau_lcfs_limit = np.min(circle_tau)
+        if min_tau_value is None:
+            raise EquilibriaError(
+                "Please enter a minimum tau value if MANUAL tau_limit is specified."
+            )
+        min_tau = min_tau_value
 
     # Using approximate value for d2_min and tau_max to avoid infinities and divide by 0
     # errors
@@ -271,7 +316,7 @@ def toroidal_harmonic_grid_and_coil_setup(
     d2_min = 0.05
     tau_max = np.log(2 * R_0 / d2_min)
     n_tau = 200
-    tau = np.linspace(tau_lcfs_limit, tau_max, n_tau)
+    tau = np.linspace(min_tau, tau_max, n_tau)
     n_sigma = 150
     sigma = np.linspace(-np.pi, np.pi, n_sigma)
 
@@ -279,16 +324,14 @@ def toroidal_harmonic_grid_and_coil_setup(
     tau, sigma = np.meshgrid(tau, sigma)
 
     # Convert to cylindrical coordinates
-    R, Z = toroidal_to_cylindrical(R_0=R_0, z_0=Z_0, tau=tau, sigma=sigma)  # noqa: N806
-    R_coils = eq.coilset.x  # noqa: N806
-    Z_coils = eq.coilset.z  # noqa: N806
-    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
+    R, Z = toroidal_to_cylindrical(R_0=R_0, Z_0=Z_0, tau=tau, sigma=sigma)  # noqa: N806
 
+    # Get control coil names
     c_names = np.array(eq.coilset.control)
 
     # Find coils that can be used in TH approximation, and those that cannot be used
-    if tau_lcfs_limit < np.min(tau_c):
-        not_too_close_coils = c_names[tau_c < tau_lcfs_limit].tolist()
+    if min_tau < np.min(tau_c):
+        not_too_close_coils = c_names[tau_c < min_tau].tolist()
         bluemira_debug(
             "Names of coils that can be used in the TH"
             f" approximation: {not_too_close_coils}."
@@ -300,11 +343,12 @@ def toroidal_harmonic_grid_and_coil_setup(
     # TODO check if modifying the eq object here is acceptable
     eq.coilset.control = th_coil_names
     R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
-    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=R_coils, Z=Z_coils)
+    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_coils, Z=Z_coils)
 
     return ToroidalHarmonicsParams(
         R_0,
         Z_0,
+        min_tau,
         R,
         Z,
         R_coils,
@@ -394,7 +438,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
     z_c = np.array(z_c)
 
     # Toroidal coords
-    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, z_0=Z_0, R=x_c, Z=z_c)
+    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=x_c, Z=z_c)
     # Useful combination
     Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
 
