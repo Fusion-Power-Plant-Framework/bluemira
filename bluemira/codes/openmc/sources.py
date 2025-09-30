@@ -84,6 +84,7 @@ def make_tokamak_source(
         transport,
         flux_map,
         source_type=[Reactions.D_T, Reactions.D_D],
+        total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
     return source.to_openmc_source()
