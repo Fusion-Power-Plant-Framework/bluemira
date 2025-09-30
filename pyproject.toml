@@ -85,14 +85,17 @@ pinned = [
 ]
 
 conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
-openmc = ["openmc>=0.14.0", "openmc_data==2.3.1"]
 process = ["process @ git+https://github.com/ukaea/process@v3.2.0"]
+openmc = [
+    "openmc>=0.14.0",
+    "openmc_data==2.3.1",
+    "fusion-neutron-source-testing @ git+ssh://github.com/Fusion-Power-Plant-Framework/fusion-neutron-source-testing",
+]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
 dagmc = [
     "cgal>=6.0.1",
     "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
-    "openmc_plasma_source>=0.4.0",
 ]
 
 [build-system]
