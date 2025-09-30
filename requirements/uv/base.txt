@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.8.0
+blosc2==3.9.0
     # via tables
 certifi==2025.8.3
     # via requests
@@ -34,7 +34,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.60.0
+fonttools==4.60.1
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -78,7 +78,7 @@ numba==0.62.0
     #   numba-scipy
 numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787
     # via bluemira (pyproject.toml)
-numexpr==2.12.1
+numexpr==2.13.0
     # via
     #   blosc2
     #   tables
@@ -106,7 +106,7 @@ packaging==25.0
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.3.2
+pandas==2.3.3
     # via seaborn
 periodictable==2.0.2
     # via bluemira (pyproject.toml)
