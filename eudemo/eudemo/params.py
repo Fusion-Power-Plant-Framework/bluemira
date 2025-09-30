@@ -144,6 +144,8 @@ class EUDEMOReactorParams(ParameterFrame):
     """Pedestal location in normalized radius [dimensionless]."""
     T_e: Parameter[float]
     """Volumed-averaged plasma electron temperature [kiloelectron_volt]."""
+    T_ie_ratio: Parameter[float]
+    """Ion to electron temperature ratio (volume-averaged)."""
     T_e_core: Parameter[float]
     """Core electron temperature [kiloelectron_volt]."""
     T_e_ped: Parameter[float]
@@ -158,6 +160,8 @@ class EUDEMOReactorParams(ParameterFrame):
     """Pedestal electron density [1/metre ** 3]."""
     n_e_sep: Parameter[float]
     """Electron density at the separatrix [1/metre ** 3]."""
+    n_i_fuel: Parameter[float]
+    """Volume-averaged fuel ion density [1/metre **3]."""
 
     q_control: Parameter[float]
 

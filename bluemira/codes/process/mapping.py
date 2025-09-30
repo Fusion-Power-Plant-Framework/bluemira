@@ -102,6 +102,8 @@ OUT_mappings = {
     "n_e": ("dene", "1/m^3"),
     "n_e_ped": ("neped", "1/m^3"),
     "n_e_sep": ("nesep", "1/m^3"),
+    "n_i_fuel": ("nd_fuel_ions", "1/m^3"),
+    "T_ie_ratio": ("tratio", ""),
 }
 
 IO_mappings = {

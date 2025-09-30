@@ -367,6 +367,9 @@ class ProcessSolverParams(MappedParameterFrame):
     T_e_sep: Parameter[float]
     """Electron temperature at the separatrix [kiloelectron_volt]."""
 
+    T_ie_ratio: Parameter[float]
+    """Ion to electron temperature ratio (volume-averaged)."""
+
     n_e: Parameter[float]
     """Volumed-averaged plasma electron density [1/metre ** 3]."""
 
@@ -378,6 +381,9 @@ class ProcessSolverParams(MappedParameterFrame):
 
     n_e_sep: Parameter[float]
     """Electron density at the separatrix [1/metre ** 3]."""
+
+    n_i_fuel: Parameter[float]
+    """Volume-averaged fuel ion density [1/metre **3]."""
 
     tk_tf_outboard: Parameter[float]
     """TF coil outboard thickness [meter]."""
