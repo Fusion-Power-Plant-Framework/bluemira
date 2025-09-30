@@ -328,19 +328,17 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         Plot the constrained region onto an Axes.
         """
+        # TODO update this plot
         if ax is None:
             _, ax = plt.subplots()
-        max_R = np.max(self.th_params.R)  # noqa: N806
-        min_R = np.min(self.th_params.R)  # noqa: N806
-        max_Z = np.max(self.th_params.Z)  # noqa: N806
-        min_Z = np.min(self.th_params.Z)  # noqa: N806
-        centre_R = (max_R - min_R) / 2 + min_R  # noqa: N806
-        centre_Z = (max_Z - np.abs(min_Z)) / 2  # noqa: N806
-        radius = (max_R - min_R) / 2
 
         ax.add_patch(
             patch.Circle(
-                (centre_R, centre_Z), radius, ec="orange", fill=True, fc="orange"
+                (self.th_params.R_0, self.th_params.Z_0),
+                self.th_params.radius,
+                ec="orange",
+                fill=True,
+                fc="orange",
             )
         )
 

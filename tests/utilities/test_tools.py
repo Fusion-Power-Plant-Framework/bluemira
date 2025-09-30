@@ -404,7 +404,7 @@ class TestDeprecationWrapper:
 def test_toroidal_coordinate_transform():
     # set values to be used in the tests
     R_0_test = 1.0  # noqa: N806
-    z_0_test = 0.0
+    Z_0_test = 0.0  # noqa: N806
     # set tau and sigma isosurfaces to be used in the tests and the min & max r & z
     # points for each isosurface
     # fmt: off
@@ -586,13 +586,13 @@ def test_toroidal_coordinate_transform():
     # use the test tau isosurface r,z points for this
     toroidal_conversion = cylindrical_to_toroidal(
         R_0=R_0_test,
-        z_0=z_0_test,
+        Z_0=Z_0_test,
         R=tau_test_isosurface_rz_points[0],
         Z=tau_test_isosurface_rz_points[1],
     )
     cylindrical_conversion = toroidal_to_cylindrical(
         R_0=R_0_test,
-        z_0=z_0_test,
+        Z_0=Z_0_test,
         tau=toroidal_conversion[0],
         sigma=toroidal_conversion[1],
     )
@@ -605,7 +605,7 @@ def test_toroidal_coordinate_transform():
     tau_input = [0.5]
     sigma_input = np.linspace(-np.pi, np.pi, 200)
     rs, zs = toroidal_to_cylindrical(
-        R_0=R_0_test, z_0=z_0_test, sigma=sigma_input, tau=tau_input
+        R_0=R_0_test, Z_0=Z_0_test, sigma=sigma_input, tau=tau_input
     )
     rs_max = np.max(rs)
     rs_min = np.min(rs)
@@ -620,7 +620,7 @@ def test_toroidal_coordinate_transform():
     sigma_input = [0.5]
     tau_input = np.linspace(0, 5, 200)
     rs, zs = toroidal_to_cylindrical(
-        R_0=R_0_test, z_0=z_0_test, sigma=sigma_input, tau=tau_input
+        R_0=R_0_test, Z_0=Z_0_test, sigma=sigma_input, tau=tau_input
     )
     rs_max = np.max(rs)
     rs_min = np.min(rs)
