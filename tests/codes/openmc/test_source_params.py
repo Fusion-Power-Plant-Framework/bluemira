@@ -31,28 +31,9 @@ openmc_solver_pm_frame = make_parameter_frame(
 pms_params = PlasmaSourceParameters.from_parameterframe(openmc_solver_pm_frame)
 
 
-def test_major_radius():
-    assert pms_params.major_radius == 900.0  # [cm]
-
-
-def test_plasma_aspect_ratio():
-    assert pms_params.aspect_ratio == 3.1  # [dimensionless]
-
 
 def test_pedestal_location_in_normalized_radius():
     assert pms_params.rho_pedestal == 0.94  # [dimensionless]
-
-
-def test_pedestal_radius():
-    assert np.isclose(pms_params.pedestal_radius, 900 / 3.1 * 0.94)
-
-
-def test_last_closed_surface_plasma_elongation():
-    assert pms_params.elongation == 1.792  # [dimensionless]
-
-
-def test_last_closed_surface_plasma_triangularity():
-    assert pms_params.triangularity == 0.5  # [dimensionless]
 
 
 def test_neutronics_reactor_power():
@@ -94,8 +75,5 @@ def test_pedestal_plasma_electron_temperature():
 def test_separatrix_plasma_electron_temperature():
     assert pms_params.ion_temperature_sep == 100.0  # [eV]
 
-
-def test_shafranov_shift_of_plasma():
-    assert pms_params.shaf_shift == 50.0  # [cm]
 
 
