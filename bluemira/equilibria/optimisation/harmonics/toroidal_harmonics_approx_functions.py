@@ -271,7 +271,7 @@ def toroidal_harmonic_grid_and_coil_setup(
         If MANUAL tau_limit is specified but no min_tau_value chosen.
     """
     # Get coil coordinates in toroidal coordinates
-    th_coilset = deepcopy(eq.coilset)
+    th_coilset = deepcopy(eq.coilset.get_control_coils())
     R_coils = th_coilset.x  # noqa: N806
     Z_coils = th_coilset.z  # noqa: N806
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_coils, Z=Z_coils)
