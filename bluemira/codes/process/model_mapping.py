@@ -907,7 +907,7 @@ class PFCoilPlacmentModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_sup_pf_shape"
+        return "i_r_pf_outside_tf_placement"
 
     DEFAULT = 0
     OUTBOARD_EQUAL = 1, ("i_tf_sup",)

@@ -576,7 +576,7 @@ class ProcessInputs:
     i_cs_superconductor: int | None = None
     i_pf_superconductor: int | None = None
     i_pf_current: int | None = None
-    i_sup_pf_shape: int | None = None
+    i_r_pf_outside_tf_placement: int | None = None
     n_pf_coils_in_group: list[int] | None = None
     nfxfh: int | None = None
     n_pf_coil_groups: int | None = None
@@ -584,7 +584,7 @@ class ProcessInputs:
     f_a_cs_steel: float | None = None
     rho_pf_coil: float | None = None
     j_pf_coil_wp_peak: list[float] | None = None
-    routr: float | None = None
+    dr_pf_tf_outboard_out_offset: float | None = None
     rpf2: float | None = None
     rref: list[float] | None = None
     sigpfcalw: float | None = None
