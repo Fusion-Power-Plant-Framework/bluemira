@@ -123,4 +123,4 @@ jobs:
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
-          fail_ci_if_error: ${{ github.ref_name == 'develop' || github.ref_name == 'v3.2.0' }}
+          fail_ci_if_error: ${{ github.ref_name == 'develop' || github.ref_name == 'main' }}
