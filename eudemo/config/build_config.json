@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": { "plot": ["eq", "convergence"] },
     "summary_plot": true,
     "save": true,
