@@ -31,7 +31,6 @@ openmc_solver_pm_frame = make_parameter_frame(
 pms_params = PlasmaSourceParameters.from_parameterframe(openmc_solver_pm_frame)
 
 
-
 def test_pedestal_location_in_normalized_radius():
     assert pms_params.rho_pedestal == 0.94  # [dimensionless]
 
@@ -74,6 +73,3 @@ def test_pedestal_plasma_electron_temperature():
 
 def test_separatrix_plasma_electron_temperature():
     assert pms_params.electron_temperature_sep == 0.1  # [keV]
-
-
-
