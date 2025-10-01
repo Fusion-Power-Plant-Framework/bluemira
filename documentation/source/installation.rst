@@ -74,11 +74,4 @@ Install ``PROCESS`` in your ``bluemira`` environment by running the following:
 
 .. code-block:: bash
 
-    bash scripts/install-process.sh
-
-you can optionally specify which version of ``PROCESS`` is installed by specifying the version tag
-or commit hash as an argument.
-
-.. code-block:: bash
-
-    bash scripts/install-process.sh v3.0.1
+    pip install -e.'[process]'
