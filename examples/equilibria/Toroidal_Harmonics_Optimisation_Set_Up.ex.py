@@ -146,6 +146,11 @@ th_constraint = ToroidalHarmonicConstraint(
 # TODO remove ? See line 302 in toroidal_harmonics_approx_functions.py
 eq.coilset.control = list(th_params.th_coil_names)
 
+# Show the constraint region
+f, ax = plt.subplots()
+th_constraint.plot(ax=ax)
+eq.plot(ax=ax)
+
 # %%
 # Run the optimisation
 th_current_opt_eq = deepcopy(eq)
