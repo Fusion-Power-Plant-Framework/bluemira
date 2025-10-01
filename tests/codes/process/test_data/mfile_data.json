@@ -2624,7 +2624,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 4.75
   },
-  "temp_cs_margin": {
+  "temp_cs_superconductor_margin": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 1.5
   },
