@@ -11,9 +11,7 @@ from dataclasses import dataclass, fields
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -113,9 +111,9 @@ class PlasmaSourceParameters:
 
     electron_temperature_alpha: float  # [dimensionless]
     electron_temperature_beta: float  # [dimensionless]
-    electron_temperature_core: float  # [eV]
-    electron_temperature_ped: float  # [eV]
-    electron_temperature_sep: float  # [eV]
+    electron_temperature_core: float  # [keV]
+    electron_temperature_ped: float  # [keV]
+    electron_temperature_sep: float  # [keV]
 
     ie_temperature_ratio: Parameter[float]
     """Ion to electron temperature ratio (volume-averaged)."""
@@ -138,6 +136,7 @@ class PlasmaSourceParameters:
         "electron_temperature_core": "keV",
         "electron_temperature_ped": "keV",
         "electron_temperature_sep": "keV",
+        "ie_temperature_ratio": "1",
         "va_electron_density": "1/m^3",
         "va_fuel_ion_density": "1/m^3",
     })
@@ -152,6 +151,7 @@ class PlasmaSourceParameters:
         "electron_temperature_core": "T_e_core",
         "electron_temperature_ped": "T_e_ped",
         "electron_temperature_sep": "T_e_sep",
+        "ie_temperature_ratio": "T_ie_ratio",
         "va_electron_density": "n_e",
         "va_fuel_ion_density": "n_i_fuel",
     })

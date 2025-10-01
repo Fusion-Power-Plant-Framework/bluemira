@@ -65,15 +65,15 @@ def test_temperature_profile_beta_exponent():
 
 
 def test_core_plasma_electron_temperature():
-    assert pms_params.electron_temperature_core == 20000.0  # [eV]
+    assert pms_params.electron_temperature_core == 20.0  # [keV]
 
 
 def test_pedestal_plasma_electron_temperature():
-    assert pms_params.electron_temperature_ped == 5500.0  # [eV]
+    assert pms_params.electron_temperature_ped == 5.5  # [keV]
 
 
 def test_separatrix_plasma_electron_temperature():
-    assert pms_params.electron_temperature_sep == 100.0  # [eV]
+    assert pms_params.electron_temperature_sep == 0.1  # [keV]
 
 
 
