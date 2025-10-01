@@ -578,7 +578,7 @@ class ProcessInputs:
     i_pf_current: int | None = None
     i_r_pf_outside_tf_placement: int | None = None
     n_pf_coils_in_group: list[int] | None = None
-    nfxfh: int | None = None
+    n_cs_current_filaments: int | None = None
     n_pf_coil_groups: int | None = None
     f_z_cs_tf_internal: float | None = None
     f_a_cs_steel: float | None = None
