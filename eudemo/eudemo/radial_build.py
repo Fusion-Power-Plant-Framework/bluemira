@@ -105,7 +105,9 @@ template_builder.add_variable("f_nd_impurity_electrons(13)", 3.573e-04)
 
 # Some constraints require multiple f-values, but they are getting ridding of those,
 # so no fancy mechanics for now...
-template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
+template_builder.add_variable(
+    "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+)
 template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
 template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 template_builder.add_variable("fncycle", 1.0)

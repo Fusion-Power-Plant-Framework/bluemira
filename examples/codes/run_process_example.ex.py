@@ -162,7 +162,9 @@ template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_boun
 template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
 template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("tdmptf", 2.5829e01)
-template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
+template_builder.add_variable(
+    "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+)
 template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 
 # %% [markdown]

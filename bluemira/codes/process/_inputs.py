@@ -146,7 +146,7 @@ class ProcessInputs:
     dia_tf_turn_coolant_channel: float | None = None
     b_crit_upper_nbti: float | None = None
     t_crit_nbti: float | None = None
-    fcutfsu: float | None = None
+    f_a_tf_turn_cable_copper: float | None = None
     fhts: float | None = None
     i_tf_stress_model: int | None = None
     i_tf_wp_geom: int | None = None

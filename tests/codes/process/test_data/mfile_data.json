@@ -2336,11 +2336,11 @@
     "var_mod": "TF coils",
     "scan01": 0.3
   },
-  "fcutfsu": {
+  "f_a_tf_turn_cable_copper": {
     "var_mod": "TF coils",
     "scan01": 0.84199
   },
-  "1-fcutfsu": {
+  "1-f_a_tf_turn_cable_copper": {
     "var_mod": "TF coils",
     "scan01": 0.15801
   },
@@ -2352,7 +2352,7 @@
     "var_mod": "TF coils",
     "scan01": 1.5
   },
-  "tmargtf": {
+  "temp_tf_superconductor_margin": {
     "var_mod": "TF coils",
     "scan01": 1.5
   },

@@ -611,7 +611,7 @@ ITERATION_VAR_MAPPING = {
     "tdmptf": 56,
     "dr_tf_nose_case": 57,
     "dx_tf_turn_steel": 58,
-    "fcutfsu": 59,
+    "f_a_tf_turn_cable_copper": 59,
     "c_tf_turn": 60,
     "dr_shld_vv_gap_inboard": 61,
     "fdtmp": 62,
