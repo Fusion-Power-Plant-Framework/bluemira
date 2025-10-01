@@ -61,7 +61,7 @@ ixc = 50 * fiooic
 boundu(50) = 0.5
 ixc = 51 * fvdump
 ixc = 53 * fjprot
-ixc = 56 * tdmptf
+ixc = 56 * t_tf_superconductor_quench
 *boundl(56) = 30.0
 boundl(56) = 10.0
 ixc = 57 * dr_tf_nose_case
@@ -274,7 +274,7 @@ c_tf_turn    = 7.5e+04 * Tf coil current per turn (a);
 f_a_tf_turn_cable_copper  = 0.4 * Copper fraction of cable conductor (tf coils)
 oacdcp   = 9.9963e+06 * Overall current density in tf coil inboard legs (a/m2)
 ripple_b_tf_plasma_edge_max   = 0.6 * Maximum allowable toroidal field ripple amplitude
-tdmptf   = 3.0e+01 * Dump time for tf coil (s)
+t_tf_superconductor_quench   = 3.0e+01 * Dump time for tf coil (s)
 n_tf_coils     = 18 * Number of tf coils (default = 50 for stellarators)
 tftmp    = 4.75 * Peak helium coolant temperature in tf coils and pf coils (k)
 dx_tf_turn_insulation = 2.0d-3 * Conduit insulation thickness (m)

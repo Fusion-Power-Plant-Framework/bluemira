@@ -177,7 +177,7 @@ class ProcessInputs:
     i_str_wp: int | None = None
     quench_model: str = None
     tcritsc: float | None = None
-    tdmptf: float | None = None
+    t_tf_superconductor_quench: float | None = None
     dx_tf_wp_insertion_gap: float | None = None
     rho_tf_bus: float | None = None
     frhocp: float | None = None
@@ -194,7 +194,7 @@ class ProcessInputs:
     dr_tf_nose_case: float | None = None
     dx_tf_turn_steel: float | None = None
     dx_tf_wp_insulation: float | None = None
-    tmaxpro: float | None = None
+    temp_tf_conductor_quench_max: float | None = None
     temp_croco_quench_max: float | None = None
     temp_tf_cryo: float | None = None
     v_tf_coil_dump_quench_max_kv: float | None = None

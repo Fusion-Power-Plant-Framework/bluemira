@@ -608,7 +608,7 @@ ITERATION_VAR_MAPPING = {
     "fjprot": 53,
     "ftmargtf": 54,
     # 55 NOT USED
-    "tdmptf": 56,
+    "t_tf_superconductor_quench": 56,
     "dr_tf_nose_case": 57,
     "dx_tf_turn_steel": 58,
     "f_a_tf_turn_cable_copper": 59,
