@@ -8,6 +8,7 @@
 A collection of functions used to approximate toroidal harmonics.
 """
 
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import combinations
@@ -270,28 +271,32 @@ def toroidal_harmonic_grid_and_coil_setup(
         If MANUAL tau_limit is specified but no min_tau_value chosen.
     """
     # Get coil coordinates in toroidal coordinates
-    R_coils = eq.coilset.x  # noqa: N806
-    Z_coils = eq.coilset.z  # noqa: N806
+    th_coilset = deepcopy(eq.coilset)
+    R_coils = th_coilset.x  # noqa: N806
+    Z_coils = th_coilset.z  # noqa: N806
     tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_coils, Z=Z_coils)
-    R_corners = np.concatenate((  # noqa: N806
-        R_coils + eq.coilset.dx,
-        R_coils - eq.coilset.dx,
-        R_coils + eq.coilset.dx,
-        R_coils - eq.coilset.dx,
-    ))
-    Z_corners = np.concatenate((  # noqa: N806
-        Z_coils - eq.coilset.dz,
-        Z_coils - eq.coilset.dz,
-        Z_coils + eq.coilset.dz,
-        Z_coils + eq.coilset.dz,
-    ))
-    tau_corners, _ = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_corners, Z=Z_corners)
+
     # Find region over which to approximate psi using TH by finding LCFS tau limit
     if tau_limit is TauLimit.LCFS:
         lcfs = eq.get_LCFS()
         lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=lcfs.x, Z=lcfs.z)
         min_tau = np.min(lcfs_tau)
     elif tau_limit is TauLimit.COIL:
+        R_corners = np.concatenate((  # noqa: N806
+            R_coils + th_coilset.dx,
+            R_coils - th_coilset.dx,
+            R_coils + th_coilset.dx,
+            R_coils - th_coilset.dx,
+        ))
+        Z_corners = np.concatenate((  # noqa: N806
+            Z_coils - th_coilset.dz,
+            Z_coils - th_coilset.dz,
+            Z_coils + th_coilset.dz,
+            Z_coils + th_coilset.dz,
+        ))
+        tau_corners, _ = cylindrical_to_toroidal(
+            R_0=R_0, Z_0=Z_0, R=R_corners, Z=Z_corners
+        )
         min_tau = np.max(tau_corners)
     else:
         if min_tau_value is None:
@@ -327,7 +332,7 @@ def toroidal_harmonic_grid_and_coil_setup(
     R, Z = toroidal_to_cylindrical(R_0=R_0, Z_0=Z_0, tau=tau, sigma=sigma)  # noqa: N806
 
     # Get control coil names
-    c_names = np.array(eq.coilset.control)
+    c_names = np.array(th_coilset.control)
 
     # Find coils that can be used in TH approximation, and those that cannot be used
     if min_tau < np.min(tau_c):
@@ -337,13 +342,10 @@ def toroidal_harmonic_grid_and_coil_setup(
             f" approximation: {not_too_close_coils}."
         )
         th_coil_names = not_too_close_coils
+        R_coils, Z_coils = R_coils[tau_c < min_tau], Z_coils[tau_c < min_tau]  # noqa: N806
+        tau_c, sigma_c = tau_c[tau_c < min_tau], sigma_c[tau_c < min_tau]
     else:
         th_coil_names = c_names.tolist()
-
-    # TODO check if modifying the eq object here is acceptable
-    eq.coilset.control = th_coil_names
-    R_coils, Z_coils = eq.coilset.get_control_coils().x, eq.coilset.get_control_coils().z  # noqa: N806
-    tau_c, sigma_c = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=R_coils, Z=Z_coils)
 
     return ToroidalHarmonicsParams(
         R_0,
