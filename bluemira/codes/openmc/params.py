@@ -27,39 +27,47 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     ----------
     major_radius:
         Major radius of the machine
-    aspect_ratio:
-        aspect ratio of the machine
-    elongation:
-        elongation of the plasma
-    triangularity:
-        triangularity of the plasma
+    profile_rho_ped:
+        Pedestal location in normalized (minor) radius
     reactor_power:
-        total reactor (thermal) power when operating at 100%
-    peaking_factor:
-        (max. heat flux on fw)/(avg. heat flux on fw)
-    temperature:
-        plasma temperature (assumed to be uniform throughout the plasma)
+        total reactor fusion power when operating at 100%
+    n_profile_alpha:
+        Electron density profile alpha exponent
+    n_e_core:
+        Core electron density
+    n_e_ped:
+        Pedestal electron density
+    n_e_sep:
+        Separatrix electron density
+    T_profile_alpha:
+        Electron temperature profile alpha exponent
+    T_profile_beta:
+        Electron temperature profile beta exponent
+    T_e_core:
+        Core electron temperature
+    T_e_ped:
+        Pedestal electron temperature
+    T_e_sep:
+        Separatrix electron temperature
+    T_ie_ratio:
+        Ion to electron temperature ratio (volume-averaged)
+    n_i_fuel:
+        Volume-averaged fuel ion density
+    n_e:
+        Volume-averaged electron density
     shaf_shift:
-        Shafranov shift
-        shift of the centre of flux surfaces, i.e.
-        mean(min radius, max radius) of the LCFS,
-        towards the outboard radial direction.
+        Radial Shafranov shift
     """
 
     """Major Radius"""
     R_0: Parameter[float]
-    """Aspect ratio"""
-    A: Parameter[float]
+
     """Pedestal location in normalized (minor) radius"""
     profile_rho_ped: Parameter[float]
 
-    """Plasma elongation"""
-    kappa: Parameter[float]
-    """Plasma triangularity"""
-    delta: Parameter[float]
     """Reactor power"""
     reactor_power: Parameter[float]
-    """ion density profile descriptors"""
+    """electronn density profile descriptors"""
     n_profile_alpha: Parameter[float]
     n_e_core: Parameter[float]
     n_e_ped: Parameter[float]
