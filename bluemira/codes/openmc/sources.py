@@ -6,25 +6,27 @@
 """Neutronics sources"""
 
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 import numpy as np
 import openmc
 from tokamak_neutron_source import (
-    TokamakNeutronSource,
     FluxMap,
-    TransportInformation,
     FractionalFuelComposition,
     Reactions,
+    TokamakNeutronSource,
+    TransportInformation,
 )
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc
-from bluemira.codes.openmc.params import PlasmaSourceParameters
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
 if TYPE_CHECKING:
     from eqdsk import EQDSKInterface
+
+    from bluemira.codes.openmc.params import PlasmaSourceParameters
 
 
 def make_tokamak_source(
