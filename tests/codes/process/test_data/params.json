@@ -560,6 +560,19 @@
     "source": "Input",
     "long_name": "Density profile alpha exponent"
   },
+  "T_ie_ratio": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of ion to electron temperature."
+
+  },
+  "n_i_fuel": {
+    "value": 0.8e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Fuel ion density (volume-averaged)"
+  },
   "V_p": {
     "value": 2400,
     "unit": "meter ** 3",
