@@ -1379,7 +1379,8 @@ class TestRegressionTH:
             ref_harmonics_cos_amplitudes=test_cos_amplitudes,
             ref_harmonics_sin_amplitudes=test_sin_amplitudes,
             th_params=self.test_th_params,
-            tolerance=None,
+            relative_tolerance_cos=1e-3,
+            relative_tolerance_sin=1e-3,
             constraint_type="equality",
         )
 
@@ -1409,7 +1410,8 @@ class TestRegressionTH:
             ref_harmonics_cos_amplitudes=test_cos_amplitudes,
             ref_harmonics_sin_amplitudes=test_sin_amplitudes,
             th_params=self.test_th_params,
-            tolerance=None,
+            relative_tolerance_cos=1e-3,
+            relative_tolerance_sin=1e-3,
             constraint_type="inequality",
         )
 
@@ -1453,7 +1455,8 @@ class TestRegressionTH:
             ref_harmonics_cos_amplitudes=cos_amplitudes,
             ref_harmonics_sin_amplitudes=sin_amplitudes,
             th_params=self.test_th_params,
-            tolerance=None,
+            relative_tolerance_cos=1e-3,
+            relative_tolerance_sin=1e-3,
             constraint_type="equality",
         )
         constraint_class.prepare(self.eq)
@@ -1509,4 +1512,5 @@ class TestRegressionTH:
         assert n_dof == expected_dof
 
 
-# TODO add tests for collocation points
+# TODO @clmould: add tests for TH collocation point function
+# 4099

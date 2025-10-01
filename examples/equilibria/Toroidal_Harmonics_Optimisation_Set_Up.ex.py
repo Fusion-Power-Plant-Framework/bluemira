@@ -67,7 +67,6 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
-from bluemira.optimisation._algorithm import Algorithm
 
 # %%
 # Data from EQDSK file
@@ -143,7 +142,6 @@ th_constraint = ToroidalHarmonicConstraint(
 )
 # Ensure control coils are set to those that can be used in the toroidal
 # harmonic approximation
-# TODO remove ? See line 302 in toroidal_harmonics_approx_functions.py
 eq.coilset.control = list(th_params.th_coil_names)
 
 # Show the constraint region
@@ -159,7 +157,7 @@ current_opt_problem = TikhonovCurrentCOP(
     th_current_opt_eq,
     targets=MagneticConstraintSet([th_constraint]),
     gamma=1e-12,
-    opt_algorithm=Algorithm.SLSQP,
+    opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
