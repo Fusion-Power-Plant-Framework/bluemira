@@ -39,7 +39,7 @@ IN_mappings = {
 
 OUT_mappings = {
     "R_0": ("rmajor", "m"),
-    "B_0": ("bt", "T"),
+    "B_0": ("b_plasma_toroidal_on_axis", "T"),
     "B_cs_peak_flat_top_end": ("b_cs_peak_flat_top_end", "T"),
     "B_cs_peak_pulse_start": ("b_cs_peak_pulse_start", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
@@ -109,7 +109,7 @@ IO_mappings = {
 
 NONE_mappings = {
     "B_tf_peak": ("b_tf_inboard_peak_with_ripple", "T"),
-    "T_e": ("te", "keV"),
+    "T_e": ("temp_plasma_electron_vol_avg_kev", "keV"),
     "Z_eff": ("zeff", "amu"),
     "V_p": ("plasma_volume", "m^3"),
     "l_i": ("ind_plasma_internal_norm", "dimensionless"),
