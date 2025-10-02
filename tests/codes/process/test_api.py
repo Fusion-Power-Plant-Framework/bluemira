@@ -27,9 +27,7 @@ def test_update_obsolete_vars():
 
 
 @pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
-@patch.object(api, "imp_data")
-def test_impurities(imp_data_mock):
-    imp_data_mock.__file__ = "./__init__.py"
+def test_impurities():
     assert api.Impurities["H"] == api.Impurities.H
     assert api.Impurities(1) == api.Impurities.H
     assert api.Impurities(1).id() == "f_nd_impurity_electrons(01)"

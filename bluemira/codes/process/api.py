@@ -45,30 +45,17 @@ class InDat:
 
 
 OBS_VARS = {}
-PROCESS_DICT = {}
-imp_data = None  # placeholder for PROCESS module
 
 try:
     from process.impurity_radiation import ImpurityDataHeader, read_impurity_file
     from process.io.in_dat import InDat  # noqa: F401
     from process.io.mfile import MFile  # noqa: F401
-    from process.io.python_fortran_dicts import get_dicts
+    from process.io.obsolete_vars import OBS_VARS
 
     ENABLED = True
 except (ModuleNotFoundError, FileNotFoundError):
     bluemira_warn("PROCESS not installed on this machine; cannot run PROCESS.")
     ENABLED = False
-
-# Get dict of obsolete vars from PROCESS (if installed)
-if ENABLED:
-    try:
-        from process.io.obsolete_vars import OBS_VARS
-    except (ModuleNotFoundError, FileNotFoundError):
-        bluemira_warn(
-            "The OBS_VAR dict is not installed in your PROCESS installed version"
-        )
-
-    PROCESS_DICT = get_dicts()
 
 
 @dataclass
@@ -147,10 +134,7 @@ class Impurities(IntEnum):
         CodesError
             Impurity directory not found
         """
-        with resources.path(
-            "process.data.lz_non_corona_14_elements", "Ar_lz_tau.dat"
-        ) as dp:
-            data_path = dp.parent
+        data_path = resources.files("process.data.lz_non_corona_14_elements")
 
         try:
             return {

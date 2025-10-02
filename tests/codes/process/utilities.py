@@ -12,9 +12,7 @@ DATA_DIR = Path(Path(__file__).parent, "test_data").as_posix()
 READ_DIR = Path(DATA_DIR, "read").as_posix()
 RUN_DIR = Path(DATA_DIR, "run").as_posix()
 PARAM_FILE = Path(DATA_DIR, "params.json").as_posix()
-FAKE_PROCESS_DICT = {  # Fake for the output of PROCESS's `get_dicts()`
-    "DICT_DESCRIPTIONS": {"some_property": "its description"}
-}
+
 
 # Ugly workaround here: we want to be able to set '.data' on the
 # FakeMFile class within tests, but then we don't want those changes

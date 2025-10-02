@@ -618,6 +618,20 @@ class InVesselGeometryModel(PROCESSModel):
     TWO_ELLIPSE = 2
 
 
+class TFTurnsInteger(PROCESSModel):
+    """Switch for TF coil integer/non-integer turns"""
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_turns_integer"
+
+    NON_INTEGER = 0
+    INTEGER = 1
+
+
 class TFCSTopologyModel(PROCESSModel):
     """
     Switch to select the TF-CS topology
