@@ -31,7 +31,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "bt",
+        "name": "b_plasma_toroidal_on_axis",
         "send": false,
         "recv": true,
         "unit": "T"
@@ -550,7 +550,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "te",
+        "name": "temp_plasma_electron_vol_avg_kev",
         "send": false,
         "recv": false,
         "unit": "keV"

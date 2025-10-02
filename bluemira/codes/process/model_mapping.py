@@ -136,20 +136,20 @@ class PlasmaPedestalModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ipedestal"
+        return "i_plasma_pedestal"
 
-    NO_PEDESTAL = 0, ("te",)
+    NO_PEDESTAL = 0, ("temp_plasma_electron_vol_avg_kev",)
     PEDESTAL_GW = (
         1,
         (
-            "te",
-            "neped",
-            "nesep",
-            "rhopedn",
-            "rhopedt",
+            "temp_plasma_electron_vol_avg_kev",
+            "nd_plasma_pedestal_electron",
+            "nd_plasma_separatrix_electron",
+            "radius_plasma_pedestal_density_norm",
+            "radius_plasma_pedestal_temp_norm",
             "tbeta",
-            "teped",
-            "tesep",
+            "temp_plasma_pedestal_kev",
+            "temp_plasma_separatrix_kev",
             "f_nd_alpha_electron",
         ),
     )

@@ -384,7 +384,10 @@ class Constraint(ConstraintSelection, Model):
         71,
         (),
         (),
-        "ensure that neomp = separatrix density (nesep) x neratio",
+        (
+            "ensure that neomp "
+            "= separatrix density (nd_plasma_separatrix_electron) x neratio"
+        ),
     )
     CS_STRESS_UPPER_LIMIT = (
         72,
@@ -554,11 +557,11 @@ FV_CONSTRAINT_ITVAR_MAPPING = {
 
 ITERATION_VAR_MAPPING = {
     "aspect": 1,
-    "bt": 2,
+    "b_plasma_toroidal_on_axis": 2,
     "rmajor": 3,
-    "te": 4,
+    "temp_plasma_electron_vol_avg_kev": 4,
     "beta": 5,
-    "dene": 6,
+    "nd_plasma_electron_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
     "fdene": 9,
@@ -664,7 +667,7 @@ ITERATION_VAR_MAPPING = {
     "fpoloidalpower": 115,
     "fpflux_fw_rad_max": 116,
     "fpsepbqar": 117,
-    "tesep": 119,
+    "temp_plasma_separatrix_kev": 119,
     "ttarget": 120,
     "neratio": 121,
     "f_a_cs_steel": 122,
@@ -687,17 +690,17 @@ ITERATION_VAR_MAPPING = {
     "copper_thick": 139,
     "dr_tf_wp_with_insulation": 140,
     "ftemp_croco_quench_max": 141,
-    "nesep": 142,
+    "nd_plasma_separatrix_electron": 142,
     "f_coppera_m2": 143,
     "fnesep": 144,
-    "fgwped": 145,
+    "f_nd_plasma_pedestal_greenwald": 145,
     "fc_tf_turn_max": 146,
     "freinke": 147,
     "fzactual": 148,
     "fb_cs_limit_max": 149,
     # 150, 151 NOT USED
-    "fgwsep": 152,
-    "fpdivlim": 153,
+    "f_nd_plasma_separatrix_greenwald": 152,
+    "fp_plasma_separatrix_min_mw": 153,
     "fne0": 154,
     "pfusife": 155,
     "rrin": 156,
