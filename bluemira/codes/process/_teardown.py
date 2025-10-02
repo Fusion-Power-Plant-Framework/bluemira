@@ -49,6 +49,7 @@ class Teardown(CodesTeardown):
         self.run_directory = run_directory
         self.read_directory = read_directory
         self._mfile_wrapper: _MFileWrapper = None
+        self.ordered_radial_build = {}
 
     def run(self):
         """
@@ -154,6 +155,7 @@ class Teardown(CodesTeardown):
         """
         mfile = self._read_mfile(path)
         self._update_params_with_outputs(mfile.data, recv_all=recv_all)
+        self.ordered_radial_build = mfile.ordered_radial_build
 
     def _read_mfile(self, path: str):
         """
@@ -236,6 +238,7 @@ class _MFileWrapper:
         self.mfile = MFile(file_path)
         _raise_on_infeasible_solution(self)
         self.data = {}
+        self.ordered_radial_build = {}
 
     def read(self) -> dict:
         """
@@ -259,6 +262,55 @@ class _MFileWrapper:
                 self.data[param_name] = value["scan01"]
 
         self.data.update(self._derive_radial_build_params(self.data))
+        self._load_ordered_radial_build_vector()
+
+    def _load_ordered_radial_build_vector(self):
+        """
+        Read the data from the PROCESS MFile.
+
+        Store the result in ``ordered_radial_build`` attribute.
+        """
+        rb_vector = []
+
+        col = {
+            "dr_fw_plasma_gap": "Scrape-off layer",
+            "gap": "Gap",
+            "dr_blkt": "Breeding blanket",
+            "dr_tf": "TF coil",
+            "dr_vv": "Vacuum vessel",
+            "dr_shld_thermal": "Thermal shield",
+            "dr_shld": "Radiation shield",
+            "rminor": "Plasma",
+            "dr_fw": "First Wall",
+            "dr_bore": "bore",
+            "dr_cs": "Central solenoid",
+        }
+
+        radial_build_labels = [
+            (k, v) for k, v in self.mfile.data.items() if "radial_label" in k
+        ]
+
+        for label, process_var_name in radial_build_labels:
+            # Get the order of the component
+            comp_order = int(label.split("(")[-1].split(")")[0])
+            # variable name
+            var_name = process_var_name["scan01"]
+            # thickness and cumulative radius
+            comp_tk = self.mfile.data[var_name]["scan01"]
+            comp_cum_tk = self.mfile.data[f"radial_cum({comp_order})"]["scan01"]
+
+            matching_key = next((key for key in col if key in var_name), None)
+            # For dr_fw_plasma_gap and dr_shld_thermal only the
+            # first matched key will be returned
+
+            comp_type = col[matching_key] if matching_key else var_name
+            rb_vector.append([comp_type, comp_tk, comp_cum_tk])
+
+        self.ordered_radial_build = {
+            "Radial Build": rb_vector,
+            "n_TF": self.data["n_tf_coils"],
+            "R_0": self.data["rmajor"],
+        }
 
     def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
@@ -280,22 +332,42 @@ class _MFileWrapper:
         length) of the TF coil, so this must be taken into consideration
         when translating the geometry into the mid-plane.
         """
-        try:
-            shield_th = data["thshield"]
-        except KeyError:
-            # PROCESS updated their parameter names in v2.4.0, splitting
-            # 'thshield' into 'thshield_ib', 'thshield_ob', and 'thshield_vb'
-            shield_th = data["thshield_ib"]
+        shield_th = data["dr_shld_thermal_inboard"]
 
         try:
-            rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]
-            r_ts_ib_in = rtfin + data["tfcth"] + data["tftsgap"] + shield_th
-            r_vv_ib_in = r_ts_ib_in + data["gapds"] + data["d_vv_in"] + data["shldith"]
-            r_fw_ib_in = r_vv_ib_in + data["vvblgap"] + data["blnkith"] + data["fwith"]
-            r_fw_ob_in = (
-                r_fw_ib_in + data["scrapli"] + 2 * data["rminor"] + data["scraplo"]
+            rtfin = (
+                data["dr_bore"]
+                + data["dr_cs"]
+                + data["dr_cs_precomp"]
+                + data["dr_cs_tf_gap"]
             )
-            r_vv_ob_in = r_fw_ob_in + data["fwoth"] + data["blnkoth"] + data["vvblgap"]
+            r_ts_ib_in = (
+                rtfin + data["dr_tf_inboard"] + data["dr_tf_shld_gap"] + shield_th
+            )
+            r_vv_ib_in = (
+                r_ts_ib_in
+                + data["dr_shld_vv_gap_inboard"]
+                + data["dr_vv_inboard"]
+                + data["dr_shld_inboard"]
+            )
+            r_fw_ib_in = (
+                r_vv_ib_in
+                + data["dr_shld_blkt_gap"]
+                + data["dr_blkt_inboard"]
+                + data["dr_fw_inboard"]
+            )
+            r_fw_ob_in = (
+                r_fw_ib_in
+                + data["dr_fw_plasma_gap_inboard"]
+                + 2 * data["rminor"]
+                + data["dr_fw_plasma_gap_outboard"]
+            )
+            r_vv_ob_in = (
+                r_fw_ob_in
+                + data["dr_fw_outboard"]
+                + data["dr_blkt_outboard"]
+                + data["dr_shld_blkt_gap"]
+            )
         except KeyError as key_error:
             raise CodesError(
                 f"Missing PROCESS parameter in '{self.file_path}': {key_error}\n"

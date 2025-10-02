@@ -90,7 +90,7 @@ class PlasmaGeometryModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ishape"
+        return "i_plasma_geometry"
 
     HENDER_K_D_100 = 0, ("kappa", "triang")
     GALAMBOS_K_D_95 = 1, ("kappa95", "triang95")
@@ -122,7 +122,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
         """
         return "i_single_null"
 
-    DOUBLE_NULL = 0, ("ftar",)
+    DOUBLE_NULL = 0, ("f_p_div_lower",)
     SINGLE_NULL = 1
 
 
@@ -150,9 +150,29 @@ class PlasmaPedestalModel(PROCESSModel):
             "tbeta",
             "teped",
             "tesep",
-            "ralpne",
+            "f_nd_alpha_electron",
         ),
     )
+
+
+class BetaNormMaxModel(PROCESSModel):
+    """
+    Switch for determining how the beta g coefficient beta_norm_max is calculated.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_beta_norm_max"
+
+    INPUT = 0, ("beta_norm_max",)
+    WESSON = 1, ("q0", "q95", "i_alphaj", "i_ind_plasma_internal_norm")
+    ORIG_SCALING = 2
+    MENARD = 3, ("i_ind_plasma_internal_norm")
+    THOLERUS = 4
+    STAMBAUGH = 5
 
 
 class PlasmaProfileModel(PROCESSModel):
@@ -165,17 +185,16 @@ class PlasmaProfileModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprofile"
+        return "i_ind_plasma_internal_norm"
 
-    INPUT = 0, ("alphaj", "rli")
-    CONSISTENT = 1, ("q", "q0")
+    INPUT = 0, ("ind_plasma_internal_norm",)
+    WESSON = 1, ("q95", "q0")
+    MENARD = 2, ("q95", "q0", "ind_plasma_internal_norm")
 
 
-class EPEDScalingModel(PROCESSModel):
+class AlphaJModel(PROCESSModel):
     """
-    Switch for the pedestal scaling model
-
-    TODO: This is largely undocumented and bound to some extent with PLASMOD
+    Switch for current profile index
     """
 
     @classproperty
@@ -183,12 +202,10 @@ class EPEDScalingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ieped"
+        return "i_alphaj"
 
-    UKNOWN_0 = 0, ("teped",)
-    SAARELMA = 1
-    UNKNOWN_1 = 2
-    UNKNOWN_2 = 3
+    INPUT = 0, ("alphaj", "ind_plasma_internal_norm")
+    WESSON = 1, ("q95", "q0")
 
 
 class BetaLimitModel(PROCESSModel):
@@ -201,31 +218,12 @@ class BetaLimitModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iculbl"
+        return "i_beta_component"
 
     TOTAL = 0  # Including fast ion contribution
     THERMAL = 1
     THERMAL_NBI = 2
     TOTAL_TF = 3  # Calculated using only the toroidal field
-
-
-class BetaGScalingModel(PROCESSModel):
-    """
-    Switch for the beta g coefficient dnbeta model
-
-    NOTE: Over-ridden if iprofile = 1
-    """
-
-    @classproperty
-    def switch_name(self) -> str:
-        """
-        PROCESS switch name
-        """
-        return "gtscale"
-
-    INPUT = 0, ("dnbeta",)
-    CONVENTIONAL = 1
-    MENARD_ST = 2
 
 
 class AlphaPressureModel(PROCESSModel):
@@ -238,7 +236,7 @@ class AlphaPressureModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ifalphap"
+        return "i_beta_fast_alpha"
 
     HENDER = 0
     WARD = 1
@@ -254,7 +252,7 @@ class DensityLimitModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "idensl"
+        return "i_density_limit"
 
     ASDEX = 1
     BORRASS_ITER_I = 2
@@ -275,12 +273,12 @@ class PlasmaCurrentScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "icurr"
+        return "i_plasma_current"
 
     PENG = 1
     PENG_DN = 2
     ITER_SIMPLE = 3
-    ITER_REVISED = 4  # Recommended for iprofile = 1
+    ITER_REVISED = 4  # Recommended for i_ind_plasma_internal_norm = 1
     TODD_I = 5
     TODD_II = 6
     CONNOR_HASTIE = 7
@@ -298,7 +296,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isc"
+        return "i_confinement_time"
 
     NEO_ALCATOR_OHMIC = 1
     MIRNOV_H_MODE = 2
@@ -361,8 +359,9 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ibss"
+        return "i_bootstrap_current"
 
+    FIXED = 0
     ITER = 1, ("cboot",)
     GENERAL = 2
     NUMERICAL = 3
@@ -379,7 +378,7 @@ class DiamagneticCurrentScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "idia"
+        return "i_diamagnetic_current"
 
     OFF = 0
     ST_FIT = 1
@@ -396,7 +395,7 @@ class PfirschSchluterCurrentScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ips"
+        return "i_pfirsch_schluter_current"
 
     OFF = 0
     SCENE_FIT = 1
@@ -412,7 +411,7 @@ class LHThreshholdScalingLaw(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ilhthresh"
+        return "i_l_h_threshhold"
 
     ITER_1996_NOM = 1
     ITER_1996_LOW = 2
@@ -467,7 +466,11 @@ class PlasmaWallGapModel(PROCESSModel):
         return "iscrp"
 
     TEN_PERCENT = 0, (), "SOL thickness calculated as 10 percent of minor radius"
-    INPUT = 1, ("scrapli", "scraplo"), "Fixed thickness SOL values"
+    INPUT = (
+        1,
+        ("dr_fw_plasma_gap_inboard", "dr_fw_plasma_gap_outboard"),
+        "Fixed thickness SOL values",
+    )
 
 
 class SphericalTokamakModel(PROCESSModel):
@@ -512,7 +515,7 @@ class OperationModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "lpulse"
+        return "i_pulsed_plant"
 
     STEADY_STATE = 0
     PULSED = 1
@@ -561,16 +564,9 @@ class BlanketModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iblanket"
+        return "i_blanket_type"
 
-    CCFE_HCPB = 1, ("blnkith", "blnkoth", "tbrmin"), "CCFE HCPB model"
-    KIT_HCPB = 2, ("blnkith", "blnkoth"), "KIT HCPB model"
-    CCFE_HCPB_TBR = (
-        3,
-        ("blnkith", "blnkoth", "iblanket_thickness", "li6enrich", "breeder_f"),
-        "CCFE HCPB model with Tritium Breeding Ratio calculation",
-    )
-    KIT_HCLL = 4, ("blnkith", "blnkoth"), "KIT HCLL model"
+    CCFE_HCPB = 1, ("dr_blkt_inboard", "dr_blkt_outboard", "tbrmin"), "CCFE HCPB model"
     DCLL = 5, ("blbuith", "blbuoth"), "no neutronics model included"
 
 
@@ -586,8 +582,8 @@ class StelleratorBlanketModel(PROCESSModel):
         """
         return "blktmodel"
 
-    SIMPLE = 0, ("coolwh",)
-    KIT_HCPB = 1, ("coolwh",)
+    SIMPLE = 0, ("i_blkt_coolant_type",)
+    KIT_HCPB = 1, ("i_blkt_coolant_type",)
 
 
 class InboardBlanketSwitch(PROCESSModel):
@@ -600,7 +596,7 @@ class InboardBlanketSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iblnkith"
+        return "i_blkt_inboard"
 
     ABSENT = 0
     PRESENT = 1
@@ -616,7 +612,7 @@ class InVesselGeometryModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "fwbsshape"
+        return "i_fw_blkt_vv_shape"
 
     CYL_ELLIPSE = 1
     TWO_ELLIPSE = 2
@@ -632,7 +628,7 @@ class TFCSTopologyModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "tf_in_cs"
+        return "i_tf_inside_cs"
 
     ITER = 0
     INSANITY = 1
@@ -723,8 +719,7 @@ class TFWindingPackTurnModel(PROCESSModel):
         """
         return "i_tf_turns_integer"
 
-    CURRENT_PER_TURN = 0, ("cpttf",)  # or t_cable_tf or t_turn_tf
-    INTEGER_TURN = 1, ("n_layer", "n_pancake")
+    CURRENT_PER_TURN = 0, ("c_tf_turn",)  # or t_cable_tf or t_turn_tf
 
 
 class TFCoilShapeModel(PROCESSModel):
@@ -850,7 +845,7 @@ class PFConductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ipfres"
+        return "i_pf_conductor"
 
     SUPERCONDUCTING = 0
     RESISTIVE = 1
@@ -866,7 +861,7 @@ class PFSuperconductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isumatpf"
+        return "i_pf_superconductor"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2, ("fhts",)
@@ -891,8 +886,31 @@ class PFCurrentControlModel(PROCESSModel):
         """
         return "i_pf_current"
 
-    INPUT = 0, ("curpfb", "curpff", "curpfs")
+    INPUT = (
+        0,
+        (
+            "c_pf_cs_coil_pulse_start_ma",
+            "c_pf_cs_coil_flat_top_ma",
+            "c_pf_cs_coil_pulse_end_ma",
+        ),
+    )
     SVD = 1
+
+
+class PFCoilPlacmentModel(PROCESSModel):
+    """Switch for the placement of Location 3 (outboard) PF coils
+    when the TF coils are superconducting (TFCoilConductorTechnology.SC)
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_r_pf_outside_tf_placement"
+
+    DEFAULT = 0
+    OUTBOARD_EQUAL = 1, ("i_tf_sup",)
 
 
 class SolenoidSwitchModel(PROCESSModel):
@@ -922,7 +940,7 @@ class CSSuperconductorModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "isumatoh"
+        return "i_cs_superconductor"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2
@@ -945,7 +963,7 @@ class CSPrecompressionModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprecomp"
+        return "i_cs_precomp"
 
     ABSENT = 0
     PRESENT = 1
@@ -979,7 +997,7 @@ class DivertorHeatFluxModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_hldiv"
+        return "i_div_heat_load"
 
     INPUT = 0
     CHAMBER = 1
@@ -997,7 +1015,7 @@ class DivertorThermalHeatUse(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprimdiv"
+        return "i_div_primary_heat"
 
     LOW_GRADE_HEAT = 0
     HIGH_GRADE_HEAT = 1
@@ -1013,7 +1031,7 @@ class ShieldThermalHeatUse(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iprimshld"
+        return "i_shld_primary_heat"
 
     NOT_USED = 0
     LOW_GRADE_HEAT = 1
@@ -1046,7 +1064,7 @@ class PrimaryPumpingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "primary_pumping"
+        return "i_p_coolant_pumping"
 
     INPUT = 0
     FRACTION = 1
@@ -1064,7 +1082,7 @@ class SecondaryCycleModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "secondary_cycle"
+        return "i_thermal_electric_conversion"
 
     FIXED = 0
     FIXED_W_DIVERTOR = 1
@@ -1096,7 +1114,7 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iefrf"
+        return "i_hcd_primary"
 
     FENSTER_LH = 1
     ICYCCD = 2
@@ -1112,6 +1130,22 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
     ECRH_O = 13
 
 
+class ECRHWaveModel(PROCESSModel):
+    """
+    Switch for ECRH wave mode
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_ecrh_wave_mode"
+
+    O_MODE = 0
+    X_MODE = 1
+
+
 class PlasmaIgnitionModel(PROCESSModel):
     """
     Switch to control whether or not the plasma is ignited
@@ -1122,7 +1156,7 @@ class PlasmaIgnitionModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ignite"
+        return "i_plasma_ignited"
 
     NOT_IGNITED = 0
     IGNITED = 1
@@ -1138,7 +1172,7 @@ class VacuumPumpingModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ntype"
+        return "i_vacuum_pump_type"
 
     TURBO_PUMP = 0
     CRYO_PUMP = 1
@@ -1154,7 +1188,7 @@ class VacuumPumpingDwellModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "dwell_pump"
+        return "i_vac_pump_dwell"
 
     T_DWELL = 0
     T_RAMP = 1
@@ -1275,7 +1309,7 @@ class VacuumPumpSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ipump"
+        return "i_fw_blkt_shared_coolant"
 
     SAME = 0, (), "FW and BB have the same primary coolant"
     DIFFERENT = (
@@ -1295,7 +1329,7 @@ class FWCoolantSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "fwcoolant"
+        return "i_fw_coolant_type"
 
     HELIUM = "helium"
     WATER = "water"
@@ -1311,7 +1345,7 @@ class ModuleSegmentSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ims"
+        return "i_blkt_module_segmentation"
 
     MMS = 0, (), "Multi Module Segment (MMS)"
     SMS = 1, (), "Single Modle Segment (SMS)"
@@ -1327,7 +1361,7 @@ class LiquidMetalBreederMaterialSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_bb_liq"
+        return "i_blkt_liquid_breeder_type"
 
     PBLI = 0, (), "PbLi"
     LI = 1, (), "Li"
@@ -1343,7 +1377,7 @@ class BBCoolantSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "icooldual"
+        return "i_blkt_dual_coolant"
 
     SINGLE_FOR_SB = (
         0,
@@ -1368,7 +1402,7 @@ class FlowChannelInsertSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "ifci"
+        return "i_blkt_liquid_breeder_channel_type"
 
     THIN = (
         0,

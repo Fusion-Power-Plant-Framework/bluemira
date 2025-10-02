@@ -86,7 +86,7 @@ pinned = [
 
 conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 openmc = ["openmc>=0.14.0", "openmc_data==2.3.1"]
-process = ["process==3.1.0"]
+process = ["process @ git+https://github.com/ukaea/process@v3.2.0"]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
 dagmc = [
@@ -368,5 +368,5 @@ ignore-names = [
 # TODO future removal
 "bluemira/structural/*" = ["DOC201"]  # 22
 "bluemira/codes/openmc/{make_csg.py,output.py,solver.py}" = ["DOC201"]
-"bluemira/codes/process/{_plotting.py,_profiles.py}" = ["DOC201"]
+"bluemira/codes/process/_profiles.py" = ["DOC201"]
 "bluemira/codes/plasmod/*" = ["DOC201"]

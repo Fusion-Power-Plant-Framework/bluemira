@@ -24,6 +24,9 @@ from tests.codes.process import utilities as utils
 
 class TestSolver:
     MODULE_REF = "bluemira.codes.process._solver"
+    TEARDOWN_MODULE_REF = "bluemira.codes.process._teardown"
+
+    IS_FILE_REF = f"{TEARDOWN_MODULE_REF}.Path.is_file"
 
     @classmethod
     def setup_class(cls):
@@ -63,7 +66,11 @@ class TestSolver:
 
     def test_get_raw_variables_retrieves_parameters(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
-        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+        with (
+            mock.patch(f"{self.MODULE_REF}.ENABLED", new=True),
+            mock.patch(f"{self.TEARDOWN_MODULE_REF}._MFileWrapper", new=utils.mfw()),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
             solver.execute(RunMode.READ)
 
         assert solver.get_raw_variables("kappa_95") == [1.65]
@@ -71,12 +78,16 @@ class TestSolver:
     def test_get_raw_variables_CodesError_given_solver_not_run(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
 
-        with pytest.raises(CodesError):
+        with pytest.raises(CodesError, match="solver has not been"):
             solver.get_raw_variables("kappa_95")
 
     def test_get_species_fraction_retrieves_parameter_value(self):
         solver = Solver(self.params, {"read_dir": utils.DATA_DIR})
-        with mock.patch(f"{self.MODULE_REF}.ENABLED", new=True):
+        with (
+            mock.patch(f"{self.MODULE_REF}.ENABLED", new=True),
+            mock.patch(f"{self.TEARDOWN_MODULE_REF}._MFileWrapper", new=utils.mfw()),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
             solver.execute(RunMode.READ)
 
         assert solver.get_species_fraction("H") == pytest.approx(0.74267)
@@ -87,6 +98,9 @@ class TestSolver:
 class TestSolverIntegration:
     DATA_DIR = Path(Path(__file__).parent, "test_data")
     MODULE_REF = "bluemira.codes.process._setup"
+
+    TEARDOWN_MODULE_REF = "bluemira.codes.process._teardown"
+    IS_FILE_REF = f"{TEARDOWN_MODULE_REF}.Path.is_file"
 
     def setup_method(self):
         self.params = ProcessSolverParams.from_json(utils.PARAM_FILE)
@@ -112,7 +126,13 @@ class TestSolverIntegration:
         assert self.params.r_tf_in_centre.value != pytest.approx(2.6354)
 
         solver = Solver(self.params, {"read_dir": self.DATA_DIR})
-        solver.execute(run_mode)
+
+        with (
+            mock.patch(f"{self.MODULE_REF}.ENABLED", new=True),
+            mock.patch(f"{self.TEARDOWN_MODULE_REF}._MFileWrapper", new=utils.mfw()),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
+            solver.execute(run_mode)
 
         # Expected value comes from ./test_data/MFILE.DAT
         assert solver.params.r_tf_in_centre.value == pytest.approx(2.6354)
@@ -120,7 +140,15 @@ class TestSolverIntegration:
     @pytest.mark.parametrize("run_mode", [RunMode.READ, RunMode.READALL])
     def test_derived_radial_build_params_are_updated(self, run_mode):
         solver = Solver(self.params, {"read_dir": self.DATA_DIR})
-        solver.execute(run_mode)
+        with (
+            mock.patch(f"{self.MODULE_REF}.ENABLED", new=True),
+            mock.patch(
+                f"{self.TEARDOWN_MODULE_REF}._MFileWrapper",
+                new=utils.mfw(radial_override=False),
+            ),
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+        ):
+            solver.execute(run_mode)
 
         # Expected values come from derivation (I added the numbers up by hand)
         assert solver.params.r_tf_in.value == pytest.approx(1.89236)
@@ -168,7 +196,7 @@ class TestSolverIntegration:
             self._indat_patch as indat_cls_mock,
             file_exists("template/path/in.dat", f"{self.MODULE_REF}.Path.is_file"),
         ):
-            indat_cls_mock.return_value.data = {"casthi": BLANK}
+            indat_cls_mock.return_value.data = {"dr_tf_plasma_case": BLANK}
             Solver(self.params, build_config)
 
         indat_cls_mock.assert_called_once_with(filename="template/path/in.dat")
@@ -193,7 +221,7 @@ class TestSolverIntegration:
     @pytest.mark.parametrize(
         ("template", "result"),
         [
-            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
+            (ProcessInputs(dr_bore=5, dr_shld_inboard=5, i_tf_wp_geom=2), (5, 5, 2)),
         ],
     )
     def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
@@ -216,6 +244,6 @@ class TestSolverIntegration:
         solver.teardown_cls = lambda *_, **_kw: None
         solver.execute("run")
 
-        assert f"bore     = {result[0]}" in open(path).read()  # noqa: SIM115
-        assert f"shldith  = {result[1]}" in open(path).read()  # noqa: SIM115
+        assert f"dr_bore  = {result[0]}" in open(path).read()  # noqa: SIM115
+        assert f"dr_shld_inboard = {result[1]}" in open(path).read()  # noqa: SIM115
         assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115

@@ -40,16 +40,17 @@ from bluemira.codes.error import CodesError
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
+    AlphaJModel,
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
+    BetaNormMaxModel,
     BootstrapCurrentScalingLaw,
     CSSuperconductorModel,
     ConfinementTimeScalingLaw,
     CostModel,
     CurrentDriveEfficiencyModel,
     DensityLimitModel,
-    EPEDScalingModel,
     OperationModel,
     OutputCostsSwitch,
     PFSuperconductorModel,
@@ -66,7 +67,6 @@ from bluemira.codes.process.model_mapping import (
     SolenoidSwitchModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
-    TFWindingPackTurnModel,
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
@@ -151,19 +151,21 @@ template_builder.add_variable("te", 12.33, upper_bound=150.0)
 template_builder.add_variable("beta", 3.1421e-2)
 template_builder.add_variable("dene", 7.4321e19)
 template_builder.add_variable("q", 3.5, lower_bound=3.5)
-template_builder.add_variable("pheat", 50.0)
-template_builder.add_variable("ralpne", 6.8940e-02)
-template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
-template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
-template_builder.add_variable("thkcas", 0.52465)
-template_builder.add_variable("tfcth", 1.2080)
-template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
-template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
-template_builder.add_variable("tdmptf", 2.5829e01)
-template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
-template_builder.add_variable("fvsbrnni", 0.39566)
+template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
+template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
+template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
+template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
+template_builder.add_variable("dx_tf_turn_steel", 8.0e-3, lower_bound=8.0e-3)
+template_builder.add_variable("dr_tf_nose_case", 0.52465)
+template_builder.add_variable("dr_tf_inboard", 1.2080)
+template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
+template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
+template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
+template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
+template_builder.add_variable(
+    "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+)
+template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 
 # %% [markdown]
 # Many of the PROCESS constraints use so-called 'f-values', which are automatically
@@ -203,13 +205,13 @@ template_builder.add_input_values({
     "fgwped": 0.85,
     "neped": 0.678e20,
     "nesep": 0.2e20,
-    "dnbeta": 3.0,
+    "beta_norm_max": 3.0,
     # Plasma impurity stuff
-    "coreradius": 0.75,
-    "coreradiationfraction": 0.6,
+    "radius_plasma_core_norm": 0.75,
+    "f_p_plasma_core_rad_reduction": 0.6,
     # Important stuff
-    "pnetelin": 500.0,
-    "tbrnmn": 7.2e3,
+    "p_plant_electric_net_required_mw": 500.0,
+    "t_burn_min": 7.2e3,
     "sig_tf_case_max": 5.8e8,
     "sig_tf_wp_max": 5.8e8,
     "alstroh": 6.6e8,
@@ -218,64 +220,73 @@ template_builder.add_input_values({
     "m_s_limit": 0.1,
     "triang": 0.5,
     "q0": 1.0,
-    "ssync": 0.6,
+    "f_sync_reflect": 0.6,
     "plasma_res_factor": 0.66,
-    "gamma": 0.3,
+    "ejima_coeff": 0.3,
     "hfact": 1.1,
     "life_dpa": 70.0,
     # Radial build inputs
-    "tftsgap": 0.05,
-    "d_vv_in": 0.3,
-    "shldith": 0.3,
-    "vvblgap": 0.02,
-    "blnkith": 0.755,
-    "scrapli": 0.225,
-    "scraplo": 0.225,
-    "blnkoth": 0.982,
-    "d_vv_out": 0.3,
-    "shldoth": 0.8,
-    "ddwex": 0.15,
+    "dr_tf_shld_gap": 0.05,
+    "dr_vv_inboard": 0.3,
+    "dr_shld_inboard": 0.3,
+    "dr_shld_blkt_gap": 0.02,
+    "dr_blkt_inboard": 0.755,
+    "dr_fw_plasma_gap_inboard": 0.225,
+    "dr_fw_plasma_gap_outboard": 0.225,
+    "dr_blkt_outboard": 0.982,
+    "dr_vv_outboard": 0.3,
+    "dr_shld_outboard": 0.8,
+    "dr_cryostat": 0.15,
     "gapomin": 0.2,
     # Vertical build inputs
-    "d_vv_top": 0.3,
-    "vgap2": 0.05,
-    "shldtth": 0.3,
-    "divfix": 0.621,
-    "d_vv_bot": 0.3,
+    "dz_vv_upper": 0.3,
+    "dz_shld_vv_gap": 0.05,
+    "dz_shld_upper": 0.3,
+    "dz_divertor": 0.621,
+    "dz_vv_lower": 0.3,
     # HCD inputs
-    "pinjalw": 51.0,
-    "gamma_ecrh": 0.3,
-    "etaech": 0.4,
-    "bscfmax": 0.99,
+    "p_hcd_injected_max": 51.0,
+    "eta_cd_norm_ecrh": 0.3,
+    "eta_ecrh_injector_wall_plug": 0.4,
+    "f_c_plasma_bootstrap_max": 0.99,
     # BOP inputs
-    "etath": 0.375,
-    "etahtp": 0.87,
+    "eta_turbine": 0.375,
+    "eta_coolant_pump_electric": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
-    "tdwell": 0.0,
-    "tramp": 500.0,
+    "t_between_pulse": 0.0,
+    "t_precharge": 500.0,
     # CS / PF coil inputs
     "t_crack_vertical": 0.4e-3,
     "fcuohsu": 0.7,
-    "ohhghf": 0.9,
+    "f_z_cs_tf_internal": 0.9,
     "rpf2": -1.825,
-    "cptdin": [4.22e4, 4.22e4, 4.22e4, 4.22e4, 4.3e4, 4.3e4, 4.3e4, 4.3e4],
-    "ipfloc": [2, 2, 3, 3],
-    "ncls": [1, 1, 2, 2],
-    "ngrp": 4,
-    "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+    "c_pf_coil_turn_peak_input": [
+        4.22e4,
+        4.22e4,
+        4.22e4,
+        4.22e4,
+        4.3e4,
+        4.3e4,
+        4.3e4,
+        4.3e4,
+    ],
+    "i_pf_location": [2, 2, 3, 3],
+    "n_pf_coils_in_group": [1, 1, 2, 2],
+    "n_pf_coil_groups": 4,
+    "j_pf_coil_wp_peak": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
     # TF coil inputs
-    "n_tf": 16,
-    "casthi": 0.06,
-    "casths": 0.05,
-    "ripmax": 0.6,
-    "dhecoil": 0.01,
+    "n_tf_coils": 16,
+    "dr_tf_plasma_case": 0.06,
+    "dx_tf_side_case_min": 0.05,
+    "ripple_b_tf_plasma_edge_max": 0.6,
+    "dia_tf_turn_coolant_channel": 0.01,
     "tftmp": 4.75,
-    "thicndut": 2.0e-3,
-    "tinstf": 0.008,
-    # "tfinsgap": 0.01,
+    "dx_tf_turn_insulation": 2.0e-3,
+    "dx_tf_wp_insulation": 0.008,
+    # "dx_tf_wp_insertion_gap": 0.01,
     "tmargmin": 1.5,
-    "vftf": 0.3,
+    "f_a_tf_turn_cable_space_extra_void": 0.3,
 })
 
 # %% [markdown]
@@ -287,10 +298,11 @@ for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.CONSISTENT,
+    BetaNormMaxModel.WESSON,
+    PlasmaProfileModel.WESSON,
+    AlphaJModel.WESSON,
     PlasmaPedestalModel.PEDESTAL_GW,
     PlasmaNullConfigurationModel.SINGLE_NULL,
-    EPEDScalingModel.SAARELMA,
     BetaLimitModel.THERMAL,
     DensityLimitModel.GREENWALD,
     AlphaPressureModel.WARD,
@@ -304,7 +316,6 @@ for model_choice in (
     SolenoidSwitchModel.SOLENOID,
     CSSuperconductorModel.NB3SN_WST,
     TFSuperconductorModel.NB3SN_WST,
-    TFWindingPackTurnModel.INTEGER_TURN,
     PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
@@ -327,8 +338,6 @@ inputs = template_builder.make_inputs()
 
 # %%
 template_builder.add_input_value("qnuc", 1.3e4)
-template_builder.add_input_value("n_layer", 20)
-template_builder.add_input_value("n_pancake", 20)
 
 
 # %% [markdown]
@@ -361,12 +370,12 @@ except CodesError as ce:
 # TODO @je-cook: actually get to converge
 # 3667
 template_builder.set_run_title("Example that should converge")
-template_builder.adjust_variable("fpnetel", 1.0)
+template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("fbetatry", 0.48251)
+template_builder.adjust_variable("falpha_energy_confinement", 1.0)
+template_builder.adjust_variable("fbeta_max", 0.48251)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
 template_builder.adjust_variable("fstrcond", 0.92007)
