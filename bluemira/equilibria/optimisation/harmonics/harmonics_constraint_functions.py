@@ -65,14 +65,10 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
 
     Parameters
     ----------
-    a_mat_cos:
-        Cos response matrix
-    a_mat_sin:
-        Sin response matrix
-    b_vec_cos:
-        Target value cos vector
-    b_vec_sin:
-        Target value sin vector
+    a_mat:
+        Response matrix
+    b_vec:
+        Target value vector
     value:
         Target constraint value
     scale:
@@ -81,18 +77,14 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
 
     def __init__(
         self,
-        a_mat_cos: np.ndarray,
-        a_mat_sin: np.ndarray,
-        b_vec_cos: np.ndarray,
-        b_vec_sin: np.ndarray,
+        a_mat: np.ndarray,
+        b_vec: np.ndarray,
         value: float,
         scale: float,
         name: str | None = None,
     ) -> None:
-        self.a_mat_cos = a_mat_cos
-        self.a_mat_sin = a_mat_sin
-        self.b_vec_cos = b_vec_cos
-        self.b_vec_sin = b_vec_sin
+        self.a_mat = a_mat
+        self.b_vec = b_vec
         self.value = value
         self.scale = scale
         self.name = name
@@ -101,15 +93,8 @@ class ToroidalHarmonicConstraintFunction(ConstraintFunction):
         """Constraint function"""  # noqa: DOC201
         currents = self.scale * vector
 
-        result_cos = self.a_mat_cos @ currents
-        result_sin = self.a_mat_sin @ currents
-
-        result_cos -= self.b_vec_cos + self.value
-        result_sin -= self.b_vec_sin + self.value
-        return np.append(result_cos, result_sin, axis=0)
+        return self.a_mat @ currents - (self.b_vec + self.value)
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""  # noqa: DOC201
-        scaled_cos = self.a_mat_cos * self.scale
-        scaled_sin = self.a_mat_sin * self.scale
-        return np.append(scaled_cos, scaled_sin, axis=0)
+        return self.a_mat * self.scale
