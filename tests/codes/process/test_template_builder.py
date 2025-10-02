@@ -46,6 +46,7 @@ from bluemira.codes.process.model_mapping import (
     SolenoidSwitchModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
+    TFTurnsInteger,
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 from bluemira.utilities.tools import compare_dicts
@@ -349,6 +350,7 @@ class TestInDatOneForOne:
             TFSuperconductorModel.NB3SN_WST,
             PrimaryPumpingModel.PRESSURE_DROP_INPUT,
             TFNuclearHeatingModel.INPUT,
+            TFTurnsInteger.INTEGER,
             CostModel.TETRA_1990,
             AvailabilityModel.INPUT,
             OutputCostsSwitch.NO,
@@ -378,7 +380,7 @@ class TestInDatOneForOne:
             "beta_norm_max": 3.0,
             # Plasma impurity stuff
             "radius_plasma_core_norm": 0.75,
-            "f_p_plasma_core_rad_reduction": 0.6,
+            "coreradiationfraction": 0.6,
             # Important stuff
             "p_plant_electric_net_required_mw": 500.0,
             "t_burn_min": 7.2e3,

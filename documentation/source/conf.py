@@ -192,7 +192,6 @@ class SkipAlreadyDocumented:
 
     def __init__(self):
         skip_list = [
-            "bluemira.codes.process.api.PROCESS_DICT",
             "bluemira.fuel_cycle.timeline.Timeline.t",
             "bluemira.fuel_cycle.timeline.Timeline.ft",
             "bluemira.fuel_cycle.timeline.Timeline.DD_rate",

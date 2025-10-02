@@ -1135,7 +1135,7 @@
     "var_mod": "Plasma",
     "scan01": 0.75
   },
-  "f_p_plasma_core_rad_reduction": {
+  "coreradiationfraction": {
     "var_mod": "Plasma",
     "scan01": 0.6
   },
