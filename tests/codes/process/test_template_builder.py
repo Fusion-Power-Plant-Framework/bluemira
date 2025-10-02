@@ -384,7 +384,7 @@ class TestInDatOneForOne:
             "beta_norm_max": 3.0,
             # Plasma impurity stuff
             "radius_plasma_core_norm": 0.75,
-            "coreradiationfraction": 0.6,
+            "f_p_plasma_core_rad_reduction": 0.6,
             # Important stuff
             "p_plant_electric_net_required_mw": 500.0,
             "t_burn_min": 7.2e3,
