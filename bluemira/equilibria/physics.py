@@ -20,7 +20,6 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import MU_0
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.equilibria.constants import PSI_NORM
 from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
@@ -307,13 +306,13 @@ def calc_energy(eq: Equilibrium) -> float:
     ) / (2 * MU_0)
 
 
-def _calc_Li_from_energy(p_energy: float, i_p: float) -> float:
+def _calc_Li_from_energy(bp_energy: float, i_p: float) -> float:
     """
     Calculates the internal inductance of the plasma [H]
 
     Parameters
     ----------
-    p_energy:
+    bp_energy:
         Poloidal magnetic energy
     i_p:
         Plasma current
@@ -322,7 +321,7 @@ def _calc_Li_from_energy(p_energy: float, i_p: float) -> float:
     -------
         Internal inductance of the plasma
     """
-    return 2 * p_energy / i_p**2
+    return 2 * bp_energy / i_p**2
 
 
 def calc_Li(eq: Equilibrium) -> float:
@@ -340,8 +339,8 @@ def calc_Li(eq: Equilibrium) -> float:
     -------
         Internal inductance of the plasma
     """
-    p_energy = calc_energy(eq)
-    return _calc_Li_from_energy(p_energy, eq.profiles.I_p)
+    bp_energy = calc_energy(eq)
+    return _calc_Li_from_energy(bp_energy, eq.profiles.I_p)
 
 
 def _calc_li_from_Li(big_li: float, R_0: float) -> float:
@@ -481,7 +480,7 @@ def calc_p_average(eq: Equilibrium) -> float:
     The average plasma pressure [Pa]
     """
     return _calc_p_average(
-        eq.pressure_map(PSI_NORM),
+        eq.pressure_map(),
         eq.get_LCFS(),
         eq.x,
         eq.dz,
@@ -538,7 +537,7 @@ def calc_beta_t(eq: Equilibrium) -> float:
     Ratio of plasma to toroidal magnetic pressure
     """
     return _calc_beta_t(
-        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles._B_0
+        eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles._B_0
     )
 
 
@@ -594,9 +593,9 @@ def calc_beta_p(eq: Equilibrium) -> float:
     Ratio of plasma to magnetic pressure
     """
     return _calc_beta_p(
-        eq.pressure_map(PSI_NORM),
+        eq.pressure_map(),
         eq.Bp(),
-        eq._get_core_mask(PSI_NORM),
+        eq._get_core_mask(),
         eq.x,
         eq.dx,
         eq.dz,
@@ -626,7 +625,7 @@ def calc_beta_p_approximate(eq: Equilibrium) -> float:
     Ratio of plasma to poloidal magnetic pressure
     """
     return _calc_beta_p_approx(
-        eq.pressure_map(PSI_NORM), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles.I_p
+        eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles.I_p
     )
 
 
