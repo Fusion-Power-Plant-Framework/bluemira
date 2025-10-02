@@ -24,13 +24,13 @@ icc = 62
 icc = 66
 
 *---------------Iteration Variables----------------*
-ixc = 2 * bt
+ixc = 2 * b_plasma_toroidal_on_axis
 ixc = 3 * rmajor
 boundu(3) = 13
-ixc = 4 * te
+ixc = 4 * temp_plasma_electron_vol_avg_kev
 boundl(4) = 5.6
 ixc = 5 * beta
-ixc = 6 * dene
+ixc = 6 * nd_plasma_electron_vol_avg
 boundl(6) = 0.69e20
 ixc = 9 * fdene
 boundu(9) = 1.2
@@ -221,8 +221,8 @@ alphan   = 1.0 * Density profile index
 alphat   = 1.45 * Temperature profile index
 aspect   = 3.1 * Aspect ratio (iteration variable 1)
 beta     = 3.0810e-02 * Total plasma beta (iteration variable 5)
-bt       = 5.6476e+00 * Toroidal field on axis (t) (iteration variable 2)
-dene     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
+b_plasma_toroidal_on_axis       = 5.6476e+00 * Toroidal field on axis (t) (iteration variable 2)
+nd_plasma_electron_vol_avg     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
 beta_norm_max   = 3.0 * (troyon-like) coefficient for beta scaling;
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (i_plasma_geometry=2; 3)
 f_c_plasma_non_inductive = 4.4628e-01 * Fraction of the plasma current produced by
@@ -234,14 +234,14 @@ i_plasma_current    = 4 * Switch for plasma current scaling to use;
 i_diamagnetic_current     = 2 *switch for diamagnetic current scaling (2: SCENE scaling)
 i_density_limit   = 7 * Switch for density limit to enforce (constraint equation 5);
 i_beta_fast_alpha = 1 * Switch for fast alpha pressure calculation;
-ipedestal = 1 * Switch for pedestal profiles;
-neped    = 0.678e20 * Electron density of pedestal (/m3) (ipedestal=1)
-nesep    = 0.2e20 * Electron density at separatrix (/m3) (ipedestal=1)
-rhopedn  = 0.94 * R/a of density pedestal (ipedestal=1)
-rhopedt  = 0.94 * R/a of temperature pedestal (ipedestal=1)
-tbeta    = 2.0 * Temperature profile index beta  (ipedestal=1)
-teped    = 5.5 * Electron temperature of pedestal (kev) (ipedestal=1)
-tesep    = 0.1 * Electron temperature at separatrix (kev) (ipedestal=1)
+i_plasma_pedestal = 1 * Switch for pedestal profiles;
+nd_plasma_pedestal_electron    = 0.678e20 * Electron density of pedestal (/m3) (i_plasma_pedestal=1)
+nd_plasma_separatrix_electron    = 0.2e20 * Electron density at separatrix (/m3) (i_plasma_pedestal=1)
+radius_plasma_pedestal_density_norm  = 0.94 * R/a of density pedestal (i_plasma_pedestal=1)
+radius_plasma_pedestal_temp_norm  = 0.94 * R/a of temperature pedestal (i_plasma_pedestal=1)
+tbeta    = 2.0 * Temperature profile index beta  (i_plasma_pedestal=1)
+temp_plasma_pedestal_kev    = 5.5 * Electron temperature of pedestal (kev) (i_plasma_pedestal=1)
+temp_plasma_separatrix_kev    = 0.1 * Electron temperature at separatrix (kev) (i_plasma_pedestal=1)
 i_ind_plasma_internal_norm = 1 * Switch for current profile consistency;
 i_alphaj = 1
 i_beta_norm_max = 1
@@ -254,7 +254,7 @@ f_nd_alpha_electron   = 0.1 * Thermal alpha density / electron density (iteratio
 rmajor   = 9.0e+00 * Plasma major radius (m) (iteration variable 3)
 i_single_null    = 1 * Switch for single null / double null plasma;
 f_sync_reflect    = 0.6 * Synchrotron wall reflectivity factor
-te       = 1.3212e+01 * Volume averaged electron temperature (kev)
+temp_plasma_electron_vol_avg_kev       = 1.3212e+01 * Volume averaged electron temperature (kev)
 triang   = 0.5 * Plasma separatrix triangularity (calculated if i_plasma_geometry=1; 3 or 4)
 f_alpha_energy_confinement_min = 5.0 * Lower limit on t_alpha_confinement/t_energy_confinement the ratio of alpha particle to energy confinement times
 *-----------------Pulse Variables------------------*

@@ -759,19 +759,19 @@
     "var_mod": "Plasma",
     "scan01": 1.1388
   },
-  "bvert": {
+  "b_plasma_vertical_required": {
     "var_mod": "Plasma",
     "scan01": -0.95509
   },
-  "bt": {
+  "b_plasma_toroidal_on_axis": {
     "var_mod": "Plasma",
     "scan01": 4.1253
   },
-  "bp": {
+  "b_plasma_poloidal_average": {
     "var_mod": "Plasma",
     "scan01": 0.95001
   },
-  "btot": {
+  "b_plasma_total": {
     "var_mod": "Plasma",
     "scan01": 4.2333
   },
@@ -859,27 +859,27 @@
     "var_mod": "Plasma",
     "scan01": 2793100000.0
   },
-  "te": {
+  "temp_plasma_electron_vol_avg_kev": {
     "var_mod": "Plasma",
     "scan01": 19.197
   },
-  "te0": {
+  "temp_plasma_electron_on_axis_kev": {
     "var_mod": "Plasma",
     "scan01": 43.343
   },
-  "ti": {
+  "temp_plasma_ion_vol_avg_kev": {
     "var_mod": "Plasma",
     "scan01": 19.197
   },
-  "ti0": {
+  "temp_plasma_ion_on_axis_kev": {
     "var_mod": "Plasma",
     "scan01": 43.343
   },
-  "ten": {
+  "temp_plasma_electron_density_weighted_kev": {
     "var_mod": "Plasma",
     "scan01": 21.516
   },
-  "dene": {
+  "nd_plasma_electron_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 6.4154e19
   },
@@ -999,15 +999,15 @@
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "ipedestal": {
+  "i_plasma_pedestal": {
     "var_mod": "Plasma",
     "scan01": 1.0
   },
-  "rhopedn": {
+  "radius_plasma_pedestal_density_norm": {
     "var_mod": "Plasma",
     "scan01": 0.94
   },
-  "neped": {
+  "nd_plasma_pedestal_electron": {
     "var_mod": "Plasma",
     "scan01": 5.0325e19
   },
@@ -1015,19 +1015,19 @@
     "var_mod": "Plasma",
     "scan01": 0.85
   },
-  "rhopedt": {
+  "radius_plasma_pedestal_temp_norm": {
     "var_mod": "Plasma",
     "scan01": 0.94
   },
-  "teped": {
+  "temp_plasma_pedestal_kev": {
     "var_mod": "Plasma",
     "scan01": 6.129
   },
-  "tesep": {
+  "temp_plasma_separatrix_kev": {
     "var_mod": "Plasma",
     "scan01": 0.1
   },
-  "nesep": {
+  "nd_plasma_separatrix_electron": {
     "var_mod": "Plasma",
     "scan01": 2.9603e19
   },
@@ -1135,7 +1135,7 @@
     "var_mod": "Plasma",
     "scan01": 0.75
   },
-  "coreradiationfraction": {
+  "f_p_plasma_core_rad_reduction": {
     "var_mod": "Plasma",
     "scan01": 0.6
   },
@@ -1379,7 +1379,7 @@
     "var_mod": "Plasma",
     "scan01": 2.7712e20
   },
-  "ntau*te": {
+  "ntau*temp_plasma_electron_vol_avg_kev": {
     "var_mod": "Plasma",
     "scan01": 5.3197e21
   },

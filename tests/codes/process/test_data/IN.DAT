@@ -25,12 +25,12 @@ icc = 56 * Pseparatrix
 
 *---------------Iteration Variables----------------*
 
-ixc = 2 * bt
+ixc = 2 * b_plasma_toroidal_on_axis
 ixc = 3 * rmajor
 boundu(3) = 13
-ixc = 4 * te
+ixc = 4 * temp_plasma_electron_vol_avg_kev
 ixc = 5 * beta
-ixc = 6 * dene
+ixc = 6 * nd_plasma_electron_vol_avg
 ixc = 9 * fdene
 boundu(9) = 1.2
 ixc = 10 * hfact
@@ -213,7 +213,7 @@ p_hcd_injected_max  = 50. * maximum allowable value for injected power (MW) (`co
 anginc   = 0.175 * angle of incidence of field line on plate (rad)
 dz_divertor   = 0.621 * divertor structure vertical thickness (m)
 pflux_div_heat_load_max_mw = 10 * heat load limit (MW/m2)
-prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `ipedestal=0`; = nesep/dene if `ipedestal>=1`)
+prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `i_plasma_pedestal=0`; = nd_plasma_separatrix_electron/nd_plasma_electron_vol_avg if `i_plasma_pedestal>=1`)
 
 *------------------Error Handling------------------*
 
@@ -391,9 +391,9 @@ alphaj   = 2.0 * current profile index
 alphan   = 1.0 * density profile index
 alphat   = 1.45 * temperature profile index
 aspect   = 3.5 * aspect ratio (`iteration variable 1`)
-beta     = 3.0810e-02 * total plasma beta (`iteration variable 5`) (calculated if `ipedestal=3` or stellarator)
-bt       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
-dene     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `ipedestal=3`)
+beta     = 3.0810e-02 * total plasma beta (`iteration variable 5`) (calculated if `i_plasma_pedestal=3` or stellarator)
+b_plasma_toroidal_on_axis       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
+nd_plasma_electron_vol_avg     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `i_plasma_pedestal=3`)
 beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
 f_c_plasma_non_inductive = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
@@ -404,14 +404,14 @@ i_beta_component   = 1 * switch for beta limit scaling (`constraint equation 24`
 i_plasma_current   = 4 * switch for plasma current scaling to use
 i_density_limit   = 7 * switch for density limit to enforce (`constraint equation 5`)
 i_beta_fast_alpha = 1 * switch for fast alpha pressure calculation
-ipedestal = 1 * switch for pedestal profiles;
-neped    = 0.678e20 * electron density of pedestal [m-3] (`ipedestal=1;2; calculated if 3`)
-nesep    = 0.2e20 * electron density at separatrix [m-3] (`ipedestal=1;2; calculated if 3`)
-rhopedn  = 0.94 * r/a of density pedestal (`ipedestal>=1`)
-rhopedt  = 0.94 * r/a of temperature pedestal (`ipedestal>=1`)
-tbeta    = 2.0 * temperature profile index beta  (`ipedestal=1;2`)
-teped    = 5.5 * electron temperature of pedestal (keV) (`ipedestal>=1; ieped=0; calculated for ieped=1`)
-tesep    = 0.1 * electron temperature at separatrix (keV) (`ipedestal>=1`) calculated if reinke
+i_plasma_pedestal = 1 * switch for pedestal profiles;
+nd_plasma_pedestal_electron    = 0.678e20 * electron density of pedestal [m-3] (`i_plasma_pedestal=1;2; calculated if 3`)
+nd_plasma_separatrix_electron    = 0.2e20 * electron density at separatrix [m-3] (`i_plasma_pedestal=1;2; calculated if 3`)
+radius_plasma_pedestal_density_norm  = 0.94 * r/a of density pedestal (`i_plasma_pedestal>=1`)
+radius_plasma_pedestal_temp_norm  = 0.94 * r/a of temperature pedestal (`i_plasma_pedestal>=1`)
+tbeta    = 2.0 * temperature profile index beta  (`i_plasma_pedestal=1;2`)
+temp_plasma_pedestal_kev    = 5.5 * electron temperature of pedestal (keV) (`i_plasma_pedestal>=1; ieped=0; calculated for ieped=1`)
+temp_plasma_separatrix_kev    = 0.1 * electron temperature at separatrix (keV) (`i_plasma_pedestal>=1`) calculated if reinke
 i_ind_plasma_internal_norm = 1 * Switch for current profile consistency;
 i_alphaj = 1
 i_beta_norm_max = 1
@@ -420,11 +420,11 @@ i_plasma_geometry   = 2 * switch for plasma cross-sectional shape calculation;
 kappa    = 1.700 * plasma separatrix elongation (calculated if `i_plasma_geometry = 1-5 or 7`)
 q95      = 3.2267e+00 * safety factor 'near' plasma edge (`iteration variable 18`) equal to q95
 q0       = 1.0 * safety factor on axis
-f_nd_alpha_electron   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `ipedestal=3`)
+f_nd_alpha_electron   = 0.1 * thermal alpha density/electron density (`iteration variable 109`) (calculated if `i_plasma_pedestal=3`)
 rmajor   = 9.1077e+00 * plasma major radius (m) (`iteration variable 3`)
 i_single_null = 1 * switch for single null / double null plasma;
 f_sync_reflect    = 0.6 * synchrotron wall reflectivity factor
-te       = 1.3212e+01 * volume averaged electron temperature (keV) (`iteration variable 4`)
+temp_plasma_electron_vol_avg_kev       = 1.3212e+01 * volume averaged electron temperature (keV) (`iteration variable 4`)
 triang   = 0.5 * plasma separatrix triangularity (calculated if `i_plasma_geometry = 1; 3-5 or 7`)
 
 *--------------Plasma Geometry Module--------------*
