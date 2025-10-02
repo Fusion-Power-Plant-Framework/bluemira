@@ -63,7 +63,7 @@ from bluemira.equilibria.optimisation.problem import (
     OutboardBreakdownZoneStrategy,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.physics import calc_beta_p, calc_li3, calc_psib
+from bluemira.equilibria.physics import calc_psib
 from bluemira.equilibria.profiles import (
     BetaIpProfile,
     BetaLiIpProfile,
@@ -364,8 +364,15 @@ eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 plt.pause(PLT_PAUSE)
 
+# Get summary of key physics parameters
+sof_summary = sof.analyse_plasma()
+eof_summary = eof.analyse_plasma()
 
-bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
-bluemira_print(f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}")
+bluemira_print(
+    f"SOF: beta_p: {sof_summary.beta_p.value:.2f} l_i: {sof_summary.li_3.value:.2f}"
+)
+bluemira_print(
+    f"EOF: beta_p: {eof_summary.beta_p.value:.2f} l_i: {eof_summary.li_3.value:.2f}"
+)
 
 plt.show(block=True)
