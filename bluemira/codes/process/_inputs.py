@@ -494,7 +494,7 @@ class ProcessInputs:
 
     # Impurity radiation
     radius_plasma_core_norm: float | None = None
-    f_p_plasma_core_rad_reduction: float | None = None
+    coreradiationfraction: float | None = None
     f_nd_impurity_electrons: list[float] | None = None
 
     # Reinke
