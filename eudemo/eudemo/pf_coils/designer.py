@@ -30,9 +30,11 @@ from bluemira.equilibria.optimisation.constraints import (
     PsiConstraint,
 )
 from bluemira.equilibria.optimisation.problem import PulsedNestedPositionCOP
+from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.run import (
     BreakdownCOPConfig,
     EQConfig,
+    MovingCurrentBoundStrategy,
     OptimisedPulsedCoilsetDesign,
     PositionConfig,
 )
@@ -201,6 +203,15 @@ class PFCoilsDesigner(Designer[CoilSet]):
             self.build_config.get("grid_settings", {}),
         )
         profiles = deepcopy(self.ref_eq.profiles)
+
+        pn = np.linspace(0, 1, 50)
+        profiles = CustomProfile(
+            profiles.pprime(pn),
+            profiles.ffprime(pn),
+            profiles.R_0,
+            profiles._B_0,
+            I_p=profiles.I_p,
+        )
         constraints = self._make_opt_constraints(coilset)
         opt_problem = self._make_pulsed_coilset_opt_problem(
             coilset, grid, profiles, coil_mapper, constraints
@@ -316,12 +327,17 @@ class PFCoilsDesigner(Designer[CoilSet]):
                     **eq_config["diagnostic_plotting"]
                 ),
             ),
+            limiter=None,
+            current_bounder=MovingCurrentBoundStrategy(
+                self.keep_out_zones,
+                eq_config["peak_PF_current_factor"] * self.params.I_p.value,
+                self.params.PF_jmax.value,
+            ),
             position_settings=PositionConfig(
                 problem=PulsedNestedPositionCOP,
                 algorithm=pos_config["optimisation_settings"]["algorithm_name"],
                 opt_conditions=pos_config["optimisation_settings"]["conditions"],
             ),
-            limiter=None,
         )
 
     def _make_opt_constraints(self, coilset):
@@ -343,9 +359,13 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "phi_l_neg": {"value": 45.0},
             "phi_l_pos": {"value": 30.0},
         })
-        lcfs = lcfs_parameterisation.create_shape().discretise(byedges=True, ndiscr=50)
+        lcfs = lcfs_parameterisation.create_shape().discretise(byedges=True, ndiscr=250)
+        # from bluemira.geometry.coordinates import interpolate_points, Coordinates
+
+        lcfs = self.ref_eq.eq.get_LCFS()
         x_lcfs, z_lcfs = lcfs.x, lcfs.z
         arg_inner = np.argmin(x_lcfs)
+        arg_outer = np.argmax(x_lcfs)
         arg_xp = np.argmin(z_lcfs)
 
         isoflux = IsofluxConstraint(
@@ -353,11 +373,15 @@ class PFCoilsDesigner(Designer[CoilSet]):
             z_lcfs,
             x_lcfs[arg_inner],
             z_lcfs[arg_inner],
-            tolerance=1.0,
+            # target_value=1.0,
+            tolerance=1e-3,
             constraint_value=0.0,
         )
         psi_inner = PsiConstraint(
-            x_lcfs[arg_inner], z_lcfs[arg_inner], target_value=0.0, tolerance=1e-3
+            [x_lcfs[i] for i in [arg_outer]],
+            [z_lcfs[i] for i in [arg_outer]],
+            target_value=1.0,
+            tolerance=1e-3,
         )
         x_point = FieldNullConstraint(x_lcfs[arg_xp], z_lcfs[arg_xp], tolerance=1e-4)
         coil_field_constraints = [

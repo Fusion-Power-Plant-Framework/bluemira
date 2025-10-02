@@ -152,7 +152,10 @@ class EUDEMOReactorParams(ParameterFrame):
 
     # Divertor silhouette
     div_type: Parameter[str]
-    div_Ltarg: Parameter[float]  # noqa: N815
+    div_Ltarg_ib: Parameter[float]  # noqa: N815
+    div_Ltarg_ob: Parameter[float]  # noqa: N815
+    div_targ_angle_ib: Parameter[float]
+    div_targ_angle_ob: Parameter[float]
     div_open: Parameter[bool]
 
     # Remote maintenance
@@ -219,7 +222,6 @@ class EUDEMOReactorParams(ParameterFrame):
     f_sol_ch_fw: Parameter[float]
     f_sol_rad: Parameter[float]
     f_sol_rad_fw: Parameter[float]
-    vvpfrac: Parameter[float]
     P_hcd_ss_el: Parameter[float]
 
     # First wall panelling
@@ -227,7 +229,6 @@ class EUDEMOReactorParams(ParameterFrame):
     fw_dL_min: Parameter[float]  # noqa: N815
 
     # CSG neutronics
-    reactor_power: Parameter[float]
     peaking_factor: Parameter[float]
     vertical_shift: Parameter[float]
     inboard_fw_tk: Parameter[float]
@@ -238,3 +239,21 @@ class EUDEMOReactorParams(ParameterFrame):
     outboard_breeding_tk: Parameter[float]
     blk_ib_manifold: Parameter[float]
     blk_ob_manifold: Parameter[float]
+
+    TBR: Parameter[float]
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    P_n_aux: Parameter[float]
+    P_n_e_mult: Parameter[float]
+    P_n_decay: Parameter[float]
+    peak_NWL: Parameter[float]  # noqa: N815
+    peak_bb_iron_dpa_rate: Parameter[float]
+    peak_vv_iron_dpa_rate: Parameter[float]
+    peak_div_cu_dpa_rate: Parameter[float]
+
+    # 0-D neutronics
+    f_n_blanket: Parameter[float]
+    f_n_divertor: Parameter[float]
+    f_n_vessel: Parameter[float]
+    f_n_aux: Parameter[float]

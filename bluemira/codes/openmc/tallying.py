@@ -64,7 +64,9 @@ def filter_cells(
     # bz_filter = openmc.CellFilter(bz_cells)
 
     # material filters
-    mat_filter = openmc.MaterialFilter(material_list[:-1])
+    mat_filter = openmc.MaterialFilter(
+        material_list
+    )  # TODO @Ocean: Likely related to #4009
     eurofer_filter = openmc.MaterialFilter([material_list[-1]])
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])

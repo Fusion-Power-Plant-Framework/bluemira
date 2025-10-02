@@ -312,9 +312,9 @@ template_builder.add_input_values({
 })
 
 
-def apply_specific_interface_rules(params: ParameterFrame):
+def apply_specific_B_to_P_interface_rules(params: ParameterFrame):
     """
-    Apply specific rules for the interface between PROCESS and BLUEMIRA
+    Apply specific rules for the interface between BLUEMIRA and PROCESS
     that relate to the EU-DEMO design parameterisation
     """
     # Apply q_95 as a boundary on the iteration vector rather than a fixed input
@@ -345,6 +345,25 @@ def apply_specific_interface_rules(params: ParameterFrame):
         "dz_vv_upper": default_vv_tk,
         "dz_vv_lower": default_vv_tk,
     })
+    # This is because these parameters are in the mapping, but they are not 1:1
+    params.update_values({"tk_vv_in": default_vv_tk, "tk_vv_out": default_vv_tk})
+
+
+def apply_specific_P_to_B_interface_rules(
+    params: ParameterFrame, process_params: ParameterFrame
+):
+    """
+    Apply specific rules for the interface between BLUEMIRA and PROCESS
+    that relate to the EU-DEMO design parameterisation
+    """
+    # CS maxima over pulse and name conventions
+    cs_b_max = max(
+        process_params.get_values("B_cs_peak_flat_top_end", "B_cs_peak_pulse_start")
+    )
+    params.update_values({
+        "CS_bmax": cs_b_max,
+        "CS_jmax": process_params.get_values("j_cs_critical")[0],
+    })
 
 
 def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
@@ -364,17 +383,24 @@ def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     """
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
+
+    # We stash these and reset them later because we need to run PROCESS with
+    # out changing the default mapping
+    tk_vv_ib = params.tk_vv_in.value
+    tk_vv_ob = params.tk_vv_out.value
+
     if run_mode == "run":
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
         )
-        apply_specific_interface_rules(params)
+        apply_specific_B_to_P_interface_rules(params)
         build_config["template_in_dat"] = template_builder.make_inputs()
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
     if plot:
         solver.plot_radial_build(show=True)
-
     params.update_from_frame(new_params)
+    params.update_values({"tk_vv_in": tk_vv_ib, "tk_vv_out": tk_vv_ob})
+    apply_specific_P_to_B_interface_rules(params, new_params)
     return params

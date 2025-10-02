@@ -1,6 +1,6 @@
 {
   "A": {
-    "value": 3.1,
+    "value": 2.8,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma aspect ratio"
@@ -24,7 +24,7 @@
     "long_name": "Peak field inside the TF coil winding pack"
   },
   "C_Ejima": {
-    "value": 0.3,
+    "value": 0.2,
     "unit": "dimensionless",
     "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "long_name": "Ejima constant"
@@ -292,7 +292,7 @@
     "description": "Maximum turning angle (clockwise tail-to-tail angle) between adjacent first wall panels"
   },
   "fw_dL_min": {
-    "value": 0.3,
+    "value": 0.15,
     "source": "Input",
     "unit": "meter",
     "long_name": "Minimum panel length",
@@ -365,19 +365,19 @@
     "long_name": "Last closed surface plasma elongation"
   },
   "kappa_95": {
-    "value": 1.6,
+    "value": 1.747,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "95th percentile plasma elongation"
   },
   "m_s_limit": {
-    "value": 0.1,
+    "value": 0.2,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Margin to vertical stability criterion"
   },
   "l_i": {
-    "value": 0.8,
+    "value": 0.78,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Normalised internal plasma inductance"
@@ -395,7 +395,7 @@
     "long_name": "Plasma safety factor on axis"
   },
   "q_95": {
-    "value": 3.5,
+    "value": 3.6,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma safety factor at the 95th percentile flux surface"
@@ -695,7 +695,7 @@
     "long_name": "TF coil ground insulation thickness"
   },
   "tk_tf_insgap": {
-    "value": 0.1,
+    "value": 0.01,
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil WP insertion gap",
@@ -761,14 +761,8 @@
     "source": "Input",
     "long_name": "Vacuum vessel double-walled shell thickness"
   },
-  "vvpfrac": {
-    "value": 0.04,
-    "unit": "volt",
-    "source": "Input",
-    "long_name": "Fraction of neutrons deposited in VV"
-  },
   "v_burn": {
-    "value": 0.05,
+    "value": 2.949e-2,
     "unit": "volt",
     "source": "Input",
     "long_name": "Loop voltage during burn"
@@ -784,13 +778,13 @@
     "source": "Input"
   },
   "CS_bmax": {
-    "value": 13,
+    "value": 1,
     "unit": "tesla",
     "source": "Input",
     "long_name": "Maximum peak field to use in CS modules"
   },
   "CS_jmax": {
-    "value": 16.5,
+    "value": 1,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in CS modules"
@@ -826,13 +820,13 @@
     "long_name": "Number of PF coils"
   },
   "PF_bmax": {
-    "value": 11,
+    "value": 12,
     "unit": "tesla",
     "source": "Input",
     "long_name": "Maximum peak field to use in PF modules"
   },
   "PF_jmax": {
-    "value": 12.5,
+    "value": 15,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in PF modules"
@@ -844,7 +838,7 @@
     "long_name": "Shafranov shift of plasma (geometric=>magnetic)"
   },
   "tk_cs_casing": {
-    "value": 0.02,
+    "value": 0.001,
     "unit": "meter",
     "source": "Input",
     "long_name": "Thickness of the CS coil casing"
@@ -861,11 +855,29 @@
     "source": "Input",
     "long_name": "Normalised psi boundary to fit FW to"
   },
-  "div_Ltarg": {
-    "value": 0.5,
+  "div_Ltarg_ib": {
+    "value": 0.62,
     "unit": "meter",
-    "source": "Input",
-    "long_name": "Divertor target length"
+    "source": "Input - F. Maviglia value",
+    "long_name": "Divertor inboard target length"
+  },
+  "div_Ltarg_ob": {
+    "value": 0.62,
+    "unit": "meter",
+    "source": "Input - F. Maviglia value",
+    "long_name": "Divertor outboard target length"
+  },
+  "div_targ_angle_ib": {
+    "value": 42,
+    "unit": "degrees",
+    "source": "Input - F. Maviglia value",
+    "long_name": "Divertor inboard target ccw angle"
+  },
+  "div_targ_angle_ob": {
+    "value": -25,
+    "unit": "degrees",
+    "source": "Input - F. Maviglia value",
+    "long_name": "Divertor outboard target ccw angle"
   },
   "div_open": {
     "value": false,
@@ -1063,12 +1075,6 @@
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
   },
-  "reactor_power": {
-    "value": 1998,
-    "unit": "MW",
-    "source": "Input",
-    "long_name": "neutronics reactor power"
-  },
   "peaking_factor": {
     "value": 1.508,
     "unit": "",
@@ -1128,5 +1134,100 @@
     "unit": "m",
     "source": "Input",
     "long_name": "Blanket manifold outboard thickness"
+  },
+  "TBR": {
+    "value": 1.05,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Tritium breeding ratio"
+  },
+  "P_n_blanket": {
+    "value": 1800,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Blanket neutron heating power"
+  },
+  "P_n_divertor": {
+    "value": 150,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Divertor neutron heating power"
+  },
+  "P_n_vessel": {
+    "value": 25,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Vacuum vessel neutron heating power"
+  },
+  "P_n_aux": {
+    "value": 10.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Auxiliary neutron heating power"
+  },
+  "P_n_e_mult": {
+    "value": 500.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Total energy multiplication thermal power"
+  },
+  "P_n_decay": {
+    "value": 30.0,
+    "unit": "MW",
+    "source": "Input",
+    "long_name": "Instantaneous (steady-state) radioactice decay power"
+  },
+  "peak_NWL": {
+    "value": 1.2,
+    "unit": "MW/m^2",
+    "source": "Input",
+    "long_name": "Peak neutron wall load"
+  },
+  "peak_bb_iron_dpa_rate": {
+    "value": 10.2,
+    "unit": "dpa/fpy",
+    "source": "Input",
+    "long_name": "Peak damage rate in Fe in the BB",
+    "description": "Usually defined in EUROfer at the outboard midplane behind the W first wall"
+  },
+  "peak_vv_iron_dpa_rate": {
+    "value": 0.3,
+    "unit": "dpa/fpy",
+    "source": "Input",
+    "long_name": "Peak damage rate in Fe in the VV"
+  },
+  "peak_div_cu_dpa_rate": {
+    "value": 3.0,
+    "unit": "dpa/fpy",
+    "source": "Input",
+    "long_name": "Peak damage rate in Cu in the divertor"
+  },
+  "f_n_blanket": {
+    "value": 0.81,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_divertor": {
+    "value": 0.1,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_vessel": {
+    "value": 0.04,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
+  },
+  "f_n_aux": {
+    "value": 0.05,
+    "unit": "",
+    "source": "Input",
+    "long_name": "Fraction of neutron power that goes into the blanket",
+    "description": "Used in 0-D neutronics model"
   }
 }

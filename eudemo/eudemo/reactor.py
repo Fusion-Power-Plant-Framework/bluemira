@@ -20,6 +20,7 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
+import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -27,8 +28,9 @@ import numpy as np
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
+from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -43,8 +45,16 @@ from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.geometry.tools import (
+    distance_to,
+    interpolate_bspline,
+    offset_wire,
+    save_cad,
+)
 from bluemira.materials.cache import establish_material_cache
+from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+    ZeroDNeutronicsModel,
+)
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -282,7 +292,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
-    return TFCoil(builder.build(), builder._make_field_solver())
+    return TFCoil(builder.build(), builder._make_field_solver(), centreline)
 
 
 def build_pf_coils(
@@ -303,12 +313,11 @@ def build_pf_coils(
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
     # to stop clashes between ports and PF coil corners
-    # TODO: Implement adjustable current bounds on sub-opt problems
-    offset_value = np.sqrt(
+    offset_value = 0.15 * np.sqrt(
         params.global_params.I_p.value / params.global_params.PF_jmax.value
     )
     for koz in pf_coil_keep_out_zones:
-        new_wire = offset_wire(koz.boundary[0], offset_value, open_wire=False)
+        new_wire = offset_wire(koz.boundary[0], abs(offset_value), open_wire=False)
         new_face = BluemiraFace(new_wire)
         pf_coil_keep_out_zones_new.append(new_face)
 
@@ -539,6 +548,65 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
         )
 
 
+def save_reactor(reactor, folder_name):
+    """
+    Save a reactor to a folder data-structure
+    """
+    bluemira_print(f"Saving reactor to {folder_name}")
+    config_folder = get_bluemira_path("config", subfolder="eudemo")
+    root = make_bluemira_path(folder_name, subfolder="eudemo")
+    process_folder = make_bluemira_path(f"{folder_name}/PROCESS", subfolder="eudemo")
+    cad_folder = make_bluemira_path(f"{folder_name}/CAD", subfolder="eudemo")
+    equilibria_folder = make_bluemira_path(
+        f"{folder_name}/equilibria", subfolder="eudemo"
+    )
+    tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
+    # Copy across PROCESS outputs
+    for fn in ["OUT.DAT", "MFILE.DAT"]:
+        shutil.copyfile(f"{config_folder}/{fn}", f"{process_folder}/{fn}")
+    # Save equilibria
+    sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
+    eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
+    sof.to_eqdsk(
+        filename="BLUEMIRA_SOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+    eof.to_eqdsk(
+        filename="BLUEMIRA_not_EOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+    df = reactor.equilibria.summary()
+    filename = f"{equilibria_folder}/BLUEMIRA_equilibria_summary.xlsx"
+    df.to_excel(filename, index=False)
+    # Save TF coils
+    filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
+    reactor.save_cad(
+        n_sectors=1,
+        with_components=[reactor.tf_coils, reactor.coil_structures],
+        filename=filename,
+    )
+    filename = f"{tf_folder}/BLUEMIRA_TF_centreline.STP"
+    save_cad(
+        reactor.tf_coils.centreline.create_shape(), filename=filename, cad_format="stp"
+    )
+    # Save CAD
+    filename = f"{cad_folder}/BLUEMIRA_full_3D_CAD.STP"
+    reactor.save_cad(n_sectors=2, filename=filename)
+    # Save figures
+    reactor.plot("xz", show=False)
+    f = plt.gcf()
+    filename = f"{root}/BLUEMIRA_reactor_xz.pdf"
+    f.savefig(filename, dpi=600, format="pdf")
+    reactor.plot("xy", show=False)
+    f = plt.gcf()
+    filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
+    f.savefig(filename, dpi=600, format="pdf")
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
 
@@ -557,6 +625,7 @@ if __name__ == "__main__":
         reactor_config.params_for("Radial build").global_params,
         reactor_config.config_for("Radial build"),
     )
+
     lcfs_coords, profiles = run_designer(
         FixedEquilibriumDesigner,
         reactor_config.params_for("Fixed boundary equilibrium"),
@@ -622,7 +691,7 @@ if __name__ == "__main__":
     if reactor_config.config_for("Neutronics").get("enabled", False):
         reactor.neutronics = NeutronicsManager(
             *run_neutronics(
-                reactor_config.params_for("Neutronics"),
+                reactor_config.params_for("Neutronics").global_params,
                 reactor_config.config_for("Neutronics"),
                 blanket=reactor.blanket,
                 vacuum_vessel=reactor.vacuum_vessel,
@@ -633,6 +702,10 @@ if __name__ == "__main__":
         if reactor_config.config_for("Neutronics")["show_data"]:
             reactor.neutronics.plot()
             bluemira_print_clean(f"{reactor.neutronics}")
+    else:
+        model = ZeroDNeutronicsModel(reactor_config.global_params)
+        new_params = model.run()
+        reactor_config.global_params.update_from_frame(new_params)
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
@@ -679,6 +752,12 @@ if __name__ == "__main__":
             lower_port_koz_xz,
         ],
     )
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
+    debug.extend([reactor.tf_coils.xz_outer_boundary])
+    debug.extend(reactor.pf_coils.xz_boundary)
+    # I know there are clashes, I need to put in dynamic bounds on position opt to
+    # include coil XS.
+    show_cad(debug)
 
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
@@ -779,16 +858,10 @@ if __name__ == "__main__":
         reactor_config.config_for("CAD_Neutronics"),
     )
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-    debug.extend(reactor.pf_coils.xz_boundary)
-    # I know there are clashes, I need to put in dynamic bounds on position opt to
-    # include coil XS.
-    show_cad(debug)
-
-    reactor.show_cad("xz")
+    reactor.plot("xz")
     reactor.show_cad(n_sectors=2)
 
-    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-    sspc_result = sspc_solver.execute()
-    sspc_solver.model.plot()
-    plt.show()
+sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+sspc_result = sspc_solver.execute()
+sspc_solver.model.plot()
+plt.show()

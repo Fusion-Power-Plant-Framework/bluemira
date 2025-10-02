@@ -16,7 +16,13 @@ from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.parameter_frame._frame import ParameterFrame
+from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.plasma_physics.reactions import n_DT_reactions
 from bluemira.radiation_transport.neutronics.constants import DPACoefficients
+from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+    ZeroDNeutronicsResult,
+)
 
 
 def get_percent_err(row):
@@ -57,6 +63,8 @@ class OpenMCResult:
 
     tbr: float
     tbr_err: float
+    e_mult: float
+    e_mult_err: float
     heating: dict
     neutron_wall_load: dict
     blanket_power: float
@@ -65,6 +73,7 @@ class OpenMCResult:
     divertor_power_err: float
     vessel_power: float
     vessel_power_err: float
+    mult_power: float
     """Neutron wall load (eV)"""
 
     photon_heat_flux: dict
@@ -82,10 +91,11 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
-        src_rate: float,
+        P_fus_DT: float,
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
+        src_rate = n_DT_reactions(P_fus_DT)
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}
@@ -115,6 +125,18 @@ class OpenMCResult:
             statepoint, src_rate, "vacuum vessel power"
         )
 
+        # MC: There is power in the TF + CS, and probably the radiation shield
+        # that I am ignoring here. Perhaps worth adding filters for these
+        total_power = blanket_power + divertor_power + vessel_power
+        total_power_err = np.sqrt(
+            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        )
+
+        dt_neuton_power = 0.8 * P_fus_DT
+        e_mult = total_power / dt_neuton_power
+        e_mult_err = total_power_err / dt_neuton_power
+        mult_power = (e_mult - 1.0) * dt_neuton_power
+
         return cls(
             universe=universe,
             src_rate=src_rate,
@@ -125,6 +147,8 @@ class OpenMCResult:
             mat_names=mat_names,
             tbr=tbr,
             tbr_err=tbr_err,
+            e_mult=e_mult,
+            e_mult_err=e_mult_err,
             heating=cls._load_heating(statepoint, mat_names, src_rate),
             blanket_power=blanket_power,
             blanket_power_err=blanket_power_err,
@@ -132,6 +156,7 @@ class OpenMCResult:
             divertor_power_err=divertor_power_err,
             vessel_power=vessel_power,
             vessel_power_err=vessel_power_err,
+            mult_power=mult_power,
             neutron_wall_load=cls._load_neutron_wall_loading(
                 statepoint, cell_names, cell_vols, src_rate
             ),
@@ -395,3 +420,53 @@ class OpenMCResult:
             numalign="right",
             floatfmt=floatfmt,
         )
+
+
+@dataclass
+class NeutronicsOutputParams(ParameterFrame):
+    """
+    Neutronics output parameters
+    """
+
+    e_mult: Parameter[float]
+    TBR: Parameter[float]
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    P_n_aux: Parameter[float]
+    P_n_e_mult: Parameter[float]
+    P_n_decay: Parameter[float]
+    peak_NWL: Parameter[float]  # noqa: N815
+    peak_bb_iron_dpa_rate: Parameter[float]
+    peak_vv_iron_dpa_rate: Parameter[float]
+    peak_div_cu_dpa_rate: Parameter[float]
+
+    @classmethod
+    def from_openmc_csg_result(cls, result: OpenMCResult):
+        """
+        Produce output parameters from an OpenMC CSG result
+        """
+        source = "OpenMC CSG"
+
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
+            Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
+            Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
+            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
+            Parameter("P_n_decay", 0.0, unit="W", source=source),
+            # TODO @Ocean: Add these  # noqa: TD003
+            Parameter("peak_NWL", 0.0, unit="W/m^2", source=source),
+            Parameter("peak_bb_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", 0.0, unit="dpa/fpy", source=source),
+        )
+
+    @classmethod
+    def from_0d_result(cls, result: ZeroDNeutronicsResult):
+        """
+        Produce output parameters from simplified 0-D neutronics model
+        """
+        return cls.from_frame(result)

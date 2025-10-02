@@ -29,8 +29,8 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         elongation of the plasma
     triangularity:
         triangularity of the plasma
-    reactor_power:
-        total reactor (thermal) power when operating at 100%
+    P_fus_DT:
+        Reactor D-T fusion power when operating at 100%
     peaking_factor:
         (max. heat flux on fw)/(avg. heat flux on fw)
     temperature:
@@ -53,7 +53,7 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     """Plasma elongation"""
     delta: Parameter[float]
     """Plasma triangularity"""
-    reactor_power: Parameter[float]  # [W]
+    P_fus_DT: Parameter[float]  # [W]
     peaking_factor: Parameter[float]  # [dimensionless]
     T_e: Parameter[float]
     """Average plasma electron temperature [J]"""
@@ -71,8 +71,8 @@ class PlasmaSourceParameters:
 
     Parameters
     ----------
-    reactor_power:
-        total reactor (thermal) power when operating at 100%
+    P_fus_DT:
+        reactor D-T fusion power when operating at 100%
     peaking_factor:
         (max. heat flux on fw)/(avg. heat flux on fw)
     temperature:
@@ -93,7 +93,7 @@ class PlasmaSourceParameters:
     aspect_ratio: float  # [dimensionless]
     elongation: float  # [dimensionless]
     triangularity: float  # [dimensionless]
-    reactor_power: float  # [W]
+    P_fus_DT: float  # [W]
     peaking_factor: float  # [dimensionless]
     temperature: float  # [K]
     shaf_shift: float  # [m]
@@ -146,7 +146,7 @@ class PlasmaSourceParameters:
         """  # noqa: DOC201
         conversion = {
             "major_radius": ("m", "cm"),
-            "reactor_power": ("W", "MW"),
+            "P_fus_DT": ("W", "MW"),
             "temperature": ("J", "keV"),
             "shaf_shift": ("m", "cm"),
             "vertical_shift": ("m", "cm"),
