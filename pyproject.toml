@@ -89,7 +89,7 @@ process = ["process @ git+https://github.com/ukaea/process@v3.2.0"]
 openmc = [
     "openmc>=0.14.0",
     "openmc_data==2.3.1",
-    "tokamak-neutron-source @ git+ssh://github.com/Fusion-Power-Plant-Framework/fusion-neutron-source-testing",
+    "tokamak-neutron-source @ git+ssh:github.com/Fusion-Power-Plant-Framework/tokamak-neutron-source",
 ]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
