@@ -165,7 +165,86 @@
     "value": 13,
     "unit": "kiloelectron_volt",
     "source": "Input",
-    "long_name": "Average plasma electron temperature"
+    "long_name": "Volume-averaged plasma electron temperature"
+  },
+  "T_e_core": {
+    "value": 20,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Core plasma electron temperature"
+  },
+  "T_e_ped": {
+    "value": 5.5,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Pedestal plasma electron temperature"
+  },
+  "T_e_sep": {
+    "value": 0.1,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Separatrix plasma electron temperature"
+  },
+  "n_e": {
+    "value": 1e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Volume-averaged plasma electron density"
+  },
+  "n_e_core": {
+    "value": 1.5e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Core plasma electron density"
+  },
+  "n_e_ped": {
+    "value": 0.8e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Pedestal plasma electron density"
+  },
+  "n_e_sep": {
+    "value": 0.3e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Separatrix plasma electron density"
+  },
+  "profile_rho_ped": {
+    "value": 0.94,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Pedestal location in normalized radius"
+  },
+  "T_profile_alpha": {
+    "value": 1.45,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Temperature profile alpha exponent"
+  },
+  "T_profile_beta": {
+    "value": 2.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Temperature profile beta exponent"
+  },
+  "n_profile_alpha": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Density profile alpha exponent"
+  },
+  "T_ie_ratio": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of ion to electron temperature."
+
+  },
+  "n_i_fuel": {
+    "value": 0.8e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Fuel ion density (volume-averaged)"
   },
   "V_p": {
     "value": 2400,
@@ -271,12 +350,6 @@
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Bootstrap fraction"
-  },
-  "T_e_ped": {
-    "value": 5.5,
-    "unit": "keV",
-    "source": "Input",
-    "long_name": "Electrons/ions temperature at pedestal"
   },
   "f_ni": {
     "value": 0.1,

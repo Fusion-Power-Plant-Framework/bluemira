@@ -1,0 +1,117 @@
+{
+  "R_0": {
+    "value": 9.0,
+    "unit": "m",
+    "source": "Input",
+    "long_name": "Major radius"
+  },
+  "A": {
+    "value": 3.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma aspect ratio"
+  },
+  "profile_rho_ped": {
+    "value": 0.94,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Pedestal location in normalized radius"
+  },
+  "kappa": {
+    "value": 1.792,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma elongation"
+  },
+  "delta": {
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma triangularity"
+  },
+  "reactor_power": {
+    "value": 1998000000.0,
+    "unit": "W",
+    "source": "Input",
+    "long_name": "neutronics reactor power"
+  },
+  "n_profile_alpha": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Density profile alpha exponent"
+  },
+  "n_e_core": {
+    "value": 1.5e20,
+    "unit": "1/m\u00b3",
+    "source": "Input",
+    "long_name": "Core plasma electron density"
+  },
+  "n_e_ped": {
+    "value": 8e19,
+    "unit": "1/m\u00b3",
+    "source": "Input",
+    "long_name": "Pedestal plasma electron density"
+  },
+  "n_e_sep": {
+    "value": 3e19,
+    "unit": "1/m\u00b3",
+    "source": "Input",
+    "long_name": "Separatrix plasma electron density"
+  },
+  "T_ie_ratio": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of ion to electron temperature."
+
+  },
+  "n_i_fuel": {
+    "value": 0.8e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Fuel ion density (volume-averaged)"
+  },
+  "n_e": {
+    "value": 1e20,
+    "unit": "1/m^3",
+    "source": "Input",
+    "long_name": "Volume-averaged electron density"
+  },
+  "T_profile_alpha": {
+    "value": 1.45,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Temperature profile alpha exponent"
+  },
+  "T_profile_beta": {
+    "value": 2.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Temperature profile beta exponent"
+  },
+  "T_e_core": {
+    "value": 3.2043532679999997e-15,
+    "unit": "J",
+    "source": "Input",
+    "long_name": "Core plasma electron temperature"
+  },
+  "T_e_ped": {
+    "value": 8.811971486999999e-16,
+    "unit": "J",
+    "source": "Input",
+    "long_name": "Pedestal plasma electron temperature"
+  },
+  "T_e_sep": {
+    "value": 1.602176634e-17,
+    "unit": "J",
+    "source": "Input",
+    "long_name": "Separatrix plasma electron temperature"
+  },
+  "shaf_shift": {
+    "value": 0.5,
+    "unit": "m",
+    "source": "equilibria",
+    "long_name": "Shafranov shift of plasma (geometric=>magnetic)"
+  }
+}

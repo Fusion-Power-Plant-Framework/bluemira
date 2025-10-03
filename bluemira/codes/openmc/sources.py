@@ -5,46 +5,91 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Neutronics sources"""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numpy as np
 import openmc
+from tokamak_neutron_source import (
+    FluxMap,
+    FractionalFuelComposition,
+    Reactions,
+    TokamakNeutronSource,
+    TransportInformation,
+)
+from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc
-from bluemira.codes.openmc.params import PlasmaSourceParameters
-from bluemira.radiation_transport.error import SourceError
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
-try:
-    from pps_isotropic.source import create_parametric_plasma_source
+if TYPE_CHECKING:
+    from eqdsk import EQDSKInterface
 
-    PPS_ISO_INSTALLED = True
-except ImportError:
-    PPS_ISO_INSTALLED = False
+    from bluemira.codes.openmc.params import PlasmaSourceParameters
 
 
-def make_pps_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:
-    """Make a plasma source
+def make_tokamak_source(
+    eq: EQDSKInterface,
+    source_parameters: PlasmaSourceParameters,
+    cell_side_length: float = 0.1,
+) -> list[openmc.Source]:
+    """
+    Make a tokamak neutron source using an equilibrium and PlasmaSourceParameters
+    for PROCESS parabolic-pedestal profiles.
 
-    Raises
-    ------
-    SourceError
-        Source not found
-    """  # noqa: DOC201
-    if not PPS_ISO_INSTALLED:
-        raise SourceError("pps_isotropic installation not found")
-    return create_parametric_plasma_source(
-        # tokamak geometry
-        major_r=source_parameters.plasma_physics_units.major_radius,
-        minor_r=source_parameters.plasma_physics_units.minor_radius,
-        elongation=source_parameters.plasma_physics_units.elongation,
-        triangularity=source_parameters.plasma_physics_units.triangularity,
-        # plasma geometry
-        peaking_factor=source_parameters.plasma_physics_units.peaking_factor,
-        temperature=source_parameters.plasma_physics_units.temperature,
-        radial_shift=source_parameters.plasma_physics_units.shaf_shift,
-        vertical_shift=source_parameters.plasma_physics_units.vertical_shift,
-        # plasma type
-        mode="DT",
+    Parameters
+    ----------
+    eq:
+        Equilibrium description
+    source_parameters:
+        PlasmaSourceParameters
+    cell_side_length:
+        The dimension of the squares with which to discretise the neutron source
+
+    Returns
+    -------
+    source:
+        Fusion source for OpenMC
+    """
+    rho_profile = np.linspace(0, 1, 50)
+    temperature_profile = ParabolicPedestalProfile(
+        source_parameters.electron_temperature_core,
+        source_parameters.electron_temperature_ped,
+        source_parameters.electron_temperature_sep,
+        source_parameters.electron_temperature_alpha,
+        source_parameters.electron_temperature_beta,
+        source_parameters.rho_pedestal,
     )
+    temperature_profile.set_scale(source_parameters.ie_temperature_ratio)
+
+    density_profile = ParabolicPedestalProfile(
+        source_parameters.electron_density_core,
+        source_parameters.electron_density_ped,
+        source_parameters.electron_density_sep,
+        source_parameters.electron_density_alpha,
+        2.0,  # Hard-coded as 2.0 in PROCESS
+        source_parameters.rho_pedestal,
+    )
+    density_profile.set_scale(
+        source_parameters.va_fuel_ion_density / source_parameters.va_electron_density
+    )
+    transport = TransportInformation.from_parameterisations(
+        ion_temperature_profile=temperature_profile,
+        fuel_density_profile=density_profile,
+        rho_profile=rho_profile,
+        fuel_composition=FractionalFuelComposition(D=0.5, T=0.5),
+    )
+    flux_map = FluxMap.from_eqdsk(eq)
+
+    source = TokamakNeutronSource(
+        transport,
+        flux_map,
+        source_type=[Reactions.D_T, Reactions.D_D],
+        total_fusion_power=source_parameters.reactor_power,
+        cell_side_length=cell_side_length,
+    )
+    return source.to_openmc_source()
 
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:

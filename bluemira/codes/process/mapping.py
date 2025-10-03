@@ -35,6 +35,11 @@ IN_mappings = {
     "bb_t_outlet": ("temp_blkt_coolant_out", "K"),
     "eta_ecrh": ("eta_ecrh_injector_wall_plug", "dimensionless"),
     "eta_cd_norm_ecrh": ("eta_cd_norm_ecrh", "1e20 A/W/m^2"),
+    "T_profile_alpha": ("alphat", "dimensionless"),
+    "T_profile_beta": ("tbeta", "dimensionless"),
+    "n_profile_alpha": ("alphan", "dimensionless"),
+    # Note: PROCESS has both rhopedt and rhopedn - they are usually the same...
+    "profile_rho_ped": ("rhopedt", "dimensionless"),
 }
 
 OUT_mappings = {
@@ -91,6 +96,14 @@ OUT_mappings = {
     "TF_currpt_ob": ("c_tf_turn", "A"),
     "P_bd_in": ("p_hcd_injected_total_mw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
+    "T_e_core": ("te0", "keV"),
+    "T_e_ped": ("teped", "keV"),
+    "n_e_core": ("ne0", "1/m^3"),
+    "n_e": ("dene", "1/m^3"),
+    "n_e_ped": ("neped", "1/m^3"),
+    "n_e_sep": ("nesep", "1/m^3"),
+    "n_i_fuel": ("nd_fuel_ions", "1/m^3"),
+    "T_ie_ratio": ("tratio", ""),
 }
 
 IO_mappings = {
@@ -105,6 +118,7 @@ IO_mappings = {
     "g_cs_tf": ("dr_cs_tf_gap", "m"),
     "g_ts_tf": ("dr_tf_shld_gap", "m"),
     "g_vv_bb": ("dr_shld_blkt_gap", "m"),
+    "T_e_sep": ("tesep", "keV"),
 }
 
 NONE_mappings = {
