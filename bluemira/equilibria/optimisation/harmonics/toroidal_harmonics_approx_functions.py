@@ -545,18 +545,18 @@ def toroidal_harmonic_approximate_psi(
     # Get coil positions and currents from equilibrium
     currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
 
+    # Check if cos or sin modes are not used in approximation
     cos_empty = len(cos_m_chosen) == 0
     sin_empty = len(sin_m_chosen) == 0
 
-    # Initialise psi and A arrays
-    approx_coilset_psi = np.zeros_like(th_params.R)
-    A = np.zeros_like(th_params.R)
-    # Useful combination
+    # Delta term
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
-    # Get sigma values for the grid
-    sigma_mult_mode_cos = [m * th_params.sigma for m in cos_m_chosen]
-    sigma_mult_mode_sin = [m * th_params.sigma for m in sin_m_chosen]
 
+    # Sigma term
+    sigma_cos = np.cos([m * th_params.sigma for m in cos_m_chosen])
+    sigma_sin = np.sin([m * th_params.sigma for m in sin_m_chosen])
+
+    # Factorial term
     factorial_m_cos = np.array([factorial(m) for m in cos_m_chosen])
     factorial_m_sin = np.array([factorial(m) for m in sin_m_chosen])
 
@@ -570,70 +570,71 @@ def toroidal_harmonic_approximate_psi(
         )
     )
 
-    if cos_empty:
-        A_cos = 0  # noqa: N806
-    else:
-        epsilon = 2 * np.ones(len(cos_m_chosen))
-        epsilon[0] = 1
-        Am_cos_matrix = (  # noqa: N806
-            0
-            if cos_empty
-            else np.einsum(
-                "ij, ikl, i, ikl -> ijkl",
-                Am_cos_current_function,
-                np.cos(sigma_mult_mode_cos),
-                factorial_m_cos,
-                legendre_q(
-                    cos_m_chosen[:, None, None] - 1 / 2,
-                    1,
-                    np.cosh(th_params.tau),
-                    n_max=30,
-                ),
-            )
+    def _make_matrix(
+        current_func,
+        sigma_term,
+        factoral_term,
+        m,
+    ):
+        """
+        Construct matrix for toroidal harmonics calculations.
+
+        Returns
+        -------
+        :
+            matrix of either cos or sin terms
+            (depending on inputs)
+        """
+        Am_matrix = np.einsum(  # noqa: N806
+            "ij, ikl, i, ikl -> ijkl",
+            current_func,
+            sigma_term,
+            factoral_term,
+            legendre_q(
+                m[:, None, None] - 1 / 2,
+                1,
+                np.cosh(th_params.tau),
+                n_max=30,
+            ),
         )
-        A_cos = np.sqrt(2 / np.pi) * (  # noqa: N806
+
+        epsilon = 2 * np.ones(len(m))
+        epsilon[0] = 1
+
+        return np.sqrt(2 / np.pi) * (
             np.einsum(
                 "ijkl, i, kl, j -> kl",
-                Am_cos_matrix,
-                epsilon,
-                np.sqrt(Delta),
-                currents,
-            )
-        )
-    if sin_empty:
-        A_sin = 0  # noqa: N806
-    else:
-        epsilon = 2 * np.ones(len(sin_m_chosen))
-        epsilon[0] = 1
-        Am_sin_matrix = (  # noqa: N806
-            0
-            if sin_empty
-            else np.einsum(
-                "ij, ikl, i, ikl-> ijkl",
-                Am_sin_current_function,
-                np.sin(sigma_mult_mode_sin),
-                factorial_m_sin,
-                legendre_q(
-                    sin_m_chosen[:, None, None] - 1 / 2,
-                    1,
-                    np.cosh(th_params.tau),
-                    n_max=30,
-                ),
-            )
-        )
-        A_sin = np.sqrt(2 / np.pi) * (  # noqa: N806
-            np.einsum(
-                "ijkl, i, kl, j -> kl",
-                Am_sin_matrix,
+                Am_matrix,
                 epsilon,
                 np.sqrt(Delta),
                 currents,
             )
         )
 
-    A = A_cos + A_sin
+    # cos and sin components of TH equation
+    A_cos = (  # noqa: N806
+        0
+        if cos_empty
+        else _make_matrix(
+            current_func=Am_cos_current_function,
+            sigma_term=sigma_cos,
+            factoral_term=factorial_m_cos,
+            m=cos_m_chosen,
+        )
+    )
+    A_sin = (  # noqa: N806
+        0
+        if sin_empty
+        else _make_matrix(
+            current_func=Am_sin_current_function,
+            sigma_term=sigma_sin,
+            factoral_term=factorial_m_sin,
+            m=sin_m_chosen,
+        )
+    )
+
     # Calc approx coilset psi using \psi = A * R
-    approx_coilset_psi = A * th_params.R
+    approx_coilset_psi = (A_cos + A_sin) * th_params.R
     Am_cos = [] if cos_empty else Am_cos_current_function @ currents  # noqa: N806
     Am_sin = [] if sin_empty else Am_sin_current_function @ currents  # noqa: N806
     return approx_coilset_psi, Am_cos, Am_sin
