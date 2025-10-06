@@ -270,8 +270,8 @@ class CoilFieldConstraints(FieldConstraints):
 
     @staticmethod
     def _get_constraint_points(coilset):
-        coilset = coilset.get_control_coils()
-        return coilset.x - coilset.dx, coilset.z
+        cc = coilset.get_control_coils()
+        return cc.x - cc.dx, cc.z
 
     def prepare(
         self,

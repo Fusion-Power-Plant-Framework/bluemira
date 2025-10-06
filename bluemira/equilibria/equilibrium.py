@@ -505,6 +505,7 @@ class CoilSetMHDState(MHDState):
         qpsi_positive: bool | None = None,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
+        force_symmetry_rtol: float = 1e-5,
         full_coil: bool = False,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid, CoilSet, Limiter | None]:
@@ -527,6 +528,11 @@ class CoilSetMHDState(MHDState):
             Set current, j_max and b_max to zero in user_coils.
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        force_symmetry_rtol:
+            The relative tolerance used when comparing coil values
+            for force_symmetry=True. If rtol > 1.e-5 then the values
+            for the secondary coil in the pair will be set to be
+            equal to the primary coil values.
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
@@ -553,7 +559,7 @@ class CoilSetMHDState(MHDState):
         )
         coilset = user_coils if user_coils is not None else CoilSet.from_group_vecs(e)
         if force_symmetry:
-            coilset = symmetrise_coilset(coilset)
+            coilset = symmetrise_coilset(coilset, rtol=force_symmetry_rtol)
 
         limiter = None if e.nlim > 5 or e.nlim == 0 else Limiter(e.xlim, e.zlim)  # noqa: PLR2004
 

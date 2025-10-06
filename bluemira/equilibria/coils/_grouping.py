@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 def symmetrise_coilset(
-    coilset: CoilSet, *, symmetrise_singular: bool = False
+    coilset: CoilSet, *, rtol: float = 1e-5, symmetrise_singular: bool = False
 ) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
@@ -50,6 +50,10 @@ def symmetrise_coilset(
     ----------
     coilset:
         CoilSet to symmetrise
+    rtol:
+        Relative tolerance used when comparing coil values.
+        If rtol > 1.e-5 then the values for the secondary coil
+        in the pair will be set to be equal to the primary coil values.
     symmetrise_singular:
         make singular coils symmetric about z=0
 
@@ -75,8 +79,7 @@ def symmetrise_coilset(
     coilset = deepcopy(coilset)
     sym_stack, sym_inds = _get_symmetric_coils(coilset)
 
-<<<<<<< HEAD
-    _, counts, indexes = _get_symmetric_coils(coilset)
+    _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol)
     new_coils = []
     coils = coilset._coils
     for count, index in zip(counts, indexes, strict=True):

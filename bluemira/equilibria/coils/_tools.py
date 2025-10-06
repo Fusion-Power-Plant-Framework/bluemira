@@ -83,9 +83,19 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 
 def _get_symmetric_coils(
     coilset: CoilSet,
+    rtol: float,
 ) -> tuple[list[npt.NDArray], npt.NDArray, list[list[int]]]:
     """
     Coilset symmetry utility
+
+    Parameters
+    ----------
+    coilset:
+        CoilSet to get symmetric coils from
+    rtol:
+        Relative tolerance used when comparing coil values.
+        If rtol > 1.e-5 then the values for the secondary coil
+        in the pair will be set to be equal to the primary coil values.
 
     Returns
     -------
@@ -107,7 +117,9 @@ def _get_symmetric_coils(
         coil = coil_matrix[i]
 
         for j, sym_coil in enumerate(sym_stack):
-            if np.allclose(coil, sym_coil[0]):
+            if np.allclose(coil, sym_coil[0], rtol=rtol):
+                if rtol > 1e-5:  # noqa: PLR2004
+                    coil = sym_coil[0]
                 sym_stack[j][1] += 1
                 sym_coil[2].append(i)
                 break
@@ -128,7 +140,7 @@ def _get_symmetric_coils(
     return coil_data.tolist(), np.array(count, dtype=int), indexes
 
 
-def check_coilset_symmetric(coilset: CoilSet) -> bool:
+def check_coilset_symmetric(coilset: CoilSet, rtol: float) -> bool:
     """
     Check whether or not a CoilSet is purely symmetric about z=0.
 
@@ -141,7 +153,7 @@ def check_coilset_symmetric(coilset: CoilSet) -> bool:
     -------
     Whether or not the CoilSet is symmetric about z=0
     """
-    coils, counts, _ = _get_symmetric_coils(coilset)
+    coils, counts, _ = _get_symmetric_coils(coilset, rtol=rtol)
     for coil, count in zip(coils, counts, strict=True):
         if count != 2 and not np.isclose(coil[1], 0.0):  # noqa: PLR2004
             # therefore z = 0
