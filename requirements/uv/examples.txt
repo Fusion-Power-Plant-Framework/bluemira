@@ -226,7 +226,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numba==0.62.0
+numba==0.62.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
