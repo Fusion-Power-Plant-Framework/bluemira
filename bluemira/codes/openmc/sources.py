@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from eqdsk import EQDSKInterface
 import numpy as np
 import openmc
 from tokamak_neutron_source import (
@@ -24,13 +25,13 @@ from bluemira.base.constants import raw_uc
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
 if TYPE_CHECKING:
-    from eqdsk import EQDSKInterface
-
     from bluemira.codes.openmc.params import PlasmaSourceParameters
+
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 
 def make_tokamak_source(
-    eq: EQDSKInterface,
+    eq: Equilibrium,
     source_parameters: PlasmaSourceParameters,
     cell_side_length: float = 0.1,
 ) -> list[openmc.Source]:
@@ -52,6 +53,9 @@ def make_tokamak_source(
     source:
         Fusion source for OpenMC
     """
+    data = eq.to_dict()
+    data["name"] = ""
+    eq = EQDSKInterface(**data)
     rho_profile = np.linspace(0, 1, 50)
     temperature_profile = ParabolicPedestalProfile(
         source_parameters.electron_temperature_core,

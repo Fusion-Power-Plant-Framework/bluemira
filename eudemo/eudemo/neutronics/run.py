@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from bluemira.codes.openmc.solver import NeutronSourceCreator
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.radiation_transport.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
@@ -61,7 +63,8 @@ def run_neutronics(
     blanket: ComponentManager,
     vacuum_vessel: ComponentManager,
     ivc_shapes: IVCShapes,
-    source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase] | None = None,
+    eq: Equilibrium,
+    source: NeutronSourceCreator | None = None,
     tally_function=None,
 ) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
     """Runs the neutronics model
@@ -105,6 +108,7 @@ def run_neutronics(
         params,
         build_config,
         neutronics_csg,
+        eq,
         source=source or make_tokamak_source,
         tally_function=tally_function,
     )

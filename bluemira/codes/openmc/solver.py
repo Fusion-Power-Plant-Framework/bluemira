@@ -13,8 +13,9 @@ from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
+from bluemira.equilibria.equilibrium import Equilibrium
 import numpy as np
 import openmc
 
@@ -98,6 +99,12 @@ class OpenMCSimulationRuntimeParameters:
     plot_pixel_per_metre: int = 100
 
 
+# Signature for a function that creates an OpenMC neutron source
+NeutronSourceCreator: TypeAlias = Callable[
+    [Equilibrium, PlasmaSourceParameters], openmc.Source
+]
+
+
 class Setup(CodesSetup):
     """Setup task for OpenMC solver"""
 
@@ -106,6 +113,7 @@ class Setup(CodesSetup):
         out_path: str,
         codes_name: str,
         cross_section_xml: str,
+        eq: Equilibrium,
         source,
         cell_arrays,
         pre_cell_model,
@@ -116,6 +124,7 @@ class Setup(CodesSetup):
         self.out_path = out_path
         self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
+        self.eq = eq
         self.source = source
         self.blanket_cell_array = cell_arrays.blanket
         self.divertor_cell_array = cell_arrays.divertor
@@ -185,6 +194,7 @@ class Setup(CodesSetup):
         self,
         run_mode,
         runtime_params,
+        eq,
         source_params,
         tally_function,
         *,
@@ -193,7 +203,7 @@ class Setup(CodesSetup):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
-            self.settings.source = self.source(source_params)
+            self.settings.source = self.source(eq, source_params)
             self.settings.batches = int(runtime_params.batches)
             self.settings.photon_transport = runtime_params.photon_transport
             self.settings.electron_treatment = runtime_params.electron_treatment
@@ -212,6 +222,7 @@ class Setup(CodesSetup):
         self,
         run_mode,
         runtime_params,
+        _eq,
         _source_params,
         _tally_function,
         *,
@@ -417,7 +428,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
         params: dict | ParameterFrame,
         build_config: dict,
         neutronics_pre_cell_model,
-        source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
         tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
@@ -425,6 +437,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         self.out_path = self.build_config.get("neutronics_output_path", Path.cwd())
 
+        self.eq = eq
         self.source = source
 
         self.pre_cell_model = neutronics_pre_cell_model
@@ -439,12 +452,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self.tally_function = filter_cells if tally_function is None else tally_function
 
     @property
-    def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
+    def source(self) -> NeutronSourceCreator:
         """Source term for OpenMC"""
         return self._source
 
     @source.setter
-    def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
+    def source(self, value: NeutronSourceCreator):
         self._source = value
 
     @property
@@ -471,7 +484,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         if run_mode is OpenMCRunModes.RUN_AND_PLOT:
             for run_mode in (OpenMCRunModes.PLOT, OpenMCRunModes.RUN):
                 result = self._single_run(
-                    run_mode, source_params, runtime_params, debug=debug
+                    run_mode, self.eq, source_params, runtime_params, debug=debug
                 )
             return result
         return self._single_run(run_mode, source_params, runtime_params, debug=debug)
@@ -479,6 +492,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def _single_run(
         self,
         run_mode: OpenMCRunModes,
+        eq: Equilibrium,
         source_params: PlasmaSourceParameters,
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
@@ -488,6 +502,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.out_path,
             self.name,
             str(self.build_config["cross_section_xml"]),
+            self.eq,
             self.source,
             self.cell_arrays,
             self.pre_cell_model,
@@ -501,7 +516,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
             result = setup(
-                run_mode, runtime_params, source_params, self.tally_function, debug=debug
+                run_mode,
+                runtime_params,
+                eq,
+                source_params,
+                self.tally_function,
+                debug=debug,
             )
         if run := self._get_execution_method(self._run, run_mode):
             result = run(run_mode, debug=debug)
