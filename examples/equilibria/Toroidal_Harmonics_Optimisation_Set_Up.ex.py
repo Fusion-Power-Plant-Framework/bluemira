@@ -126,7 +126,7 @@ plt.show()
 # %% [markdown]
 # ## Use in Optimisation Problem
 # We can use the amplitudes for each of our approximation poloidal modes
-# as constraints or targets. In the following example, we do both.
+# as targets in an optimisation.
 # In this example, we are merely attempting to preserve an equilibrium
 # solution using only TH. Other constraints and/or targets could be
 # used in conjunction with the TH.
