@@ -55,8 +55,8 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    brute_force_toroidal_harmonic_approximation,
     plot_toroidal_harmonic_approximation,
+    toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.equilibria.optimisation.problem._tikhonov import (
@@ -98,15 +98,15 @@ psi_norm = 0.95
 R_0, Z_0 = eq.effective_centre()
 th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
-# using brute force
-result = brute_force_toroidal_harmonic_approximation(
+# use toroidal harmonic approximation
+result = toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
     psi_norm=psi_norm,
     n_degrees_of_freedom=6,
     max_harmonic_mode=5,
     plasma_mask=True,
-    cl=True,
+    from_psi_fit=True,
 )
 
 # %% [markdown]
@@ -119,7 +119,7 @@ print(f"Cos modes used = {result.cos_m}")
 print(f"Sin modes used = {result.sin_m}")
 # plot to compare th approx psi to bm psi
 f, ax = plot_toroidal_harmonic_approximation(
-    eq=eq, th_params=th_params, result=result, psi_norm=psi_norm, cl=True
+    eq=eq, th_params=th_params, result=result, psi_norm=psi_norm
 )
 ax.set_title("Comparison of bluemira coilset psi to TH approx.")
 plt.show()
@@ -135,9 +135,9 @@ plt.show()
 th_constraint = ToroidalHarmonicConstraint(
     ref_harmonics_cos=result.cos_m,
     ref_harmonics_sin=result.sin_m,
-    ref_harmonics_cos_amplitudes=result.cos_amplitudes_from_psi_fit,
-    ref_harmonics_sin_amplitudes=result.sin_amplitudes_from_psi_fit,
-    constraint_type="equality",
+    ref_harmonics_cos_amplitudes=result.cos_amplitudes,
+    ref_harmonics_sin_amplitudes=result.sin_amplitudes,
+    constraint_type="inequality",
     th_params=th_params,
 )
 # Ensure control coils are set to those that can be used in the toroidal
@@ -161,7 +161,6 @@ current_opt_problem = TikhonovCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
-    constraints=[th_constraint],
 )
 
 program = PicardIterator(
@@ -170,7 +169,7 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-3),
     relaxation=0.0,
-    maxiter=30,
+    maxiter=50,
 )
 program()
 

@@ -35,12 +35,12 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     _get_plasma_mask,
     _set_n_degrees_of_freedom,
-    brute_force_toroidal_harmonic_approximation,
     coil_toroidal_harmonic_amplitude_matrix,
     f_hypergeometric,
     legendre_p,
     legendre_q,
     toroidal_harmonic_approximate_psi,
+    toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -1326,14 +1326,14 @@ class TestRegressionTH:
         ])
         expected_sin_amplitudes = np.array([3.15627377])
 
-        result = brute_force_toroidal_harmonic_approximation(
+        result = toroidal_harmonic_approximation(
             eq=self.eq,
             th_params=self.test_th_params,
             psi_norm=self.psi_norm,
             n_degrees_of_freedom=n_degrees_of_freedom,
             max_harmonic_mode=max_harmonic_mode,
             plasma_mask=True,
-            cl=False,
+            from_psi_fit=False,
         )
         mask = _get_plasma_mask(
             eq=self.eq,
