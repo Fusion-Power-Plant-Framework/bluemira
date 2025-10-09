@@ -1407,6 +1407,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def n_current_optimisable_coils(self) -> int:
         """
         Get the number of all current optimisable coils.
+
+        This will only count the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         return len(self.current_optimisable_coil_names)
 
@@ -1414,6 +1417,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def current_optimisable_coil_names(self) -> list[str]:
         """
         Get the names of all current optimisable coils.
+
+        This will be the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         optimisable_coil_names = [
             c.primary_coil.name if isinstance(c, Circuit) else c.name
@@ -1564,6 +1570,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def n_position_optimisable_coils(self) -> int:
         """
         Get the number of coils that can be position optimised.
+
+        This will only count the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         return len(self.position_optimisable_coil_names)
 
@@ -1571,6 +1580,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def position_optimisable_coil_names(self) -> list[str]:
         """
         Get the names of the coils that can be position optimised.
+
+        This will be the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         optimisable_coil_names = (
             c.primary_coil.name if isinstance(c, SymmetricCircuit) else c.name
