@@ -123,7 +123,6 @@
     "electron_treatment": "ttb",
     "run_mode": "run_and_plot",
     "openmc_write_summary": false,
-    "parametric_source": true,
     "blanket_type": "HCPB",
     "plot_axis": "xz",
     "plot_pixel_per_metre": 100,

@@ -94,7 +94,6 @@ class OpenMCSimulationRuntimeParameters:
     electron_treatment: Literal["ttb", "led"] = "led"
     run_mode: str = OpenMCRunModes.RUN.value
     openmc_write_summary: bool = False
-    parametric_source: bool = True
     plot_axis: str = "xz"
     plot_pixel_per_metre: int = 100
 
