@@ -102,6 +102,7 @@ class OpenMCResult:
             else None
             for cell_id in universe.cells
         }
+        src_rate = 1.0
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)

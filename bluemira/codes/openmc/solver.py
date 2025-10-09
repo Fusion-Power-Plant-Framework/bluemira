@@ -43,7 +43,6 @@ from bluemira.codes.openmc.params import (
     PlasmaSourceParameters,
 )
 from bluemira.codes.openmc.tallying import filter_cells
-from bluemira.plasma_physics.reactions import n_DT_reactions
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -363,7 +362,7 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            n_DT_reactions(source_params.reactor_power),
+            1.0,  # The new source encodes fusion power already
             statepoint_file,
         )
         if delete_files:
