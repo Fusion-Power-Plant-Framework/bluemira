@@ -11,6 +11,9 @@ File I/O functions and some path operations
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from tempfile import gettempdir
+
+from bluemira.base.look_and_feel import bluemira_print
 
 BM_ROOT = "!BM_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
@@ -20,7 +23,12 @@ def _get_relpath(folder: str, subfolder: str) -> str:
     path = Path(folder, subfolder)
     if path.is_dir():
         return path.as_posix()
-    raise ValueError(f"{path} Not a valid folder.")
+
+    tmp_root = Path(gettempdir()) / "bluemira"
+    tmp_sub = tmp_root / subfolder
+    tmp_sub.mkdir(parents=True, exist_ok=True)  # create /tmp/bluemira/{subfolder}
+    bluemira_print(f'"{path}" not found. Using temporary folder: "{tmp_sub}"')
+    return tmp_sub.as_posix()
 
 
 def get_bluemira_root() -> str:
