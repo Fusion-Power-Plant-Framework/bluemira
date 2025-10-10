@@ -22,10 +22,20 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.head_ref }}
           fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+      - name: Skip dependency
+        id: skip_check # if [skip dependency] in commit message, skip dependabot job
+        run: |
+          last_commit_message=$(git log -1 --pretty=%B)
+          if echo "$last_commit_message" | grep -q "\[skip dependency\]"; then
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_skip=false" >> $GITHUB_OUTPUT
+          fi
       - name: Check pyproject
         env:
           DEPENDABOT: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
         id: check_pyproject_change
+        if: steps.skip_check.outputs.should_skip == 'false'
         run: |
           hasdiff=$(git diff --quiet HEAD~$((${{ env.PR_FETCH_DEPTH }} - 1)) HEAD pyproject.toml && echo 0 || echo 1)
           if [ $DEPENDABOT == 'true' ] ; then
@@ -36,7 +46,7 @@ jobs:
   dependabot:
     runs-on: ubuntu-latest
     needs: [dependency_changes]
-    if: needs.dependency_changes.outputs.changed == 1
+    if: needs.dependency_changes.outputs.changed == 1 && needs.dependency_changes.outputs.should_skip != 'true' # sanity check
     steps:
       - name: Dependabot metadata
         if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
@@ -52,7 +62,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.DEPENDENCY_HELPER_TOKEN }}
           ref: ${{ github.head_ref }}
 
       - name: Run uv
@@ -68,7 +78,7 @@ jobs:
           git config user.name "dependabot[bot]"
           git add requirements
           if [[ -n $(git status --porcelain) ]] ; then
-            git commit -m "Updated dependencies in requirements files"
+            git commit -m "Updated dependencies in requirements files [skip dependency]"
             git push
           fi
 
@@ -80,12 +90,12 @@ jobs:
           pre-commit autoupdate || true  # pre-commit hooks is not a file
           git add .pre-commit-config.yaml
           if [[ -n $(git status --porcelain) ]] ; then
-            git commit -m "Updated pre-commit"
+            git commit -m "Updated pre-commit [skip dependency]"
             git push
           fi
           pre-commit run --all-files || true  # linter fixes returns non zero
           git add .
           if [[ -n $(git status --porcelain) ]] ; then
-            git commit -m 'Linter fixes'
+            git commit -m 'Linter fixes [skip dependency]'
             git push
           fi
