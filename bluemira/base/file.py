@@ -13,8 +13,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from tempfile import gettempdir
 
-from bluemira.base.look_and_feel import bluemira_print
-
 BM_ROOT = "!BM_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
 
@@ -27,6 +25,10 @@ def _get_relpath(folder: str, subfolder: str) -> str:
     tmp_root = Path(gettempdir()) / "bluemira"
     tmp_sub = tmp_root / subfolder
     tmp_sub.mkdir(parents=True, exist_ok=True)  # create /tmp/bluemira/{subfolder}
+
+    # avoid circular import with lazy import
+    from bluemira.base.look_and_feel import bluemira_print  # noqa: PLC0415
+
     bluemira_print(f'"{path}" not found. Using temporary folder: "{tmp_sub}"')
     return tmp_sub.as_posix()
 
