@@ -22,15 +22,17 @@ def _get_relpath(folder: str, subfolder: str) -> str:
     if path.is_dir():
         return path.as_posix()
 
-    tmp_root = Path(gettempdir()) / "bluemira"
-    tmp_sub = tmp_root / subfolder
-    tmp_sub.mkdir(parents=True, exist_ok=True)  # create /tmp/bluemira/{subfolder}
+    if subfolder == "generated_data":
+        tmp_sub = Path(gettempdir()) / "bluemira" / subfolder
+        tmp_sub.mkdir(parents=True, exist_ok=True)
 
-    # avoid circular import with lazy import
-    from bluemira.base.look_and_feel import bluemira_print  # noqa: PLC0415
+        # avoid circular import with lazy import
+        from bluemira.base.look_and_feel import bluemira_print  # noqa: PLC0415
 
-    bluemira_print(f'"{path}" not found. Using temporary folder: "{tmp_sub}"')
-    return tmp_sub.as_posix()
+        bluemira_print(f'"{path}" not found. Using temporary folder: "{tmp_sub}"')
+        return tmp_sub.as_posix()
+
+    raise ValueError(f"{path} Not a valid folder.")
 
 
 def get_bluemira_root() -> str:
