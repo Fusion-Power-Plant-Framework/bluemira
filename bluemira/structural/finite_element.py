@@ -9,23 +9,39 @@ FEM solvers for 2D structural problems under plain strain linear elasticity assu
 """
 
 import numpy as np
-from mpi4py import MPI
-from ufl import (
-    TrialFunction, TestFunction, sym, grad, inner, dot, as_vector, as_matrix,
-    FacetNormal, Measure
-)
-from dolfinx import fem, cpp
+from dolfinx import cpp, fem
+from dolfinx.fem.petsc import LinearProblem as PETScLinearProblem
 from dolfinx.io import VTKFile
-from dolfinx_mpc import LinearProblem, MultiPointConstraint
+from dolfinx_mpc import LinearProblem as MPCProblem
+from dolfinx_mpc import MultiPointConstraint
 from dolfinx_mpc.utils import create_normal_approximation
+from mpi4py import MPI
+from petsc4py import PETSc
+from ufl import (
+    FacetNormal,
+    Measure,
+    TestFunction,
+    TrialFunction,
+    as_matrix,
+    as_vector,
+    dot,
+    grad,
+    inner,
+    sym,
+)
 
 from bluemira.mesh.meshing import Mesh
 
 
 class FEMPlainStrainLEA2D:
-    def __init__(self, mesh: Mesh, cell_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
-                 facet_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None, degree: int = 2,
-                 repr: str = "vectorial"):
+    def __init__(
+        self,
+        mesh: Mesh,
+        cell_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
+        facet_markers: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
+        degree: int = 2,
+        repr: str = "vectorial",
+    ):
         """
         Initialize the FEM solver for plane strain elasticity.
 
@@ -42,9 +58,10 @@ class FEMPlainStrainLEA2D:
         repr : str, optional
             Representation type for stress/strain ('vectorial' only supported).
         """
-
         if repr != "vectorial":
-            raise NotImplementedError("Only 'vectorial' representation is currently supported.")
+            raise NotImplementedError(
+                "Only 'vectorial' representation is currently supported."
+            )
 
         self._gdim = 2
         self._repr = repr
@@ -100,7 +117,7 @@ class FEMPlainStrainLEA2D:
         C = as_matrix([
             [zz * (1 - self.nu), zz * self.nu, 0.0],
             [zz * self.nu, zz * (1 - self.nu), 0.0],
-            [0.0, 0.0, 0.5 * zz * (1 - 2 * self.nu)]
+            [0.0, 0.0, 0.5 * zz * (1 - 2 * self.nu)],
         ])
 
         def _strain(u):
@@ -144,6 +161,26 @@ class FEMPlainStrainLEA2D:
         pressure_term = dot(T * n, self.v) * self.ds(tag)
         self.loads.append(pressure_term)
 
+    def set_dirichlet_bcs(self, boundary_conditions: list[tuple[int, int, float]]):
+        """
+        Set Dirichlet boundary conditions on specific component and facet tag.
+
+        Parameters
+        ----------
+        boundary_conditions : list of (component, facet_tag, value)
+            - component: 0 for x, 1 for y
+            - facet_tag: boundary marker tag
+            - value: value to set
+        """
+        self.bcs = []
+        for component, tag, value in boundary_conditions:
+            fdim = self.domain.topology.dim - 1
+            self.domain.topology.create_connectivity(fdim, 0)
+            facets = self.facet_markers.find(tag)
+            dofs = fem.locate_dofs_topological(self.V.sub(component), fdim, facets)
+            bc = fem.dirichletbc(PETSc.ScalarType(value), dofs, self.V.sub(component))
+            self.bcs.append(bc)
+
     def apply_slip_conditions(self, slip_tags: list):
         """
         Apply slip boundary conditions using MultiPoint Constraints (MPC)
@@ -159,7 +196,9 @@ class FEMPlainStrainLEA2D:
 
         for tag in slip_tags:
             normal_vec = create_normal_approximation(self.V, self.facet_markers, tag)
-            self.mpc.create_slip_constraint(self.V, (self.facet_markers, tag), normal_vec)
+            self.mpc.create_slip_constraint(
+                self.V, (self.facet_markers, tag), normal_vec
+            )
         self.mpc.finalize()
         self._mpc_activated = True
 
@@ -190,17 +229,30 @@ class FEMPlainStrainLEA2D:
         RuntimeError
             If materials are not set or slip conditions are not applied.
         """
-        #TODO: consider the case without mpc
-        if not self._mpc_activated:
-            raise RuntimeError("Slip conditions not applied. Call apply_slip_conditions() first.")
-
         if np.all(self.E.x.array == 0.0) or np.all(self.nu.x.array == 0.0):
-            raise RuntimeError("Material properties E and nu not set. Did you call set_materials()?")
+            raise RuntimeError(
+                "Material properties E and nu not set. Did you call set_materials()?"
+            )
 
-        self.uh = fem.Function(self.mpc.function_space, name="Displacement")
-        self._setup_forms()
+        if self._mpc_activated:
+            self.uh = fem.Function(self.mpc.function_space, name="Displacement")
+            self._setup_forms()
+            self.problem = MPCProblem(
+                self.a_form,
+                self.L_form,
+                self.mpc,
+                petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+            )
+        else:
+            self._setup_forms()
+            self.problem = PETScLinearProblem(
+                self.a_form,
+                self.L_form,
+                bcs=self.bcs if hasattr(self, "bcs") else None,
+                u=self.uh,
+                petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+            )
 
-        self.problem = LinearProblem(self.a_form, self.L_form, self.mpc, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
         self.uh = self.problem.solve()
         return self.uh
 
@@ -226,8 +278,16 @@ class FEMPlainStrainLEA2D:
             strain_i = fem.Function(scalar_space)
             stress_i = fem.Function(scalar_space)
 
-            strain_i.interpolate(fem.Expression(strain_expr[i], scalar_space.element.interpolation_points()))
-            stress_i.interpolate(fem.Expression(stress_expr[i], scalar_space.element.interpolation_points()))
+            strain_i.interpolate(
+                fem.Expression(
+                    strain_expr[i], scalar_space.element.interpolation_points()
+                )
+            )
+            stress_i.interpolate(
+                fem.Expression(
+                    stress_expr[i], scalar_space.element.interpolation_points()
+                )
+            )
 
             strain_fn.x.array[i::3] = strain_i.x.array
             stress_fn.x.array[i::3] = stress_i.x.array
