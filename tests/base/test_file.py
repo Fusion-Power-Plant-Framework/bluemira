@@ -7,6 +7,7 @@
 import os
 import tempfile
 from pathlib import Path
+from tempfile import gettempdir
 
 import pytest
 
@@ -251,3 +252,14 @@ def test_working_dir_context_manager():
     final_cwd = Path.cwd()
     assert cwd != changed_cwd
     assert cwd == final_cwd
+
+
+def test_tmp_generated_data(monkeypatch, tmp_path):
+    fake_root = tmp_path / "bluemira"  # fake root using tmp_path fixture
+    monkeypatch.setattr("bluemira.base.file.get_bluemira_root", lambda: str(fake_root))
+    result = try_get_bluemira_path(subfolder="generated_data")
+    tmp_path_expected = Path(gettempdir()) / "bluemira" / "generated_data"
+
+    if result:
+        assert Path(result).is_dir()
+        assert result == str(tmp_path_expected)
