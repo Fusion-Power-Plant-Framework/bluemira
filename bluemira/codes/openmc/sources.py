@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from eqdsk import EQDSKInterface
 import numpy as np
 import openmc
+from eqdsk import EQDSKInterface
 from tokamak_neutron_source import (
     FluxMap,
     FractionalFuelComposition,
@@ -26,7 +26,6 @@ from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
 
 if TYPE_CHECKING:
     from bluemira.codes.openmc.params import PlasmaSourceParameters
-
     from bluemira.equilibria.equilibrium import Equilibrium
 
 

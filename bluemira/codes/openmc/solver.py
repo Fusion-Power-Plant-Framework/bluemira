@@ -15,7 +15,6 @@ from operator import attrgetter
 from pathlib import Path
 from typing import Literal, TypeAlias
 
-from bluemira.equilibria.equilibrium import Equilibrium
 import numpy as np
 import openmc
 
@@ -43,6 +42,7 @@ from bluemira.codes.openmc.params import (
     PlasmaSourceParameters,
 )
 from bluemira.codes.openmc.tallying import filter_cells
+from bluemira.equilibria.equilibrium import Equilibrium
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -125,7 +125,7 @@ class Setup(CodesSetup):
         self.eq = eq
         self.source = source
         self._source_rate = 1.0
-        self._source_T_rate = 1.0
+        self._source_triton_rate = 1.0
         self.blanket_cell_array = cell_arrays.blanket
         self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
@@ -203,7 +203,7 @@ class Setup(CodesSetup):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
-            self.settings.source, source_rate, source_T_rate = self.source(
+            self.settings.source, source_rate, source_t_rate = self.source(
                 eq, source_params
             )
             self.settings.batches = int(runtime_params.batches)
@@ -218,7 +218,7 @@ class Setup(CodesSetup):
                 self.matlist(self.materials),
             )
         self._source_rate = source_rate
-        self._source_T_rate = source_T_rate
+        self._source_triton_rate = source_t_rate
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
 
@@ -360,9 +360,8 @@ class Teardown(CodesTeardown):
         self,
         universe,
         files_created,
-        source_params,
         source_rate: float,
-        source_T_rate: float,
+        source_triton_rate: float,
         statepoint_file,
         *,
         delete_files: bool = False,
@@ -371,7 +370,7 @@ class Teardown(CodesTeardown):
         result = OpenMCResult.from_run(
             universe,
             source_rate,
-            source_T_rate,
+            source_triton_rate,
             statepoint_file,
         )
         if delete_files:
@@ -536,9 +535,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
             result = teardown(
                 self._setup.universe,
                 self._setup.files_created,
-                source_params,
                 self._setup._source_rate,
-                self._setup._source_T_rate,
+                self._setup._source_triton_rate,
                 Path(
                     self.out_path,
                     run_mode.name.lower(),

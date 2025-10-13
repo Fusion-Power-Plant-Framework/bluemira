@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-
 from bluemira.codes.utilities import get_code_interface
 
 if TYPE_CHECKING:
