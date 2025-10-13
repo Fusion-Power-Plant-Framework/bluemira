@@ -145,7 +145,7 @@ markdown-it-py==3.0.0
     #   rich
 markupsafe==3.0.3
     # via jinja2
-matplotlib==3.10.6
+matplotlib==3.10.7
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
