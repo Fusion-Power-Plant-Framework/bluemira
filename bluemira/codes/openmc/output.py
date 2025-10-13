@@ -199,7 +199,7 @@ class OpenMCResult:
         """
         scale = source_rate / source_T_rate
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
-        std = np.sqrt(np.sum(tbr_df["std. dev."]**2))
+        std = np.sqrt(np.sum(tbr_df["std. dev."] ** 2))
         return scale * tbr_df["mean"], scale * std
 
     @classmethod

@@ -97,7 +97,11 @@ def make_tokamak_source(
         total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
-    return source.to_openmc_source(), source.source_rate, source.source_T_rate,
+    return (
+        source.to_openmc_source(),
+        source.source_rate,
+        source.source_T_rate,
+    )
 
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:

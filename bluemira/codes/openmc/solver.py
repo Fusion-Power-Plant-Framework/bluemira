@@ -203,7 +203,9 @@ class Setup(CodesSetup):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
-            self.settings.source, source_rate, source_T_rate = self.source(eq, source_params)
+            self.settings.source, source_rate, source_T_rate = self.source(
+                eq, source_params
+            )
             self.settings.batches = int(runtime_params.batches)
             self.settings.photon_transport = runtime_params.photon_transport
             self.settings.electron_treatment = runtime_params.electron_treatment
