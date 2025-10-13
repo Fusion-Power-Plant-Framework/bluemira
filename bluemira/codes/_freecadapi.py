@@ -23,14 +23,8 @@ from typing import TYPE_CHECKING, Protocol
 from unittest import mock
 
 import FreeCAD
-import BOPTools
-import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
-import BOPTools.JoinFeatures
-import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
-import BOPTools.SplitFeatures
-import BOPTools.Utils
 import DraftGeomUtils
 import FreeCADGui
 import Part
