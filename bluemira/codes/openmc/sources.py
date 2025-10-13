@@ -34,7 +34,7 @@ def make_tokamak_source(
     eq: Equilibrium,
     source_parameters: PlasmaSourceParameters,
     cell_side_length: float = 0.1,
-) -> list[openmc.Source]:
+) -> tuple[list[openmc.Source], float, float]:
     """
     Make a tokamak neutron source using an equilibrium and PlasmaSourceParameters
     for PROCESS parabolic-pedestal profiles.
@@ -52,6 +52,10 @@ def make_tokamak_source(
     -------
     source:
         Fusion source for OpenMC
+    source_rate:
+        Absolute neutron production rate (used for tallying)
+    source_T_rate:
+        Absolute plasma T consumption rate (used for tallying)
     """
     data = eq.to_dict()
     data["name"] = ""
@@ -93,9 +97,7 @@ def make_tokamak_source(
         total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
-    source.transport.plot()
-    source.plot()
-    return source.to_openmc_source()
+    return source.to_openmc_source(), source.source_rate, source.source_T_rate,
 
 
 def make_ring_source(source_parameters: PlasmaSourceParameters) -> openmc.Source:

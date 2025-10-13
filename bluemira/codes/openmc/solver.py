@@ -99,7 +99,7 @@ class OpenMCSimulationRuntimeParameters:
 
 # Signature for a function that creates an OpenMC neutron source
 NeutronSourceCreator: TypeAlias = Callable[
-    [Equilibrium, PlasmaSourceParameters], openmc.Source
+    [Equilibrium, PlasmaSourceParameters], tuple[openmc.Source, float, float]
 ]
 
 
@@ -124,6 +124,8 @@ class Setup(CodesSetup):
         self.cross_section_xml = cross_section_xml
         self.eq = eq
         self.source = source
+        self._source_rate = 1.0
+        self._source_T_rate = 1.0
         self.blanket_cell_array = cell_arrays.blanket
         self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
@@ -201,7 +203,7 @@ class Setup(CodesSetup):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
-            self.settings.source = self.source(eq, source_params)
+            self.settings.source, source_rate, source_T_rate = self.source(eq, source_params)
             self.settings.batches = int(runtime_params.batches)
             self.settings.photon_transport = runtime_params.photon_transport
             self.settings.electron_treatment = runtime_params.electron_treatment
@@ -213,6 +215,8 @@ class Setup(CodesSetup):
                 self.divertor_cell_array,
                 self.matlist(self.materials),
             )
+        self._source_rate = source_rate
+        self._source_T_rate = source_T_rate
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
 
@@ -355,6 +359,8 @@ class Teardown(CodesTeardown):
         universe,
         files_created,
         source_params,
+        source_rate: float,
+        source_T_rate: float,
         statepoint_file,
         *,
         delete_files: bool = False,
@@ -362,7 +368,8 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            1.0,  # The new source encodes fusion power already
+            source_rate,
+            source_T_rate,
             statepoint_file,
         )
         if delete_files:
@@ -528,6 +535,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
                 self._setup.universe,
                 self._setup.files_created,
                 source_params,
+                self._setup._source_rate,
+                self._setup._source_T_rate,
                 Path(
                     self.out_path,
                     run_mode.name.lower(),
