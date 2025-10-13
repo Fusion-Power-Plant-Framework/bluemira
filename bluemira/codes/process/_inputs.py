@@ -38,6 +38,7 @@ class ProcessInputs:
     maxcal: int | None = None
     minmax: int | None = None
     epsvmc: float | None = None
+    neqns: int | None = None
     ioptimz: int | None = None
     output_costs: int | None = None
     isweep: int | None = None

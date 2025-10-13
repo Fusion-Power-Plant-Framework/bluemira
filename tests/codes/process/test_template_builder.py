@@ -232,6 +232,7 @@ class TestInDatOneForOne:
         template_builder = PROCESSTemplateBuilder()
         template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
         template_builder.set_optimisation_numerics(maxiter=1000, tolerance=1e-8)
+        template_builder.set_number_equality_constraints(num_equality_cons=0)
 
         template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
