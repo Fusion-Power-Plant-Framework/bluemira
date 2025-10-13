@@ -773,7 +773,7 @@ def polar_to_cartesian(
     return x, z
 
 
-def toroidal_to_cylindrical(R_0: float, z_0: float, tau: np.ndarray, sigma: np.ndarray):
+def toroidal_to_cylindrical(R_0: float, Z_0: float, tau: np.ndarray, sigma: np.ndarray):
     """
     Convert from toroidal coordinates to cylindrical coordinates in the poloidal plane
     Toroidal coordinates are denoted by (\\tau, \\sigma, \\phi)
@@ -788,7 +788,7 @@ def toroidal_to_cylindrical(R_0: float, z_0: float, tau: np.ndarray, sigma: np.n
     ----------
     R_0:
         r coordinate of focus in poloidal plane
-    z_0:
+    Z_0:
         z coordinate of focus in poloidal plane
     tau:
         the tau coordinates to transform
@@ -801,11 +801,11 @@ def toroidal_to_cylindrical(R_0: float, z_0: float, tau: np.ndarray, sigma: np.n
         Tuple of transformed coordinates in cylindrical form
     """
     R = R_0 * np.sinh(tau) / (np.cosh(tau) - np.cos(sigma))  # noqa: N806
-    Z = R_0 * np.sin(sigma) / (np.cosh(tau) - np.cos(sigma)) + z_0  # noqa: N806
+    Z = R_0 * np.sin(sigma) / (np.cosh(tau) - np.cos(sigma)) + Z_0  # noqa: N806
     return R, Z
 
 
-def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray):  # noqa: N803
+def cylindrical_to_toroidal(R_0: float, Z_0: float, R: np.ndarray, Z: np.ndarray):  # noqa: N803
     """
     Convert from cylindrical coordinates to toroidal coordinates in the poloidal plane
     Toroidal coordinates are denoted by (\\tau, \\sigma, \\phi)
@@ -824,7 +824,7 @@ def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray
     ----------
     R_0:
         r coordinate of focus in poloidal plane
-    z_0:
+    Z_0:
         z coordinate of focus in poloidal plane
     R:
         the r coordinates to transform
@@ -836,10 +836,10 @@ def cylindrical_to_toroidal(R_0: float, z_0: float, R: np.ndarray, Z: np.ndarray
     tau, sigma:
         Tuple of transformed coordinates in toroidal form
     """
-    d_1 = np.sqrt((R + R_0) ** 2 + (Z - z_0) ** 2)
-    d_2 = np.sqrt((R - R_0) ** 2 + (Z - z_0) ** 2)
+    d_1 = np.sqrt((R + R_0) ** 2 + (Z - Z_0) ** 2)
+    d_2 = np.sqrt((R - R_0) ** 2 + (Z - Z_0) ** 2)
     tau = np.log(d_1 / d_2)
-    sigma = np.sign(Z - z_0) * np.arccos(
+    sigma = np.sign(Z - Z_0) * np.arccos(
         np.clip((d_1**2 + d_2**2 - 4 * R_0**2) / (2 * d_1 * d_2), -1, 1)
     )
     return tau, sigma
