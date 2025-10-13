@@ -2,60 +2,70 @@ from __future__ import annotations
 
 # Standard libraries
 import os
-import math
-from pathlib import Path
 
+# Basix
+import basix
+
+# dolfinx_mpc
+import dolfinx_mpc
+
+# GMSH and PyVista
 # Third-party packages
 import numpy as np
-import scipy.sparse.linalg
-from scipy.sparse.linalg import spsolve
-from scipy.sparse import bmat
-import matplotlib.pyplot as plt
+import pyvista
+from basix.ufl import element
+
+# DOLFINx core
+from dolfinx import (
+    common,
+    default_real_type,
+    default_scalar_type,
+    fem,
+    geometry,
+    plot,
+)
+
+# DOLFINx C++ utilities
+# DOLFINx FEM
+from dolfinx.fem import Constant, dirichletbc
+from dolfinx.fem.petsc import (
+    apply_lifting_nest,
+    set_bc_nest,
+)
+
+# DOLFINx I/O
+from dolfinx.io import VTKFile, XDMFFile, gmshio
+
+# DOLFINx mesh utils
+from dolfinx_mpc import MultiPointConstraint
+from dolfinx_mpc.utils import (
+    create_normal_approximation,
+)
 
 # MPI and PETSc
 from mpi4py import MPI
 from petsc4py import PETSc
 
-# GMSH and PyVista
-import gmsh
-import pyvista
-
-# DOLFINx core
-from dolfinx import mesh,fem, io, plot, common, default_real_type, default_scalar_type, geometry
-
-# DOLFINx FEM
-from dolfinx.fem import (Function, Constant, form, dirichletbc,locate_dofs_topological)
-from dolfinx.fem.petsc import (assemble_matrix, assemble_vector, apply_lifting, apply_lifting_nest, set_bc, set_bc_nest)
-
-# DOLFINx I/O
-from dolfinx.io import (XDMFFile, VTKFile, VTXWriter, gmshio, distribute_entity_data)
-
-# DOLFINx mesh utils
-from dolfinx.mesh import (create_mesh, meshtags_from_entities)
-
-# DOLFINx C++ utilities
-from dolfinx.cpp.mesh import to_type, cell_entity_type
-from dolfinx.cpp.la.petsc import (get_local_vectors, scatter_local_vectors)
-
-# UFL
-from ufl import (FacetNormal, Identity, Measure, TestFunction, TrialFunction, as_tensor, as_vector, dot, dx, ds, inner, sym, tr, grad, nabla_grad, extract_blocks, MixedFunctionSpace)
-
-# Basix
-import basix
-import basix.ufl as bul
-from basix.ufl import element, mixed_element
-
-# dolfinx_mpc
-import dolfinx_mpc
-from dolfinx_mpc import (MultiPointConstraint, LinearProblem)
-from dolfinx_mpc.utils import (create_point_to_point_constraint, determine_closest_block, gather_PETScMatrix, gather_PETScVector, gather_transformation_matrix, facet_normal_approximation,create_normal_approximation)
-
 # scifem utilities
-from scifem import (create_real_functionspace,assemble_scalar)
+# UFL
+from ufl import (
+    FacetNormal,
+    Identity,
+    Measure,
+    TestFunction,
+    TrialFunction,
+    as_tensor,
+    dot,
+    ds,
+    dx,
+    inner,
+    sym,
+    tr,
+)
 
-## Importing mesh from GMSH
+# Importing mesh from GMSH
 # Mesh
-mesh_path = "neufrustum4.msh"
+mesh_path = "../../neufrustum4.msh"
 domain, cell_tags, facet_tags = gmshio.read_from_msh(mesh_path, MPI.COMM_WORLD, gdim=2)
 
 # Check for Measures
@@ -66,12 +76,12 @@ topology, cell_types, geometry = plot.vtk_mesh(domain, 2)
 grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
 
 p = pyvista.Plotter()
-p.add_mesh(grid,show_edges=True)
+p.add_mesh(grid, show_edges=True)
 p.view_xy()
 p.show_axes()
 p.show()
 
-with XDMFFile(MPI.COMM_WORLD, "neufrustum4.xdmf", "w") as xdmf:
+with XDMFFile(MPI.COMM_WORLD, "../../neufrustum4.xdmf", "w") as xdmf:
     xdmf.write_mesh(domain)
     xdmf.write_meshtags(cell_tags, domain.geometry)
 
@@ -79,10 +89,16 @@ with XDMFFile(MPI.COMM_WORLD, "neufrustum4.xdmf", "w") as xdmf:
 # Function spaces
 degree = 2
 gdim = domain.topology.dim
-fdim = gdim -1 
+fdim = gdim - 1
 # Create the function space
 cellname = domain.ufl_cell().cellname()
-Ve = basix.ufl.element(basix.ElementFamily.P, cellname, 2, shape=(domain.geometry.dim,), dtype=default_real_type)
+Ve = basix.ufl.element(
+    basix.ElementFamily.P,
+    cellname,
+    2,
+    shape=(domain.geometry.dim,),
+    dtype=default_real_type,
+)
 Qe = basix.ufl.element(basix.ElementFamily.P, cellname, 1, dtype=default_real_type)
 
 V = fem.functionspace(domain, Ve)
@@ -92,7 +108,7 @@ Q = fem.functionspace(domain, Qe)
 left_facets = np.flatnonzero(facet_tags.values == 2)
 left_dofs_x = fem.locate_dofs_topological(V.sub(0), domain.topology.dim - 1, left_facets)
 bc_x = dirichletbc(PETSc.ScalarType(0.0), left_dofs_x, V.sub(0))
-#bcs = [bc_x]
+# bcs = [bc_x]
 bcs = []
 
 # Slip condition MPC on displacement space V only
@@ -118,9 +134,14 @@ f = fem.Constant(domain, default_scalar_type((0, 0)))
 
 # Helper functions for strains and stresses
 def eps_3d(u, ezz):
-    return sym(as_tensor([[u[0].dx(0), u[0].dx(1), 0],
-                          [u[1].dx(0), u[1].dx(1), 0],
-                          [0, 0, ezz]]))
+    return sym(
+        as_tensor([
+            [u[0].dx(0), u[0].dx(1), 0],
+            [u[1].dx(0), u[1].dx(1), 0],
+            [0, 0, ezz],
+        ])
+    )
+
 
 def sigma_3d(u, ezz):
     return lmbda * tr(eps_3d(u, ezz)) * Identity(3) + 2 * mu * eps_3d(u, ezz)
@@ -129,11 +150,19 @@ def sigma_3d(u, ezz):
 # Bilinear form blocks
 a00 = fem.form(inner(sigma_3d(u, 0), eps_3d(v, 0)) * dx)
 a01 = fem.form(inner(sigma_3d(Constant(domain, (0.0, 0.0)), ezz), eps_3d(v, 0)) * dx)
-a10 = fem.form(inner(sigma_3d(u, 0), eps_3d(Constant(domain, (0.0, 0.0)), ezz_test)) * dx)
-a11 = fem.form(inner(sigma_3d(Constant(domain, (0.0, 0.0)), ezz), eps_3d(Constant(domain, (0.0, 0.0)), ezz_test)) * dx)
+a10 = fem.form(
+    inner(sigma_3d(u, 0), eps_3d(Constant(domain, (0.0, 0.0)), ezz_test)) * dx
+)
+a11 = fem.form(
+    inner(
+        sigma_3d(Constant(domain, (0.0, 0.0)), ezz),
+        eps_3d(Constant(domain, (0.0, 0.0)), ezz_test),
+    )
+    * dx
+)
 
 
-a = [[a00, a01],[a10, a11]]
+a = [[a00, a01], [a10, a11]]
 
 
 # RHS forms
@@ -213,7 +242,6 @@ ezzh.x.scatter_forward()
 mpc.backsubstitution(uh)
 mpc_q.backsubstitution(ezzh)
 
-from basix.ufl import element
 
 cellname = domain.ufl_cell().cellname()  # Get the string like "triangle"
 V0_elem = element("P", cellname, 2, shape=(2,))
@@ -233,17 +261,20 @@ strain_expr = eps_3d(uh, ezzh)
 stress_expr = sigma_3d(uh, ezzh)
 
 # Interpolate
-strain_func.interpolate(fem.Expression(strain_expr, TensorSpace.element.interpolation_points()))
-stress_func.interpolate(fem.Expression(stress_expr, TensorSpace.element.interpolation_points()))
+strain_func.interpolate(
+    fem.Expression(strain_expr, TensorSpace.element.interpolation_points())
+)
+stress_func.interpolate(
+    fem.Expression(stress_expr, TensorSpace.element.interpolation_points())
+)
 
 # Write results
-if MPI.COMM_WORLD.rank == 0 and not os.path.exists("results"):
-    os.makedirs("results")
+if MPI.COMM_WORLD.rank == 0 and not os.path.exists("../../results"):
+    os.makedirs("../../results")
 MPI.COMM_WORLD.barrier()
 
-with VTKFile(domain.comm, "jason3", "w") as vtk:
+with VTKFile(domain.comm, "../../jason3", "w") as vtk:
     vtk.write_function(uh_interp)
     vtk.write_function(ezzh)
     vtk.write_function(strain_func)
     vtk.write_function(stress_func)
-

@@ -1,28 +1,30 @@
-# Plane Strain Linear Elastic Analysis 
+# Plane Strain Linear Elastic Analysis
 
-import gmsh
-import os
-import math
-import numpy as np
-import matplotlib.pyplot as plt
-import sys
 import ufl
-from mpi4py import MPI
-from dolfinx.io import XDMFFile, VTKFile
-from petsc4py import PETSc
-from dolfinx.cpp.mesh import to_type, cell_entity_type
-from dolfinx import mesh, fem, io, common, default_scalar_type, geometry
-import dolfinx.fem.petsc
-from dolfinx.io import VTXWriter, distribute_entity_data, gmshio
-from dolfinx.mesh import create_mesh, meshtags_from_entities
-from dolfinx.plot import vtk_mesh
-from ufl import (FacetNormal, as_matrix, Identity, Measure, TestFunction, tr, TrialFunction, as_vector, div, dot, ds, dx, inner, lhs, grad, nabla_grad, rhs, sym)
+from dolfinx import fem, geometry
+from dolfinx.io import VTKFile, gmshio
 from dolfinx_mpc import LinearProblem, MultiPointConstraint
 from dolfinx_mpc.utils import create_normal_approximation
+from mpi4py import MPI
+from ufl import (
+    FacetNormal,
+    TestFunction,
+    TrialFunction,
+    as_matrix,
+    as_vector,
+    dot,
+    ds,
+    dx,
+    grad,
+    inner,
+    sym,
+)
 
 # Mesh
 mesh_path = "neufrustum4.msh"
-domain, cell_markers, facet_markers = gmshio.read_from_msh(mesh_path, MPI.COMM_WORLD, gdim=2)
+domain, cell_markers, facet_markers = gmshio.read_from_msh(
+    mesh_path, MPI.COMM_WORLD, gdim=2
+)
 
 # Check for Measures
 
@@ -35,7 +37,7 @@ topology, cell_types, geometry = plot.vtk_mesh(domain, 2)
 grid = pyvista.UnstructuredGrid(topology, cell_types, geometry)
 
 p = pyvista.Plotter()
-p.add_mesh(grid,show_edges=True)
+p.add_mesh(grid, show_edges=True)
 p.view_xy()
 p.show_axes()
 p.show()
@@ -47,50 +49,57 @@ ds = ufl.Measure("ds", domain=domain, subdomain_data=facet_markers)
 
 gdim = 2
 
-def strain(u, repr ="vectorial"):
+
+def strain(u, repr="vectorial"):
     eps_t = sym(grad(u))
-    if repr =="vectorial":
-        return as_vector([eps_t[0,0], eps_t[1,1], 2*eps_t[0,1]])
-    elif repr =="tensorial":
+    if repr == "vectorial":
+        return as_vector([eps_t[0, 0], eps_t[1, 1], 2 * eps_t[0, 1]])
+    if repr == "tensorial":
         return eps_t
 
+
 E = fem.Constant(domain, 200000000000.0)
-nu = fem.Constant(domain,0.3)
+nu = fem.Constant(domain, 0.3)
 
-lmbda = E*nu/(1+nu)/(1-2*nu)
-mu = E/2/(1+nu)
-#z = E/(1-nu**2)
-zz = E/((1+nu)*(1-2*nu))
+lmbda = E * nu / (1 + nu) / (1 - 2 * nu)
+mu = E / 2 / (1 + nu)
+# z = E/(1-nu**2)
+zz = E / ((1 + nu) * (1 - 2 * nu))
 
-C = as_matrix([[zz*(1-nu), zz*nu, 0.0],[zz*nu, zz*(1-nu), 0.0],[0.0, 0.0, 0.5*zz*(1-2*nu)]])
+C = as_matrix([
+    [zz * (1 - nu), zz * nu, 0.0],
+    [zz * nu, zz * (1 - nu), 0.0],
+    [0.0, 0.0, 0.5 * zz * (1 - 2 * nu)],
+])
 
-def stress(u, repr ="vectorial"):
+
+def stress(u, repr="vectorial"):
     sigv = dot(C, strain(u))
-    if repr =="vectorial":
+    if repr == "vectorial":
         return sigv
-    elif repr =="tensorial":
+    if repr == "tensorial":
         return as_matrix([[sigv[0], sigv[2]], [sigv[2], sigv[1]]])
 
 
 # Define Function Space
 degree = 2
-V = fem.functionspace(domain, ("P",degree, (gdim,)))
+V = fem.functionspace(domain, ("P", degree, (gdim,)))
 
 
-#Define Variational Problem
+# Define Variational Problem
 du = TrialFunction(V)
 u_ = TestFunction(V)
-#u = fem.Function(V, name = "Displacement")
-a_form = inner(stress(du),strain(u_))*dx
+# u = fem.Function(V, name = "Displacement")
+a_form = inner(stress(du), strain(u_)) * dx
 
 
 T = fem.Constant(domain, 1000000.0)
 
 
-#Self-weight on the surface
+# Self-weight on the surface
 n = FacetNormal(domain)
 
-L_form = dot(T*n,u_) * ds(8)
+L_form = dot(T * n, u_) * ds(8)
 
 
 # Get the facet markers for boundary edges (ps1 and ps2)
@@ -106,7 +115,9 @@ mpc.finalize()
 uh = fem.Function(mpc.function_space, name="Displacement")
 
 # --- Solve ---
-problem = LinearProblem(a_form, L_form, mpc, petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+problem = LinearProblem(
+    a_form, L_form, mpc, petsc_options={"ksp_type": "preonly", "pc_type": "lu"}
+)
 uh_mpc = problem.solve()
 uh.name = "u"
 
@@ -121,7 +132,9 @@ strain_fn = fem.Function(DG0, name="Strain")
 for i in range(3):
     scalar_space = fem.functionspace(domain, ("DG", 0))
     strain_i = fem.Function(scalar_space)
-    strain_i.interpolate(fem.Expression(strain_expr[i], scalar_space.element.interpolation_points()))
+    strain_i.interpolate(
+        fem.Expression(strain_expr[i], scalar_space.element.interpolation_points())
+    )
     strain_fn.x.array[i::3] = strain_i.x.array
 
 # STRESS
@@ -130,7 +143,9 @@ stress_fn = fem.Function(DG0, name="Stress")
 for i in range(3):
     scalar_space = fem.functionspace(domain, ("DG", 0))
     stress_i = fem.Function(scalar_space)
-    stress_i.interpolate(fem.Expression(stress_expr[i], scalar_space.element.interpolation_points()))
+    stress_i.interpolate(
+        fem.Expression(stress_expr[i], scalar_space.element.interpolation_points())
+    )
     stress_fn.x.array[i::3] = stress_i.x.array
 
 
@@ -138,4 +153,3 @@ with VTKFile(domain.comm, "jason2.pvd", "w") as vtk:
     vtk.write_function(strain_fn)
     vtk.write_function(uh_mpc)
     vtk.write_function(stress_fn)
-
