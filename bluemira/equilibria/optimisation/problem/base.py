@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
@@ -97,6 +98,45 @@ class CoilsetOptimisationProblem(abc.ABC):
         self._coilset = coilset
         self.max_currents = max_currents
         self.bounds = self.get_current_bounds(max_currents, self.scale)
+
+        self.targets = targets or MagneticConstraintSet([])
+        self.constraints = constraints or []
+
+        self.opt_algorithm = opt_algorithm
+        self.opt_conditions = self._opt_condition_defaults({
+            "max_eval": 100,
+            **(opt_conditions or {}),
+        })
+        self.opt_parameters = {} if opt_parameters is None else opt_parameters
+
+    @property
+    def coilset(self) -> CoilSet:
+        """The optimisation problem coilset"""
+        return self._coilset
+
+    @coilset.setter
+    def coilset(self, value: CoilSet):
+        self._coilset = value
+
+    @property
+    def scale(self) -> float:
+        """Problem scaling value"""
+        return 1e6
+
+    def __init__(
+        self,
+        coilset: CoilSet,
+        opt_algorithm: AlgorithmType,
+        *,
+        max_currents: npt.ArrayLike | None = None,
+        targets: MagneticConstraintSet | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+    ):
+        self._coilset = coilset
+        self.max_currents = max_currents
+        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
         self.targets = targets or MagneticConstraintSet([])
         self.constraints = constraints or []
