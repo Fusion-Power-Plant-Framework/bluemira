@@ -186,9 +186,9 @@ class TestCoilsetOptimiser:
             coilset_opt_state.zs,
             coilset_opt_state.currents,
         )
-        x += 1.1
-        z += 0.6
-        currents += 0.99
+        x = x + 1.1  # noqa: PLR6104
+        z = z + 0.6  # noqa: PLR6104
+        currents = currents + 0.99  # noqa: PLR6104
         # Update
         self.optimiser_partial.coilset.set_optimisation_state(
             currents,
@@ -223,7 +223,6 @@ class TestCoilsetOptimiser:
         assert n_control_currents == len(coilset_current_limits)
 
         optimiser_current_bounds = self.optimiser_partial.get_current_bounds(
-            self.optimiser_partial.coilset,
             user_max_current,
             self.optimiser_partial.scale,
         )
@@ -249,15 +248,13 @@ class TestCoilsetOptimiser:
         self.optimiser_sym.update_magnetic_constraints(I_not_dI=True, fixed_coils=False)
 
         eq_constraints_none, ineq_constraints_none = (
-            self.optimiser_none._make_numerical_constraints(self.optimiser_none.coilset)
+            self.optimiser_none._make_numerical_constraints()
         )
         eq_constraints_part, ineq_constraints_part = (
-            self.optimiser_partial._make_numerical_constraints(
-                self.optimiser_partial.coilset
-            )
+            self.optimiser_partial._make_numerical_constraints()
         )
         eq_constraints_sym, ineq_constraints_sym = (
-            self.optimiser_sym._make_numerical_constraints(self.optimiser_sym.coilset)
+            self.optimiser_sym._make_numerical_constraints()
         )
 
         # make sure things make sense

@@ -34,7 +34,8 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
     Parameters
     ----------
     eq:
-        Equilibrium object used to update magnetic field targets.
+        Equilibrium object (used to update magnetic field targets)
+        with Coilset to optimise.
     targets:
         Set of magnetic field targets to use in objective function.
     position_mapper:
@@ -112,7 +113,7 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
             )
             x0 = np.concatenate((initial_mapped_positions, cs_opt_state.currents))
 
-        eq_constraints, ineq_constraints = self._make_numerical_constraints(self.coilset)
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=self.objective,
             x0=x0,
@@ -194,7 +195,7 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
             np.zeros(opt_dimension),
             np.ones(opt_dimension),
         )
-        current_bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        current_bounds = self.get_current_bounds(max_currents, self.scale)
 
         return (
             np.concatenate((lower_pos_bounds, current_bounds[0])),

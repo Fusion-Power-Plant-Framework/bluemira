@@ -572,14 +572,10 @@ class TestCoilSet:
         np.testing.assert_allclose(coilset.get_max_current(), [np.inf, np.inf, np.inf])
 
     def test_get_position_optimisable_coils(self):
-        all_c_opt_coils = [
-            c.name for c in self.coilset_w_sc.get_position_optimisable_coils()
-        ]
-        pf1_c_opt_coils = [
-            c.name for c in self.coilset_w_sc.get_position_optimisable_coils(["PF_1"])
-        ]
-        assert all_c_opt_coils == ["PF_1", "PF_2"]
-        assert pf1_c_opt_coils == ["PF_1"]
+        all_c_opt_coils = self.coilset_w_sc.get_position_optimisable_coils()
+        pf1_c_opt_coils = self.coilset_w_sc.get_position_optimisable_coils(["PF_1"])
+        assert all_c_opt_coils.name == ["PF_1", "PF_2"]
+        assert pf1_c_opt_coils.name == ["PF_1"]
 
         assert self.coilset_w_sc.n_position_optimisable_coils == 2
 

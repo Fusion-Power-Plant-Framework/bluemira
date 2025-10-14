@@ -256,8 +256,7 @@ class CoilFieldConstraints(FieldConstraints):
         B_max: float | np.ndarray,
         tolerance: float | np.ndarray | None = None,
     ):
-        cc = coilset.get_control_coils()
-        n_coils = cc.n_coils()
+        n_coils = coilset.n_control
         if is_num(B_max):
             B_max *= np.ones(n_coils)
         if len(B_max) != n_coils:
@@ -928,7 +927,7 @@ class MagneticConstraintSet:
         """
         Build the control response matrix used in optimisation.
         """
-        self.A = np.zeros((len(self), len(self.coilset.control)))
+        self.A = np.zeros((len(self), self.coilset.n_control))
 
         i = 0
         for constraint in self.constraints:

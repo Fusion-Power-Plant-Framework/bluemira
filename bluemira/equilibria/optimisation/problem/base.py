@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
@@ -122,6 +123,45 @@ class CoilsetOptimisationProblem(abc.ABC):
         """Problem scaling value"""
         return 1e6
 
+    def __init__(
+        self,
+        coilset: CoilSet,
+        opt_algorithm: AlgorithmType,
+        *,
+        max_currents: npt.ArrayLike | None = None,
+        targets: MagneticConstraintSet | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+    ):
+        self._coilset = coilset
+        self.max_currents = max_currents
+        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+
+        self.targets = targets or MagneticConstraintSet([])
+        self.constraints = constraints or []
+
+        self.opt_algorithm = opt_algorithm
+        self.opt_conditions = self._opt_condition_defaults({
+            "max_eval": 100,
+            **(opt_conditions or {}),
+        })
+        self.opt_parameters = {} if opt_parameters is None else opt_parameters
+
+    @property
+    def coilset(self) -> CoilSet:
+        """The optimisation problem coilset"""
+        return self._coilset
+
+    @coilset.setter
+    def coilset(self, value: CoilSet):
+        self._coilset = value
+
+    @property
+    def scale(self) -> float:
+        """Problem scaling value"""
+        return 1e6
+
     def _opt_condition_defaults(
         self, default_cond: dict[str, float | int]
     ) -> dict[str, float | int]:
@@ -140,9 +180,8 @@ class CoilsetOptimisationProblem(abc.ABC):
     def optimise(self, **kwargs) -> CoilsetOptimiserResult:
         """Run the coilset optimisation."""
 
-    @staticmethod
     def get_current_bounds(
-        coilset: CoilSet, max_currents: npt.ArrayLike | None, current_scale: float
+        self, max_currents: npt.ArrayLike | None, current_scale: float
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.
@@ -172,9 +211,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         EquilibriaError
             Number of max currents not equal to number of optimisable currents
         """
-        cc = coilset.get_control_coils()
-
-        n_cc_opt_currents = cc.n_current_optimisable_coils
+        n_cc_opt_currents = self.coilset.n_current_optimisable_coils
         scaled_input_current_limits = np.inf * np.ones(n_cc_opt_currents)
 
         if max_currents is not None:
@@ -198,7 +235,9 @@ class CoilsetOptimisationProblem(abc.ABC):
         # if a coil is not fixed (sized) and it has jmax, then the current is limited
         # by the max current provided or defaults to inf
 
-        opt_coils_max_currents = cc.get_max_current()[cc._opt_currents_inds]
+        opt_coils_max_currents = (
+            self.coilset.get_current_optimisable_coils().get_max_current()
+        )
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
@@ -220,8 +259,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         ValueError
             Length of max current vector must be equal to controls
         """
-        n_control_currents = len(self.coilset.current[self.coilset._control_ind])
-        if len(max_currents) != n_control_currents:
+        if len(max_currents) != self.coilset.n_current_optimisable_coils:
             raise ValueError(
                 "Length of maximum current vector must be equal to the number of"
                 " controls."
@@ -234,7 +272,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         self.bounds = (lower_bounds, upper_bounds)
 
     def _make_numerical_constraints(
-        self, coilset: CoilSet
+        self,
     ) -> tuple[list[ConstraintT], list[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries.
 
@@ -255,7 +293,7 @@ class CoilsetOptimisationProblem(abc.ABC):
             f_c = f.f_constraint
             df_c = getattr(f, "df_constraint", None)
 
-            if coilset._contains_circuits:
+            if self.coilset._contains_circuits:
                 # if the coilset contains circuits, we need to wrap the constraint
                 # functions (f_c) and 'expand' the current vector, which repeats
                 # the currents for each circuit in the coilset.
@@ -269,7 +307,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 # wrap the constraint function
                 @functools.wraps(f.f_constraint)
                 def wrapped_f_c(x, f=f):
-                    return f.f_constraint(coilset._opt_currents_expand_mat @ x)
+                    return f.f_constraint(self.coilset._opt_currents_expand_mat @ x)
 
                 f_c = wrapped_f_c
 
@@ -277,8 +315,10 @@ class CoilsetOptimisationProblem(abc.ABC):
                     # wrap the derivative function
                     @functools.wraps(f.df_constraint)
                     def wrapped_df_c(x, f=f):
-                        df_res = f.df_constraint(coilset._opt_currents_expand_mat @ x)
-                        return df_res @ coilset._opt_currents_expand_mat
+                        df_res = f.df_constraint(
+                            self.coilset._opt_currents_expand_mat @ x
+                        )
+                        return df_res @ self.coilset._opt_currents_expand_mat
 
                     df_c = wrapped_df_c
 

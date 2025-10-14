@@ -240,7 +240,7 @@ x_point = FieldNullConstraint(
 
 # %%
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-    coilset, eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
+    eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
 )
 diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 program = PicardIterator(
@@ -290,7 +290,7 @@ current_opt_problem = TikhonovCurrentCOP(
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6},
     opt_parameters={},
-    max_currents=coilset.get_max_current(0.0),
+    max_currents=eq.coilset.get_max_current(0.0),
     constraints=[x_point, field_constraints, force_constraints],
 )
 program = PicardIterator(
@@ -317,7 +317,6 @@ program()
 
 # %%
 minimal_current_eq = deepcopy(eq)
-minimal_current_coilset = deepcopy(coilset)
 minimal_current_opt_problem = MinimalCurrentCOP(
     minimal_current_eq,
     opt_algorithm="SLSQP",
@@ -335,8 +334,8 @@ program = PicardIterator(
 )
 program()
 
-control_coils = coilset.get_control_coils()
-min_control_coils = minimal_current_coilset.get_control_coils()
+control_coils = eq.coilset.get_control_coils()
+min_control_coils = minimal_current_eq.coilset.get_control_coils()
 
 print(
     "Total currents from minimal error optimisation problem:"
@@ -403,7 +402,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     opt_parameters={},
-    max_currents=coilset.get_max_current(I_p),
+    max_currents=sof.coilset.get_max_current(I_p),
     constraints=[sof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
@@ -414,7 +413,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     opt_parameters={},
-    max_currents=coilset.get_max_current(I_p),
+    max_currents=eof.coilset.get_max_current(I_p),
     constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
 
@@ -445,12 +444,11 @@ current_opt_problem_eof = TikhonovCurrentCOP(
 # coil regions, but demonstrates the principle with acceptable run-times.
 
 # %%
-# We'll store these so that we can look at them again later
-old_coilset = deepcopy(coilset)
+# We'll store this so that we can look at them again later
 old_eq = deepcopy(eq)
 
 region_interpolators = {}
-pf_coils = coilset.get_coiltype("PF")
+pf_coils = eq.coilset.get_coiltype("PF")
 for x, z, name in zip(pf_coils.x, pf_coils.z, pf_coils.name, strict=False):
     region = make_polygon(
         {"x": [x - 1, x + 1, x + 1, x - 1], "z": [z - 1, z - 1, z + 1, z + 1]},
@@ -461,7 +459,7 @@ for x, z, name in zip(pf_coils.x, pf_coils.z, pf_coils.name, strict=False):
 position_mapper = PositionMapper(region_interpolators)
 
 position_opt_problem = PulsedNestedPositionCOP(
-    coilset,
+    eq.coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
     opt_algorithm="COBYLA",
@@ -538,7 +536,7 @@ program()
 
 # %%
 f, ax = plt.subplots()
-x_old, z_old = old_coilset.position
+x_old, z_old = old_eq.coilset.position
 x_new, z_new = sof.coilset.position
 plot_coordinates(old_eq.get_LCFS(), ax=ax, edgecolor="b", fill=False)
 plot_coordinates(sof.get_LCFS(), ax=ax, edgecolor="r", fill=False)
@@ -561,7 +559,7 @@ plt.show()
 f, (ax_1, ax_2, ax_3) = plt.subplots(1, 3)
 
 old_eq.plot(ax=ax_1)
-old_coilset.plot(ax=ax_1, label=True)
+old_eq.coilset.plot(ax=ax_1, label=True)
 
 sof.plot(ax=ax_2)
 sof.coilset.plot(ax=ax_2, label=True)

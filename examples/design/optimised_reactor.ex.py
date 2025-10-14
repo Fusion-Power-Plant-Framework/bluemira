@@ -188,7 +188,7 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
         tolerance=1e-4,  # [T]
     )
     current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-        coilset, eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
+        eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
     )
     diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
     program = PicardIterator(

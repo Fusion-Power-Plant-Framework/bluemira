@@ -244,9 +244,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             lower=True,
             n=100,
         )
-        return UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, eq_targets, gamma=1e-8
-        )
+        return UnconstrainedTikhonovCurrentGradientCOP(eq, eq_targets, gamma=1e-8)
 
 
 def _make_tf_boundary(
@@ -804,9 +802,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             Optimisation problem
         """
         eq_targets = ReferenceConstraints(lcfs_shape, n_points)
-        return UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, eq_targets, gamma=gamma
-        )
+        return UnconstrainedTikhonovCurrentGradientCOP(eq, eq_targets, gamma=gamma)
 
     def _update_params_from_eq(self, eq: Equilibrium):
         self.params.update_values(plasma_data(eq), source=type(self).__name__)

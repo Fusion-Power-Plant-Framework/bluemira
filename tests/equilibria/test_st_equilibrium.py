@@ -187,7 +187,7 @@ class TestSTEquilibrium:
             coilset, grid, self.profiles, force_symmetry=True, psi=initial_psi
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
+            eq, constraint_set, gamma=build_tweaks["tikhonov_gamma"]
         )
 
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
@@ -281,7 +281,7 @@ class TestSTEquilibrium:
             coilset_temp, grid, self.profiles, force_symmetry=True, psi=None
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            coilset, eq, constraint_set, gamma=tikhonov_gamma
+            eq, constraint_set, gamma=tikhonov_gamma
         )
         opt_problem.optimise()
 
