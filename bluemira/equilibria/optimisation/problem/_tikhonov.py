@@ -15,7 +15,6 @@ from bluemira.equilibria.optimisation.constraints import (
 )
 from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
 from bluemira.equilibria.optimisation.problem.base import (
-    CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
     EqCoilsetOptimisationProblem,
 )
@@ -135,7 +134,7 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
 
-class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
+class UnconstrainedTikhonovCurrentGradientCOP(EqCoilsetOptimisationProblem):
     """
     Unbounded, unconstrained, analytically optimised current gradient vector for minimal
     error to the L2-norm of a set of magnetic constraints (used here as targets).
@@ -158,9 +157,20 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         gamma: float,
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        max_currents: npt.ArrayLike | None = None,
     ):
-        super().__init__(coilset_mhd_state=eq)
-        self.targets = targets
+        super().__init__(
+            eq,
+            opt_algorithm,
+            max_currents=max_currents,
+            opt_conditions=opt_conditions,
+            constraints=None,
+            opt_parameters={"initial_step": 0.03, **(opt_parameters or {})},
+            targets=targets,
+        )
         self.gamma = gamma
 
     def optimise(self, **_) -> CoilsetOptimiserResult:
