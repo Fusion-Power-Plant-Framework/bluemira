@@ -66,6 +66,7 @@ class ProcessInputs:
     fw_armour_thickness: float | None = None
     i_blanket_type: int | None = None
     i_blkt_inboard: int | None = None
+    i_blkt_dual_coolant: int | None = None
     f_blkt_li6_enrichment: float | None = None
     breeder_f: float | None = None
     breeder_multiplier: float | None = None
@@ -543,7 +544,7 @@ class ProcessInputs:
     i_shld_primary_heat: int | None = None
     pinjmax: float | None = None
     pflux_plant_floor_electric: float | None = None
-    p_tritium_plant_elec_mw: float | None = None
+    p_tritium_plant_electric_mw: float | None = None
     vachtmw: float | None = None
     i_hcd_calculations: int | None = None
     # Water usage
