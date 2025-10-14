@@ -220,7 +220,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         if initial_currents:
             self.initial_currents = initial_currents / self.sub_opt_problems[0].scale
         else:
-            self.initial_currents = np.zeros(self.coilset.n_control)
+            self.initial_currents = np.zeros(coilset.get_control_coils().n_coils())
         self.debug = {0: debug}
         self.iter = {0: 0.0}
         opt_dimension = self.position_mapper.dimension
