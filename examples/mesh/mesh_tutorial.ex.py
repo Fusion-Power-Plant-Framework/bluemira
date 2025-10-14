@@ -38,7 +38,6 @@ Some examples of using bluemira mesh module.
 # %%
 from pathlib import Path
 
-import dolfin
 import matplotlib.pyplot as plt
 
 from bluemira.base.components import Component, PhysicalComponent
@@ -50,6 +49,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from dolfinx import plot
 
 set_log_level("DEBUG")
 
@@ -140,7 +140,8 @@ mesh, boundaries, subdomains, labels = import_mesh(
     directory=directory,
     subdomains=True,
 )
-dolfin.plot(mesh)
+
+plot.vtk_mesh(mesh, 2)
 plt.show()
 
 print(mesh.coordinates())
