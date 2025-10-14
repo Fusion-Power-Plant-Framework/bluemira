@@ -531,7 +531,7 @@ class ProcessInputs:
     # IFE
 
     # Heat transport
-    p_plant_electric_base_mw: float | None = None
+    p_plant_electric_base: float | None = None
     crypw_max: float | None = None
     f_crypmw: float | None = None
     etatf: float | None = None
