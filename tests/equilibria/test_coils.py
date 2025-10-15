@@ -622,7 +622,7 @@ class TestCoilSetSymmetry:
         ],
     )
     def test_symmetry_check(self, coilset, is_sym):
-        assert check_coilset_symmetric(coilset) is is_sym
+        assert check_coilset_symmetric(coilset, rtol=1e-5) is is_sym
 
     @pytest.mark.parametrize(
         ("coilset", "n_coils", "n_sym_coils", "n_sing_coils"),
