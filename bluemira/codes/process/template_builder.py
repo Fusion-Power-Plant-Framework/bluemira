@@ -55,6 +55,7 @@ class PROCESSTemplateBuilder:
         self.ioptimiz: int = 0
         self.maxcal: int = 1000
         self.epsvmc: float = 1.0e-8
+        self.neqns: int = 0
 
     def set_run_title(self, run_title: str):
         """
@@ -81,6 +82,17 @@ class PROCESSTemplateBuilder:
         """
         self.maxcal = maxiter
         self.epsvmc = tolerance
+
+    def set_number_equality_constraints(self, num_equality_cons: int = 0):
+        """
+        Set numbert of equality constraints used
+
+        Parameters
+        ----------
+        num_equality_cons:
+            Number of equality constraints used in process
+        """
+        self.neqns = num_equality_cons
 
     def set_minimisation_objective(self, objective: Objective):
         """
@@ -120,10 +132,10 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
-
-        if constraint.value in FV_CONSTRAINT_ITVAR_MAPPING:
+        if (constraint.value in FV_CONSTRAINT_ITVAR_MAPPING) and (self.neqns == 0):
             # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
-            # f-value constraints.
+            # f-value constraints. If equality constraints are used then no f-values
+            # are enforced so the config consistencey is not checked
             self.add_fvalue_constraint(constraint, None, None, None)
         else:
             self._constraints.append(constraint)
@@ -328,6 +340,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
+            neqns=self.neqns,
             f_nd_impurity_electrons=self.f_nd_impurity_electrons,
             **self.values,
             **models,
