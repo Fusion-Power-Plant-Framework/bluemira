@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": true
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": { "plot": ["eq", "convergence"] },
     "summary_plot": true,
     "save": true,
@@ -92,7 +92,7 @@
         "x1": { "value": "r_fw_ib_in" },
         "x2": { "value": "r_fw_ob_in" }
       },
-      "run_mode": "read",
+      "run_mode": "run",
       "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": { "n_koz_points": 100 },
       "optimisation_settings": {
@@ -118,7 +118,7 @@
     "enabled": true,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 16800,
-    "batches": 1,
+    "batches": 3,
     "photon_transport": true,
     "electron_treatment": "ttb",
     "run_mode": "run_and_plot",
@@ -134,7 +134,7 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "material": {
@@ -160,7 +160,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
