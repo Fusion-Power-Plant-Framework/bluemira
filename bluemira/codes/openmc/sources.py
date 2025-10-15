@@ -96,6 +96,7 @@ def make_tokamak_source(
         total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
+    source.plot()
     return (
         source.to_openmc_source(),
         source.source_rate,

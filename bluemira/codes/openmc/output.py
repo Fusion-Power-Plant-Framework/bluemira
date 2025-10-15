@@ -200,7 +200,7 @@ class OpenMCResult:
         scale = source_rate / source_triton_rate
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         # Single tally, so std dev scales linearly
-        return scale * float(tbr_df["mean"]), scale * float(tbr_df["std. dev."])
+        return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
 
     @classmethod
     def _load_filter_power_err(
