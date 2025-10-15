@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from bluemira.codes.openmc.solver import NeutronSourceCreator
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.radiation_transport.neutronics.blanket_data import (
     create_materials,
     get_preset_physical_properties,
@@ -24,15 +22,14 @@ from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
 
     import numpy.typing as npt
-    import openmc.source
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
     from bluemira.codes.openmc.output import OpenMCResult
-    from bluemira.codes.openmc.params import PlasmaSourceParameters
+    from bluemira.codes.openmc.solver import NeutronSourceCreator
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.geometry.wire import BluemiraWire
     from eudemo.blanket import Blanket
     from eudemo.ivc import IVCShapes
