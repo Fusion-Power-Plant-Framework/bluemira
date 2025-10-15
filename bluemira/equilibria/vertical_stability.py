@@ -88,7 +88,14 @@ class RZIp:
         # TODO @je-cook: Possibly implement quad indexing?
         # 1231231231231
         self._coilset = cs
-        self.ind_mat = make_mutual_inductance_matrix(cs, square_coil=True)
+        self.ind_mat = make_mutual_inductance_matrix(
+            cs, square_coil=True, with_quadratures=True
+        )
+        diag = np.diag(np.diag(self.ind_mat))
+        non_diag = (
+            2 * np.pi * (self.ind_mat - diag)
+        )  # extra 2pi term due to per circle rather than per radian
+        self.ind_mat = diag + non_diag
 
     def __call__(
         self,
@@ -112,20 +119,17 @@ class RZIp:
             # this constraint is pretty irrelevant for breakdown
             return 0
 
-        cc = self.coilset.get_control_coils()
-
         return stab_destab(
-            cc_current=cc.current,
+            cc_current=self.coilset.get_control_coils().current,
             ind_mat=self.ind_mat,
             control_ind=self.coilset._control_ind,
             uncontrolled_ind=list(
                 set(self.coilset._get_type_index()) - set(self.coilset._control_ind)
             ),
-            r_struct=self.coilset.x,
-            x_ac=cc.x,
+            r_struct=np.tile(eq.x.reshape(-1), (len(self.coilset._get_type_index()), 1)),
             i_plasma=eq._jtor * eq.grid.step,
-            br_struct_grid=eq._bx_green,
-            dbrdz_struct_grid=eq._db_green,
+            br_struct_grid=np.rollaxis(eq._bx_green, 2, 0),
+            dbrdz_struct_grid=np.rollaxis(eq._db_green, 2, 0),
             with_active=with_active,
         )
 
@@ -136,7 +140,6 @@ def stab_destab(
     control_ind: list[int],
     uncontrolled_ind: list[int],
     r_struct: npt.NDArray,
-    x_ac: npt.NDArray,
     i_plasma: npt.NDArray,
     br_struct_grid: npt.NDArray,
     dbrdz_struct_grid: npt.NDArray,
@@ -157,9 +160,7 @@ def stab_destab(
     uncontrollled_ind:
         indicies of passive structures
     r_struct:
-        active and passive structure x position
-    x_ac:
-        active coil x positions
+        flattened array of eq R points duplicated by number of coils
     i_plasma:
         the plasma jtor x grid step
     br_struct_grid:
@@ -174,6 +175,7 @@ def stab_destab(
     :
         The stability criterion
     """
+    r_active = r_struct[control_ind, :]
     if with_active:
         l_ps_ps = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
         l_ac_ps = ind_mat[control_ind][:, uncontrolled_ind]
@@ -185,17 +187,19 @@ def stab_destab(
         ])
     else:
         mss = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
-        r_struct = r_struct[..., uncontrolled_ind]
-        br_struct_grid = br_struct_grid[..., uncontrolled_ind]
-
-    msp_prime = (2 * np.pi * r_struct * br_struct_grid).reshape(-1, r_struct.size)
+        r_struct = r_struct[uncontrolled_ind, :]
+        br_struct_grid = br_struct_grid[uncontrolled_ind, ...]
+    shape = np.shape(br_struct_grid)
+    br = br_struct_grid.reshape((len(uncontrolled_ind), shape[1] * shape[2]))
+    dbrdz = dbrdz_struct_grid[control_ind, ...]
+    dbrdz = dbrdz.reshape((len(control_ind), shape[1] * shape[2]))
+    msp_prime = (2 * np.pi * r_struct * br).T
     i_plasma = i_plasma.reshape(-1)
+    grid_coil = (2 * np.pi * r_active * dbrdz).T
     destabilising = np.einsum(
         "b, bd, d",
         i_plasma,
-        (2 * np.pi * x_ac * dbrdz_struct_grid[..., control_ind]).reshape(
-            -1, cc_current.size
-        ),
+        grid_coil,
         cc_current,
         optimize=["einsum_path", (0, 1), (0, 1)],
     )
@@ -209,7 +213,6 @@ def stab_destab(
         i_plasma,
         optimize=["einsum_path", (0, 1), (1, 2), (0, 1), (0, 1)],
     )
-
     # stabilising force/ destabilising force differentiated wrt to z coord
     # f = -d_fs / d_fd
     # not infinite if destabilising is 0 because therefore it is stable
