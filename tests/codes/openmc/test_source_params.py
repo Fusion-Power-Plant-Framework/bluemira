@@ -6,12 +6,7 @@
 import json
 from pathlib import Path
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import numpy as np
 import pytest
-from matplotlib.cm import coolwarm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter_frame import make_parameter_frame
@@ -19,7 +14,6 @@ from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.codes.openmc.sources import make_tokamak_source
 
 PARAMS_PATH = Path(get_bluemira_path("codes/openmc", subfolder="tests"), "params.json")
 

@@ -22,7 +22,6 @@ from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
 )
 
 if TYPE_CHECKING:
-
     import numpy.typing as npt
 
     from bluemira.base.parameter_frame import ParameterFrame
