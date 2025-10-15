@@ -62,20 +62,28 @@ def make_mutual_inductance_matrix(
 
     """
     if with_quadratures:
-        n_coils = coilset._quad_dx.ravel().size
-        xcoord = coilset._quad_x
-        zcoord = coilset._quad_z
-        dx = coilset._quad_dx
-        dz = coilset._quad_dz
+        xcoord = coilset._quad_x.flatten()
+        zcoord = coilset._quad_z.flatten()
+        dx = coilset._quad_dx.flatten()
+        dz = coilset._quad_dz.flatten()
+        zero_idxs = np.nonzero(dx)
+        xcoord = xcoord[zero_idxs]
+        zcoord = zcoord[zero_idxs]
+        dx = dx[zero_idxs]
+        dz = dz[zero_idxs]
+        n_coils = dx.size
+        ncoils = coilset.n_coils()
+        duplication = n_coils / ncoils
+        n_turns = np.repeat(coilset.n_turns, duplication)
     else:
         n_coils = coilset.n_coils()
         xcoord = coilset.x
         zcoord = coilset.z
         dx = coilset.dx
         dz = coilset.dz
+        n_turns = coilset.n_turns
 
     M = np.zeros((n_coils, n_coils))  # noqa: N806
-    n_turns = coilset.n_turns
 
     itri, jtri = np.triu_indices(n_coils, k=1)
     M[itri, jtri] = (
@@ -85,8 +93,8 @@ def make_mutual_inductance_matrix(
     )
     M[jtri, itri] = M[itri, jtri]
 
-    M[np.diag_indices_from(M)] = (
-        square_coil_inductance_kirchhoff(xcoord, dx, dz)
+    M[np.diag_indices_from(M)] = np.squeeze(
+        square_coil_inductance_kirchhoff(xcoord, 2 * dx, 2 * dz)
         if square_coil
         else (n_turns**2 * circular_coil_inductance_elliptic(xcoord, np.hypot(dx, dz)))
     )
