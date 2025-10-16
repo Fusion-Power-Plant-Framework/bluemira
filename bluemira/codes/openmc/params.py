@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 @dataclass
 class OpenMCNeutronicsSolverParams(ParameterFrame):
     """
+    OpenMC neutronics solver workflow parameters.
 
     Parameters
     ----------
@@ -65,24 +66,26 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
 
     """Reactor power"""
     reactor_power: Parameter[float]
-    """electronn density profile descriptors"""
+
+    """Electron density profile descriptors"""
     n_profile_alpha: Parameter[float]
     n_e_core: Parameter[float]
     n_e_ped: Parameter[float]
     n_e_sep: Parameter[float]
-    """temperature profile descriptors"""
+
+    """Electron temperature profile descriptors"""
     T_profile_alpha: Parameter[float]
     T_profile_beta: Parameter[float]
     T_e_core: Parameter[float]
     T_e_ped: Parameter[float]
     T_e_sep: Parameter[float]
 
-    T_ie_ratio: Parameter[float]
     """Ion to electron temperature ratio (volume-averaged)."""
-    n_i_fuel: Parameter[float]
+    T_ie_ratio: Parameter[float]
     """Volume-averaged fuel ion density [1/metre **3]."""
-    n_e: Parameter[float]
+    n_i_fuel: Parameter[float]
     """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    n_e: Parameter[float]
 
     """Shafranov shift"""
     shaf_shift: Parameter[float]
@@ -115,12 +118,12 @@ class PlasmaSourceParameters:
     electron_temperature_ped: float  # [keV]
     electron_temperature_sep: float  # [keV]
 
-    ie_temperature_ratio: Parameter[float]
     """Ion to electron temperature ratio (volume-averaged)."""
-    va_fuel_ion_density: Parameter[float]
+    ie_temperature_ratio: Parameter[float]
     """Volume-averaged fuel ion density [1/metre **3]."""
-    va_electron_density: Parameter[float]
+    va_fuel_ion_density: Parameter[float]
     """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    va_electron_density: Parameter[float]
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
@@ -158,7 +161,8 @@ class PlasmaSourceParameters:
 
     @classmethod
     def from_parameterframe(cls, params: ParameterFrame):
-        """Create an object of this class (PlasmaSourceParameters) from a ParameterFrame
+        """
+        Create an object of this class (PlasmaSourceParameters) from a ParameterFrame
         (specifically, an object of the class OpenMCNeutronicsSolverParams), with the
         appropriate units.
 

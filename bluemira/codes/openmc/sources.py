@@ -20,6 +20,7 @@ from tokamak_neutron_source import (
     TransportInformation,
 )
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
+from tokamak_neutron_source.flux import FluxPoint, EQDSKFluxInterpolator, ClosedFluxSurface
 
 from bluemira.base.constants import raw_uc
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
@@ -56,9 +57,6 @@ def make_tokamak_source(
     source_T_rate:
         Absolute plasma T consumption rate (used for tallying)
     """
-    data = eq.to_dict()
-    data["name"] = ""
-    eq = EQDSKInterface(**data)
     rho_profile = np.linspace(0, 1, 50)
     temperature_profile = ParabolicPedestalProfile(
         source_parameters.electron_temperature_core,
@@ -87,7 +85,17 @@ def make_tokamak_source(
         rho_profile=rho_profile,
         fuel_composition=FractionalFuelComposition(D=0.5, T=0.5),
     )
-    flux_map = FluxMap.from_eqdsk(eq)
+
+    lcfs = eq.get_LCFS()
+    o_point = eq.get_OX_points()[0][0]
+    o_point = FluxPoint(*o_point)
+    flux_map = FluxMap(
+        ClosedFluxSurface(lcfs.x, lcfs.z),
+        o_point,
+        EQDSKFluxInterpolator(
+            eq.x, eq.z, eq.psi_norm(), o_point,
+        )
+    )
 
     source = TokamakNeutronSource(
         transport,
@@ -96,7 +104,6 @@ def make_tokamak_source(
         total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
-    source.plot()
     return (
         source.to_openmc_source(),
         source.source_rate,
