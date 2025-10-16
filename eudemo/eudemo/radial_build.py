@@ -99,7 +99,7 @@ template_builder.add_variable("dr_tf_nose_case", 0.52465)
 template_builder.add_variable("dr_tf_inboard", 1.2080)
 template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
 template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-template_builder.add_variable("f_a_cs_steel", 0.57875)
+template_builder.add_variable("f_a_cs_turn_steel", 0.57875)
 template_builder.add_variable("j_cs_flat_top_end", 2.0726e07)
 template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
@@ -182,7 +182,7 @@ template_builder.add_input_values({
     "residual_sig_hoop": 150.0e6,
     # "n_cycle_min": ,
     # "t_crack_radial": ,
-    # "t_structural_radial": ,
+    # "dr_cs_turn_conduit": ,
     "t_crack_vertical": 0.65e-3,
     "sf_vertical_crack": 1.0,
     "sf_radial_crack": 1.0,

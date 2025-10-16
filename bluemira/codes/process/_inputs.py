@@ -310,8 +310,8 @@ class ProcessInputs:
     n_cycle_min: int | None = None
     t_crack_vertical: float | None = None
     t_crack_radial: float | None = None
-    t_structural_radial: float | None = None
-    t_structural_vertical: float | None = None
+    dr_cs_turn_conduit: float | None = None
+    dz_cs_turn_conduit: float | None = None
     sf_vertical_crack: float | None = None
     sf_radial_crack: float | None = None
     sf_fast_fracture: float | None = None
@@ -583,7 +583,7 @@ class ProcessInputs:
     n_cs_current_filaments: int | None = None
     n_pf_coil_groups: int | None = None
     f_z_cs_tf_internal: float | None = None
-    f_a_cs_steel: float | None = None
+    f_a_cs_turn_steel: float | None = None
     rho_pf_coil: float | None = None
     j_pf_coil_wp_peak: list[float] | None = None
     dr_pf_tf_outboard_out_offset: float | None = None

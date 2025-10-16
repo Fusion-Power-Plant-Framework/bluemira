@@ -2580,7 +2580,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 3.996
   },
-  "f_a_cs_steel": {
+  "f_a_cs_turn_steel": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 0.42079
   },

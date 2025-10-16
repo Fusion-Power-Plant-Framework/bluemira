@@ -287,7 +287,7 @@ class TestInDatOneForOne:
             "dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1
         )
         template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-        template_builder.add_variable("f_a_cs_steel", 0.57875)
+        template_builder.add_variable("f_a_cs_turn_steel", 0.57875)
         template_builder.add_variable("j_cs_flat_top_end", 2.0726e07)
         template_builder.add_variable(
             "c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4
