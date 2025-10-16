@@ -96,12 +96,12 @@ OUT_mappings = {
     "TF_currpt_ob": ("c_tf_turn", "A"),
     "P_bd_in": ("p_hcd_injected_total_mw", "MW"),
     "condrad_cryo_heat": ("qss/1.0d6", "MW"),
-    "T_e_core": ("te0", "keV"),
-    "T_e_ped": ("teped", "keV"),
-    "n_e_core": ("ne0", "1/m^3"),
-    "n_e": ("dene", "1/m^3"),
-    "n_e_ped": ("neped", "1/m^3"),
-    "n_e_sep": ("nesep", "1/m^3"),
+    "T_e_core": ("temp_plasma_electron_on_axis_kev", "keV"),
+    "T_e_ped": ("temp_plasma_pedestal_kev", "keV"),
+    "n_e_core": ("nd_plasma_electron_on_axis", "1/m^3"),
+    "n_e": ("nd_plasma_electrons_vol_avg", "1/m^3"),
+    "n_e_ped": ("nd_plasma_pedestal_electron", "1/m^3"),
+    "n_e_sep": ("nd_plasma_separatrix_electron", "1/m^3"),
     "n_i_fuel": ("nd_fuel_ions", "1/m^3"),
     "T_ie_ratio": ("tratio", ""),
 }
@@ -118,7 +118,7 @@ IO_mappings = {
     "g_cs_tf": ("dr_cs_tf_gap", "m"),
     "g_ts_tf": ("dr_tf_shld_gap", "m"),
     "g_vv_bb": ("dr_shld_blkt_gap", "m"),
-    "T_e_sep": ("tesep", "keV"),
+    "T_e_sep": ("temp_plasma_separatrix_kev", "keV"),
 }
 
 NONE_mappings = {
