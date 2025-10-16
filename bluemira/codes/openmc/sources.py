@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import openmc
-from eqdsk import EQDSKInterface
 from tokamak_neutron_source import (
     FluxMap,
     FractionalFuelComposition,
@@ -19,8 +18,12 @@ from tokamak_neutron_source import (
     TokamakNeutronSource,
     TransportInformation,
 )
+from tokamak_neutron_source.flux import (
+    ClosedFluxSurface,
+    EQDSKFluxInterpolator,
+    FluxPoint,
+)
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
-from tokamak_neutron_source.flux import FluxPoint, EQDSKFluxInterpolator, ClosedFluxSurface
 
 from bluemira.base.constants import raw_uc
 from bluemira.radiation_transport.neutronics.constants import dt_neutron_energy
@@ -93,8 +96,11 @@ def make_tokamak_source(
         ClosedFluxSurface(lcfs.x, lcfs.z),
         o_point,
         EQDSKFluxInterpolator(
-            eq.x, eq.z, eq.psi_norm(), o_point,
-        )
+            eq.x,
+            eq.z,
+            eq.psi_norm(),
+            o_point,
+        ),
     )
 
     source = TokamakNeutronSource(

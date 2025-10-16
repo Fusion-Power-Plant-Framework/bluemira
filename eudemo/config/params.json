@@ -238,7 +238,6 @@
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Ratio of ion to electron temperature."
-
   },
   "n_i_fuel": {
     "value": 0.8e20,

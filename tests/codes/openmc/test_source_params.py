@@ -50,7 +50,9 @@ def test_separatrix_plasma_electron_density():
 
 
 def test_temperature_profile_alpha_exponent():
-    assert pms_params.electron_temperature_alpha == pytest.approx(1.45)  # [dimensionless]
+    assert pms_params.electron_temperature_alpha == pytest.approx(
+        1.45
+    )  # [dimensionless]
 
 
 def test_temperature_profile_beta_exponent():
