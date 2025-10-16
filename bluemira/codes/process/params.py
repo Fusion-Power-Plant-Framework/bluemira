@@ -165,7 +165,7 @@ class ProcessSolverParams(MappedParameterFrame):
     """Plasma current [megaampere]."""
 
     j_cs_critical: Parameter[float]
-    """Maximum allowable current density in the central solenoid [A/m**2]"""
+    """Maximum allowable current density in the central solenoid [A/m^2]"""
 
     kappa_95: Parameter[float]
     """95th percentile plasma elongation [dimensionless]."""
@@ -371,25 +371,25 @@ class ProcessSolverParams(MappedParameterFrame):
     """Ion to electron temperature ratio (volume-averaged)."""
 
     n_e: Parameter[float]
-    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    """Volumed-averaged plasma electron density [1/metre^3]."""
 
     n_e_core: Parameter[float]
-    """Core electron density [1/metre ** 3]."""
+    """Core electron density [1/metre^3]."""
 
     n_e_ped: Parameter[float]
-    """Pedestal electron density [1/metre ** 3]."""
+    """Pedestal electron density [1/metre^3]."""
 
     n_e_sep: Parameter[float]
-    """Electron density at the separatrix [1/metre ** 3]."""
+    """Electron density at the separatrix [1/metre^3]."""
 
     n_i_fuel: Parameter[float]
-    """Volume-averaged fuel ion density [1/metre **3]."""
+    """Volume-averaged fuel ion density [1/metre^3]."""
 
     tk_tf_outboard: Parameter[float]
     """TF coil outboard thickness [meter]."""
 
     V_p: Parameter[float]
-    """Plasma volume [meter ** 3]."""
+    """Plasma volume [meter^3]."""
 
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""

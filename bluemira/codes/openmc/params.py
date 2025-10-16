@@ -82,9 +82,9 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
 
     """Ion to electron temperature ratio (volume-averaged)."""
     T_ie_ratio: Parameter[float]
-    """Volume-averaged fuel ion density [1/metre **3]."""
+    """Volume-averaged fuel ion density [1/metre^3]."""
     n_i_fuel: Parameter[float]
-    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    """Volumed-averaged plasma electron density [1/metre^3]."""
     n_e: Parameter[float]
 
     """Shafranov shift"""
@@ -120,9 +120,9 @@ class PlasmaSourceParameters:
 
     """Ion to electron temperature ratio (volume-averaged)."""
     ie_temperature_ratio: Parameter[float]
-    """Volume-averaged fuel ion density [1/metre **3]."""
+    """Volume-averaged fuel ion density [1/metre^3]."""
     va_fuel_ion_density: Parameter[float]
-    """Volumed-averaged plasma electron density [1/metre ** 3]."""
+    """Volumed-averaged plasma electron density [1/metre^3]."""
     va_electron_density: Parameter[float]
 
     # mapping from parameter names in params.json (extracted by
