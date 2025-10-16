@@ -82,11 +82,13 @@ for constraint in (
     template_builder.add_constraint(constraint)
 
 # Variable vector values and bounds
-template_builder.add_variable("bt", 5.3292, upper_bound=20.0)
+template_builder.add_variable("b_plasma_toroidal_on_axis", 5.3292, upper_bound=20.0)
 template_builder.add_variable("rmajor", 9.2901, upper_bound=13.0)
-template_builder.add_variable("te", 12.33, upper_bound=150.0)
+template_builder.add_variable(
+    "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
+)
 template_builder.add_variable("beta", 3.4421e-2)
-template_builder.add_variable("dene", 7.4321e19)
+template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
 template_builder.add_variable("q95", 3.5, lower_bound=3.5)
 template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
 template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
@@ -97,7 +99,7 @@ template_builder.add_variable("dr_tf_nose_case", 0.52465)
 template_builder.add_variable("dr_tf_inboard", 1.2080)
 template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
 template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-template_builder.add_variable("f_a_cs_steel", 0.57875)
+template_builder.add_variable("f_a_cs_turn_steel", 0.57875)
 template_builder.add_variable("j_cs_flat_top_end", 2.0726e07)
 template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
@@ -180,7 +182,7 @@ template_builder.add_input_values({
     "residual_sig_hoop": 150.0e6,
     # "n_cycle_min": ,
     # "t_crack_radial": ,
-    # "t_structural_radial": ,
+    # "dr_cs_turn_conduit": ,
     "t_crack_vertical": 0.65e-3,
     "sf_vertical_crack": 1.0,
     "sf_radial_crack": 1.0,
@@ -195,18 +197,18 @@ template_builder.add_input_values({
     # Profile parameterisation inputs
     "alphan": 1.0,
     "alphat": 1.45,
-    "rhopedn": 0.94,
-    "rhopedt": 0.94,
+    "radius_plasma_pedestal_density_norm": 0.94,
+    "radius_plasma_pedestal_temp_norm": 0.94,
     "tbeta": 2.0,
-    "teped": 5.5,
-    "tesep": 0.1,
-    "fgwped": 0.85,
-    "neped": 0.678e20,
-    "nesep": 0.2e20,
+    "temp_plasma_pedestal_kev": 5.5,
+    "temp_plasma_separatrix_kev": 0.1,
+    "f_nd_plasma_pedestal_greenwald": 0.85,
+    "nd_plasma_pedestal_electron": 0.678e20,
+    "nd_plasma_separatrix_electron": 0.2e20,
     "beta_norm_max": 3.0,
     # Plasma impurity stuff
     "radius_plasma_core_norm": 0.75,
-    "coreradiationfraction": 0.6,
+    "f_p_plasma_core_rad_reduction": 0.6,
     # Important stuff
     "p_plant_electric_net_required_mw": 500.0,
     "t_burn_min": 7.2e3,
