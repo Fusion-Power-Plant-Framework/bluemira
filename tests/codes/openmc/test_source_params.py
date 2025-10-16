@@ -30,40 +30,40 @@ def test_pedestal_location_in_normalized_radius():
 
 
 def test_neutronics_reactor_power():
-    assert pms_params.reactor_power == 1998.0e6  # [W]
+    assert pms_params.reactor_power == pytest.approx(1998.0e6)  # [W]
 
 
 def test_density_profile_alpha_exponent():
-    assert pms_params.electron_density_alpha == 1.0  # [dimensionless]
+    assert pms_params.electron_density_alpha == pytest.approx(1.0)  # [dimensionless]
 
 
 def test_core_plasma_electron_density():
-    assert pms_params.electron_density_core == 1.5e20  # [1/m^3]
+    assert pms_params.electron_density_core == pytest.approx(1.5e20)  # [1/m^3]
 
 
 def test_pedestal_plasma_electron_density():
-    assert pms_params.electron_density_ped == 8e19  # [1/m^3]
+    assert pms_params.electron_density_ped == pytest.approx(8e19)  # [1/m^3]
 
 
 def test_separatrix_plasma_electron_density():
-    assert pms_params.electron_density_sep == 3e19  # [1/m^3]
+    assert pms_params.electron_density_sep == pytest.approx(3e19)  # [1/m^3]
 
 
 def test_temperature_profile_alpha_exponent():
-    assert pms_params.electron_temperature_alpha == 1.45  # [dimensionless]
+    assert pms_params.electron_temperature_alpha == pytest.approx(1.45)  # [dimensionless]
 
 
 def test_temperature_profile_beta_exponent():
-    assert pms_params.electron_temperature_beta == 2.0  # [dimensionless]
+    assert pms_params.electron_temperature_beta == pytest.approx(2.0)  # [dimensionless]
 
 
 def test_core_plasma_electron_temperature():
-    assert pms_params.electron_temperature_core == 20.0  # [keV]
+    assert pms_params.electron_temperature_core == pytest.approx(20.0)  # [keV]
 
 
 def test_pedestal_plasma_electron_temperature():
-    assert pms_params.electron_temperature_ped == 5.5  # [keV]
+    assert pms_params.electron_temperature_ped == pytest.approx(5.5)  # [keV]
 
 
 def test_separatrix_plasma_electron_temperature():
-    assert pms_params.electron_temperature_sep == 0.1  # [keV]
+    assert pms_params.electron_temperature_sep == pytest.approx(0.1)  # [keV]
