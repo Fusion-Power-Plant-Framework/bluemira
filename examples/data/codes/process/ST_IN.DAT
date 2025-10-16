@@ -30,7 +30,7 @@ boundu(3) = 13
 ixc = 4 * temp_plasma_electron_vol_avg_kev
 boundl(4) = 5.6
 ixc = 5 * beta
-ixc = 6 * nd_plasma_electron_vol_avg
+ixc = 6 * nd_plasma_electrons_vol_avg
 boundl(6) = 0.69e20
 ixc = 9 * fdene
 boundu(9) = 1.2
@@ -222,7 +222,7 @@ alphat   = 1.45 * Temperature profile index
 aspect   = 3.1 * Aspect ratio (iteration variable 1)
 beta     = 3.0810e-02 * Total plasma beta (iteration variable 5)
 b_plasma_toroidal_on_axis       = 5.6476e+00 * Toroidal field on axis (t) (iteration variable 2)
-nd_plasma_electron_vol_avg     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
+nd_plasma_electrons_vol_avg     = 7.9759e+19 * Electron density (/m3) (iteration variable 6)
 beta_norm_max   = 3.0 * (troyon-like) coefficient for beta scaling;
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (i_plasma_geometry=2; 3)
 f_c_plasma_non_inductive = 4.4628e-01 * Fraction of the plasma current produced by

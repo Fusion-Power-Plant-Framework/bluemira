@@ -127,7 +127,7 @@ class TestPROCESSTemplateBuilder:
         t.add_variable("b_plasma_toroidal_on_axis", 5.0)
         t.add_variable("rmajor", 9.0)
         t.add_variable("temp_plasma_electron_vol_avg_kev", 12.0)
-        t.add_variable("nd_plasma_electron_vol_avg", 8.0e19)
+        t.add_variable("nd_plasma_electrons_vol_avg", 8.0e19)
         _ = t.make_inputs()
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
@@ -146,7 +146,7 @@ class TestPROCESSTemplateBuilder:
         t.add_variable("b_plasma_toroidal_on_axis", 5.0)
         t.add_variable("rmajor", 9.0)
         t.add_variable("temp_plasma_electron_vol_avg_kev", 12.0)
-        t.add_variable("nd_plasma_electron_vol_avg", 8.0e19)
+        t.add_variable("nd_plasma_electrons_vol_avg", 8.0e19)
         t.add_input_value("pflux_fw_neutron_max_mw", 8.0)
         t.add_input_value("aspect", 3.1)
         _ = t.make_inputs()
@@ -274,7 +274,7 @@ class TestInDatOneForOne:
             "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
         )
         template_builder.add_variable("beta", 3.1421e-2)
-        template_builder.add_variable("nd_plasma_electron_vol_avg", 7.4321e19)
+        template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
         template_builder.add_variable("q95", 3.5, lower_bound=3.5)
         template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
         template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)

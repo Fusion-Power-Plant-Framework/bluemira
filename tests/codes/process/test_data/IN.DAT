@@ -30,7 +30,7 @@ ixc = 3 * rmajor
 boundu(3) = 13
 ixc = 4 * temp_plasma_electron_vol_avg_kev
 ixc = 5 * beta
-ixc = 6 * nd_plasma_electron_vol_avg
+ixc = 6 * nd_plasma_electrons_vol_avg
 ixc = 9 * fdene
 boundu(9) = 1.2
 ixc = 10 * hfact
@@ -213,7 +213,7 @@ p_hcd_injected_max  = 50. * maximum allowable value for injected power (MW) (`co
 anginc   = 0.175 * angle of incidence of field line on plate (rad)
 dz_divertor   = 0.621 * divertor structure vertical thickness (m)
 pflux_div_heat_load_max_mw = 10 * heat load limit (MW/m2)
-prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `i_plasma_pedestal=0`; = nd_plasma_separatrix_electron/nd_plasma_electron_vol_avg if `i_plasma_pedestal>=1`)
+prn1     = 0.4 * n-scrape-off / n-average plasma; (input for `i_plasma_pedestal=0`; = nd_plasma_separatrix_electron/nd_plasma_electrons_vol_avg if `i_plasma_pedestal>=1`)
 
 *------------------Error Handling------------------*
 
@@ -393,7 +393,7 @@ alphat   = 1.45 * temperature profile index
 aspect   = 3.5 * aspect ratio (`iteration variable 1`)
 beta     = 3.0810e-02 * total plasma beta (`iteration variable 5`) (calculated if `i_plasma_pedestal=3` or stellarator)
 b_plasma_toroidal_on_axis       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
-nd_plasma_electron_vol_avg     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `i_plasma_pedestal=3`)
+nd_plasma_electrons_vol_avg     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `i_plasma_pedestal=3`)
 beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
 f_c_plasma_non_inductive = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)

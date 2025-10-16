@@ -610,7 +610,7 @@ class ProcessInputs:
     csawth: float | None = None
     cvol: float | None = None
     cwrmax: float | None = None
-    nd_plasma_electron_vol_avg: float | None = None
+    nd_plasma_electrons_vol_avg: float | None = None
     beta_norm_max: float | None = None
     epbetmax: float | None = None
     f_p_alpha_plasma_deposited: float | None = None

@@ -879,7 +879,7 @@
     "var_mod": "Plasma",
     "scan01": 21.516
   },
-  "nd_plasma_electron_vol_avg": {
+  "nd_plasma_electrons_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 6.4154e19
   },

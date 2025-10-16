@@ -561,7 +561,7 @@ ITERATION_VAR_MAPPING = {
     "rmajor": 3,
     "temp_plasma_electron_vol_avg_kev": 4,
     "beta": 5,
-    "nd_plasma_electron_vol_avg": 6,
+    "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
     "fdene": 9,
