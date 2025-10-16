@@ -340,7 +340,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
-            neqns=self.neqns,
+            neqns=self.neqns or None,
             f_nd_impurity_electrons=self.f_nd_impurity_electrons,
             **self.values,
             **models,
