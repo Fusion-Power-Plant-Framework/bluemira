@@ -78,14 +78,12 @@ def run_neutronics(
     NeutronicsError
         Can't import default neutron source
     """
-    # TODO get these materials from the componentmanager or something similar
+
     blanket_type = BlanketType(build_config.pop("blanket_type"))
-    breeder_materials = get_preset_materials(blanket_type)
-    
-    tokamak_geometry = get_preset_geometry(
-        build_config.pop("blanket_type")
-    )
-    material_library = create_materials(breeder_materials)
+    # TODO get the geometry from the physical components
+    tokamak_geometry = get_preset_geometry(blanket_type)
+    # TODO get these materials from the physical components
+    material_library = create_materials(blanket_type)
 
     params.update_from_dict(
         {
