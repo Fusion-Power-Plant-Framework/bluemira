@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 
 from bluemira.base.constants import raw_uc
+from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.materials.material import MassFractionMaterial
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
@@ -541,29 +542,31 @@ class TokamakGeometry:
     inb_gap: float
 
 
-def get_preset_physical_properties(
-    blanket_type: str | BlanketType,
+def get_preset_materials(blanket_type: BlanketType) -> BreederTypeParameters:
+    match blanket_type:
+        case BlanketType.HCPB:
+            li6_enrichment = 0.6
+        case _:
+            li6_enrichment = 0.9
+    return  BreederTypeParameters(
+        blanket_type=blanket_type,
+        enrichment_fraction_Li6=li6_enrichment,
+    )
+
+def get_preset_geometry(
+    params: ParameterFrame,
+    blanket_type: BlanketType,
 ) -> tuple[BreederTypeParameters, TokamakGeometry]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
     The allowed list of blanket types are specified in BlanketType.
-    Currently, the blanket types with pre-populated data in this function are:
-    {'wcll', 'dcll', 'hcpb'}
 
     Returns
     -------
-    breeder_materials:
-        breeder blanket materials
     tokamak_geometry:
         tokamak geometry parameters
     """
-    blanket_type = BlanketType(blanket_type)
-
-    breeder_materials = BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=0.60,
-    )
 
     # Geometry variables
 
@@ -584,7 +587,7 @@ def get_preset_physical_properties(
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
 
-    shared_building_geometry = {  # that are identical in all three types of reactors.
+    shared_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
         "inb_vv_thick": 0.6,  # [m]
         "tf_thick": 0.4,  # [m]
@@ -592,7 +595,7 @@ def get_preset_physical_properties(
     }
     if blanket_type is BlanketType.WCLL:
         tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
+            **shared_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
             inb_mnfld_thick=0.435,  # [m]
@@ -602,7 +605,7 @@ def get_preset_physical_properties(
         )
     elif blanket_type is BlanketType.DCLL:
         tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
+            **shared_geometry,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
             inb_mnfld_thick=0.178,  # [m]
@@ -613,7 +616,7 @@ def get_preset_physical_properties(
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
         tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
+            **shared_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
             inb_mnfld_thick=0.560,  # [m]
@@ -621,7 +624,7 @@ def get_preset_physical_properties(
             outb_bz_thick=0.460,  # [m]
             outb_mnfld_thick=0.560,  # [m]
         )
-    return breeder_materials, tokamak_geometry
+    return tokamak_geometry
 
 
 def create_materials(

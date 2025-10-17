@@ -12,8 +12,10 @@ from typing import TYPE_CHECKING
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
 from bluemira.radiation_transport.neutronics.blanket_data import (
+    BlanketType,
     create_materials,
-    get_preset_physical_properties,
+    get_preset_materials,
+    get_preset_geometry,
 )
 from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
 from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
@@ -77,7 +79,10 @@ def run_neutronics(
         Can't import default neutron source
     """
     # TODO get these materials from the componentmanager or something similar
-    breeder_materials, tokamak_geometry = get_preset_physical_properties(
+    blanket_type = BlanketType(build_config.pop("blanket_type"))
+    breeder_materials = get_preset_materials(blanket_type)
+    
+    tokamak_geometry = get_preset_geometry(
         build_config.pop("blanket_type")
     )
     material_library = create_materials(breeder_materials)
