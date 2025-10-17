@@ -232,7 +232,7 @@ class NeutronicsReactor(ABC):
         blanket_discretisation: int = 10,
         divertor_discretisation: int = 5,
     ):
-        bluemira_print("Creating axis-symmetric neutronics model")
+        bluemira_print("Creating axisymmetric CSG neutronics model")
 
         self.params = make_parameter_frame(params, self.param_cls)
         self.material_library = materials_library

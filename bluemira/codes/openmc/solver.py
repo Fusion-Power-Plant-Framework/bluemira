@@ -13,7 +13,7 @@ from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal
+from typing import Literal, TypeAlias
 
 import numpy as np
 import openmc
@@ -42,7 +42,7 @@ from bluemira.codes.openmc.params import (
     PlasmaSourceParameters,
 )
 from bluemira.codes.openmc.tallying import filter_cells
-from bluemira.plasma_physics.reactions import n_DT_reactions
+from bluemira.equilibria.equilibrium import Equilibrium
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -93,9 +93,14 @@ class OpenMCSimulationRuntimeParameters:
     electron_treatment: Literal["ttb", "led"] = "led"
     run_mode: str = OpenMCRunModes.RUN.value
     openmc_write_summary: bool = False
-    parametric_source: bool = True
     plot_axis: str = "xz"
     plot_pixel_per_metre: int = 100
+
+
+# Signature for a function that creates an OpenMC neutron source
+NeutronSourceCreator: TypeAlias = Callable[
+    [Equilibrium, PlasmaSourceParameters], tuple[openmc.Source, float, float]
+]
 
 
 class Setup(CodesSetup):
@@ -106,6 +111,7 @@ class Setup(CodesSetup):
         out_path: str,
         codes_name: str,
         cross_section_xml: str,
+        eq: Equilibrium,
         source,
         cell_arrays,
         pre_cell_model,
@@ -116,7 +122,10 @@ class Setup(CodesSetup):
         self.out_path = out_path
         self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
+        self.eq = eq
         self.source = source
+        self._source_rate = 1.0
+        self._source_triton_rate = 1.0
         self.blanket_cell_array = cell_arrays.blanket
         self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
@@ -185,6 +194,7 @@ class Setup(CodesSetup):
         self,
         run_mode,
         runtime_params,
+        eq,
         source_params,
         tally_function,
         *,
@@ -193,7 +203,9 @@ class Setup(CodesSetup):
         """Run stage for setup openmc"""
         with self._base_setup(run_mode, debug=debug):
             self.settings.particles = runtime_params.particles
-            self.settings.source = self.source(source_params)
+            self.settings.source, source_rate, source_t_rate = self.source(
+                eq, source_params
+            )
             self.settings.batches = int(runtime_params.batches)
             self.settings.photon_transport = runtime_params.photon_transport
             self.settings.electron_treatment = runtime_params.electron_treatment
@@ -205,6 +217,8 @@ class Setup(CodesSetup):
                 self.divertor_cell_array,
                 self.matlist(self.materials),
             )
+        self._source_rate = source_rate
+        self._source_triton_rate = source_t_rate
         self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
         self.files_created.add("tallies.out")
 
@@ -212,6 +226,7 @@ class Setup(CodesSetup):
         self,
         run_mode,
         runtime_params,
+        _eq,
         _source_params,
         _tally_function,
         *,
@@ -345,7 +360,8 @@ class Teardown(CodesTeardown):
         self,
         universe,
         files_created,
-        source_params,
+        source_rate: float,
+        source_triton_rate: float,
         statepoint_file,
         *,
         delete_files: bool = False,
@@ -353,7 +369,8 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCResult.from_run(
             universe,
-            n_DT_reactions(source_params.reactor_power),
+            source_rate,
+            source_triton_rate,
             statepoint_file,
         )
         if delete_files:
@@ -417,7 +434,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
         params: dict | ParameterFrame,
         build_config: dict,
         neutronics_pre_cell_model,
-        source: Callable[[PlasmaSourceParameters], openmc.source.SourceBase],
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
         tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
@@ -425,6 +443,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         self.out_path = self.build_config.get("neutronics_output_path", Path.cwd())
 
+        self.eq = eq
         self.source = source
 
         self.pre_cell_model = neutronics_pre_cell_model
@@ -439,12 +458,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
         self.tally_function = filter_cells if tally_function is None else tally_function
 
     @property
-    def source(self) -> Callable[[PlasmaSourceParameters], openmc.Source]:
+    def source(self) -> NeutronSourceCreator:
         """Source term for OpenMC"""
         return self._source
 
     @source.setter
-    def source(self, value: Callable[[PlasmaSourceParameters], openmc.Source]):
+    def source(self, value: NeutronSourceCreator):
         self._source = value
 
     @property
@@ -488,6 +507,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.out_path,
             self.name,
             str(self.build_config["cross_section_xml"]),
+            self.eq,
             self.source,
             self.cell_arrays,
             self.pre_cell_model,
@@ -501,7 +521,12 @@ class OpenMCNeutronicsSolver(CodesSolver):
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
             result = setup(
-                run_mode, runtime_params, source_params, self.tally_function, debug=debug
+                run_mode,
+                runtime_params,
+                self.eq,
+                source_params,
+                self.tally_function,
+                debug=debug,
             )
         if run := self._get_execution_method(self._run, run_mode):
             result = run(run_mode, debug=debug)
@@ -509,7 +534,8 @@ class OpenMCNeutronicsSolver(CodesSolver):
             result = teardown(
                 self._setup.universe,
                 self._setup.files_created,
-                source_params,
+                self._setup._source_rate,
+                self._setup._source_triton_rate,
                 Path(
                     self.out_path,
                     run_mode.name.lower(),

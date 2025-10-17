@@ -83,6 +83,7 @@ class OpenMCResult:
         cls,
         universe: openmc.Universe,
         src_rate: float,
+        src_triton_rate: float,
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
@@ -102,9 +103,10 @@ class OpenMCResult:
             else None
             for cell_id in universe.cells
         }
+
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
-        tbr, tbr_err = cls._load_tbr(statepoint)
+        tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
         blanket_power, blanket_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "breeding blanket power"
         )
@@ -183,7 +185,7 @@ class OpenMCResult:
         return dataset
 
     @classmethod
-    def _load_tbr(cls, statepoint):
+    def _load_tbr(cls, statepoint, source_rate: float, source_triton_rate: float):
         """
         Load the TBR value and uncertainty.
 
@@ -195,8 +197,10 @@ class OpenMCResult:
             absolute error, but since the table is only 1 row long, we can turn the array
             into a float by .sum().
         """
+        scale = source_rate / source_triton_rate
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
-        return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
+        # Single tally, so std dev scales linearly
+        return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
 
     @classmethod
     def _load_filter_power_err(

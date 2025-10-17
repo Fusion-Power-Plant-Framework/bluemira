@@ -165,7 +165,7 @@ class ProcessSolverParams(MappedParameterFrame):
     """Plasma current [megaampere]."""
 
     j_cs_critical: Parameter[float]
-    """Maximum allowable current density in the central solenoid [A/m**2]"""
+    """Maximum allowable current density in the central solenoid [A/m^2]"""
 
     kappa_95: Parameter[float]
     """95th percentile plasma elongation [dimensionless]."""
@@ -343,14 +343,53 @@ class ProcessSolverParams(MappedParameterFrame):
     r_tf_inboard_out: Parameter[float]
     """Outboard Radius of the TF coil inboard leg tapered region [meter]."""
 
+    T_profile_alpha: Parameter[float]
+    """Temperature profile alpha exponent [dimensionless]."""
+
+    T_profile_beta: Parameter[float]
+    """Temperature profile beta exponent [dimensionless]."""
+
+    n_profile_alpha: Parameter[float]
+    """Density profile alpha exponent [dimensionless]."""
+
+    profile_rho_ped: Parameter[float]
+    """Pedestal location in normalized radius [dimensionless]."""
+
     T_e: Parameter[float]
-    """Average plasma electron temperature [kiloelectron_volt]."""
+    """Volumed-averaged plasma electron temperature [kiloelectron_volt]."""
+
+    T_e_core: Parameter[float]
+    """Core electron temperature [kiloelectron_volt]."""
+
+    T_e_ped: Parameter[float]
+    """Pedestal electron temperature [kiloelectron_volt]."""
+
+    T_e_sep: Parameter[float]
+    """Electron temperature at the separatrix [kiloelectron_volt]."""
+
+    T_ie_ratio: Parameter[float]
+    """Ion to electron temperature ratio (volume-averaged)."""
+
+    n_e: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre^3]."""
+
+    n_e_core: Parameter[float]
+    """Core electron density [1/metre^3]."""
+
+    n_e_ped: Parameter[float]
+    """Pedestal electron density [1/metre^3]."""
+
+    n_e_sep: Parameter[float]
+    """Electron density at the separatrix [1/metre^3]."""
+
+    n_i_fuel: Parameter[float]
+    """Volume-averaged fuel ion density [1/metre^3]."""
 
     tk_tf_outboard: Parameter[float]
     """TF coil outboard thickness [meter]."""
 
     V_p: Parameter[float]
-    """Plasma volume [meter ** 3]."""
+    """Plasma volume [meter^3]."""
 
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""

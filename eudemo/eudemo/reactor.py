@@ -627,6 +627,7 @@ if __name__ == "__main__":
                 blanket=reactor.blanket,
                 vacuum_vessel=reactor.vacuum_vessel,
                 ivc_shapes=ivc_shapes,
+                eq=reference_eq,
             )
         )
 
