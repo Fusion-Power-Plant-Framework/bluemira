@@ -419,7 +419,7 @@ class ParameterFrame:
         try:
             _validate_units(member_param_data, value_type)
         except pint.errors.PintError as pe:
-            raise ValueError("Unit conversion failed") from pe
+            raise ValueError(f"Unit conversion failed for {member}") from pe
         return Parameter(
             name=member,
             **member_param_data,
