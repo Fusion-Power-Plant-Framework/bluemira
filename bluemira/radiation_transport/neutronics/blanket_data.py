@@ -553,6 +553,16 @@ def get_preset_materials(blanket_type: BlanketType) -> BreederTypeParameters:
         enrichment_fraction_Li6=li6_enrichment,
     )
 
+def _scale_blanket_thicknesses(blanket_tk: dict[str, float], total_thickness: float) -> dict[str, float]:
+    """
+    Normalize the values of a blanket thicnkess dictionary to sum to 1, then scale 
+    by `total_thickness`.
+    """
+    s = sum(blanket_tk.values())
+    if s == 0:
+        raise ValueError("Sum of dictionary values is zero; cannot normalize.")
+    return {k: (v / s) * total_thickness for k, v in blanket_tk.items()}
+
 def get_preset_geometry(
     params: ParameterFrame,
     blanket_type: BlanketType,
@@ -586,45 +596,60 @@ def get_preset_geometry(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-
+    r_vv_ib_out = params.get_values("r_vv_ib_out")
+    r_tf_in = params.get_values("r_tf_in")
+    r_tf_inboard_out = params.get_values("r_tf_inboard_out")
+    tk_bb_ib = params.get_values("tk_bb_ib")
+    tk_bb_ob = params.get_values("tk_bb_ob")
     shared_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": 0.2,  # [m]
-        "inb_vv_thick": 0.6,  # [m]
-        "tf_thick": 0.4,  # [m]
-        "outb_vv_thick": 0.6,  # [m]
+        "inb_gap": r_tf_in - r_vv_ib_out,  # [m]
+        "inb_vv_thick": params.get_values("tk_vv_in"),  # [m]
+        "tf_thick": r_tf_inboard_out - r_tf_in,  # [m]
+        "outb_vv_thick": params.get_values("tk_vv_out"),  # [m]
     }
+
     if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.378,  # [m]
-            inb_mnfld_thick=0.435,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.538,  # [m]
-            outb_mnfld_thick=0.429,  # [m]
-        )
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.027,
+            "inb_bz_thick": 0.378,
+            "inb_mnfld_thick": 0.435,
+        }
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.027,
+            "outb_bz_thick": 0.538,
+            "outb_mnfld_thick": 0.429,
+        }
+
     elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_geometry,
-            inb_fw_thick=0.022,  # [m]
-            inb_bz_thick=0.300,  # [m]
-            inb_mnfld_thick=0.178,  # [m]
-            outb_fw_thick=0.022,  # [m]
-            outb_bz_thick=0.640,  # [m]
-            outb_mnfld_thick=0.248,  # [m]
-        )
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.022,
+            "inb_bz_thick": 0.300,
+            "inb_mnfld_thick": 0.178,
+        }
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.022,
+            "outb_bz_thick": 0.640,
+            "outb_mnfld_thick": 0.248,
+        }
+
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometry(
-            **shared_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.460,  # [m]
-            inb_mnfld_thick=0.560,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.460,  # [m]
-            outb_mnfld_thick=0.560,  # [m]
-        )
-    return tokamak_geometry
+        # MC: This does not look right @Ocean... please put findable references
+        # for these data
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.027,
+            "inb_bz_thick": 0.460,
+            "inb_mnfld_thick": 0.560,
+        }
+        
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.027,
+            "outb_bz_thick": 0.460,
+            "outb_mnfld_thick": 0.560,
+        }
+    ib_blanket_geometry = _scale_blanket_thicknesses(ib_blanket_geometry, tk_bb_ib)
+    ob_blanket_geometry = _scale_blanket_thicknesses(ob_blanket_geometry, tk_bb_ob)
+    return TokamakGeometry(**shared_geometry, **ib_blanket_geometry, **ob_blanket_geometry)
 
 
 def create_materials(
