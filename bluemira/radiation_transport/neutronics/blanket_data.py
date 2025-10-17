@@ -599,16 +599,16 @@ def get_preset_geometry(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-    r_vv_ib_out = params.get_values("r_vv_ib_out")
-    r_tf_in = params.get_values("r_tf_in")
-    r_tf_inboard_out = params.get_values("r_tf_inboard_out")
-    tk_bb_ib = params.get_values("tk_bb_ib")
-    tk_bb_ob = params.get_values("tk_bb_ob")
+    r_vv_ib_in = params.get_values("r_vv_ib_in")[0]
+    r_tf_in = params.get_values("r_tf_in")[0]
+    r_tf_inboard_out = params.get_values("r_tf_inboard_out")[0]
+    tk_bb_ib = params.get_values("tk_bb_ib")[0]
+    tk_bb_ob = params.get_values("tk_bb_ob")[0]
     shared_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": r_tf_in - r_vv_ib_out,  # [m]
-        "inb_vv_thick": params.get_values("tk_vv_in"),  # [m]
+        "inb_gap": r_tf_in - r_vv_ib_in,  # [m]
+        "inb_vv_thick": params.get_values("tk_vv_in")[0],  # [m]
         "tf_thick": r_tf_inboard_out - r_tf_in,  # [m]
-        "outb_vv_thick": params.get_values("tk_vv_out"),  # [m]
+        "outb_vv_thick": params.get_values("tk_vv_out")[0],  # [m]
     }
 
     if blanket_type is BlanketType.WCLL:

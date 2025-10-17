@@ -14,7 +14,6 @@ from bluemira.codes.wrapper import neutronics_code_solver
 from bluemira.radiation_transport.neutronics.blanket_data import (
     BlanketType,
     create_materials,
-    get_preset_materials,
     get_preset_geometry,
 )
 from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
@@ -81,7 +80,7 @@ def run_neutronics(
 
     blanket_type = BlanketType(build_config.pop("blanket_type"))
     # TODO get the geometry from the physical components
-    tokamak_geometry = get_preset_geometry(blanket_type)
+    tokamak_geometry = get_preset_geometry(params, blanket_type)
     # TODO get these materials from the physical components
     material_library = create_materials(blanket_type)
 
