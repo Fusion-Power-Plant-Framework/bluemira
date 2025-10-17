@@ -13,7 +13,7 @@ import numpy as np
 import pint
 from typeguard import config, typechecked
 
-from bluemira.base.constants import raw_uc, units_compatible
+from bluemira.base.constants import raw_uc, units_compatible, ureg
 
 
 def type_fail(exc, memo):  # noqa: ARG001
@@ -90,7 +90,7 @@ class Parameter(Generic[ParameterValueType]):
         value = self._type_check(name, value, _value_types)
         self._name = name
         self._value = value
-        self._unit = pint.Unit(unit)
+        self._unit = ureg.Unit(unit)
         self._source = source
         self._description = description
         self._long_name = long_name
