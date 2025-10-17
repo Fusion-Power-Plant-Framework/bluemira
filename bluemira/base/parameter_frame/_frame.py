@@ -28,6 +28,7 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
     units_compatible,
+    ureg,
 )
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
@@ -116,7 +117,7 @@ class ParameterFrame:
             _validate_units(val_unit, vt)
             if field.unit != val_unit["unit"]:
                 field.set_value(val_unit["value"], "unit enforcement")
-                field._unit = pint.Unit(val_unit["unit"])
+                field._unit = ureg.Unit(val_unit["unit"])
             else:
                 # ensure int-> float conversion
                 field._value = val_unit["value"]
@@ -596,13 +597,13 @@ def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
 
 def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
     try:
-        quantity = pint.Quantity(param_data["value"], param_data["unit"])
+        quantity = ureg.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
         try:
-            quantity = pint.Quantity(f"{param_data['value']}*{param_data['unit']}")
+            quantity = ureg.Quantity(f"{param_data['value']}*{param_data['unit']}")
         except pint.errors.PintError as pe:
             if param_data["value"] is None:
-                quantity = pint.Quantity(
+                quantity = ureg.Quantity(
                     1 if param_data["unit"] in {None, ""} else param_data["unit"]
                 )
                 param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT 🤯 😭:"
@@ -616,7 +617,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
     except TypeError:
         if param_data["value"] is None:
             # dummy for None values
-            quantity = pint.Quantity(
+            quantity = ureg.Quantity(
                 1 if param_data["unit"] in {None, ""} else param_data["unit"]
             )
         elif isinstance(param_data["value"], bool | str):
@@ -660,7 +661,7 @@ def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
     """
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
-    return pint.Unit(
+    return ureg.Unit(
         ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow, strict=False)])
     )
 
@@ -681,10 +682,10 @@ def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
     dim_keys = list(combined_unit_dimensions.keys())
     dim_val = list(combined_unit_dimensions.values())
     with suppress(ValueError):
-        return pint.Unit(
+        return ureg.Unit(
             combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
         )
-    return pint.Unit(unit)
+    return ureg.Unit(unit)
 
 
 def _convert_angle_units(
@@ -721,7 +722,7 @@ def _convert_angle_units(
     unit_list = orig_unit_str.split("/", 1)
     exp = "." if angle_unit in unit_list[0] else "/"
     modified_unit = "".join(str(modified_unit).split(angle_unit))
-    return pint.Unit(f"{modified_unit}{exp}{new_angle_unit}")
+    return ureg.Unit(f"{modified_unit}{exp}{new_angle_unit}")
 
 
 def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Unit:
@@ -755,7 +756,7 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
     dpa = "displacements_per_atom" in unit_str
 
     if not (fpy or dpa) and ang_unit is None:
-        return pint.Unit(modified_unit)
+        return ureg.Unit(modified_unit)
 
     new_unit = _non_comutative_unit_conversion(
         dict(modified_unit.dimensionality), unit_str.split("/", 1)[0], dpa, fpy
@@ -796,7 +797,7 @@ def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
     else:
         fpy_str = ""
 
-    return pint.Unit(
+    return ureg.Unit(
         f"{dpa_str}{fpy_str}{_fix_combined_units(_remake_units(dimensionality))}"
     )
 
