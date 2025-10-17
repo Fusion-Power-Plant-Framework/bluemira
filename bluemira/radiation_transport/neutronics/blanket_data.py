@@ -547,6 +547,16 @@ def _scale_blanket_thicknesses(
     """
     Normalize the values of a blanket thicnkess dictionary to sum to 1, then scale
     by `total_thickness`.
+
+    Returns
+    -------
+    :
+        The scaled blanket thickness dictionary
+
+    Raises
+    ------
+    ValueError
+        If the original blanket values sum to 0.0
     """
     s = sum(blanket_tk.values())
     if s == 0:
