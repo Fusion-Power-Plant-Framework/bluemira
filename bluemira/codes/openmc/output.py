@@ -10,7 +10,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-from bluemira.plasma_physics.reactions import E_DT_fusion
 import numpy as np
 import openmc
 from tabulate import tabulate
@@ -19,6 +18,7 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.plasma_physics.reactions import E_DT_fusion
 from bluemira.radiation_transport.neutronics.constants import DPACoefficients
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
