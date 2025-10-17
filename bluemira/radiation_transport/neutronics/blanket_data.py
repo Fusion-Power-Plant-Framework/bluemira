@@ -10,7 +10,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from bluemira.base.constants import raw_uc
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.materials.material import MassFractionMaterial
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
@@ -542,26 +541,6 @@ class TokamakGeometry:
     inb_gap: float
 
 
-def get_preset_materials(blanket_type: BlanketType) -> BreederTypeParameters:
-    """
-    Get the materials for a specified blanket type.
-
-    Returns
-    -------
-    : 
-        an apparently useless wrapper around a float and the input
-    """
-    match blanket_type:
-        case BlanketType.HCPB:
-            li6_enrichment = 0.6
-        case _:
-            li6_enrichment = 0.9
-    return BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=li6_enrichment,
-    )
-
-
 def _scale_blanket_thicknesses(
     blanket_tk: dict[str, float], total_thickness: float
 ) -> dict[str, float]:
@@ -592,7 +571,6 @@ def get_preset_geometry(
     Blanket sub-component thicknesses are scaled according to design data from
     various sources.
     """
-
     # Geometry variables
 
     # Break down from here.
