@@ -498,7 +498,6 @@ class OpenMCNeutronicsSolver(CodesSolver):
     def _single_run(
         self,
         run_mode: OpenMCRunModes,
-        eq: Equilibrium,
         source_params: PlasmaSourceParameters,
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
@@ -524,7 +523,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             result = setup(
                 run_mode,
                 runtime_params,
-                eq,
+                self.eq,
                 source_params,
                 self.tally_function,
                 debug=debug,
