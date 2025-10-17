@@ -490,7 +490,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         if run_mode is OpenMCRunModes.RUN_AND_PLOT:
             for run_mode in (OpenMCRunModes.PLOT, OpenMCRunModes.RUN):
                 result = self._single_run(
-                    run_mode, self.eq, source_params, runtime_params, debug=debug
+                    run_mode, source_params, runtime_params, debug=debug
                 )
             return result
         return self._single_run(run_mode, source_params, runtime_params, debug=debug)
