@@ -7,6 +7,7 @@
 
 import numpy.typing as npt
 from periodictable import elements
+import numpy.typing as npt
 
 from bluemira.base.constants import (
     ELECTRON_MOLAR_MASS,
