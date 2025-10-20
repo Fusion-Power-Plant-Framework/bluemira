@@ -550,7 +550,7 @@ class NeutronicsOutputParams(ParameterFrame):
             Parameter("P_n_aux", 0.0, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
             Parameter(
-                "P_n_decay", np.nan, unit="W", source=source
+                "P_n_decay", 0.0, unit="W", source=source
             ),  # can't get this without coupling to D1S/R2S/involving fispact
             Parameter(
                 "peak_eurofer_dpa_rate",
