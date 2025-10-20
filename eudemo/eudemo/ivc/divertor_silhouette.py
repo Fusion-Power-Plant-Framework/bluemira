@@ -285,12 +285,6 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         ----------
         label:
             The label to give the returned Component.
-        start:
-            The position (in x-z) to start drawing the baffle from,
-            e.g., the outside end of a target.
-        end:
-            The position (in x-z) to stop drawing the baffle, e.g., the
-            position to the upper part of the first wall.
 
         Returns
         -------

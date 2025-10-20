@@ -310,7 +310,7 @@ class HomogenisedMixture:
         ----------
         name:
             The name of the mixture
-        materials_dict:
+        material_dict:
             The dictionary defining this and any additional mixtures
         material_cache:
             The cache to load the constituent materials from

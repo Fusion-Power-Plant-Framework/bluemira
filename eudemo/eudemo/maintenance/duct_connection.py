@@ -464,7 +464,7 @@ def make_upper_port_xy_face(
         Outer radius of the port keep-out zone
     wall_end_tk:
         Port wall end thickness
-    wall_size_tk:
+    wall_side_tk:
         Port wall side thickness
     y_offset:
         Offset value from the x-z plane at which to start building the port

@@ -151,9 +151,9 @@ class OpenMCResult:
 
         Parameters
         ----------
-        volume_file_path
-
-        Cell_names
+        volume_file_path:
+            filepath to volume
+        cell_names:
             indicative names to print.
         """
         if volume_file_path.is_file():

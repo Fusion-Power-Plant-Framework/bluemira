@@ -167,8 +167,6 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         Parameters
         ----------
-        variables:
-            Bounded optimisation variables
         name:
             Variable name for which to get the index
 
@@ -195,8 +193,6 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
         Parameters
         ----------
-        variables:
-            Bounded optimisation variables
         x_norm:
             Normalised vector of variable values
 
@@ -331,12 +327,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             Matplotlib axis instance
         key:
             label of annotation
-        xy1:
-            Tuple for first arrow point
-        xy2:
-            Tuple for second arrow point
-        xy3:
-            Tuple for arrow label location
+        radius:
+            radius of arrow
+        centre:
+            centre coordinate of arrow
 
         """
         x_1, z_1 = _get_rotated_point(centre, radius + 0.5, angles[1])

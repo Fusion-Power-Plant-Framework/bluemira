@@ -309,9 +309,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        pprime:
+        p_prime:
             pprime as function of psi_norm (1-D function)
-        ffprime:
+        ff_prime:
             ffprime as function of psi_norm (1-D function)
         I_p:
             Target current (also used to initialise the solution in case self.psi is

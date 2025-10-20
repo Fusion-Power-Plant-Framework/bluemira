@@ -98,7 +98,7 @@ class MaterialProperty:
             The optional pressure [Pa].
         B:
             The magnetic flux density [T].
-        esp_vol:
+        eps_vol:
             The optional cell volume [m^3].
 
         Returns

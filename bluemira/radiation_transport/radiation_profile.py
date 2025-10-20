@@ -1934,7 +1934,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        firstwall:
+        firstwall_geom:
             first wall geometry
         """
         self.radiation_distribution_plot(
@@ -2171,9 +2171,9 @@ class RadiationSource:
 
         Parameters
         ----------
-        x:
+        x_lst:
             The x coordinate(s) of desired radiation source point(s)
-        z:
+        z_lst:
             The z coordinate(s) of desired radiation source point(s)
 
         Returns

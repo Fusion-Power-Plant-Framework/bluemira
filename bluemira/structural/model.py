@@ -196,7 +196,7 @@ class FiniteElementModel:
 
         Parameters
         ----------
-        coordinates:
+        coords:
             The coordinates to transform into connected Nodes and Elements
         cross_section:
             The cross section of all the Elements in the Coordinates

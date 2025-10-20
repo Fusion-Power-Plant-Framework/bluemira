@@ -330,7 +330,7 @@ def integrate_f(
 
     Parameters
     ----------
-    function:
+    f:
         function to be integrated in the subdomain
     mesh:
         mesh of the FEM model
