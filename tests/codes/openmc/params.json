@@ -1,4 +1,10 @@
 {
+  "P_fus": {
+    "value": 2000,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Total fusion power"
+  },
   "R_0": {
     "value": 9.0,
     "unit": "m",
@@ -28,12 +34,6 @@
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Last closed surface plasma triangularity"
-  },
-  "reactor_power": {
-    "value": 1998000000.0,
-    "unit": "W",
-    "source": "Input",
-    "long_name": "neutronics reactor power"
   },
   "n_profile_alpha": {
     "value": 1.0,
