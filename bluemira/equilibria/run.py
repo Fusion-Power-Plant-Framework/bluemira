@@ -438,6 +438,7 @@ class PulsedCoilsetDesign(ABC):
             coilset,
             self.grid,
             self.profiles,
+            o_point_fallback=self.eq_config.o_point_fallback,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
             coilset,
@@ -452,7 +453,6 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
 
@@ -474,7 +474,6 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
 
@@ -517,7 +516,7 @@ class PulsedCoilsetDesign(ABC):
 
     def get_sof_eof_opt_problems(
         self, psi_sof: float, psi_eof: float
-    ) -> list[CoilsetOptimisationProblem]:
+    ) -> list[EqCoilsetOptimisationProblem]:
         """
         Returns
         -------
@@ -567,7 +566,6 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
         return program
@@ -742,7 +740,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         return optimised_coilset
 
     def _consolidate_coilset(
-        self, coilset: CoilSet, sub_opt_problems: Iterable[CoilsetOptimisationProblem]
+        self, coilset: CoilSet, sub_opt_problems: Iterable[EqCoilsetOptimisationProblem]
     ) -> CoilSet:
         """
         Set the current bounds on the current optimisation problems, fix coil sizes, and
