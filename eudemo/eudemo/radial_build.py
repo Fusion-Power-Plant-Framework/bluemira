@@ -368,23 +368,6 @@ def apply_specific_P_to_B_interface_rules(
     })
 
 
-def apply_specific_P_to_B_interface_rules(
-    params: ParameterFrame, process_params: ParameterFrame
-):
-    """
-    Apply specific rules for the interface between BLUEMIRA and PROCESS
-    that relate to the EU-DEMO design parameterisation
-    """
-    # CS maxima over pulse and name conventions
-    cs_b_max = max(
-        process_params.get_values("B_cs_peak_flat_top_end", "B_cs_peak_pulse_start")
-    )
-    params.update_values({
-        "CS_bmax": cs_b_max,
-        "CS_jmax": process_params.get_values("j_cs_critical")[0],
-    })
-
-
 def radial_build(params: ParameterFrame, build_config: dict) -> ParameterFrame:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
