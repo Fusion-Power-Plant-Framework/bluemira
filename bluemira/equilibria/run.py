@@ -452,7 +452,7 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_settings.o_point_fallback,
+            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
 
@@ -474,7 +474,7 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_settings.o_point_fallback,
+            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
 
@@ -567,7 +567,7 @@ class PulsedCoilsetDesign(ABC):
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            o_point_fallback=self.eq_settings.o_point_fallback,
+            o_point_fallback=self.eq_config.o_point_fallback,
         )
         program()
         return program
