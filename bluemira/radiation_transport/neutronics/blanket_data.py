@@ -8,10 +8,9 @@
 
 from dataclasses import dataclass
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.materials.neutronics import (
     BlanketType,
-    BreederTypeParameters,
     _make_dcll_mats,
     _make_hcpb_mats,
     _make_wcll_mats,
@@ -61,30 +60,46 @@ class TokamakGeometry:
     inb_gap: float
 
 
-def get_preset_physical_properties(
-    blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, TokamakGeometry]:
+def _scale_blanket_thicknesses(
+    blanket_tk: dict[str, float], total_thickness: float
+) -> dict[str, float]:
     """
-    Works as a switch-case for choosing the tokamak geometry
-    and blankets for a given blanket type.
-    The allowed list of blanket types are specified in BlanketType.
-    Currently, the blanket types with pre-populated data in this function are:
-    {'wcll', 'dcll', 'hcpb'}
+    Normalize the values of a blanket thicnkess dictionary to sum to 1, then scale
+    by `total_thickness`.
 
     Returns
     -------
-    breeder_materials:
-        breeder blanket materials
+    :
+        The scaled blanket thickness dictionary
+
+    Raises
+    ------
+    ValueError
+        If the original blanket values sum to 0.0
+    """
+    s = sum(blanket_tk.values())
+    if s == 0:
+        raise ValueError("Sum of dictionary values is zero; cannot normalize.")
+    return {k: (v / s) * total_thickness for k, v in blanket_tk.items()}
+
+
+def get_preset_geometry(
+    params: ParameterFrame,
+    blanket_type: BlanketType,
+) -> TokamakGeometry:
+    """
+    Get the tokamak geometry according to a specified blanket type.
+
+    Returns
+    -------
     tokamak_geometry:
         tokamak geometry parameters
+
+    Notes
+    -----
+    Blanket sub-component thicknesses are scaled according to design data from
+    various sources.
     """
-    blanket_type = BlanketType(blanket_type)
-
-    breeder_materials = BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=0.60,
-    )
-
     # Geometry variables
 
     # Break down from here.
@@ -103,84 +118,86 @@ def get_preset_physical_properties(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-
-    shared_building_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": 0.2,  # [m]
-        "inb_vv_thick": 0.6,  # [m]
-        "tf_thick": 0.4,  # [m]
-        "outb_vv_thick": 0.6,  # [m]
+    r_vv_ib_in = params.get_values("r_vv_ib_in")[0]
+    r_tf_in = params.get_values("r_tf_in")[0]
+    r_tf_inboard_out = params.get_values("r_tf_inboard_out")[0]
+    tk_bb_ib = params.get_values("tk_bb_ib")[0]
+    tk_bb_ob = params.get_values("tk_bb_ob")[0]
+    shared_geometry = {  # that are identical in all three types of reactors.
+        "inb_gap": r_tf_in - r_vv_ib_in,  # [m]
+        "inb_vv_thick": params.get_values("tk_vv_in")[0],  # [m]
+        "tf_thick": r_tf_inboard_out - r_tf_in,  # [m]
+        "outb_vv_thick": params.get_values("tk_vv_out")[0],  # [m]
     }
+
     if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.378,  # [m]
-            inb_mnfld_thick=0.435,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.538,  # [m]
-            outb_mnfld_thick=0.429,  # [m]
-        )
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.027,
+            "inb_bz_thick": 0.378,
+            "inb_mnfld_thick": 0.435,
+        }
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.027,
+            "outb_bz_thick": 0.538,
+            "outb_mnfld_thick": 0.429,
+        }
+
     elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.022,  # [m]
-            inb_bz_thick=0.300,  # [m]
-            inb_mnfld_thick=0.178,  # [m]
-            outb_fw_thick=0.022,  # [m]
-            outb_bz_thick=0.640,  # [m]
-            outb_mnfld_thick=0.248,  # [m]
-        )
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.022,
+            "inb_bz_thick": 0.300,
+            "inb_mnfld_thick": 0.178,
+        }
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.022,
+            "outb_bz_thick": 0.640,
+            "outb_mnfld_thick": 0.248,
+        }
+
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.460,  # [m]
-            inb_mnfld_thick=0.560,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.460,  # [m]
-            outb_mnfld_thick=0.560,  # [m]
-        )
-    return breeder_materials, tokamak_geometry
+        # MC: This does not look right @Ocean... please put findable references
+        # for these data
+        ib_blanket_geometry = {
+            "inb_fw_thick": 0.027,
+            "inb_bz_thick": 0.460,
+            "inb_mnfld_thick": 0.560,
+        }
 
-
-def create_materials(
-    breeder_materials: BreederTypeParameters,
-) -> NeutronicsMaterials:
-    """
-    Parameters
-    ----------
-    breeder_materials:
-        dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
-
-    Returns
-    -------
-    :
-        Materials used along with those blankets.
-    """
-    return _create_from_blanket_type(
-        breeder_materials.blanket_type,
-        raw_uc(breeder_materials.enrichment_fraction_Li6, "", "%"),
+        ob_blanket_geometry = {
+            "outb_fw_thick": 0.027,
+            "outb_bz_thick": 0.460,
+            "outb_mnfld_thick": 0.560,
+        }
+    ib_blanket_geometry = _scale_blanket_thicknesses(ib_blanket_geometry, tk_bb_ib)
+    ob_blanket_geometry = _scale_blanket_thicknesses(ob_blanket_geometry, tk_bb_ob)
+    return TokamakGeometry(
+        **shared_geometry, **ib_blanket_geometry, **ob_blanket_geometry
     )
 
 
-def _create_from_blanket_type(
-    blanket_type: BlanketType, li_enrich_ao: float
+def create_materials(
+    blanket_type: BlanketType,
 ) -> NeutronicsMaterials:
-    """Create Materials Library by specifying just the blanket type
+    """
+    Create Materials Library by specifying just the blanket type
 
     Parameters
     ----------
     blanket_type:
         the blanket type
-    li_enrich_ao:
-        PERCENTAGE enrichment of Li6 (float between 0 - 100)
 
     Returns
     -------
     :
         Set of materials used for that specific type of reactor.
     """
+    match blanket_type:
+        case BlanketType.HCPB:
+            li_enrich_ao = 60.0  # [%]
+        case _:
+            li_enrich_ao = 90.0  # [%]
+
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
     elif blanket_type is BlanketType.HCPB:

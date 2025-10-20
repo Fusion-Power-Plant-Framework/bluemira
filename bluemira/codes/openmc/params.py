@@ -65,7 +65,7 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     profile_rho_ped: Parameter[float]
 
     """Reactor power"""
-    reactor_power: Parameter[float]
+    P_fus: Parameter[float]
 
     """Electron density profile descriptors"""
     n_profile_alpha: Parameter[float]
@@ -97,11 +97,6 @@ class PlasmaSourceParameters:
     Parameters describing the plasma source,
     i.e. where the plasma is positioned (and therefore where the power is concentrated),
     and what temperature the plasma is at.
-
-    Parameters
-    ----------
-    reactor_power:
-        total reactor (thermal) power when operating at 100%
     """
 
     rho_pedestal: float  # [dimensionless]
@@ -145,6 +140,7 @@ class PlasmaSourceParameters:
     })
     _mapping: ClassVar[Mapping[str, str]] = MappingProxyType({
         "rho_pedestal": "profile_rho_ped",
+        "reactor_power": "P_fus",
         "electron_density_alpha": "n_profile_alpha",
         "electron_density_core": "n_e_core",
         "electron_density_ped": "n_e_ped",
