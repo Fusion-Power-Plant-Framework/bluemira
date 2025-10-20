@@ -2807,7 +2807,7 @@ def collect_verts_faces(
     ----------
     solid:
         FreeCAD Part
-    tessellation:
+    tesselation:
         amount of tessellation for the mesh
 
     Returns

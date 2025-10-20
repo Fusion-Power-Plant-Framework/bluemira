@@ -260,10 +260,6 @@ class BalanceOfPlantPlotter:
 
         Parameters
         ----------
-        inputs: dict
-            The inputs to BalanceOfPlant (used here to format the title)
-        op_mode: str
-            The operation mode of the reactor
         flow_dict: dict
             The dictionary of flows for each of the Sankey diagrams.
 

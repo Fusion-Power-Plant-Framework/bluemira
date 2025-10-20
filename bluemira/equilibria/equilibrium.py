@@ -1303,7 +1303,7 @@ class Equilibrium(CoilSetMHDState):
 
         Parameters
         ----------
-        vcontrol:
+        vcontrol_str:
             Vertical control strategy
         """
         if vcontrol_str is None:

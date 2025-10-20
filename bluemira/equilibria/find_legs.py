@@ -484,7 +484,7 @@ def _extract_leg(
     x_cut, z_cut:
         a point on the horizontal line (radial_line) that intersects the flux surface,
         below beyond which the flux surface becomes the legs
-    delta:
+    delta_x:
         the width of the radial_line (used for cutting)
     o_point_z:
         the approximate height of the o-point (center of the plasma). Used to determine

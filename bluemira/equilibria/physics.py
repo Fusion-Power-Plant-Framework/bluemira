@@ -646,8 +646,6 @@ def _calc_beta_p(
     ----------
     pressure_map:
         Pressure at normalised psi values within chosen closed flux surface
-    fs:
-        Coordinates of the chosen closed flux surface
     Bp:
         Poloidal field at x and z-coordinates
     mask:
@@ -878,7 +876,7 @@ def beta_N_to_beta(  # noqa: N802
         Normalised ratio of plasma to magnetic pressure (Troyon factor)
     a:
         Plasma minor radius [m]
-    b_tor:
+    Btor:
         Toroidal field [T]
     I_p:
         Plasma current [A]

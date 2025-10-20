@@ -657,8 +657,6 @@ class EqAnalysis:
 
         Parameters
         ----------
-        title:
-            Title to be added at top of figure
         ax:
             List of Matplotlib Axes objects set by user
         show:
@@ -717,8 +715,6 @@ class EqAnalysis:
             Matplotlib Axes objects set by user
         show:
             Whether or not to display the plot
-        equilibrium_name:
-            Name used in plot label
 
         Returns
         -------
@@ -1191,10 +1187,6 @@ class MultiEqAnalysis:
 
         Parameters
         ----------
-        equilibria_dict:
-            Dictionary of equilibria load information.
-            Can be created using select_multi_eqs function.
-            Will set or reset the values used by MultiEqAnalysis.
         value_type:
             Choose the type of coilset data to be printed,
             default is current values.
@@ -1249,8 +1241,6 @@ class MultiEqAnalysis:
             List of Matplotlib Axes objects set by user
         header:
             Text to be added at the top of the figure
-        show:
-            Whether or not to display the plot
         n_points:
             number of normalised psi points
 

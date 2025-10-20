@@ -189,7 +189,7 @@ def target_temperature(
         Poloidal magnetic field at the target [T]
     b_pol_u:
         Poloidal magnetic field at the midplane [T]
-    alpha:
+    alpha_pol_deg:
         Incident angle between separatrix and target plate as
         poloidal projection [deg]
     r_u:
@@ -679,11 +679,11 @@ def calculate_total_radiated_power(
 
     Parameters
     ----------
-    x : np.ndarray
+    x:
         Array of x-coordinates (in meters) of the radiation map.
-    z : np.ndarray
+    z:
         Array of z-coordinates (in meters) of the radiation map.
-    Prad : np.ndarray
+    p_rad:
         Array of radiation power density values (in MW/m³)
         at the corresponding x and z coordinates.
 
@@ -768,7 +768,7 @@ def radiative_loss_function_plot(
     ----------
     t_ref:
         temperature reference [keV]
-    l_z:
+    lz_val:
         radiative power loss reference [Wm^3]
     species:
         species names
