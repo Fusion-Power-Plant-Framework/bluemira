@@ -84,7 +84,8 @@ def run_csg_neutronics(
         Can't import default neutron source
     """
     blanket_type = BlanketType(build_config.pop("blanket_type"))
-    tokamak_geometry = get_preset_geometry(params)
+    # TODO get the geometry from the physical components
+    tokamak_geometry = get_preset_geometry(params, blanket_type)
     # TODO get these materials from the physical components
     material_library = create_materials(blanket_type)
 

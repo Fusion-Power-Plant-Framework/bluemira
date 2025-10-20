@@ -20,7 +20,7 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
-from bluemira.plasma_physics.reactions import E_DT_fusion, n_DT_reactions
+from bluemira.plasma_physics.reactions import E_DT_fusion
 from bluemira.radiation_transport.neutronics.constants import (
     FE_DPA_THRESHOLD_EV,
     get_dpa_coefficients,
@@ -107,7 +107,6 @@ class OpenMCCSGResult:
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
-        src_rate = n_DT_reactions(P_fus_DT)
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}
@@ -161,7 +160,7 @@ class OpenMCCSGResult:
             blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
         )
 
-        dt_neuton_power = 0.8 * P_fus_DT
+        dt_neuton_power = 0.8 * E_DT_fusion() * src_triton_rate
         e_mult = total_power / dt_neuton_power
         e_mult_err = total_power_err / dt_neuton_power
         mult_power = (e_mult - 1.0) * dt_neuton_power
