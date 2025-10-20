@@ -601,8 +601,8 @@ def build_comp_manager_show_cad_tree(
         Component manager
     dim:
         Dimension to build the CAD in
-    component_filter:
-        Filter to apply to the components
+    construction_params:
+        Parameters for the construction of CAD.
 
     Returns
     -------

@@ -829,11 +829,6 @@ class DivertorPreCellArray:
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
 
-        Parameters
-        ----------
-        interior_vertices:
-            array of shape (N+1, 3) arranged counter-clockwise (inboard to outboard).
-
         Returns
         -------
         :

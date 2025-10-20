@@ -132,8 +132,8 @@ class DPACoefficients:
             the average amount of energy dispersed
             by displacing one atom in the wall material's lattice.
 
-        Attributes/values
-        -----------------
+        Notes
+        -----
         atoms_per_cc: number density, given in cgs.
         displacements_per_damage_eV:
         """

@@ -308,7 +308,7 @@ def reduce_coordinates(coordinates: np.ndarray) -> Coordinates:
 
     Parameters
     ----------
-    points:
+    coordinates:
         The coordinates of the shape to reduce
 
     Returns

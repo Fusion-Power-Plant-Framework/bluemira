@@ -72,7 +72,7 @@ def cut_curve(
     discretisation_level:
         We yield a list of points of len==discretisation_level, such that we can build a
         wire made of (discretisation_level-1) straight lines to approximate each segment.
-    reversed:
+    reverse:
         Whether we want the neutron spectrum to go in the increasing or the decreasing
         direction.
 

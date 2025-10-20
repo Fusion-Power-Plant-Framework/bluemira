@@ -90,13 +90,6 @@ class FemMagnetostatic2d:
         boundaries:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
-        dirichlet_bc_function:
-            Dirichlet boundary condition function
-        dirichlet_marker:
-            Identification number for the dirichlet boundary
-        neumann_bc_function:
-            Neumann boundary condition function
-
         """
         # check whether mesh is a filename or a mesh, then load it or use it
         self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh

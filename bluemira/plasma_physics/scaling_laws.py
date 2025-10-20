@@ -149,8 +149,6 @@ def lambda_q(
         Power in the scrape-off layer [W]
     R_0:
         Major radius [m]
-    method:
-        Scaling to use when calculating lambda_q
     error:
         Whether or not to report the value with +/- errors
 

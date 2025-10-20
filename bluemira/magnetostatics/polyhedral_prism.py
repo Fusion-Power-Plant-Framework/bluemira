@@ -289,10 +289,10 @@ def _surface_integral_fabbri(
     ----------
     face_points:
         Array of points on each face (n_face, n_points, 3)
-    face_normals:
+    face_normal:
         Array of normalised normal vectors to the faces (pointing outwards)
         (n_face, 3)
-    mid_points:
+    mid_point:
         Array of face midpoints (n_face, 3)
     n_sides:
         Number of points in the face points (avoid reflected lists)
@@ -815,13 +815,13 @@ def _surface_integral_bottura(
 
     Parameters
     ----------
-    face_points:
-        Array of points on each face (n_face, n_points, 3)
-    face_normals:
+    face_normal:
         Array of normalised normal vectors to the faces (pointing outwards)
         (n_face, 3)
-    mid_points:
-        Array of face midpoints (n_face, 3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists):
     point:
         Point at which to calculate the vector potential (3)
 

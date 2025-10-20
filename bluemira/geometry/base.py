@@ -201,12 +201,6 @@ class BluemiraGeo(ABC, meshing.Meshable):
         Get the optimised bounding box of the shape, via freecad's optimalBoundingBox
         method.
 
-        Parameters
-        ----------
-        tolerance:
-            Tolerance with which to tesselate the BluemiraGeo before calculating the
-            bounding box.
-
         Returns
         -------
         :
@@ -366,8 +360,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
         degree:
             rotation angle
 
-        Note
-        ----
+        Notes
+        -----
         The operation is made on shape and boundary in order to maintain the consistency.
         Shape is then not reconstructed from boundary (in order to reduce the
         computational time and avoid problems due to api objects orientation).
