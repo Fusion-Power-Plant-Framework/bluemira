@@ -99,12 +99,12 @@ class OpenMCResult:
     def from_run(
         cls,
         universe: openmc.Universe,
+        cell_arrays: CellStage,
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: str = "",
     ):
         """Create results class from run statepoint"""
-        src_rate = n_DT_reactions(P_fus_DT)
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}
