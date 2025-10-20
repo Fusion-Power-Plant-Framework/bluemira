@@ -23,7 +23,7 @@ from bluemira.codes.openmc.make_csg import CellStage
 from bluemira.plasma_physics.reactions import E_DT_fusion
 from bluemira.radiation_transport.neutronics.constants import (
     DPACoefficients,
-    dpa_Fe_threshold_eV,
+    FE_DPA_THRESHOLD_EV,
 )
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
@@ -358,7 +358,7 @@ class OpenMCResult:
                 eurofer_mask[cell.id] = True
         eurofer_selection = all_damages["cell"].map(eurofer_mask)
         eurofer_damage = cls._add_dpa_column(
-            all_damages[eurofer_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+            all_damages[eurofer_selection], dpa_threshold_eV=FE_DPA_THRESHOLD_EV
         )
 
         bb_mask = dict.fromkeys(all_damages.cell.values, False)
@@ -377,10 +377,10 @@ class OpenMCResult:
         div_selection = all_damages["cell"].map(div_mask)
 
         bb_damage = cls._add_dpa_column(
-            all_damages[bb_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+            all_damages[bb_selection], dpa_threshold_eV=FE_DPA_THRESHOLD_EV
         )
         vv_damage = cls._add_dpa_column(
-            all_damages[vv_selection], dpa_threshold_eV=dpa_Fe_threshold_eV
+            all_damages[vv_selection], dpa_threshold_eV=FE_DPA_THRESHOLD_EV
         )
         div_damage = cls._add_dpa_column(
             all_damages[div_selection],
