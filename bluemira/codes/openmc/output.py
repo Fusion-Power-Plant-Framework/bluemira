@@ -398,21 +398,29 @@ class OpenMCResult:
         """Add the data for number of atoms and number of displacements, which are then
         used to calculate the DPA/FPY.
         """
-        num_atoms, num_displacements = {}, {}
-        for i, row in df.iterrows():
-            dpa_coefs = DPACoefficients(
-                row["density (g/cc)"], row["molar mass (g)"], dpa_threshold_eV
-            )
-            num_atoms[i] = row["vol (m^3)"] * raw_uc(
-                dpa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
-            )
-            num_displacements[i] = (
-                row["damage (eV)/fpy"] * dpa_coefs.displacements_per_damage_eV
-            )
+        density = df["density (g/cc)"].to_numpy()
+        molar_mass = df["molar mass (g)"].to_numpy()
+        volume = df["vol (m^3)"].to_numpy()
+        damage_eV_fpy = df["damage (eV)/fpy"].to_numpy()
 
+        dpa_coefs = [
+            DPACoefficients(rho, mm, dpa_threshold_eV)
+            for rho, mm in zip(density, molar_mass)
+        ]
+
+        atoms_per_cc = np.array([c.atoms_per_cc for c in dpa_coefs])
+        displacements_per_damage = np.array(
+            [c.displacements_per_damage_eV for c in dpa_coefs]
+        )
+
+        num_atoms = volume * raw_uc(atoms_per_cc, "1/cm^3", "1/m^3")
+        num_displacements = damage_eV_fpy * displacements_per_damage
+
+        # NOTE: Avoid SettingWithCopyWarnings
+        df = df.copy()
         df["num_atoms"] = num_atoms
         df["num_displacements"] = num_displacements
-        df["dpa/fpy"] = df["num_displacements"] / df["num_atoms"]
+        df["dpa/fpy"] = num_displacements / num_atoms
         return df[["cell", "cell_names", "vol (m^3)", "num_atoms", "dpa/fpy", "%err."]]
 
     @classmethod
