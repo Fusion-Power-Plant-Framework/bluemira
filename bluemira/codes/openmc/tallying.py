@@ -9,13 +9,12 @@ from itertools import chain
 
 import openmc
 
-from bluemira.codes.openmc.make_csg import BlanketCellArray, DivertorCellArray
+from bluemira.codes.openmc.make_csg import CellStage
 
 
 def filter_cells(
     material_list,
-    blanket_cell_array: BlanketCellArray,
-    divertor_cell_array: DivertorCellArray,
+    csg_model: CellStage,
 ):
     """
     Create scores and the filter for the scores. Give them names.
@@ -42,9 +41,13 @@ def filter_cells(
         Divide by area to get fluence in unit: cm^-2.
 
     """
-    blanket_cells = [*chain.from_iterable(blanket_cell_array)]
-    div_cells = [*chain.from_iterable(divertor_cell_array)]
-    cells = blanket_cells + div_cells
+    blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
+    blanket_excl_vv = [
+        *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
+    ]
+    div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
+    cells = list(csg_model.cells[:-1])  # exclude the external void
+    cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [
         *(stack[0] for stack in blanket_cell_array),
         *(stack[1] for stack in blanket_cell_array),
@@ -53,21 +56,22 @@ def filter_cells(
         *(stack[-1] for stack in blanket_cell_array),
         *(stack[-1] for stack in divertor_cell_array),
     ]
+    pfs_cells = [stack[0] for stack in blanket_cell_array] + [
+        stack[0] for stack in divertor_cell_array
+    ]
     # bz_cells = [stack[2] for stack in blanket_cell_array]
 
     # Cell filters
-    blanket_cell_filter = openmc.CellFilter(blanket_cells)
-    div_cell_filter = openmc.CellFilter(div_cells)
+    blanket_cell_filter = openmc.CellFilter(blanket_excl_vv)
+    pfs_cells_filter = openmc.CellFilter(pfs_cells)
+    div_cell_filter = openmc.CellFilter(div_excl_vv)
     cell_filter = openmc.CellFilter(cells)
     fw_surf_filter = openmc.CellFilter(fw_surf_cells)
     vv_filter = openmc.CellFilter(vv_cells)
     # bz_filter = openmc.CellFilter(bz_cells)
 
     # material filters
-    mat_filter = openmc.MaterialFilter(
-        material_list
-    )  # TODO @Ocean: Likely related to #4009
-    eurofer_filter = openmc.MaterialFilter([material_list[-1]])
+    mat_filter = openmc.MaterialFilter(material_list)
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
 
@@ -75,18 +79,18 @@ def filter_cells(
     return (
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
-        ("Total power", "heating", [mat_filter]),
+        ("total power", "heating", [mat_filter, cell_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [blanket_cell_filter]),
         # Fluence
         ("neutron flux in every cell", "flux", [cell_filter, neutron_filter]),
+        ("neutron flux at PFS", "flux", [pfs_cells_filter]),
+        ("volumetric heating at PFS", "heating", [pfs_cells_filter]),
         ("photon heating", "heating", [fw_surf_filter, photon_filter]),
         # ("neutron flux in 2d mesh", "flux", [cyl_mesh_filter, neutron_filter]),
         # TF winding pack does not exits yet, so this will have to wait
         # DPA
-        ("eurofer damage", "damage-energy", [cell_filter, eurofer_filter]),
+        ("damage", "damage-energy", [cell_filter]),
         # used to get the EUROFER OBMP
-        ("divertor damage", "damage-energy", [div_cell_filter, mat_filter]),
-        ("vacuum vessel damage", "damage-energy", [vv_filter]),
     )
