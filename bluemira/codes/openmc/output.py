@@ -409,9 +409,9 @@ class OpenMCResult:
         ]
 
         atoms_per_cc = np.array([c.atoms_per_cc for c in dpa_coefs])
-        displacements_per_damage = np.array(
-            [c.displacements_per_damage_eV for c in dpa_coefs]
-        )
+        displacements_per_damage = np.array([
+            c.displacements_per_damage_eV for c in dpa_coefs
+        ])
 
         num_atoms = volume * raw_uc(atoms_per_cc, "1/cm^3", "1/m^3")
         num_displacements = damage_eV_fpy * displacements_per_damage
