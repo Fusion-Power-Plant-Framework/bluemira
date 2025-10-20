@@ -197,7 +197,6 @@ def create_materials(
             li_enrich_ao = 60.0  # [%]
         case _:
             li_enrich_ao = 90.0  # [%]
->>>>>>> 47eb01aa4 (LAR fix neutronics radii (#4116))
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
