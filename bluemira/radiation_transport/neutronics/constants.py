@@ -6,6 +6,7 @@
 """constants used for the neutronics module"""
 
 from periodictable import elements
+import numpy.typing as npt
 
 from bluemira.base.constants import (
     ELECTRON_MOLAR_MASS,
@@ -95,10 +96,10 @@ FE_DENSITY_G_CC = elements.isotope("Fe").density
 
 
 def get_dpa_coefficients(
-    density_g_cc: float = FE_DENSITY_G_CC,
-    molar_mass_g: float = FE_MOLAR_MASS_G,
-    dpa_threshold_eV: float = FE_DPA_THRESHOLD_EV,
-) -> tuple[float, float]:
+    density_g_cc: float | npt.NDArray = FE_DENSITY_G_CC,
+    molar_mass_g: float | npt.NDArray = FE_MOLAR_MASS_G,
+    dpa_threshold_eV: float | npt.NDArray = FE_DPA_THRESHOLD_EV,
+) -> tuple[float | npt.NDArray, float | npt.NDArray]:
     """
     Get the displacements per atom (DPA) coefficients.
 

@@ -22,7 +22,6 @@ from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
 from bluemira.plasma_physics.reactions import E_DT_fusion
 from bluemira.radiation_transport.neutronics.constants import (
-    DPACoefficients,
     FE_DPA_THRESHOLD_EV,
     get_dpa_coefficients,
 )
