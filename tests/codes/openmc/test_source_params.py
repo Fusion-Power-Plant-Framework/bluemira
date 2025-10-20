@@ -30,7 +30,7 @@ def test_pedestal_location_in_normalized_radius():
 
 
 def test_neutronics_reactor_power():
-    assert pms_params.reactor_power == pytest.approx(1998.0e6)  # [W]
+    assert pms_params.reactor_power == pytest.approx(2000.0e6)  # [W]
 
 
 def test_density_profile_alpha_exponent():
