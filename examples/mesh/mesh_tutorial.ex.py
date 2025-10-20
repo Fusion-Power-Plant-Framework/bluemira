@@ -129,19 +129,50 @@ print(m.get_gmsh_dict(buffer))
 # ## Convert to xdmf
 
 # %%
+# %%
 msh_to_xdmf(
     "Mesh.msh",
     dimensions=(0, 2),
     directory=directory,
 )
 
-mesh, boundaries, subdomains, labels = import_mesh(
-    "Mesh",
-    directory=directory,
-    subdomains=True,
-)
+import dolfinx
+from mpi4py import MPI
 
-plot.vtk_mesh(mesh, 2)
-plt.show()
+directory = Path(directory)
+mesh, cell_markers, facet_markers = dolfinx.io.gmshio.read_from_msh(directory
+                                                                    / "Mesh.msh",
+                                                            MPI.COMM_WORLD, 0 ,gdim=2)
 
-print(mesh.coordinates())
+from bluemira.mesh.tools import import_mesh_v9
+mesh_in, boundaries_mf_in, subdomains_mf_in, link_dict_in = import_mesh_v9("Mesh",
+                                                                 subdomains=True, directory=directory)
+
+import pyvista
+
+def plot_dolfinx_mesh(mesh, show: bool = True):
+    """
+    Plots the mesh structure, including nodes and faces.
+
+    Parameters
+    ----------
+    show : bool, optional
+        Flag to display the plot immediately (default is True).
+
+    Returns
+    -------
+    pyvista.Plotter
+        The PyVista plotter object with the mesh visualization.
+    """
+    from dolfinx.plot import vtk_mesh
+
+    plotter = pyvista.Plotter()
+    tdim = mesh.topology.dim
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, tdim))
+    plotter.add_mesh(grid, show_edges=True)
+    plotter.view_xy()
+    if show:
+        plotter.show()
+    return plotter
+
+plot_dolfinx_mesh(mesh_in, show=True)

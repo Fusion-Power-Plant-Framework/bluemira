@@ -156,6 +156,106 @@ def import_mesh(
     return mesh, boundaries_mf, subdomains_mf, link_dict
 
 
+from pathlib import Path
+import json
+from mpi4py import MPI
+from dolfinx import io
+
+def import_mesh_v9(
+    file_prefix: str = "mesh", *, subdomains: bool = False, directory: str = "."
+) -> tuple:
+    """
+    Import a Dolfinx v0.9 mesh and optional boundary/subdomain tags.
+
+    Parameters
+    ----------
+    file_prefix:
+        File prefix for the mesh (defaults to 'mesh')
+    subdomains:
+        Whether subdomains are present (defaults to False)
+    directory:
+        Directory containing the mesh and tag files
+
+    Returns
+    -------
+    mesh:
+        dolfinx.Mesh object of the domain
+    boundaries_mf:
+        dolfinx.MeshTags or None
+    subdomains_mf:
+        dolfinx.MeshTags or None
+    link_dict:
+        Dictionary linking MSH and XDMF entities
+
+    Raises
+    ------
+    FileNotFoundError
+        If required mesh files are missing
+    """
+    DOMAIN_SUFFIX = "domain.xdmf"
+    BOUNDARY_SUFFIX = "boundaries.xdmf"
+    LINKFILE_SUFFIX = "linkfile.json"
+
+    domain_file = Path(directory, f"{file_prefix}_{DOMAIN_SUFFIX}")
+    boundary_file = Path(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}")
+    link_file = Path(directory, f"{file_prefix}_{LINKFILE_SUFFIX}")
+
+    files = [domain_file, boundary_file, link_file]
+    exists = [file.exists() for file in files]
+
+    if not all(exists):
+        msg = "\n".join([
+            fn.as_posix() for fn, exist in zip(files, exists, strict=False) if not exist
+        ])
+        raise FileNotFoundError(f"No mesh file(s) found:\n {msg}")
+
+    # --- Read mesh
+    with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
+        mesh = xdmf.read_mesh(name="Grid")
+
+    # --- Read boundaries (if any)
+    boundaries_mf = None
+    try:
+        with io.XDMFFile(MPI.COMM_WORLD, boundary_file.as_posix(), "r") as xdmf:
+            for name in ["boundaries", "FacetTags", "Grid", None]:
+                try:
+                    boundaries_mf = (
+                        xdmf.read_meshtags(mesh, name=name)
+                        if name is not None
+                        else xdmf.read_meshtags(mesh)
+                    )
+                    break
+                except RuntimeError:
+                    continue
+    except Exception:
+        boundaries_mf = None
+
+    # --- Read subdomains (optional)
+    subdomains_mf = None
+    if subdomains:
+        try:
+            with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
+                for name in ["subdomains", "CellTags", "Grid", None]:
+                    try:
+                        subdomains_mf = (
+                            xdmf.read_meshtags(mesh, name=name)
+                            if name is not None
+                            else xdmf.read_meshtags(mesh)
+                        )
+                        break
+                    except RuntimeError:
+                        continue
+        except Exception:
+            subdomains_mf = None
+
+    # --- Read link dictionary
+    with open(link_file) as file:
+        link_dict = json.load(file)
+
+    return mesh, boundaries_mf, subdomains_mf, link_dict
+
+
+
 def _check_dimensions(dimensions: int | list[int]) -> tuple[int]:
     if isinstance(dimensions, int):
         dimensions = tuple(np.arange(dimensions))
