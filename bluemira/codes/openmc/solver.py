@@ -45,9 +45,6 @@ from bluemira.codes.openmc.params import (
 )
 from bluemira.codes.openmc.tallying import csg_filter_cells, dagmc_tallys
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-    NeutronicsReactor,
-)
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -56,9 +53,6 @@ if TYPE_CHECKING:
     from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
         NeutronicsReactor,
     )
-
-if TYPE_CHECKING:
-    from matproplib.conditions import OperationalConditions
 
 
 class OpenMCRunModes(BaseRunMode):
