@@ -547,6 +547,7 @@ class NeutronicsOutputParams(ParameterFrame):
             Parameter("P_n_blanket", result.blanket_power, unit="W", source=source),
             Parameter("P_n_divertor", result.divertor_power, unit="W", source=source),
             Parameter("P_n_vessel", result.vessel_power, unit="W", source=source),
+            # No auxiliaries (e.g. HCD, port plugs modelled here)
             Parameter("P_n_aux", 0.0, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
             Parameter(

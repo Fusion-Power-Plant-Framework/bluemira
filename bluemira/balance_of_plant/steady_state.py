@@ -457,7 +457,6 @@ class BalanceOfPlantModel:
         """
         Carry out the balance of plant calculation
         """
-        print(self.params)
         p_fusion = self.params.P_fus_DT.value + self.params.P_fus_DD.value
         f_neutron_DT = HE_MOLAR_MASS / (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
         f_neutron_DD = 0.5 * HE3_MOLAR_MASS / (NEUTRON_MOLAR_MASS + HE3_MOLAR_MASS)
@@ -558,8 +557,6 @@ class BalanceOfPlantModel:
         """
         Perform a series of sanity checks.
         """
-        from pprint import pprint
-        pprint(self.flow_dict)
         delta_truth = 0
         # Per block check
         for label, flow in self.flow_dict.items():
