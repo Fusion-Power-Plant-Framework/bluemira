@@ -16,9 +16,6 @@ class TestEUDEMOPowerCycle:
         Parameter("P_rad", 400e6, "W", source="test"),
         Parameter("P_hcd_ss", 50e6, "W", source="test"),
         Parameter("P_hcd_ss_el", 150e6, "W", source="test"),
-        Parameter("vvpfrac", 0.04, "", source="test"),
-        Parameter("e_mult", 1.35, "", source="test"),
-        Parameter("e_decay_mult", 1.015, "", source="test"),
         Parameter("f_core_rad_fw", 0.3, "", source="test"),
         Parameter("f_sol_rad", 0.2, "", source="test"),
         Parameter("f_sol_rad_fw", 0.9, "", source="test"),
@@ -33,6 +30,12 @@ class TestEUDEMOPowerCycle:
         Parameter("bb_pump_eta_el", 0.9, "", source="test"),
         Parameter("div_pump_eta_isen", 0.99, "", source="test"),
         Parameter("div_pump_eta_el", 0.98, "", source="test"),
+        Parameter("P_n_blanket", 1e6, "", source="test"),
+        Parameter("P_n_divertor", 1e6, "", source="test"),
+        Parameter("P_n_vessel", 1e6, "", source="test"),
+        Parameter("P_n_aux", 1e6, "", source="test"),
+        Parameter("P_n_e_mult", 1e6, "", source="test"),
+        Parameter("P_n_decay", 1e6, "", source="test"),
     )
 
     @classmethod
