@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """constants used for the neutronics module"""
 
-from periodictable import elements
 import numpy.typing as npt
+from periodictable import elements
 
 from bluemira.base.constants import (
     ELECTRON_MOLAR_MASS,

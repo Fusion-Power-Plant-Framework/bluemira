@@ -309,7 +309,7 @@ ignore-names = [
     "*HFS*",
     "*_OX_*",
     "*_F",
-    "*eV",
+    "*eV*",
     "I_not_dI",
     "*Li*"
 ]
