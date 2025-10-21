@@ -274,10 +274,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         If a nested coilgroup is empty it is also removed from the parent coilgroup
 
         """
-        names = [
-            c.primary_coil.name if isinstance(c, Circuit) else c.name
-            for c in self._coils
-        ]
+        names = self.name
 
         if _top_level and (remainder := set(coil_name) - set(names)):
             raise EquilibriaError(f"Unknown coils {remainder}")
