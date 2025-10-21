@@ -79,6 +79,13 @@ class SteadyStatePowerCycleParams(ParameterFrame):
     div_pump_eta_isen: Parameter[float]
     div_pump_eta_el: Parameter[float]
 
+    P_n_blanket: Parameter[float]
+    P_n_divertor: Parameter[float]
+    P_n_vessel: Parameter[float]
+    P_n_aux: Parameter[float]
+    P_n_e_mult: Parameter[float]
+    P_n_decay: Parameter[float]
+
 
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """
