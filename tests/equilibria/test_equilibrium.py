@@ -296,7 +296,8 @@ class TestSolveEquilibrium:
         "o_point_fallback", [OPointCalcOptions.GRID_CENTRE, OPointCalcOptions.RAISE]
     )
     @pytest.mark.parametrize("shape", shape_funcs)
-    def test_betapliip_profile(self, shape, o_point_fallback):
+    @pytest.mark.parametrize("use_approx_beta_p", [True, False])
+    def test_betapliip_profile(self, shape, o_point_fallback, use_approx_beta_p):
         rel_tol = 0.015
         profiles = BetaLiIpProfile(
             self.beta_p,
@@ -307,6 +308,7 @@ class TestSolveEquilibrium:
             shape=shape,
             li_min_iter=0,
             li_rel_tol=rel_tol,
+            use_approx_beta_p=use_approx_beta_p,
         )
         eq = Equilibrium(
             deepcopy(self.coilset),
