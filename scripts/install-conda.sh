@@ -23,7 +23,7 @@ envsubst '$HOME' < conda/miniforge-init.sh > ~/.miniforge-init.sh
 source ~/.miniforge-init.sh
 
 # Create the bluemira conda environment
-sed s/".*python.*"/"  - python="$PYTHON_VERSION/g ./conda/environment.yml > ./conda/tmp_env.yml
+sed s/".*python .*"/"  - python="$PYTHON_VERSION/g ./conda/environment.yml > ./conda/tmp_env.yml
 mamba env create -f ./conda/tmp_env.yml -n $ENVIRONMENT
 conda activate $ENVIRONMENT
 
