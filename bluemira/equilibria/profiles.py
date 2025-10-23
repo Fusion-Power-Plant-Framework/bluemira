@@ -599,6 +599,7 @@ class BetaIpProfile(Profile):
         R_0: float,
         B_0: float,
         shape: ShapeFunction | None = None,
+        *,
         use_approx_beta_p: bool = False,  # noqa: FBT001, FBT002
     ):
         self.betap = betap
@@ -773,6 +774,7 @@ class BetaLiIpProfile(BetaIpProfile):
         shape: ShapeFunction | None = None,
         li_rel_tol: float = 0.015,
         li_min_iter: int = 5,
+        *,
         use_approx_beta_p: bool = False,  # noqa: FBT001, FBT002
     ):
         super().__init__(
