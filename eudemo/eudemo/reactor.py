@@ -777,7 +777,7 @@ if __name__ == "__main__":
     debug.extend(reactor.pf_coils.xz_boundary)
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.
-    show_cad(debug)
+    # show_cad(debug)
 
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
