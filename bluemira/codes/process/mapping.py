@@ -111,7 +111,7 @@ OUT_mappings = {
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
     "tau_flattop": (("t_burn_min", "t_plant_pulse_burn"), "s"),
-    "P_el_net": (("p_plant_electric_net_required_mw", "pnetelmw"), "MW"),
+    "P_el_net": (("p_plant_electric_net_required_mw", "p_plant_electric_net_mw"), "MW"),
     "tk_bb_ib": ("dr_blkt_inboard", "m"),
     "tk_bb_ob": ("dr_blkt_outboard", "m"),
     "tk_vv_in": ("dr_vv_inboard", "m"),

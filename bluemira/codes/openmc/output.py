@@ -153,19 +153,6 @@ class OpenMCCSGResult:
         peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
         peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
 
-        total_power, total_power_err = cls._load_filter_power_err(
-            statepoint, src_rate, "total power"
-        )
-
-        dt_neuton_power = 0.8 * E_DT_fusion() * src_triton_rate
-        e_mult = total_power / dt_neuton_power
-        e_mult_err = total_power_err / dt_neuton_power
-        mult_power = (e_mult - 1.0) * dt_neuton_power
-        all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        damage = cls._load_damage(
-            statepoint, cell_names, cell_vols, cell_arrays, src_rate
-        )
-
         return cls(
             universe=universe,
             cell_arrays=cell_arrays,
