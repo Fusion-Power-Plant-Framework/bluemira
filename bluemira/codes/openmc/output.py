@@ -80,6 +80,8 @@ class OpenMCResult:
     total_power: float
     total_power_err: float
     mult_power: float
+    peak_bb_fe_damage: float
+    peak_bb_fe_damage_err: float
     fluxes: dict
     damage: dict
 
@@ -146,6 +148,9 @@ class OpenMCResult:
         damage = cls._load_damage(
             statepoint, cell_names, cell_vols, cell_arrays, src_rate
         )
+        max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
+        peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
+        peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
 
         return cls(
             universe=universe,
@@ -172,6 +177,8 @@ class OpenMCResult:
             vessel_power_err=vessel_power_err,
             fluxes=all_fluxes,
             mult_power=mult_power,
+            peak_bb_fe_damage=peak_bb_fe_damage,
+            peak_bb_fe_damage_err=peak_bb_fe_damage_err,
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols, src_rate
             ),
