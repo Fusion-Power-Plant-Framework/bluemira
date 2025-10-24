@@ -201,9 +201,13 @@ class UnconstrainedTikhonovCurrentGradientCOP(EqCoilsetOptimisationProblem):
         opt_currents = self.coilset._opt_currents + current_adjustment
         self.coilset.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
 
+        # if the coilset contains circuits, we need to 'expand' the current vector,
+        # which repeats the currents for each circuit in the coilset.
+        opt_currents_sym = self.coilset._opt_currents_expand_mat @ opt_currents
+
         f_x = floatify(
-            np.linalg.norm(a_mat @ opt_currents - b_vec)
-            + np.linalg.norm(self.gamma * opt_currents)
+            np.linalg.norm(a_mat @ opt_currents_sym - b_vec)
+            + np.linalg.norm(self.gamma * opt_currents_sym)
         )
         return CoilsetOptimiserResult(
             coilset=self.coilset,

@@ -1512,22 +1512,25 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ValueError
             Number of values not equal to number of optimisable currents
         """
-        n_curr_opt_coils = self.n_current_optimisable_coils
+        n_opt, n_cc = self.n_current_optimisable_coils, self.n_control
+        all_currents = deepcopy(self.current)
         n_vals = values.shape[0]
 
         if n_vals == 1:
             c = values[0]
-            self.current = np.ones(self.n_control) * c
+            all_currents[self._control_ind] = np.ones(n_cc) * c
+            self.current = all_currents
             return
 
-        if n_vals != n_curr_opt_coils:
+        if n_vals != n_opt:
             raise ValueError(
                 f"The number of current elements {n_vals} "
                 "does not match the number of "
-                f"optimisable currents: {n_curr_opt_coils}"
+                f"optimisable currents: {n_opt}"
             )
 
-        self.current = self._opt_currents_expand_mat @ values
+        all_currents[self._control_ind] = self._opt_currents_expand_mat @ values
+        self.current = all_currents
 
     @property
     def n_position_optimisable_coils(self) -> int:
