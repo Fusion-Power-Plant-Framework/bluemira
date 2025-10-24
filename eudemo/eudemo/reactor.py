@@ -757,7 +757,7 @@ if __name__ == "__main__":
     debug.extend(reactor.pf_coils.xz_boundary)
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.
-    show_cad(debug)
+    # show_cad(debug)
 
     cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
@@ -858,10 +858,16 @@ if __name__ == "__main__":
         reactor_config.config_for("CAD_Neutronics"),
     )
 
-    reactor.plot("xz")
-    reactor.show_cad(n_sectors=2)
+    # reactor.plot("xz")
+    # reactor.show_cad(n_sectors=2)
 
-sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-sspc_result = sspc_solver.execute()
-sspc_solver.model.plot()
-plt.show()
+    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+    sspc_result = sspc_solver.execute()
+  
+
+
+    # import json
+    # a_value = reactor_config.global_params.A.value
+    # a_string = f"{a_value:.2f}".split(".")[0] + "_" + f"{a_value:.2f}".split(".")[1]
+    # with open(f"BLUEMIRA_OUT_A_{a_string}.json", "w") as f:
+    #     json.dump(reactor_config.global_params.to_dict(), f, indent=2)

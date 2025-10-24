@@ -23,6 +23,7 @@ from tokamak_neutron_source.flux import (
     EQDSKFluxInterpolator,
     FluxPoint,
 )
+from tokamak_neutron_source.flux import FausserFluxSurface, LCFSInformation
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc
@@ -110,6 +111,20 @@ def make_tokamak_source(
         total_fusion_power=source_parameters.reactor_power,
         cell_side_length=cell_side_length,
     )
+
+    # flux_map = FluxMap.from_parameterisation(
+    #     FausserFluxSurface(
+    #         LCFSInformation(8.390965960613608+0.4679079907058359, 0.0, 3.1405193793601094, 1.9033531333296347, 0.3867862903983617, 0.4679079907058359),
+    #     ),
+    #     rho_profile=rho_profile,
+    # )
+    # source = TokamakNeutronSource(
+    #     transport,
+    #     flux_map,
+    #     source_type=[Reactions.D_T, Reactions.D_D],
+    #     total_fusion_power=source_parameters.reactor_power,
+    #     cell_side_length=cell_side_length,
+    # )
     return (
         source.to_openmc_source(),
         source.source_rate,
