@@ -16,6 +16,42 @@ from matproplib.library.beryllium import Be12Ti
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
 
+# Elements
+he_cool_mat = material(
+    name="helium",
+    elements={"He4": 1.0},
+    properties=props(density=(0.008867, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
+tungsten_mat = material(
+    name="tungsten",
+    elements={
+        "W182": 0.266,
+        "W183": 0.143,
+        "W184": 0.307,
+        "W186": 0.284,
+    },
+    properties=props(density=(19.3, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
+water_mat = material(
+    name="water",
+    elements={"H1": 2 / 3, "O16": 1 / 3},
+    properties=props(density=(0.866, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
+al2o3_mat = material(
+    name="Aluminium Oxide",
+    elements={"Al27": 2 / 5, "O16": 3 / 5},
+    properties=props(density=(3.95, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
+
+# alloys
 eurofer_mat = material(
     name="eurofer",
     elements={
@@ -36,33 +72,6 @@ al2o3_mat = material(
     name="Aluminium Oxide",
     elements={"Al27": 2, "O16": 3},
     properties=props(density=(3.95, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-# Elements
-he_cool_mat = material(
-    name="helium",
-    elements={"He4": 1.0},
-    properties=props(density=(0.008867, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-tungsten_mat = material(
-    name="tungsten",
-    elements={
-        "W182": 0.266,
-        "W183": 0.143,
-        "W184": 0.307,
-        "W186": 0.284,
-    },
-    properties=props(density=(19.3, "g/cm3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-water_mat = material(
-    name="water",
-    elements={"H1": 2, "O16": 1},
-    properties=props(density=(0.866, "g/cm3")),
     converters=OpenMCNeutronicConfig(),
 )()
 
@@ -184,7 +193,7 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
         ],
         fraction_type="atomic",
         converters=OpenMCNeutronicConfig(
-            # packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
+            packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
             enrichment=li_enrich_ao * 100,
             enrichment_target="Li6",
             enrichment_type="atomic",
