@@ -412,7 +412,7 @@ def plot_component_dim(
     """
     Plot the component in the specified dimension.
     """
-    ComponentPlotter(view=dim, **kwargs).plot_2d(component)
+    ComponentPlotter(view=dim).plot_2d(component, **kwargs)
 
 
 def _construct_comp_manager_physical_comps(

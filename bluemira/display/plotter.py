@@ -714,11 +714,14 @@ class ComponentPlotter(BasePlotter):
             if comp.plot_options.face_options["color"] in flatten_iterable(
                 BLUE_PALETTE.as_hex()
             ):
+                print("in here")
                 if self.options._external_options:
+                    print(self.options._external_options)
                     options = comp.plot_options
                 else:
-                    options = self.options
+                    options = comp.plot_options
             else:
+                print("out here")
                 options = comp.plot_options
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
         else:
