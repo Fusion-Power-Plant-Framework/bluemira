@@ -22,8 +22,10 @@ The EUDEMO reactor design routine.
 
 import shutil
 from pathlib import Path
+import json
 
 import matplotlib.pyplot as plt
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 import numpy as np
 from matproplib.conditions import OperationalConditions
 
@@ -549,7 +551,7 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
         )
 
 
-def save_reactor(reactor, folder_name):
+def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
     """
@@ -580,9 +582,7 @@ def save_reactor(reactor, folder_name):
         directory=equilibria_folder,
         qpsi_calcmode=1,
     )
-    df = reactor.equilibria.summary()
-    filename = f"{equilibria_folder}/BLUEMIRA_equilibria_summary.xlsx"
-    df.to_excel(filename, index=False)
+
     # Save TF coils
     filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
     reactor.save_cad(
@@ -606,6 +606,11 @@ def save_reactor(reactor, folder_name):
     f = plt.gcf()
     filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
     f.savefig(filename, dpi=600, format="pdf")
+
+    # Save params
+    filename = f"{root}/BLUEMIRA_OUT.json"
+    with open(filename, "w") as f:
+        json.dump(reactor_config.global_params.to_dict(), f, indent=2)
 
 
 if __name__ == "__main__":
@@ -871,6 +876,14 @@ if __name__ == "__main__":
 
     sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
     sspc_result = sspc_solver.execute()
+    reactor_config.global_params.P_el_net.set_value(sspc_result["P_el_net"], "BLUEMIRA")
+
+    lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
+
+    reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+
+    a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
+    save_reactor(reactor, reactor_config, folder_name=f"results/A_{a_string}")
   
 
 
