@@ -24,8 +24,10 @@ import json
 import shutil
 from copy import copy
 from pathlib import Path
+import json
 
 import matplotlib.pyplot as plt
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 import numpy as np
 from matproplib.conditions import OperationalConditions
 
@@ -520,6 +522,31 @@ def build_radiation_plugs(
     return builder.build()
 
 
+<<<<<<< HEAD
+=======
+def export_dagmc_model(reactor: EUDEMO, build_config):
+    """
+    Export the reactor model to a DAGMC model.
+
+    Parameters
+    ----------
+    reactor : EUDEMO
+        The reactor instance to export.
+    build_config : dict
+        The build configuration parameters.
+    """
+    if build_config.get("export_dagmc_model", False):
+        reactor.save_cad(
+            directory=build_config.get("dagmc_export_dir", None),
+            cad_format="dagmc",
+            construction_params={
+                "without_components": [reactor.plasma],
+                "group_by_materials": True,
+            },
+        )
+
+
+>>>>>>> 89a070e74 (fix plotting?)
 def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
@@ -551,10 +578,13 @@ def save_reactor(reactor, reactor_config, folder_name):
         directory=equilibria_folder,
         qpsi_calcmode=1,
     )
+<<<<<<< HEAD
     # TODO this is currently a string
     # df = reactor.equilibria.summary()
     # filename = Path(equilibria_folder, "BLUEMIRA_equilibria_summary.xlsx")
     # df.to_excel(filename, index=False)
+=======
+>>>>>>> 89a070e74 (fix plotting?)
 
     # Save TF coils
     filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
@@ -580,6 +610,7 @@ def save_reactor(reactor, reactor_config, folder_name):
     filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
     f.savefig(filename, dpi=600, format="pdf")
 
+<<<<<<< HEAD
     filename = f"{root}/BLUEMIRA_OUT.json"
     json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
@@ -613,6 +644,12 @@ def save_reactor(reactor, reactor_config, folder_name):
     ).as_posix()
 
     json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
+=======
+    # Save params
+    filename = f"{root}/BLUEMIRA_OUT.json"
+    with open(filename, "w") as f:
+        json.dump(reactor_config.global_params.to_dict(), f, indent=2)
+>>>>>>> 89a070e74 (fix plotting?)
 
 
 if __name__ == "__main__":
