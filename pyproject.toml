@@ -26,6 +26,7 @@ dependencies = [
     "gmsh",
     "imageio>=1.0",
     "matplotlib>=3.8",
+    "matproplib",
     "meshio>=4.0",
     "neutronics-material-maker>=1.1.4",
     "nlopt>=2.7.1",
