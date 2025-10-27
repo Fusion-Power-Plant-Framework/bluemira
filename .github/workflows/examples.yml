@@ -21,11 +21,11 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.11", "3.12"]
         process-version: ["v3.2.1"]
         include:
           - os: "ubuntu-latest"
-            python-version: "3.12"
+            python-version: "3.10"
             process-version: "process_disabled"
 
       fail-fast: false
