@@ -228,6 +228,10 @@ class BlanketBuilder(Builder):
     def get_segments(
         self, silhouette: BluemiraFace, sub_name: str, inboard: bool, color_index: int
     ):
+        """
+        Create the sub-layer-segments of the blanket from a silhouette of
+        a sub-layer.
+        """
         if inboard:
             n_seg_per_sector = self.params.n_bb_inboard.value
             name = self.IBS
