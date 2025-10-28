@@ -60,45 +60,14 @@ class TokamakGeometry:
     inb_gap: float
 
 
-def _scale_blanket_thicknesses(
-    blanket_tk: dict[str, float], total_thickness: float
-) -> dict[str, float]:
+def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
     """
-    Normalize the values of a blanket thicnkess dictionary to sum to 1, then scale
-    by `total_thickness`.
-
-    Returns
-    -------
-    :
-        The scaled blanket thickness dictionary
-
-    Raises
-    ------
-    ValueError
-        If the original blanket values sum to 0.0
-    """
-    s = sum(blanket_tk.values())
-    if s == 0:
-        raise ValueError("Sum of dictionary values is zero; cannot normalize.")
-    return {k: (v / s) * total_thickness for k, v in blanket_tk.items()}
-
-
-def get_preset_geometry(
-    params: ParameterFrame,
-    blanket_type: BlanketType,
-) -> TokamakGeometry:
-    """
-    Get the tokamak geometry according to a specified blanket type.
+    Get the tokamak geometry.
 
     Returns
     -------
     tokamak_geometry:
         tokamak geometry parameters
-
-    Notes
-    -----
-    Blanket sub-component thicknesses are scaled according to design data from
-    various sources.
     """
     # Geometry variables
 
@@ -123,62 +92,41 @@ def get_preset_geometry(
     r_tf_inboard_out = params.get_values("r_tf_inboard_out")[0]
     tk_bb_ib = params.get_values("tk_bb_ib")[0]
     tk_bb_ob = params.get_values("tk_bb_ob")[0]
-    shared_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": r_tf_in - r_vv_ib_in,  # [m]
-        "inb_vv_thick": params.get_values("tk_vv_in")[0],  # [m]
-        "tf_thick": r_tf_inboard_out - r_tf_in,  # [m]
-        "outb_vv_thick": params.get_values("tk_vv_out")[0],  # [m]
-    }
 
-    if blanket_type is BlanketType.WCLL:
-        ib_blanket_geometry = {
-            "inb_fw_thick": 0.027,
-            "inb_bz_thick": 0.378,
-            "inb_mnfld_thick": 0.435,
-        }
-        ob_blanket_geometry = {
-            "outb_fw_thick": 0.027,
-            "outb_bz_thick": 0.538,
-            "outb_mnfld_thick": 0.429,
-        }
+    ib_fw_thick = params.get_values("tk_bb_fw_ib")[0]
+    ib_bz_thick = params.get_values("tk_bb_bz_ib")[0]
+    ob_fw_thick = params.get_values("tk_bb_fw_ib")[0]
+    ob_bz_thick = params.get_values("tk_bb_bz_ib")[0]
 
-    elif blanket_type is BlanketType.DCLL:
-        ib_blanket_geometry = {
-            "inb_fw_thick": 0.022,
-            "inb_bz_thick": 0.300,
-            "inb_mnfld_thick": 0.178,
-        }
-        ob_blanket_geometry = {
-            "outb_fw_thick": 0.022,
-            "outb_bz_thick": 0.640,
-            "outb_mnfld_thick": 0.248,
-        }
+    ib_mnfld_thick = tk_bb_ib - ib_fw_thick - ib_bz_thick
+    ob_mnfld_thick = tk_bb_ob - ob_fw_thick - ob_bz_thick
 
-    elif blanket_type is BlanketType.HCPB:
-        # HCPB Design Report, 26/07/2019
-        # MC: This does not look right @Ocean... please put findable references
-        # for these data
-        ib_blanket_geometry = {
-            "inb_fw_thick": 0.027,
-            "inb_bz_thick": 0.460,
-            "inb_mnfld_thick": 0.560,
-        }
+    if ib_mnfld_thick < 0.0:
+        raise ValueError(
+            f"Inboard manifold thickness is negative: {ib_mnfld_thick:.3f} m. "
+            "Please check blanket thickness parameters."
+        )
+    if ob_mnfld_thick < 0.0:
+        raise ValueError(
+            f"Outboard manifold thickness is negative: {ob_mnfld_thick:.3f} m. "
+            "Please check blanket thickness parameters."
+        )
 
-        ob_blanket_geometry = {
-            "outb_fw_thick": 0.027,
-            "outb_bz_thick": 0.460,
-            "outb_mnfld_thick": 0.560,
-        }
-    ib_blanket_geometry = _scale_blanket_thicknesses(ib_blanket_geometry, tk_bb_ib)
-    ob_blanket_geometry = _scale_blanket_thicknesses(ob_blanket_geometry, tk_bb_ob)
     return TokamakGeometry(
-        **shared_geometry, **ib_blanket_geometry, **ob_blanket_geometry
+        inb_fw_thick=ib_fw_thick,
+        inb_bz_thick=ib_bz_thick,
+        inb_mnfld_thick=ib_mnfld_thick,
+        inb_vv_thick=params.get_values("tk_vv_in")[0],
+        outb_vv_thick=params.get_values("tk_vv_out")[0],
+        tf_thick=r_tf_inboard_out - r_tf_in,
+        outb_fw_thick=ob_fw_thick,
+        outb_bz_thick=ob_bz_thick,
+        outb_mnfld_thick=ob_mnfld_thick,
+        inb_gap=r_tf_in - r_vv_ib_in,
     )
 
 
-def create_materials(
-    blanket_type: BlanketType,
-) -> NeutronicsMaterials:
+def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     Create Materials Library by specifying just the blanket type
 
