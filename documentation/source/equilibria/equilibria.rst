@@ -659,6 +659,98 @@ calculation of the Jacobian of the field constraints. Instead, we choose
 to constrain the poloidal field at the centre of the inside edge of each
 coil, where the field is generally the highest.
 
+
+Toroidal Harmonic constraints
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+An equilibrium poloidal field has a plasma and coilset contribution. When we optimise coil currents,
+we also have to re-solve the equilbrium solution for the plasma. We can use the following premise that
+our equilibrium solution will not change if the coilset contribution
+to the poloidal field (vacuum field) is kept the same in the region
+occupied by the core plasma (i.e. the region characterised by closed flux surfaces).
+If we constrain the core plasma while altering (optimising) other aspects
+of the magnetic configuration, then we will not need to re-solve for
+the plasma equilibrium at each iteration. We can decompose the vacuum field into Toroidal Harmonics (TH)
+to create a minimal set of constraints for use in optimisation.
+
+There are benefits to using TH as a minimal set of constraints:
+- We can choose not to re-solve for the plasma equilibrium at each step, since the
+coilset contribution to the core plasma (within the LCFS) is constrained.
+- We have a minimal set of constraints (a set of harmonic amplitudes) for the core
+plasma contribution, which can reduce the dimensionality of the problem we are
+considering.
+We get the TH amplitudes/coefficients, :math:`A(\tau, \sigma)`, from the following equations:
+
+.. math::
+   :label: TH_no_currents
+
+   \begin{aligned}
+   A(\tau, \sigma) &= \sum_{m=0}^{\infty} A_m^{\cos} \epsilon_m m! \sqrt{\frac{2}{\pi}}
+   \Delta^{\frac{1}{2}} \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \cos(m \sigma)  \\
+   &+ A_m^
+   {\sin}
+   \epsilon_m m! \sqrt{\frac{2}{\pi}} \Delta^{\frac{1}{2}}
+   \textbf{Q}_{m-\frac{1}{2}}^{1}(\cosh \tau) \sin(m \sigma)\end{aligned}
+
+where
+
+.. math::
+   :label: TH_with_currents
+
+   A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} factorial\_term \frac{\sinh(
+   \tau_c)}
+   {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) ^{\cos}_{\sin}(m
+   \sigma_c)
+
+where
+
+- :math:`A_m^{\cos, \sin}` are coefficients for a single coil
+
+- subscript :math:`c` refers to a single coil
+
+- :math:`I_c, \tau_c, \sigma_c` are the coil current, and coil position in toroidal coordinates :math:`(\tau, \sigma)`
+
+- :math:`m` is the poloidal mode number
+
+- :math:`P_{\nu}^{\mu}` is the associated Legendre function of the first kind of degree :math:`\nu` and order :math:`\mu`
+
+- :math:`\textbf{Q}_{\nu}^{\mu}` is Olver's definition of the associated Legendre function of the second kind. See [here](https://dlmf.nist.gov/14) or F. W. J. Olver (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information.
+
+- :math:`\varepsilon_m = 1` for :math:`m = 0` and :math:`\varepsilon_m = 2` for :math:`m \ge 1`
+
+- :math:`\Delta = \cosh(\tau) - \cos(\sigma)`
+
+- :math:`\Delta_c = \cosh(\tau_c) - \cos(\sigma_c)`
+
+- :math:`factorial\_term = \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right)`
+
+Our TH approximation uses collocation points and a brute force method to calculate the TH
+amplitudes for a given number of degrees of freedom, using TH functions up to a given maximum
+poloidal mode number. The method starts by setting
+up the region to be used in the TH approximation using the `toroidal_harmonic_grid_and_coil_setup` function. 
+This function needs to be provided with the equilbrium, and the coordinates of the focus point. By default the 
+focus point is set to the effective centre of the plasma. There are also optional arguments which are used
+to specify where the approximation region is placed. The `tau_limit` is used to determine how the maximum
+tau value is chosen. The three options are:
+
+- LCFS: use the maximum extent of the LCFS
+- COIL: use the maxmimum area that is contained within all coils
+- MANUAL: use a user-specified tau limit
+
+The `min_tau_value` is used to specify the minimum tau for the toroidal coordinate approximation region, and 
+lower min tau means a larger region of space (the maximum tau is at the focus point).
+
+Then it iterates through combinations of cos and sin modes,
+calculates the psi at the collocation points using equation :eq:`TH_no_currents`, compares this approximated psi to the bluemira psi at the collocation points,
+and returns the combination of modes that gives the best approximation when compared using an L2 norm of the error across the 
+psi map.
+
+When we want to use TH as a constraint, we use equation :eq:`TH_with_currents` to create an :math:`A\bf{x} = b` constraint.
+
+.. figure:: th-flux-comparison.png
+   :name: fig:th-flux-comparison
+
+   Diagram showing the comparison of coilset psi calculated by bluemira vs calculated using toroidal harmonic equations.
+
 Coil position optimisation and constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

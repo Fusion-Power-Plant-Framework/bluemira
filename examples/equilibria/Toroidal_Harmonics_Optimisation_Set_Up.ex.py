@@ -106,7 +106,6 @@ result = toroidal_harmonic_approximation(
     n_degrees_of_freedom=6,
     max_harmonic_mode=5,
     plasma_mask=True,
-    from_psi_fit=True,
 )
 
 # %% [markdown]
