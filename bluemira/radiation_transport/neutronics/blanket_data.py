@@ -68,6 +68,12 @@ def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
     -------
     tokamak_geometry:
         tokamak geometry parameters
+
+    Raises
+    ------
+    ValueError
+        If the thickness of the sub-layers is incompatible with the totoal
+        blanket thickness.
     """
     # Geometry variables
 

@@ -543,11 +543,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
                 debug=debug,
             )
         if run := self._get_execution_method(self._run, run_mode):
-            import time
-
-            t = time.time()
             result = run(run_mode, debug=debug)
-            print(f"Total runtime: {time.time() - t:.2f} seconds")
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(
                 self._setup.universe,
