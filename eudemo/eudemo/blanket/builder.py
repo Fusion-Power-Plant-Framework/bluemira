@@ -36,6 +36,10 @@ class BlanketBuilderParams(ParameterFrame):
     n_bb_inboard: Parameter[int]
     n_bb_outboard: Parameter[int]
     c_rm: Parameter[float]
+    tk_bb_fw_ib: Parameter[float]
+    tk_bb_bz_ib: Parameter[float]
+    tk_bb_fw_ob: Parameter[float]
+    tk_bb_bz_ob: Parameter[float]
 
 
 class BlanketBuilder(Builder):
@@ -84,10 +88,10 @@ class BlanketBuilder(Builder):
             The component tree
         """
         ib_fw, ib_bz, ib_manifold = self._subdivide_poloidally(
-            self.ib_silhouette, 0.02, 0.4
+            self.ib_silhouette, self.params.tk_bb_fw_ib.value, self.params.tk_bb_bz_ib.value
         )
         ob_fw, ob_bz, ob_manifold = self._subdivide_poloidally(
-            self.ob_silhouette, 0.02, 0.4
+            self.ob_silhouette, self.params.tk_bb_fw_ob.value, self.params.tk_bb_bz_ob.value
         )
 
         ib_segments = (
