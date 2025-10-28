@@ -23,7 +23,6 @@ from tokamak_neutron_source.flux import (
     EQDSKFluxInterpolator,
     FluxPoint,
 )
-from tokamak_neutron_source.flux import FausserFluxSurface, LCFSInformation
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc

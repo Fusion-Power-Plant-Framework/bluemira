@@ -198,6 +198,10 @@ class EUDEMOReactorParams(ParameterFrame):
     # Blanket
     n_bb_inboard: Parameter[int]
     n_bb_outboard: Parameter[int]
+    tk_bb_fw_ib: Parameter[float]
+    tk_bb_bz_ib: Parameter[float]
+    tk_bb_fw_ob: Parameter[float]
+    tk_bb_bz_ob: Parameter[float]
 
     # TF Coils
     r_tf_current_ib: Parameter[float]
@@ -256,6 +260,7 @@ class EUDEMOReactorParams(ParameterFrame):
     fw_dL_min: Parameter[float]  # noqa: N815
 
     # CSG neutronics
+    # TODO: What ever happened to these...? They never got used.
     peaking_factor: Parameter[float]
     vertical_shift: Parameter[float]
     inboard_fw_tk: Parameter[float]

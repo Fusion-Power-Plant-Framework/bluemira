@@ -277,7 +277,9 @@ def build_blanket(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
     ib_silhouette, ob_silhouette, panel_points = designer.execute()
-    builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
+    builder = BlanketBuilder(
+        params, build_config, ib_silhouette, ob_silhouette, panel_points
+    )
     return Blanket(builder.build(), panel_points, r_inner_cut)
 
 

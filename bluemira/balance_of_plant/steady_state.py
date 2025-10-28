@@ -515,7 +515,14 @@ class BalanceOfPlantModel:
         self.flow_dict = {
             "Plasma": [p_fusion, p_hcd, -p_neutron, -p_separatrix - p_radiation],
             "H&CD": [p_hcd_el, -p_hcd, -(p_hcd_el - p_hcd)],
-            "Neutrons": [p_neutron, p_nrgm, -p_n_blk, -p_n_div, -p_n_vv - p_n_aux, -p_n_other],
+            "Neutrons": [
+                p_neutron,
+                p_nrgm,
+                -p_n_blk,
+                -p_n_div,
+                -p_n_vv - p_n_aux,
+                -p_n_other,
+            ],
             "Radiation and \nseparatrix": [
                 p_radiation + p_separatrix,
                 -p_rad_sep_fw,
