@@ -20,12 +20,11 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
+import json
 import shutil
 from pathlib import Path
-import json
 
 import matplotlib.pyplot as plt
-from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 import numpy as np
 from matproplib.conditions import OperationalConditions
 
@@ -46,8 +45,8 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
-from bluemira.display.displayer import show_cad
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates

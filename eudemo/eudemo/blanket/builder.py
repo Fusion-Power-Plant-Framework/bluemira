@@ -18,12 +18,17 @@ from bluemira.builders.tools import (
     get_n_sectors,
     pattern_revolved_silhouette,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.tools import boolean_cut, boolean_fragments, slice_shape
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fragments,
+    make_polygon,
+    offset_wire,
+    slice_shape,
+)
 
 
 @dataclass
@@ -154,7 +159,7 @@ class BlanketBuilder(Builder):
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
         slices = []
-        for i, segment in enumerate(segments):
+        for segment in segments:
             single_slice = PhysicalComponent(
                 segment.name, BluemiraFace(slice_shape(segment.shape, xy_plane)[0])
             )
@@ -184,9 +189,8 @@ class BlanketBuilder(Builder):
             degree=sector_degree * n_sectors,
         )
 
-    def _find_union_face(
-        self, silhouette: BluemiraFace, cut: BluemiraFace
-    ) -> BluemiraFace:
+    @staticmethod
+    def _find_union_face(silhouette: BluemiraFace, cut: BluemiraFace) -> BluemiraFace:
         # This is perhaps not entirely robust, but works for now
         fragments = boolean_fragments([silhouette, cut])[1][0]
         return fragments[0]
@@ -208,6 +212,10 @@ class BlanketBuilder(Builder):
     def get_segments(
         self, silhouette: BluemiraFace, sub_name: str, inboard: bool, color_index: int
     ):
+        """
+        Create the sub-layer-segments of the blanket from a silhouette of
+        a sub-layer.
+        """
         if inboard:
             n_seg_per_sector = self.params.n_bb_inboard.value
             name = self.IBS
