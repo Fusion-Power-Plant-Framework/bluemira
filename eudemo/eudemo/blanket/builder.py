@@ -103,21 +103,19 @@ class BlanketBuilder(Builder):
             self.params.tk_bb_bz_ob.value,
         )
 
-        ib_segments = (
+        segments = (
             self.get_segments(ib_fw, self.FW, inboard=True, color_index=0)
             + self.get_segments(ib_bz, self.BZ, inboard=True, color_index=1)
             + self.get_segments(ib_manifold, self.MANIFOLD, inboard=True, color_index=2)
-        )
-        ob_segments = (
-            self.get_segments(ob_fw, self.FW, inboard=False, color_index=0)
+            + self.get_segments(ob_fw, self.FW, inboard=False, color_index=0)
             + self.get_segments(ob_bz, self.BZ, inboard=False, color_index=1)
             + self.get_segments(ob_manifold, self.MANIFOLD, inboard=False, color_index=2)
         )
 
         return self.component_tree(
             xz=[self.build_xz(ib_fw, ib_bz, ib_manifold, ob_fw, ob_bz, ob_manifold)],
-            xy=self.build_xy(ib_segments + ob_segments),
-            xyz=self.build_xyz(ib_segments + ob_segments, degree=0),
+            xy=self.build_xy(segments),
+            xyz=self.build_xyz(segments, degree=0),
         )
 
     def build_xz(self, ib_fw, ib_bz, ib_manifold, ob_fw, ob_bz, ob_manifold):
