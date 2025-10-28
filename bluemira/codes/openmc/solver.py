@@ -541,6 +541,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
             )
         if run := self._get_execution_method(self._run, run_mode):
             import time
+
             t = time.time()
             result = run(run_mode, debug=debug)
             print(f"Total runtime: {time.time() - t:.2f} seconds")

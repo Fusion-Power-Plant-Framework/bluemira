@@ -32,7 +32,11 @@ from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_print_clean
+from bluemira.base.look_and_feel import (
+    bluemira_error,
+    bluemira_print,
+    bluemira_print_clean,
+)
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -272,7 +276,9 @@ def build_blanket(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
     ib_silhouette, ob_silhouette, panel_points = designer.execute()
-    builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
+    builder = BlanketBuilder(
+        params, build_config, ib_silhouette, ob_silhouette, panel_points
+    )
     return Blanket(builder.build(), panel_points, r_inner_cut)
 
 
@@ -870,15 +876,18 @@ if __name__ == "__main__":
 
         sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
         sspc_result = sspc_solver.execute()
-        reactor_config.global_params.P_el_net.set_value(sspc_result["P_el_net"], "BLUEMIRA")
+        reactor_config.global_params.P_el_net.set_value(
+            sspc_result["P_el_net"], "BLUEMIRA"
+        )
 
         lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 
         reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        save_reactor(reactor, reactor_config, folder_name=f"results_dl_min_0_1/A_{a_string}")
-
+        save_reactor(
+            reactor, reactor_config, folder_name=f"results_dl_min_0_1/A_{a_string}"
+        )
 
         # import json
         # a_value = reactor_config.global_params.A.value
