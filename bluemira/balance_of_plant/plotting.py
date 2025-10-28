@@ -344,13 +344,13 @@ class BalanceOfPlantPlotter:
         # 2: Neutrons
         sankey.add(
             patchlabel="Neutrons",
-            labels=[None, "Energy Multiplication", "Blanket n", "Divertor n", "Aux n"],
+            labels=[None, "Energy Multiplication", "Blanket n", "Divertor n", "Aux n", "Other n"],
             flows=flow_dict["Neutrons"],
-            orientations=[0, 1, 0, -1, -1],
+            orientations=[0, 1, 0, -1, -1, -1],
             prior=0,
             connect=(2, 0),
             trunklength=trunk_length,
-            pathlengths=[l_s, l_s, l_s, 3 * l_m, l_m],
+            pathlengths=[l_s, l_s, l_s, 3 * l_m, l_m, l_s],
             facecolor=BLUEMIRA_PALETTE["orange"].as_hex(),
         )
         # 3: Radiation and separatrix
