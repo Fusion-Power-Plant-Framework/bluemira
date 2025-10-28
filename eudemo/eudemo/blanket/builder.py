@@ -88,10 +88,14 @@ class BlanketBuilder(Builder):
             The component tree
         """
         ib_fw, ib_bz, ib_manifold = self._subdivide_poloidally(
-            self.ib_silhouette, self.params.tk_bb_fw_ib.value, self.params.tk_bb_bz_ib.value
+            self.ib_silhouette,
+            self.params.tk_bb_fw_ib.value,
+            self.params.tk_bb_bz_ib.value,
         )
         ob_fw, ob_bz, ob_manifold = self._subdivide_poloidally(
-            self.ob_silhouette, self.params.tk_bb_fw_ob.value, self.params.tk_bb_bz_ob.value
+            self.ob_silhouette,
+            self.params.tk_bb_fw_ob.value,
+            self.params.tk_bb_bz_ob.value,
         )
 
         ib_segments = (

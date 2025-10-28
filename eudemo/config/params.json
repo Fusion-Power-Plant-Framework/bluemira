@@ -1303,25 +1303,25 @@
     "description": "Used in 0-D neutronics model"
   },
   "tk_bb_fw_ib": {
-    "value": 0.02,
+    "value": 0.027,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket first wall inboard thickness"
   },
   "tk_bb_bz_ib": {
-    "value": 0.35,
+    "value": 0.4,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket breeding zone inboard thickness"
   },
   "tk_bb_fw_ob": {
-    "value": 0.02,
+    "value": 0.027,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket first wall outboard thickness"
   },
   "tk_bb_bz_ob": {
-    "value": 0.46,
+    "value": 0.5,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket breeding zone outboard thickness"
