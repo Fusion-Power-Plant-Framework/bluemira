@@ -87,7 +87,7 @@ def symmetrise_coilset(
         else:
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
-    return CoilSet(*new_coils)
+    return CoilSet(*new_coils, control_names=coilset.control)
 
 
 class CoilGroup(CoilGroupFieldsMixin):
@@ -1243,12 +1243,17 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         names = self.name
         if isinstance(control_names, list):
-            self._control_ind = [names.index(c) for c in control_names]
+            control_ind = [names.index(c) for c in control_names]
         elif control_names or control_names is None:
-            self._control_ind = np.arange(len(names)).tolist()
+            control_ind = np.arange(len(names)).tolist()
         else:
-            self._control_ind = []
-        self._control = [names[c] for c in self._control_ind]
+            control_ind = []
+        # Sort to match self.names - so that we are not changing
+        # the order based on the input control_names ordering.
+        # For SymmetricCircuits, the list names will be returned
+        # in circuit pairs in order of primary coil name.
+        self._control_ind = np.sort(control_ind)
+        self._control = [names[c] for c in np.sort(self._control_ind)]
 
     def get_control_coils(self) -> CoilSet:
         """Get control coils"""  # noqa: DOC201
