@@ -1333,7 +1333,6 @@ class TestRegressionTH:
             n_degrees_of_freedom=n_degrees_of_freedom,
             max_harmonic_mode=max_harmonic_mode,
             plasma_mask=True,
-            from_psi_fit=False,
         )
         mask = _get_plasma_mask(
             eq=self.eq,
