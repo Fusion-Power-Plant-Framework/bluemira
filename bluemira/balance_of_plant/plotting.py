@@ -340,7 +340,14 @@ class BalanceOfPlantPlotter:
         # 2: Neutrons
         sankey.add(
             patchlabel="Neutrons",
-            labels=[None, "Energy Multiplication", "Blanket n", "Divertor n", "Aux n", "Other n"],
+            labels=[
+                None,
+                "Energy Multiplication",
+                "Blanket n",
+                "Divertor n",
+                "Aux n",
+                "Other n",
+            ],
             flows=flow_dict["Neutrons"],
             orientations=[0, 1, 0, -1, -1, -1],
             prior=0,
