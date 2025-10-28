@@ -476,6 +476,8 @@ class BalanceOfPlantModel:
         p_n_vv = self.params.P_n_vessel.value
         p_n_aux = self.params.P_n_aux.value
         p_nrgm = self.params.P_n_e_mult.value
+        # "Lost" neutron power that doesn't go into any of the defined components
+        p_n_other = p_neutron + p_nrgm - p_n_blk - p_n_div - p_n_vv - p_n_aux
 
         p_blk_decay = self.params.P_n_decay.value
 
@@ -513,7 +515,7 @@ class BalanceOfPlantModel:
         self.flow_dict = {
             "Plasma": [p_fusion, p_hcd, -p_neutron, -p_separatrix - p_radiation],
             "H&CD": [p_hcd_el, -p_hcd, -(p_hcd_el - p_hcd)],
-            "Neutrons": [p_neutron, p_nrgm, -p_n_blk, -p_n_div, -p_n_vv - p_n_aux],
+            "Neutrons": [p_neutron, p_nrgm, -p_n_blk, -p_n_div, -p_n_vv - p_n_aux, -p_n_other],
             "Radiation and \nseparatrix": [
                 p_radiation + p_separatrix,
                 -p_rad_sep_fw,
