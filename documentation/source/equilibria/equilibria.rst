@@ -726,8 +726,8 @@ where
 Our TH approximation uses collocation points and a brute force method to calculate the TH
 amplitudes for a given number of degrees of freedom, using TH functions up to a given maximum
 poloidal mode number. The method starts by setting
-up the region to be used in the TH approximation using the `toroidal_harmonic_grid_and_coil_setup` function. 
-This function needs to be provided with the equilbrium, and the coordinates of the focus point. By default the 
+up the region to be used in the TH approximation using the `toroidal_harmonic_grid_and_coil_setup` function.
+This function needs to be provided with the equilbrium, and the coordinates of the focus point. By default the
 focus point is set to the effective centre of the plasma. There are also optional arguments which are used
 to specify where the approximation region is placed. The `tau_limit` is used to determine how the maximum
 tau value is chosen. The three options are:
@@ -736,12 +736,12 @@ tau value is chosen. The three options are:
 - COIL: use the maxmimum area that is contained within all coils
 - MANUAL: use a user-specified tau limit
 
-The `min_tau_value` is used to specify the minimum tau for the toroidal coordinate approximation region, and 
+The `min_tau_value` is used to specify the minimum tau for the toroidal coordinate approximation region, and
 lower min tau means a larger region of space (the maximum tau is at the focus point).
 
 Then it iterates through combinations of cos and sin modes,
 calculates the psi at the collocation points using equation :eq:`TH_no_currents`, compares this approximated psi to the bluemira psi at the collocation points,
-and returns the combination of modes that gives the best approximation when compared using an L2 norm of the error across the 
+and returns the combination of modes that gives the best approximation when compared using an L2 norm of the error across the
 psi map.
 
 When we want to use TH as a constraint, we use equation :eq:`TH_with_currents` to create an :math:`A\bf{x} = b` constraint.
