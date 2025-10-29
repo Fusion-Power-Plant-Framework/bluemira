@@ -804,10 +804,10 @@ def toroidal_harmonics_to_positions(
 
     Returns
     -------
-    :
+    harmonics2collocation_cos:
         collocation matrix for cos components
-    :
-        collocation matrix for cos components
+    harmonics2collocation_sin:
+        collocation matrix for sin components
 
     Raises
     ------
