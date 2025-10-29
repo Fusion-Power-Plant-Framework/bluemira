@@ -1043,6 +1043,37 @@ def toroidal_harmonic_approximation(
     )
 
 
+def _approximation_direct_from_currents(
+    eq, th_params, cos_m_chosen, sin_m_chosen, true_coilset_psi, mask
+):
+    """
+    Approximate psi using the equation for toroidal harmonic amplitudes that
+    is dependent on current
+
+    Returns
+    -------
+    error:
+        Error of L2 norm when comparing approximated
+        coilset psi to desired coilset psi
+    approximate_coilset_psi:
+        Approximated coilset psi
+    cos_amps:
+        Selected cosine toroidal harmonic amplitudes
+    sin_amps:
+        Selected sine toroidal harmonic amplitudes
+    """
+    approximate_coilset_psi, cos_amps, sin_amps = toroidal_harmonic_approximate_psi(
+        eq=eq,
+        th_params=th_params,
+        cos_m_chosen=cos_m_chosen,
+        sin_m_chosen=sin_m_chosen,
+    )
+    # Calculate L2 norm of the error between the approximated coilset psi and the
+    # true coilset psi
+    error_new = np.linalg.norm(mask * (approximate_coilset_psi - true_coilset_psi))
+    return error_new, approximate_coilset_psi, cos_amps, sin_amps
+
+
 def _approximation_from_psi_fitting(
     th_params,
     n_degrees_of_freedom,
