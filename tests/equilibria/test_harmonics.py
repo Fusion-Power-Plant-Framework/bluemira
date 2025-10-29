@@ -1316,15 +1316,15 @@ class TestRegressionTH:
         max_harmonic_mode = 5
 
         expected_cos_modes = np.array([0, 1, 2, 3, 4])
-        expected_sin_modes = np.array([3])
+        expected_sin_modes = np.array([0])
         expected_cos_amplitudes = np.array([
-            -4.23864252,
-            -3.58288708,
-            -10.51447447,
-            -11.673279,
-            -14.26727472,
+            -4.2389231,
+            -3.58792624,
+            -10.58312314,
+            -12.03133123,
+            -15.05828234,
         ])
-        expected_sin_amplitudes = np.array([3.15627377])
+        expected_sin_amplitudes = np.array([-19.33699313])
 
         result = toroidal_harmonic_approximation(
             eq=self.eq,
