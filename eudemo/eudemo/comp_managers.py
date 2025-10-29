@@ -285,12 +285,12 @@ class ThermalShield(PortManagerMixin, ComponentManager):
 
         vvts_sector_body = PhysicalComponent(vvts_target_name, final_shape)
         vvts_sector_void = PhysicalComponent(
-            vvts_void_name, final_void, material=Void("vacuum")
+            vvts_void_name, final_void, material=Void(name="vacuum")
         )
 
         cts_sector_body = PhysicalComponent(cts_target_name, cts_target_shape)
         cts_sector_void = PhysicalComponent(
-            cts_void_name, cts_target_void, material=Void("vacuum")
+            cts_void_name, cts_target_void, material=Void(name="vacuum")
         )
 
         self._orphan_old_components([vvts, cts])

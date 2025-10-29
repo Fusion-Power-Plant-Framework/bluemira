@@ -11,16 +11,16 @@ Classes and methods to load, store, and retrieve materials.
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, ClassVar
+import types
+from typing import TYPE_CHECKING
 
 from matproplib.library.fluids import Void
 
 from bluemira.materials.error import MaterialsError
+from bluemira.utilities.tools import get_module
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
-    from matproplib.materail import Material
+    from matproplib.material import Material
 
 vacuum_void = Void(name="Vacuum")
 
@@ -33,8 +33,6 @@ class MaterialCache:
     -----
     Extend the `available_classes` attribute to load custom classes.
     """
-
-    _material_dict: ClassVar = {}
 
     _instance: MaterialCache | None = None
 
@@ -68,9 +66,41 @@ class MaterialCache:
         try:
             super().__getattribute__(value)
         except AttributeError:
-            if value in self._material_dict:
-                return self._material_dict[value]
+            if value in self._material_package:
+                return self._material_package[value]
             raise
+
+    def load_from_package(self, package):
+        """Load material package"""
+        self._material_packages = [get_module(p) for p in package]
+
+    def _get_material(self, name):
+        name = name.replace("-", "_")
+        name = name.split(".") if "." in name else [name]
+
+        def _d(p, name, initial_p):
+            if name in dir(p):
+                return getattr(p, name)
+            for dp in filter(lambda s: not s.startswith("__"), dir(p)):
+                attr = getattr(p, dp)
+                if dp == name:
+                    return attr
+                if (
+                    isinstance(attr, types.ModuleType)
+                    and initial_p in repr(attr)
+                    and (attr := _d(attr, name, initial_p)) is not None
+                ):
+                    return attr
+            return None
+
+        for p in self._material_packages:
+            if len(name) == 1:
+                return _d(p, name[0], p.__name__)
+            mod = p
+            for n in name:
+                mod = _d(mod, n, p.__name__)
+            return mod
+        raise AttributeError("No such material")
 
     def get_material(self, name: str, *, clone: bool = True):
         """
@@ -89,19 +119,11 @@ class MaterialCache:
         The requested material.
         """
         if clone:
-            return copy.deepcopy(self._material_dict[name])
-        return self._material_dict[name]
-
-    def _update_cache(self, mat_name: str, mat, *, overwrite: bool = True):
-        if not overwrite and mat_name in self._material_dict:
-            raise MaterialsError(
-                f"Attempt to load material {mat_name}, which already "
-                "exists in the cache."
-            )
-        self._material_dict[mat_name] = mat
+            return copy.deepcopy(self._get_material(name))
+        return self._get_material(name)
 
 
-def establish_material_cache(materials_json_paths: list[Path | str]):
+def establish_material_cache(materials_package: str | object):
     """
     Load the material data from the provided json files into the global material cache
     instance.
@@ -111,7 +133,7 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
 
     Parameters
     ----------
-    materials_json_paths:
+    materials_package:
         A list of paths to the data files to load into the material cache.
 
     Returns
@@ -119,8 +141,7 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
     The material cache.
     """
     cache = MaterialCache.get_instance()
-    for path in materials_json_paths:
-        cache.load_from_file(path)
+    cache.load_from_package(materials_package)
     return cache
 
 
