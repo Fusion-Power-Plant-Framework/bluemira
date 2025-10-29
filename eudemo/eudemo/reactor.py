@@ -620,8 +620,16 @@ def save_reactor(reactor, reactor_config, folder_name):
 
 if __name__ == "__main__":
     set_log_level("INFO")
+    import time
+
+    run_time_track = {
+        "Total": 0.0,
+        "PROCESS": 0.0,
+        "CSG neutronics": 0.0,
+    }
 
     try:
+        start = time.time()
         reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
         reactor = EUDEMO(
             "EUDEMO",
@@ -630,10 +638,13 @@ if __name__ == "__main__":
 
         establish_material_cache(["eurofusion_materials.library", "matproplib"])
 
+        process_start = time.time()
         radial_build(
             reactor_config.params_for("Radial build").global_params,
             reactor_config.config_for("Radial build"),
         )
+        process_end = time.time()
+        run_time_track["PROCESS"] = process_end - process_start
 
         lcfs_coords, profiles = run_designer(
             FixedEquilibriumDesigner,
@@ -698,6 +709,7 @@ if __name__ == "__main__":
         )
 
         if reactor_config.config_for("Neutronics").get("enabled", False):
+            neutronics_start = time.time()
             reactor.neutronics = NeutronicsManager(
                 *run_neutronics(
                     reactor_config.params_for("Neutronics").global_params,
@@ -709,6 +721,8 @@ if __name__ == "__main__":
                     op_cond=OperationalConditions(temperature=298, pressure=101325),
                 )
             )
+            neutronics_end = time.time()
+            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
 
             if reactor_config.config_for("Neutronics")["show_data"]:
                 reactor.neutronics.plot()
@@ -882,16 +896,17 @@ if __name__ == "__main__":
 
         reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
-        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        save_reactor(
-            reactor, reactor_config, folder_name=f"results_dl_min_0_1/A_{a_string}"
-        )
+        end = time.time()
 
-        # import json
-        # a_value = reactor_config.global_params.A.value
-        # a_string = f"{a_value:.2f}".split(".")[0] + "_" + f"{a_value:.2f}".split(".")[1]
-        # with open(f"BLUEMIRA_OUT_A_{a_string}.json", "w") as f:
-        #     json.dump(reactor_config.global_params.to_dict(), f, indent=2)
+        run_time_track["Total"] = start - end
+
+        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
+        folder_name = f"results_dl_min_0_1/A_{a_string}"
+        filename = f"{folder_name}/run_time.json"
+        with open(filename, "w") as f:
+            json.dump(run_time_track, f, indent=2)
+        save_reactor(reactor, reactor_config, folder_name=folder_name)
+
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))
         raise e
