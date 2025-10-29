@@ -119,7 +119,7 @@ class TSUpperPortDuctBuilder(Builder):
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
-            material=Void("vacuum"),
+            material=Void(name="vacuum"),
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -224,7 +224,9 @@ class TSEquatorialPortDuctBuilder(Builder):
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
-        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+        void = PhysicalComponent(
+            self.name + " voidspace", void, material=Void(name="vacuum")
+        )
 
         apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
@@ -328,7 +330,7 @@ class VVUpperPortDuctBuilder(Builder):
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
-            material=Void("vacuum"),
+            material=Void(name="vacuum"),
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -346,7 +348,7 @@ class VVUpperPortDuctBuilder(Builder):
         comp = PhysicalComponent(self.name, xy_face)
         apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         void = PhysicalComponent(
-            self.name + " voidspace", xy_voidface, material=Void("vacuum")
+            self.name + " voidspace", xy_voidface, material=Void(name="vacuum")
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -433,7 +435,9 @@ class VVEquatorialPortDuctBuilder(Builder):
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
-        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+        void = PhysicalComponent(
+            self.name + " voidspace", void, material=Void(name="vacuum")
+        )
 
         apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))

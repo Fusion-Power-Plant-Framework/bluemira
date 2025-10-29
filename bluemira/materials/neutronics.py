@@ -87,7 +87,7 @@ def make_PbLi_mat(li_enrich_ao) -> Material:
         elements={"Pb": 0.83, "Li": 0.17},
         properties=props(density=(9.4, "g/cm^3")),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="ao"
+            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -108,12 +108,12 @@ def make_Li4SiO4_mat(li_enrich_ao) -> Material:
     """
     return material(
         name="lithium_orthosilicate",
-        elements={"Li": 4, "Si28": 1, "O16": 4},
+        elements={"Li": 4 / 9, "Si28": 1 / 9, "O16": 4 / 9},
         properties=props(
             density=(2.247 + 0.078 * (100.0 - li_enrich_ao) / 100.0, "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="ao"
+            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -134,7 +134,7 @@ def make_Li2TiO3_mat(li_enrich_ao) -> Material:
     """
     return material(
         name="lithium_titanate",
-        elements={"Li": 2, "Ti": 1, "O16": 3},
+        elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
             density=(
                 3.28 + 0.06 * (100.0 - li_enrich_ao) / 100.0,
@@ -142,7 +142,7 @@ def make_Li2TiO3_mat(li_enrich_ao) -> Material:
             )
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="ao"
+            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -183,7 +183,7 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
             (make_Li4SiO4_mat(li_enrich_ao), 9 * 0.65 / (9 * 0.65 + 6 * 0.35)),
             (make_Li2TiO3_mat(li_enrich_ao), 6 * 0.35 / (9 * 0.65 + 6 * 0.35)),
         ],
-        fraction_type="ao",
+        fraction_type="atomic",
         converters=OpenMCNeutronicConfig(
             packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
         ),
@@ -286,7 +286,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_vv_mat = mixture(
         name="inb_vacuum_vessel",
         materials=[(eurofer_mat, 0.8), (water_mat, 0.2)],
-        fraction_type="vo",
+        fraction_type="volume",
         converters=OpenMCNeutronicConfig(material_id=104),
     )
 
@@ -299,7 +299,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (he_cool_mat, 12.0 / 27.0),
             (lined_euro_mat, 11.5 / 27.0),
         ],
-        fraction_type="vo",
+        fraction_type="volume",
         converters=OpenMCNeutronicConfig(material_id=101),
     )
 
@@ -310,7 +310,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (lined_euro_mat, 0.0605 + 0.9395 * 0.05),
             (make_PbLi_mat(li_enrich_ao), 0.9395 * 0.95),
         ],
-        fraction_type="vo",
+        fraction_type="volume",
         converters=OpenMCNeutronicConfig(material_id=102),
     )
 
@@ -321,7 +321,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[(eurofer_mat, 0.573), (inb_bz_mat, 0.426)],  # 1% void
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
@@ -352,7 +352,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_vv_mat = mixture(
         name="inb_vacuum_vessel",  # optional name of homogeneous material
         materials=[(eurofer_mat, 0.6), (water_mat, 0.4)],
-        fraction_type="vo",
+        fraction_type="volume",
         converters=OpenMCNeutronicConfig(material_id=104),
     )
 
@@ -371,18 +371,18 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (eurofer_mat, 25.0 * 0.573 / 27.0),
                 (he_cool_mat, 25.0 * 0.427 / 27.0),
             ],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=101),
         ),
         inb_bz_mat=mixture(
             name="inb_breeder_zone",
             materials=[
                 (eurofer_mat, structural_fraction_vo),
-                (Be12Ti, multiplier_fraction_vo),
+                (Be12Ti(), multiplier_fraction_vo),
                 (make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
                 (he_cool_mat, helium_fraction_vo),
             ],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=102),
         ),
         inb_mani_mat=mixture(
@@ -392,7 +392,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
                 (he_cool_mat, 0.5035),
             ],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
@@ -403,7 +403,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (water_mat, 4.5 / 25.0),
                 (eurofer_mat, 4.5 / 25.0),
             ],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=302),
         ),
     )
@@ -437,7 +437,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_fw_mat = mixture(
         name="inb_first_wall",
         materials=[(tungsten_mat, 0.0766), (water_mat, 0.1321), (eurofer_mat, 0.7913)],
-        fraction_type="vo",
+        fraction_type="volume",
         converters=OpenMCNeutronicConfig(material_id=101),
     )
 
@@ -445,7 +445,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         inb_vv_mat=mixture(
             name="inb_vacuum_vessel",
             materials=[(eurofer_mat, 0.6), (water_mat, 0.4)],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=104),
         ),
         inb_fw_mat=inb_fw_mat,
@@ -457,13 +457,13 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (water_mat, 0.0176),
                 (eurofer_mat, 0.1582),
             ],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=102),
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[(PbLi_mat, 0.2129), (water_mat, 0.2514), (eurofer_mat, 0.5357)],
-            fraction_type="vo",
+            fraction_type="volume",
             converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(eurofer_mat, "divertor", 301),

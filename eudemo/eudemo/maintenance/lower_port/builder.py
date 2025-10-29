@@ -99,7 +99,9 @@ class TSLowerPortDuctBuilder(Builder):
             duct,
             material=self.get_material(self.TS),
         )
-        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+        void = PhysicalComponent(
+            self.name + " voidspace", void, material=Void(name="vacuum")
+        )
         apply_component_display_options(pc, color=BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
@@ -183,7 +185,9 @@ class VVLowerPortDuctBuilder(Builder):
             duct,
             material=self.get_material(self.VV),
         )
-        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+        void = PhysicalComponent(
+            self.name + " voidspace", void, material=Void(name="vacuum")
+        )
         apply_component_display_options(pc, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
 

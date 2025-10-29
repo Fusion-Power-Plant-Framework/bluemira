@@ -94,7 +94,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             VacuumVesselBuilder.BODY, final_shape, material=vv_body.material
         )
         sector_void = PhysicalComponent(
-            VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
+            VacuumVesselBuilder.VOID, final_void, material=Void(name="vacuum")
         )
 
         self._orphan_old_components(component)
@@ -212,7 +212,7 @@ class VacuumVesselBuilder(Builder):
             material=self.get_material(),
         )
         vacuum = PhysicalComponent(
-            self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
+            self.VOID, BluemiraFace(inner_vv), material=Void(name="vacuum")
         )
         apply_component_display_options(body, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(vacuum, color=(0, 0, 0))
@@ -249,6 +249,6 @@ class VacuumVesselBuilder(Builder):
             degree,
             material=[
                 self.get_material(),
-                Void("vacuum"),
+                Void(name="vacuum"),
             ],
         )

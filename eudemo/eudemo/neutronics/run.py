@@ -23,6 +23,7 @@ from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from matproplib.conditions import OperationalConditions
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
@@ -60,6 +61,7 @@ def run_neutronics(
     vacuum_vessel: ComponentManager,
     ivc_shapes: IVCShapes,
     eq: Equilibrium,
+    op_cond: OperationalConditions,
     source: NeutronSourceCreator | None = None,
     tally_function=None,
 ) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
@@ -106,6 +108,7 @@ def run_neutronics(
         neutronics_csg,
         eq,
         source=source or make_tokamak_source,
+        op_cond=op_cond,
         tally_function=tally_function,
     )
 

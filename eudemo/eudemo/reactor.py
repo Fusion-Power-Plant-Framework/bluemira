@@ -24,6 +24,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib.conditions import OperationalConditions
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
@@ -548,10 +549,7 @@ if __name__ == "__main__":
         n_sectors=reactor_config.global_params.n_TF.value,
     )
 
-    establish_material_cache([
-        reactor_config.config_for("materials_path")["materials"],
-        reactor_config.config_for("materials_path")["mixtures"],
-    ])
+    establish_material_cache(["eurofusion_materials.library", "matproplib"])
 
     radial_build(
         reactor_config.params_for("Radial build").global_params,
@@ -628,6 +626,7 @@ if __name__ == "__main__":
                 vacuum_vessel=reactor.vacuum_vessel,
                 ivc_shapes=ivc_shapes,
                 eq=reference_eq,
+                op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
         )
 
