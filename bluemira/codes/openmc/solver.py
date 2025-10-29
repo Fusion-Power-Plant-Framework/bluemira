@@ -57,6 +57,9 @@ if TYPE_CHECKING:
         NeutronicsReactor,
     )
 
+if TYPE_CHECKING:
+    from matproplib.conditions import OperationalConditions
+
 
 class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""

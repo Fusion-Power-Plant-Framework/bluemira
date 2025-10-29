@@ -118,12 +118,12 @@ def make_Li4SiO4_mat(li_enrich_ao) -> Material:
     """
     return material(
         name="lithium_orthosilicate",
-        elements={"Li": 4, "Si28": 1, "O16": 4},
+        elements={"Li": 4 / 9, "Si28": 1 / 9, "O16": 4 / 9},
         properties=props(
             density=(2.247 + 0.078 * (100.0 - li_enrich_ao) / 100.0, "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="ao"
+            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -144,7 +144,7 @@ def make_Li2TiO3_mat(li_enrich_ao) -> Material:
     """
     return material(
         name="lithium_titanate",
-        elements={"Li": 2, "Ti": 1, "O16": 3},
+        elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
             density=(
                 3.28 + 0.06 * (100.0 - li_enrich_ao) / 100.0,
@@ -152,7 +152,7 @@ def make_Li2TiO3_mat(li_enrich_ao) -> Material:
             )
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="ao"
+            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -399,12 +399,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(
-                material_id=102,
-                enrichment=li_enrich_ao * 100,
-                enrichment_target="Li6",
-                enrichment_type="atomic",
-            ),
+            converters=OpenMCNeutronicConfig(material_id=102),
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
@@ -415,12 +410,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(
-                material_id=103,
-                enrichment=li_enrich_ao * 100,
-                enrichment_target="Li6",
-                enrichment_type="atomic",
-            ),
+            converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
         div_fw_mat=mixture(
