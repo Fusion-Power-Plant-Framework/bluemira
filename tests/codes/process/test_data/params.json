@@ -124,7 +124,7 @@
     "source": "Input",
     "long_name": "Ratio of plasma pressure to poloidal magnetic pressure"
   },
-  "beta": {
+  "beta_total_vol_avg": {
     "value": 0.04,
     "unit": "dimensionless",
     "source": "Input",

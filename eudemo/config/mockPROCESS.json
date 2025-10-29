@@ -29,7 +29,7 @@
   "V_p": 2400,
   "Z_eff": 2.2,
   "e_mult": 1.35,
-  "beta": 0.030673,
+  "beta_total_vol_avg": 0.030673,
   "beta_p": 1.2071,
   "condrad_cryo_heat": 0.0,
   "delta": 0.5,

@@ -787,7 +787,7 @@
     "var_mod": "Plasma",
     "scan01": 2.6552
   },
-  "beta": {
+  "beta_total_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 0.067018
   },
@@ -919,7 +919,7 @@
     "var_mod": "Plasma",
     "scan01": 0.0
   },
-  "dnelimt": {
+  "nd_plasma_electrons_max": {
     "var_mod": "Plasma",
     "scan01": 5.9206e19
   },

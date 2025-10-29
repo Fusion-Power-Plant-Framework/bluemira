@@ -144,7 +144,7 @@ class ProcessSolverParams(MappedParameterFrame):
     beta_p: Parameter[float]
     """Ratio of plasma pressure to poloidal magnetic pressure [dimensionless]."""
 
-    beta: Parameter[float]
+    beta_total_vol_avg: Parameter[float]
     """Total ratio of plasma pressure to magnetic pressure [dimensionless]."""
 
     condrad_cryo_heat: Parameter[float]

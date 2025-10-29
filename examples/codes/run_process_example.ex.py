@@ -150,9 +150,9 @@ template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
 template_builder.add_variable(
     "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
 )
-template_builder.add_variable("beta", 3.1421e-2)
+template_builder.add_variable("beta_total_vol_avg", 3.1421e-2)
 template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
-template_builder.add_variable("q", 3.5, lower_bound=3.5)
+template_builder.add_variable("q95", 3.5, lower_bound=3.5)
 template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
 template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
 template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)

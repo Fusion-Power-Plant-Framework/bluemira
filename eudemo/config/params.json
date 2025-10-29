@@ -301,7 +301,7 @@
     "long_name": "Decay heat multiplication factor",
     "description": "Quasi-instantaneous energy multiplication; still present when plasma is off (PPCS FWBL Helium Cooled Model P PPCS04 D5part1)"
   },
-  "beta": {
+  "beta_total_vol_avg": {
     "value": 0.04,
     "unit": "dimensionless",
     "source": "Input",

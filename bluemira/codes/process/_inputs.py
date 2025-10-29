@@ -604,7 +604,7 @@ class ProcessInputs:
     alphat: float | None = None
     aspect: float | None = None
     beamfus0: float | None = None
-    beta: float | None = None
+    beta_total_vol_avg: float | None = None
     betbm0: float | None = None
     b_plasma_toroidal_on_axis: float | None = None
     csawth: float | None = None

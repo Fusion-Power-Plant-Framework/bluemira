@@ -65,7 +65,7 @@ OUT_mappings = {
     "P_brehms": ("pbrempv*plasma_volume", "MW"),
     "f_bs": ("f_c_plasma_bootstrap", "dimensionless"),
     "beta_p": ("beta_poloidal", "dimensionless"),
-    "beta": ("beta", "dimensionless"),
+    "beta_total_vol_avg": ("beta_total_vol_avg", "dimensionless"),
     "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
