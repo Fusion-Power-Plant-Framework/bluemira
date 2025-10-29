@@ -202,9 +202,12 @@ class BlanketBuilder(Builder):
         bz_cut_wire = offset_wire(fw_cut_wire, bz_thickness)
         fw_cut = BluemiraFace(fw_cut_wire)
         bz_cut = BluemiraFace(bz_cut_wire)
+        from bluemira.display import show_cad
+
         fw = self._find_union_face(silhouette, fw_cut)
         bz = self._find_union_face(silhouette, bz_cut)
         manifold = boolean_cut(silhouette, bz_cut)[0]
+        show_cad([fw, bz, manifold])
         return fw, bz, manifold
 
     def get_segments(
