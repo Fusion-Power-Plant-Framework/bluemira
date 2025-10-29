@@ -25,7 +25,7 @@ import shutil
 from copy import copy
 from pathlib import Path
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # ty:ignore[unresolved-import]
 import numpy as np
 from matproplib.conditions import OperationalConditions
 
@@ -620,14 +620,14 @@ if __name__ == "__main__":
     set_log_level("INFO")
     import time
 
-    try:
-        run_time_track = {
-            "Total": 0.0,
-            "PROCESS": 0.0,
-            "CSG neutronics": 0.0,
-            "CAD neutronics": 0.0,
-        }
+    run_time_track = {
+        "Total": 0.0,
+        "PROCESS": 0.0,
+        "CSG neutronics": 0.0,
+        "CAD neutronics": 0.0,
+    }
 
+    try:
         start = time.time()
         reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
         reactor = EUDEMO("EUDEMO", n_sectors=reactor_config.global_params.n_TF.value)
@@ -709,7 +709,6 @@ if __name__ == "__main__":
         )
 
         zero_d_params = ZeroDNeutronicsModel(reactor_config.global_params).run()
-
         reactor_config.global_params.update_from_frame(zero_d_params)
         if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
             neutronics_csg = run_csg_neutronics(
@@ -891,7 +890,6 @@ if __name__ == "__main__":
         reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
         end = time.time()
-
         run_time_track["Total"] = end - start
         n_config = reactor_config.config_for("Neutronics")
         particles = n_config.get("particles", n_config["DAGMC"]["particles"])
@@ -906,6 +904,7 @@ if __name__ == "__main__":
 
         reactor.plot("xz")
         reactor.show_cad(n_sectors=2)
+
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))
         raise e
