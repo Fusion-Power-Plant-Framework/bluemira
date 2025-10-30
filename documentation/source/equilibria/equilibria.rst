@@ -695,26 +695,26 @@ where
 
 Toroidal coordinates are defined as :math:`\tau = \ln\frac{d_1}{d_2}` and :math:`\sigma  = sign(z - z_0) \arccos\frac{d_1^2 + d_2^2 - 4 R_0^2}{2 d_1 d_2}`where, :math:`d_1^2 = (R + R_0)^2 + (z - z_0)^2`and :math: :`d_2^2 = (R - R_0)^2 + (z - z_0)^2`.
 
-Our TH approximation uses collocation points and a brute force method to calculate the TH
-amplitudes for a given number of degrees of freedom, using TH functions up to a given maximum
-poloidal mode number. The method starts by setting
-up the region to be used in the TH approximation using the `toroidal_harmonic_grid_and_coil_setup` function.
-This function needs to be provided with the equilbrium, and the coordinates of the focus point. By default the
-focus point is set to the effective centre of the plasma. There are also optional arguments which are used
-to specify where the approximation region is placed. The `tau_limit` is used to determine how the maximum
-tau value is chosen. The three options are:
+Toroidal harmonic amplitudes can be implemented as a set of constraints or targets in a coilset optimisation. The TH amplitudes are used to preserve the coilset contribution in the region occupied by the core plasma (i.e. the region characterised by closed flux surfaces), enabling modification of the poloidal magnetic configuration outside the core region without (significantly) altering the plasma equilibrium.
 
-- LCFS: use the maximum extent of the LCFS
-- COIL: use the maxmimum area that is contained within all coils
-- MANUAL: use a user-specified tau limit
+Potential benefits to using TH as a set of constraints include:
+- We can choose not to re-solve for the plasma equilibrium at each optimisation step, since the
+coilset contribution to the core plasma (within the LCFS) is constrained.
+- We have a minimal set of constraints (a set of harmonic amplitudes) for the core
+plasma contribution, which can reduce the dimensionality of the problem we are
+considering.
 
-The `min_tau_value` is used to specify the minimum tau for the toroidal coordinate approximation region, and
-lower min tau means a larger region of space (the maximum tau is at the focus point).
+To set up a toroidal harmonic constraint, we first find the significant poloidal modes and their amplitude values using equations  :eq:` ToroidalHarmonics `and :eq:` PoloidalFlux `.
 
-Then it iterates through combinations of cos and sin modes,
-calculates the psi at the collocation points using equation :eq:`TH_no_currents`, compares this approximated psi to the bluemira psi at the collocation points,
-and returns the combination of modes that gives the best approximation when compared using an L2 norm of the error across the
-psi map.
+The user chooses the: 
+- Number of degrees of freedom (DoF) appropriate for the given optimisation problem – this limits the number of poloidal modes that can be used in the TH approximation. The default value will allow DoF up to the number of coilset currents being optimised.  
+- Normalised psi value of the flux surface within which the coilset contribution to psi will be constrained.
+
+Then these values are input in `toroidal_harmonic_approximation`, which iterates through all the combinations of cos and sin modes up to the DoF limit. For each iteration:
+- Psi values for a set of sampled positions within the selected flux surface are found and used to determine the amplitudes of the contributing poloidal modes.
+- L2 norm of the error between the approximated coilset psi and the true coilset psi is calculated. 
+
+The `toroidal_harmonic_approximation` returns the result as a `ToroidalHarmonicsSelectionResult`for the approximate psi with the smallest difference to the true coilset psi in the selected closed flux region. This contains all the information needed to set up a `ToroidalHarmonicConstraint`, as well as supporting information that can be used in analysis.
 
 When we want to use TH as a constraint, we use equation :eq:`TH_with_currents` to create an :math:`A\bf{x} = b` constraint.
 
