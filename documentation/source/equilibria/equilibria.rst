@@ -744,6 +744,20 @@ where
 
    Diagram showing a comparison of coilset psi calculated in bluemira and the approximation of coilset psi found using toroidal harmonic functions.
 
+See [here](https://dlmf.nist.gov/14) or F. W. J. Olver (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information on the Legendre functions used in the TH approximation.
+
+Note 1:
+
+The default region to be conserved in the TH approximation is set to encompass the the maximum extent of the LCFS, with its focus point at the effective centre of the plasma. However, the function `toroidal_harmonic_grid_and_coil_setup` can be used to approximate a region with a different area and focus point. The optional arguments, which are used to specify where the approximation region is placed, are:
+- the maximum extent of the LCFS,
+- the maxmimum area that is contained within all coils,
+- a user-specified tau limit.
+Lower min tau means a larger region of space (the maximum tau is at the focus point).
+
+Note 2:
+
+If a coil is within the TH approximation region then its contribution must be kept fixed during an optimisation. The coilset 'control coils' must be set to be the same as the `th_coilset` returned in the `ToroidalHarmonicsSelectionResult` while setting up the optimisation problem. Please see 'examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up.ex.py' for an example.
+
 Coil position optimisation and constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
