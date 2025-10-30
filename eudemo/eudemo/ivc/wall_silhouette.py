@@ -196,6 +196,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
                 KeepOutZone(
                     self._make_wall_keep_out_zone(),
                     n_discr=self.problem_settings.get("n_koz_points", 100),
+                    byedges=False,
                 )
             ],
         )

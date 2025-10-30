@@ -214,7 +214,7 @@ class SuperSankey(Sankey):
 BALANCE_PLOT_DEFAULTS = {
     # Matplotlib figure
     "facecolor": "k",
-    "figsize": (14, 10),
+    "figsize": (14, 8),
     # Sankey scalings
     "scale": 0.001,
     "gap": 0.25,
