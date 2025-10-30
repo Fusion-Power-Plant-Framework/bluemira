@@ -665,6 +665,10 @@ Toroidal Harmonic constraints
 An equilibrium poloidal field has a plasma and coilset contribution.We can use Toroidal Harmonic (TH) functions to approximate the coilset contribution to the poloidal magnetic flux using equations :eq:` ToroidalHarmonics `and :eq:` PoloidalFlux `.
 
 .. math::
+   :label: PoloidalFlux
+   \psi = R A = \frac{R_0 \sinh \tau}{\Delta} A 
+
+.. math::
    :label: ToroidalHarmonics
 
    \begin{aligned}
