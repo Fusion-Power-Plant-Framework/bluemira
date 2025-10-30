@@ -749,7 +749,7 @@ When we want to use TH as a constraint, we use equation :eq:`TH_with_currents` t
 .. figure:: th-flux-comparison.png
    :name: fig:th-flux-comparison
 
-   Diagram showing the comparison of coilset psi calculated by bluemira vs calculated using toroidal harmonic equations.
+   Diagram showing a comparison of coilset psi calculated in bluemira and the approximation of coilset psi found using toroidal harmonic functions.
 
 Coil position optimisation and constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
