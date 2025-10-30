@@ -604,11 +604,17 @@ class PFCoilSupportBuilder(Builder):
         try:
             shape = boolean_fuse(shape_list)
         except GeometryError:
-            bluemira_warn(
-                "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
-                " instead of a BluemiraSolid, please check!"
-            )
-            shape = BluemiraCompound(shape_list)
+            try:
+                for s in shape_list:
+                    s.scale(1000)
+                shape = boolean_fuse(shape_list)
+                shape.scale(0.001)
+            except GeometryError:
+                bluemira_warn(
+                    "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
+                    " instead of a BluemiraSolid, please check!"
+                )
+                shape = BluemiraCompound(shape_list)
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(
