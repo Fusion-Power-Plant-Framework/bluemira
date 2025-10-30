@@ -289,19 +289,27 @@ def pattern_revolved_silhouette(
             face, base=(0, 0, 0), direction=(0, 0, 1), degree=sector_degree
         )
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
+
         try:
             shapes = boolean_cut(volume, gaps)
         except ValueError:
             # TODO @CoronelBuendia: Unknown cause of failure in valid FreeCAD
-            # geometries...
+            # geometries... likely related to precision
             bluemira_warn(
-                "Boolean cutting operation in pattern_revolved_silhouette has failed,"
-                "trying our best to cut as much as possible."
+                "Boolean cutting operation in pattern_revolved_silhouette has failed, "
+                "trying our best by scaling up the problem. If you don't see a "
+                "subsequent warning, all went to plan."
             )
+            volume.scale(1000)
+            for gap in gaps:
+                gap.scale(1000)
             try:
-                shapes = boolean_cut(volume, [gaps[0], gaps[2]])
+                shapes = boolean_cut(volume, gaps)
+                for shape in shapes:
+                    shape.scale(0.001)
             except ValueError:
                 bluemira_warn("It's not going well... we've given up")
+                volume.scale(0.001)
                 shapes = [volume]
 
     return _order_shapes_anticlockwise(shapes)
