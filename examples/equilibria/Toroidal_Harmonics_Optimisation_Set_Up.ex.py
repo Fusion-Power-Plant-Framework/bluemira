@@ -132,12 +132,8 @@ plt.show()
 # %%
 # Create a constraint
 th_constraint = ToroidalHarmonicConstraint(
-    ref_harmonics_cos=result.cos_m,
-    ref_harmonics_sin=result.sin_m,
-    ref_harmonics_cos_amplitudes=result.cos_amplitudes,
-    ref_harmonics_sin_amplitudes=result.sin_amplitudes,
+    th_result=result,
     constraint_type="inequality",
-    th_params=th_params,
 )
 # Ensure control coils are set to those that can be used in the toroidal
 # harmonic approximation

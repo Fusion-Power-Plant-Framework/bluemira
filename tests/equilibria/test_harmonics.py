@@ -33,6 +33,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    ToroidalHarmonicsSelectionResult,
     _get_plasma_mask,
     _set_n_degrees_of_freedom,
     coil_toroidal_harmonic_amplitude_matrix,
@@ -1371,13 +1372,19 @@ class TestRegressionTH:
             -14.26727472,
         ])
         test_sin_amplitudes = np.array([3.15627377])
-
-        test_constraint_class_equality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_modes,
-            ref_harmonics_sin=test_sin_modes,
-            ref_harmonics_cos_amplitudes=test_cos_amplitudes,
-            ref_harmonics_sin_amplitudes=test_sin_amplitudes,
+        test_result = ToroidalHarmonicsSelectionResult(
+            cos_m=test_cos_modes,
+            sin_m=test_sin_modes,
+            cos_amplitudes=test_cos_amplitudes,
+            sin_amplitudes=test_sin_amplitudes,
+            error=0.0,
+            coilset_psi=np.zeros(10),
+            fixed_psi=np.zeros(10),
+            true_unfixed_psi=np.zeros(10),
             th_params=self.test_th_params,
+        )
+        test_constraint_class_equality = ToroidalHarmonicConstraint(
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="equality",
@@ -1404,11 +1411,7 @@ class TestRegressionTH:
             assert test_tol == ref_tol
 
         test_constraint_class_inequality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_modes,
-            ref_harmonics_sin=test_sin_modes,
-            ref_harmonics_cos_amplitudes=test_cos_amplitudes,
-            ref_harmonics_sin_amplitudes=test_sin_amplitudes,
-            th_params=self.test_th_params,
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="inequality",
