@@ -25,7 +25,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, get_intersect
+from bluemira.geometry.error import NotClosedWireError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -519,7 +520,40 @@ class PFCoilSupportBuilder(Builder):
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
 
-        rib_face = BluemiraFace(rib_wire)
+        inter1 = get_intersect(
+            np.array([[v1[0], v3[0]], [v1[2], v3[2]]]),
+            np.array([[v2[0], v4[0]], [v2[2], v4[2]]]),
+        )
+        if len(inter1[0]) > 0:
+            v3, v4 = v4, v3
+
+        closing_wire = make_polygon(
+            {
+                "x": [v3[0], v1[0], v2[0], v4[0]],
+                "y": 0,
+                "z": [v3[2], v1[2], v2[2], v4[2]],
+            },
+            closed=False,
+        )
+        try:
+            rib_face = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
+        except NotClosedWireError:
+            rib_wire = make_polygon(
+                {
+                    "x": [v3[0], v1[0], v2[0], v4[0]],
+                    "y": 0,
+                    "z": [v3[2], v1[2], v2[2], v4[2]],
+                },
+                closed=True,
+            )
+            rib_face = BluemiraFace(rib_wire)
+
+        # Trim rib face if there is a collision
+        result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
+
+        if result:
+            result.sort(key=lambda face: -face.area)
+            rib_face = result[0]
 
         return rib_face
 

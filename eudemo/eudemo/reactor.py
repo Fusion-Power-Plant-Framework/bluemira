@@ -321,7 +321,7 @@ def build_pf_coils(
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
     # to stop clashes between ports and PF coil corners
-    offset_value = 0.15 * np.sqrt(
+    offset_value = 0.18 * np.sqrt(
         params.global_params.I_p.value / params.global_params.PF_jmax.value
     )
     for koz in pf_coil_keep_out_zones:
@@ -884,7 +884,9 @@ if __name__ == "__main__":
         run_time_track["Total"] = start - end
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_dl_min_0_1/A_{a_string}"
+        folder_name = f"results_v01/A_{a_string}"
+        import os
+        os.makedirs(folder_name, exist_ok=True) 
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
