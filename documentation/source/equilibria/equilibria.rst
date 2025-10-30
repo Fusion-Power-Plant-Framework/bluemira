@@ -716,7 +716,7 @@ Then these values are input in `toroidal_harmonic_approximation`, which iterates
 
 The `toroidal_harmonic_approximation` returns the result as a `ToroidalHarmonicsSelectionResult`for the approximate psi with the smallest difference to the true coilset psi in the selected closed flux region. This contains all the information needed to set up a `ToroidalHarmonicConstraint`, as well as supporting information that can be used in analysis.
 
-When we want to use TH as a constraint, we use equation :eq:`TH_with_currents` to create an :math:`A\bf{x} = b` constraint.
+A `ToroidalHarmonicsSelectionResult` contains the combination of modes (and their amplitude values) that gives the best approximation when compared using an L2 norm of the error across the psi map. These can be then implemented as an A\bf{x} = b constraint or magnetic target using the equation :eq:`THAmplitudeCurrentRelation`.
 
 .. figure:: th-flux-comparison.png
    :name: fig:th-flux-comparison
