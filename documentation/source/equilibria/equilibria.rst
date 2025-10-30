@@ -718,6 +718,27 @@ The `toroidal_harmonic_approximation` returns the result as a `ToroidalHarmonics
 
 A `ToroidalHarmonicsSelectionResult` contains the combination of modes (and their amplitude values) that gives the best approximation when compared using an L2 norm of the error across the psi map. These can be then implemented as an A\bf{x} = b constraint or magnetic target using the equation :eq:`THAmplitudeCurrentRelation`.
 
+.. math::
+   :label: THAmplitudeCurrentRelation
+   A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} factorial\_term \frac{\sinh(
+   \tau_c)}
+   {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) ^{\cos}_{\sin}(m
+   \sigma_c)
+
+where
+
+- :math:`A_m^{\cos, \sin}` are hamonic amplitudes for a single coil
+
+- subscript :math:`c` refers to a single coil
+
+- :math:`I_c, \tau_c, \sigma_c` are the coil current, and coil position in toroidal coordinates.
+
+- :math:`P_{m - \frac{1}{2}}^{-1}` is the associated Legendre function of the first kind. 
+
+- :math:`\Delta_c = \cosh(\tau_c) - \cos(\sigma_c)`
+
+- :math:`factorial\_term = \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right)`
+
 .. figure:: th-flux-comparison.png
    :name: fig:th-flux-comparison
 
