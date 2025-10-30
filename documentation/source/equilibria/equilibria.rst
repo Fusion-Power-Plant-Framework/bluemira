@@ -681,16 +681,6 @@ An equilibrium poloidal field has a plasma and coilset contribution.We can use T
 
 where
 
-.. math::
-   :label: TH_with_currents
-
-   A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} factorial\_term \frac{\sinh(
-   \tau_c)}
-   {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) ^{\cos}_{\sin}(m
-   \sigma_c)
-
-where
-
 - :math:`A_m^{\cos, \sin}` are coefficients for a single coil
 
 - subscript :math:`c` refers to a single coil
