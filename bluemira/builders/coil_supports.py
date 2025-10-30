@@ -578,7 +578,20 @@ class PFCoilSupportBuilder(Builder):
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
 
-        shape = boolean_fuse(shape_list)
+        try:
+            shape = boolean_fuse(shape_list)
+        except GeometryError:
+            try:
+                for s in shape_list:
+                    s.scale(1000)
+                shape = boolean_fuse(shape_list)
+                shape.scale(0.001)
+            except GeometryError:
+                bluemira_warn(
+                    "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
+                    " instead of a BluemiraSolid, please check!"
+                )
+                shape = BluemiraCompound(shape_list)
 
         # Trim the solid with the TF boundary
         tf_coil_cut = extrude_shape(
