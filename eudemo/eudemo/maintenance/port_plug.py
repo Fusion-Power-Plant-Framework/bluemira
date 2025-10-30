@@ -266,7 +266,7 @@ class CryostatPortPlugBuilder(Builder):
                 material=self.get_material(self.PORT_PLUG),
             )
             void = PhysicalComponent(  # noqa: PLW2901
-                f"{self.name} {i} voidspace", void, material=Void("air")
+                f"{self.name} {i} voidspace", void, material=Void(name="air")
             )
             apply_component_display_options(plug, BLUE_PALETTE["CR"][1])
             apply_component_display_options(void, (0, 0, 0))
@@ -349,7 +349,7 @@ class RadiationPortPlugBuilder(Builder):
         for i, (plug, void) in enumerate(zip(plugs, voids, strict=False)):
             plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
             void = PhysicalComponent(  # noqa: PLW2901
-                f"{self.name} {i} voidspace", void, material=Void("air")
+                f"{self.name} {i} voidspace", void, material=Void(name="air")
             )
             apply_component_display_options(plug, BLUE_PALETTE["RS"][1])
             apply_component_display_options(void, (0, 0, 0))
