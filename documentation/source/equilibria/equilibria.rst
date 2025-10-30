@@ -662,23 +662,7 @@ coil, where the field is generally the highest.
 
 Toroidal Harmonic constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-An equilibrium poloidal field has a plasma and coilset contribution. When we optimise coil currents,
-we also have to re-solve the equilbrium solution for the plasma. We can use the following premise that
-our equilibrium solution will not change if the coilset contribution
-to the poloidal field (vacuum field) is kept the same in the region
-occupied by the core plasma (i.e. the region characterised by closed flux surfaces).
-If we constrain the core plasma while altering (optimising) other aspects
-of the magnetic configuration, then we will not need to re-solve for
-the plasma equilibrium at each iteration. We can decompose the vacuum field into Toroidal Harmonics (TH)
-to create a minimal set of constraints for use in optimisation.
-
-There are benefits to using TH as a minimal set of constraints:
-- We can choose not to re-solve for the plasma equilibrium at each step, since the
-coilset contribution to the core plasma (within the LCFS) is constrained.
-- We have a minimal set of constraints (a set of harmonic amplitudes) for the core
-plasma contribution, which can reduce the dimensionality of the problem we are
-considering.
-We get the TH amplitudes/coefficients, :math:`A(\tau, \sigma)`, from the following equations:
+An equilibrium poloidal field has a plasma and coilset contribution.We can use Toroidal Harmonic (TH) functions to approximate the coilset contribution to the poloidal magnetic flux using equations :eq:` ToroidalHarmonics `and :eq:` PoloidalFlux `.
 
 .. math::
    :label: TH_no_currents
