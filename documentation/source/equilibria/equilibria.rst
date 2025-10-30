@@ -681,25 +681,19 @@ An equilibrium poloidal field has a plasma and coilset contribution.We can use T
 
 where
 
-- :math:`A_m^{\cos, \sin}` are coefficients for a single coil
-
-- subscript :math:`c` refers to a single coil
-
-- :math:`I_c, \tau_c, \sigma_c` are the coil current, and coil position in toroidal coordinates :math:`(\tau, \sigma)`
+- :math:`\psi` is poloidal flux
 
 - :math:`m` is the poloidal mode number
 
-- :math:`P_{\nu}^{\mu}` is the associated Legendre function of the first kind of degree :math:`\nu` and order :math:`\mu`
-
-- :math:`\textbf{Q}_{\nu}^{\mu}` is Olver's definition of the associated Legendre function of the second kind. See [here](https://dlmf.nist.gov/14) or F. W. J. Olver (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information.
+- :math:`A_m^{\cos, \sin}` are harmonic amplitudes
 
 - :math:`\varepsilon_m = 1` for :math:`m = 0` and :math:`\varepsilon_m = 2` for :math:`m \ge 1`
 
 - :math:`\Delta = \cosh(\tau) - \cos(\sigma)`
 
-- :math:`\Delta_c = \cosh(\tau_c) - \cos(\sigma_c)`
+- :math:`\textbf{Q}_{\nu}^{\mu}` is Olver's definition of the associated Legendre function of the second kind.
 
-- :math:`factorial\_term = \prod_{i=0}^{m-1} \left( 1 + \frac{1}{2(m-i)}\right)`
+Toroidal coordinates are defined as :math:`\tau = \ln\frac{d_1}{d_2}` and :math:`\sigma  = sign(z - z_0) \arccos\frac{d_1^2 + d_2^2 - 4 R_0^2}{2 d_1 d_2}`where, :math:`d_1^2 = (R + R_0)^2 + (z - z_0)^2`and :math: :`d_2^2 = (R - R_0)^2 + (z - z_0)^2`.
 
 Our TH approximation uses collocation points and a brute force method to calculate the TH
 amplitudes for a given number of degrees of freedom, using TH functions up to a given maximum
