@@ -40,6 +40,7 @@ from bluemira.codes.process.model_mapping import (
     SolenoidSwitchModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
+    TFWindingPackGeometryModel,
 )
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
@@ -164,6 +165,7 @@ for model_choice in (
     SolenoidSwitchModel.SOLENOID,
     CSSuperconductorModel.NB3SN_WST,
     TFSuperconductorModel.NB3SN_WST,
+    TFWindingPackGeometryModel.RECTANGULAR,
     PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
