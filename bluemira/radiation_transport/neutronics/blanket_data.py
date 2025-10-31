@@ -15,7 +15,7 @@ from bluemira.materials.neutronics import (
     _make_hcpb_mats,
     _make_wcll_mats,
     duplicate_mat_as,
-    eurofer_mat,
+    EUROFER_MAT,
 )
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
@@ -148,9 +148,9 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 60.0  # [%]
+            li_enrich_ao = 0.60  # [%]
         case _:
-            li_enrich_ao = 90.0  # [%]
+            li_enrich_ao = 0.90  # [%]
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
@@ -175,13 +175,13 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
         outb_vv_mat=duplicate_mat_as(
             base_materials.inb_vv_mat, "outb_vacuum_vessel", 204
         ),
-        tf_coil_mat=duplicate_mat_as(eurofer_mat, "tf_coil", 401),
+        tf_coil_mat=duplicate_mat_as(EUROFER_MAT, "tf_coil", 401),
         container_mat=duplicate_mat_as(base_materials.inb_vv_mat, "container", 501),
         # surfaces
-        inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
-        outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
-        div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
+        inb_sf_mat=duplicate_mat_as(EUROFER_MAT, "inb_sf", 601),
+        outb_sf_mat=duplicate_mat_as(EUROFER_MAT, "outb_sf", 602),
+        div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(eurofer_mat, "rad_shield", 604),
+        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
     )
