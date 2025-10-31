@@ -321,7 +321,7 @@ def build_pf_coils(
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
     # to stop clashes between ports and PF coil corners
-    offset_value = 0.18 * np.sqrt(
+    offset_value = 0.2 * np.sqrt(
         params.global_params.I_p.value / params.global_params.PF_jmax.value
     )
     for koz in pf_coil_keep_out_zones:
