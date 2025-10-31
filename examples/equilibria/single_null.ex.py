@@ -246,6 +246,7 @@ diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 program = PicardIterator(
     eq,
     current_opt_problem,
+    convergence=DudsonConvergence(1e-3),
     fixed_coils=True,
     relaxation=0.2,
     diagnostic_plotting=diagnostic_plotting,
@@ -410,7 +411,7 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     eof,
     targets=MagneticConstraintSet([isoflux]),
     gamma=1e-12,
-    opt_algorithm="COBYLA",
+    opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     opt_parameters={},
     max_currents=coilset.get_max_current(I_p),
