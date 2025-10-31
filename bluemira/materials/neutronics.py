@@ -354,6 +354,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (make_PbLi_mat(li_enrich_ao), 0.9395 * 0.95),
         ],
         fraction_type="volume",
+        mix_condition=OperationalConditions(temperature=673.15),
         converters=OpenMCNeutronicConfig(material_id=102),
     )
 

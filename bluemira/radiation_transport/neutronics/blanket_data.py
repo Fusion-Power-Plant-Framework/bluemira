@@ -148,9 +148,9 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 60.0  # [%]
+            li_enrich_ao = 60  # [%]
         case _:
-            li_enrich_ao = 90.0  # [%]
+            li_enrich_ao = 90  # [%]
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
@@ -183,5 +183,5 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
         div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(EUROFER_MAT, "div_sf", 604),
+        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
     )
