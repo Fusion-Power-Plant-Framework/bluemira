@@ -662,11 +662,12 @@ coil, where the field is generally the highest.
 
 Toroidal Harmonic constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-An equilibrium poloidal field has a plasma and coilset contribution.We can use Toroidal Harmonic (TH) functions to approximate the coilset contribution to the poloidal magnetic flux using equations :eq:` ToroidalHarmonics `and :eq:` PoloidalFlux `.
+An equilibrium poloidal field has a plasma and coilset contribution. We can use Toroidal Harmonic (TH) functions to approximate the coilset contribution to the poloidal magnetic flux using equations :eq:`PoloidalFlux` and :eq:`ToroidalHarmonics`.
 
 .. math::
    :label: PoloidalFlux
-   \psi = R A = \frac{R_0 \sinh \tau}{\Delta} A 
+
+   \psi = R A = \frac{R_0 \sinh \tau}{\Delta} A
 
 .. math::
    :label: ToroidalHarmonics
@@ -693,33 +694,37 @@ where
 
 - :math:`\textbf{Q}_{\nu}^{\mu}` is Olver's definition of the associated Legendre function of the second kind.
 
-Toroidal coordinates are defined as :math:`\tau = \ln\frac{d_1}{d_2}` and :math:`\sigma  = sign(z - z_0) \arccos\frac{d_1^2 + d_2^2 - 4 R_0^2}{2 d_1 d_2}`where, :math:`d_1^2 = (R + R_0)^2 + (z - z_0)^2`and :math: :`d_2^2 = (R - R_0)^2 + (z - z_0)^2`.
+Toroidal coordinates are defined as :math:`\tau = \ln\frac{d_1}{d_2}` and :math:`\sigma  = sign(z - z_0) \arccos\frac{d_1^2 + d_2^2 - 4 R_0^2}{2 d_1 d_2}` where, :math:`d_1^2 = (R + R_0)^2 + (z - z_0)^2` and :math:`d_2^2 = (R - R_0)^2 + (z - z_0)^2`, and :math:`R_0` and :math:`Z_0` are the coordinates of the focus point.
 
 Toroidal harmonic amplitudes can be implemented as a set of constraints or targets in a coilset optimisation. The TH amplitudes are used to preserve the coilset contribution in the region occupied by the core plasma (i.e. the region characterised by closed flux surfaces), enabling modification of the poloidal magnetic configuration outside the core region without (significantly) altering the plasma equilibrium.
 
-Potential benefits to using TH as a set of constraints include:
-- We can choose not to re-solve for the plasma equilibrium at each optimisation step, since the
-coilset contribution to the core plasma (within the LCFS) is constrained.
-- We have a minimal set of constraints (a set of harmonic amplitudes) for the core
-plasma contribution, which can reduce the dimensionality of the problem we are
-considering.
+Potential benefits of using TH as a set of constraints include:
 
-To set up a toroidal harmonic constraint, we first find the significant poloidal modes and their amplitude values using equations  :eq:` ToroidalHarmonics `and :eq:` PoloidalFlux `.
+- We can choose not to re-solve for the plasma equilibrium at each optimisation step, since the coilset contribution to the core plasma (within the LCFS) is constrained.
 
-The user chooses the: 
-- Number of degrees of freedom (DoF) appropriate for the given optimisation problem – this limits the number of poloidal modes that can be used in the TH approximation. The default value will allow DoF up to the number of coilset currents being optimised.  
+- We have a minimal set of constraints (a set of harmonic amplitudes) for the core plasma contribution, which can reduce the dimensionality of the problem we are considering.
+
+To set up a toroidal harmonic constraint, we first find the significant poloidal modes and their amplitude values using equations :eq:`PoloidalFlux` and :eq:`ToroidalHarmonics`.
+
+The user chooses the:
+
+- Number of degrees of freedom (DoF) appropriate for the given optimisation problem – this limits the number of poloidal modes that can be used in the TH approximation. The default value will allow DoF up to the number of coilset currents being optimised.
+
 - Normalised psi value of the flux surface within which the coilset contribution to psi will be constrained.
 
 Then these values are input in `toroidal_harmonic_approximation`, which iterates through all the combinations of cos and sin modes up to the DoF limit. For each iteration:
+
 - Psi values for a set of sampled positions within the selected flux surface are found and used to determine the amplitudes of the contributing poloidal modes.
-- L2 norm of the error between the approximated coilset psi and the true coilset psi is calculated. 
 
-The `toroidal_harmonic_approximation` returns the result as a `ToroidalHarmonicsSelectionResult`for the approximate psi with the smallest difference to the true coilset psi in the selected closed flux region. This contains all the information needed to set up a `ToroidalHarmonicConstraint`, as well as supporting information that can be used in analysis.
+- L2 norm of the error between the approximated coilset psi and the true coilset psi is calculated.
 
-A `ToroidalHarmonicsSelectionResult` contains the combination of modes (and their amplitude values) that gives the best approximation when compared using an L2 norm of the error across the psi map. These can be then implemented as an A\bf{x} = b constraint or magnetic target using the equation :eq:`THAmplitudeCurrentRelation`.
+The `toroidal_harmonic_approximation` returns the result as a `ToroidalHarmonicsSelectionResult` for the approximate psi with the smallest difference to the true coilset psi in the selected closed flux region. This contains all the information needed to set up a `ToroidalHarmonicConstraint`, as well as supporting information that can be used in analysis.
+
+A `ToroidalHarmonicsSelectionResult` contains the combination of modes (and their amplitude values) that gives the best approximation when compared using an L2 norm of the error across the psi map. These can be then implemented as an :math:`A\bf{x} = b` constraint or magnetic target using equation :eq:`THAmplitudeCurrentRelation`.
 
 .. math::
    :label: THAmplitudeCurrentRelation
+
    A_m^{\cos, \sin} = \frac{\mu_0 I_c}{2^{\frac{5}{2}}} factorial\_term \frac{\sinh(
    \tau_c)}
    {\Delta_c^{\frac{1}{2}}} P_{m - \frac{1}{2}}^{-1}(\cosh(\tau_c)) ^{\cos}_{\sin}(m
@@ -733,7 +738,7 @@ where
 
 - :math:`I_c, \tau_c, \sigma_c` are the coil current, and coil position in toroidal coordinates.
 
-- :math:`P_{m - \frac{1}{2}}^{-1}` is the associated Legendre function of the first kind. 
+- :math:`P_{m - \frac{1}{2}}^{-1}` is the associated Legendre function of the first kind.
 
 - :math:`\Delta_c = \cosh(\tau_c) - \cos(\sigma_c)`
 
@@ -744,19 +749,31 @@ where
 
    Diagram showing a comparison of coilset psi calculated in bluemira and the approximation of coilset psi found using toroidal harmonic functions.
 
-See [here](https://dlmf.nist.gov/14) or F. W. J. Olver (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information on the Legendre functions used in the TH approximation.
+See `here`_ or F. W. J. Olver (1997b) Asymptotics and Special Functions. A. K. Peters, Wellesley, MA. for more information on the Legendre functions used in the TH approximation.
+
+.. _here: https://dlmf.nist.gov/14
 
 Note 1:
 
-The default region to be conserved in the TH approximation is set to encompass the the maximum extent of the LCFS, with its focus point at the effective centre of the plasma. However, the function `toroidal_harmonic_grid_and_coil_setup` can be used to approximate a region with a different area and focus point. The optional arguments, which are used to specify where the approximation region is placed, are:
+The default TH approximation region is set to encompass the the maximum extent of the LCFS, with its focus point at the effective centre of the plasma. However, the function `toroidal_harmonic_grid_and_coil_setup` can be used to approximate a region with a different area and focus point. The optional arguments, which are used to specify where the approximation region is placed, are:
+
 - the maximum extent of the LCFS,
+
 - the maxmimum area that is contained within all coils,
+
 - a user-specified tau limit.
+
 Lower min tau means a larger region of space (the maximum tau is at the focus point).
 
 Note 2:
 
-If a coil is within the TH approximation region then its contribution must be kept fixed during an optimisation. The coilset 'control coils' must be set to be the same as the `th_coilset` returned in the `ToroidalHarmonicsSelectionResult` while setting up the optimisation problem. Please see 'examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up.ex.py' for an example.
+If a coil is within the TH approximation region then its contribution must be kept fixed during an optimisation. The coilset 'control coils' must be set to be the same as the `th_coil_names` returned in the `ToroidalHarmonicsSelectionResult` while setting up the optimisation problem. Please see 'examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up.ex.py' for an example.
+
+
+.. figure:: th-region-and-coils.png
+   :name: fig:th-region
+
+   Diagram showing the default TH approximation region.
 
 Coil position optimisation and constraints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

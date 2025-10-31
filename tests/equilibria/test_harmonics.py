@@ -1448,15 +1448,23 @@ class TestRegressionTH:
         ])
         sin_amplitudes = np.array([3.15627377])
 
+        test_result = ToroidalHarmonicsSelectionResult(
+            cos_m=cos_modes,
+            sin_m=sin_modes,
+            cos_amplitudes=cos_amplitudes,
+            sin_amplitudes=sin_amplitudes,
+            error=0.0,
+            coilset_psi=np.zeros(10),
+            fixed_psi=np.zeros(10),
+            true_unfixed_psi=np.zeros(10),
+            th_params=self.test_th_params,
+        )
+
         # Vector of currents in MA for arg in constraint function
         vector = self.eq.coilset.current * 1e-6
 
         constraint_class = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=cos_modes,
-            ref_harmonics_sin=sin_modes,
-            ref_harmonics_cos_amplitudes=cos_amplitudes,
-            ref_harmonics_sin_amplitudes=sin_amplitudes,
-            th_params=self.test_th_params,
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="equality",

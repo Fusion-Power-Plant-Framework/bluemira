@@ -142,6 +142,7 @@ eq.coilset.control = list(th_params.th_coil_names)
 # Show the constraint region
 f, ax = plt.subplots()
 th_constraint.plot(ax=ax)
+eq.coilset.plot(ax=ax)
 eq.plot(ax=ax)
 
 # %%
