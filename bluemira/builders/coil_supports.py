@@ -471,6 +471,16 @@ class PFCoilSupportBuilder(Builder):
         if distance == np.inf:
             raise BuilderError("No intersections found!")
 
+        import matplotlib.pyplot as plt
+
+        f, ax = plt.subplots()
+        ax.plot(v1[0], v1[2], marker="o", label="1")
+        ax.plot(v2[0], v2[2], marker="o", label="2")
+        ax.plot(v3[0], v3[2], marker="o", label="3")
+        ax.plot(v4[0], v4[2], marker="o", label="4")
+        ax.legend()
+        ax.set_aspect("equal")
+        plt.show()
         return v1, v2, v3, v4, best_angle
 
     def _get_intersecting_wire(self, v1, v2, v3, v4, angle):
@@ -491,7 +501,6 @@ class PFCoilSupportBuilder(Builder):
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
         v1, v2, v3, v4, _angle = self._get_support_point_angle(support_face)
-
         points = np.array([
             [v1[0], v1[2]],
             [v2[0], v2[2]],
@@ -578,20 +587,14 @@ class PFCoilSupportBuilder(Builder):
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
 
-        try:
-            shape = boolean_fuse(shape_list)
-        except GeometryError:
-            try:
-                for s in shape_list:
-                    s.scale(1000)
-                shape = boolean_fuse(shape_list)
-                shape.scale(0.001)
-            except GeometryError:
-                bluemira_warn(
-                    "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
-                    " instead of a BluemiraSolid, please check!"
-                )
-                shape = BluemiraCompound(shape_list)
+        shape = boolean_fuse(shape_list)
+
+        # Trim the solid with the TF boundary
+        tf_coil_cut = extrude_shape(
+            BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
+        )
+        tf_coil_cut.translate((0, -0.05 * width, 0))
+        shape = boolean_cut(shape, tf_coil_cut)[0]
 
         # Trim the solid with the TF boundary
         tf_coil_cut = extrude_shape(
