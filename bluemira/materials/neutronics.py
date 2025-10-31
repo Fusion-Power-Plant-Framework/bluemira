@@ -10,46 +10,20 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from matproplib.conditions import OperationalConditions
+from matproplib import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
+from matproplib.library.fluids import Helium, Water
+from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
 
+tungsten_mat = PlanseeTungsten()
+
 # Elements
-he_cool_mat = material(
-    name="helium",
-    elements={"He4": 1.0},
-    properties=props(density=(0.008867, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
+helium_mat = Helium()
 
-tungsten_mat = material(
-    name="tungsten",
-    elements={
-        "W182": 0.266,
-        "W183": 0.143,
-        "W184": 0.307,
-        "W186": 0.284,
-    },
-    properties=props(density=(19.3, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-water_mat = material(
-    name="water",
-    elements={"H1": 2 / 3, "O16": 1 / 3},
-    properties=props(density=(0.866, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-al2o3_mat = material(
-    name="Aluminium Oxide",
-    elements={"Al27": 2 / 5, "O16": 3 / 5},
-    properties=props(density=(3.95, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
+water_mat = Water()
 
 # alloys
 eurofer_mat = material(
@@ -306,7 +280,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         materials=[
             (tungsten_mat, 2.0 / 27.0),
             (eurofer_mat, 1.5 / 27.0),
-            (he_cool_mat, 12.0 / 27.0),
+            (helium_mat, 12.0 / 27.0),
             (lined_euro_mat, 11.5 / 27.0),
         ],
         fraction_type="volume",
@@ -383,7 +357,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             materials=[
                 (tungsten_mat, 2.0 / 27.0),
                 (eurofer_mat, 25.0 * 0.573 / 27.0),
-                (he_cool_mat, 25.0 * 0.427 / 27.0),
+                (helium_mat, 25.0 * 0.427 / 27.0),
             ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
@@ -395,7 +369,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (eurofer_mat, structural_fraction_vo),
                 (Be12Ti(), multiplier_fraction_vo),
                 (make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
-                (he_cool_mat, helium_fraction_vo),
+                (helium_mat, helium_fraction_vo),
             ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
@@ -406,7 +380,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             materials=[
                 (eurofer_mat, 0.4724),
                 (make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
-                (he_cool_mat, 0.5035),
+                (helium_mat, 0.5035),
             ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
