@@ -664,6 +664,33 @@ class OptVariablesFrame:
         """
         return {opv.name: opv.as_dict() for opv in self}
 
+    @classmethod
+    def from_dict(
+        cls, var_dict: VarDictT, *, strict_bounds: bool = False
+    ) -> OptVariablesFrame:
+        """
+        Create an OptVariablesFrame instance from a dictionary.
+
+        Parameters
+        ----------
+        var_dict: VarDictT
+            The dictionary with the dict
+
+        Returns
+        -------
+        :
+            The new instance
+        """
+        instance = cls()
+        for name, cfg in var_dict.items():
+            getattr(instance, name).adjust(
+                value=cfg.get("value"),
+                lower_bound=cfg.get("lower_bound"),
+                upper_bound=cfg.get("upper_bound"),
+                strict_bounds=strict_bounds,
+            )
+        return instance
+
     def as_serialisable(self) -> dict[str, OptVarSerialisedT]:
         """
         Returns
