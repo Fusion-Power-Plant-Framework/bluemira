@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 def symmetrise_coilset(
-    coilset: CoilSet, *, rtol: float = 1e-5, symmetrise_singular: bool = False
+    coilset: CoilSet, *, rtol: float | None = None, symmetrise_singular: bool = False
 ) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
@@ -52,8 +52,9 @@ def symmetrise_coilset(
         CoilSet to symmetrise
     rtol:
         Relative tolerance used when comparing coil values.
-        If rtol > 1.e-5 then the values for the secondary coil
-        in the pair will be set to be equal to the primary coil values.
+        The values for the secondary coil in the pair will be
+        set to be equal to the primary coil values if they are
+        within rtol.
     symmetrise_singular:
         make singular coils symmetric about z=0
 
@@ -1223,7 +1224,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def n_control(self) -> float:
         """Number of coils being actively controlled"""
-        return len(self._control)
+        return len(self.control)
 
     @property
     def control(self) -> list[str]:

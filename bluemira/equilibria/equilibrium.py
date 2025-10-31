@@ -505,7 +505,7 @@ class CoilSetMHDState(MHDState):
         qpsi_positive: bool | None = None,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
-        force_symmetry_rtol: float = 1e-5,
+        force_symmetry_rtol: float | None = None,
         full_coil: bool = False,
         **kwargs,
     ) -> tuple[EQDSKInterface, Grid, CoilSet, Limiter | None]:
@@ -529,10 +529,10 @@ class CoilSetMHDState(MHDState):
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         force_symmetry_rtol:
-            The relative tolerance used when comparing coil values
-            for force_symmetry=True. If rtol > 1.e-5 then the values
-            for the secondary coil in the pair will be set to be
-            equal to the primary coil values.
+            Relative tolerance used when comparing coil values.
+            The values for the secondary coil in the pair will be
+            set to be equal to the primary coil values if they are
+            within force_symmetry_rtol.
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width

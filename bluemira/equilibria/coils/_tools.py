@@ -83,7 +83,7 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 
 def _get_symmetric_coils(
     coilset: CoilSet,
-    rtol: float,
+    rtol: float | None = None,
 ) -> tuple[list[npt.NDArray], npt.NDArray, list[list[int]]]:
     """
     Coilset symmetry utility
@@ -93,9 +93,11 @@ def _get_symmetric_coils(
     coilset:
         CoilSet to get symmetric coils from
     rtol:
-        Relative tolerance used when comparing coil values.
-        If rtol > 1.e-5 then the values for the secondary coil
-        in the pair will be set to be equal to the primary coil values.
+        Relative tolerance used when comparing coil values,
+        rtol = 1.e-5 is the default value for np.allclose.
+        The values for the secondary coil in the pair will be
+        set to be equal to the primary coil values if they are
+        within rtol.
 
     Returns
     -------
@@ -108,6 +110,7 @@ def _get_symmetric_coils(
     """
     from bluemira.equilibria.coils._grouping import SymmetricCircuit  # noqa: PLC0415
 
+    rtol = rtol or 1e-5
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
@@ -117,8 +120,7 @@ def _get_symmetric_coils(
 
         for j, sym_coil in enumerate(sym_stack):
             if np.allclose(coil, sym_coil[0], rtol=rtol):
-                if rtol > 1e-5:  # noqa: PLR2004
-                    coil = sym_coil[0]
+                coil = sym_coil[0]
                 sym_stack[j][1] += 1
                 sym_coil[2].append(i)
                 break
