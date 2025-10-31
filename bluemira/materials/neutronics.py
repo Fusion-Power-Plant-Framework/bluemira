@@ -85,6 +85,7 @@ except ImportError:
         properties=props(density=0.008867),
     )()
 
+
 al2o3_mat = material(
     name="Aluminium Oxide",
     elements={"Al27": 2 / 5, "O16": 3 / 5},
@@ -193,6 +194,7 @@ lined_euro_mat = mixture(
         (al2o3_mat, 0.4 / 2.4),
     ],
     fraction_type="volume",
+    volume_conditions=OperationalConditions(temperature=673.15),
     converters=OpenMCNeutronicConfig(),
 )
 
@@ -328,6 +330,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_vacuum_vessel",
         materials=[(EUROFER_MAT, 0.8), (WATER_MAT, 0.2)],
         fraction_type="volume",
+        volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
         converters=OpenMCNeutronicConfig(material_id=104),
     )
 
@@ -341,6 +344,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (lined_euro_mat, 11.5 / 27.0),
         ],
         fraction_type="volume",
+        volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
         converters=OpenMCNeutronicConfig(material_id=101),
     )
 
@@ -352,6 +356,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             (make_PbLi_mat(li_enrich_ao), 0.9395 * 0.95),
         ],
         fraction_type="volume",
+        volume_conditions=OperationalConditions(temperature=673.15),
         converters=OpenMCNeutronicConfig(material_id=102),
     )
 
@@ -363,6 +368,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             name="inb_manifold",
             materials=[(EUROFER_MAT, 0.573), (inb_bz_mat, 0.426)],  # 1% void
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15),
             converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
@@ -416,6 +422,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (HELIUM_MAT, 25.0 * 0.427 / 27.0),
             ],
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(material_id=101),
         ),
         inb_bz_mat=mixture(
@@ -460,6 +467,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (EUROFER_MAT, 4.5 / 25.0),
             ],
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
             converters=OpenMCNeutronicConfig(material_id=302),
         ),
     )
@@ -494,6 +502,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_first_wall",
         materials=[(TUNGSTEN_MAT, 0.0766), (WATER_MAT, 0.1321), (EUROFER_MAT, 0.7913)],
         fraction_type="volume",
+        volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
         converters=OpenMCNeutronicConfig(material_id=101),
     )
 
@@ -502,6 +511,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             name="inb_vacuum_vessel",
             materials=[(EUROFER_MAT, 0.6), (WATER_MAT, 0.4)],
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
             converters=OpenMCNeutronicConfig(material_id=104),
         ),
         inb_fw_mat=inb_fw_mat,
@@ -514,12 +524,14 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (EUROFER_MAT, 0.1582),
             ],
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
             converters=OpenMCNeutronicConfig(material_id=102),
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[(PbLi_mat, 0.2129), (WATER_MAT, 0.2514), (EUROFER_MAT, 0.5357)],
             fraction_type="volume",
+            volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
             converters=OpenMCNeutronicConfig(material_id=103),
         ),
         divertor_mat=duplicate_mat_as(EUROFER_MAT, "divertor", 301),

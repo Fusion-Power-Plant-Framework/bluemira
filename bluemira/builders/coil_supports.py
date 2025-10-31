@@ -486,16 +486,6 @@ class PFCoilSupportBuilder(Builder):
         if distance == np.inf:
             raise BuilderError("No intersections found!")
 
-        import matplotlib.pyplot as plt
-
-        f, ax = plt.subplots()
-        ax.plot(v1[0], v1[2], marker="o", label="1")
-        ax.plot(v2[0], v2[2], marker="o", label="2")
-        ax.plot(v3[0], v3[2], marker="o", label="3")
-        ax.plot(v4[0], v4[2], marker="o", label="4")
-        ax.legend()
-        ax.set_aspect("equal")
-        plt.show()
         return v1, v2, v3, v4, best_angle
 
     def _get_intersecting_wire(self, v1, v2, v3, v4, angle):
