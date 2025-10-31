@@ -70,7 +70,7 @@ def symmetrise_coilset(
     """
     coilset = deepcopy(coilset)
 
-    _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol)
+    _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol or 1e-5)
     new_coils = []
     coils = coilset._coils
     for count, index in zip(counts, indexes, strict=True):
