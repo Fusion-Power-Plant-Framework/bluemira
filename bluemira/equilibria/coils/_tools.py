@@ -109,6 +109,7 @@ def _get_symmetric_coils(
     """
     from bluemira.equilibria.coils._grouping import SymmetricCircuit  # noqa: PLC0415
 
+    rtol = rtol or 1e-5
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
