@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -25,8 +26,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
-from bluemira.geometry.coordinates import Coordinates, get_intersect
-from bluemira.geometry.error import NotClosedWireError
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -486,6 +486,16 @@ class PFCoilSupportBuilder(Builder):
         if distance == np.inf:
             raise BuilderError("No intersections found!")
 
+        import matplotlib.pyplot as plt
+
+        f, ax = plt.subplots()
+        ax.plot(v1[0], v1[2], marker="o", label="1")
+        ax.plot(v2[0], v2[2], marker="o", label="2")
+        ax.plot(v3[0], v3[2], marker="o", label="3")
+        ax.plot(v4[0], v4[2], marker="o", label="4")
+        ax.legend()
+        ax.set_aspect("equal")
+        plt.show()
         return v1, v2, v3, v4, best_angle
 
     def _get_intersecting_wire(self, v1, v2, v3, v4, angle):
@@ -513,47 +523,15 @@ class PFCoilSupportBuilder(Builder):
             [v3[0], v3[2]],
             [v4[0], v4[2]],
         ])
+
         hull = ConvexHull(points)
 
-        # Get the intersection with the TF edge wire and use this for the rib profile
-        intersection_wire = self._get_intersecting_wire(v1, v2, v3, v4, angle)
+        x = [p[0] for p in points[hull.vertices]]
+        z = [p[1] for p in points[hull.vertices]]
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
 
-        inter1 = get_intersect(
-            np.array([[v1[0], v3[0]], [v1[2], v3[2]]]),
-            np.array([[v2[0], v4[0]], [v2[2], v4[2]]]),
-        )
-        if len(inter1[0]) > 0:
-            v3, v4 = v4, v3
-
-        closing_wire = make_polygon(
-            {
-                "x": [v3[0], v1[0], v2[0], v4[0]],
-                "y": 0,
-                "z": [v3[2], v1[2], v2[2], v4[2]],
-            },
-            closed=False,
-        )
-        try:
-            rib_face = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
-        except NotClosedWireError:
-            rib_wire = make_polygon(
-                {
-                    "x": [v3[0], v1[0], v2[0], v4[0]],
-                    "y": 0,
-                    "z": [v3[2], v1[2], v2[2], v4[2]],
-                },
-                closed=True,
-            )
-            rib_face = BluemiraFace(rib_wire)
-
-        # Trim rib face if there is a collision
-        result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
-
-        if result:
-            result.sort(key=lambda face: -face.area)
-            rib_face = result[0]
+        rib_face = BluemiraFace(rib_wire)
 
         return rib_face
 
@@ -594,10 +572,6 @@ class PFCoilSupportBuilder(Builder):
         shape_list = []
         # First build the support block around the PF coil
         support_face = self._build_support_xs()
-        # Trim support face is there is a collision
-        support_face = boolean_cut(support_face, BluemiraFace(self.tf_xz_keep_out_zone))[
-            0
-        ]
 
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         support_block = extrude_shape(support_face, vec=(0, width, 0))
@@ -606,20 +580,14 @@ class PFCoilSupportBuilder(Builder):
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
 
-        try:
-            shape = boolean_fuse(shape_list)
-        except GeometryError:
-            try:
-                for s in shape_list:
-                    s.scale(1000)
-                shape = boolean_fuse(shape_list)
-                shape.scale(0.001)
-            except GeometryError:
-                bluemira_warn(
-                    "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
-                    " instead of a BluemiraSolid, please check!"
-                )
-                shape = BluemiraCompound(shape_list)
+        shape = boolean_fuse(shape_list)
+
+        # Trim the solid with the TF boundary
+        tf_coil_cut = extrude_shape(
+            BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
+        )
+        tf_coil_cut.translate((0, -0.05 * width, 0))
+        shape = boolean_cut(shape, tf_coil_cut)[0]
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(
