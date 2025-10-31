@@ -1249,7 +1249,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         # For SymmetricCircuits, the list names will be returned
         # in circuit pairs in order of primary coil name.
         self._control_ind = np.sort(control_ind)
-        self._control = [names[c] for c in np.sort(self._control_ind)]
+        self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self) -> CoilSet:
         """Get control coils"""  # noqa: DOC201
