@@ -24,6 +24,9 @@ if TYPE_CHECKING:
     from bluemira.codes.openmc.solver import NeutronSourceCreator
     from bluemira.codes.params import MappedParameterFrame
     from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
+        NeutronicsReactor,
+    )
 
 
 def systems_code_solver(
@@ -94,7 +97,7 @@ def transport_code_solver(
 def neutronics_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    neutronics_model,
+    neutronics_model: NeutronicsReactor,
     eq: Equilibrium,
     source: NeutronSourceCreator,
     op_cond: OperationalConditions,

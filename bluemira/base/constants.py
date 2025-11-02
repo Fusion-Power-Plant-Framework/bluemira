@@ -11,7 +11,7 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -427,11 +427,14 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
         return True
 
 
+ArrayLike = TypeVar("ArrayLike")
+
+
 def raw_uc(
-    value: npt.ArrayLike,
+    value: ArrayLike,
     unit_from: str | ureg.Unit,
     unit_to: str | ureg.Unit,
-) -> float | np.ndarray:
+) -> ArrayLike:
     """
     Raw unit converter
 
