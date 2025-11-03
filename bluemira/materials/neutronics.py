@@ -79,7 +79,7 @@ def make_PbLi_mat(li_enrich_ao) -> Material:
     )()
 
 
-def make_Li4SiO4_mat(li_enrich_ao) -> Material:
+def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
     """
     Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment
 
@@ -92,20 +92,24 @@ def make_Li4SiO4_mat(li_enrich_ao) -> Material:
     -------
     :
         Li4SiO4 material with the specified Li-6 enrichment.
+
+    Notes
+    -----
+    packing_fraction=0.642 Fusion Eng. Des., 164, 112171. See issue #3657
     """
     return material(
         name="lithium_orthosilicate",
-        elements={"Li": 4 / 9, "Si28": 1 / 9, "O16": 4 / 9},
+        elements={"Li": 4 / 9, "Si": 1 / 9, "O": 4 / 9},
         properties=props(
-            density=(2.247 + 0.078 * (100.0 - li_enrich_ao) / 100.0, "g/cm^3")
+            density=(packing_fraction * (2.247 + 0.078 * (1.0 - li_enrich_ao)), "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
+            enrichment=li_enrich_ao*100, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
 
-def make_Li2TiO3_mat(li_enrich_ao) -> Material:
+def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
     """
     Make Li2TiO3 according to the enrichment fraction inputted.
 
@@ -118,18 +122,22 @@ def make_Li2TiO3_mat(li_enrich_ao) -> Material:
     -------
     :
         Li2TiO3 material with the specified Li-6 enrichment.
+
+    Notes
+    -----
+    packing_fraction=0.642 Fusion Eng. Des., 164, 112171. See issue #3657
     """
     return material(
         name="lithium_titanate",
-        elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
+        elements={"Li": 2 / 6, "Ti": 1 / 6, "O": 3 / 6},
         properties=props(
             density=(
-                3.28 + 0.06 * (100.0 - li_enrich_ao) / 100.0,
+                packing_fraction*(3.28 + 0.06 * (1.0 - li_enrich_ao)) ,
                 "g/cm^3",
             )
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
+            enrichment=li_enrich_ao*100, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )()
 
@@ -173,7 +181,8 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
         ],
         fraction_type="atomic",
         converters=OpenMCNeutronicConfig(
-            packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
+            # packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
+            enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"
         ),
     )  # combination fraction type is by atom fraction
     # KALOS_ACB_mat.set_density("g/cm^3", 2.52 * 0.642)  # applying packing fraction
@@ -355,6 +364,8 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     breeder_fraction_vo = 0.103  # 0.163
     helium_fraction_vo = 0.276  # 0.062
 
+    KALOS_ACB_MAT = make_KALOS_ACB_mat(li_enrich_ao)
+
     return ReactorBaseMaterials(
         inb_vv_mat=inb_vv_mat,
         inb_fw_mat=mixture(
@@ -373,23 +384,23 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             materials=[
                 (EUROFER_MAT, structural_fraction_vo),
                 (Be12Ti(), multiplier_fraction_vo),
-                (make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
+                (KALOS_ACB_MAT, breeder_fraction_vo),
                 (HELIUM_MAT, helium_fraction_vo),
             ],
             fraction_type="volume",
             volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(material_id=102),
+            converters=OpenMCNeutronicConfig(material_id=102, enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"),
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[
                 (EUROFER_MAT, 0.4724),
-                (make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
+                (KALOS_ACB_MAT, 0.0241),
                 (HELIUM_MAT, 0.5035),
             ],
             fraction_type="volume",
             volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(material_id=103),
+            converters=OpenMCNeutronicConfig(material_id=103, enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
         div_fw_mat=mixture(
