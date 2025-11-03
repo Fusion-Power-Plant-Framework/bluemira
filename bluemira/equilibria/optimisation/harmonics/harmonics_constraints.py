@@ -27,7 +27,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions i
     ToroidalHarmonicConstraintFunction,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
-    ToroidalHarmonicsParams,
+    ToroidalHarmonicsSelectionResult,
     coil_toroidal_harmonic_amplitude_matrix,
 )
 from bluemira.utilities.tools import is_num
@@ -194,17 +194,20 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
-        ref_harmonics_cos: npt.NDArray[np.float64],
-        ref_harmonics_sin: npt.NDArray[np.float64],
-        ref_harmonics_cos_amplitudes: npt.NDArray[np.float64],
-        ref_harmonics_sin_amplitudes: npt.NDArray[np.float64],
-        th_params: ToroidalHarmonicsParams,
+        th_result: ToroidalHarmonicsSelectionResult,
         relative_tolerance_cos: float | npt.NDArray[np.float64] = 1e-3,
         relative_tolerance_sin: float | npt.NDArray[np.float64] = 1e-3,
         constraint_type: str = "equality",
         weights: float | np.ndarray = 1.0,
     ):
         self.constraint_type = constraint_type
+
+        ref_harmonics_cos = th_result.cos_m
+        ref_harmonics_sin = th_result.sin_m
+        ref_harmonics_cos_amplitudes = th_result.cos_amplitudes
+        ref_harmonics_sin_amplitudes = th_result.sin_amplitudes
+        th_params = th_result.th_params
+
         tolerance_cos = np.abs(relative_tolerance_cos * ref_harmonics_cos_amplitudes)
         tolerance_sin = np.abs(relative_tolerance_sin * ref_harmonics_sin_amplitudes)
         tolerance = np.append(tolerance_cos, tolerance_sin, axis=0)

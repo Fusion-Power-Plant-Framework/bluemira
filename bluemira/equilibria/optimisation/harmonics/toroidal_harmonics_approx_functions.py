@@ -256,6 +256,11 @@ def toroidal_harmonic_grid_and_coil_setup(
         R coordinate of the toroidal focus point in cylindrical coordinates
     Z_0:
         Z coordinate of the toroidal focus point in cylindrical coordinates
+    tau_limit:
+        How the maximum tau value is chosen. The three options are:
+            - LCFS: use the maximum extent of the LCFS
+            - COIL: use the maximum area within all the coils
+            - MANUAL: use a specified limit
     min_tau_value:
         The minimum tau for the toroidal coordinate approximation region,
         lower min tau means a larger region of space (maximum tau is at focus)
@@ -799,10 +804,10 @@ def toroidal_harmonics_to_positions(
 
     Returns
     -------
-    :
+    harmonics2collocation_cos:
         collocation matrix for cos components
-    :
-        collocation matrix for cos components
+    harmonics2collocation_sin:
+        collocation matrix for sin components
 
     Raises
     ------
@@ -918,7 +923,6 @@ def toroidal_harmonic_approximation(
     max_harmonic_mode: int = 5,
     *,
     plasma_mask: bool = False,
-    from_psi_fit: bool = True,
 ) -> ToroidalHarmonicsSelectionResult:
     """
     Calculate the toroidal harmonic (TH) amplitudes/coefficients for a given
@@ -954,10 +958,6 @@ def toroidal_harmonic_approximation(
     plasma_mask:
         Whether or not to apply a mask to the error metric (within the psi_norm flux
         surface)
-    from_psi_fit:
-        If True then the toroidal harmonics approximation of the coilset contribution
-        to psi is calculated from fit to the psi values at certain collocation points.
-        Otherwise, it is calculated from the coilset currents
 
     Returns
     -------
@@ -983,13 +983,9 @@ def toroidal_harmonic_approximation(
         max_harmonic_mode,
         len(th_params.th_coil_names),
     )
-    collocation = (
-        None
-        if not from_psi_fit
-        else collocation_points(
-            eq.get_LCFS(),
-            PointType.GRID_POINTS,
-        )
+    collocation = collocation_points(
+        eq.get_LCFS(),
+        PointType.GRID_POINTS,
     )
 
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
@@ -1011,26 +1007,19 @@ def toroidal_harmonic_approximation(
         sin_m_chosen = mode_values[mode_id[mode_id >= max_harmonic_mode]]
 
         # Calculate psi using the combination of poloidal mode numbers (m) selected in
-        # this iteration
-        if not from_psi_fit:
-            error_new, approximate_coilset_psi, cos_amps, sin_amps = (
-                _approximation_direct_from_currents(
-                    eq, th_params, cos_m_chosen, sin_m_chosen, true_coilset_psi, mask
-                )
+        # this iteration at the collocation points
+        error_new, approximate_coilset_psi, cos_amps, sin_amps = (
+            _approximation_from_psi_fitting(
+                th_params,
+                n_degrees_of_freedom,
+                collocation,
+                mode_id,
+                max_harmonic_mode,
+                collocation_psi,
+                mask,
+                true_coilset_psi,
             )
-        else:
-            error_new, approximate_coilset_psi, cos_amps, sin_amps = (
-                _approximation_from_psi_fitting(
-                    th_params,
-                    n_degrees_of_freedom,
-                    collocation,
-                    mode_id,
-                    max_harmonic_mode,
-                    collocation_psi,
-                    mask,
-                    true_coilset_psi,
-                )
-            )
+        )
         # If the new error is less than the previously lowest error, then select the
         # current combination of poloidal mode numbers (m), amplitudes and associated psi
         if error_new < error:

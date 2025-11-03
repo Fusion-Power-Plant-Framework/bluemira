@@ -33,6 +33,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    ToroidalHarmonicsSelectionResult,
     _get_plasma_mask,
     _set_n_degrees_of_freedom,
     coil_toroidal_harmonic_amplitude_matrix,
@@ -680,7 +681,7 @@ def test_legendre_q_function():
     ]
     tau_c = 1.2824746787307681
     test_leg_q_values = [legendre_q(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
-    assert test_leg_q_values == expected_leg_q_values
+    np.testing.assert_almost_equal(test_leg_q_values, expected_leg_q_values)
 
     # test on array input for x
     expected_leg_q_array_values = [
@@ -1316,15 +1317,15 @@ class TestRegressionTH:
         max_harmonic_mode = 5
 
         expected_cos_modes = np.array([0, 1, 2, 3, 4])
-        expected_sin_modes = np.array([3])
+        expected_sin_modes = np.array([0])
         expected_cos_amplitudes = np.array([
-            -4.23864252,
-            -3.58288708,
-            -10.51447447,
-            -11.673279,
-            -14.26727472,
+            -4.2389231,
+            -3.58792624,
+            -10.58312314,
+            -12.03133123,
+            -15.05828234,
         ])
-        expected_sin_amplitudes = np.array([3.15627377])
+        expected_sin_amplitudes = np.array([-19.33699313])
 
         result = toroidal_harmonic_approximation(
             eq=self.eq,
@@ -1333,7 +1334,6 @@ class TestRegressionTH:
             n_degrees_of_freedom=n_degrees_of_freedom,
             max_harmonic_mode=max_harmonic_mode,
             plasma_mask=True,
-            from_psi_fit=False,
         )
         mask = _get_plasma_mask(
             eq=self.eq,
@@ -1372,13 +1372,19 @@ class TestRegressionTH:
             -14.26727472,
         ])
         test_sin_amplitudes = np.array([3.15627377])
-
-        test_constraint_class_equality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_modes,
-            ref_harmonics_sin=test_sin_modes,
-            ref_harmonics_cos_amplitudes=test_cos_amplitudes,
-            ref_harmonics_sin_amplitudes=test_sin_amplitudes,
+        test_result = ToroidalHarmonicsSelectionResult(
+            cos_m=test_cos_modes,
+            sin_m=test_sin_modes,
+            cos_amplitudes=test_cos_amplitudes,
+            sin_amplitudes=test_sin_amplitudes,
+            error=0.0,
+            coilset_psi=np.zeros(10),
+            fixed_psi=np.zeros(10),
+            true_unfixed_psi=np.zeros(10),
             th_params=self.test_th_params,
+        )
+        test_constraint_class_equality = ToroidalHarmonicConstraint(
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="equality",
@@ -1405,11 +1411,7 @@ class TestRegressionTH:
             assert test_tol == ref_tol
 
         test_constraint_class_inequality = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=test_cos_modes,
-            ref_harmonics_sin=test_sin_modes,
-            ref_harmonics_cos_amplitudes=test_cos_amplitudes,
-            ref_harmonics_sin_amplitudes=test_sin_amplitudes,
-            th_params=self.test_th_params,
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="inequality",
@@ -1446,15 +1448,23 @@ class TestRegressionTH:
         ])
         sin_amplitudes = np.array([3.15627377])
 
+        test_result = ToroidalHarmonicsSelectionResult(
+            cos_m=cos_modes,
+            sin_m=sin_modes,
+            cos_amplitudes=cos_amplitudes,
+            sin_amplitudes=sin_amplitudes,
+            error=0.0,
+            coilset_psi=np.zeros(10),
+            fixed_psi=np.zeros(10),
+            true_unfixed_psi=np.zeros(10),
+            th_params=self.test_th_params,
+        )
+
         # Vector of currents in MA for arg in constraint function
         vector = self.eq.coilset.current * 1e-6
 
         constraint_class = ToroidalHarmonicConstraint(
-            ref_harmonics_cos=cos_modes,
-            ref_harmonics_sin=sin_modes,
-            ref_harmonics_cos_amplitudes=cos_amplitudes,
-            ref_harmonics_sin_amplitudes=sin_amplitudes,
-            th_params=self.test_th_params,
+            th_result=test_result,
             relative_tolerance_cos=1e-3,
             relative_tolerance_sin=1e-3,
             constraint_type="equality",

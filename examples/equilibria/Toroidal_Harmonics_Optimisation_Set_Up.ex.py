@@ -106,7 +106,6 @@ result = toroidal_harmonic_approximation(
     n_degrees_of_freedom=6,
     max_harmonic_mode=5,
     plasma_mask=True,
-    from_psi_fit=True,
 )
 
 # %% [markdown]
@@ -133,12 +132,8 @@ plt.show()
 # %%
 # Create a constraint
 th_constraint = ToroidalHarmonicConstraint(
-    ref_harmonics_cos=result.cos_m,
-    ref_harmonics_sin=result.sin_m,
-    ref_harmonics_cos_amplitudes=result.cos_amplitudes,
-    ref_harmonics_sin_amplitudes=result.sin_amplitudes,
+    th_result=result,
     constraint_type="inequality",
-    th_params=th_params,
 )
 # Ensure control coils are set to those that can be used in the toroidal
 # harmonic approximation
@@ -147,6 +142,7 @@ eq.coilset.control = list(th_params.th_coil_names)
 # Show the constraint region
 f, ax = plt.subplots()
 th_constraint.plot(ax=ax)
+eq.coilset.plot(ax=ax)
 eq.plot(ax=ax)
 
 # %%
