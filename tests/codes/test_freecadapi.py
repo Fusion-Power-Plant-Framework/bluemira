@@ -695,6 +695,14 @@ class TestCADFiletype:
         if not hasattr(FreeCADGui, "subgraphFromObject"):
             FreeCADGui.setupWithoutGUI()
 
+    def test_bad_init(self):
+        match = "not a valid CADFileType"
+        with pytest.raises(ValueError, match=match):
+            cadapi.CADFileType("😇")
+
+        with pytest.raises(ValueError, match=match):
+            cadapi.CADFileType("hello")
+
     @pytest.mark.parametrize(("name", "ftype"), cadapi.CADFileType.__members__.items())
     def test_init(self, name, ftype):
         assert cadapi.CADFileType[name] == ftype
