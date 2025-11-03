@@ -720,7 +720,13 @@ if __name__ == "__main__":
                 eq=reference_eq,
                 op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
-            if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
+            print(f"TBR = {reactor.neutronics.results.tbr}")
+            print(f"e_mult = {reactor.neutronics.results.e_mult}")
+            raise ValueError
+            neutronics_end = time.time()
+            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+
+            if reactor_config.config_for("Neutronics")["show_data"]:
                 reactor.neutronics.plot()
                 bluemira_print(f"{reactor.neutronics}")
         else:
