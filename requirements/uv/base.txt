@@ -10,7 +10,7 @@ asteval==1.0.6
     #   neutronics-material-maker
 babel==2.17.0
     # via bluemira (pyproject.toml)
-blosc2==3.10.2
+blosc2==3.11.0
     # via tables
 certifi==2025.10.5
     # via requests
@@ -24,7 +24,7 @@ contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.1.0
+coolprop==7.2.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
@@ -40,7 +40,7 @@ fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.14.1
+gmsh==4.15.0
     # via bluemira (pyproject.toml)
 idna==3.11
     # via requests
@@ -87,6 +87,7 @@ numpy==1.26.4
     #   bluemira (pyproject.toml)
     #   blosc2
     #   contourpy
+    #   coolprop
     #   eqdsk
     #   imageio
     #   matplotlib
@@ -146,7 +147,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.3
+pyvista==0.46.4
     # via bluemira (pyproject.toml)
 requests==2.32.5
     # via
@@ -163,7 +164,7 @@ scipy==1.15.3
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.10.2
+scooby==0.11.0
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)

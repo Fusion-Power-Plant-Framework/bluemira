@@ -23,7 +23,7 @@ babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
     #   sphinx
-blosc2==3.10.2
+blosc2==3.11.0
     # via tables
 certifi==2025.10.5
     # via requests
@@ -42,7 +42,7 @@ contourpy==1.3.2
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.1.0
+coolprop==7.2.0
     # via bluemira (pyproject.toml)
 coverage==7.11.0
     # via pytest-cov
@@ -81,7 +81,7 @@ fortranformat==2.0.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
-gmsh==4.14.1
+gmsh==4.15.0
     # via bluemira (pyproject.toml)
 greenlet==3.2.4
     # via sqlalchemy
@@ -99,7 +99,7 @@ importlib-metadata==8.7.0
     #   myst-nb
 iniconfig==2.3.0
     # via pytest
-ipykernel==7.0.1
+ipykernel==7.1.0
     # via myst-nb
 ipython==8.37.0
     # via
@@ -151,7 +151,7 @@ matplotlib==3.10.7
     #   pyvista
     #   seaborn
     #   vtk
-matplotlib-inline==0.1.7
+matplotlib-inline==0.2.1
     # via
     #   ipykernel
     #   ipython
@@ -208,6 +208,7 @@ numpy==1.26.4
     #   bluemira (pyproject.toml)
     #   blosc2
     #   contourpy
+    #   coolprop
     #   eqdsk
     #   imageio
     #   matplotlib
@@ -265,7 +266,7 @@ pre-commit==4.3.0
     # via bluemira (pyproject.toml)
 prompt-toolkit==3.0.52
     # via ipython
-psutil==7.1.1
+psutil==7.1.3
     # via ipykernel
 ptyprocess==0.7.0
     # via pexpect
@@ -316,7 +317,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.3
+pyvista==0.46.4
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -343,7 +344,7 @@ rich==14.2.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.27.1
+rpds-py==0.28.0
     # via
     #   jsonschema
     #   referencing
@@ -356,7 +357,7 @@ scipy==1.15.3
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.10.2
+scooby==0.11.0
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
@@ -454,7 +455,7 @@ tzdata==2025.2
     # via pandas
 urllib3==2.5.0
     # via requests
-virtualenv==20.35.3
+virtualenv==20.35.4
     # via pre-commit
 vtk==9.3.1
     # via
