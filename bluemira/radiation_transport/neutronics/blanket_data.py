@@ -148,9 +148,9 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 0.60  # [%]
+            li_enrich_ao = 0.60  # 
         case _:
-            li_enrich_ao = 0.90  # [%]
+            li_enrich_ao = 0.90  #
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
