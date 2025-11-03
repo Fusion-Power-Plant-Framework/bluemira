@@ -28,7 +28,7 @@ coolprop==7.1.0
     # via bluemira (pyproject.toml)
 cycler==0.12.1
     # via matplotlib
-eqdsk==0.5.0
+eqdsk==0.7.0
     # via bluemira (pyproject.toml)
 flexcache==0.3
     # via pint
