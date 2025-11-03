@@ -353,7 +353,7 @@ class Constraint(ConstraintSelection, Model):
     PF_ENERGY_RATE_UPPER_LIMIT = (
         66,
         (65, 113),
-        ("t_current_ramp_up",),
+        ("t_plant_pulse_plasma_current_ramp_up",),
         "Limit on rate of change of energy in poloidal field",
     )
     WALL_RADIATION_UPPER_LIMIT = (
@@ -572,7 +572,7 @@ ITERATION_VAR_MAPPING = {
     "fpflux_fw_neutron_max_mw": 14,
     "fvs_plasma_total_required": 15,
     "dr_cs": 16,
-    "t_between_pulse": 17,
+    "t_plant_pulse_dwell": 17,
     "q95": 18,
     "e_beam_kev": 19,
     "tcpav": 20,
@@ -620,7 +620,7 @@ ITERATION_VAR_MAPPING = {
     "fdtmp": 62,
     "ftemp_fw_max": 63,
     "fp_hcd_injected_min_mw": 64,
-    "t_current_ramp_up": 65,
+    "t_plant_pulse_plasma_current_ramp_up": 65,
     "ft_current_ramp_up": 66,
     "ft_cycle_min": 67,
     "fptemp": 68,

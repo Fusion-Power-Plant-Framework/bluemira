@@ -1858,7 +1858,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "t_burn",
+        "name": "t_plant_pulse_burn",
         "send": false,
         "recv": false,
         "unit": "s"

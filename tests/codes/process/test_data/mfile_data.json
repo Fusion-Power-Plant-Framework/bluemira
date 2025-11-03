@@ -1603,27 +1603,27 @@
     "var_mod": "Current Drive System",
     "scan01": 562.5
   },
-  "t_precharge": {
+  "t_plant_pulse_coil_precharge": {
     "var_mod": "Times",
     "scan01": 50.043
   },
-  "t_current_ramp_up": {
+  "t_plant_pulse_plasma_current_ramp_up": {
     "var_mod": "Times",
     "scan01": 50.043
   },
-  "t_fusion_ramp": {
+  "t_plant_pulse_fusion_ramp": {
     "var_mod": "Times",
     "scan01": 10.0
   },
-  "t_burn": {
+  "t_plant_pulse_burn": {
     "var_mod": "Times",
     "scan01": 10000.0
   },
-  "t_ramp_down": {
+  "t_plant_pulse_plasma_current_ramp_down": {
     "var_mod": "Times",
     "scan01": 50.043
   },
-  "t_between_pulse": {
+  "t_plant_pulse_dwell": {
     "var_mod": "Times",
     "scan01": 0.0
   },
@@ -3472,11 +3472,11 @@
     "var_mod": "Vacuum System",
     "scan01": 0.0
   },
-  "t_between_pulse.": {
+  "t_plant_pulse_dwell.": {
     "var_mod": "Vacuum System",
     "scan01": 0.0
   },
-  "t_precharge.": {
+  "t_plant_pulse_coil_precharge.": {
     "var_mod": "Vacuum System",
     "scan01": 50.043
   },

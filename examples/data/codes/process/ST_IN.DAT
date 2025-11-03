@@ -76,7 +76,7 @@ boundu(60) = 9.0d4
 ixc = 61 * dr_shld_vv_gap_inboard
 boundl(61) = 0.12
 ixc = 63  * ftemp_fw_max (f-value for equation 39)
-ixc = 65 * t_current_ramp_up
+ixc = 65 * t_plant_pulse_plasma_current_ramp_up
 boundu(65) = 1000
 ixc = 103 * fl_h_threshold
 ixc = 109 * f_nd_alpha_electron
@@ -205,7 +205,7 @@ rpf2     = -1.825 * Offset (m) of radial position of i_pf_location=2 pf coils
 
 maxpoloidalpower = 250
 fpoloidalpower = 1.00
-t_current_ramp_up = 80 *
+t_plant_pulse_plasma_current_ramp_up = 80 *
 
 zref(1) = 3.6
 zref(2) = 1.2
@@ -286,6 +286,6 @@ tmargmin = 1.7 * Minimum allowable temperature margin (cs and tf coils) (k)
 v_tf_coil_dump_quench_max_kv    = 30.0        * Max voltage across tf coil during quench (kv)
 f_a_tf_turn_cable_space_extra_void     = 0.33 * Coolant fraction of tfc 'cable' (itfsup=1); or of tfc leg (itfsup=0)
 *-----------------Times Variables------------------*
-t_burn    = 1000.0 * Burn time (s) (calculated if i_pulsed_plant=1)
+t_plant_pulse_burn    = 1000.0 * Burn time (s) (calculated if i_pulsed_plant=1)
 *-----------------Vacuum Variables-----------------*
 output_costs = 0

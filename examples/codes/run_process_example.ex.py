@@ -256,8 +256,8 @@ template_builder.add_input_values({
     "eta_coolant_pump_electric": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
-    "t_between_pulse": 0.0,
-    "t_precharge": 500.0,
+    "t_plant_pulse_dwell": 0.0,
+    "t_plant_pulse_coil_precharge": 500.0,
     # CS / PF coil inputs
     "t_crack_vertical": 0.4e-3,
     "fcuohsu": 0.7,
