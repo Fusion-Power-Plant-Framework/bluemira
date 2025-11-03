@@ -181,6 +181,12 @@ def _create_from_blanket_type(
     :
         Set of materials used for that specific type of reactor.
     """
+    match blanket_type:
+        case BlanketType.HCPB:
+            li_enrich_ao = 0.60
+        case _:
+            li_enrich_ao = 0.90
+
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
     elif blanket_type is BlanketType.HCPB:

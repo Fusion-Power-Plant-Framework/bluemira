@@ -629,10 +629,16 @@ if __name__ == "__main__":
                 op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
         )
+        print(f"TBR = {reactor.neutronics.results.tbr}")
+        print(f"e_mult = {reactor.neutronics.results.e_mult}")
 
         if reactor_config.config_for("Neutronics")["show_data"]:
             reactor.neutronics.plot()
             bluemira_print_clean(f"{reactor.neutronics}")
+
+    if reactor_config.config_for("Neutronics")["show_data"]:
+        reactor.neutronics.plot()
+        bluemira_print_clean(f"{reactor.neutronics}")
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
