@@ -72,7 +72,7 @@ class TestOptVariable:
 
 
 @dataclass
-class TestOptVariablesOptVariables(OptVariablesFrame):
+class MockOptVariables(OptVariablesFrame):
     __test__ = False
 
     a: OptVariable = ov("a", 2, 0, 3)
@@ -80,9 +80,9 @@ class TestOptVariablesOptVariables(OptVariablesFrame):
     c: OptVariable = ov("c", -1, -10, 10)
 
 
-class TestOptVariables:
+class TestOptVariablesFrame:
     def setup_method(self):
-        self.vars = TestOptVariablesOptVariables()
+        self.vars = MockOptVariables()
 
     def test_init(self):
         assert self.vars.n_free_variables == 3
@@ -127,7 +127,7 @@ class TestOptVariables:
         try:
             the_path = Path(tempdir, "opt_var_test.json")
             self.vars.to_json(the_path)
-            new_vars = TestOptVariablesOptVariables.from_json(the_path)
+            new_vars = MockOptVariables.from_json(the_path)
             assert new_vars.as_dict() == self.vars.as_dict()
         finally:
             shutil.rmtree(tempdir)
@@ -137,7 +137,7 @@ class TestOptVariables:
 
         table_pattern = "\n".join(  # noqa: FLY002
             [
-                "TestOptVariablesOptVariables",
+                "MockOptVariables",
                 "╒════════╤═════════╤═══════════════╤═══════════════╤═════════╤═══════════════╕",
                 "│ name   │   value │   lower_bound │   upper_bound │ fixed   │ description   │",
                 "╞════════╪═════════╪═══════════════╪═══════════════╪═════════╪═══════════════╡",
