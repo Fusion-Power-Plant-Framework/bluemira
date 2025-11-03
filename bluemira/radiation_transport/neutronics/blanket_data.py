@@ -16,7 +16,6 @@ from bluemira.materials.neutronics import (
     _make_hcpb_mats,
     _make_wcll_mats,
     duplicate_mat_as,
-    eurofer_mat,
 )
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 

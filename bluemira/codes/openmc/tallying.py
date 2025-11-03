@@ -108,24 +108,10 @@ def dagmc_tallys(material_list, model):
     mesh = openmc.RegularMesh.from_domain(model, dimension=(100, 100, 100))
     mesh_filter = openmc.MeshFilter(mesh)
 
-    # mesh tally using the previously created mesh and records heating on the mesh
-    heating_mesh_tally = openmc.Tally(name="heating_on_mesh")
-    heating_mesh_tally.filters = [mesh_filter]
-    heating_mesh_tally.scores = ["heating"]
-
-    # mesh tally using the previously created mesh and records TBR on the mesh
-    tbr_mesh_tally = openmc.Tally(name="tbr_on_mesh")
-    tbr_mesh_tally.filters = [mesh_filter]
-    tbr_mesh_tally.scores = ["(n,Xt)"]
-
-    flux_mesh_tally = openmc.Tally(name="flux_on_mesh")
-    flux_mesh_tally.filters = [mesh_filter]
-    flux_mesh_tally.scores = ["flux"]
-
-    tallies = openmc.Tallies([
-        tbr_cell_tally,
-        tbr_mesh_tally,
-        heating_cell_tally,
-        heating_mesh_tally,
-        flux_mesh_tally,
-    ])
+    return [
+        ("heating", "heating", None),
+        ("heating_on_mesh", "heating", [mesh_filter]),
+        ("tbr", "(n,Xt)", None),
+        ("tbr_on_mesh", "(n,Xt)", [mesh_filter]),
+        ("flux_on_mesh", "flux", [mesh_filter]),
+    ]

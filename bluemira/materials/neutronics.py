@@ -12,6 +12,7 @@ from enum import Enum, auto
 
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
+from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
 

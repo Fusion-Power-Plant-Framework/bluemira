@@ -19,7 +19,7 @@ from PIL import Image
 from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
-    from bluemira.codes.openmc.output import OpenMCResult
+    from bluemira.codes.openmc.output import OpenMCCSGResult
     from bluemira.equilibria.run import Snapshot
     from eudemo.eudemo.neutronics.run import EUDEMONeutronicsCSGReactor
 
@@ -67,7 +67,7 @@ class NeutronicsManager:
     def __init__(
         self,
         csg_reactor: EUDEMONeutronicsCSGReactor,
-        results: OpenMCResult | dict[int, float],
+        results: OpenMCCSGResult | dict[int, float],
     ):
         self.csg_reactor = csg_reactor
         self.results = results

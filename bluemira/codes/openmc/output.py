@@ -540,7 +540,7 @@ class NeutronicsOutputParams(ParameterFrame):
     peak_div_cu_dpa_rate: Parameter[float]
 
     @classmethod
-    def from_openmc_csg_result(cls, result: OpenMCResult):
+    def from_openmc_csg_result(cls, result: OpenMCCSGResult):
         """
         Produce output parameters from an OpenMC CSG result
         """

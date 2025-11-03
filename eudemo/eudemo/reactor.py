@@ -785,6 +785,12 @@ if __name__ == "__main__":
         reactor_config.config_for("CAD_Neutronics"),
     )
 
+    from bluemira.codes.openmc.sovler import OpenMCDAGMCNeutronicsSolver
+
+    OpenMCDAGMCNeutronicsSolver(
+        params, build_config, eq, source, neutronics_model, op_cond, tally_function
+    )
+
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary)
     # I know there are clashes, I need to put in dynamic bounds on position opt to
