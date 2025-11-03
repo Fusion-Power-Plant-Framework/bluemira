@@ -94,3 +94,24 @@ def filter_cells(
         ("damage", "damage-energy", [cell_filter]),
         # used to get the EUROFER OBMP
     )
+
+
+def dagmc_tallys(material_list, model):
+    heating_cell_tally = openmc.Tally(name="heating")
+    heating_cell_tally.scores = ["heating"]
+
+    # record the total TBR
+    tbr_cell_tally = openmc.Tally(name="tbr")
+    tbr_cell_tally.scores = ["(n,Xt)"]
+
+    # mesh that covers the geometry
+    mesh = openmc.RegularMesh.from_domain(model, dimension=(100, 100, 100))
+    mesh_filter = openmc.MeshFilter(mesh)
+
+    return [
+        ("heating", "heating", None),
+        ("heating_on_mesh", "heating", [mesh_filter]),
+        ("tbr", "(n,Xt)", None),
+        ("tbr_on_mesh", "(n,Xt)", [mesh_filter]),
+        ("flux_on_mesh", "flux", [mesh_filter]),
+    ]

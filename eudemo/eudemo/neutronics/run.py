@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
-    from bluemira.codes.openmc.output import OpenMCResult
+    from bluemira.codes.openmc.output import OpenMCCSGResult
     from bluemira.codes.openmc.solver import NeutronSourceCreator
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.geometry.wire import BluemiraWire
@@ -55,7 +55,7 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
 
 
 def run_neutronics(
-    params: dict | ParameterFrame,
+    params: ParameterFrame,
     build_config: dict,
     blanket: ComponentManager,
     vacuum_vessel: ComponentManager,
@@ -64,7 +64,7 @@ def run_neutronics(
     op_cond: OperationalConditions,
     source: NeutronSourceCreator | None = None,
     tally_function=None,
-) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCResult | dict[int, float]]:
+) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCCSGResult | dict[int, float]]:
     """Runs the neutronics model
 
     Returns
@@ -110,8 +110,12 @@ def run_neutronics(
         tally_function=tally_function,
     )
 
-    res, new_params = solver.execute()
+    outputs = solver.execute(build_config.get("run_mode", "run"))
 
-    params.update_from_frame(new_params)
+    if len(outputs) == 2:
+        res = outputs[0]
+        params.update_from_frame(outputs[1])
+    else:
+        res = outputs
 
     return neutronics_csg, res
