@@ -38,8 +38,9 @@ IN_mappings = {
     "T_profile_alpha": ("alphat", "dimensionless"),
     "T_profile_beta": ("tbeta", "dimensionless"),
     "n_profile_alpha": ("alphan", "dimensionless"),
-    # Note: PROCESS has both rhopedt and rhopedn - they are usually the same...
-    "profile_rho_ped": ("rhopedt", "dimensionless"),
+    # Note: PROCESS has both radius_plasma_pedestal_temp_norm and
+    # radius_plasma_pedestal_density_norm - they are usually the same...
+    "profile_rho_ped": ("radius_plasma_pedestal_temp_norm", "dimensionless"),
 }
 
 OUT_mappings = {
