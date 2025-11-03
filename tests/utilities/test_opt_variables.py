@@ -73,11 +73,18 @@ class TestOptVariable:
 
 @dataclass
 class MockOptVariables(OptVariablesFrame):
-    __test__ = False
-
     a: OptVariable = ov("a", 2, 0, 3)
     b: OptVariable = ov("b", 0, -1, 1)
     c: OptVariable = ov("c", -1, -10, 10)
+
+
+@pytest.fixture
+def mock_opt_vars():
+    return {
+        "a": {"value": 2},
+        "b": {"value": -0.5},
+        "c": {"value": 5},
+    }
 
 
 class TestOptVariablesFrame:
@@ -88,6 +95,19 @@ class TestOptVariablesFrame:
         assert self.vars.n_free_variables == 3
         assert len(self.vars.values) == 3
         assert np.allclose(self.vars.values, np.array([2, 0, -1]))
+
+    def test_from_dict(self, mock_opt_vars):
+        # test that OptVariablesFrame cannot be
+        # instantiates directly
+        with pytest.raises(TypeError):
+            OptVariablesFrame.from_dict(mock_opt_vars)
+
+        # test that a subclass can be instantiated
+        # from dict
+        mock_vars = MockOptVariables.from_dict(mock_opt_vars)
+        assert mock_vars.n_free_variables == 3
+        assert len(mock_vars.values) == 3
+        assert np.allclose(mock_vars.values, np.array([2, -0.5, 5]))
 
     def test_fix(self):
         self.vars.fix_variable("a", value=100)
