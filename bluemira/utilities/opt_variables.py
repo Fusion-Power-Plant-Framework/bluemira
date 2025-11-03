@@ -665,9 +665,7 @@ class OptVariablesFrame:
         return {opv.name: opv.as_dict() for opv in self}
 
     @classmethod
-    def from_dict(
-        cls, var_dict: VarDictT, *, strict_bounds: bool = False
-    ) -> OptVariablesFrame:
+    def from_dict(cls, var_dict: VarDictT) -> OptVariablesFrame:
         """
         Create an OptVariablesFrame instance from a dictionary.
 
@@ -680,15 +678,21 @@ class OptVariablesFrame:
         -------
         :
             The new instance
+
+        Raises
+        ------
+        TypeError
+            Direct initialisation of OptVariableFrame;
         """
-        instance = cls()
-        for name, cfg in var_dict.items():
-            getattr(instance, name).adjust(
-                value=cfg.get("value"),
-                lower_bound=cfg.get("lower_bound"),
-                upper_bound=cfg.get("upper_bound"),
-                strict_bounds=strict_bounds,
+        if cls == OptVariablesFrame:
+            raise TypeError(
+                "Cannot instantiate an OptVariablesFrame directly. It must be"
+                " subclassed."
             )
+
+        instance = cls()
+        instance.adjust_variables(var_dict, strict_bounds=False)
+
         return instance
 
     def as_serialisable(self) -> dict[str, OptVarSerialisedT]:
