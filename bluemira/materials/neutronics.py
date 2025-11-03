@@ -18,12 +18,16 @@ from matproplib.library.tungsten import PlanseeTungsten
 from matproplib import OperationalConditions
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
+from matproplib.properties.dependent import Density
 try:
     from eurofusion_materials.library.steel import EUROfer97
     from eurofusion_materials.library.tungsten import Tungsten
 
     EUROFER_MAT = EUROfer97()
     TUNGSTEN_MAT = Tungsten()
+    WATER_MAT = Water()
+    HELIUM_MAT = Helium()
+    raise ImportError
 except ImportError:
     bluemira_warn("You do have eurofusion_materials installed, or do not have access. "
                   "We're going to use some representative imitation materials instead, "
@@ -41,10 +45,25 @@ except ImportError:
 )()
     TUNGSTEN_MAT = PlanseeTungsten()
 
-# Elements
-HELIUM_MAT = Helium()
+    # Debugging replacements (to be removed)
+    Be12Ti = material(
+        "Be12Ti",
+        elements={"Be": 12.0/13, "Ti": 1.0/13, "fraction_type": "atomic"},
+        converters=OpenMCNeutronicConfig(),
+        properties=props(density=2250.0),
+    )
+    WATER_MAT =   material("water",
+        elements={"H1": 2/3, "O16": 1/3, "fraction_type": "atomic"},
+        properties=props(density=866.0),  # WTF 
+        converters=OpenMCNeutronicConfig(),
+    )()
 
-WATER_MAT = Water()
+    HELIUM_MAT = material(
+        "He",
+        elements={"He4": 1.0},
+        converters=OpenMCNeutronicConfig(),
+        properties=props(density=0.008867),
+    )()
 
 al2o3_mat = material(
     name="Aluminium Oxide",
@@ -52,6 +71,13 @@ al2o3_mat = material(
     properties=props(density=(3.95, "g/cm^3")),
     converters=OpenMCNeutronicConfig(),
 )()
+
+# Be12Ti = material(
+#     "Be12Ti",
+#     elements="Be12Ti",
+#     converters=OpenMCNeutronicConfig(),
+#     properties=props(density=2250.0),
+# )
 
 
 # Lithium-containing materials
@@ -79,7 +105,7 @@ def make_PbLi_mat(li_enrich_ao) -> Material:
     )()
 
 
-def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
+def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
     """
     Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment
 
@@ -109,7 +135,7 @@ def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
     )()
 
 
-def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
+def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
     """
     Make Li2TiO3 according to the enrichment fraction inputted.
 
@@ -481,3 +507,111 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         divertor_mat=duplicate_mat_as(EUROFER_MAT, "divertor", 301),
         div_fw_mat=duplicate_mat_as(inb_fw_mat, "div_first_wall", 302),
     )
+
+
+if __name__ == "__main__":
+    m = _make_hcpb_mats(0.6)
+    from matproplib import OperationalConditions
+
+    r = repr(m.inb_bz_mat.convert("openmc", OperationalConditions(temperature=300, pressure=8e6)))
+
+    true_output = """
+    Material
+	ID             =	102
+	Name           =	inb_breeder_zone
+	Temperature    =	None
+	Density        =	2.273067751637386 [g/cm3]
+	Volume         =	None [cm^3]
+	Depletable     =	False
+	S(a,b) Tables  
+	Nuclides       
+	Be9            =	0.6998631398987396 [ao]
+	Cr50           =	0.0006047907018436486 [ao]
+	Cr52           =	0.011662786678199645 [ao]
+	Cr53           =	0.001322466388542349 [ao]
+	Cr54           =	0.0003291898756870492 [ao]
+	Fe54           =	0.0076998749495311705 [ao]
+	Fe56           =	0.12087156990920156 [ao]
+	Fe57           =	0.002791451671181617 [ao]
+	Fe58           =	0.0003714909727575347 [ao]
+	He4            =	5.015408434749478e-06 [ao]
+	Li6            =	0.023828836409492977 [ao]
+	Li7            =	0.01588589093966199 [ao]
+	O16            =	0.04392689540133806 [ao]
+	Si28           =	0.00782259781119719 [ao]
+	Ti46           =	0.0051590629511089415 [ao]
+	Ti47           =	0.004652536770454608 [ao]
+	Ti48           =	0.04610013584918195 [ao]
+	Ti49           =	0.003383094613999923 [ao]
+	Ti50           =	0.0032392661923326435 [ao]
+	W182           =	0.00012897639723287904 [ao]
+	W183           =	6.895717680765253e-05 [ao]
+	W184           =	0.0001472355767323238 [ao]
+	W186           =	0.0001347374563400298 [ao]
+    """
+
+
+    import re
+    from math import isclose
+
+    def compare_materials(str1: str, str2: str, tol: float = 1e-8):
+        """
+        Compare two material definition strings, using str1 as the reference.
+        Shows absolute and relative (to str1) differences.
+        """
+        def parse_material(s: str):
+            pattern = re.compile(r"(\w+)\s*=\s*([^\s]+)")
+            data = {}
+            for key, value in pattern.findall(s):
+                v = re.sub(r"\[.*?\]", "", value).strip()
+                try:
+                    data[key] = float(v)
+                except ValueError:
+                    data[key] = v
+            return data
+
+        ref = parse_material(str1)
+        new = parse_material(str2)
+
+        ref_keys, new_keys = set(ref), set(new)
+
+        only_in_ref = sorted(ref_keys - new_keys)
+        only_in_new = sorted(new_keys - ref_keys)
+        both = sorted(ref_keys & new_keys)
+
+        diffs = []
+
+        for key in both:
+            v1, v2 = ref[key], new[key]
+            if isinstance(v1, float) and isinstance(v2, float):
+                if not isclose(v1, v2, rel_tol=tol, abs_tol=tol):
+                    rel_diff = (v2 - v1) / v1 if v1 != 0 else float("inf")
+                    diffs.append((key, v1, v2, v2 - v1, rel_diff))
+            elif v1 != v2:
+                diffs.append((key, v1, v2, None, None))
+
+        # --- Print summary ---
+        print("🔹 Only in reference (missing in second):")
+        for k in only_in_ref:
+            print(f"  {k} = {ref[k]}")
+
+        print("\n🔹 Only in second (not in reference):")
+        for k in only_in_new:
+            print(f"  {k} = {new[k]}")
+
+        print("\n🔹 Differences beyond tolerance (relative to reference):")
+        for key, v1, v2, delta, rel in diffs:
+            if rel is None:
+                print(f"  {key}: '{v1}' != '{v2}'")
+            else:
+                print(f"  {key}: {v1:.6g} → {v2:.6g}  "
+                    f"(Δ={delta:.3g}, rel={rel*100:.3f}%)")
+
+        return {
+            "only_in_ref": only_in_ref,
+            "only_in_new": only_in_new,
+            "diffs": diffs,
+        }
+
+
+    compare_materials(true_output, r)
