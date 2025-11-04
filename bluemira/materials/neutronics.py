@@ -17,13 +17,9 @@ from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-<<<<<<< HEAD
 
 from bluemira.base.look_and_feel import bluemira_warn
 
-=======
-from matproplib.properties.dependent import Density
->>>>>>> 91aa1edff (still at a loss...)
 try:
     from eurofusion_materials.library.steel import EUROfer97
     from eurofusion_materials.library.tungsten import Tungsten
@@ -56,18 +52,16 @@ except ImportError:
     TUNGSTEN_MAT = PlanseeTungsten()
 
     # Debugging replacements (to be removed)
-<<<<<<< HEAD
-    TUNGSTEN_MAT = material(
-        name="tungsten",
-        elements={
-            "W182": 0.266,
-            "W183": 0.143,
-            "W184": 0.307,
-            "W186": 0.284,
-            "fraction_type": "atomic",
-        },
-        properties=props(density=(19.3, "g/cm^3")),
-        converters=OpenMCNeutronicConfig(),
+    TUNGSTEN_MAT =  material(name="tungsten",
+                            elements={
+                                "W182": 0.266,
+                                "W183": 0.143,
+                                "W184": 0.307,
+                                "W186": 0.284,
+                                "fraction_type": "atomic",
+                            },
+                            properties=props(density=(19.3, "g/cm^3")),
+                            converters=OpenMCNeutronicConfig(),
     )()
 
     Be12Ti = material(
@@ -90,26 +84,6 @@ except ImportError:
         properties=props(density=0.008867),
     )()
 
-=======
-    Be12Ti = material(
-        "Be12Ti",
-        elements={"Be": 12.0/13, "Ti": 1.0/13, "fraction_type": "atomic"},
-        converters=OpenMCNeutronicConfig(),
-        properties=props(density=2250.0),
-    )
-    WATER_MAT =   material("water",
-        elements={"H1": 2/3, "O16": 1/3, "fraction_type": "atomic"},
-        properties=props(density=866.0),  # WTF
-        converters=OpenMCNeutronicConfig(),
-    )()
-
-    HELIUM_MAT = material(
-        "He",
-        elements={"He4": 1.0},
-        converters=OpenMCNeutronicConfig(),
-        properties=props(density=0.008867),
-    )()
->>>>>>> 91aa1edff (still at a loss...)
 
 al2o3_mat = material(
     name="Aluminium Oxide",
