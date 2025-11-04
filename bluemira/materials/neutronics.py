@@ -17,8 +17,6 @@ from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-from matproplib.properties.dependent import Density
-
 
 tungsten_mat = PlanseeTungsten()
 
@@ -27,7 +25,8 @@ HELIUM_MAT = Helium()
 
 water_mat = Water()
 
-# alloys
+
+# Debugging replacements (to be removed)
 EUROFER_MAT = material(
     name="eurofer",
     elements={
@@ -42,6 +41,7 @@ EUROFER_MAT = material(
     properties=props(density=(7.78, "g/cm^3")),
     converters=OpenMCNeutronicConfig(),
 )()
+TUNGSTEN_MAT = PlanseeTungsten()
 
 # Debugging replacements (to be removed)
 TUNGSTEN_MAT = material(
