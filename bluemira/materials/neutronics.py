@@ -44,6 +44,19 @@ EUROFER_MAT = material(
 )()
 
 # Debugging replacements (to be removed)
+TUNGSTEN_MAT = material(
+    name="tungsten",
+    elements={
+        "W182": 0.266,
+        "W183": 0.143,
+        "W184": 0.307,
+        "W186": 0.284,
+        "fraction_type": "atomic",
+    },
+    properties=props(density=(19.3, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
 Be12Ti = material(
     "Be12Ti",
     elements={"Be": 12.0 / 13, "Ti": 1.0 / 13, "fraction_type": "atomic"},
