@@ -19,6 +19,7 @@ from matproplib import OperationalConditions
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
 from matproplib.properties.dependent import Density
+
 try:
     from eurofusion_materials.library.steel import EUROfer97
     from eurofusion_materials.library.tungsten import Tungsten
@@ -29,47 +30,51 @@ try:
     HELIUM_MAT = Helium()
     raise ImportError
 except ImportError:
-    bluemira_warn("You do have eurofusion_materials installed, or do not have access. "
-                  "We're going to use some representative imitation materials instead, "
-                  "as opposed to the official, material descriptions.")
+    bluemira_warn(
+        "You do have eurofusion_materials installed, or do not have access. "
+        "We're going to use some representative imitation materials instead, "
+        "as opposed to the official, material descriptions."
+    )
     EUROFER_MAT = material(
-    name="eurofer",
-    elements={
-        "Fe": 0.9006,
-        "Cr": 0.0886,
-        "W182": 0.0108 * 0.266,
-        "W183": 0.0108 * 0.143,
-        "W184": 0.0108 * 0.307,
-        "W186": 0.0108 * 0.284,
-        "fraction_type": "mass",
-    },
-    properties=props(density=(7.78, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
+        name="eurofer",
+        elements={
+            "Fe": 0.9006,
+            "Cr": 0.0886,
+            "W182": 0.0108 * 0.266,
+            "W183": 0.0108 * 0.143,
+            "W184": 0.0108 * 0.307,
+            "W186": 0.0108 * 0.284,
+            "fraction_type": "mass",
+        },
+        properties=props(density=(7.78, "g/cm^3")),
+        converters=OpenMCNeutronicConfig(),
+    )()
     TUNGSTEN_MAT = PlanseeTungsten()
 
     # Debugging replacements (to be removed)
-    TUNGSTEN_MAT =  material(name="tungsten",
-                            elements={
-                                "W182": 0.266,
-                                "W183": 0.143,
-                                "W184": 0.307,
-                                "W186": 0.284,
-                                "fraction_type": "atomic",
-                            },
-                            properties=props(density=(19.3, "g/cm^3")),
-                            converters=OpenMCNeutronicConfig(),
+    TUNGSTEN_MAT = material(
+        name="tungsten",
+        elements={
+            "W182": 0.266,
+            "W183": 0.143,
+            "W184": 0.307,
+            "W186": 0.284,
+            "fraction_type": "atomic",
+        },
+        properties=props(density=(19.3, "g/cm^3")),
+        converters=OpenMCNeutronicConfig(),
     )()
 
     Be12Ti = material(
         "Be12Ti",
-        elements={"Be": 12.0/13, "Ti": 1.0/13, "fraction_type": "atomic"},
+        elements={"Be": 12.0 / 13, "Ti": 1.0 / 13, "fraction_type": "atomic"},
         converters=OpenMCNeutronicConfig(),
         properties=props(density=2250.0),
     )
-    WATER_MAT =   material("water",
-        elements={"H1": 2/3, "O16": 1/3, "fraction_type": "atomic"},
-        properties=props(density=866.0),  # WTF 
+    WATER_MAT = material(
+        "water",
+        elements={"H1": 2 / 3, "O16": 1 / 3, "fraction_type": "atomic"},
+        properties=props(density=866.0),  # WTF
         converters=OpenMCNeutronicConfig(),
     )()
 
@@ -145,7 +150,9 @@ def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
             density=(packing_fraction * (2.247 + 0.078 * (1.0 - li_enrich_ao)), "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao*100, enrichment_target="Li6", enrichment_type="atomic"
+            enrichment=li_enrich_ao * 100,
+            enrichment_target="Li6",
+            enrichment_type="atomic",
         ),
     )()
 
@@ -173,12 +180,14 @@ def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
         elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
             density=(
-                packing_fraction*(3.28 + 0.06 * (1.0 - li_enrich_ao)) ,
+                packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)),
                 "g/cm^3",
             )
         ),
         converters=OpenMCNeutronicConfig(
-            enrichment=li_enrich_ao*100, enrichment_target="Li6", enrichment_type="atomic"
+            enrichment=li_enrich_ao * 100,
+            enrichment_target="Li6",
+            enrichment_type="atomic",
         ),
     )()
 
@@ -223,7 +232,9 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
         fraction_type="atomic",
         converters=OpenMCNeutronicConfig(
             # packing_fraction=0.642,  # Fusion Eng. Des., 164, 112171. See issue #3657
-            enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"
+            enrichment=li_enrich_ao * 100,
+            enrichment_target="Li6",
+            enrichment_type="atomic",
         ),
     )  # combination fraction type is by atom fraction
     # KALOS_ACB_mat.set_density("g/cm^3", 2.52 * 0.642)  # applying packing fraction
@@ -430,7 +441,12 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             ],
             fraction_type="volume",
             volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(material_id=102, enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"),
+            converters=OpenMCNeutronicConfig(
+                material_id=102,
+                enrichment=li_enrich_ao * 100,
+                enrichment_target="Li6",
+                enrichment_type="atomic",
+            ),
         ),
         inb_mani_mat=mixture(
             name="inb_manifold",
@@ -441,7 +457,12 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             ],
             fraction_type="volume",
             volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
-            converters=OpenMCNeutronicConfig(material_id=103, enrichment=li_enrich_ao * 100, enrichment_target="Li6", enrichment_type="atomic"),
+            converters=OpenMCNeutronicConfig(
+                material_id=103,
+                enrichment=li_enrich_ao * 100,
+                enrichment_target="Li6",
+                enrichment_type="atomic",
+            ),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
         div_fw_mat=mixture(
@@ -528,7 +549,11 @@ if __name__ == "__main__":
     m = _make_hcpb_mats(0.6)
     from matproplib import OperationalConditions
 
-    r = repr(m.inb_bz_mat.convert("openmc", OperationalConditions(temperature=300, pressure=8e6)))
+    r = repr(
+        m.inb_bz_mat.convert(
+            "openmc", OperationalConditions(temperature=300, pressure=8e6)
+        )
+    )
 
     true_output = """
     Material
@@ -565,7 +590,6 @@ if __name__ == "__main__":
 	W186           =	0.0001347374563400298 [ao]
     """
 
-
     import re
     from math import isclose
 
@@ -574,6 +598,7 @@ if __name__ == "__main__":
         Compare two material definition strings, using str1 as the reference.
         Shows absolute and relative (to str1) differences.
         """
+
         def parse_material(s: str):
             pattern = re.compile(r"(\w+)\s*=\s*([^\s]+)")
             data = {}
@@ -619,14 +644,15 @@ if __name__ == "__main__":
             if rel is None:
                 print(f"  {key}: '{v1}' != '{v2}'")
             else:
-                print(f"  {key}: {v1:.6g} → {v2:.6g}  "
-                    f"(Δ={delta:.3g}, rel={rel*100:.3f}%)")
+                print(
+                    f"  {key}: {v1:.6g} → {v2:.6g}  "
+                    f"(Δ={delta:.3g}, rel={rel * 100:.3f}%)"
+                )
 
         return {
             "only_in_ref": only_in_ref,
             "only_in_new": only_in_new,
             "diffs": diffs,
         }
-
 
     compare_materials(true_output, r)

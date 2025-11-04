@@ -506,15 +506,20 @@ class PFCoilSupportBuilder(Builder):
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
         v1, v2, v3, v4, _angle = self._get_support_point_angle(support_face)
-        
-        points = np.array([[v1[0], v1[2]], [v2[0], v2[2]], [v3[0], v3[2]], [v4[0], v4[2]]])
+
+        points = np.array([
+            [v1[0], v1[2]],
+            [v2[0], v2[2]],
+            [v3[0], v3[2]],
+            [v4[0], v4[2]],
+        ])
         hull = ConvexHull(points)
 
         x = [p[0] for p in points[hull.vertices]]
         z = [p[1] for p in points[hull.vertices]]
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
-        
+
         rib_face = BluemiraFace(rib_wire)
 
         return rib_face
@@ -565,9 +570,11 @@ class PFCoilSupportBuilder(Builder):
         shape_list.extend(self._make_ribs(width, support_face))
 
         shape = boolean_fuse(shape_list)
-        
+
         # Trim the solid with the TF boundary
-        tf_coil_cut = extrude_shape(BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0])
+        tf_coil_cut = extrude_shape(
+            BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
+        )
         tf_coil_cut.translate((0, -0.05 * width, 0))
         shape = boolean_cut(shape, tf_coil_cut)[0]
 
