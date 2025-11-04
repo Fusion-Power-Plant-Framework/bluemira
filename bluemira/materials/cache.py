@@ -120,7 +120,7 @@ class MaterialCache:
         ----------
         mat_name:
             The name of the material or mixture.
-        mat_dict:
+        mats_dict:
             The dictionary containing the material or mixture attributes to be loaded.
 
         Raises
@@ -150,7 +150,7 @@ class MaterialCache:
         ----------
         mat_name:
             The name of the mixture.
-        mat_dict:
+        mats_dict:
             The dictionary containing the mixture attributes to be loaded.
         """
         mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]
@@ -168,7 +168,7 @@ class MaterialCache:
         ----------
         mat_name:
             The name of the material.
-        mat_dict:
+        mats_dict:
             The dictionary containing the material attributes to be loaded.
         """
         mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]

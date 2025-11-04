@@ -1253,8 +1253,6 @@ def plot_dolfinx_2d_mesh_plt(
         Mapping from group ID to color.
     cmap : str
         Colormap for automatic coloring of groups.
-    show_nodes : bool
-        If True, plot red dots at node positions.
     figsize : tuple
         Size of the figure if ax is None.
     title : str

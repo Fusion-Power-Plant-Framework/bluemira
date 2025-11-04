@@ -602,11 +602,12 @@ def flatten_iterable(iters: Iterable[Any]):
 
     Parameters
     ----------
-    lists: set of Iterables
+    iters:
         The object(s) to de-nest
 
     Yields
     ------
+    :
         elements of iterable
 
     Notes

@@ -49,7 +49,7 @@ class CoilNumber:
 
         Parameters
         ----------
-        coil:
+        ctype:
             Object to number
 
         Returns

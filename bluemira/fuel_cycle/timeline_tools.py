@@ -103,8 +103,8 @@ def generate_truncnorm_distribution(
         The integral value of the distribution
     sigma:
         The standard deviation of the underlying normal distribution
-    rng_seed:
-        random number generator seed for the log normal distribution
+    rng:
+        random number generator for the log normal distribution
 
     Returns
     -------

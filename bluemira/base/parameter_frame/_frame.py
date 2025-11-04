@@ -459,9 +459,6 @@ class ParameterFrame:
         ----------
         keys:
             table column keys
-        tablefmt:
-            The format of the table (default="fancy_grid") - see
-            https://github.com/astanin/python-tabulate#table-format
         floatfmt:
             Format floats to this precision
         value_label:

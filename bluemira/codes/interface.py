@@ -356,7 +356,7 @@ class CodesSolver(abc.ABC):
 
         Parameters
         ----------
-        mappings:
+        send_recv:
             A dictionary where keys are variables to change the mappings
             of, and values specify 'send', and or, 'recv' booleans.
 

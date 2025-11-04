@@ -1943,9 +1943,6 @@ def make_compound(
         List of shape objects to be saved
     label:
         Label for the resulting shape
-    set_constituents:
-        If True, shapes will be set at as the compound's consitituents.
-        It won't be deriived from the cadapi shape.
 
     Returns
     -------

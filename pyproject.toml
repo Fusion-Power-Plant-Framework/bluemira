@@ -21,7 +21,7 @@ dependencies = [
     "click>=8.0,!=8.3.0",
     "contourpy>=1.0",
     "CoolProp>=6.5",
-    "eqdsk>=0.5.0, <0.8.0",
+    "eqdsk>=0.7.0, <0.8.0",
     "fortranformat>=2.0",
     "gmsh",
     "imageio>=1.0",
@@ -66,7 +66,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.13.1",
+    "ruff==0.14.3",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -76,10 +76,10 @@ dev = [
 examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
-    "numba==0.62.0",
+    "numba==0.62.1",
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy==1.26.4",
-    "matplotlib==3.10.6",
+    "matplotlib==3.10.7",
     "scipy==1.15.3",
     "vtk==9.3.1",  # needed for uv resolution
 ]
@@ -89,7 +89,7 @@ conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 process = ["process @ git+https://github.com/ukaea/process@v3.2.1"]
 openmc = [
     "openmc>=0.14.0",
-    "openmc_data==2.3.1",
+    "openmc_data==2.3.2",
     "tokamak-neutron-source >=0.1.1",
 ]
 polyscope = ["polyscope"]
@@ -171,7 +171,6 @@ select = ["ALL"]
 ignore = [
     "ANN",     # type annotations
     "EM",      # string in error messages
-    "PD901",   # Pandas df variable name
     "B019",    # using cache memory leaks
     "COM812",  # enforce trailing comma, disagrees with black/ruff format
     "D200",    # docs stuff
@@ -369,6 +368,7 @@ ignore-names = [
 "tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
 "tests/geometry/test_private_tools.py" = ["E501"]
 "tests/utilities/test_opt_variables.py" = ["E501"]
+"scripts/openmc_data_download/*" = ["ASYNC240"]
 
 # TODO future removal
 "bluemira/structural/*" = ["DOC201"]  # 22

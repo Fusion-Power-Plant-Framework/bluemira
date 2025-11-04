@@ -1705,7 +1705,7 @@ class Coordinates:
 
         Parameters
         ----------
-        angle: float
+        max_angle: float
             Maximum turning angle [degree]
         dx_min: float
             Minimum segment length
@@ -1885,13 +1885,13 @@ def vector_intersect_3d(
 
     Parameters
     ----------
-    p1:
+    p_1:
         The first point on the first vector
-    p2:
+    p_2:
         The second point on the first vector
-    p3:
+    p_3:
         The first point on the second vector
-    p4:
+    p_4:
         The second point on the second vector
 
     Returns

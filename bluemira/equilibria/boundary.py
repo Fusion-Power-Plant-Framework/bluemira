@@ -54,8 +54,8 @@ class FreeBoundary:
         jtor:
             The toroidal current density in the plasma [A/m^2]
 
-        Note
-        ----
+        Notes
+        -----
         Modifies psi in-place
         """
         for i, (j, k) in enumerate(self.edges):
@@ -75,8 +75,8 @@ def apply_boundary(rhs: npt.NDArray[np.float64], lhs: npt.ArrayLike):
         The left-hand-side of the equality
         If 0, will apply a fixed boundary condition of 0 to the rhs
 
-    Note
-    ----
+    Notes
+    -----
     Modified rhs in-place; applying lhs boundary condition
     """
     if is_num(lhs):

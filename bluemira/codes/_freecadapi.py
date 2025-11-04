@@ -23,14 +23,8 @@ from typing import TYPE_CHECKING, Protocol
 from unittest import mock
 
 import FreeCAD
-import BOPTools
-import BOPTools.GeneralFuseResult
 import BOPTools.JoinAPI
-import BOPTools.JoinFeatures
-import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
-import BOPTools.SplitFeatures
-import BOPTools.Utils
 import DraftGeomUtils
 import FreeCADGui
 import Part
@@ -1564,10 +1558,10 @@ class CADFileType(enum.Enum):
             if value.upper() in cls.__members__:
                 return cls[value.upper()]
             for mixed_c in (cls.STEP_ZIP, cls.IFC_BIM_JSON, cls.FREECAD):
-                if value in mixed_c.value:
+                if value in mixed_c.value.file_extensions:
                     return mixed_c
             for cl in cls.__members__.values():
-                if value in cl.value:
+                if value in cl.value.file_extensions:
                     return cl
         return super()._missing_(value)
 
@@ -1849,13 +1843,7 @@ def save_cad(
     Part builds in millimetres therefore we need to scale to metres to be
     consistent with our units
     """
-    try:
-        cad_format = CADFileType(cad_format)
-    except ValueError as ve:
-        try:
-            cad_format = CADFileType[cad_format.upper()]
-        except (KeyError, AttributeError):
-            raise ve from None
+    cad_format = CADFileType(cad_format)
 
     filename = force_file_extension(filename, f".{cad_format.ext}")
 
@@ -2813,7 +2801,7 @@ def collect_verts_faces(
     ----------
     solid:
         FreeCAD Part
-    tessellation:
+    tesselation:
         amount of tessellation for the mesh
 
     Returns

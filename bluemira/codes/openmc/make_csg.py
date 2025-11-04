@@ -720,13 +720,6 @@ def make_cell_arrays(
 
     Parameters
     ----------
-    materials:
-        library containing information about the materials
-    tokamak_dimensions:
-        A parameter
-        :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`,
-        Specifying the dimensions of various layers in the blanket, divertor, and
-        central solenoid.
     control_id: bool
         Whether to set the blanket Cells and surface IDs by force or not.
         With this set to True, it will be easier to understand where each cell came
@@ -1402,25 +1395,27 @@ class BlanketCellStack:
 
         Parameters
         ----------
-        pre_cell
+        pre_cell:
             An instance of :class:`~PreCell`
-        ccw_surf
+        ccw_surface:
             An instance of :class:`openmc.surface.Surface`
-        cw_surf
+        cw_surface:
             An instance of :class:`openmc.surface.Surface`
-        depth_series
+        depth_series:
             a series of floats corresponding to the N-2 interfaces between the N-1
             layers, whereas the N-th layer is the vacuum vessel (and the pre-cell has
             already stored the thickness for that).
             Each float represents how deep into the blanket (i.e. how many [cm] into the
             first wall we need to drill, from the plasma facing surface) to hit that
             interface layer.
-        fill_lib
+        csg:
+            CSG reactor CAD
+        fill_lib:
             :class:`~MaterialsLibrary` so that it separates into .inboard, .outboard,
             .divertor, .tf_coil_windings, etc.
-        inboard
+        inboard:
             boolean denoting whether this cell is inboard or outboard
-        blanket_stack_num
+        blanket_stack_num:
             An optional number indexing the current stack. Used for labelling.
             If None: we will not be controlling the cell and surfaces id.
 
@@ -1639,8 +1634,8 @@ class BlanketCellArray:
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
 
-        Parameters
-        ----------
+        Returns
+        -------
         interior_vertices:
             array of shape (N+1, 3) arranged clockwise (inboard to outboard).
         """
@@ -2229,8 +2224,8 @@ class DivertorCellArray:
         Returns all of the tokamak's poloidal cross-section's inside corners'
         coordinates, in 3D.
 
-        Parameters
-        ----------
+        Returns
+        -------
         interior_vertices: npt.NDArray of shape (N+1, 3)
             Arranged counter-clockwise (inboard to outboard).
         """

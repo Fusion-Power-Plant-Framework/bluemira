@@ -40,6 +40,11 @@ class Options:
         -------
         :
             the attributes or from "_options" dict
+
+        Raises
+        ------
+        AttributeError
+            Attribute not found
         """
         try:
             return super().__getattribute__(attr)
