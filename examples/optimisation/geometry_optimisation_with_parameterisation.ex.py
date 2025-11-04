@@ -27,6 +27,7 @@
 
 # %%
 from dataclasses import dataclass
+from typing import TypedDict
 
 from bluemira.display import plot_2d
 from bluemira.display.plotter import PlotOptions
@@ -34,7 +35,12 @@ from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+from bluemira.utilities.opt_variables import (
+    OptVarVarDictValueT,
+    OptVariable,
+    OptVariablesFrame,
+    ov,
+)
 
 
 @dataclass
@@ -46,10 +52,18 @@ class CircleOptVariables(OptVariablesFrame):
     centre_z: OptVariable = ov("centre_z", 0, 0, 10)
 
 
-class Circle(GeometryParameterisation):
+class CircleVarDict(TypedDict, total=False):
+    """Typed Dict for CircleVarDict"""
+
+    radius: OptVarVarDictValueT
+    centre_x: OptVarVarDictValueT
+    centre_z: OptVarVarDictValueT
+
+
+class Circle(GeometryParameterisation[CircleOptVariables]):
     """Geometry parameterisation for a circle in the xz-plane."""
 
-    def __init__(self, var_dict: VarDictT | None = None):
+    def __init__(self, var_dict: CircleVarDict | None = None):
         opt_variables = CircleOptVariables()
         opt_variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(opt_variables)
