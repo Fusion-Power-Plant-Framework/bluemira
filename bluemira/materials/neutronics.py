@@ -52,16 +52,17 @@ except ImportError:
     TUNGSTEN_MAT = PlanseeTungsten()
 
     # Debugging replacements (to be removed)
-    TUNGSTEN_MAT =  material(name="tungsten",
-                            elements={
-                                "W182": 0.266,
-                                "W183": 0.143,
-                                "W184": 0.307,
-                                "W186": 0.284,
-                                "fraction_type": "atomic",
-                            },
-                            properties=props(density=(19.3, "g/cm^3")),
-                            converters=OpenMCNeutronicConfig(),
+    TUNGSTEN_MAT = material(
+        name="tungsten",
+        elements={
+            "W182": 0.266,
+            "W183": 0.143,
+            "W184": 0.307,
+            "W186": 0.284,
+            "fraction_type": "atomic",
+        },
+        properties=props(density=(19.3, "g/cm^3")),
+        converters=OpenMCNeutronicConfig(),
     )()
 
     Be12Ti = material(

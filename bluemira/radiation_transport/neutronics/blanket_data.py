@@ -148,7 +148,7 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 0.60  # 
+            li_enrich_ao = 0.60  #
         case _:
             li_enrich_ao = 0.90  #
 
