@@ -37,7 +37,10 @@ except ImportError:
     elements={
         "Fe": 0.9006,
         "Cr": 0.0886,
-        "W": 0.0108,
+        "W182": 0.0108 * 0.266,
+        "W183": 0.0108 * 0.143,
+        "W184": 0.0108 * 0.307,
+        "W186": 0.0108 * 0.284,
         "fraction_type": "mass",
     },
     properties=props(density=(7.78, "g/cm^3")),
@@ -46,6 +49,18 @@ except ImportError:
     TUNGSTEN_MAT = PlanseeTungsten()
 
     # Debugging replacements (to be removed)
+    TUNGSTEN_MAT =  material(name="tungsten",
+                            elements={
+                                "W182": 0.266,
+                                "W183": 0.143,
+                                "W184": 0.307,
+                                "W186": 0.284,
+                                "fraction_type": "atomic",
+                            },
+                            properties=props(density=(19.3, "g/cm^3")),
+                            converters=OpenMCNeutronicConfig(),
+    )()
+
     Be12Ti = material(
         "Be12Ti",
         elements={"Be": 12.0/13, "Ti": 1.0/13, "fraction_type": "atomic"},
@@ -380,7 +395,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_vacuum_vessel",  # optional name of homogeneous material
         materials=[(EUROFER_MAT, 0.6), (WATER_MAT, 0.4)],
         fraction_type="volume",
-        volume_conditions=OperationalConditions(temperature=673.15, pressure=1e5),
+        volume_conditions=OperationalConditions(temperature=373.15, pressure=1e5),
         converters=OpenMCNeutronicConfig(material_id=104),
     )
 
