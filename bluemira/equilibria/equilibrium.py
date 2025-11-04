@@ -1683,8 +1683,9 @@ class Equilibrium(CoilSetMHDState):
         mask = self._get_core_mask(psi_n)
 
         # psi norm values for an arbitrary coordinate on the LCFS
-        psi_lcfs = self.psi(self.get_LCFS().x[0], self.get_LCFS().z[0])
-        psi_n = calc_psi_norm(psi_lcfs, *self.get_OX_psis(psi_lcfs))
+        lcfs = self.get_LCFS()
+        psi_lcfs_min = np.min(self.psi(lcfs.x, lcfs.z))
+        psi_n = calc_psi_norm(psi_lcfs_min, *self.get_OX_psis(psi_lcfs_min))
 
         # N.B. must be clipped at psi_n for interpolation if lower than 1
         p = self.pressure(np.clip(self.psi_norm(), 0, min(1, psi_n)))
