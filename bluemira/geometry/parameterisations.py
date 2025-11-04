@@ -12,10 +12,12 @@ from __future__ import annotations
 
 import abc
 import copy
+import json
 from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 
 import matplotlib.pyplot as plt
@@ -36,12 +38,11 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 from bluemira.utilities.plot_tools import str_to_latex
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from pathlib import Path
 
     from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
 
@@ -243,9 +244,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.to_json(file)
 
     @classmethod
-    def from_json(
-        cls, file: Path | str | TextIO, param_cls: type[OptVariablesFrameT]
-    ) -> GeometryParameterisation:
+    def from_json(cls, file: Path | str | TextIO) -> GeometryParameterisation:
         """
         Create the GeometryParameterisation from a json file.
 
@@ -259,8 +258,12 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         :
             The GeometryParameterisation from a json file.
         """
-        variables = param_cls.from_json(file)
-        return cls(variables)
+        if isinstance(file, Path | str):
+            with open(file) as fh:
+                return cls.from_json(fh)
+
+        var_dict = json.load(file)
+        return cls(var_dict)
 
     @staticmethod
     def _annotator(
@@ -561,9 +564,9 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, variables: PrincetonDOptVariables | None = None):
-        if not variables:
-            variables = PrincetonDOptVariables()
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = PrincetonDOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def create_shape(
@@ -893,14 +896,14 @@ class PrincetonDDiscrete(PrincetonD):
 
     def __init__(
         self,
-        variables: PrincetonDOptVariables | None = None,
+        var_dict: VarDictT | None = None,
         n_TF: int | None = None,
         tf_wp_width: float | None = None,
         tf_wp_depth: float | None = None,
         n_points: int = 50,
         tolerance: float = 1e-3,
     ):
-        super().__init__(variables)
+        super().__init__(var_dict)
         if n_TF is None:
             raise GeometryParameterisationError("Must specify n_TF.")
         if tf_wp_width is None or tf_wp_depth is None:
@@ -1071,10 +1074,9 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, variables: TripleArcOptVaribles | None = None):
-        if not variables:
-            variables = TripleArcOptVaribles()
-
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = TripleArcOptVaribles()
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
@@ -1478,9 +1480,9 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, variables: SextupleArcOptVariables | None = None):
-        if not variables:
-            variables = SextupleArcOptVariables()
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = SextupleArcOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
@@ -1777,9 +1779,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, variables: PolySplineOptVariables | None = None):
-        if not variables:
-            variables = PolySplineOptVariables()
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = PolySplineOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
 
@@ -2608,7 +2610,7 @@ class PictureFrame(
 
     def __init__(
         self,
-        variables: PictureFrameOptVariables | None = None,
+        var_dict: VarDictT | None = None,
         *,
         upper: str | PFrameSection = PFrameSection.FLAT,
         lower: str | PFrameSection = PFrameSection.FLAT,
@@ -2621,9 +2623,8 @@ class PictureFrame(
             inner = PFrameSection[inner]
         self.inner = inner
 
-        if not variables:
-            variables = PictureFrameOptVariables()
-
+        variables = PictureFrameOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
         variables.configure(self.upper, self.lower, self.inner)
         super().__init__(variables)
 

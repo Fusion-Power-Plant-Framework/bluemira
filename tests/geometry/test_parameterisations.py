@@ -17,20 +17,14 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
-    OptVariablesFrameT,
     PFrameSection,
     PictureFrame,
-    PictureFrameOptVariables,
     PictureFrameTools,
     PolySpline,
-    PolySplineOptVariables,
     PrincetonD,
     PrincetonDDiscrete,
-    PrincetonDOptVariables,
     SextupleArc,
-    SextupleArcOptVariables,
     TripleArc,
-    TripleArcOptVaribles,
     _calculate_discrete_constant_tension_shape,
     _princeton_d,
 )
@@ -42,24 +36,22 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 
 @pytest.mark.parametrize(
-    ("param_class", "var_class"),
+    "param_class",
     [
-        (PictureFrame, PictureFrameOptVariables),
-        (PolySpline, PolySplineOptVariables),
-        (PrincetonD, PrincetonDOptVariables),
-        (SextupleArc, SextupleArcOptVariables),
-        (TripleArc, TripleArcOptVaribles),
+        PictureFrame,
+        PolySpline,
+        PrincetonD,
+        SextupleArc,
+        TripleArc,
     ],
 )
-def test_read_write(
-    param_class: type[GeometryParameterisation], var_class: type[OptVariablesFrameT]
-):
+def test_read_write(param_class: type[GeometryParameterisation]):
     tempdir = tempfile.mkdtemp()
     try:
         the_path = Path(tempdir, f"{param_class.__name__}.json")
         param = param_class()
         param.to_json(the_path)
-        new_param = param_class.from_json(the_path, var_class)
+        new_param = param_class.from_json(the_path)
         for attr in GeometryParameterisation.__slots__:
             if attr == "_variables":
                 assert new_param.variables.as_dict() == param.variables.as_dict()
@@ -116,11 +108,10 @@ class TestPrincetonD:
             _princeton_d(10, 3, 0)
 
     def test_instantiation_fixed(self):
-        p_vars = PrincetonDOptVariables.from_dict({
+        p = PrincetonD({
             "x1": {"value": 5, "fixed": True},
             "x2": {"value": 14, "fixed": False},
         })
-        p = PrincetonD(p_vars)
         assert p.variables["x1"].fixed
         assert not p.variables["x2"].fixed
 
@@ -183,41 +174,41 @@ class TestPrincetonDDiscrete:
     def test_princeton_d_discrete_parameterisation_init_error(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonDDiscrete(
-                PrincetonDOptVariables.from_dict({
+                {
                     "x1": {"value": 5, "fixed": True},
                     "x2": {"value": 14, "fixed": False},
                     "dz": {"value": 0.1},
-                }),
+                },
             )
 
     def test_princeton_d_discrete_parameterisation_call_error(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonDDiscrete(
-                PrincetonDOptVariables.from_dict({
+                {
                     "x1": {"value": 14, "fixed": True},
                     "x2": {"value": 5, "fixed": False},
                     "dz": {"value": 0.1},
-                }),
+                },
             )
 
     def test_princeton_d_discrete_parameterisation_init_error_2(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonDDiscrete(
-                PrincetonDOptVariables.from_dict({
+                {
                     "x1": {"value": 5, "fixed": True},
                     "x2": {"value": 14, "fixed": False},
                     "dz": {"value": 0.1},
-                }),
+                },
                 n_TF=16,
             )
 
     def test_princeton_d_disctrete_shape(self):
         parameterisation = PrincetonDDiscrete(
-            PrincetonDOptVariables.from_dict({
+            {
                 "x1": {"value": 5, "fixed": True},
                 "x2": {"value": 14, "fixed": False},
                 "dz": {"value": 0.1},
-            }),
+            },
             n_TF=16,
             tf_wp_depth=0.7,
             tf_wp_width=0.4,
@@ -236,16 +227,14 @@ class TestPrincetonDDiscrete:
 
 class TestPictureFrame:
     def test_length(self):
-        p = PictureFrame(
-            PictureFrameOptVariables.from_dict({
-                "x1": {"value": 4},
-                "x2": {"value": 16},
-                "z1": {"value": 8},
-                "z2": {"value": -8},
-                "ri": {"value": 1, "upper_bound": 1},
-                "ro": {"value": 1},
-            })
-        )
+        p = PictureFrame({
+            "x1": {"value": 4},
+            "x2": {"value": 16},
+            "z1": {"value": 8},
+            "z2": {"value": -8},
+            "ri": {"value": 1, "upper_bound": 1},
+            "ro": {"value": 1},
+        })
         wire = p.create_shape()
         length = 2 * (np.pi + 10 + 14)
         assert np.isclose(wire.length, length)
@@ -274,16 +263,14 @@ class TestPictureFrame:
         assert np.isclose(wire.length, length)
 
     def test_ordering(self):
-        p = PictureFrame(
-            PictureFrameOptVariables.from_dict({
-                "x1": {"value": 4},
-                "x2": {"value": 16},
-                "z1": {"value": 8},
-                "z2": {"value": -8},
-                "ri": {"value": 1, "upper_bound": 1},
-                "ro": {"value": 1},
-            })
-        )
+        p = PictureFrame({
+            "x1": {"value": 4},
+            "x2": {"value": 16},
+            "z1": {"value": 8},
+            "z2": {"value": -8},
+            "ri": {"value": 1, "upper_bound": 1},
+            "ro": {"value": 1},
+        })
         wire = p.create_shape()
         assert _wire_edges_tangent(wire.shape)
 
@@ -476,22 +463,20 @@ class TestSextupleArc:
         assert len(wire._boundary) == 7
 
     def test_circle(self):
-        p = SextupleArc(
-            SextupleArcOptVariables.from_dict({
-                "x1": {"value": 4},
-                "z1": {"value": 0},
-                "r1": {"value": 4},
-                "r2": {"value": 4},
-                "r3": {"value": 4},
-                "r4": {"value": 4},
-                "r5": {"value": 4},
-                "a1": {"value": 60, "upper_bound": 60},
-                "a2": {"value": 60, "upper_bound": 60},
-                "a3": {"value": 60, "upper_bound": 60},
-                "a4": {"value": 60, "upper_bound": 60},
-                "a5": {"value": 60, "upper_bound": 60},
-            })
-        )
+        p = SextupleArc({
+            "x1": {"value": 4},
+            "z1": {"value": 0},
+            "r1": {"value": 4},
+            "r2": {"value": 4},
+            "r3": {"value": 4},
+            "r4": {"value": 4},
+            "r5": {"value": 4},
+            "a1": {"value": 60, "upper_bound": 60},
+            "a2": {"value": 60, "upper_bound": 60},
+            "a3": {"value": 60, "upper_bound": 60},
+            "a4": {"value": 60, "upper_bound": 60},
+            "a5": {"value": 60, "upper_bound": 60},
+        })
         wire = p.create_shape()
 
         assert np.isclose(wire.length, 2 * np.pi * 4)
