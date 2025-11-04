@@ -1681,8 +1681,15 @@ class Equilibrium(CoilSetMHDState):
             Plasma pressure map.
         """
         mask = self._get_core_mask(psi_n)
-        # N.B. must be clipped at 1 for interpolation
-        p = self.pressure(np.clip(self.psi_norm(), 0, 1))
+
+        # psi norm values for an arbitrary coordinate on the LCFS
+        lcfs = self.get_LCFS()
+        psi_lcfs_min = np.min(self.psi(lcfs.x, lcfs.z))
+        psi_n = calc_psi_norm(psi_lcfs_min, *self.get_OX_psis(psi_lcfs_min))
+
+        # N.B. must be clipped at psi_n for interpolation if lower than 1
+        p = self.pressure(np.clip(self.psi_norm(), 0, min(1, psi_n)))
+
         return p * mask
 
     def _get_core_mask(self, psi_n: float | None = None) -> npt.NDArray[np.float64]:
