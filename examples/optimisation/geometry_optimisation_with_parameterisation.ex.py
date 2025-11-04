@@ -34,7 +34,7 @@ from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 
 @dataclass
@@ -49,9 +49,9 @@ class CircleOptVariables(OptVariablesFrame):
 class Circle(GeometryParameterisation):
     """Geometry parameterisation for a circle in the xz-plane."""
 
-    def __init__(self, opt_variables: CircleOptVariables | None = None):
-        if not opt_variables:
-            opt_variables = CircleOptVariables()
+    def __init__(self, var_dict: VarDictT | None = None):
+        opt_variables = CircleOptVariables()
+        opt_variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(opt_variables)
 
     def create_shape(self, label: str = "") -> BluemiraWire:
@@ -71,12 +71,11 @@ class Circle(GeometryParameterisation):
 zone = make_polygon({"x": [-2, -2, 3, 3], "z": [0, 1, 1, 0]}, closed=True)
 
 # Now lets create our circle within the shape
-circle_parameters = {
+circle = Circle({
     "radius": {"value": 10},
     "centre_x": {"value": -2},
     "centre_z": {"value": 1.5},
-}
-circle = Circle(CircleOptVariables.from_dict(circle_parameters))
+})
 
 plot_2d([circle.create_shape(), zone])
 
