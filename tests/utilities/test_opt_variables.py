@@ -72,22 +72,42 @@ class TestOptVariable:
 
 
 @dataclass
-class TestOptVariablesOptVariables(OptVariablesFrame):
-    __test__ = False
-
+class MockOptVariables(OptVariablesFrame):
     a: OptVariable = ov("a", 2, 0, 3)
     b: OptVariable = ov("b", 0, -1, 1)
     c: OptVariable = ov("c", -1, -10, 10)
 
 
-class TestOptVariables:
+@pytest.fixture
+def mock_opt_vars():
+    return {
+        "a": {"value": 2},
+        "b": {"value": -0.5},
+        "c": {"value": 5},
+    }
+
+
+class TestOptVariablesFrame:
     def setup_method(self):
-        self.vars = TestOptVariablesOptVariables()
+        self.vars = MockOptVariables()
 
     def test_init(self):
         assert self.vars.n_free_variables == 3
         assert len(self.vars.values) == 3
         assert np.allclose(self.vars.values, np.array([2, 0, -1]))
+
+    def test_from_dict(self, mock_opt_vars):
+        # test that OptVariablesFrame cannot be
+        # instantiates directly
+        with pytest.raises(TypeError):
+            OptVariablesFrame.from_dict(mock_opt_vars)
+
+        # test that a subclass can be instantiated
+        # from dict
+        mock_vars = MockOptVariables.from_dict(mock_opt_vars)
+        assert mock_vars.n_free_variables == 3
+        assert len(mock_vars.values) == 3
+        assert np.allclose(mock_vars.values, np.array([2, -0.5, 5]))
 
     def test_fix(self):
         self.vars.fix_variable("a", value=100)
@@ -127,7 +147,7 @@ class TestOptVariables:
         try:
             the_path = Path(tempdir, "opt_var_test.json")
             self.vars.to_json(the_path)
-            new_vars = TestOptVariablesOptVariables.from_json(the_path)
+            new_vars = MockOptVariables.from_json(the_path)
             assert new_vars.as_dict() == self.vars.as_dict()
         finally:
             shutil.rmtree(tempdir)
@@ -137,7 +157,7 @@ class TestOptVariables:
 
         table_pattern = "\n".join(  # noqa: FLY002
             [
-                "TestOptVariablesOptVariables",
+                "MockOptVariables",
                 "╒════════╤═════════╤═══════════════╤═══════════════╤═════════╤═══════════════╕",
                 "│ name   │   value │   lower_bound │   upper_bound │ fixed   │ description   │",
                 "╞════════╪═════════╪═══════════════╪═══════════════╪═════════╪═══════════════╡",
