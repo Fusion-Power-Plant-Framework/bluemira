@@ -14,7 +14,6 @@ from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-from matproplib.properties.dependent import Density
 
 try:
     from eurofusion_materials.library.steel import EUROfer97
@@ -32,32 +31,33 @@ except ImportError:
         "as opposed to the official, material descriptions."
     )
     EUROFER_MAT = material(
-    name="eurofer",
-    elements={
-        "Fe": 0.9006,
-        "Cr": 0.0886,
-        "W182": 0.0108 * 0.266,
-        "W183": 0.0108 * 0.143,
-        "W184": 0.0108 * 0.307,
-        "W186": 0.0108 * 0.284,
-        "fraction_type": "mass",
-    },
-    properties=props(density=(7.78, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
+        name="eurofer",
+        elements={
+            "Fe": 0.9006,
+            "Cr": 0.0886,
+            "W182": 0.0108 * 0.266,
+            "W183": 0.0108 * 0.143,
+            "W184": 0.0108 * 0.307,
+            "W186": 0.0108 * 0.284,
+            "fraction_type": "mass",
+        },
+        properties=props(density=(7.78, "g/cm^3")),
+        converters=OpenMCNeutronicConfig(),
+    )()
     TUNGSTEN_MAT = PlanseeTungsten()
 
     # Debugging replacements (to be removed)
-    TUNGSTEN_MAT =  material(name="tungsten",
-                            elements={
-                                "W182": 0.266,
-                                "W183": 0.143,
-                                "W184": 0.307,
-                                "W186": 0.284,
-                                "fraction_type": "atomic",
-                            },
-                            properties=props(density=(19.3, "g/cm^3")),
-                            converters=OpenMCNeutronicConfig(),
+    TUNGSTEN_MAT = material(
+        name="tungsten",
+        elements={
+            "W182": 0.266,
+            "W183": 0.143,
+            "W184": 0.307,
+            "W186": 0.284,
+            "fraction_type": "atomic",
+        },
+        properties=props(density=(19.3, "g/cm^3")),
+        converters=OpenMCNeutronicConfig(),
     )()
 
     Be12Ti = material(
