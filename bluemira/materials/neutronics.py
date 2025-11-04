@@ -125,7 +125,7 @@ def make_PbLi_mat(li_enrich_ao) -> Material:
     )()
 
 
-def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
+def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
     """
     Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment
 
@@ -157,7 +157,7 @@ def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
     )()
 
 
-def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=1.0) -> Material:
+def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
     """
     Make Li2TiO3 according to the enrichment fraction inputted.
 
