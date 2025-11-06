@@ -38,8 +38,9 @@ IN_mappings = {
     "T_profile_alpha": ("alphat", "dimensionless"),
     "T_profile_beta": ("tbeta", "dimensionless"),
     "n_profile_alpha": ("alphan", "dimensionless"),
-    # Note: PROCESS has both rhopedt and rhopedn - they are usually the same...
-    "profile_rho_ped": ("rhopedt", "dimensionless"),
+    # Note: PROCESS has both radius_plasma_pedestal_temp_norm and
+    # radius_plasma_pedestal_density_norm - they are usually the same...
+    "profile_rho_ped": ("radius_plasma_pedestal_temp_norm", "dimensionless"),
 }
 
 OUT_mappings = {
@@ -65,7 +66,7 @@ OUT_mappings = {
     "P_brehms": ("pbrempv*plasma_volume", "MW"),
     "f_bs": ("f_c_plasma_bootstrap", "dimensionless"),
     "beta_p": ("beta_poloidal", "dimensionless"),
-    "beta": ("beta", "dimensionless"),
+    "beta_total_vol_avg": ("beta_total_vol_avg", "dimensionless"),
     "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
@@ -108,7 +109,7 @@ OUT_mappings = {
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
-    "tau_flattop": (("t_burn_min", "t_burn"), "s"),
+    "tau_flattop": (("t_burn_min", "t_plant_pulse_burn"), "s"),
     "P_el_net": (("p_plant_electric_net_required_mw", "pnetelmw"), "MW"),
     "tk_bb_ib": ("dr_blkt_inboard", "m"),
     "tk_bb_ob": ("dr_blkt_outboard", "m"),

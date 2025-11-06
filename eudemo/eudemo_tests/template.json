@@ -673,14 +673,14 @@
     "unit": "°C",
     "source": "Input (HCPB classic)"
   },
-  "beta": {
+  "beta_total_vol_avg": {
     "name": "Total ratio of plasma pressure to magnetic pressure",
     "value": 0.04,
     "unit": "dimensionless",
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "beta",
+        "name": "beta_total_vol_avg",
         "send": false,
         "recv": true,
         "unit": "dimensionless"
@@ -1858,7 +1858,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "t_burn",
+        "name": "t_plant_pulse_burn",
         "send": false,
         "recv": false,
         "unit": "s"

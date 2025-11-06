@@ -49,12 +49,12 @@ class ProcessInputs:
     # Top down of PROCESS variables list
 
     # Times
-    t_burn: float | None = None
-    t_between_pulse: float | None = None
-    t_fusion_ramp: float | None = None
-    t_current_ramp_up: float | None = None
-    t_ramp_down: float | None = None
-    t_precharge: float | None = None
+    t_plant_pulse_burn: float | None = None
+    t_plant_pulse_dwell: float | None = None
+    t_plant_pulse_fusion_ramp: float | None = None
+    t_plant_pulse_plasma_current_ramp_up: float | None = None
+    t_plant_pulse_plasma_current_ramp_down: float | None = None
+    t_plant_pulse_coil_precharge: float | None = None
 
     # FWBS
     ibkt_life: int | None = None
@@ -604,7 +604,7 @@ class ProcessInputs:
     alphat: float | None = None
     aspect: float | None = None
     beamfus0: float | None = None
-    beta: float | None = None
+    beta_total_vol_avg: float | None = None
     betbm0: float | None = None
     b_plasma_toroidal_on_axis: float | None = None
     csawth: float | None = None

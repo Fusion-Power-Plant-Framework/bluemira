@@ -273,7 +273,7 @@ class TestInDatOneForOne:
         template_builder.add_variable(
             "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
         )
-        template_builder.add_variable("beta", 3.1421e-2)
+        template_builder.add_variable("beta_total_vol_avg", 3.1421e-2)
         template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
         template_builder.add_variable("q95", 3.5, lower_bound=3.5)
         template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
@@ -431,8 +431,8 @@ class TestInDatOneForOne:
             "eta_coolant_pump_electric": 0.87,
             "etaiso": 0.9,
             "vfshld": 0.6,
-            "t_between_pulse": 0.0,
-            "t_precharge": 500.0,
+            "t_plant_pulse_dwell": 0.0,
+            "t_plant_pulse_coil_precharge": 500.0,
             # CS / PF coil inputs
             "t_crack_vertical": 0.4e-3,
             "fcuohsu": 0.7,
