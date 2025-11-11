@@ -721,9 +721,6 @@ if __name__ == "__main__":
                     op_cond=OperationalConditions(temperature=298, pressure=101325),
                 )
             )
-            print(f"TBR = {reactor.neutronics.results.tbr}")
-            print(f"e_mult = {reactor.neutronics.results.e_mult}") 
-            raise ValueError
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
 
@@ -904,7 +901,7 @@ if __name__ == "__main__":
         run_time_track["Total"] = end - start
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v01/A_{a_string}"
+        folder_name = f"results_v02/A_{a_string}"
         import os
         os.makedirs(folder_name, exist_ok=True) 
         filename = f"{folder_name}/run_time.json"
