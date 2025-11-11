@@ -1,6 +1,6 @@
 {
   "A": {
-    "value": 3.58989898989899,
+    "value": 3.064,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma aspect ratio"

@@ -81,7 +81,7 @@ class PanellingDesigner(Designer[np.ndarray]):
     _defaults: ClassVar = {
         "algorithm": "SLSQP",
         "opt_conditions": {"max_eval": 500, "ftol_rel": 1e-8},
-        "n_panel_increment_attempts": 3,
+        "n_panel_increment_attempts": 10,
         "boundary_discretisation": 200,
     }
 
