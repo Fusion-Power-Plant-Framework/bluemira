@@ -20,6 +20,7 @@ from bluemira.equilibria.optimisation.constraints import (
     _get_dummy_equilibrium,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    SphericalHarmonicsResult,
     coil_harmonic_amplitude_matrix,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
@@ -30,7 +31,6 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     ToroidalHarmonicsSelectionResult,
     coil_toroidal_harmonic_amplitude_matrix,
 )
-from bluemira.utilities.tools import is_num
 
 
 class SphericalHarmonicConstraint(UpdateableConstraint):
@@ -40,63 +40,39 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     Parameters
     ----------
-    degrees:
-        Degrees required for approximation of desired core plasma
-        (Returned by spherical_harmonic_approximation)
-    ref_harmonics:
-        Initial harmonic amplitudes obtained from desired core plasma
-        (Returned by spherical_harmonic_approximation)
-    r_t: float
-        (Returned by spherical_harmonic_approximation)
-    sh_coil_names:
-        Names of the coils to use with SH approximation
-        (Returned by spherical_harmonic_approximation)
+    SphericalHarmonicsResult:
+        Result of spherical harmonic approximation for equilibrium of interest.
     tolerance:
-        Tolerance with which the constraint(s) will be met
+        Relative tolerance with which the constraint(s) will be met
 
     """
 
     def __init__(
         self,
-        ref_degrees: npt.NDArray[np.float64],
-        ref_harmonics: npt.NDArray[np.float64],
-        r_t: float,
-        sh_coil_names: list,
-        tolerance: float | npt.NDArray | None = None,
-        smallest_tol: float = 1e-6,
+        sh_approximation_result: SphericalHarmonicsResult,
+        tolerance: float | npt.NDArray = 1e-3,
         constraint_type: str = "equality",
     ):
-        if tolerance is None:
-            ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
-            tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
-            np.nan_to_num(
-                tolerance, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
-            )
-        elif is_num(tolerance):
-            tolerance *= np.ones(len(ref_harmonics))
-        elif len(tolerance) != len(ref_harmonics):
-            raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
+        self.degrees = sh_approximation_result.degrees
+        target_harmonics = sh_approximation_result.amplitudes
+        self.sh_coil_names = sh_approximation_result.coil_names
+        self.r_t = sh_approximation_result.r_t
 
         self.constraint_type = constraint_type
-        self.tolerance = tolerance
+        tolerance = np.abs(tolerance * target_harmonics)
 
-        self.target_harmonics = ref_harmonics
-        self.max_degree = len(ref_harmonics)
-
-        if self.constraint_type == "equality":
+        if constraint_type == "equality":
+            self.target_harmonics = target_harmonics
             self.tolerance = tolerance
-            self.target_harmonics = ref_harmonics
         else:
-            self.tolerance = np.append(tolerance, tolerance, axis=0)
-            self.target_harmonics = np.append(ref_harmonics, ref_harmonics, axis=0)
-
-        self.degrees = ref_degrees
-        self.sh_coil_names = sh_coil_names
-        self.r_t = r_t
+            self.target_harmonics = np.append(
+                target_harmonics, -target_harmonics, axis=0
+            )
+            self.tolerance = np.tile(tolerance, 2)
 
         self._args = {
             "a_mat": None,
-            "b_vec": None,
+            "b_vec": self.target_harmonics,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -131,13 +107,12 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if not fixed_coils:
             raise ValueError("SphericalHarmonicConstraint requires fixed coils")
 
-        self._args["a_mat"] = self.control_response(equilibrium.coilset)
-        self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
-        if self.constraint_type == "inequality":
-            self._args["a_mat"] = np.append(
-                self._args["a_mat"], -1 * self._args["a_mat"], axis=0
-            )
-            self._args["b_vec"][2:] *= -1
+        a_mat = self.control_response(equilibrium.coilset)
+        self._args["a_mat"] = (
+            a_mat
+            if self.constraint_type == "equality"
+            else np.append(self._args["a_mat"], -1 * self._args["a_mat"], axis=0)
+        )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
