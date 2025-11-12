@@ -7,8 +7,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
 from bluemira.radiation_transport.neutronics.blanket_data import (
@@ -54,7 +56,7 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
         )
 
 
-def run_neutronics(
+def run_csg_neutronics(
     params: ParameterFrame,
     build_config: dict,
     blanket: ComponentManager,
@@ -119,3 +121,50 @@ def run_neutronics(
         res = outputs
 
     return neutronics_csg, res
+
+
+def export_dagmc_model(reactor, build_config):
+    """
+    Export the reactor model to a DAGMC model.
+
+    Parameters
+    ----------
+    reactor : EUDEMO
+        The reactor instance to export.
+    build_config : dict
+        The build configuration parameters.
+    """
+    if build_config.get("export_dagmc_model", False):
+        reactor.save_cad(
+            directory=build_config.get("dagmc_export_dir", None),
+            cad_format="dagmc",
+            construction_params={
+                "without_components": [reactor.plasma],
+                "group_by_materials": True,
+            },
+        )
+
+
+def run_dagmc_neutronics(
+    reactor,
+    params,
+    build_config,
+    eq: Equilibrium,
+    source: NeutronSourceCreator | None = None,
+    tally_function=None,
+):
+    export_dagmc_model(reactor, build_config)
+
+    solver = OpenMCDAGMCNeutronicsSolver(
+        params,
+        build_config,
+        eq,
+        source=source or make_tokamak_source,
+        dagmc_model_path=build_config.get("dagmc_export_dir", Path.cwd()),
+        materials=reactor.materials,
+        tally_function=tally_function,
+    )
+
+    outputs = solver.execute(build_config.get("run_mode", "run"))
+
+    return outputs

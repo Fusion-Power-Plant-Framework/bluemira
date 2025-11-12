@@ -96,7 +96,7 @@ from eudemo.maintenance.port_plug import (
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager, NeutronicsManager
-from eudemo.neutronics.run import run_neutronics
+from eudemo.neutronics.run import run_csg_neutronics, run_dagmc_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -534,28 +534,6 @@ def build_radiation_plugs(
     return builder.build()
 
 
-def export_dagmc_model(reactor: EUDEMO, build_config):
-    """
-    Export the reactor model to a DAGMC model.
-
-    Parameters
-    ----------
-    reactor : EUDEMO
-        The reactor instance to export.
-    build_config : dict
-        The build configuration parameters.
-    """
-    if build_config.get("export_dagmc_model", False):
-        reactor.save_cad(
-            directory=build_config.get("dagmc_export_dir", None),
-            cad_format="dagmc",
-            construction_params={
-                "without_components": [reactor.plasma],
-                "group_by_materials": True,
-            },
-        )
-
-
 def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
@@ -715,7 +693,7 @@ if __name__ == "__main__":
         if reactor_config.config_for("Neutronics").get("enabled", False):
             neutronics_start = time.time()
             reactor.neutronics = NeutronicsManager(
-                *run_neutronics(
+                *run_csg_neutronics(
                     reactor_config.params_for("Neutronics").global_params,
                     reactor_config.config_for("Neutronics"),
                     blanket=reactor.blanket,
@@ -882,33 +860,12 @@ if __name__ == "__main__":
             n_TF=reactor_config.global_params.n_TF.value,
         )
 
-        export_dagmc_model(
+        run_dagmc_neutronics(
             reactor,
+            reactor_config.params_for("CAD_Neutronics"),
             reactor_config.config_for("CAD_Neutronics"),
+            reference_eq,
         )
-
-        from bluemira.codes.openmc.sovler import OpenMCDAGMCNeutronicsSolver
-
-        OpenMCDAGMCNeutronicsSolver(
-            params, build_config, eq, source, neutronics_model, op_cond, tally_function
-        )
-
-        debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-        debug.extend(reactor.pf_coils.xz_boundary)
-        # I know there are clashes, I need to put in dynamic bounds on position opt to
-        # include coil XS.
-        show_cad(debug)
-
-        # reactor.plot("xz")
-        # reactor.show_cad(n_sectors=2)
-
-        sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-        sspc_result = sspc_solver.execute()
-        reactor_config.global_params.P_el_net.set_value(
-            sspc_result["P_el_net"], "BLUEMIRA"
-        )
-
-        lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 
         reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
