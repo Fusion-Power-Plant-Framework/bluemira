@@ -340,7 +340,7 @@ def toroidal_harmonic_grid_and_coil_setup(
     c_names = np.array(th_coilset.control)
 
     # Find coils that can be used in TH approximation, and those that cannot be used
-    if min_tau < np.min(tau_c):
+    if min_tau > np.min(tau_c):
         not_too_close_coils = c_names[tau_c < min_tau].tolist()
         bluemira_debug(
             "Names of coils that can be used in the TH"
@@ -649,7 +649,7 @@ def _separate_psi_contributions(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     collocation: Collocation | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Separate the psi contributions from fixed sources (plasma + excluded coils) and from
     potentially variable sources (coilset).
@@ -664,6 +664,8 @@ def _separate_psi_contributions(
         Bluemira Equilibrium
     th_params:
         Dataclass holding necessary parameters for the TH approximation
+    collocation:
+        Collocation points at which to calculate psi
 
     Returns
     -------
@@ -672,6 +674,9 @@ def _separate_psi_contributions(
         These coils are outside of our approximation region
     plasma_psi + excluded_coil_psi:
         The psi contribution from fixed sources
+    collocation_coilset_psi:
+        The psi contribution from the coilset at the specified collocation points.
+        If no collocation points are specified, this is None
     """
     excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
@@ -801,6 +806,15 @@ def toroidal_harmonics_to_positions(
     """
     Matrix for collocation psi fitting or psi calculation across
     grid with known amplitude values.
+
+    Parameters
+    ----------
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    n_allowed:
+        The number of harmonic functions (and amplitudes) to use
+    collocation:
+        Collocation points at which to calculate psi
 
     Returns
     -------
