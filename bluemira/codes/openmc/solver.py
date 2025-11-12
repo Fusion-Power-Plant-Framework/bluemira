@@ -176,7 +176,10 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         self, settings: openmc.Settings, tallies: openmc.Tallies | None = None
     ) -> openmc.Model:
         model = openmc.Model(geometry=self.geometry, tallies=tallies, settings=settings)
-        model.materials = self.materials  # .get_all_materials()
+        if isinstance(self.materials, MaterialsLibrary):
+            model.materials = self.materials.get_all_materials()
+        else:
+            model.materials = self.materials
         return model
 
     @abstractmethod
@@ -540,7 +543,7 @@ class OpenMCCSGTeardown(CodesTeardown):
     def plot(self, _universe, _source_info, fig: FigureData, **kwargs):
         """Plot stage for Teardown task"""
         fig.axis.get_figure().savefig(fig.path)
-        return axis
+        return fig.axis
 
     def volume(
         self,

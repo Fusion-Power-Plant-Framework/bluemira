@@ -90,26 +90,13 @@ to a DAGMC model and run it in OpenMC.
 """
 
 # %%
-import math
-from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.builder import Builder
-from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.designer import Designer
-from bluemira.base.file import get_bluemira_root
-from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.reactor import ComponentManager, Reactor
-from bluemira.builders.plasma import Plasma, PlasmaBuilder
-from bluemira.builders.tools import apply_component_display_options
-from bluemira.display import show_cad
-from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.display.plotter import PlotOptions, plot_2d
+from bluemira.base.parameter_frame import Parameter
+from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -125,23 +112,6 @@ from bluemira.equilibria.optimisation.problem import (
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import PicardIterator
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.optimisation import optimise_geometry
-from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import (
-    distance_to,
-    interpolate_bspline,
-    make_polygon,
-    offset_wire,
-    revolve_shape,
-    sweep_shape,
-)
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.materials.cache import establish_material_cache
-from bluemira.optimisation import Algorithm
-
-
-from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 
 
 def _lcfs_parameterisation(R_0, A):

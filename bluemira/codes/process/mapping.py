@@ -103,7 +103,7 @@ OUT_mappings = {
     "n_e": ("nd_plasma_electrons_vol_avg", "1/m^3"),
     "n_e_ped": ("nd_plasma_pedestal_electron", "1/m^3"),
     "n_e_sep": ("nd_plasma_separatrix_electron", "1/m^3"),
-    "n_i_fuel": ("nd_fuel_ions", "1/m^3"),
+    "n_i_fuel": ("nd_plasma_fuel_ions_vol_avg", "1/m^3"),
     "T_ie_ratio": ("f_temp_plasma_ion_electron", ""),
 }
 

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 
 from bluemira.base.constants import raw_uc
 from bluemira.materials.neutronics import (
+    EUROFER_MAT,
     BlanketType,
     BreederTypeParameters,
     _make_dcll_mats,
@@ -209,13 +210,13 @@ def _create_from_blanket_type(
         outb_vv_mat=duplicate_mat_as(
             base_materials.inb_vv_mat, "outb_vacuum_vessel", 204
         ),
-        tf_coil_mat=duplicate_mat_as(eurofer_mat, "tf_coil", 401),
+        tf_coil_mat=duplicate_mat_as(EUROFER_MAT, "tf_coil", 401),
         container_mat=duplicate_mat_as(base_materials.inb_vv_mat, "container", 501),
         # surfaces
-        inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
-        outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
-        div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
+        inb_sf_mat=duplicate_mat_as(EUROFER_MAT, "inb_sf", 601),
+        outb_sf_mat=duplicate_mat_as(EUROFER_MAT, "outb_sf", 602),
+        div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(eurofer_mat, "rad_shield", 604),
+        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
     )

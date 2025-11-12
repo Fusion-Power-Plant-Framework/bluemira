@@ -10,11 +10,15 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 
+from matproplib.conditions import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
+from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 try:
     from eurofusion_materials.library.steel import EUROfer97
@@ -390,7 +394,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_vacuum_vessel",  # optional name of homogeneous material
         materials=[(EUROFER_MAT, 0.6), (WATER_MAT, 0.4)],
         fraction_type="volume",
-        volume_conditions=OperationalConditions(temperature=373.15, pressure=1e5),
+        mix_conditions=OperationalConditions(temperature=373.15, pressure=1e5),
         converters=OpenMCNeutronicConfig(material_id=104),
     )
 
@@ -423,7 +427,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (HELIUM_MAT, helium_fraction_vo),
             ],
             fraction_type="volume",
-            volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
+            mix_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(
                 material_id=102,
                 enrichment=li_enrich_ao * 100,
@@ -439,7 +443,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (HELIUM_MAT, 0.5035),
             ],
             fraction_type="volume",
-            volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
+            mix_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(
                 material_id=103,
                 enrichment=li_enrich_ao * 100,

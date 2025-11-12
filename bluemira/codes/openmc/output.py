@@ -25,9 +25,6 @@ from bluemira.radiation_transport.neutronics.constants import (
     FE_DPA_THRESHOLD_EV,
     get_dpa_coefficients,
 )
-from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
-    ZeroDNeutronicsResult,
-)
 
 
 def get_percent_err(row):
@@ -587,10 +584,3 @@ class NeutronicsOutputParams(ParameterFrame):
                 source=source,
             ),
         )
-
-    @classmethod
-    def from_0d_result(cls, result: ZeroDNeutronicsResult):
-        """
-        Produce output parameters from simplified 0-D neutronics model
-        """
-        return cls.from_frame(result)
