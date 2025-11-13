@@ -136,7 +136,7 @@ class BaseManager(abc.ABC):
     @property
     def materials(self):
         """Get all materials in the Manager"""
-        return self.component().get_component_propertues("material", first=False)
+        return self.component().get_component_properties("material", first=False)[0]
 
     @staticmethod
     def _validate_cad_dim(dim: DIM_3D | DIM_2D) -> None:
