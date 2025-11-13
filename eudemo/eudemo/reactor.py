@@ -690,12 +690,12 @@ if __name__ == "__main__":
             cut_angle,
         )
 
-        if reactor_config.config_for("Neutronics").get("enabled", False):
+        if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
             neutronics_start = time.time()
             reactor.neutronics = NeutronicsManager(
                 *run_csg_neutronics(
-                    reactor_config.params_for("Neutronics").global_params,
-                    reactor_config.config_for("Neutronics"),
+                    reactor_config.params_for("Neutronics", "CSG").global_params,
+                    reactor_config.config_for("Neutronics", "CSG"),
                     blanket=reactor.blanket,
                     vacuum_vessel=reactor.vacuum_vessel,
                     ivc_shapes=ivc_shapes,
@@ -875,6 +875,13 @@ if __name__ == "__main__":
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
         folder_name = f"results_v02/A_{a_string}"
+        run_dagmc_neutronics(
+            reactor,
+            reactor_config.params_for("Neutronics", "DAGMC"),
+            reactor_config.config_for("Neutronics", "DAGMC"),
+            reference_eq,
+        )
+
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
