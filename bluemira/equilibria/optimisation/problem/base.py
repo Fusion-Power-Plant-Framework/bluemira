@@ -148,8 +148,6 @@ class CoilsetOptimisationProblem(abc.ABC):
 
         Parameters
         ----------
-        coilset:
-            Coilset to fetch current bounds for.
         max_currents:
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
