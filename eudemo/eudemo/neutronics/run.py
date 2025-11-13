@@ -10,17 +10,19 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from matproplib.library.fluids import Void
+
 from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
 from bluemira.radiation_transport.neutronics.blanket_data import (
+    BlanketType,
     create_materials,
-    get_preset_physical_properties,
+    get_preset_geometry,
 )
 from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
 from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
-    NeutronicsReactorParameterFrame,
 )
 
 if TYPE_CHECKING:
@@ -81,14 +83,12 @@ def run_csg_neutronics(
     NeutronicsError
         Can't import default neutron source
     """
-    # TODO get these materials from the componentmanager or something similar
-    breeder_materials, tokamak_geometry = get_preset_physical_properties(
-        build_config.pop("blanket_type")
-    )
-    material_library = create_materials(breeder_materials)
+    blanket_type = BlanketType(build_config.pop("blanket_type"))
+    tokamak_geometry = get_preset_geometry(params)
+    # TODO get these materials from the physical components
+    material_library = create_materials(blanket_type)
 
-    csg_params = NeutronicsReactorParameterFrame.from_config_params(params)
-    csg_params.update_from_dict(
+    params.update_from_dict(
         {
             "inboard_fw_tk": {"value": tokamak_geometry.inb_fw_thick, "unit": "m"},
             "inboard_breeding_tk": {"value": tokamak_geometry.inb_bz_thick, "unit": "m"},
@@ -101,7 +101,7 @@ def run_csg_neutronics(
         source="Neutronics",
     )
     neutronics_csg = EUDEMONeutronicsCSGReactor(
-        csg_params, ivc_shapes, blanket, vacuum_vessel, material_library
+        params, ivc_shapes, blanket, vacuum_vessel, material_library
     )
 
     solver = neutronics_code_solver(
@@ -116,7 +116,7 @@ def run_csg_neutronics(
 
     outputs = solver.execute(build_config.get("run_mode", "run"))
 
-    if len(outputs) == 2:
+    if len(outputs) == 2:  # noqa: PLR2004
         res = outputs[0]
         params.update_from_frame(outputs[1])
     else:
@@ -141,7 +141,10 @@ def export_dagmc_model(reactor, build_config):
             directory=build_config.get("dagmc_export_dir", None),
             cad_format="dagmc",
             construction_params={
-                "without_components": [reactor.plasma],
+                "without_components": [
+                    reactor.plasma,
+                    reactor.blanket,
+                ],
                 "group_by_materials": True,
             },
         )
@@ -155,18 +158,27 @@ def run_dagmc_neutronics(
     source: NeutronSourceCreator | None = None,
     tally_function=None,
 ):
+    """Creates and runs the DAGMC neutronics model"""  # noqa: DOC201
     export_dagmc_model(reactor, build_config)
+
+    mats = {"undef_material": Void(name="undef_material")}
+    for m in reactor.materials:
+        if m is not None and m.name not in mats:
+            mats[m.name] = m
 
     solver = OpenMCDAGMCNeutronicsSolver(
         params,
         build_config,
         eq,
         source=source or make_tokamak_source,
-        dagmc_model_path=build_config.get("dagmc_export_dir", Path.cwd()),
-        materials=reactor.materials,
+        dagmc_model_path=Path(
+            build_config.get("dagmc_export_dir", Path.cwd()), f"{reactor.name}.h5m"
+        ),
+        materials=[
+            m.convert("openmc", {"temperature": 298, "pressure": 101325})
+            for m in mats.values()
+        ],
         tally_function=tally_function,
     )
 
-    outputs = solver.execute(build_config.get("run_mode", "run"))
-
-    return outputs
+    return solver.execute(build_config.get("run_mode", "run"))

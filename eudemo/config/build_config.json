@@ -115,23 +115,28 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "enabled": true,
-    "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
-    "particles": 16800,
-    "batches": 3,
-    "photon_transport": true,
-    "electron_treatment": "ttb",
-    "run_mode": "run_and_plot",
-    "openmc_write_summary": false,
-    "blanket_type": "HCPB",
-    "plot_axis": "xz",
-    "plot_pixel_per_metre": 100,
-    "neutronics_output_path": "$path_expand:./neutronics",
-    "show_data": false
-  },
-  "CAD_Neutronics": {
-    "export_dagmc_model": true,
-    "dagmc_export_dir": "$path_expand:./dagmc_export"
+    "CSG": {
+      "enabled": false,
+      "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+      "particles": 10000,
+      "batches": 2,
+      "photon_transport": true,
+      "electron_treatment": "ttb",
+      "run_mode": "run_and_plot",
+      "openmc_write_summary": false,
+      "blanket_type": "HCPB",
+      "plot_axis": "xz",
+      "plot_pixel_per_metre": 100,
+      "neutronics_output_path": "$path_expand:./neutronics",
+      "show_data": false
+    },
+    "DAGMC": {
+      "export_dagmc_model": false,
+      "dagmc_export_dir": "$path_expand:./dagmc_export",
+      "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+      "particles": 10000,
+      "batches": 2
+    }
   },
   "TF coils": {
     "run_mode": "run",

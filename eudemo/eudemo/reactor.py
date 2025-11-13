@@ -29,7 +29,7 @@ from matproplib.conditions import OperationalConditions
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -595,11 +595,11 @@ if __name__ == "__main__":
         cut_angle,
     )
 
-    if reactor_config.config_for("Neutronics").get("enabled", False):
+    if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
         reactor.neutronics = NeutronicsManager(
             *run_csg_neutronics(
-                reactor_config.params_for("Neutronics"),
-                reactor_config.config_for("Neutronics"),
+                reactor_config.params_for("Neutronics", "CSG"),
+                reactor_config.config_for("Neutronics", "CSG"),
                 blanket=reactor.blanket,
                 vacuum_vessel=reactor.vacuum_vessel,
                 ivc_shapes=ivc_shapes,
@@ -607,14 +607,16 @@ if __name__ == "__main__":
                 op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
         )
-        print(f"TBR = {reactor.neutronics.results.tbr}")
-        print(f"e_mult = {reactor.neutronics.results.e_mult}")
+        bluemira_print(
+            f"TBR = {reactor.neutronics.results.tbr}\n"
+            f"e_mult = {reactor.neutronics.results.e_mult}"
+        )
 
-        if reactor_config.config_for("Neutronics")["show_data"]:
+        if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
             reactor.neutronics.plot()
             bluemira_print_clean(f"{reactor.neutronics}")
 
-    if reactor_config.config_for("Neutronics")["show_data"]:
+    if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
         reactor.neutronics.plot()
         bluemira_print_clean(f"{reactor.neutronics}")
 
@@ -674,12 +676,7 @@ if __name__ == "__main__":
     reactor.thermal_shield = assemble_thermal_shield(
         vv_thermal_shield, cryostat_thermal_shield
     )
-    run_dagmc_neutronics(
-        reactor,
-        reactor_config.params_for("CAD_Neutronics"),
-        reactor_config.config_for("CAD_Neutronics"),
-        reference_eq,
-    )
+
     reactor.coil_structures = build_coil_structures(
         reactor_config.params_for("Coil structures"),
         reactor_config.config_for("Coil structures"),
@@ -765,8 +762,8 @@ if __name__ == "__main__":
 
     run_dagmc_neutronics(
         reactor,
-        reactor_config.params_for("CAD_Neutronics"),
-        reactor_config.config_for("CAD_Neutronics"),
+        reactor_config.params_for("Neutronics", "DAGMC"),
+        reactor_config.config_for("Neutronics", "DAGMC"),
         reference_eq,
     )
 
