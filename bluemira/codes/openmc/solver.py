@@ -698,7 +698,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
                 debug=debug,
             )
         if run := self._get_execution_method(self._run, run_mode):
-            result = run(run_mode, debug=debug)
+            result = run(run_mode, model, config, debug=debug)
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(self._setup.universe, config, result)
         return result
