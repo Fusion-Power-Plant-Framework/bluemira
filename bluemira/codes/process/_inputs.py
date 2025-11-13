@@ -614,7 +614,7 @@ class ProcessInputs:
     beta_norm_max: float | None = None
     epbetmax: float | None = None
     f_p_alpha_plasma_deposited: float | None = None
-    f_deuterium: float | None = None
+    f_plasma_fuel_deuterium: float | None = None
     f_p_div_lower: float | None = None
     ffwal: float | None = None
     f_nd_plasma_pedestal_greenwald: float | None = None
@@ -622,8 +622,8 @@ class ProcessInputs:
     fkzohm: float | None = None
     fp_plasma_separatrix_min_mw: float | None = None
     fne0: float | None = None
-    f_tritium: float | None = None
-    f_helium3: float | None = None
+    f_plasma_fuel_tritium: float | None = None
+    f_plasma_fuel_helium3: float | None = None
     f_c_plasma_non_inductive: float | None = None
     ejima_coeff: float | None = None
     hfact: float | None = None

@@ -707,7 +707,7 @@
     "source": "Input",
     "mapping": {
       "PROCESS": {
-        "name": "beta_poloidal",
+        "name": "beta_poloidal_vol_avg",
         "send": false,
         "recv": true,
         "unit": "dimensionless"

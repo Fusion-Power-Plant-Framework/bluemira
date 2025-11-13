@@ -791,7 +791,7 @@
     "var_mod": "Plasma",
     "scan01": 0.067018
   },
-  "beta_poloidal": {
+  "beta_poloidal_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 1.3307
   },
@@ -827,7 +827,7 @@
     "var_mod": "Plasma",
     "scan01": 0.060033
   },
-  "eps*beta_poloidal": {
+  "eps*beta_poloidal_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 0.55564
   },
@@ -847,7 +847,7 @@
     "var_mod": "Plasma",
     "scan01": 4.0526
   },
-  "beta_max": {
+  "beta_vol_avg_max": {
     "var_mod": "Plasma",
     "scan01": 0.075333
   },
@@ -887,7 +887,7 @@
     "var_mod": "Plasma",
     "scan01": 8.4384e19
   },
-  "nd_electron_line": {
+  "nd_plasma_electron_line": {
     "var_mod": "Plasma",
     "scan01": 7.1047e19
   },
@@ -895,23 +895,23 @@
     "var_mod": "Plasma",
     "scan01": 1.2
   },
-  "nd_ions_total": {
+  "nd_plasma_ions_total_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 5.3766e19
   },
-  "nd_fuel_ions": {
+  "nd_plasma_fuel_ions_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 4.7623e19
   },
-  "nd_impurities": {
+  "nd_plasma_impurities_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 8.7155e16
   },
-  "nd_alphas": {
+  "nd_plasma_alphas_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 6.0339e18
   },
-  "nd_protons": {
+  "nd_plasma_protons_vol_avg": {
     "var_mod": "Plasma",
     "scan01": 2.2157e16
   },
@@ -1071,11 +1071,11 @@
     "var_mod": "Plasma",
     "scan01": 5.9206e19
   },
-  "f_deuterium": {
+  "f_plasma_fuel_deuterium": {
     "var_mod": "Plasma",
     "scan01": 0.5
   },
-  "f_tritium": {
+  "f_plasma_fuel_tritium": {
     "var_mod": "Plasma",
     "scan01": 0.5
   },
