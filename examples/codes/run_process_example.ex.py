@@ -181,9 +181,8 @@ template_builder.add_variable("f_a_cs_turn_steel", 0.8)
 
 # %%
 # Modified f-values and bounds w.r.t. defaults
-template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-
+template_builder.adjust_variable("foh_stress", 1.0, upper_bound=1.0)
 
 # %% [markdown]
 # Often one wants to specify certain impurity concentrations, and even use
