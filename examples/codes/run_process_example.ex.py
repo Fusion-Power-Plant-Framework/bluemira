@@ -280,9 +280,7 @@ template_builder.add_input_values({
     "ripple_b_tf_plasma_edge_max": 0.6,
     "dia_tf_turn_coolant_channel": 0.01,
     "tftmp": 4.75,
-    "dx_tf_turn_insulation": 2.0e-3,
     "dx_tf_wp_insulation": 0.008,
-    # "dx_tf_wp_insertion_gap": 0.01,
     "tmargmin": 1.5,
     "f_a_tf_turn_cable_space_extra_void": 0.3,
 })
