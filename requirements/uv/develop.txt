@@ -13,7 +13,9 @@ asteval==1.0.6
 astroid==3.3.11
     # via sphinx-autoapi
 asttokens==3.0.0
-    # via stack-data
+    # via
+    #   matproplib
+    #   stack-data
 attrs==25.4.0
     # via
     #   jsonschema
@@ -22,6 +24,7 @@ attrs==25.4.0
 babel==2.17.0
     # via
     #   bluemira (pyproject.toml)
+    #   matproplib
     #   sphinx
 blosc2==3.11.0
     # via tables
@@ -31,6 +34,8 @@ cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.4.4
     # via requests
+citeproc-py==0.9.0
+    # via csl-reference
 click==8.2.1
     # via
     #   bluemira (pyproject.toml)
@@ -43,9 +48,13 @@ contourpy==1.3.2
     #   bluemira (pyproject.toml)
     #   matplotlib
 coolprop==7.2.0
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   matproplib
 coverage==7.11.0
     # via pytest-cov
+csl-reference==0.1.1
+    # via matproplib
 cycler==0.12.1
     # via matplotlib
 debugpy==1.8.17
@@ -137,6 +146,8 @@ kiwisolver==1.4.9
     # via matplotlib
 llvmlite==0.45.1
     # via numba
+lxml==6.0.2
+    # via citeproc-py
 markdown-it-py==3.0.0
     # via
     #   jupytext
@@ -148,6 +159,7 @@ markupsafe==3.0.3
 matplotlib==3.10.7
     # via
     #   bluemira (pyproject.toml)
+    #   matproplib
     #   pyvista
     #   seaborn
     #   vtk
@@ -155,6 +167,8 @@ matplotlib-inline==0.2.1
     # via
     #   ipykernel
     #   ipython
+matproplib==0.0.1
+    # via bluemira (pyproject.toml)
 mdit-py-plugins==0.5.0
     # via
     #   jupytext
@@ -212,10 +226,12 @@ numpy==1.26.4
     #   eqdsk
     #   imageio
     #   matplotlib
+    #   matproplib
     #   meshio
     #   nlopt
     #   numba
     #   numexpr
+    #   numpydantic
     #   pandas
     #   periodictable
     #   pyvista
@@ -223,6 +239,8 @@ numpy==1.26.4
     #   scipy
     #   seaborn
     #   tables
+numpydantic==1.7.0
+    # via matproplib
 packaging==25.0
     # via
     #   ipykernel
@@ -239,7 +257,9 @@ parso==0.8.5
 pathspec==0.12.1
     # via mypy
 periodictable==2.0.2
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   matproplib
 pexpect==4.9.0
     # via ipython
 pillow==12.0.0
@@ -248,7 +268,9 @@ pillow==12.0.0
     #   matplotlib
     #   pyvista
 pint==0.24.4
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   matproplib
 platformdirs==4.5.0
     # via
     #   blosc2
@@ -279,7 +301,11 @@ py-cpuinfo==9.0.0
 pyclipper==1.3.0.post6
     # via bluemira (pyproject.toml)
 pydantic==2.12.3
-    # via bluemira (pyproject.toml)
+    # via
+    #   bluemira (pyproject.toml)
+    #   csl-reference
+    #   matproplib
+    #   numpydantic
 pydantic-core==2.41.4
     # via pydantic
 pygments==2.19.2
@@ -439,6 +465,7 @@ typing-extensions==4.15.0
     #   ipython
     #   mypy
     #   myst-nb
+    #   numpydantic
     #   pint
     #   pydantic
     #   pydantic-core
