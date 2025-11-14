@@ -635,10 +635,6 @@ if __name__ == "__main__":
             "EUDEMO",
             n_sectors=reactor_config.global_params.n_TF.value,
         )
-        bluemira_print(
-            f"TBR = {reactor.neutronics.results.tbr}\n"
-            f"e_mult = {reactor.neutronics.results.e_mult}"
-        )
 
         establish_material_cache(["eurofusion_materials.library", "matproplib"])
 
@@ -725,9 +721,11 @@ if __name__ == "__main__":
                     op_cond=OperationalConditions(temperature=298, pressure=101325),
                 )
             )
-            print(f"TBR = {reactor.neutronics.results.tbr}")
-            print(f"e_mult = {reactor.neutronics.results.e_mult}") 
-            raise ValueError
+            bluemira_print(
+                f"TBR = {reactor.neutronics.results.tbr}\n"
+                f"e_mult = {reactor.neutronics.results.e_mult}"
+            )
+
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
 
@@ -909,8 +907,8 @@ if __name__ == "__main__":
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
         folder_name = f"results_v01/A_{a_string}"
-        import os
-        os.makedirs(folder_name, exist_ok=True) 
+
+        Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
