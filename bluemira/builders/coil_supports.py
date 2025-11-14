@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
-from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -25,8 +24,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, get_intersect
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -505,23 +506,40 @@ class PFCoilSupportBuilder(Builder):
     def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
-        v1, v2, v3, v4, _angle = self._get_support_point_angle(support_face)
+        v1, v2, v3, v4, angle = self._get_support_point_angle(support_face)
 
-        points = np.array([
-            [v1[0], v1[2]],
-            [v2[0], v2[2]],
-            [v3[0], v3[2]],
-            [v4[0], v4[2]],
-        ])
+        # Get the intersection with the TF edge wire and use this for the rib profile
+        intersection_wire = self._get_intersecting_wire(v1, v2, v3, v4, angle)
 
-        hull = ConvexHull(points)
+        # Make the closing wire, and make sure the polygon doesn't self-intersect
+        v3 = intersection_wire.start_point().xyz.T[0]
+        v4 = intersection_wire.end_point().xyz.T[0]
 
-        x = [p[0] for p in points[hull.vertices]]
-        z = [p[1] for p in points[hull.vertices]]
+        inter1 = get_intersect(
+            np.array([[v1[0], v3[0]], [v1[2], v3[2]]]),
+            np.array([[v2[0], v4[0]], [v2[2], v4[2]]]),
+        )
+        if len(inter1[0]) > 0:
+            v3, v4 = v4, v3
 
-        rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
+        closing_wire = make_polygon(
+            {
+                "x": [v3[0], v1[0], v2[0], v4[0]],
+                "y": 0,
+                "z": [v3[2], v1[2], v2[2], v4[2]],
+            },
+            closed=False,
+        )
+        rib_face = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
 
-        return BluemiraFace(rib_wire)
+        # Trim rib face if there is a collision
+        result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
+
+        if result:
+            result.sort(key=lambda face: -face.area)
+            rib_face = result[0]
+
+        return rib_face
 
     def _make_ribs(self, width, support_face):
         xz_profile = self._make_rib_profile(support_face)
@@ -572,14 +590,14 @@ class PFCoilSupportBuilder(Builder):
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
 
-        shape = boolean_fuse(shape_list)
-
-        # Trim the solid with the TF boundary
-        tf_coil_cut = extrude_shape(
-            BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
-        )
-        tf_coil_cut.translate((0, -0.05 * width, 0))
-        shape = boolean_cut(shape, tf_coil_cut)[0]
+        try:
+            shape = boolean_fuse(shape_list)
+        except GeometryError:
+            bluemira_warn(
+                "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
+                " instead of a BluemiraSolid, please check!"
+            )
+            shape = BluemiraCompound(shape_list)
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(
