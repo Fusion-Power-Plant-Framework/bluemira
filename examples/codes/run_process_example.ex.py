@@ -151,29 +151,28 @@ inputs = template_builder.make_inputs()
 # So let's go ahead and add the iteration variables we want to the problem:
 
 # %%
-template_builder.add_variable("b_plasma_toroidal_on_axis", 5.3292, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
+template_builder.add_variable("b_plasma_toroidal_on_axis", 5.7, upper_bound=20.0)
+template_builder.add_variable("rmajor", 8.0, lower_bound=8.0, upper_bound=9.0)
 template_builder.add_variable(
-    "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
+    "temp_plasma_electron_vol_avg_kev", 27.33, upper_bound=100.0
 )
-template_builder.add_variable("beta_total_vol_avg", 3.1421e-2)
-template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
-template_builder.add_variable("q95", 3.5, lower_bound=3.5)
-template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
-template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
-template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
+template_builder.add_variable("beta_total_vol_avg", 3.0e-2)
+template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.5e19)
+template_builder.add_variable("q95", 3.5, lower_bound=3.0)
+template_builder.add_variable("p_hcd_primary_extra_heat_mw", 75.0)
+template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02, upper_bound=0.1)
+template_builder.add_variable("dr_bore", 2.0, lower_bound=0.1)
+template_builder.add_variable("dr_cs", 0.5, lower_bound=0.3)
 template_builder.add_variable("dx_tf_turn_steel", 8.0e-3, lower_bound=8.0e-3)
-template_builder.add_variable("dr_tf_nose_case", 0.52465)
-template_builder.add_variable("dr_tf_inboard", 1.2080)
-template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
-template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
+template_builder.add_variable("dr_tf_nose_case", 0.5)
+template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.50e4, upper_bound=9.0e4)
+template_builder.add_variable("t_tf_superconductor_quench", 2.5e01)
 template_builder.add_variable(
-    "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+    "f_a_tf_turn_cable_copper", 0.80, lower_bound=0.5, upper_bound=0.94
 )
-template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
+template_builder.add_variable("f_c_plasma_non_inductive", 0.8)
+template_builder.add_variable("dr_tf_wp_with_insulation", 0.5, lower_bound=0.4)
+template_builder.add_variable("f_a_cs_turn_steel", 0.8)
 
 # %% [markdown]
 # Many of the PROCESS constraints use so-called 'f-values', which are automatically
