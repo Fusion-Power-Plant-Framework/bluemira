@@ -29,10 +29,11 @@ from bluemira.structural.plotting import (
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
+    from matproblib.conditions import OperationalConditions
+    from matproplib.material import Material
 
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.structural.crosssection import CrossSection
-    from bluemira.structural.material import StructuralMaterial
 
 
 class Geometry:
@@ -227,7 +228,8 @@ class Geometry:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: StructuralMaterial | None = None,
+        material: Material | None = None,
+        op_cond: OperationalConditions | None = None,
     ) -> int:
         """
         Adds an Element to the Geometry object
@@ -263,6 +265,7 @@ class Geometry:
                 self.n_elements,
                 cross_section,
                 material,
+                op_cond,
             )
             self.elements.append(element)
             # Keep track of Element connectivity
@@ -279,6 +282,7 @@ class Geometry:
             elem_id,
             cross_section,
             material,
+            op_cond,
         )
 
         self.elements[elem_id] = element
@@ -319,7 +323,8 @@ class Geometry:
         self,
         coordinates: Coordinates,
         cross_section: CrossSection,
-        material: StructuralMaterial | None = None,
+        material: Material | None = None,
+        op_cond: OperationalConditions | None = None,
     ):
         """
         Adds a Coordinates object to the Geometry
@@ -338,11 +343,11 @@ class Geometry:
         n1 = n_start
         for point in coordinates.points[1:]:
             n2 = self.add_node(*point)
-            self.add_element(n1, n2, cross_section, material)
+            self.add_element(n1, n2, cross_section, material, op_cond)
             n1 = n2
 
         if coordinates.closed:
-            self.add_element(n2, n_start, cross_section, material)
+            self.add_element(n2, n_start, cross_section, material, op_cond)
 
     def k_matrix(self) -> np.ndarray:
         """

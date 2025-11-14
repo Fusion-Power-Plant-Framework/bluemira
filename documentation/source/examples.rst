@@ -81,7 +81,6 @@ Other Examples
     examples/balance_of_plant/steady_state_example
     examples/design/optimised_reactor
     examples/fuel_cycle/EUDEMO_fuelcycle
-    examples/materials/material_definitions
     examples/mesh/mesh_tutorial
     examples/plasma_physics/fusion_reactions
     examples/radiation_transport/heat_flux_calculation

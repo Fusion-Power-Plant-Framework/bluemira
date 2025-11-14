@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING
 from bluemira.codes.utilities import get_code_interface
 
 if TYPE_CHECKING:
+    from matproplib.conditions import OperationalConditions
+
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame import Parameter as ParameterFrame
     from bluemira.codes._typing import TransportSolver
@@ -95,6 +97,7 @@ def neutronics_code_solver(
     neutronics_model,
     eq: Equilibrium,
     source: NeutronSourceCreator,
+    op_cond: OperationalConditions,
     tally_function=None,
     module: str = "OPENMC",
 ) -> CodesSolver:
@@ -117,5 +120,5 @@ def neutronics_code_solver(
     """
     neutron = get_code_interface(module)
     return neutron.Solver(
-        params, build_config, neutronics_model, eq, source, tally_function
+        params, build_config, neutronics_model, eq, source, op_cond, tally_function
     )

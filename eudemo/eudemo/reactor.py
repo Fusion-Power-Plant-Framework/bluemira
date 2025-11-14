@@ -24,11 +24,12 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matproplib.conditions import OperationalConditions
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -548,10 +549,7 @@ if __name__ == "__main__":
         n_sectors=reactor_config.global_params.n_TF.value,
     )
 
-    establish_material_cache([
-        reactor_config.config_for("materials_path")["materials"],
-        reactor_config.config_for("materials_path")["mixtures"],
-    ])
+    establish_material_cache(["eurofusion_materials.library", "matproplib"])
 
     radial_build(
         reactor_config.params_for("Radial build").global_params,
@@ -628,12 +626,21 @@ if __name__ == "__main__":
                 vacuum_vessel=reactor.vacuum_vessel,
                 ivc_shapes=ivc_shapes,
                 eq=reference_eq,
+                op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
+        )
+        bluemira_print(
+            f"TBR = {reactor.neutronics.results.tbr}\n"
+            f"e_mult = {reactor.neutronics.results.e_mult}"
         )
 
         if reactor_config.config_for("Neutronics")["show_data"]:
             reactor.neutronics.plot()
             bluemira_print_clean(f"{reactor.neutronics}")
+
+    if reactor_config.config_for("Neutronics")["show_data"]:
+        reactor.neutronics.plot()
+        bluemira_print_clean(f"{reactor.neutronics}")
 
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),

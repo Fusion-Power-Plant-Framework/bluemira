@@ -13,7 +13,7 @@ from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import TYPE_CHECKING, Literal, TypeAlias
 
 import numpy as np
 import openmc
@@ -43,6 +43,9 @@ from bluemira.codes.openmc.params import (
 )
 from bluemira.codes.openmc.tallying import filter_cells
 from bluemira.equilibria.equilibrium import Equilibrium
+
+if TYPE_CHECKING:
+    from matproplib.conditions import OperationalConditions
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -436,6 +439,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
         neutronics_pre_cell_model,
         eq: Equilibrium,
         source: NeutronSourceCreator,
+        op_cond: OperationalConditions,
         tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
@@ -448,7 +452,7 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         self.pre_cell_model = neutronics_pre_cell_model
         self.materials = MaterialsLibrary.from_neutronics_materials(
-            self.pre_cell_model.material_library
+            self.pre_cell_model.material_library, op_cond
         )
 
         self.cell_arrays = make_cell_arrays(

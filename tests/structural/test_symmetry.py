@@ -7,23 +7,27 @@
 from copy import deepcopy
 
 import numpy as np
+from matproplib.conditions import STPConditions
 
 from bluemira.geometry.tools import make_circle
+from bluemira.materials.basic import SS316
 from bluemira.structural.crosssection import IBeam
-from bluemira.structural.material import SS316
 from bluemira.structural.model import FiniteElementModel
 from bluemira.structural.transformation import cyclic_pattern
 
 
 class TestCyclicSymmetry:
     def test_symmetry(self):
+        ss316 = SS316()
+        op_cond = STPConditions()
+
         model = FiniteElementModel()
 
         xsection = IBeam(0.4, 0.6, 0.2, 0.1)
 
         i1 = model.add_node(5, 0, 0)
         i2 = model.add_node(9, 0, 3)
-        model.add_element(i1, i2, xsection, SS316)
+        model.add_element(i1, i2, xsection, ss316, op_cond)
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         circle = make_circle(radius=9, center=(0, 0, 3), start_angle=0, end_angle=30)
@@ -34,7 +38,7 @@ class TestCyclicSymmetry:
         sym_nodes.append(n1)
         for point in coordinates.points[1:]:
             n2 = model.add_node(*point)
-            model.add_element(n1, n2, xsection, SS316)
+            model.add_element(n1, n2, xsection, ss316, op_cond)
             n1 = n2
 
         sym_nodes.append(n1)

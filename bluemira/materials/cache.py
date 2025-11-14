@@ -11,25 +11,18 @@ Classes and methods to load, store, and retrieve materials.
 from __future__ import annotations
 
 import copy
-import json
-from typing import TYPE_CHECKING, Any, ClassVar
+import types
+from typing import TYPE_CHECKING
 
-from bluemira.materials.material import (
-    BePebbleBed,
-    Liquid,
-    MassFractionMaterial,
-    Material,
-    MaterialsError,
-    NbSnSuperconductor,
-    NbTiSuperconductor,
-    Plasma,
-    UnitCellCompound,
-    Void,
-)
-from bluemira.materials.mixtures import HomogenisedMixture
+from matproplib.library.fluids import Void
+
+from bluemira.materials.error import MaterialsError
+from bluemira.utilities.tools import get_module
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from matproplib.material import Material
+
+vacuum_void = Void(name="Vacuum")
 
 
 class MaterialCache:
@@ -40,25 +33,6 @@ class MaterialCache:
     -----
     Extend the `available_classes` attribute to load custom classes.
     """
-
-    _material_dict: ClassVar = {}
-
-    default_classes = (
-        Void,
-        MassFractionMaterial,
-        NbTiSuperconductor,
-        NbSnSuperconductor,
-        Liquid,
-        UnitCellCompound,
-        BePebbleBed,
-        Plasma,
-        HomogenisedMixture,
-    )
-
-    def __init__(self):
-        self.available_classes = {
-            mat_class.__name__: mat_class for mat_class in self.default_classes
-        }
 
     _instance: MaterialCache | None = None
 
@@ -92,89 +66,41 @@ class MaterialCache:
         try:
             super().__getattribute__(value)
         except AttributeError:
-            if value in self._material_dict:
-                return self._material_dict[value]
+            if value in self._material_package:
+                return self._material_package[value]
             raise
 
-    def load_from_file(self, path: str) -> dict[str, Any]:
-        """
-        Load materials from a file.
+    def load_from_package(self, package):
+        """Load material package"""
+        self._material_packages = [get_module(p) for p in package]
 
-        Parameters
-        ----------
-        path:
-            The path to the file from which to load the materials.
-        """
-        with open(path) as fh:
-            mats_dict = json.load(fh)
-        for name in mats_dict:
-            self.load_from_dict(name, mats_dict)
+    def _get_material(self, name):
+        name = name.replace("-", "_")
+        name = name.split(".") if "." in name else [name]
 
-    def load_from_dict(
-        self, mat_name: str, mats_dict: dict[str, Any], *, overwrite: bool = True
-    ):
-        """
-        Load a material or mixture from a dictionary.
+        def _d(p, name, initial_p):
+            if name in dir(p):
+                return getattr(p, name)
+            for dp in filter(lambda s: not s.startswith("__"), dir(p)):
+                attr = getattr(p, dp)
+                if dp == name:
+                    return attr
+                if (
+                    isinstance(attr, types.ModuleType)
+                    and initial_p in repr(attr)
+                    and (attr := _d(attr, name, initial_p)) is not None
+                ):
+                    return attr
+            return None
 
-        Parameters
-        ----------
-        mat_name:
-            The name of the material or mixture.
-        mats_dict:
-            The dictionary containing the material or mixture attributes to be loaded.
-
-        Raises
-        ------
-        MaterialsError
-            Unknown material class
-        """
-        if (
-            material_class := mats_dict[mat_name]["material_class"]
-        ) not in self.available_classes:
-            raise MaterialsError(
-                f"Request to load unknown material class {material_class}"
-            )
-
-        if issubclass(self.available_classes[material_class], HomogenisedMixture):
-            self.mixture_from_dict(mat_name, mats_dict, overwrite=overwrite)
-        else:
-            self.material_from_dict(mat_name, mats_dict, overwrite=overwrite)
-
-    def mixture_from_dict(
-        self, mat_name: str, mats_dict: dict[str, Any], *, overwrite: bool = True
-    ):
-        """
-        Load a mixture from a dictionary.
-
-        Parameters
-        ----------
-        mat_name:
-            The name of the mixture.
-        mats_dict:
-            The dictionary containing the mixture attributes to be loaded.
-        """
-        mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]
-        self._update_cache(
-            mat_name, mat_class.from_dict(mat_name, mats_dict, self), overwrite=overwrite
-        )
-
-    def material_from_dict(
-        self, mat_name: str, mats_dict: dict[str, Any], *, overwrite: bool = True
-    ):
-        """
-        Load a material from a dictionary.
-
-        Parameters
-        ----------
-        mat_name:
-            The name of the material.
-        mats_dict:
-            The dictionary containing the material attributes to be loaded.
-        """
-        mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]
-        self._update_cache(
-            mat_name, mat_class(mat_name, **mats_dict[mat_name]), overwrite=overwrite
-        )
+        for p in self._material_packages:
+            if len(name) == 1:
+                return _d(p, name[0], p.__name__)
+            mod = p
+            for n in name:
+                mod = _d(mod, n, p.__name__)
+            return mod
+        raise AttributeError("No such material")
 
     def get_material(self, name: str, *, clone: bool = True):
         """
@@ -193,19 +119,11 @@ class MaterialCache:
         The requested material.
         """
         if clone:
-            return copy.deepcopy(self._material_dict[name])
-        return self._material_dict[name]
-
-    def _update_cache(self, mat_name: str, mat, *, overwrite: bool = True):
-        if not overwrite and mat_name in self._material_dict:
-            raise MaterialsError(
-                f"Attempt to load material {mat_name}, which already "
-                "exists in the cache."
-            )
-        self._material_dict[mat_name] = mat
+            return copy.deepcopy(self._get_material(name))
+        return self._get_material(name)
 
 
-def establish_material_cache(materials_json_paths: list[Path | str]):
+def establish_material_cache(materials_package: str | object):
     """
     Load the material data from the provided json files into the global material cache
     instance.
@@ -215,7 +133,7 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
 
     Parameters
     ----------
-    materials_json_paths:
+    materials_package:
         A list of paths to the data files to load into the material cache.
 
     Returns
@@ -223,8 +141,7 @@ def establish_material_cache(materials_json_paths: list[Path | str]):
     The material cache.
     """
     cache = MaterialCache.get_instance()
-    for path in materials_json_paths:
-        cache.load_from_file(path)
+    cache.load_from_package(materials_package)
     return cache
 
 

@@ -36,7 +36,6 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -400,10 +399,7 @@ class OptimisedReactor(Reactor):  # noqa: D101
         """Initialise the optimised reactor."""
         self.params = reactor_params
         super().__init__("OptimisedReactor", n_sectors=reactor_params.n_TF.value)
-        establish_material_cache([
-            Path(get_bluemira_root()) / "data" / "materials" / "materials.json",
-            Path(get_bluemira_root()) / "data" / "materials" / "mixtures.json",
-        ])
+        establish_material_cache(["matproplib"])
 
     def build_plasma(self):
         """Build the plasma component."""
