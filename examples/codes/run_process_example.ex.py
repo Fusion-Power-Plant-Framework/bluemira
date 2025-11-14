@@ -192,7 +192,7 @@ template_builder.adjust_variable("foh_stress", 1.0, upper_bound=1.0)
 template_builder.add_impurity(Impurities.H, 1.0)
 template_builder.add_impurity(Impurities.He, 0.1)
 template_builder.add_impurity(Impurities.W, 5.0e-5)
-template_builder.add_variable(Impurities.Xe.id(), 3.573e-04)
+template_builder.add_variable(Impurities.Xe.id(), 3.8e-04)
 
 
 # %% [markdown]
