@@ -12,11 +12,10 @@ from matproplib.library.fluids import Void
 from matproplib.material import material
 from matproplib.properties.group import props
 
-__all__ = ["Void"]
-
 
 # Just some simple materials to play with during tests and the like
 def sm(self, op_cond):
+    """Simple shear modulus"""  # noqa: DOC201
     return self.youngs_modulus(op_cond) / (0.5 + 0.5 * self.poissons_ratio(op_cond))
 
 
