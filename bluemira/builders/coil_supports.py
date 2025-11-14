@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
+from scipy.spatial import ConvexHull
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -512,16 +513,15 @@ class PFCoilSupportBuilder(Builder):
             [v3[0], v3[2]],
             [v4[0], v4[2]],
         ])
+
         hull = ConvexHull(points)
 
-        # Get the intersection with the TF edge wire and use this for the rib profile
-        intersection_wire = self._get_intersecting_wire(v1, v2, v3, v4, angle)
+        x = [p[0] for p in points[hull.vertices]]
+        z = [p[1] for p in points[hull.vertices]]
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
 
-        rib_face = BluemiraFace(rib_wire)
-
-        return rib_face
+        return BluemiraFace(rib_wire)
 
     def _make_ribs(self, width, support_face):
         xz_profile = self._make_rib_profile(support_face)

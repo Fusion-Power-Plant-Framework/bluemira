@@ -29,7 +29,7 @@ from matproplib.conditions import OperationalConditions
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print_clean
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -629,8 +629,10 @@ if __name__ == "__main__":
                 op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
         )
-        print(f"TBR = {reactor.neutronics.results.tbr}")
-        print(f"e_mult = {reactor.neutronics.results.e_mult}")
+        bluemira_print(
+            f"TBR = {reactor.neutronics.results.tbr}\n"
+            f"e_mult = {reactor.neutronics.results.e_mult}"
+        )
 
         if reactor_config.config_for("Neutronics")["show_data"]:
             reactor.neutronics.plot()
