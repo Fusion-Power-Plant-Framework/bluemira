@@ -121,8 +121,14 @@ for constraint in (
     Constraint.TF_CASE_STRESS_UPPER_LIMIT,
     Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
     Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
+    Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
     Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
     Constraint.TF_T_MARGIN_LOWER_LIMIT,
+    Constraint.CS_T_MARGIN_LOWER_LIMIT,
+    Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
+    Constraint.DUMP_TIME_LOWER_LIMIT,
+    Constraint.CS_STRESS_UPPER_LIMIT,
+    Constraint.DENSITY_PROFILE_CONSISTENCY,
     Constraint.PSEPB_QAR_UPPER_LIMIT,
 ):
     template_builder.add_constraint(constraint)
