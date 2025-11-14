@@ -3840,7 +3840,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
-  "pnetelmw.": {
+  "p_plant_electric_net_mw.": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 600.0
   },
@@ -3860,7 +3860,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 1580.8
   },
-  "pnetelmw": {
+  "p_plant_electric_net_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 600.0
   },
@@ -3868,11 +3868,11 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2634.7
   },
-  "pnetelmw/(p_fusion_total_mw+p_blkt_multiplication_mw": {
+  "p_plant_electric_net_mw/(p_fusion_total_mw+p_blkt_multiplication_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 13.67
   },
-  "pnetelmw/p_fusion_total_mw": {
+  "p_plant_electric_net_mw/p_fusion_total_mw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 16.271
   },

@@ -233,7 +233,7 @@
     "mapping": {
       "PROCESS": {
         "name": "p_plant_electric_net_required_mw",
-        "out_name": "pnetelmw",
+        "out_name": "p_plant_electric_net_mw",
         "send": true,
         "recv": true,
         "unit": "MW"
