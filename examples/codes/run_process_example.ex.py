@@ -356,26 +356,14 @@ except CodesError as ce:
     bluemira_error(ce)
 
 # %%
-# Great, so it runs! All we need to do now is make sure we have properly
-# specified our design problem, and perhaps adjust the initial values
-# of the iteration variables to give the optimisation algorithm a better
-# chance of finding a feasible point.
+# PROCESS runs but no feasbile solution can be found.
+# We can adjust our design problem, perhaps relaxing some of the
+# requirements we have put on the fusion powerplant.
 
 # %%
-
-# TODO @je-cook: actually get to converge
-# 3667
+# Let's reduce the requirement for net electric power to a lower value.
 template_builder.set_run_title("Example that should converge")
-template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
-template_builder.adjust_variable("fstrcase", 1.0)
-template_builder.adjust_variable("ftmargtf", 1.0)
-template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("falpha_energy_confinement", 1.0)
-template_builder.adjust_variable("fbeta_max", 0.48251)
-template_builder.adjust_variable("fpsepbqar", 1.0)
-template_builder.adjust_variable("fvdump", 1.0)
-template_builder.adjust_variable("fstrcond", 0.92007)
-template_builder.adjust_variable("fjprot", 1.0)
+template_builder.add_input_value("p_plant_electric_net_required_mw", 400.0)
 
 # %%
 
