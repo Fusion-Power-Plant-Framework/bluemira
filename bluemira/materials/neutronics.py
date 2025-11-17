@@ -50,27 +50,6 @@ except ImportError:
     )()
     TUNGSTEN_MAT = PlanseeTungsten()
 
-    # Debugging replacements (to be removed)
-
-    Be12Ti = material(
-        "Be12Ti",
-        elements={"Be": 12.0 / 13, "Ti": 1.0 / 13, "fraction_type": "atomic"},
-        converters=OpenMCNeutronicConfig(),
-        properties=props(density=2250.0),
-    )
-    WATER_MAT = material(
-        "water",
-        elements={"H1": 2 / 3, "O16": 1 / 3, "fraction_type": "atomic"},
-        properties=props(density=866.0),  # WTF
-        converters=OpenMCNeutronicConfig(),
-    )()
-
-    HELIUM_MAT = material(
-        "He",
-        elements={"He4": 1.0},
-        converters=OpenMCNeutronicConfig(),
-        properties=props(density=0.008867),
-    )()
 
 al2o3_mat = material(
     name="Aluminium Oxide",
