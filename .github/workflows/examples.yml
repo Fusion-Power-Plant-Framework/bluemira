@@ -56,10 +56,8 @@ jobs:
           # needs improvement #2999
           python ./scripts/run_examples.py \
             -e 'plasmod_example' \
-            -e 'process_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
             -e 'mesh/mesh_tutorial' \
             -e 'radiation_transport/run_cad_neutronics' \
-            ${RUN_DAGMC_EX} \
-            ${RUN_PROCESS_EX}
+            ${RUN_DAGMC_EX}

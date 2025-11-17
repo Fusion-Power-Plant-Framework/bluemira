@@ -86,7 +86,7 @@ template_builder = PROCESSTemplateBuilder()
 # %%
 template_builder.set_run_title("Example that won't converge")
 template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
-template_builder.set_optimisation_numerics(maxiter=1000, tolerance=1e-8)
+template_builder.set_optimisation_numerics(maxiter=200, tolerance=1e-8)
 
 
 # %% [markdown]
@@ -121,8 +121,14 @@ for constraint in (
     Constraint.TF_CASE_STRESS_UPPER_LIMIT,
     Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
     Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
+    Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
     Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
     Constraint.TF_T_MARGIN_LOWER_LIMIT,
+    Constraint.CS_T_MARGIN_LOWER_LIMIT,
+    Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
+    Constraint.DUMP_TIME_LOWER_LIMIT,
+    Constraint.CS_STRESS_UPPER_LIMIT,
+    Constraint.DENSITY_PROFILE_CONSISTENCY,
     Constraint.PSEPB_QAR_UPPER_LIMIT,
 ):
     template_builder.add_constraint(constraint)
@@ -145,29 +151,28 @@ inputs = template_builder.make_inputs()
 # So let's go ahead and add the iteration variables we want to the problem:
 
 # %%
-template_builder.add_variable("b_plasma_toroidal_on_axis", 5.3292, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
+template_builder.add_variable("b_plasma_toroidal_on_axis", 5.7, upper_bound=20.0)
+template_builder.add_variable("rmajor", 8.0, lower_bound=8.0, upper_bound=9.0)
 template_builder.add_variable(
-    "temp_plasma_electron_vol_avg_kev", 12.33, upper_bound=150.0
+    "temp_plasma_electron_vol_avg_kev", 27.33, upper_bound=100.0
 )
-template_builder.add_variable("beta_total_vol_avg", 3.1421e-2)
-template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.4321e19)
-template_builder.add_variable("q95", 3.5, lower_bound=3.5)
-template_builder.add_variable("p_hcd_primary_extra_heat_mw", 50.0)
-template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02)
-template_builder.add_variable("dr_bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("dr_cs", 0.55242, lower_bound=0.1)
+template_builder.add_variable("beta_total_vol_avg", 3.0e-2)
+template_builder.add_variable("nd_plasma_electrons_vol_avg", 7.5e19)
+template_builder.add_variable("q95", 3.5, lower_bound=3.0)
+template_builder.add_variable("p_hcd_primary_extra_heat_mw", 75.0)
+template_builder.add_variable("f_nd_alpha_electron", 6.8940e-02, upper_bound=0.1)
+template_builder.add_variable("dr_bore", 2.0, lower_bound=0.1)
+template_builder.add_variable("dr_cs", 0.5, lower_bound=0.3)
 template_builder.add_variable("dx_tf_turn_steel", 8.0e-3, lower_bound=8.0e-3)
-template_builder.add_variable("dr_tf_nose_case", 0.52465)
-template_builder.add_variable("dr_tf_inboard", 1.2080)
-template_builder.add_variable("dr_cs_tf_gap", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("dr_shld_vv_gap_inboard", 0.02, lower_bound=0.02)
-template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
-template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
+template_builder.add_variable("dr_tf_nose_case", 0.5)
+template_builder.add_variable("c_tf_turn", 6.5e4, lower_bound=6.50e4, upper_bound=9.0e4)
+template_builder.add_variable("t_tf_superconductor_quench", 2.5e01)
 template_builder.add_variable(
-    "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+    "f_a_tf_turn_cable_copper", 0.80, lower_bound=0.5, upper_bound=0.94
 )
-template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
+template_builder.add_variable("f_c_plasma_non_inductive", 0.8)
+template_builder.add_variable("dr_tf_wp_with_insulation", 0.5, lower_bound=0.4)
+template_builder.add_variable("f_a_cs_turn_steel", 0.8)
 
 # %% [markdown]
 # Many of the PROCESS constraints use so-called 'f-values', which are automatically
@@ -176,9 +181,8 @@ template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 
 # %%
 # Modified f-values and bounds w.r.t. defaults
-template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-
+template_builder.adjust_variable("foh_stress", 1.0, upper_bound=1.0)
 
 # %% [markdown]
 # Often one wants to specify certain impurity concentrations, and even use
@@ -188,7 +192,7 @@ template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.add_impurity(Impurities.H, 1.0)
 template_builder.add_impurity(Impurities.He, 0.1)
 template_builder.add_impurity(Impurities.W, 5.0e-5)
-template_builder.add_variable(Impurities.Xe.id(), 3.573e-04)
+template_builder.add_variable(Impurities.Xe.id(), 3.8e-04)
 
 
 # %% [markdown]
@@ -204,74 +208,66 @@ template_builder.add_input_values({
     "tbeta": 2.0,
     "temp_plasma_pedestal_kev": 5.5,
     "temp_plasma_separatrix_kev": 0.1,
-    "f_nd_plasma_pedestal_greenwald": 0.85,
-    "nd_plasma_pedestal_electron": 0.678e20,
+    "nd_plasma_pedestal_electron": 0.5e20,
     "nd_plasma_separatrix_electron": 0.2e20,
     "beta_norm_max": 3.0,
     # Plasma impurity stuff
     "radius_plasma_core_norm": 0.75,
     "f_p_plasma_core_rad_reduction": 0.6,
     # Important stuff
-    "p_plant_electric_net_required_mw": 500.0,
+    "p_plant_electric_net_required_mw": 800.0,
     "t_burn_min": 7.2e3,
-    "sig_tf_case_max": 5.8e8,
-    "sig_tf_wp_max": 5.8e8,
-    "alstroh": 6.6e8,
-    "psepbqarmax": 9.2,
-    "aspect": 3.1,
-    "m_s_limit": 0.1,
+    "sig_tf_case_max": 7.5e8,
+    "sig_tf_wp_max": 7.5e8,
+    "alstroh": 7.5e8,
+    "psepbqarmax": 10.0,
+    "aspect": 3.0,
     "triang": 0.5,
     "q0": 1.0,
     "f_sync_reflect": 0.6,
-    "plasma_res_factor": 0.66,
+    "plasma_res_factor": 0.7,
     "ejima_coeff": 0.3,
     "hfact": 1.1,
-    "life_dpa": 70.0,
     # Radial build inputs
-    "dr_tf_shld_gap": 0.05,
     "dr_vv_inboard": 0.3,
     "dr_shld_inboard": 0.3,
     "dr_shld_blkt_gap": 0.02,
-    "dr_blkt_inboard": 0.755,
-    "dr_fw_plasma_gap_inboard": 0.225,
-    "dr_fw_plasma_gap_outboard": 0.225,
-    "dr_blkt_outboard": 0.982,
+    "dr_blkt_inboard": 0.7,
+    "dr_fw_plasma_gap_inboard": 0.25,
+    "dr_fw_plasma_gap_outboard": 0.25,
+    "dr_blkt_outboard": 1.0,
     "dr_vv_outboard": 0.3,
     "dr_shld_outboard": 0.8,
     "dr_cryostat": 0.15,
-    "gapomin": 0.2,
     # Vertical build inputs
     "dz_vv_upper": 0.3,
-    "dz_shld_vv_gap": 0.05,
-    "dz_shld_upper": 0.3,
-    "dz_divertor": 0.621,
+    "dz_divertor": 0.62,
     "dz_vv_lower": 0.3,
     # HCD inputs
-    "p_hcd_injected_max": 51.0,
+    "p_hcd_injected_max": 200.0,
     "eta_cd_norm_ecrh": 0.3,
-    "eta_ecrh_injector_wall_plug": 0.4,
-    "f_c_plasma_bootstrap_max": 0.99,
+    "eta_ecrh_injector_wall_plug": 0.5,
+    "f_c_plasma_bootstrap_max": 0.95,
     # BOP inputs
-    "eta_turbine": 0.375,
+    "eta_turbine": 0.4,
     "eta_coolant_pump_electric": 0.87,
     "etaiso": 0.9,
     "vfshld": 0.6,
-    "t_plant_pulse_dwell": 0.0,
+    "t_plant_pulse_dwell": 1800.0,
     "t_plant_pulse_coil_precharge": 500.0,
     # CS / PF coil inputs
-    "t_crack_vertical": 0.4e-3,
     "fcuohsu": 0.7,
     "f_z_cs_tf_internal": 0.9,
     "rpf2": -1.825,
     "c_pf_coil_turn_peak_input": [
-        4.22e4,
-        4.22e4,
-        4.22e4,
-        4.22e4,
-        4.3e4,
-        4.3e4,
-        4.3e4,
-        4.3e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
+        4.0e4,
     ],
     "i_pf_location": [2, 2, 3, 3],
     "n_pf_coils_in_group": [1, 1, 2, 2],
@@ -284,9 +280,7 @@ template_builder.add_input_values({
     "ripple_b_tf_plasma_edge_max": 0.6,
     "dia_tf_turn_coolant_channel": 0.01,
     "tftmp": 4.75,
-    "dx_tf_turn_insulation": 2.0e-3,
     "dx_tf_wp_insulation": 0.008,
-    # "dx_tf_wp_insertion_gap": 0.01,
     "tmargmin": 1.5,
     "f_a_tf_turn_cable_space_extra_void": 0.3,
 })
@@ -362,26 +356,14 @@ except CodesError as ce:
     bluemira_error(ce)
 
 # %%
-# Great, so it runs! All we need to do now is make sure we have properly
-# specified our design problem, and perhaps adjust the initial values
-# of the iteration variables to give the optimisation algorithm a better
-# chance of finding a feasible point.
+# PROCESS runs but no feasbile solution can be found.
+# We can adjust our design problem, perhaps relaxing some of the
+# requirements we have put on the fusion powerplant.
 
 # %%
-
-# TODO @je-cook: actually get to converge
-# 3667
+# Let's reduce the requirement for net electric power to a lower value.
 template_builder.set_run_title("Example that should converge")
-template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
-template_builder.adjust_variable("fstrcase", 1.0)
-template_builder.adjust_variable("ftmargtf", 1.0)
-template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("falpha_energy_confinement", 1.0)
-template_builder.adjust_variable("fbeta_max", 0.48251)
-template_builder.adjust_variable("fpsepbqar", 1.0)
-template_builder.adjust_variable("fvdump", 1.0)
-template_builder.adjust_variable("fstrcond", 0.92007)
-template_builder.adjust_variable("fjprot", 1.0)
+template_builder.add_input_value("p_plant_electric_net_required_mw", 400.0)
 
 # %%
 
@@ -391,3 +373,4 @@ solver = systems_code_solver(
 
 result = solver.execute("run")
 # %%
+# Now PROCESS has found a feasible solution!
