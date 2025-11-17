@@ -332,7 +332,7 @@ class TestSolveEquilibrium:
         program = PicardIterator(
             eq,
             opt_problem,
-            convergence=DudsonConvergence(1e-1),
+            convergence=DudsonConvergence(1e-2),
             fixed_coils=True,
             relaxation=0.2,
         )
