@@ -19,7 +19,6 @@ import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.tools import _timing
 from bluemira.codes.interface import (
@@ -38,6 +37,7 @@ from bluemira.codes.openmc.material import MaterialsLibrary
 from bluemira.codes.openmc.output import (
     NeutronicsOutputParams,
     OpenMCCSGResult,
+    OpenMCDAGMCResult,
 )
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
@@ -499,32 +499,11 @@ class OpenMCCSGTeardown(CodesTeardown):
         self.cell_arrays = cell_arrays
         self.pre_cell_model = pre_cell_model
 
-    @staticmethod
-    def delete_files(files_created):
-        """Remove files generated during the run (mainly .xml files.)"""
-        removed_files, failed_to_remove_files = [], []
-        for file_name in files_created:
-            if (f := file_name).exists():
-                f.unlink()
-                removed_files.append(file_name)
-            else:
-                failed_to_remove_files.append(file_name)
-
-        if removed_files:
-            bluemira_debug(f"Removed files {removed_files}")
-        if failed_to_remove_files:
-            bluemira_debug(
-                f"Attempted to remove files {failed_to_remove_files} but "
-                "they don't exists."
-            )
-
     def run(
         self,
         universe,
         source_info: SourceInfo,
         statepoint_file,
-        *,
-        delete_files: bool = False,
     ):
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
@@ -532,12 +511,10 @@ class OpenMCCSGTeardown(CodesTeardown):
             self.cell_arrays,
             source_info.rate,
             source_info.triton_rate,
-            statepoint_file,
+            Path(statepoint_file),
         )
         output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
 
-        if delete_files:
-            self.delete_files(files_created)
         return result, output_params
 
     def plot(self, _universe, _source_info, fig: FigureData, **kwargs):
@@ -550,12 +527,8 @@ class OpenMCCSGTeardown(CodesTeardown):
         _universe,
         _source_params,
         _statepoint_file,
-        *,
-        delete_files: bool = False,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
-        if delete_files:
-            self.delete_files(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
@@ -575,12 +548,10 @@ class OpenMCDAGTeardown(CodesTeardown):
         universe,
         source_info: SourceInfo,
         statepoint_file,
-        *,
-        delete_files: bool = False,
     ):
         """Run stage for Teardown task"""
-        result = OpenMCDAGResult.from_run(
-            universe, source_info.rate, source_info.triton_rate, statepoint_file
+        result = OpenMCDAGMCResult.from_run(
+            universe, source_info.rate, source_info.triton_rate, Path(statepoint_file)
         )
         output_params = NeutronicsOutputParams.from_openmc_dag_result(result)
 
@@ -602,8 +573,6 @@ class OpenMCDAGTeardown(CodesTeardown):
         _universe,
         _source_params,
         _statepoint_file,
-        *,
-        delete_files: bool = False,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
 

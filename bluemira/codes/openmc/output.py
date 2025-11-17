@@ -104,7 +104,7 @@ class OpenMCCSGResult:
         cell_arrays: CellStage,
         src_rate: float,
         src_triton_rate: float,
-        statepoint_file: str = "",
+        statepoint_file: Path,
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -125,7 +125,7 @@ class OpenMCCSGResult:
         }
 
         # Loads up the output file from the simulation
-        statepoint = openmc.StatePoint(statepoint_file)
+        statepoint = openmc.StatePoint(statepoint_file.as_posix())
         tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
         blanket_power, blanket_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "breeding blanket power"
@@ -521,6 +521,19 @@ class OpenMCCSGResult:
 
 
 @dataclass
+class OpenMCDAGMCResult:
+    @classmethod
+    def from_file(
+        cls,
+        universe: openmc.Universe,
+        src_rate: float,
+        src_triton_rate: float,
+        statepoint_file: Path,
+    ):
+        statepoint = openmc.StatePoint(statepoint_file.as_posix())
+
+
+@dataclass
 class NeutronicsOutputParams(ParameterFrame):
     """
     Neutronics output parameters
@@ -538,6 +551,10 @@ class NeutronicsOutputParams(ParameterFrame):
     peak_bb_iron_dpa_rate: Parameter[float]
     peak_vv_iron_dpa_rate: Parameter[float]
     peak_div_cu_dpa_rate: Parameter[float]
+
+    @classmethod
+    def from_openmc_dagmc_result(cls, result: OpenMCDAGMCResult):
+        return cls()
 
     @classmethod
     def from_openmc_csg_result(cls, result: OpenMCCSGResult):
