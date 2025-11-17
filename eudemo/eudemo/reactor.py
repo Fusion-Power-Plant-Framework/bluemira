@@ -46,7 +46,6 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
@@ -99,7 +98,6 @@ from eudemo.model_managers import EquilibriumManager, NeutronicsManager
 from eudemo.neutronics.run import run_csg_neutronics, run_dagmc_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
-from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
@@ -706,7 +704,7 @@ if __name__ == "__main__":
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
 
-            if reactor_config.config_for("Neutronics")["show_data"]:
+            if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
                 reactor.neutronics.plot()
                 bluemira_print_clean(f"{reactor.neutronics}")
         else:
@@ -862,8 +860,8 @@ if __name__ == "__main__":
 
         run_dagmc_neutronics(
             reactor,
-            reactor_config.params_for("CAD_Neutronics"),
-            reactor_config.config_for("CAD_Neutronics"),
+            reactor_config.params_for("Neutronics", "DAGMC"),
+            reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
 

@@ -59,7 +59,7 @@ def get_percent_err(row):
 
 
 @dataclass
-class OpenMCResult:
+class OpenMCCSGResult:
     """
     Class that looks opens up the openmc universe from the statepoint file,
         so that the dataframes containing the relevant results

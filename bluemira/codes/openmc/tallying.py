@@ -12,7 +12,7 @@ import openmc
 from bluemira.codes.openmc.make_csg import CellStage
 
 
-def filter_cells(
+def csg_filter_cells(
     material_list,
     csg_model: CellStage,
 ):
