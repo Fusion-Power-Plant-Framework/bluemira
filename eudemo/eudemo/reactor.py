@@ -46,6 +46,7 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
@@ -98,6 +99,7 @@ from eudemo.model_managers import EquilibriumManager, NeutronicsManager
 from eudemo.neutronics.run import run_csg_neutronics, run_dagmc_neutronics
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
+from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
@@ -864,6 +866,14 @@ if __name__ == "__main__":
             reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
+
+        sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+        sspc_result = sspc_solver.execute()
+        reactor_config.global_params.P_el_net.set_value(
+            sspc_result["P_el_net"], "BLUEMIRA"
+        )
+
+        lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 
         reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
