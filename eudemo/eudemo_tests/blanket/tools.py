@@ -3,13 +3,15 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+import numpy as np
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket.designer import BlanketSegments
 
 
-def make_simple_blanket() -> BlanketSegments:
+def make_simple_blanket() -> tuple[Coordinates, BlanketSegments]:
     """
     Make a semi-circular (ish) blanket.
 
@@ -41,7 +43,14 @@ def make_simple_blanket() -> BlanketSegments:
     outboard = BluemiraFace(
         BluemiraWire([ob_arc_inner, upper_join, ob_arc_outer, lower_join])
     )
-    return BlanketSegments(
+
+    inner = ib_arc_inner.discretise(ndiscr=10)
+    inner.set_ccw([0, 1, 0])
+    outer = ob_arc_inner.discretise(ndiscr=10)
+    outer.set_ccw([0, 1, 0])
+    panel_points = Coordinates({"x": np.concatenate([inner.x, outer.x]), "z": np.concatenate([inner.z, outer.z])})
+
+    return panel_points, BlanketSegments(
         inboard=inboard,
         outboard=outboard,
         inboard_boundary=ib_arc_inner,
