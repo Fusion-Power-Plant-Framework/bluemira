@@ -520,9 +520,7 @@ class PFCoilSupportBuilder(Builder):
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
 
-        rib_face = BluemiraFace(rib_wire)
-
-        return rib_face
+        return BluemiraFace(rib_wire)
 
     def _make_ribs(self, width, support_face):
         xz_profile = self._make_rib_profile(support_face)

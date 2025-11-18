@@ -4,8 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from bluemira.geometry.coordinates import Coordinates
-from eudemo.blanket import Blanket, BlanketBuilder
+from eudemo.blanket import BlanketBuilder
 from eudemo_tests.blanket.tools import make_simple_blanket
 
 
@@ -26,7 +25,6 @@ def make_blanket_component():
         build_config={},
         ib_silhouette=segments.inboard,
         ob_silhouette=segments.outboard,
-        panel_points=panel_points
+        panel_points=panel_points,
     )
     return params, segments, builder.build()
-

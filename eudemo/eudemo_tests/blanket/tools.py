@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import numpy as np
+
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon
@@ -48,7 +49,10 @@ def make_simple_blanket() -> tuple[Coordinates, BlanketSegments]:
     inner.set_ccw([0, 1, 0])
     outer = ob_arc_inner.discretise(ndiscr=10)
     outer.set_ccw([0, 1, 0])
-    panel_points = Coordinates({"x": np.concatenate([inner.x, outer.x]), "z": np.concatenate([inner.z, outer.z])})
+    panel_points = Coordinates({
+        "x": np.concatenate([inner.x, outer.x]),
+        "z": np.concatenate([inner.z, outer.z]),
+    })
 
     return panel_points, BlanketSegments(
         inboard=inboard,

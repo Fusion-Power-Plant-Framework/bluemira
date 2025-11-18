@@ -387,10 +387,10 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         blanket_join_point:
             The position (in x-z) where the baffle
             joins to the blanket wall
-        target_start_point:
+        target_baffle_join_point:
             The position (in x-z) where the baffle
             is tangent and joins to the target.
-        target_end_point:
+        target_gradient:
             The position (in x-z) where the target
             joins to the dome.
 

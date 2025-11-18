@@ -295,14 +295,15 @@ def pattern_revolved_silhouette(
         except ValueError:
             # TODO @CoronelBuendia: Unknown cause of failure in valid FreeCAD
             # geometries... likely related to precision
+            # 3586
             bluemira_warn(
                 "Boolean cutting operation in pattern_revolved_silhouette has failed, "
                 "trying our best by scaling up the problem. If you don't see a "
                 "subsequent warning, all went to plan."
             )
             volume.scale(1000)
-            for gap in gaps:
-                gap.scale(1000)
+            for gap_ in gaps:
+                gap_.scale(1000)
             try:
                 shapes = boolean_cut(volume, gaps)
                 for shape in shapes:

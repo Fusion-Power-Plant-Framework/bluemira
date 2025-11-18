@@ -902,8 +902,7 @@ if __name__ == "__main__":
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
         folder_name = f"results_v02/A_{a_string}"
-        import os
-        os.makedirs(folder_name, exist_ok=True) 
+        Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
@@ -911,4 +910,4 @@ if __name__ == "__main__":
 
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))
-        raise e
+        raise
