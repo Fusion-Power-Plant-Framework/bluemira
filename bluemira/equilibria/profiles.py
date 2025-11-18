@@ -18,7 +18,7 @@ import numba as nb
 import numpy as np
 from eqdsk import EQDSKInterface
 from scipy.integrate import quad
-from scipy.interpolate import interp1d
+from scipy.interpolate import RectBivariateSpline, interp1d
 from scipy.optimize import curve_fit
 
 from bluemira.base.constants import MU_0
@@ -28,13 +28,12 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     OPointCalcOptions,
     Opoint,
-    find_LCFS_separatrix,
     in_plasma,
     in_zone,
     o_point_fallback_calculator,
 )
 from bluemira.equilibria.grid import integrate_dx_dz
-from bluemira.equilibria.physics import _calc_beta_p_approx
+from bluemira.equilibria.physics import _calc_beta_p
 from bluemira.equilibria.plotting import ProfilePlotter
 
 if TYPE_CHECKING:
@@ -669,13 +668,26 @@ class BetaIpProfile(Profile):
 
         if x_points != []:  # NOTE: Necessary un-pythonic formulation
             # More accurate beta_p constraint calculation
-            # This is the Freidberg approximation
-            lcfs, _ = find_LCFS_separatrix(
-                x, z, psi, o_points=o_points, x_points=x_points
+            psi_func = RectBivariateSpline(x[:, 0], z[0, :], psi)
+
+            def _Bx_func(x, z):
+                return -psi_func(x, z, dy=1, grid=False) / x
+
+            def _Bz_func(x, z):
+                return psi_func(x, z, dx=1, grid=False) / x
+
+            Bx = _Bx_func(x, z)
+            Bz = _Bz_func(x, z)
+            Bp = np.hypot(Bx, Bz)
+            beta_p_actual = _calc_beta_p(
+                pfunc,
+                Bp,
+                mask,
+                x,
+                self.dx,
+                self.dz,
             )
-            beta_p_actual = _calc_beta_p_approx(
-                pfunc, lcfs, x, self.dx, self.dz, self.I_p
-            )
+
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
         else:
@@ -750,7 +762,13 @@ class BetaLiIpProfile(BetaIpProfile):
         li_rel_tol: float = 0.015,
         li_min_iter: int = 5,
     ):
-        super().__init__(betap, I_p, R_0, B_0, shape=shape)
+        super().__init__(
+            betap,
+            I_p,
+            R_0,
+            B_0,
+            shape=shape,
+        )
         self._l_i_target = l_i
         self._l_i_rel_tol = li_rel_tol
         self._l_i_min_iter = li_min_iter

@@ -247,7 +247,14 @@ profiles = CustomProfile(
 shape = DoublePowerFunc([2, 1])
 profiles = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
 profiles = BetaLiIpProfile(
-    beta_p, l_i, I_p, R_0, B_0, shape=shape, li_min_iter=0, li_rel_tol=0.001
+    beta_p,
+    l_i,
+    I_p,
+    R_0,
+    B_0,
+    shape=shape,
+    li_min_iter=0,
+    li_rel_tol=0.001,
 )
 
 
