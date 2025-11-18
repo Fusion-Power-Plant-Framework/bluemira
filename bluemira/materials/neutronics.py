@@ -26,8 +26,6 @@ try:
 
     EUROFER_MAT = EUROfer97()
     TUNGSTEN_MAT = Tungsten()
-    WATER_MAT = Water()
-    HELIUM_MAT = Helium()
 except ImportError:
     bluemira_warn(
         "You do have eurofusion_materials installed, or do not have access. "
@@ -50,6 +48,8 @@ except ImportError:
     )()
     TUNGSTEN_MAT = PlanseeTungsten()
 
+WATER_MAT = Water()
+HELIUM_MAT = Helium()
 
 al2o3_mat = material(
     name="Aluminium Oxide",
