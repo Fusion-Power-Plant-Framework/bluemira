@@ -21,6 +21,7 @@ from bluemira.base.components import (
     get_properties_from_components,
 )
 from bluemira.base.error import BuilderError, ComponentError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.display.palettes import ColorPalette
 from bluemira.geometry.constants import D_TOLERANCE
@@ -288,7 +289,30 @@ def pattern_revolved_silhouette(
             face, base=(0, 0, 0), direction=(0, 0, 1), degree=sector_degree
         )
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
-        shapes = boolean_cut(volume, gaps)
+
+        try:
+            shapes = boolean_cut(volume, gaps)
+        except ValueError:
+            # TODO @CoronelBuendia: Unknown cause of failure in valid FreeCAD
+            # geometries... likely related to precision
+            # 3586
+            bluemira_warn(
+                "Boolean cutting operation in pattern_revolved_silhouette has failed, "
+                "trying our best by scaling up the problem. If you don't see a "
+                "subsequent warning, all went to plan."
+            )
+            volume.scale(1000)
+            for gap_ in gaps:
+                gap_.scale(1000)
+            try:
+                shapes = boolean_cut(volume, gaps)
+                for shape in shapes:
+                    shape.scale(0.001)
+            except ValueError:
+                bluemira_warn("It's not going well... we've given up")
+                volume.scale(0.001)
+                shapes = [volume]
+
     return _order_shapes_anticlockwise(shapes)
 
 
@@ -354,7 +378,7 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
         The gap volumes
     """
     bb = face.bounding_box
-    delta = 1.0
+    delta = 0.1
     x = np.array([
         bb.x_min - delta,
         bb.x_max + delta,

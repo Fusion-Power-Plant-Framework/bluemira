@@ -111,7 +111,7 @@ class TestBlanketDesigner:
         # within the BlanketDesigner, we can't initialise the
         # PanellingDesigner first. This probably speaks to a bit of a
         # design issue.
-        blanket = make_simple_blanket()
+        panel_points, blanket = make_simple_blanket()
         d = 3 * np.sqrt(2) / 2
         # fmt: off
         ib_panel_coords = np.array([

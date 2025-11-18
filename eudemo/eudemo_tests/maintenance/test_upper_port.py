@@ -56,7 +56,7 @@ class TestUpperPortDesigner:
             closed=True,
         )
         bb = BluemiraFace(bb)
-        designer = UpperPortKOZDesigner(params, {}, bb)
+        designer = UpperPortKOZDesigner(params, {}, bb, upper_port_extrema=10)
 
         up_zone, r_cut, cut_angle = designer.run()
 

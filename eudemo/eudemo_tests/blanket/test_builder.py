@@ -3,6 +3,7 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket.builder import BlanketBuilder
@@ -14,6 +15,10 @@ class TestBlanketBuilder:
         cls.params = {
             "n_bb_inboard": {"value": 2, "unit": "m"},
             "n_bb_outboard": {"value": 3, "unit": "m"},
+            "tk_bb_fw_ib": {"value": 0.02, "unit": "m"},
+            "tk_bb_fw_ob": {"value": 0.02, "unit": "m"},
+            "tk_bb_bz_ib": {"value": 0.02, "unit": "m"},
+            "tk_bb_bz_ob": {"value": 0.02, "unit": "m"},
             "c_rm": {"value": 0.02, "unit": "m"},
             "n_TF": {"value": 12, "unit": ""},
         }
@@ -45,6 +50,14 @@ class TestBlanketBuilder:
                 closed=True,
             )
         )
+        cls.panel_points = Coordinates([
+            [2.9, 0, 9],
+            [2, 0, 9],
+            [2, 0, -2],
+            [4, 0, -2],
+            [4, 0, 9],
+            [2.9, 0, 9],
+        ])
 
     def test_components_and_segments(self):
         builder = BlanketBuilder(
@@ -52,6 +65,7 @@ class TestBlanketBuilder:
             build_config={},
             ib_silhouette=self.ib_silhouette,
             ob_silhouette=self.ob_silhouette,
+            panel_points=self.panel_points,
         )
         blanket = builder.build()
 
@@ -60,7 +74,7 @@ class TestBlanketBuilder:
         xyz = blanket.get_component("xyz")
         assert xyz
         xyz.show_cad()
-        expected_num_leaves = (
+        expected_num_leaves = 3 * (
             self.params["n_bb_inboard"]["value"] + self.params["n_bb_outboard"]["value"]
         )
         assert len(xyz.leaves) == expected_num_leaves

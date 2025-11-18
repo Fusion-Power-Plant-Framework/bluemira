@@ -20,6 +20,8 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
+import json
+import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -28,8 +30,13 @@ from matproplib.conditions import OperationalConditions
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
+from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import bluemira_print, bluemira_print_clean
+from bluemira.base.look_and_feel import (
+    bluemira_error,
+    bluemira_print,
+    bluemira_print_clean,
+)
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -38,14 +45,22 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
-from bluemira.display.displayer import show_cad
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
+from bluemira.geometry.tools import (
+    distance_to,
+    interpolate_bspline,
+    offset_wire,
+    save_cad,
+)
 from bluemira.materials.cache import establish_material_cache
+from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+    ZeroDNeutronicsModel,
+)
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -261,7 +276,9 @@ def build_blanket(
         params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
     )
     ib_silhouette, ob_silhouette, panel_points = designer.execute()
-    builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
+    builder = BlanketBuilder(
+        params, build_config, ib_silhouette, ob_silhouette, panel_points
+    )
     return Blanket(builder.build(), panel_points, r_inner_cut)
 
 
@@ -283,7 +300,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
-    return TFCoil(builder.build(), builder._make_field_solver())
+    return TFCoil(builder.build(), builder._make_field_solver(), centreline)
 
 
 def build_pf_coils(
@@ -304,12 +321,11 @@ def build_pf_coils(
     pf_coil_keep_out_zones_new = []
     # This is a very crude way of forcing PF coil centrepoints away from the KOZs
     # to stop clashes between ports and PF coil corners
-    # TODO: Implement adjustable current bounds on sub-opt problems
-    offset_value = np.sqrt(
+    offset_value = 0.2 * np.sqrt(
         params.global_params.I_p.value / params.global_params.PF_jmax.value
     )
     for koz in pf_coil_keep_out_zones:
-        new_wire = offset_wire(koz.boundary[0], offset_value, open_wire=False)
+        new_wire = offset_wire(koz.boundary[0], abs(offset_value), open_wire=False)
         new_face = BluemiraFace(new_wire)
         pf_coil_keep_out_zones_new.append(new_face)
 
@@ -540,263 +556,358 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
         )
 
 
+def save_reactor(reactor, reactor_config, folder_name):
+    """
+    Save a reactor to a folder data-structure
+    """
+    bluemira_print(f"Saving reactor to {folder_name}")
+    config_folder = get_bluemira_path("config", subfolder="eudemo")
+    root = make_bluemira_path(folder_name, subfolder="eudemo")
+    process_folder = make_bluemira_path(f"{folder_name}/PROCESS", subfolder="eudemo")
+    cad_folder = make_bluemira_path(f"{folder_name}/CAD", subfolder="eudemo")
+    equilibria_folder = make_bluemira_path(
+        f"{folder_name}/equilibria", subfolder="eudemo"
+    )
+    tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
+    # Copy across PROCESS outputs
+    for fn in ["OUT.DAT", "MFILE.DAT"]:
+        shutil.copyfile(f"{config_folder}/{fn}", f"{process_folder}/{fn}")
+    # Save equilibria
+    sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
+    eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
+    sof.to_eqdsk(
+        filename="BLUEMIRA_SOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+    eof.to_eqdsk(
+        filename="BLUEMIRA_not_EOF.eqdsk",
+        filetype="eqdsk",
+        directory=equilibria_folder,
+        qpsi_calcmode=1,
+    )
+
+    # Save TF coils
+    filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
+    reactor.save_cad(
+        n_sectors=1,
+        with_components=[reactor.tf_coils, reactor.coil_structures],
+        filename=filename,
+    )
+    filename = f"{tf_folder}/BLUEMIRA_TF_centreline.STP"
+    save_cad(
+        reactor.tf_coils.centreline.create_shape(), filename=filename, cad_format="stp"
+    )
+    # Save CAD
+    filename = f"{cad_folder}/BLUEMIRA_full_3D_CAD.STP"
+    reactor.save_cad(n_sectors=2, filename=filename)
+    # Save figures
+    reactor.plot("xz", show=False)
+    f = plt.gcf()
+    filename = f"{root}/BLUEMIRA_reactor_xz.pdf"
+    f.savefig(filename, dpi=600, format="pdf")
+    reactor.plot("xy", show=False)
+    f = plt.gcf()
+    filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
+    f.savefig(filename, dpi=600, format="pdf")
+
+    # Save params
+    filename = f"{root}/BLUEMIRA_OUT.json"
+    with open(filename, "w") as f:
+        json.dump(reactor_config.global_params.to_dict(), f, indent=2)
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
+    import time
 
-    reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
-    reactor = EUDEMO(
-        "EUDEMO",
-        n_sectors=reactor_config.global_params.n_TF.value,
-    )
+    run_time_track = {
+        "Total": 0.0,
+        "PROCESS": 0.0,
+        "CSG neutronics": 0.0,
+    }
 
-    establish_material_cache(["eurofusion_materials.library", "matproplib"])
+    try:
+        start = time.time()
+        reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
+        reactor = EUDEMO(
+            "EUDEMO",
+            n_sectors=reactor_config.global_params.n_TF.value,
+        )
 
-    radial_build(
-        reactor_config.params_for("Radial build").global_params,
-        reactor_config.config_for("Radial build"),
-    )
-    lcfs_coords, profiles = run_designer(
-        FixedEquilibriumDesigner,
-        reactor_config.params_for("Fixed boundary equilibrium"),
-        reactor_config.config_for("Fixed boundary equilibrium"),
-    )
+        establish_material_cache(["eurofusion_materials.library", "matproplib"])
 
-    lcfs_coords, profiles = run_designer(
-        DummyFixedEquilibriumDesigner,
-        reactor_config.params_for("Dummy fixed boundary equilibrium"),
-        reactor_config.config_for("Dummy fixed boundary equilibrium"),
-    )
+        process_start = time.time()
+        radial_build(
+            reactor_config.params_for("Radial build").global_params,
+            reactor_config.config_for("Radial build"),
+        )
+        process_end = time.time()
+        run_time_track["PROCESS"] = process_end - process_start
 
-    reactor.equilibria = EquilibriumManager()
+        lcfs_coords, profiles = run_designer(
+            FixedEquilibriumDesigner,
+            reactor_config.params_for("Fixed boundary equilibrium"),
+            reactor_config.config_for("Fixed boundary equilibrium"),
+        )
 
-    reference_eq = build_reference_equilibrium(
-        reactor_config.params_for("Free boundary equilibrium"),
-        reactor_config.config_for("Free boundary equilibrium"),
-        reactor.equilibria,
-        lcfs_coords,
-        profiles,
-    )
+        lcfs_coords, profiles = run_designer(
+            DummyFixedEquilibriumDesigner,
+            reactor_config.params_for("Dummy fixed boundary equilibrium"),
+            reactor_config.config_for("Dummy fixed boundary equilibrium"),
+        )
 
-    reactor.plasma = build_plasma(
-        reactor_config.params_for("Plasma"),
-        reactor_config.config_for("Plasma"),
-        reference_eq,
-    )
+        reactor.equilibria = EquilibriumManager()
 
-    ivc_shapes = design_ivc(
-        reactor_config.params_for("IVC").global_params,
-        reactor_config.config_for("IVC"),
-        equilibrium=reference_eq,
-    )
+        reference_eq = build_reference_equilibrium(
+            reactor_config.params_for("Free boundary equilibrium"),
+            reactor_config.config_for("Free boundary equilibrium"),
+            reactor.equilibria,
+            lcfs_coords,
+            profiles,
+        )
 
-    reactor.vacuum_vessel = build_vacuum_vessel(
-        reactor_config.params_for("Vacuum vessel"),
-        reactor_config.config_for("Vacuum vessel"),
-        ivc_shapes.outer_boundary,
-    )
+        reactor.plasma = build_plasma(
+            reactor_config.params_for("Plasma"),
+            reactor_config.config_for("Plasma"),
+            reference_eq,
+        )
 
-    reactor.divertor = build_divertor(
-        reactor_config.params_for("Divertor"),
-        reactor_config.config_for("Divertor"),
-        ivc_shapes.divertor_face,
-    )
+        ivc_shapes = design_ivc(
+            reactor_config.params_for("IVC").global_params,
+            reactor_config.config_for("IVC"),
+            equilibrium=reference_eq,
+        )
 
-    upper_port_designer = UpperPortKOZDesigner(
-        reactor_config.params_for("Upper Port"),
-        reactor_config.config_for("Upper Port"),
-        ivc_shapes.blanket_face,
-    )
-    upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+        reactor.vacuum_vessel = build_vacuum_vessel(
+            reactor_config.params_for("Vacuum vessel"),
+            reactor_config.config_for("Vacuum vessel"),
+            ivc_shapes.outer_boundary,
+        )
 
-    reactor.blanket = build_blanket(
-        reactor_config.params_for("Blanket"),
-        reactor_config.config_for("Blanket"),
-        ivc_shapes.inner_boundary,
-        ivc_shapes.blanket_face,
-        r_inner_cut,
-        cut_angle,
-    )
+        reactor.divertor = build_divertor(
+            reactor_config.params_for("Divertor"),
+            reactor_config.config_for("Divertor"),
+            ivc_shapes.divertor_face,
+        )
 
-    if reactor_config.config_for("Neutronics").get("enabled", False):
-        reactor.neutronics = NeutronicsManager(
-            *run_neutronics(
-                reactor_config.params_for("Neutronics"),
-                reactor_config.config_for("Neutronics"),
-                blanket=reactor.blanket,
-                vacuum_vessel=reactor.vacuum_vessel,
-                ivc_shapes=ivc_shapes,
-                eq=reference_eq,
-                op_cond=OperationalConditions(temperature=298, pressure=101325),
+        upper_port_designer = UpperPortKOZDesigner(
+            reactor_config.params_for("Upper Port"),
+            reactor_config.config_for("Upper Port"),
+            ivc_shapes.blanket_face,
+        )
+        upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+
+        reactor.blanket = build_blanket(
+            reactor_config.params_for("Blanket"),
+            reactor_config.config_for("Blanket"),
+            ivc_shapes.inner_boundary,
+            ivc_shapes.blanket_face,
+            r_inner_cut,
+            cut_angle,
+        )
+
+        if reactor_config.config_for("Neutronics").get("enabled", False):
+            neutronics_start = time.time()
+            reactor.neutronics = NeutronicsManager(
+                *run_neutronics(
+                    reactor_config.params_for("Neutronics").global_params,
+                    reactor_config.config_for("Neutronics"),
+                    blanket=reactor.blanket,
+                    vacuum_vessel=reactor.vacuum_vessel,
+                    ivc_shapes=ivc_shapes,
+                    eq=reference_eq,
+                    op_cond=OperationalConditions(temperature=298, pressure=101325),
+                )
             )
+            neutronics_end = time.time()
+            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+
+            if reactor_config.config_for("Neutronics")["show_data"]:
+                reactor.neutronics.plot()
+                bluemira_print_clean(f"{reactor.neutronics}")
+        else:
+            model = ZeroDNeutronicsModel(reactor_config.global_params)
+            new_params = model.run()
+            reactor_config.global_params.update_from_frame(new_params)
+
+        vv_thermal_shield = build_vacuum_vessel_thermal_shield(
+            reactor_config.params_for("Thermal shield"),
+            reactor_config.config_for("Thermal shield", "VVTS"),
+            reactor.vacuum_vessel.xz_boundary,
         )
-        bluemira_print(
-            f"TBR = {reactor.neutronics.results.tbr}\n"
-            f"e_mult = {reactor.neutronics.results.e_mult}"
+
+        reactor.tf_coils = build_tf_coils(
+            reactor_config.params_for("TF coils"),
+            reactor_config.config_for("TF coils"),
+            reactor.plasma.lcfs(),
+            vv_thermal_shield.xz_boundary,
         )
 
-        if reactor_config.config_for("Neutronics")["show_data"]:
-            reactor.neutronics.plot()
-            bluemira_print_clean(f"{reactor.neutronics}")
+        eq_port_designer = EquatorialPortKOZDesigner(
+            reactor_config.params_for("Equatorial Port"),
+            reactor_config.config_for("Equatorial Port"),
+            x_ob=20.0,
+        )
 
-    if reactor_config.config_for("Neutronics")["show_data"]:
-        reactor.neutronics.plot()
-        bluemira_print_clean(f"{reactor.neutronics}")
+        eq_port_koz_xz = eq_port_designer.execute()
 
-    vv_thermal_shield = build_vacuum_vessel_thermal_shield(
-        reactor_config.params_for("Thermal shield"),
-        reactor_config.config_for("Thermal shield", "VVTS"),
-        reactor.vacuum_vessel.xz_boundary,
-    )
-
-    reactor.tf_coils = build_tf_coils(
-        reactor_config.params_for("TF coils"),
-        reactor_config.config_for("TF coils"),
-        reactor.plasma.lcfs(),
-        vv_thermal_shield.xz_boundary,
-    )
-
-    eq_port_designer = EquatorialPortKOZDesigner(
-        reactor_config.params_for("Equatorial Port"),
-        reactor_config.config_for("Equatorial Port"),
-        x_ob=20.0,
-    )
-
-    eq_port_koz_xz = eq_port_designer.execute()
-
-    (
-        lp_duct_xz_void_space,
-        lower_port_koz_xz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortKOZDesigner(
-        reactor_config.params_for("Lower Port"),
-        reactor_config.config_for("Lower Port"),
-        ivc_shapes.divertor_face,
-        ivc_shapes.div_wall_join_pt,
-        reactor.tf_coils.xz_outer_boundary,
-    ).execute()
-
-    reactor.pf_coils = build_pf_coils(
-        reactor_config.params_for("PF coils"),
-        reactor_config.config_for("PF coils"),
-        reactor.equilibria,
-        reactor.tf_coils.xz_outer_boundary,
-        pf_coil_keep_out_zones=[
-            upper_port_koz_xz,
-            eq_port_koz_xz,
+        (
+            lp_duct_xz_void_space,
             lower_port_koz_xz,
-        ],
-    )
+            lp_duct_angled_nowall_extrude_boundary,
+            lp_duct_straight_nowall_extrude_boundary,
+        ) = LowerPortKOZDesigner(
+            reactor_config.params_for("Lower Port"),
+            reactor_config.config_for("Lower Port"),
+            ivc_shapes.divertor_face,
+            ivc_shapes.div_wall_join_pt,
+            reactor.tf_coils.xz_outer_boundary,
+        ).execute()
 
-    cryostat_thermal_shield = build_cryots(
-        reactor_config.params_for("Thermal shield"),
-        reactor_config.config_for("Thermal shield", "Cryostat"),
-        reactor.pf_coils.xz_boundary,
-        reactor.tf_coils.xz_outer_boundary,
-    )
+        reactor.pf_coils = build_pf_coils(
+            reactor_config.params_for("PF coils"),
+            reactor_config.config_for("PF coils"),
+            reactor.equilibria,
+            reactor.tf_coils.xz_outer_boundary,
+            pf_coil_keep_out_zones=[
+                upper_port_koz_xz,
+                eq_port_koz_xz,
+                lower_port_koz_xz,
+            ],
+        )
+        debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
+        debug.extend([reactor.tf_coils.xz_outer_boundary])
+        debug.extend(reactor.pf_coils.xz_boundary)
+        # I know there are clashes, I need to put in dynamic bounds on position opt to
+        # include coil XS.
+        # show_cad(debug)
 
-    reactor.thermal_shield = assemble_thermal_shield(
-        vv_thermal_shield, cryostat_thermal_shield
-    )
+        cryostat_thermal_shield = build_cryots(
+            reactor_config.params_for("Thermal shield"),
+            reactor_config.config_for("Thermal shield", "Cryostat"),
+            reactor.pf_coils.xz_boundary,
+            reactor.tf_coils.xz_outer_boundary,
+        )
 
-    reactor.coil_structures = build_coil_structures(
-        reactor_config.params_for("Coil structures"),
-        reactor_config.config_for("Coil structures"),
-        tf_coil_xz_face=reactor.tf_coils.xz_face,
-        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary,
-        pf_coil_keep_out_zones=[
+        reactor.thermal_shield = assemble_thermal_shield(
+            vv_thermal_shield, cryostat_thermal_shield
+        )
+
+        reactor.coil_structures = build_coil_structures(
+            reactor_config.params_for("Coil structures"),
+            reactor_config.config_for("Coil structures"),
+            tf_coil_xz_face=reactor.tf_coils.xz_face,
+            pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary,
+            pf_coil_keep_out_zones=[
+                upper_port_koz_xz,
+                eq_port_koz_xz,
+                lower_port_koz_xz,
+            ],
+        )
+
+        reactor.cryostat = build_cryostat(
+            reactor_config.params_for("Cryostat"),
+            reactor_config.config_for("Cryostat"),
+            cryostat_thermal_shield.xz_boundary,
+        )
+
+        reactor.radiation_shield = build_radiation_shield(
+            reactor_config.params_for("RadiationShield"),
+            reactor_config.config_for("RadiationShield"),
+            reactor.cryostat.xz_boundary,
+        )
+
+        # Incorporate ports
+        # TODO: Make potentially larger depending on where the PF
+        # coils ended up. Warn if this isn't the case.
+
+        ts_upper_port, vv_upper_port = build_upper_port(
+            reactor_config.params_for("Upper Port"),
+            reactor_config.config_for("Upper Port"),
             upper_port_koz_xz,
-            eq_port_koz_xz,
-            lower_port_koz_xz,
-        ],
-    )
+            reactor.pf_coils,
+            cryostat_thermal_shield.xz_boundary,
+        )
+        ts_eq_port, vv_eq_port = build_equatorial_port(
+            reactor_config.params_for("Equatorial Port"),
+            reactor_config.config_for("Equatorial Port"),
+            cryostat_thermal_shield.xz_boundary,
+        )
 
-    reactor.cryostat = build_cryostat(
-        reactor_config.params_for("Cryostat"),
-        reactor_config.config_for("Cryostat"),
-        cryostat_thermal_shield.xz_boundary,
-    )
+        ts_lower_port, vv_lower_port = build_lower_port(
+            reactor_config.params_for("Lower Port"),
+            reactor_config.config_for("Lower Port"),
+            lp_duct_angled_nowall_extrude_boundary,
+            lp_duct_straight_nowall_extrude_boundary,
+            reactor.cryostat.xz_boundary,
+        )
 
-    reactor.radiation_shield = build_radiation_shield(
-        reactor_config.params_for("RadiationShield"),
-        reactor_config.config_for("RadiationShield"),
-        reactor.cryostat.xz_boundary,
-    )
+        reactor.vacuum_vessel.add_ports(
+            [vv_upper_port, vv_eq_port, vv_lower_port],
+            n_TF=reactor_config.global_params.n_TF.value,
+        )
 
-    # Incorporate ports
-    # TODO: Make potentially larger depending on where the PF
-    # coils ended up. Warn if this isn't the case.
+        reactor.thermal_shield.add_ports(
+            [ts_upper_port, ts_eq_port, ts_lower_port],
+            n_TF=reactor_config.global_params.n_TF.value,
+        )
 
-    ts_upper_port, vv_upper_port = build_upper_port(
-        reactor_config.params_for("Upper Port"),
-        reactor_config.config_for("Upper Port"),
-        upper_port_koz_xz,
-        reactor.pf_coils,
-        cryostat_thermal_shield.xz_boundary,
-    )
-    ts_eq_port, vv_eq_port = build_equatorial_port(
-        reactor_config.params_for("Equatorial Port"),
-        reactor_config.config_for("Equatorial Port"),
-        cryostat_thermal_shield.xz_boundary,
-    )
+        cr_plugs = build_cryostat_plugs(
+            reactor_config.params_for("Cryostat"),
+            reactor_config.config_for("Cryostat"),
+            [ts_upper_port, ts_eq_port, ts_lower_port],
+            reactor.cryostat.xz_boundary,
+        )
 
-    ts_lower_port, vv_lower_port = build_lower_port(
-        reactor_config.params_for("Lower Port"),
-        reactor_config.config_for("Lower Port"),
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-        reactor.cryostat.xz_boundary,
-    )
+        rs_plugs = build_radiation_plugs(
+            reactor_config.params_for("RadiationShield"),
+            reactor_config.config_for("RadiationShield"),
+            cr_plugs,
+            reactor.radiation_shield.xz_boundary,
+        )
 
-    reactor.vacuum_vessel.add_ports(
-        [vv_upper_port, vv_eq_port, vv_lower_port],
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
+        reactor.cryostat.add_plugs(
+            cr_plugs,
+            n_TF=reactor_config.global_params.n_TF.value,
+        )
 
-    reactor.thermal_shield.add_ports(
-        [ts_upper_port, ts_eq_port, ts_lower_port],
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
+        reactor.radiation_shield.add_plugs(
+            rs_plugs,
+            n_TF=reactor_config.global_params.n_TF.value,
+        )
 
-    cr_plugs = build_cryostat_plugs(
-        reactor_config.params_for("Cryostat"),
-        reactor_config.config_for("Cryostat"),
-        [ts_upper_port, ts_eq_port, ts_lower_port],
-        reactor.cryostat.xz_boundary,
-    )
+        export_dagmc_model(
+            reactor,
+            reactor_config.config_for("CAD_Neutronics"),
+        )
 
-    rs_plugs = build_radiation_plugs(
-        reactor_config.params_for("RadiationShield"),
-        reactor_config.config_for("RadiationShield"),
-        cr_plugs,
-        reactor.radiation_shield.xz_boundary,
-    )
+        # reactor.plot("xz")
+        # reactor.show_cad(n_sectors=2)
 
-    reactor.cryostat.add_plugs(
-        cr_plugs,
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
+        sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+        sspc_result = sspc_solver.execute()
+        reactor_config.global_params.P_el_net.set_value(
+            sspc_result["P_el_net"], "BLUEMIRA"
+        )
 
-    reactor.radiation_shield.add_plugs(
-        rs_plugs,
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
+        lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 
-    export_dagmc_model(
-        reactor,
-        reactor_config.config_for("CAD_Neutronics"),
-    )
+        reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-    debug.extend(reactor.pf_coils.xz_boundary)
-    # I know there are clashes, I need to put in dynamic bounds on position opt to
-    # include coil XS.
-    show_cad(debug)
+        end = time.time()
 
-    reactor.show_cad("xz")
-    reactor.show_cad(n_sectors=2)
+        run_time_track["Total"] = end - start
 
-    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-    sspc_result = sspc_solver.execute()
-    sspc_solver.model.plot()
-    plt.show()
+        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
+        folder_name = f"results_v02/A_{a_string}"
+        Path(folder_name).mkdir(exist_ok=True, parents=True)
+        filename = f"{folder_name}/run_time.json"
+        with open(filename, "w") as f:
+            json.dump(run_time_track, f, indent=2)
+        save_reactor(reactor, reactor_config, folder_name=folder_name)
+
+    except Exception as e:
+        bluemira_error(e.with_traceback(e.__traceback__))
+        raise

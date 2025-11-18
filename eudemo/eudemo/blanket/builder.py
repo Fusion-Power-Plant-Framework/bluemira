@@ -19,9 +19,16 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
-from bluemira.geometry.tools import slice_shape
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fragments,
+    make_polygon,
+    offset_wire,
+    slice_shape,
+)
 
 
 @dataclass
@@ -34,6 +41,10 @@ class BlanketBuilderParams(ParameterFrame):
     n_bb_inboard: Parameter[int]
     n_bb_outboard: Parameter[int]
     c_rm: Parameter[float]
+    tk_bb_fw_ib: Parameter[float]
+    tk_bb_bz_ib: Parameter[float]
+    tk_bb_fw_ob: Parameter[float]
+    tk_bb_bz_ob: Parameter[float]
 
 
 class BlanketBuilder(Builder):
@@ -53,6 +64,9 @@ class BlanketBuilder(Builder):
     BB = "BB"
     IBS = "IBS"
     OBS = "OBS"
+    FW = "FW"
+    BZ = "BZ"
+    MANIFOLD = "MANIFOLD"
     param_cls: type[BlanketBuilderParams] = BlanketBuilderParams
     params: BlanketBuilderParams
 
@@ -62,10 +76,12 @@ class BlanketBuilder(Builder):
         build_config: dict,
         ib_silhouette: BluemiraFace,
         ob_silhouette: BluemiraFace,
+        panel_points: Coordinates,
     ):
         super().__init__(params, build_config)
         self.ib_silhouette = ib_silhouette
         self.ob_silhouette = ob_silhouette
+        self.panel_points = panel_points
 
     def build(self) -> Component:
         """
@@ -76,14 +92,33 @@ class BlanketBuilder(Builder):
         :
             The component tree
         """
-        segments = self.get_segments(self.ib_silhouette, self.ob_silhouette)
+        ib_fw, ib_bz, ib_manifold = self._subdivide_poloidally(
+            self.ib_silhouette,
+            self.params.tk_bb_fw_ib.value,
+            self.params.tk_bb_bz_ib.value,
+        )
+        ob_fw, ob_bz, ob_manifold = self._subdivide_poloidally(
+            self.ob_silhouette,
+            self.params.tk_bb_fw_ob.value,
+            self.params.tk_bb_bz_ob.value,
+        )
+
+        segments = (
+            self.get_segments(ib_fw, self.FW, inboard=True, color_index=0)
+            + self.get_segments(ib_bz, self.BZ, inboard=True, color_index=1)
+            + self.get_segments(ib_manifold, self.MANIFOLD, inboard=True, color_index=2)
+            + self.get_segments(ob_fw, self.FW, inboard=False, color_index=0)
+            + self.get_segments(ob_bz, self.BZ, inboard=False, color_index=1)
+            + self.get_segments(ob_manifold, self.MANIFOLD, inboard=False, color_index=2)
+        )
+
         return self.component_tree(
-            xz=[self.build_xz(self.ib_silhouette, self.ob_silhouette)],
+            xz=[self.build_xz(ib_fw, ib_bz, ib_manifold, ob_fw, ob_bz, ob_manifold)],
             xy=self.build_xy(segments),
             xyz=self.build_xyz(segments, degree=0),
         )
 
-    def build_xz(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
+    def build_xz(self, ib_fw, ib_bz, ib_manifold, ob_fw, ob_bz, ob_manifold):
         """
         Build the x-z components of the blanket.
 
@@ -92,11 +127,23 @@ class BlanketBuilder(Builder):
         :
             The xz component
         """
-        ibs = PhysicalComponent(self.IBS, ibs_silhouette)
-        obs = PhysicalComponent(self.OBS, obs_silhouette)
-        apply_component_display_options(ibs, color=BLUE_PALETTE[self.BB][0])
-        apply_component_display_options(obs, color=BLUE_PALETTE[self.BB][1])
-        return Component(self.BB, children=[ibs, obs])
+        ib_fw = PhysicalComponent(f"{self.IBS}_{self.FW}", ib_fw)
+        ib_bz = PhysicalComponent(f"{self.IBS}_{self.BZ}", ib_bz)
+        ib_manifold = PhysicalComponent(f"{self.IBS}_{self.MANIFOLD}", ib_manifold)
+        apply_component_display_options(ib_fw, color=BLUE_PALETTE[self.BB][0])
+        apply_component_display_options(ib_bz, color=BLUE_PALETTE[self.BB][1])
+        apply_component_display_options(ib_manifold, color=BLUE_PALETTE[self.BB][2])
+
+        ob_fw = PhysicalComponent(f"{self.OBS}_{self.FW}", ob_fw)
+        ob_bz = PhysicalComponent(f"{self.OBS}_{self.BZ}", ob_bz)
+        ob_manifold = PhysicalComponent(f"{self.OBS}_{self.MANIFOLD}", ob_manifold)
+        apply_component_display_options(ob_fw, color=BLUE_PALETTE[self.BB][0])
+        apply_component_display_options(ob_bz, color=BLUE_PALETTE[self.BB][1])
+        apply_component_display_options(ob_manifold, color=BLUE_PALETTE[self.BB][2])
+
+        return Component(
+            self.BB, children=[ib_fw, ib_bz, ib_manifold, ob_fw, ob_bz, ob_manifold]
+        )
 
     def build_xy(self, segments: list[PhysicalComponent]):
         """
@@ -110,11 +157,13 @@ class BlanketBuilder(Builder):
         xy_plane = BluemiraPlacement.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])
 
         slices = []
-        for i, segment in enumerate(segments):
+        for segment in segments:
             single_slice = PhysicalComponent(
                 segment.name, BluemiraFace(slice_shape(segment.shape, xy_plane)[0])
             )
-            apply_component_display_options(single_slice, color=BLUE_PALETTE[self.BB][i])
+            apply_component_display_options(
+                single_slice, color=segment.display_cad_options.color
+            )
             slices.append(single_slice)
 
         return circular_pattern_component(
@@ -132,49 +181,63 @@ class BlanketBuilder(Builder):
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
-        # TODO: Add blanket cuts properly in 3-D
         return circular_pattern_component(
             Component(self.BB, children=segments),
             n_sectors,
             degree=sector_degree * n_sectors,
         )
 
-    def get_segments(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):
-        """
-        Create segments of the blanket from inboard and outboard silhouettes
+    @staticmethod
+    def _find_union_face(silhouette: BluemiraFace, cut: BluemiraFace) -> BluemiraFace:
+        # This is perhaps not entirely robust, but works for now
+        fragments = boolean_fragments([silhouette, cut])[1][0]
+        return fragments[0]
 
-        Returns
-        -------
-        :
-            Blanket segments
-        """
-        ibs_shapes = pattern_revolved_silhouette(
-            ibs_silhouette,
-            self.params.n_bb_inboard.value,
-            self.params.n_TF.value,
-            self.params.c_rm.value,
-        )
+    def _subdivide_poloidally(
+        self, silhouette: BluemiraFace, fw_thickness: float, bz_thickness: float
+    ):
+        base_wire = make_polygon(self.panel_points.T)
+        base_wire.close()
+        fw_cut_wire = offset_wire(base_wire, fw_thickness)
+        bz_cut_wire = offset_wire(fw_cut_wire, bz_thickness)
+        fw_cut = BluemiraFace(fw_cut_wire)
+        bz_cut = BluemiraFace(bz_cut_wire)
+        fw = self._find_union_face(silhouette, fw_cut)
+        bz = self._find_union_face(silhouette, bz_cut)
+        manifold = boolean_cut(silhouette, bz_cut)[0]
+        return fw, bz, manifold
 
-        obs_shapes = pattern_revolved_silhouette(
-            obs_silhouette,
-            self.params.n_bb_outboard.value,
+    def get_segments(
+        self, silhouette: BluemiraFace, sub_name: str, *, inboard: bool, color_index: int
+    ):
+        """
+        Create the sub-layer-segments of the blanket from a silhouette of
+        a sub-layer.
+        """  # noqa: DOC201
+        if inboard:
+            n_seg_per_sector = self.params.n_bb_inboard.value
+            name = self.IBS
+        else:
+            n_seg_per_sector = self.params.n_bb_outboard.value
+            name = self.OBS
+
+        shapes = pattern_revolved_silhouette(
+            silhouette,
+            n_seg_per_sector,
             self.params.n_TF.value,
             self.params.c_rm.value,
         )
 
         segments = []
-        for name, base_no, bs_shape in [
-            [self.IBS, 0, ibs_shapes],
-            [self.OBS, self.params.n_bb_inboard.value + 1, obs_shapes],
-        ]:
-            for no, shape in enumerate(bs_shape):
-                segment = PhysicalComponent(
-                    f"{name}_{no}",
-                    shape,
-                    material=self.get_material(name),
-                )
-                apply_component_display_options(
-                    segment, color=BLUE_PALETTE[self.BB][base_no + no]
-                )
-                segments.append(segment)
+        for no, shape in enumerate(shapes):
+            segment = PhysicalComponent(
+                f"{name}_{sub_name}_{no}",
+                shape,
+                material=self.get_material(name),
+            )
+            apply_component_display_options(
+                segment, color=BLUE_PALETTE[self.BB][color_index]
+            )
+            segments.append(segment)
+
         return segments

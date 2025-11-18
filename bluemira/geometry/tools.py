@@ -988,7 +988,7 @@ def convex_hull_wires_2d(
     elif hull_plane is HullPlane.YZ:
         plane_idxs = (1, 2)
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Cannot find the Convex hull for a 3D object yet.")
 
     shape_discretisations = []
     for wire in wires:
@@ -1960,7 +1960,7 @@ def make_compound(
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
-    # check that all the shapes are of the same time
+    # check that all the shapes are of the same type
     _type = type(shapes[0])
     if not all(isinstance(s, _type) for s in shapes):
         raise ValueError(f"All instances in {shapes} must be of the same type.")

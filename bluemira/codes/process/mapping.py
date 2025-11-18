@@ -70,6 +70,7 @@ OUT_mappings = {
     "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
+    "T_e": ("te", "keV"),
     "tk_fw_in": ("dr_fw_inboard", "m"),
     "tk_fw_out": ("dr_fw_outboard", "m"),
     "tk_tf_inboard": ("dr_tf_inboard", "m"),
@@ -103,14 +104,14 @@ OUT_mappings = {
     "n_e": ("nd_plasma_electrons_vol_avg", "1/m^3"),
     "n_e_ped": ("nd_plasma_pedestal_electron", "1/m^3"),
     "n_e_sep": ("nd_plasma_separatrix_electron", "1/m^3"),
-    "n_i_fuel": ("nd_fuel_ions", "1/m^3"),
+    "n_i_fuel": ("nd_plasma_fuel_ions_vol_avg", "1/m^3"),
     "T_ie_ratio": ("f_temp_plasma_ion_electron", ""),
 }
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
     "tau_flattop": (("t_burn_min", "t_plant_pulse_burn"), "s"),
-    "P_el_net": (("p_plant_electric_net_required_mw", "pnetelmw"), "MW"),
+    "P_el_net": (("p_plant_electric_net_required_mw", "p_plant_electric_net_mw"), "MW"),
     "tk_bb_ib": ("dr_blkt_inboard", "m"),
     "tk_bb_ob": ("dr_blkt_outboard", "m"),
     "tk_vv_in": ("dr_vv_inboard", "m"),

@@ -231,7 +231,7 @@ class DefaultPlotOptions:
     # View of object
     view: ViewDescriptor = ViewDescriptor()
     # use external object options or default plotter options
-    _external_options: bool = False
+    _external_options: bool = True
 
     @property
     def view_placement(self) -> BluemiraPlacement:
@@ -840,7 +840,7 @@ def plot_2d(
     :
         The axes with the plotted data.
     """
-    _external_options = options is None
+    _external_options = options is not None
     parts, options = _validate_plot_inputs(parts, options)
 
     for part, option in zip(parts, options, strict=False):

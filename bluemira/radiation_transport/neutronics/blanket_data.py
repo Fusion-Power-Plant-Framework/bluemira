@@ -8,11 +8,10 @@
 
 from dataclasses import dataclass
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.materials.neutronics import (
     EUROFER_MAT,
     BlanketType,
-    BreederTypeParameters,
     _make_dcll_mats,
     _make_hcpb_mats,
     _make_wcll_mats,
@@ -61,30 +60,21 @@ class TokamakGeometry:
     inb_gap: float
 
 
-def get_preset_physical_properties(
-    blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, TokamakGeometry]:
+def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
     """
-    Works as a switch-case for choosing the tokamak geometry
-    and blankets for a given blanket type.
-    The allowed list of blanket types are specified in BlanketType.
-    Currently, the blanket types with pre-populated data in this function are:
-    {'wcll', 'dcll', 'hcpb'}
+    Get the tokamak geometry.
 
     Returns
     -------
-    breeder_materials:
-        breeder blanket materials
     tokamak_geometry:
         tokamak geometry parameters
+
+    Raises
+    ------
+    ValueError
+        If the thickness of the sub-layers is incompatible with the totoal
+        blanket thickness.
     """
-    blanket_type = BlanketType(blanket_type)
-
-    breeder_materials = BreederTypeParameters(
-        blanket_type=blanket_type,
-        enrichment_fraction_Li6=0.60,
-    )
-
     # Geometry variables
 
     # Break down from here.
@@ -103,78 +93,53 @@ def get_preset_physical_properties(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
+    r_vv_ib_in = params.get_values("r_vv_ib_in")[0]
+    r_tf_in = params.get_values("r_tf_in")[0]
+    r_tf_inboard_out = params.get_values("r_tf_inboard_out")[0]
+    tk_bb_ib = params.get_values("tk_bb_ib")[0]
+    tk_bb_ob = params.get_values("tk_bb_ob")[0]
 
-    shared_building_geometry = {  # that are identical in all three types of reactors.
-        "inb_gap": 0.2,  # [m]
-        "inb_vv_thick": 0.6,  # [m]
-        "tf_thick": 0.4,  # [m]
-        "outb_vv_thick": 0.6,  # [m]
-    }
-    if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.378,  # [m]
-            inb_mnfld_thick=0.435,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.538,  # [m]
-            outb_mnfld_thick=0.429,  # [m]
+    ib_fw_thick = params.get_values("tk_bb_fw_ib")[0]
+    ib_bz_thick = params.get_values("tk_bb_bz_ib")[0]
+    ob_fw_thick = params.get_values("tk_bb_fw_ib")[0]
+    ob_bz_thick = params.get_values("tk_bb_bz_ib")[0]
+
+    ib_mnfld_thick = tk_bb_ib - ib_fw_thick - ib_bz_thick
+    ob_mnfld_thick = tk_bb_ob - ob_fw_thick - ob_bz_thick
+
+    if ib_mnfld_thick < 0.0:
+        raise ValueError(
+            f"Inboard manifold thickness is negative: {ib_mnfld_thick:.3f} m. "
+            "Please check blanket thickness parameters."
         )
-    elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.022,  # [m]
-            inb_bz_thick=0.300,  # [m]
-            inb_mnfld_thick=0.178,  # [m]
-            outb_fw_thick=0.022,  # [m]
-            outb_bz_thick=0.640,  # [m]
-            outb_mnfld_thick=0.248,  # [m]
+    if ob_mnfld_thick < 0.0:
+        raise ValueError(
+            f"Outboard manifold thickness is negative: {ob_mnfld_thick:.3f} m. "
+            "Please check blanket thickness parameters."
         )
-    elif blanket_type is BlanketType.HCPB:
-        # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometry(
-            **shared_building_geometry,
-            inb_fw_thick=0.027,  # [m]
-            inb_bz_thick=0.460,  # [m]
-            inb_mnfld_thick=0.560,  # [m]
-            outb_fw_thick=0.027,  # [m]
-            outb_bz_thick=0.460,  # [m]
-            outb_mnfld_thick=0.560,  # [m]
-        )
-    return breeder_materials, tokamak_geometry
 
-
-def create_materials(
-    breeder_materials: BreederTypeParameters,
-) -> NeutronicsMaterials:
-    """
-    Parameters
-    ----------
-    breeder_materials:
-        dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
-
-    Returns
-    -------
-    :
-        Materials used along with those blankets.
-    """
-    return _create_from_blanket_type(
-        breeder_materials.blanket_type,
-        raw_uc(breeder_materials.enrichment_fraction_Li6, "", "%"),
+    return TokamakGeometry(
+        inb_fw_thick=ib_fw_thick,
+        inb_bz_thick=ib_bz_thick,
+        inb_mnfld_thick=ib_mnfld_thick,
+        inb_vv_thick=params.get_values("tk_vv_in")[0],
+        outb_vv_thick=params.get_values("tk_vv_out")[0],
+        tf_thick=r_tf_inboard_out - r_tf_in,
+        outb_fw_thick=ob_fw_thick,
+        outb_bz_thick=ob_bz_thick,
+        outb_mnfld_thick=ob_mnfld_thick,
+        inb_gap=r_tf_in - r_vv_ib_in,
     )
 
 
-def _create_from_blanket_type(
-    blanket_type: BlanketType, li_enrich_ao: float
-) -> NeutronicsMaterials:
-    """Create Materials Library by specifying just the blanket type
+def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
+    """
+    Create Materials Library by specifying just the blanket type
 
     Parameters
     ----------
     blanket_type:
         the blanket type
-    li_enrich_ao:
-        PERCENTAGE enrichment of Li6 (float between 0 - 100)
 
     Returns
     -------
@@ -183,9 +148,9 @@ def _create_from_blanket_type(
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 0.60
+            li_enrich_ao = 0.6
         case _:
-            li_enrich_ao = 0.90
+            li_enrich_ao = 0.9
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
@@ -218,5 +183,5 @@ def _create_from_blanket_type(
         div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(EUROFER_MAT, "div_sf", 604),
+        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
     )
