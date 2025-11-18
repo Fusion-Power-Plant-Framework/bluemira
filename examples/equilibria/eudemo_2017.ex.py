@@ -255,7 +255,6 @@ profiles = BetaLiIpProfile(
     shape=shape,
     li_min_iter=0,
     li_rel_tol=0.001,
-    use_approx_beta_p=True,
 )
 
 
