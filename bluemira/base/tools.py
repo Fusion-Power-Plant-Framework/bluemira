@@ -410,7 +410,7 @@ def plot_component_dim(
     dim: str,
     component: ComponentT,
     *,
-    show: bool,
+    show: bool = True,
     **kwargs,
 ):
     """
