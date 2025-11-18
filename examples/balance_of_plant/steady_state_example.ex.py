@@ -52,12 +52,12 @@ default_params = BoPModelParams.from_dict({
     "P_rad": {"value": 400e6, "unit": "W", "source": "example"},
     "P_hcd_ss": {"value": 50e6, "unit": "W", "source": "example"},
     "P_hcd_ss_el": {"value": 150e6, "unit": "W", "source": "example"},
-    "P_n_blanket": {"value": 1e6, "unit": "W", "source": "example"},
-    "P_n_divertor": {"value": 1e6, "unit": "W", "source": "example"},
-    "P_n_vessel": {"value": 1e6, "unit": "W", "source": "example"},
-    "P_n_aux": {"value": 1e6, "unit": "W", "source": "example"},
-    "P_n_e_mult": {"value": 0.9, "unit": "", "source": "example"},
-    "P_n_decay": {"value": 0.9, "unit": "", "source": "example"},
+    "P_n_blanket": {"value": 1.8e9, "unit": "W", "source": "example"},
+    "P_n_divertor": {"value": 200e6, "unit": "W", "source": "example"},
+    "P_n_vessel": {"value": 4e6, "unit": "W", "source": "example"},
+    "P_n_aux": {"value": 30e6, "unit": "W", "source": "example"},
+    "P_n_e_mult": {"value": 500e6, "unit": "W", "source": "example"},
+    "P_n_decay": {"value": 25e6, "unit": "W", "source": "example"},
 })
 
 # %% [markdown]
