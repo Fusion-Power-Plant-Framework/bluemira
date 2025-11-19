@@ -24,10 +24,7 @@ from bluemira.optimisation._algorithm import (
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._scipy_opt import (
-    ScipyAlgorithm,
-    ScipyOptimiser,
-)
+from bluemira.optimisation._scipy.optimiser import SCIPY_ALG_MAPPING, ScipyOptimiser
 from bluemira.optimisation.error import OptimisationError
 from bluemira.optimisation.typed import (
     ConstraintT,
@@ -273,16 +270,12 @@ def _make_optimiser(
     :
         Configured optimiser.
     """
-    if Algorithm(algorithm) in NLOPT_ALG_MAPPING:
+    if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
         optimiser = NloptOptimiser
+    elif alg in SCIPY_ALG_MAPPING:
+        optimiser = ScipyOptimiser
     else:
-        try:
-            algorithm = algorithm.removesuffix("_SCIPY")
-            ScipyAlgorithm(algorithm)
-        except KeyError:
-            raise OptimisationError("Unknown algorithm") from None
-        else:
-            optimiser = ScipyOptimiser
+        raise OptimisationError("Unknown algorithm") from None
 
     opt = optimiser(
         algorithm,
@@ -429,5 +422,8 @@ def _set_default_termination_conditions(
         if not isinstance(algorithm, Algorithm):
             return opt_conditions
 
-        return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
+        try:
+            return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
+        except AttributeError:
+            return opt_conditions  # SciPy algorithm
     return opt_conditions
