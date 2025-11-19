@@ -19,7 +19,9 @@ from scipy.optimize import Bounds, minimize
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._tools import process_scipy_result
+from bluemira.optimisation._tools import _initial_guess_from_bounds, process_scipy_result
+from bluemira.optimisation.error import OptimisationError
+from bluemira.utilities.error import OptVariablesError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -27,14 +29,6 @@ if TYPE_CHECKING:
     import numpy as np
 
     from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
-
-
-@dataclass
-class Constraint:
-    f_constraint: OptimiserCallable
-    tolerance: np.ndarray
-    type: str
-    df_constraint: OptimiserCallable | None = None
 
 
 class ScipyAlgorithm(Enum):
@@ -71,15 +65,15 @@ class ScipyAlgorithm(Enum):
     @classmethod
     def from_algorithm(cls, algorithm: AlgorithmType):
         return {
-            Algorithm.BFGS_SCIPY: cls.BFGS,
+            Algorithm.BFGS: cls.BFGS,
             Algorithm.CG: cls.CG,
-            Algorithm.COBYLA_SCIPY: cls.COBYLA,
+            Algorithm.COBYLA: cls.COBYLA,
             Algorithm.DOGLEG: cls.DOGLEG,
             Algorithm.L_BFGS_B: cls.L_BFGS_B,
             Algorithm.NELDER_MEAD: cls.NELDER_MEAD,
             Algorithm.NEWTON_CG: cls.NEWTON_CG,
             Algorithm.POWELL: cls.POWELL,
-            Algorithm.SLSQP_SCIPY: cls.SLSQP,
+            Algorithm.SLSQP: cls.SLSQP,
             Algorithm.TNC: cls.TNC,
             Algorithm.TRUST_CONSTR: cls.TRUST_CONSTR,
             Algorithm.TRUST_EXACT: cls.TRUST_EXACT,
@@ -94,7 +88,7 @@ SLSQP_OPS = ["eps", "finite_diff_rel_step"]
 
 @dataclass
 class ScipyOptConditions:
-    tol: float | None = None
+    ftol: float | None = None
     maxiter: int | None = None
 
     def to_dict(self) -> dict[str, float]:
@@ -107,8 +101,8 @@ class ScipyOptConditions:
             A dictionary of optimiser conditions.
         """
         dct = asdict(self)
-        if self.tol is None:
-            del dct["tol"]
+        if self.ftol is None:
+            del dct["ftol"]
             bluemira_warn("Scipy default tolerance in use")
         if self.maxiter is None:
             del dct["maxiter"]
@@ -154,6 +148,32 @@ class ScipyOptimiser(Optimiser):
         self.eq_constraint = []
         self.ineq_constraint = []
 
+    def _add_constraint(
+        self,
+        constraint_list: list[dict],
+        f_constraint: OptimiserCallable,
+        tolerance: np.ndarray,
+        df_constraint: OptimiserCallable | None = None,
+        ctype: str = "eq",
+    ):
+        if self.algorithm not in {
+            ScipyAlgorithm.COBYLA,
+            ScipyAlgorithm.SLSQP,
+            ScipyAlgorithm.TRUST_CONSTR,
+        }:
+            raise OptimisationError(
+                f"Algorithm '{self.algorithm.name}' does not support {
+                    ctype
+                } constraints."
+            )
+        constraint_list.append({
+            "type": ctype,
+            "fun": lambda x, f=f_constraint: -f(x),
+            "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
+            "tolerance": tolerance,
+        })
+        # TO DO: introduce NonlinearConstraint for trust-constr
+
     def add_eq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -196,8 +216,8 @@ class ScipyOptimiser(Optimiser):
             * ISRES
 
         """
-        self.eq_constraint.append(
-            Constraint(f_constraint, tolerance, "eq", df_constraint)
+        self._add_constraint(
+            self.eq_constraint, f_constraint, tolerance, df_constraint, "eq"
         )
 
     def add_ineq_constraint(
@@ -242,8 +262,8 @@ class ScipyOptimiser(Optimiser):
             * ISRES
 
         """
-        self.ineq_constraint.append(
-            Constraint(f_constraint, tolerance, "ineq", df_constraint)
+        self._add_constraint(
+            self.ineq_constraint, f_constraint, tolerance, df_constraint, "ineq"
         )
 
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
@@ -264,18 +284,33 @@ class ScipyOptimiser(Optimiser):
         parameters ``x``, as well as other information about the
         optimisation.
         """
-        result = minimize(
-            fun=self.f_objective,
-            x0=x0,
-            method=self.algorithm.scipy_name,
-            jac=self.df_objective if self.algorithm.df_supported else None,
-            bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
-            constraints=[
-                *(constr.as_dict() for constr in self.eq_constraint),
-                *(constr.as_dict() for constr in self.ineq_constraint),
-            ],
-            options={**self.opt_parameters, **self.opt_conditions.to_dict()},
-        )
+        if x0 is None:
+            x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
+
+        try:
+            result = minimize(
+                fun=self.f_objective,
+                x0=x0,
+                args=(),
+                method=self.algorithm.scipy_name,
+                jac=self.df_objective if self.algorithm.df_supported else None,
+                hess=None,
+                constraints=[
+                    *(
+                        constr.as_dict() if not isinstance(constr, dict) else constr
+                        for constr in self.eq_constraint
+                    ),
+                    *(
+                        constr.as_dict() if not isinstance(constr, dict) else constr
+                        for constr in self.ineq_constraint
+                    ),
+                ],
+                bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
+                tol=None,
+                options={**self.opt_parameters, **self.opt_conditions.to_dict()},
+            )
+        except OptVariablesError:  # TO DO: add specific exceptions and messages
+            bluemira_warn("Badly behaved numerical gradients are causing trouble...")
 
         process_scipy_result(result)
         return OptimiserResult(
@@ -283,6 +318,7 @@ class ScipyOptimiser(Optimiser):
             x=result.x,
             n_evals=result.nit,
             history=None,
+            constraint_history=None,
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
@@ -291,6 +327,7 @@ class ScipyOptimiser(Optimiser):
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
+        # TO DO: convert to ineq constraints if bounds not supported for give algorithm
         self._lower_bounds = bounds
 
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
@@ -299,4 +336,5 @@ class ScipyOptimiser(Optimiser):
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
+        # TO DO: convert to ineq constraints if bounds not supported for give algorithm
         self._upper_bounds = bounds

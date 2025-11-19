@@ -260,12 +260,18 @@ def _make_optimiser(
     ------
     OptimisationError
         Unknown Algorithm
+
+    Returns
+    -------
+    :
+        Configured optimiser.
     """
-    if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
+    if Algorithm(algorithm) in NLOPT_ALG_MAPPING:
         optimiser = NloptOptimiser
     else:
         try:
-            ScipyAlgorithm(alg)
+            algorithm = algorithm.removesuffix("_SCIPY")
+            ScipyAlgorithm(algorithm)
         except KeyError:
             raise OptimisationError("Unknown algorithm") from None
         else:

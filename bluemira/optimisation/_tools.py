@@ -100,3 +100,26 @@ def process_scipy_result(res):
         return res.x
 
     raise OptimisationError(f"{res.message}\n{res!s}")
+
+
+def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
+    """
+    Derive an initial guess for the optimiser.
+
+    Takes the center of the bounds for each parameter.
+
+    Returns
+    -------
+    :
+        Initial guess based on the midpoint of the provided bounds.
+    """
+    bounds = np.array([lower, upper])
+    # bounds are +/- inf by default, change to real numbers so
+    # we can take an average
+    np.nan_to_num(
+        bounds,
+        posinf=np.finfo(np.float64).max,
+        neginf=np.finfo(np.float64).min,
+        copy=False,
+    )
+    return np.mean(bounds, axis=0)
