@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
 from numpy import clip, inf, ones_like
@@ -16,6 +17,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._scipy.conditions import ScipyConditions, _convert_to_scipy
+from bluemira.optimisation._scipy.parameters import _make_alg_params
 from bluemira.optimisation._tools import _initial_guess_from_bounds, process_scipy_result
 from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.error import OptVariablesError
@@ -70,7 +72,7 @@ class ScipyOptimiser(Optimiser):
         self.f_objective = f_objective
         self.df_objective = df_objective
         self._set_conditions(opt_conditions or {})
-        self._opt_parameters = opt_parameters or {}
+        self._set_parameters(opt_parameters or {})
         self.keep_history = keep_history
         self._eq_constraints = []
         self._ineq_constraints = []
@@ -103,7 +105,7 @@ class ScipyOptimiser(Optimiser):
         :
             the optimiser algorithms's parameters.
         """
-        return self._opt_parameters
+        return asdict(self._opt_parameters)
 
     @property
     def lower_bounds(self) -> np.ndarray:
@@ -134,6 +136,10 @@ class ScipyOptimiser(Optimiser):
         self._opt_conditions = ScipyConditions(
             **_convert_to_scipy((opt_conditions), self.algorithm)
         )
+
+    def _set_parameters(self, opt_parameters: Mapping[str, int | float]) -> None:
+        """Initialise the optimiser's parameters."""
+        self._opt_parameters = _make_alg_params(opt_parameters, self.algorithm)
 
     def add_eq_constraint(
         self,
