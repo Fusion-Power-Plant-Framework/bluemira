@@ -18,6 +18,7 @@ CONDITION_MAP = {
         "stopval": "f_target",
     },
     "COBYLA": {"ftol_abs": "tol"},
+    "COBYQA": {"ftol_abs": "feasibility_tol"},
 }
 
 
@@ -28,6 +29,7 @@ class ScipyConditions:
     ftol: float | None = None
     xtol: float | None = None
     tol: float | None = None
+    feasibility_tol: float | None = None
     maxiter: int | None = None
     f_target: float | None = None
 

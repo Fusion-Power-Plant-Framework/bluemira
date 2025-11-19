@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from numpy import clip
-from scipy.optimize import Bounds, minimize
+from numpy import clip, inf, ones_like
+from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
@@ -72,8 +72,8 @@ class ScipyOptimiser(Optimiser):
         self._set_conditions(opt_conditions or {})
         self._opt_parameters = opt_parameters or {}
         self.keep_history = keep_history
-        self.eq_constraint = []
-        self.ineq_constraint = []
+        self._eq_constraints = []
+        self._ineq_constraints = []
 
     @property
     def algorithm(self) -> str:
@@ -135,31 +135,6 @@ class ScipyOptimiser(Optimiser):
             **_convert_to_scipy((opt_conditions), self.algorithm)
         )
 
-    def _add_constraint(
-        self,
-        constraint_list: list[dict],
-        f_constraint: OptimiserCallable,
-        tolerance: np.ndarray,
-        df_constraint: OptimiserCallable | None = None,
-        ctype: str = "eq",
-    ):
-        if self.algorithm not in {
-            SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
-            SCIPY_ALG_MAPPING[Algorithm.COBYQA],
-            SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY],
-            SCIPY_ALG_MAPPING[Algorithm.TRUST_CONSTR],
-        }:
-            raise OptimisationError(
-                f"""Algorithm '{self.algorithm}' does not support {ctype} constraints."""
-            )
-        constraint_list.append({
-            "type": ctype,
-            "fun": lambda x, f=f_constraint: -f(x),
-            "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
-            "tolerance": tolerance,
-        })
-        # TO DO: introduce NonlinearConstraint for trust-constr
-
     def add_eq_constraint(
         self,
         f_constraint: OptimiserCallable,
@@ -193,6 +168,11 @@ class ScipyOptimiser(Optimiser):
             :math`m` is the dimensionality of the constraint, and
             :math:`n` is the number of optimisation parameters.
 
+        Raises
+        ------
+        OptimisationError
+            Algorithm does not support equality constraints.
+
         Notes
         -----
         Inequality constraints are only supported by algorithms:
@@ -202,9 +182,29 @@ class ScipyOptimiser(Optimiser):
             * ISRES
 
         """
-        self._add_constraint(
-            self.eq_constraint, f_constraint, tolerance, df_constraint, "eq"
-        )
+        if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]:
+            self._eq_constraints.extend([
+                {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t - f(x)},
+                {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t + f(x)},
+            ])
+        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY]:
+            self._eq_constraints.append({
+                "type": "eq",
+                "fun": f_constraint,
+                "jac": df_constraint,
+            })
+        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYQA]:
+            self._eq_constraints.append(
+                NonlinearConstraint(
+                    fun=f_constraint,
+                    lb=-tolerance,
+                    ub=tolerance,
+                )
+            )
+        else:
+            raise OptimisationError(
+                f"Algorithm '{self.algorithm}' does not support equality constraints."
+            )
 
     def add_ineq_constraint(
         self,
@@ -239,6 +239,11 @@ class ScipyOptimiser(Optimiser):
             :math`m` is the dimensionality of the constraint, and
             :math:`n` is the number of optimisation parameters.
 
+        Raises
+        ------
+        OptimisationError
+            Algorithm does not support inequality constraints.
+
         Notes
         -----
         Inequality constraints are only supported by algorithms:
@@ -248,9 +253,27 @@ class ScipyOptimiser(Optimiser):
             * ISRES
 
         """
-        self._add_constraint(
-            self.ineq_constraint, f_constraint, tolerance, df_constraint, "ineq"
-        )
+        if self.algorithm in {
+            SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY],
+            SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
+        }:
+            self._ineq_constraints.append({
+                "type": "ineq",
+                "fun": lambda x, f=f_constraint: -f(x),
+                "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
+            })
+        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYQA]:
+            self._ineq_constraints.append(
+                NonlinearConstraint(
+                    fun=f_constraint,
+                    lb=-inf * ones_like(tolerance),  # nlopt constr is f(x) <= 0
+                    ub=tolerance,
+                )
+            )
+        else:
+            raise OptimisationError(
+                f"Algorithm '{self.algorithm}' does not support inequality constraints."
+            )
 
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
         """
@@ -274,7 +297,6 @@ class ScipyOptimiser(Optimiser):
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
 
         def safe_obj(x):
-            # COBYLA sometimes steps slightly outside normalized range
             x_safe = clip(x, 0.0, 1.0)
             return self.f_objective(x_safe)
 
@@ -301,7 +323,7 @@ class ScipyOptimiser(Optimiser):
                     wrap_constraint(c)
                     if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
                     else c
-                    for c in self.ineq_constraint
+                    for c in self._eq_constraints + self._ineq_constraints
                 ],
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
                 tol=None,  # ignore - provide specific tolerance in opt_conditions
