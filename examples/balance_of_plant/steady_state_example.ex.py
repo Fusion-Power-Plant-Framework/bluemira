@@ -32,7 +32,6 @@ from bluemira.balance_of_plant.steady_state import (
     BoPModelParams,
     H2OPumping,
     HePumping,
-    NeutronPowerStrategy,
     ParasiticLoadStrategy,
     PredeterminedEfficiency,
     RadChargedPowerStrategy,
@@ -53,22 +52,20 @@ default_params = BoPModelParams.from_dict({
     "P_rad": {"value": 400e6, "unit": "W", "source": "example"},
     "P_hcd_ss": {"value": 50e6, "unit": "W", "source": "example"},
     "P_hcd_ss_el": {"value": 150e6, "unit": "W", "source": "example"},
+    "P_n_blanket": {"value": 1.8e9, "unit": "W", "source": "example"},
+    "P_n_divertor": {"value": 200e6, "unit": "W", "source": "example"},
+    "P_n_vessel": {"value": 4e6, "unit": "W", "source": "example"},
+    "P_n_aux": {"value": 30e6, "unit": "W", "source": "example"},
+    "P_n_e_mult": {"value": 600e6, "unit": "W", "source": "example"},
+    "P_n_decay": {"value": 25e6, "unit": "W", "source": "example"},
 })
 
 # %% [markdown]
 #
-# We then weed to specify how we're going to treat the neutrons, radiation, and charged
+# We then weed to specify how we're going to treat the radiation, and charged
 # particle loads. We do this by specifying "strategies".
 
 # %%
-neutron_power_strat = NeutronPowerStrategy(
-    f_blanket=0.9,
-    f_divertor=0.05,
-    f_vessel=0.04,
-    f_other=0.01,
-    energy_multiplication=1.35,
-    decay_multiplication=1.0175,
-)
 rad_sep_strat = RadChargedPowerStrategy(
     f_core_rad_fw=0.9,
     f_sol_rad=0.75,
@@ -132,7 +129,6 @@ parasitic_load_strat = EUDEMOReferenceParasiticLoadStrategy()
 HCPB_bop = BalanceOfPlantModel(
     default_params,
     rad_sep_strat=rad_sep_strat,
-    neutron_strat=neutron_power_strat,
     blanket_pump_strat=blanket_pump_strat,
     divertor_pump_strat=divertor_pump_strat,
     bop_cycle_strat=bop_cycle,
@@ -155,21 +151,14 @@ HCPB_bop.plot(title="HCPB blanket")
 # that the energy multiplication is different too
 
 # %%
-neutron_power_strat = NeutronPowerStrategy(
-    f_blanket=0.9,
-    f_divertor=0.05,
-    f_vessel=0.04,
-    f_other=0.01,
-    energy_multiplication=1.25,
-    decay_multiplication=1.002,
-)
-blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
-bop_cycle = PredeterminedEfficiency(0.33)
+blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.95, eta_electric=0.87)
+bop_cycle = PredeterminedEfficiency(0.31)
+
+default_params.P_n_e_mult.value = 340e6
 
 WCLL_bop = BalanceOfPlantModel(
     default_params,
     rad_sep_strat=rad_sep_strat,
-    neutron_strat=neutron_power_strat,
     blanket_pump_strat=blanket_pump_strat,
     divertor_pump_strat=divertor_pump_strat,
     bop_cycle_strat=bop_cycle,
