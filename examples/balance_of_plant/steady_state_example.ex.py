@@ -56,7 +56,7 @@ default_params = BoPModelParams.from_dict({
     "P_n_divertor": {"value": 200e6, "unit": "W", "source": "example"},
     "P_n_vessel": {"value": 4e6, "unit": "W", "source": "example"},
     "P_n_aux": {"value": 30e6, "unit": "W", "source": "example"},
-    "P_n_e_mult": {"value": 500e6, "unit": "W", "source": "example"},
+    "P_n_e_mult": {"value": 600e6, "unit": "W", "source": "example"},
     "P_n_decay": {"value": 25e6, "unit": "W", "source": "example"},
 })
 
@@ -151,8 +151,10 @@ HCPB_bop.plot(title="HCPB blanket")
 # that the energy multiplication is different too
 
 # %%
-blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.99, eta_electric=0.87)
-bop_cycle = PredeterminedEfficiency(0.33)
+blanket_pump_strat = H2OPumping(0.005, eta_isentropic=0.95, eta_electric=0.87)
+bop_cycle = PredeterminedEfficiency(0.31)
+
+default_params.P_n_e_mult.value = 340e6
 
 WCLL_bop = BalanceOfPlantModel(
     default_params,
