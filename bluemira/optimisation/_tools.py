@@ -79,6 +79,9 @@ def _process_slsqp(res: OptimizeResult) -> np.ndarray:
     }
     if res.status == 0:
         return res.x
+    if res.status == 9:  # noqa: PLR2004
+        bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
+        return res.x
     _log_and_raise(
         "SLSQP",
         codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
@@ -87,8 +90,8 @@ def _process_slsqp(res: OptimizeResult) -> np.ndarray:
 
 def _process_cobyla(res: OptimizeResult) -> np.ndarray:
     codes = {
-        2: "Trust-region subproblem failed.",
-        3: "Maximum number of function evaluations reached.",
+        2: "Maximum number of function evaluations reached.",
+        3: "Trust-region subproblem failed.",
         20: "Maximum number of trust-region iterations reached.",
         -1: "NaN/Inf encountered in x.",
         -2: "NaN/Inf encountered in f.",
@@ -104,6 +107,9 @@ def _process_cobyla(res: OptimizeResult) -> np.ndarray:
     }
     if res.status in {0, 1}:
         return res.x
+    if res.status in {2, 20}:
+        bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
+        return res.x
     _log_and_raise(
         "COBYLA",
         codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
@@ -118,6 +124,9 @@ def _process_cobyqa(res: OptimizeResult) -> np.ndarray:
         -2: "Linear algebra failure inside COBYQA.",
     }
     if res.status in {0, 1, 2, 3, 4}:
+        return res.x
+    if res.status in {5, 6}:
+        bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
         return res.x
     _log_and_raise(
         "COBYQA",
