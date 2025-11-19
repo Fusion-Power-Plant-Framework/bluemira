@@ -15,7 +15,7 @@ from scipy.optimize import Bounds, minimize
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._scipy.conditions import ScipyConditions
+from bluemira.optimisation._scipy.conditions import ScipyConditions, _convert_to_scipy
 from bluemira.optimisation._tools import _initial_guess_from_bounds, process_scipy_result
 from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.error import OptVariablesError
@@ -32,6 +32,7 @@ SCIPY_ALG_MAPPING = {
     Algorithm.BFGS_SCIPY: "BFGS",
     Algorithm.CG: "CG",
     Algorithm.COBYLA_SCIPY: "COBYLA",
+    Algorithm.COBYQA: "COBYQA",
     Algorithm.DOGLEG: "DOGLEG",
     Algorithm.L_BFGS_B: "L_BFGS_B",
     Algorithm.NELDER_MEAD: "NELDER_MEAD",
@@ -68,8 +69,8 @@ class ScipyOptimiser(Optimiser):
         self.n_variables = n_variables
         self.f_objective = f_objective
         self.df_objective = df_objective
-        self._set_conditions(algorithm, opt_conditions)
-        self.opt_parameters = opt_parameters or {}
+        self._set_conditions(opt_conditions or {})
+        self._opt_parameters = opt_parameters or {}
         self.keep_history = keep_history
         self.eq_constraint = []
         self.ineq_constraint = []
@@ -84,14 +85,55 @@ class ScipyOptimiser(Optimiser):
         """
         return self._algorithm
 
+    @property
+    def opt_conditions(self) -> dict[str, float]:
+        """
+        Returns
+        -------
+        :
+            the optimiser's stopping conditions.
+        """
+        return self._opt_conditions.to_dict()
+
+    @property
+    def opt_parameters(self) -> Mapping[str, int | float]:
+        """
+        Returns
+        -------
+        :
+            the optimiser algorithms's parameters.
+        """
+        return self._opt_parameters
+
+    @property
+    def lower_bounds(self) -> np.ndarray:
+        """
+        Returns
+        -------
+        :
+            the lower bounds for the optimisation parameters.
+        """
+        return self._lower_bounds
+
+    @property
+    def upper_bounds(self) -> np.ndarray:
+        """
+        Returns
+        -------
+        :
+            the upper bounds for the optimisation parameters.
+        """
+        return self._upper_bounds
+
     def _set_algorithm(self, alg: AlgorithmType) -> None:
         """Set the optimiser's algorithm."""
         self._algorithm = SCIPY_ALG_MAPPING[Algorithm(alg)]
 
-    def _set_conditions(
-        self, alg: AlgorithmType, opt_conditions: Mapping[str, int | float] | None
-    ) -> None:
-        self._opt_conditions = ScipyConditions(Algorithm(alg), (opt_conditions or {}))
+    def _set_conditions(self, opt_conditions: Mapping[str, int | float]) -> None:
+        """Initialise the optimiser's conditions."""
+        self._opt_conditions = ScipyConditions(
+            **_convert_to_scipy((opt_conditions), self.algorithm)
+        )
 
     def _add_constraint(
         self,
@@ -103,6 +145,7 @@ class ScipyOptimiser(Optimiser):
     ):
         if self.algorithm not in {
             SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
+            SCIPY_ALG_MAPPING[Algorithm.COBYQA],
             SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY],
             SCIPY_ALG_MAPPING[Algorithm.TRUST_CONSTR],
         }:
@@ -260,9 +303,9 @@ class ScipyOptimiser(Optimiser):
                     else c
                     for c in self.ineq_constraint
                 ],
-                bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
-                tol=None,
-                options={**self.opt_parameters, **self._opt_conditions.to_dict()},
+                bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
+                tol=None,  # ignore - provide specific tolerance in opt_conditions
+                options={**self.opt_parameters, **self.opt_conditions},
             )
         except OptVariablesError:  # TO DO: add specific exceptions and messages
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")
