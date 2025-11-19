@@ -56,13 +56,12 @@ class MaxCircleLenOptProblem(GeomOptimisationProblem):
 
 
 class TestGeomOptimisationProblem:
-    def test_maximise_circle_len_with_kozs(self):
+    @pytest.mark.parametrize("alg", ["SLSQP", "SLSQP_SCIPY"])
+    def test_maximise_circle_len_with_kozs(self, alg):
         op = MaxCircleLenOptProblem()
         circle = Circle(1, (1, 1))
 
-        result = op.optimise(
-            circle, algorithm="SLSQP", opt_conditions={"xtol_rel": 1e-12}
-        )
+        result = op.optimise(circle, algorithm=alg, opt_conditions={"xtol_rel": 1e-12})
 
         assert result.geom.variables["radius"].value == pytest.approx(15)
         assert result.geom.variables["centre_x"].value == pytest.approx(1)

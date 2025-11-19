@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -18,7 +17,11 @@ from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._scipy.conditions import ScipyConditions, _convert_to_scipy
 from bluemira.optimisation._scipy.parameters import _make_alg_params
-from bluemira.optimisation._tools import _initial_guess_from_bounds, process_scipy_result
+from bluemira.optimisation._tools import (
+    _check_bounds,
+    _initial_guess_from_bounds,
+    process_scipy_result,
+)
 from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.error import OptVariablesError
 
@@ -105,9 +108,7 @@ class ScipyOptimiser(Optimiser):
         :
             the optimiser algorithms's parameters.
         """
-        if isinstance(self._opt_parameters, dict):
-            return self._opt_parameters
-        return asdict(self._opt_parameters)
+        return self._opt_parameters
 
     @property
     def lower_bounds(self) -> np.ndarray:
@@ -382,11 +383,7 @@ class ScipyOptimiser(Optimiser):
         ValueError
             Incorrect bounds dimensions.
         """
-        if len(bounds) != self.n_variables:
-            raise ValueError(
-                f"Invalid lower bounds dimensions: {len(bounds)} "
-                f"for {self.n_variables} variables."
-            )
+        _check_bounds(self.n_variables, bounds)
         self._lower_bounds = bounds
 
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
@@ -400,9 +397,5 @@ class ScipyOptimiser(Optimiser):
         ValueError
             Incorrect bounds dimensions.
         """
-        if len(bounds) != self.n_variables:
-            raise ValueError(
-                f"Invalid upper bounds dimensions: {len(bounds)} "
-                f"for {self.n_variables} variables."
-            )
+        _check_bounds(self.n_variables, bounds)
         self._upper_bounds = bounds

@@ -19,6 +19,8 @@ from bluemira.optimisation.error import OptimisationError
 
 _FloatOrArray = float | np.ndarray
 
+NO_CODE = "Unknown termination code"
+
 
 def approx_derivative(
     func: Callable[[np.ndarray], _FloatOrArray],
@@ -84,7 +86,7 @@ def _process_slsqp(res: OptimizeResult) -> np.ndarray:
         return res.x
     _log_and_raise(
         "SLSQP",
-        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
     )
 
 
@@ -112,7 +114,7 @@ def _process_cobyla(res: OptimizeResult) -> np.ndarray:
         return res.x
     _log_and_raise(
         "COBYLA",
-        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
     )
 
 
@@ -130,7 +132,7 @@ def _process_cobyqa(res: OptimizeResult) -> np.ndarray:
         return res.x
     _log_and_raise(
         "COBYQA",
-        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
     )
 
 
@@ -169,6 +171,21 @@ def process_scipy_result(res: OptimizeResult, alg: str) -> np.ndarray:
         return _process_cobyqa(res)
 
     raise OptimisationError(f"{res.message}\n{res!s}")
+
+
+def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
+    """Validate that the bounds have the correct dimensions.
+
+    Raises
+    ------
+    ValueError
+        New bounds in not 1D and does not have a size of n_dims
+    """
+    if new_bounds.ndim != 1 or new_bounds.size != n_dims:
+        raise ValueError(
+            f"Cannot set bounds with shape '{new_bounds.shape}', "
+            f"array must be one dimensional and have '{n_dims}' elements."
+        )
 
 
 def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
