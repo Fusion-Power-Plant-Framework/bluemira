@@ -20,7 +20,7 @@ from bluemira.optimisation._nlopt.functions import (
     ObjectiveFunction,
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._tools import _initial_guess_from_bounds
+from bluemira.optimisation._tools import _check_bounds, _initial_guess_from_bounds
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
 from bluemira.utilities.error import OptVariablesError
 
@@ -423,21 +423,6 @@ def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
         validated and converted algorithm
     """
     return Algorithm(algorithm)
-
-
-def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
-    """Validate that the bounds have the correct dimensions.
-
-    Raises
-    ------
-    ValueError
-        New bounds in not 1D and does not have a size of n_dims
-    """
-    if new_bounds.ndim != 1 or new_bounds.size != n_dims:
-        raise ValueError(
-            f"Cannot set bounds with shape '{new_bounds.shape}', "
-            f"array must be one dimensional and have '{n_dims}' elements."
-        )
 
 
 def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:

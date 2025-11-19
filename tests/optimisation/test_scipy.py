@@ -8,9 +8,11 @@ from copy import copy
 
 import numpy as np
 import pytest
+from scipy.optimize import OptimizeResult
 
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._scipy import ScipyOptimiser
+from bluemira.optimisation._tools import process_scipy_result
 from bluemira.optimisation.error import (
     OptimisationError,
 )
@@ -24,7 +26,7 @@ def no_op(x):
 
 class TestScipyOptimiser:
     @pytest.mark.parametrize("alg", [1.1, [1, 2]])
-    def test_ValueError_given_invalid_algorithm(self, alg):
+    def test_valueerror_given_invalid_algorithm(self, alg):
         with pytest.raises(ValueError):  # noqa: PT011
             ScipyOptimiser(alg, 1, no_op)
 
@@ -135,9 +137,12 @@ class TestScipyOptimiser:
         assert opt.opt_parameters == params
 
     def test_override_algorithm_default_parameters(self):
-        opt = ScipyOptimiser("COBYLA_SCIPY", 5, no_op, opt_parameters={"rhobeg": 0.3})
-        assert opt.opt_parameters["rhobeg"] == 0.3
-        assert opt.opt_parameters["catol"] == 1e-4
+        opt = ScipyOptimiser(
+            "COBYLA_SCIPY", 5, no_op, opt_parameters={"rhobeg": 0.3, "disp": True}
+        )
+        np.testing.assert_allclose(opt.opt_parameters["rhobeg"], 0.3)
+        np.testing.assert_allclose(opt.opt_parameters["catol"], 1e-4)
+        assert opt.opt_parameters["disp"]
 
     def test_minimising_objective_function_set_on_init_scipy(self):
         opt = ScipyOptimiser(
@@ -181,7 +186,7 @@ class TestScipyOptimiser:
             "TRUST_NCG",
         ],
     )
-    def test_OptimisationError_adding_eq_constraint_on_unsupported_algorithm_scipy(
+    def test_optimisationerror_adding_eq_constraint_on_unsupported_algorithm_scipy(
         self, alg
     ):
         opt = ScipyOptimiser(alg, 5, no_op)
@@ -231,7 +236,7 @@ class TestScipyOptimiser:
             "TRUST_NCG",
         ],
     )
-    def test_OptimisationError_adding_ineq_constraint_on_unsupported_algorithm_scipy(
+    def test_optimisationerror_adding_ineq_constraint_on_unsupported_algorithm_scipy(
         self, alg
     ):
         opt = ScipyOptimiser(alg, 5, no_op)
@@ -257,12 +262,12 @@ class TestScipyOptimiser:
         np.testing.assert_equal(result, 1)  # ineq flipped for scipy
         np.testing.assert_equal(grad, -2)
 
-    def test_ValueError_setting_lower_bounds_with_wrong_dims_scipy(self):
+    def test_valueerror_setting_lower_bounds_with_wrong_dims_scipy(self):
         opt = ScipyOptimiser("SLSQP_SCIPY", 2, no_op)
         with pytest.raises(ValueError):  # noqa: PT011
             opt.set_lower_bounds(np.array([1, 2, 3]))
 
-    def test_ValueError_setting_upper_bounds_with_wrong_dims_scipy(self):
+    def test_valueerror_setting_upper_bounds_with_wrong_dims_scipy(self):
         opt = ScipyOptimiser("SLSQP_SCIPY", 4, no_op)
         with pytest.raises(ValueError):  # noqa: PT011
             opt.set_upper_bounds(np.array([[1, 2], [3, 4]]))
@@ -278,3 +283,41 @@ class TestScipyOptimiser:
         opt = ScipyOptimiser("SLSQP_SCIPY", 4, no_op)
         opt.set_upper_bounds(bounds)
         np.testing.assert_allclose(opt.upper_bounds, bounds)
+
+    @pytest.mark.parametrize("alg", ["SLSQP", "COBYLA", "COBYQA"])
+    def test_process_scipy_result_status_0(self, alg):
+        res = OptimizeResult(x=np.array([1.0]), status=0, success=False, message="")
+        np.testing.assert_allclose(process_scipy_result(res, alg), np.array([1.0]))
+
+    @pytest.mark.parametrize("alg", ["SLSQP", "COBYLA", "COBYQA"])
+    def test_raise_given_optimise_exception_scipy(self, alg, caplog):
+        res = OptimizeResult(x=np.array([1.0]), status=-1, success=False, message="")
+        with pytest.raises(OptimisationError):
+            process_scipy_result(res, alg)
+        assert len(caplog.records) == 1
+
+    @pytest.mark.parametrize(
+        ("alg", "status"),
+        [
+            ("SLSQP", 9),
+            ("COBYLA", 2),
+            ("COBYQA", 5),
+        ],
+    )
+    def test_warning_given_inoptimal_solution_scipy(self, alg, status, caplog):
+        res = OptimizeResult(x=np.array([1.0]), status=status, success=False, message="")
+        np.testing.assert_allclose(process_scipy_result(res, alg), np.array([1.0]))
+        assert len(caplog.records) == 1
+        assert "returning inoptimal result" in caplog.messages[0]
+
+    def test_warning_given_optimise_exception_unknown_alg_scipy(self):
+        res = OptimizeResult(x=np.array([1.0]), status=0, success=False, message="")
+        with pytest.raises(OptimisationError):
+            process_scipy_result(res, "UNKNOWN")
+
+    def test_warning_given_optimise_exception_no_status_scipy(self, caplog):
+        res = OptimizeResult(x=np.array([1.0]), success=False, message="")
+        with pytest.raises(OptimisationError):
+            process_scipy_result(res, "SLSQP")
+        assert len(caplog.records) == 1
+        assert "Failed without status." in caplog.messages[0]

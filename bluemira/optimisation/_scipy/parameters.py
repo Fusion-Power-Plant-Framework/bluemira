@@ -25,7 +25,9 @@ PARAMETER_CLS = {
 }
 
 
-def _make_alg_params(user_params: Mapping[str, int | float], alg: str):
+def _make_alg_params(
+    user_params: Mapping[str, int | float], alg: str
+) -> Mapping[str, int | float]:
     """
     Algorithm parameter factory.
 
@@ -36,4 +38,6 @@ def _make_alg_params(user_params: Mapping[str, int | float], alg: str):
     """
     if not (cls := PARAMETER_CLS.get(alg)):
         return user_params  # no defaults
-    return cls(**{**asdict(cls()), **user_params})  # merge defaults with user_params
+    known = {k: user_params.get(k, v) for k, v in asdict(cls()).items()}
+    extras = {k: v for k, v in user_params.items() if k not in asdict(cls())}
+    return {**known, **extras}  # merge defaults with user_params
