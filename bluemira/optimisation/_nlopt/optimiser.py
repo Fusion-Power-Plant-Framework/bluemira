@@ -20,6 +20,7 @@ from bluemira.optimisation._nlopt.functions import (
     ObjectiveFunction,
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._tools import _initial_guess_from_bounds
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
 from bluemira.utilities.error import OptVariablesError
 
@@ -437,29 +438,6 @@ def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
             f"Cannot set bounds with shape '{new_bounds.shape}', "
             f"array must be one dimensional and have '{n_dims}' elements."
         )
-
-
-def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
-    """
-    Derive an initial guess for the optimiser.
-
-    Takes the center of the bounds for each parameter.
-
-    Returns
-    -------
-    :
-        Initial guess based on the midpoint of the provided bounds.
-    """
-    bounds = np.array([lower, upper])
-    # bounds are +/- inf by default, change to real numbers so
-    # we can take an average
-    np.nan_to_num(
-        bounds,
-        posinf=np.finfo(np.float64).max,
-        neginf=np.finfo(np.float64).min,
-        copy=False,
-    )
-    return np.mean(bounds, axis=0)
 
 
 def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:
