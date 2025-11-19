@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
-from numpy import clip, inf, ones_like
+import numpy as np
 from scipy.optimize import Bounds, NonlinearConstraint, minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -24,8 +24,6 @@ from bluemira.utilities.error import OptVariablesError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
-
-    import numpy as np
 
     from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
@@ -73,12 +71,14 @@ class ScipyOptimiser(Optimiser):
         self.df_objective = df_objective
         self._set_conditions(opt_conditions or {})
         self._set_parameters(opt_parameters or {})
+        self.set_lower_bounds(np.ones(n_variables) * -np.inf)
+        self.set_upper_bounds(np.ones(n_variables) * np.inf)
         self.keep_history = keep_history
         self._eq_constraints = []
         self._ineq_constraints = []
 
     @property
-    def algorithm(self) -> str:
+    def algorithm(self) -> AlgorithmType:
         """
         Returns
         -------
@@ -105,6 +105,8 @@ class ScipyOptimiser(Optimiser):
         :
             the optimiser algorithms's parameters.
         """
+        if isinstance(self._opt_parameters, dict):
+            return self._opt_parameters
         return asdict(self._opt_parameters)
 
     @property
@@ -129,17 +131,19 @@ class ScipyOptimiser(Optimiser):
 
     def _set_algorithm(self, alg: AlgorithmType) -> None:
         """Set the optimiser's algorithm."""
-        self._algorithm = SCIPY_ALG_MAPPING[Algorithm(alg)]
+        self._algorithm = Algorithm(alg)
 
     def _set_conditions(self, opt_conditions: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's conditions."""
         self._opt_conditions = ScipyConditions(
-            **_convert_to_scipy((opt_conditions), self.algorithm)
+            **_convert_to_scipy((opt_conditions), SCIPY_ALG_MAPPING[self.algorithm])
         )
 
     def _set_parameters(self, opt_parameters: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's parameters."""
-        self._opt_parameters = _make_alg_params(opt_parameters, self.algorithm)
+        self._opt_parameters = _make_alg_params(
+            opt_parameters, SCIPY_ALG_MAPPING[self.algorithm]
+        )
 
     def add_eq_constraint(
         self,
@@ -181,30 +185,35 @@ class ScipyOptimiser(Optimiser):
 
         Notes
         -----
-        Inequality constraints are only supported by algorithms:
+        Equality constraints are only supported by algorithms:
 
             * SLSQP
-            * COBYLA
-            * ISRES
+            * COBYQA
+            * TRUST_CONSTR
+
+            However, equality constraints can be converted to pairs
+            of inequality constraints to work with other algorithms,
+            such as COBYLA.
 
         """
-        if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]:
+        if self.algorithm == Algorithm.COBYLA_SCIPY:
             self._eq_constraints.extend([
                 {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t - f(x)},
                 {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t + f(x)},
             ])
-        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY]:
+        elif self.algorithm == Algorithm.SLSQP_SCIPY:
             self._eq_constraints.append({
                 "type": "eq",
                 "fun": f_constraint,
                 "jac": df_constraint,
             })
-        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYQA]:
+        elif self.algorithm == Algorithm.COBYQA:
             self._eq_constraints.append(
                 NonlinearConstraint(
                     fun=f_constraint,
                     lb=-tolerance,
                     ub=tolerance,
+                    jac=df_constraint,
                 )
             )
         else:
@@ -256,24 +265,25 @@ class ScipyOptimiser(Optimiser):
 
             * SLSQP
             * COBYLA
-            * ISRES
+            * COBYQA
 
         """
         if self.algorithm in {
-            SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY],
-            SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
+            Algorithm.SLSQP_SCIPY,
+            Algorithm.COBYLA_SCIPY,
         }:
             self._ineq_constraints.append({
                 "type": "ineq",
                 "fun": lambda x, f=f_constraint: -f(x),
                 "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
             })
-        elif self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYQA]:
+        elif self.algorithm == Algorithm.COBYQA:
             self._ineq_constraints.append(
                 NonlinearConstraint(
-                    fun=f_constraint,
-                    lb=-inf * ones_like(tolerance),  # nlopt constr is f(x) <= 0
-                    ub=tolerance,
+                    fun=lambda x, f=f_constraint: -f(x),
+                    lb=-tolerance,  # nlopt constr is f(x) <= 0
+                    ub=np.inf * np.ones_like(tolerance),
+                    jac=(lambda x, df=df_constraint: -df(x)) if df_constraint else None,
                 )
             )
         else:
@@ -310,12 +320,12 @@ class ScipyOptimiser(Optimiser):
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
 
         def safe_obj(x):
-            x_safe = clip(x, 0.0, 1.0)
+            x_safe = np.clip(x, 0.0, 1.0)
             return self.f_objective(x_safe)
 
         def wrap_constraint(c):
             def safe_constraint(x):
-                x_safe = clip(x, 0.0, 1.0)
+                x_safe = np.clip(x, 0.0, 1.0)
                 return c["fun"](x_safe)
 
             new_c = c.copy()
@@ -325,17 +335,15 @@ class ScipyOptimiser(Optimiser):
         try:
             result = minimize(
                 fun=safe_obj
-                if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
+                if self.algorithm == Algorithm.COBYLA_SCIPY
                 else self.f_objective,
                 x0=x0,
                 args=(),
-                method=self.algorithm,
+                method=SCIPY_ALG_MAPPING[self.algorithm],
                 jac=self.df_objective if self.algorithm in DF_SUPPORTED else None,
                 hess=None,  # algorithms that use this are not yet implemented
                 constraints=[
-                    wrap_constraint(c)
-                    if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
-                    else c
+                    wrap_constraint(c) if self.algorithm == Algorithm.COBYLA_SCIPY else c
                     for c in self._eq_constraints + self._ineq_constraints
                 ],
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
@@ -354,7 +362,7 @@ class ScipyOptimiser(Optimiser):
                 "your optimisation problem and termination conditions."
             ) from None
 
-        process_scipy_result(result, self.algorithm)
+        process_scipy_result(result, SCIPY_ALG_MAPPING[self.algorithm])
         return OptimiserResult(
             f_x=result.fun,
             x=result.x,
@@ -368,7 +376,17 @@ class ScipyOptimiser(Optimiser):
         Set the lower bound for each optimisation parameter.
 
         Set to `-np.inf` to unbound the parameter's minimum.
+
+        Raises
+        ------
+        ValueError
+            Incorrect bounds dimensions.
         """
+        if len(bounds) != self.n_variables:
+            raise ValueError(
+                f"Invalid lower bounds dimensions: {len(bounds)} "
+                f"for {self.n_variables} variables."
+            )
         self._lower_bounds = bounds
 
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
@@ -376,5 +394,15 @@ class ScipyOptimiser(Optimiser):
         Set the upper bound for each optimisation parameter.
 
         Set to `np.inf` to unbound the parameter's minimum.
+
+        Raises
+        ------
+        ValueError
+            Incorrect bounds dimensions.
         """
+        if len(bounds) != self.n_variables:
+            raise ValueError(
+                f"Invalid upper bounds dimensions: {len(bounds)} "
+                f"for {self.n_variables} variables."
+            )
         self._upper_bounds = bounds
