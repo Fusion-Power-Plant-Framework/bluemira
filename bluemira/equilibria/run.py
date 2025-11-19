@@ -382,7 +382,9 @@ class PulsedCoilsetDesign(ABC):
         bluemira_warn("Premagnetisation not calculated")
         return np.inf
 
-    def run_premagnetisation(self):
+    def run_premagnetisation(
+        self, *, keep_history: bool = False, check_constraints: bool = False
+    ):
         """Run the breakdown optimisation problem.
 
         Raises
@@ -416,7 +418,11 @@ class PulsedCoilsetDesign(ABC):
                 constraints=constraints,
                 B_stray_max=self.params.B_premag_stray_max.value,
             )
-            result = problem.optimise(fixed_coils=False)
+            result = problem.optimise(
+                fixed_coils=False,
+                keep_history=keep_history,
+                check_constraints=check_constraints,
+            )
             breakdown.set_breakdown_point(*strategy.breakdown_point)
             psi_premag = breakdown.breakdown_psi
 
@@ -477,6 +483,8 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
+            keep_history=True,
+            check_constraints=True,
         )
         program()
 
@@ -760,7 +768,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise(self, *, verbose: bool = False) -> CoilSet:
+    def optimise(
+        self,
+        *,
+        verbose: bool = False,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+    ) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """  # noqa: DOC201
@@ -772,7 +786,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         pos_opt_problem = self.pos_config.make_opt_problem(
             self.position_mapper, self.current_bounder, sub_opt_problems
         )
-        result = pos_opt_problem.optimise(verbose=verbose)
+        result = pos_opt_problem.optimise(
+            verbose=verbose,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+        )
         optimised_coilset = self._consolidate_coilset(result.coilset, sub_opt_problems)
 
         self.converge_and_snapshot(sub_opt_problems)

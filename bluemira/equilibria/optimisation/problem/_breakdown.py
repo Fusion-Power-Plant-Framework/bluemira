@@ -229,7 +229,15 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
             "scale": self.scale,
         }
 
-    def optimise(self, x0=None, *, fixed_coils=True):
+    def optimise(
+        self,
+        x0=None,
+        *,
+        fixed_coils: bool = True,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+        verbose: bool = False,
+    ):
         """
         Solve the optimisation problem.
         """  # noqa: DOC201
@@ -252,6 +260,9 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=verbose,
         )
 
         opt_currents = opt_result.x
