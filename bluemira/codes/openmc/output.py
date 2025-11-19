@@ -16,7 +16,7 @@ import pandas as pd
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
@@ -531,6 +531,75 @@ class OpenMCDAGMCResult:
         statepoint_file: Path,
     ):
         statepoint = openmc.StatePoint(statepoint_file.as_posix())
+
+        tbr_cell_tally = statepoint.get_tally(name="tbr")
+        tbr_mesh_tally = statepoint.get_tally(name="tbr_on_mesh")
+        heating_cell_tally = statepoint.get_tally(name="heating")
+        heating_mesh_tally = statepoint.get_tally(name="heating_on_mesh")
+        flux_mesh_tally = statepoint.get_tally(name="flux_on_mesh")
+
+        bluemira_print(f"The reactor has a TBR of {tbr_cell_tally.mean.sum()}")
+        bluemira_print(
+            f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}"
+        )
+
+        bluemira_print(
+            f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
+            "per source particle is deposited"
+        )
+        bluemira_print(
+            f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
+        )
+
+        mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
+        mesh.write_data_to_vtk(
+            filename="tbr_mesh_mean.vtk",
+            datasets={"mean": tbr_mesh_tally.mean},
+        )
+
+        model_w = universe.bounding_box.width
+
+        heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
+        flux_mesh_mean = flux_mesh_tally.mean.reshape(100, 100, 100)
+        scaling = tuple(
+            round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
+        )
+        # If you want to view only the +ve x half of the tally, uncomment the next line
+        # heating_mesh_mean[:, :, heating_mesh_mean.shape[2] // 2 : -1] = 0
+        numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)
+        numpy_to_vtk(flux_mesh_mean, "flux_mesh_mean", scaling)
+
+
+import vtk
+from vtkmodules.util import numpy_support
+
+
+def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
+    """Convert a numpy array to a VTK image data file."""
+    data_type = vtk.VTK_FLOAT
+    shape = data.shape
+
+    flat_data_array = data.flatten()
+    vtk_data = numpy_support.numpy_to_vtk(
+        num_array=flat_data_array, deep=True, array_type=data_type
+    )
+    vtk_data.SetName(output_name)
+
+    half_x = int(0.5 * scaling[0] * (shape[0] - 1))
+    half_y = int(0.5 * scaling[1] * (shape[1] - 1))
+    half_z = int(0.5 * scaling[2] * (shape[2] - 1))
+
+    img = vtk.vtkImageData()
+    img.GetPointData().SetScalars(vtk_data)
+    img.SetSpacing(scaling[0], scaling[1], scaling[2])
+    img.SetDimensions(shape[0], shape[1], shape[2])
+    img.SetOrigin(-half_x, -half_y, -half_z)
+
+    # Save the VTK file
+    writer = vtk.vtkXMLImageDataWriter()
+    writer.SetFileName(f"{output_name}.vti")
+    writer.SetInputData(img)
+    writer.Write()
 
 
 @dataclass
