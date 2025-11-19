@@ -7,19 +7,15 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, field
-from enum import Enum, auto
-from inspect import signature
-from types import DynamicClassAttribute
 from typing import TYPE_CHECKING, Any
 
-from eqdsk.file import dataclass
 from numpy import clip
 from scipy.optimize import Bounds, minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._scipy.conditions import ScipyConditions
 from bluemira.optimisation._tools import _initial_guess_from_bounds, process_scipy_result
 from bluemira.optimisation.error import OptimisationError
 from bluemira.utilities.error import OptVariablesError
@@ -32,144 +28,28 @@ if TYPE_CHECKING:
     from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 
-CONDITION_MAP = {  # nlopt to scipy condition map
-    "ftol_rel": "ftol",
-    "ftol_abs": "ftol",  # override if both given
-    "xtol_rel": "xtol",
-    "xtol_abs": "xtol",
-    "max_eval": "maxiter",
+SCIPY_ALG_MAPPING = {
+    Algorithm.BFGS_SCIPY: "BFGS",
+    Algorithm.CG: "CG",
+    Algorithm.COBYLA_SCIPY: "COBYLA",
+    Algorithm.DOGLEG: "DOGLEG",
+    Algorithm.L_BFGS_B: "L_BFGS_B",
+    Algorithm.NELDER_MEAD: "NELDER_MEAD",
+    Algorithm.NEWTON_CG: "NEWTON_CG",
+    Algorithm.POWELL: "POWELL",
+    Algorithm.SLSQP_SCIPY: "SLSQP",
+    Algorithm.TNC: "TNC",
+    Algorithm.TRUST_CONSTR: "TRUST_CONSTR",
+    Algorithm.TRUST_EXACT: "TRUST_EXACT",
+    Algorithm.TRUST_KRYLOV: "TRUST_KRYLOV",
+    Algorithm.TRUST_NCG: "TRUST_NCG",
 }
 
-ALG_CONDITION_MAP = {  # algorithm-specific condition overrides
-    "COBYLA": {"ftol": "tol"},
+DF_SUPPORTED = {
+    SCIPY_ALG_MAPPING[Algorithm.NELDER_MEAD],
+    SCIPY_ALG_MAPPING[Algorithm.POWELL],
+    SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
 }
-
-
-class ScipyAlgorithm(Enum):
-    NELDER_MEAD = auto()
-    POWELL = auto()
-    CG = auto()
-    BFGS = auto()
-    NEWTON_CG = auto()
-    L_BFGS_B = auto()
-    TNC = auto()
-    COBYLA = auto()
-    SLSQP = auto()
-    TRUST_CONSTR = auto()
-    DOGLEG = auto()
-    TRUST_NCG = auto()
-    TRUST_EXACT = auto()
-    TRUST_KRYLOV = auto()
-
-    @DynamicClassAttribute
-    def scipy_name(self) -> str:
-        return self.name.replace("_", "-").lower()
-
-    @DynamicClassAttribute
-    def df_supported(self):
-        return self not in {self.NELDER_MEAD, self.POWELL, self.COBYLA}
-
-    @classmethod
-    def _missing_(cls, value: str) -> ScipyAlgorithm:
-        try:
-            return cls[value.upper()]
-        except (KeyError, AttributeError):
-            raise ValueError(f"No such Algorithm value '{value}'.") from None
-
-    @classmethod
-    def from_algorithm(cls, algorithm: AlgorithmType):
-        return {
-            Algorithm.BFGS: cls.BFGS,
-            Algorithm.CG: cls.CG,
-            Algorithm.COBYLA: cls.COBYLA,
-            Algorithm.DOGLEG: cls.DOGLEG,
-            Algorithm.L_BFGS_B: cls.L_BFGS_B,
-            Algorithm.NELDER_MEAD: cls.NELDER_MEAD,
-            Algorithm.NEWTON_CG: cls.NEWTON_CG,
-            Algorithm.POWELL: cls.POWELL,
-            Algorithm.SLSQP: cls.SLSQP,
-            Algorithm.TNC: cls.TNC,
-            Algorithm.TRUST_CONSTR: cls.TRUST_CONSTR,
-            Algorithm.TRUST_EXACT: cls.TRUST_EXACT,
-            Algorithm.TRUST_KRYLOV: cls.TRUST_KRYLOV,
-            Algorithm.TRUST_NCG: cls.TRUST_NCG,
-        }[Algorithm(algorithm)]
-
-
-COBYLA_OPS = ["catol"]
-SLSQP_OPS = ["eps", "finite_diff_rel_step"]
-
-
-@dataclass
-class ScipyOptConditions:
-    ftol: float | None = None
-    xtol: float | None = None
-    gtol: float | None = None
-    maxiter: int | None = None
-    _extra: dict[str, Any] = field(default_factory=dict, repr=False)
-
-    def to_dict(self) -> dict[str, float]:
-        """
-        Return used conditions, with warnings if defaults will be used.
-
-        Returns
-        -------
-        :
-            A dictionary of optimiser conditions.
-        """
-        dct = asdict(self)
-        dct.update(self._extra)  # merge in algorithm-specific or remapped args
-        dct.pop("_extra", None)
-
-        for key in list(dct.keys()):
-            if dct[key] is None:
-                del dct[key]
-        return dct
-
-    @classmethod
-    def from_kwargs(cls, algorithm: ScipyAlgorithm, **kwargs):
-        params = set(signature(cls).parameters)
-
-        translated = {}
-        for name, val in kwargs.items():
-            if name in CONDITION_MAP:
-                if name.endswith("_rel"):
-                    bluemira_warn(
-                        f"{name} provided; using as {CONDITION_MAP[name]}, unless "
-                        f"{CONDITION_MAP[name] + '_abs'} is provided (takes priority)"
-                    )
-                translated[CONDITION_MAP[name]] = val
-            else:
-                bluemira_warn(f"Scipy does not recognise '{name}'")
-                translated[name] = val
-
-        overrides = ALG_CONDITION_MAP.get(algorithm.name, {})
-        for k_old, k_new in overrides.items():
-            if k_old in translated:
-                translated[k_new] = translated.pop(k_old)
-
-        native_args = {k: v for k, v in translated.items() if k in params}
-        extra_args = {k: v for k, v in translated.items() if k not in params}
-
-        inst = cls(**native_args)
-        inst._extra = extra_args  # preserve unmapped/algorithm-specific settings
-
-        algorithm_defaults = {
-            "COBYLA": {
-                "tol": 1e-6,
-                "catol": 1e-4,
-                "rhobeg": 0.2,
-                "maxiter": 500,
-            },
-        }
-
-        if algorithm.name in algorithm_defaults:
-            for k, v in algorithm_defaults[algorithm.name].items():
-                # only use the default if the user didn't explicitly provide a value
-                if k not in inst._extra and getattr(inst, k, None) is None:
-                    inst._extra[k] = v
-
-        return inst
 
 
 class ScipyOptimiser(Optimiser):
@@ -184,17 +64,34 @@ class ScipyOptimiser(Optimiser):
         *,
         keep_history: bool = False,
     ):
-        self.algorithm = ScipyAlgorithm.from_algorithm(algorithm)
+        self._set_algorithm(algorithm)
         self.n_variables = n_variables
         self.f_objective = f_objective
         self.df_objective = df_objective
-        self.opt_conditions = ScipyOptConditions.from_kwargs(
-            self.algorithm, **(opt_conditions or {})
-        )
+        self._set_conditions(algorithm, opt_conditions)
         self.opt_parameters = opt_parameters or {}
         self.keep_history = keep_history
         self.eq_constraint = []
         self.ineq_constraint = []
+
+    @property
+    def algorithm(self) -> str:
+        """
+        Returns
+        -------
+        :
+            the optimiser's algorithm.
+        """
+        return self._algorithm
+
+    def _set_algorithm(self, alg: AlgorithmType) -> None:
+        """Set the optimiser's algorithm."""
+        self._algorithm = SCIPY_ALG_MAPPING[Algorithm(alg)]
+
+    def _set_conditions(
+        self, alg: AlgorithmType, opt_conditions: Mapping[str, int | float] | None
+    ) -> None:
+        self._opt_conditions = ScipyConditions(Algorithm(alg), (opt_conditions or {}))
 
     def _add_constraint(
         self,
@@ -205,14 +102,12 @@ class ScipyOptimiser(Optimiser):
         ctype: str = "eq",
     ):
         if self.algorithm not in {
-            ScipyAlgorithm.COBYLA,
-            ScipyAlgorithm.SLSQP,
-            ScipyAlgorithm.TRUST_CONSTR,
+            SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
+            SCIPY_ALG_MAPPING[Algorithm.SLSQP_SCIPY],
+            SCIPY_ALG_MAPPING[Algorithm.TRUST_CONSTR],
         }:
             raise OptimisationError(
-                f"""Algorithm '{self.algorithm.name}' does not support {
-                    ctype
-                } constraints."""
+                f"""Algorithm '{self.algorithm}' does not support {ctype} constraints."""
             )
         constraint_list.append({
             "type": ctype,
@@ -351,19 +246,23 @@ class ScipyOptimiser(Optimiser):
 
         try:
             result = minimize(
-                fun=safe_obj if ScipyAlgorithm.COBYLA else self.f_objective,
+                fun=safe_obj
+                if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
+                else self.f_objective,
                 x0=x0,
                 args=(),
-                method=self.algorithm.scipy_name,
-                jac=self.df_objective if self.algorithm.df_supported else None,
+                method=self.algorithm,
+                jac=self.df_objective if self.algorithm in DF_SUPPORTED else None,
                 hess=None,
                 constraints=[
-                    wrap_constraint(c) if ScipyAlgorithm.COBYLA else c
+                    wrap_constraint(c)
+                    if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
+                    else c
                     for c in self.ineq_constraint
                 ],
                 bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
                 tol=None,
-                options={**self.opt_parameters, **self.opt_conditions.to_dict()},
+                options={**self.opt_parameters, **self._opt_conditions.to_dict()},
             )
         except OptVariablesError:  # TO DO: add specific exceptions and messages
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")

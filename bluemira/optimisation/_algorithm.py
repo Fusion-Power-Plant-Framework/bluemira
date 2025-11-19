@@ -95,6 +95,15 @@ class AlgorithmConditions:
     max_time: float | None = None
     stop_val: float | None = None
 
+    # SciPy algorithm conditions
+    ftol: float | None = None
+    xtol: float | None = None
+    gtol: float | None = None
+    maxiter: int | None = 2000
+    tol: float | None = None
+    rhobeg: float | None = None
+    catol: float | None = None
+
     def to_dict(self) -> dict[str, float]:
         """
         Returns
@@ -130,3 +139,12 @@ class AlgorithmDefaultConditions:
     DIRECT_L: AlgorithmConditions = field(default_factory=AlgorithmConditions)
     CRS: AlgorithmConditions = field(default_factory=AlgorithmConditions)
     ISRES: AlgorithmConditions = field(default_factory=AlgorithmConditions)
+
+    SLSQP_SCIPY: AlgorithmConditions = field(default_factory=AlgorithmConditions)
+    COBYLA_SCIPY: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(
+            tol=1e-6,
+            catol=1e-4,
+            rhobeg=0.2,
+        )
+    )
