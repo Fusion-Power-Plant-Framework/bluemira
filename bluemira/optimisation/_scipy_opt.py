@@ -7,13 +7,14 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict
+from dataclasses import asdict, field
 from enum import Enum, auto
 from inspect import signature
 from types import DynamicClassAttribute
 from typing import TYPE_CHECKING, Any
 
 from eqdsk.file import dataclass
+from numpy import clip
 from scipy.optimize import Bounds, minimize
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -29,6 +30,19 @@ if TYPE_CHECKING:
     import numpy as np
 
     from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+
+
+CONDITION_MAP = {  # nlopt to scipy condition map
+    "ftol_rel": "ftol",
+    "ftol_abs": "ftol",  # override if both given
+    "xtol_rel": "xtol",
+    "xtol_abs": "xtol",
+    "max_eval": "maxiter",
+}
+
+ALG_CONDITION_MAP = {  # algorithm-specific condition overrides
+    "COBYLA": {"ftol": "tol"},
+}
 
 
 class ScipyAlgorithm(Enum):
@@ -92,6 +106,7 @@ class ScipyOptConditions:
     xtol: float | None = None
     gtol: float | None = None
     maxiter: int | None = None
+    _extra: dict[str, Any] = field(default_factory=dict, repr=False)
 
     def to_dict(self) -> dict[str, float]:
         """
@@ -103,43 +118,56 @@ class ScipyOptConditions:
             A dictionary of optimiser conditions.
         """
         dct = asdict(self)
+        dct.update(self._extra)  # merge in algorithm-specific or remapped args
+        dct.pop("_extra", None)
+
         for key in list(dct.keys()):
             if dct[key] is None:
-                bluemira_warn(f"Scipy default '{key}' in use")
                 del dct[key]
         return dct
 
     @classmethod
-    def from_kwargs(cls, **kwargs):
+    def from_kwargs(cls, algorithm: ScipyAlgorithm, **kwargs):
         params = set(signature(cls).parameters)
-
-        mapping = {  # nlopt to scipy condition mapping
-            "ftol_rel": "ftol",
-            "ftol_abs": "ftol",  # override if both given
-            "xtol_rel": "xtol",
-            "xtol_abs": "xtol",
-            "max_eval": "maxiter",
-        }
 
         translated = {}
         for name, val in kwargs.items():
-            if name in mapping:
+            if name in CONDITION_MAP:
                 if name.endswith("_rel"):
                     bluemira_warn(
-                        f"{name} provided; using as {mapping[name]}, unless"
-                        f" {mapping[name] + '_abs'} is provided (takes priority)"
+                        f"{name} provided; using as {CONDITION_MAP[name]}, unless "
+                        f"{CONDITION_MAP[name] + '_abs'} is provided (takes priority)"
                     )
-                translated[mapping[name]] = val
+                translated[CONDITION_MAP[name]] = val
             else:
                 bluemira_warn(f"Scipy does not recognise '{name}'")
                 translated[name] = val
 
-        native_args = {k: v for k, v in translated.items() if k in params}
-        inst = cls(**native_args)
+        overrides = ALG_CONDITION_MAP.get(algorithm.name, {})
+        for k_old, k_new in overrides.items():
+            if k_old in translated:
+                translated[k_new] = translated.pop(k_old)
 
-        for new_name, new_val in translated.items():
-            if new_name not in params:
-                setattr(inst, new_name, new_val)
+        native_args = {k: v for k, v in translated.items() if k in params}
+        extra_args = {k: v for k, v in translated.items() if k not in params}
+
+        inst = cls(**native_args)
+        inst._extra = extra_args  # preserve unmapped/algorithm-specific settings
+
+        algorithm_defaults = {
+            "COBYLA": {
+                "tol": 1e-6,
+                "catol": 1e-4,
+                "rhobeg": 0.2,
+                "maxiter": 500,
+            },
+        }
+
+        if algorithm.name in algorithm_defaults:
+            for k, v in algorithm_defaults[algorithm.name].items():
+                # only use the default if the user didn't explicitly provide a value
+                if k not in inst._extra and getattr(inst, k, None) is None:
+                    inst._extra[k] = v
 
         return inst
 
@@ -160,7 +188,9 @@ class ScipyOptimiser(Optimiser):
         self.n_variables = n_variables
         self.f_objective = f_objective
         self.df_objective = df_objective
-        self.opt_conditions = ScipyOptConditions.from_kwargs(**(opt_conditions or {}))
+        self.opt_conditions = ScipyOptConditions.from_kwargs(
+            self.algorithm, **(opt_conditions or {})
+        )
         self.opt_parameters = opt_parameters or {}
         self.keep_history = keep_history
         self.eq_constraint = []
@@ -305,23 +335,31 @@ class ScipyOptimiser(Optimiser):
         if x0 is None:
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
 
+        def safe_obj(x):
+            # COBYLA sometimes steps slightly outside normalized range
+            x_safe = clip(x, 0.0, 1.0)
+            return self.f_objective(x_safe)
+
+        def wrap_constraint(c):
+            def safe_constraint(x):
+                x_safe = clip(x, 0.0, 1.0)
+                return c["fun"](x_safe)
+
+            new_c = c.copy()
+            new_c["fun"] = safe_constraint
+            return new_c
+
         try:
             result = minimize(
-                fun=self.f_objective,
+                fun=safe_obj if ScipyAlgorithm.COBYLA else self.f_objective,
                 x0=x0,
                 args=(),
                 method=self.algorithm.scipy_name,
                 jac=self.df_objective if self.algorithm.df_supported else None,
                 hess=None,
                 constraints=[
-                    *(
-                        constr.as_dict() if not isinstance(constr, dict) else constr
-                        for constr in self.eq_constraint
-                    ),
-                    *(
-                        constr.as_dict() if not isinstance(constr, dict) else constr
-                        for constr in self.ineq_constraint
-                    ),
+                    wrap_constraint(c) if ScipyAlgorithm.COBYLA else c
+                    for c in self.ineq_constraint
                 ],
                 bounds=Bounds(lb=self._lower_bounds, ub=self._upper_bounds),
                 tol=None,
@@ -334,7 +372,7 @@ class ScipyOptimiser(Optimiser):
         return OptimiserResult(
             f_x=result.fun,
             x=result.x,
-            n_evals=result.nit,
+            n_evals=result.nit if hasattr(result, "nit") else result.nfev,
             history=None,
             constraint_history=None,
         )
@@ -345,7 +383,6 @@ class ScipyOptimiser(Optimiser):
 
         Set to `-np.inf` to unbound the parameter's minimum.
         """
-        # TO DO: convert to ineq constraints if bounds not supported for give algorithm
         self._lower_bounds = bounds
 
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
@@ -354,5 +391,4 @@ class ScipyOptimiser(Optimiser):
 
         Set to `np.inf` to unbound the parameter's minimum.
         """
-        # TO DO: convert to ineq constraints if bounds not supported for give algorithm
         self._upper_bounds = bounds
