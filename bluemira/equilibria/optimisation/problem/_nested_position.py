@@ -203,6 +203,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         current_bounder: MovingCurrentBoundStrategy | None = None,
         *,
         debug: bool = False,
+        keep_history: bool = True,
+        check_constraints: bool = True,
     ):
         super().__init__(
             coilset,
@@ -226,6 +228,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         opt_dimension = self.position_mapper.dimension
         self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
         self.current_bounder = current_bounder
+
+        self.keep_history = keep_history
+        self.check_constraints = check_constraints
 
     @staticmethod
     def _run_reporting(itern, max_fom, verbose):
@@ -261,7 +266,10 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             debug[entry].append([lcfs, value])
 
     def sub_opt_objective(
-        self, vector: npt.NDArray[np.float64], *, verbose: bool = False
+        self,
+        vector: npt.NDArray[np.float64],
+        *,
+        verbose: bool = False,
     ) -> float:
         """Run the sub-optimisations
 
@@ -291,7 +299,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             if self.current_bounder is not None:
                 sub_opt_prob.set_current_bounds(max_currents)
 
-            result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
+            result = sub_opt_prob.optimise(
+                x0=self.initial_currents,
+                fixed_coils=False,
+                keep_history=self.keep_history,
+                check_constraints=self.check_constraints,
+            )
 
             self._run_diagnostics(self.debug, sub_opt_prob, result)
             fom_values.append(result.f_x)
@@ -303,8 +316,18 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
     def objective(
         self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
-        """The objective function of the parent optimisation."""  # noqa: DOC201
-        return self.sub_opt_objective(vector, verbose=verbose)
+        """
+        The objective function of the parent optimisation.
+
+        Returns
+        -------
+        :
+            Results of the sub-optimisations.
+        """
+        return self.sub_opt_objective(
+            vector,
+            verbose=verbose,
+        )
 
     def _get_initial_vector(self) -> npt.NDArray[np.float64]:
         """
@@ -319,7 +342,12 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
     def optimise(
-        self, x0: npt.NDArray | None = None, *, verbose: bool = False
+        self,
+        x0: npt.NDArray | None = None,
+        *,
+        verbose: bool = False,
+        keep_history: bool = False,
+        check_constraints: bool = False,
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP
@@ -336,6 +364,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset:
             Optimised CoilSet
         """
+        keep_history = keep_history or self.keep_history
+        check_constraints = check_constraints or self.check_constraints
         if x0 is None:
             x0 = self._get_initial_vector()
 
@@ -350,12 +380,15 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=verbose,
         )
 
         optimal_positions = opt_result.x
         # Call the objective one last time, makes sure the coilset state
         # is set to the optimum
-        self.sub_opt_objective(optimal_positions)
+        self.sub_opt_objective(optimal_positions, verbose=verbose)
 
         # Clean up state of Equilibrium objects
         for sub_opt in self.sub_opt_problems:
