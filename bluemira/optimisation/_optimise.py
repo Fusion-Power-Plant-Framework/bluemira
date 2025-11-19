@@ -22,7 +22,13 @@ from bluemira.optimisation._algorithm import (
     AlgorithmType,
 )
 from bluemira.optimisation._nlopt import NloptOptimiser
+from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._scipy_opt import (
+    ScipyAlgorithm,
+    ScipyOptimiser,
+)
+from bluemira.optimisation.error import OptimisationError
 from bluemira.optimisation.typed import (
     ConstraintT,
     ObjectiveCallable,
@@ -250,13 +256,29 @@ def _make_optimiser(
     *,
     keep_history: bool = False,
 ) -> Optimiser:
-    """
+    """Make a new optimiser object.
+
     Returns
     -------
     :
-        a new optimiser object.
+        An initialised optimiser object.
+
+    Raises
+    ------
+    OptimisationError
+        Unknown Algorithm
     """
-    opt = NloptOptimiser(
+    if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
+        optimiser = NloptOptimiser
+    else:
+        try:
+            ScipyAlgorithm(alg)
+        except KeyError:
+            raise OptimisationError("Unknown algorithm") from None
+        else:
+            optimiser = ScipyOptimiser
+
+    opt = optimiser(
         algorithm,
         dimensions,
         f_objective=f_objective,
