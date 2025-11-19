@@ -292,6 +292,13 @@ class ScipyOptimiser(Optimiser):
         The result of the optimisation, containing the optimised
         parameters ``x``, as well as other information about the
         optimisation.
+
+        Raises
+        ------
+        OptimisationError
+            Low-level optimisation error.
+        KeyboardInterrupt
+            Optimisation halted by user.
         """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
@@ -318,7 +325,7 @@ class ScipyOptimiser(Optimiser):
                 args=(),
                 method=self.algorithm,
                 jac=self.df_objective if self.algorithm in DF_SUPPORTED else None,
-                hess=None,
+                hess=None,  # algorithms that use this are not yet implemented
                 constraints=[
                     wrap_constraint(c)
                     if self.algorithm == SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY]
@@ -329,10 +336,19 @@ class ScipyOptimiser(Optimiser):
                 tol=None,  # ignore - provide specific tolerance in opt_conditions
                 options={**self.opt_parameters, **self.opt_conditions},
             )
-        except OptVariablesError:  # TO DO: add specific exceptions and messages
+        except OptVariablesError as err:
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")
+            raise OptimisationError(f"SciPy {self.algorithm} failed: {err}") from None
+        except RuntimeError as err:
+            bluemira_warn(f"RuntimeError during optimisation: {err}")
+            raise OptimisationError(f"SciPy {self.algorithm} failed: {err}") from None
+        except KeyboardInterrupt:
+            raise KeyboardInterrupt(
+                "The optimisation was halted by the user. Please check "
+                "your optimisation problem and termination conditions."
+            ) from None
 
-        process_scipy_result(result)
+        process_scipy_result(result, self.algorithm)
         return OptimiserResult(
             f_x=result.fun,
             x=result.x,

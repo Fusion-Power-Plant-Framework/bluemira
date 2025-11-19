@@ -6,12 +6,13 @@
 """Collection of utility functions for the module."""
 
 from collections.abc import Callable, Iterable
-from typing import Any
+from typing import Any, NoReturn
 
 import numpy as np
 from scipy.optimize._numdiff import (
     approx_derivative as _approx_derivative,  # noqa: PLC2701
 )
+from scipy.optimize._optimize import OptimizeResult
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationError
@@ -58,7 +59,73 @@ def approx_derivative(
     )
 
 
-def process_scipy_result(res):
+def _log_and_raise(alg: str, msg: str) -> NoReturn:
+    bluemira_warn(f"{alg} failed: {msg}")
+    raise OptimisationError(f"{alg} optimisation failed: {msg}")
+
+
+def _process_slsqp(res: OptimizeResult) -> np.ndarray:
+    codes = {
+        -1: "Gradient evaluation required (g & a)",
+        1: "Function evaluation required (f & c)",
+        2: "More equality constraints than independent variables",
+        3: "More than 3*n iterations in LSQ subproblem",
+        4: "Inequality constraints incompatible",
+        5: "Singular matrix E in LSQ subproblem",
+        6: "Singular matrix C in LSQ subproblem",
+        7: "Rank-deficient equality constraint subproblem HFTI",
+        8: "Positive directional derivative for linesearch",
+        9: "Iteration limit reached",
+    }
+    if res.status == 0:
+        return res.x
+    _log_and_raise(
+        "SLSQP",
+        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+    )
+
+
+def _process_cobyla(res: OptimizeResult) -> np.ndarray:
+    codes = {
+        2: "Trust-region subproblem failed.",
+        3: "Maximum number of function evaluations reached.",
+        20: "Maximum number of trust-region iterations reached.",
+        -1: "NaN/Inf encountered in x.",
+        -2: "NaN/Inf encountered in f.",
+        -3: "NaN/Inf encountered in model.",
+        6: "No space between variable bounds.",
+        7: "Numerical instability (damaging rounding).",
+        8: "Zero linear constraint detected.",
+        30: "Terminated by user callback.",
+        100: "COBYLA internal error (invalid input).",
+        101: "COBYLA internal error (assertion fails).",
+        102: "COBYLA internal error (validation fails).",
+        103: "COBYLA internal error (memory allocation fails).",
+    }
+    if res.status in {0, 1}:
+        return res.x
+    _log_and_raise(
+        "COBYLA",
+        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+    )
+
+
+def _process_cobyqa(res: OptimizeResult) -> np.ndarray:
+    codes = {
+        5: "Maximum function evaluations reached.",
+        6: "Maximum iteration count reached.",
+        -1: "Infeasible starting point or problem.",
+        -2: "Linear algebra failure inside COBYQA.",
+    }
+    if res.status in {0, 1, 2, 3, 4}:
+        return res.x
+    _log_and_raise(
+        "COBYQA",
+        codes.get(res.status, "Unknown termination code") + f"\n\n{res.message}{res!s}",
+    )
+
+
+def process_scipy_result(res: OptimizeResult, alg: str) -> np.ndarray:
     """
     Handle a scipy.minimize OptimizeResult object. Process error codes, if any.
 
@@ -84,20 +151,13 @@ def process_scipy_result(res):
         bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
         raise OptimisationError(f"{res.message}\n{res!s}")
 
-    if res.status == 8:  # noqa: PLR2004
-        # This can happen when scipy is not convinced that it has found a minimum.
-        bluemira_warn(
-            "\nOptimiser (scipy) found a positive directional derivative,\n"
-            f"returning suboptimal result. \n\n{res.message}{res!s}"
-        )
-        return res.x
-
-    if res.status == 9:  # noqa: PLR2004
-        bluemira_warn(
-            "\nOptimiser (scipy) exceeded number of iterations, returning"
-            f"suboptimal result. \n\n{res.message}{res!s}"
-        )
-        return res.x
+    # scipy uses different result status codes depending on the algorithm *sigh*
+    if alg == "SLSQP":
+        return _process_slsqp(res)
+    if alg == "COBYLA":
+        return _process_cobyla(res)
+    if alg == "COBYQA":
+        return _process_cobyqa(res)
 
     raise OptimisationError(f"{res.message}\n{res!s}")
 
