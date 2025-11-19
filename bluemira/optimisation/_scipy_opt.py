@@ -89,11 +89,13 @@ SLSQP_OPS = ["eps", "finite_diff_rel_step"]
 @dataclass
 class ScipyOptConditions:
     ftol: float | None = None
+    xtol: float | None = None
+    gtol: float | None = None
     maxiter: int | None = None
 
     def to_dict(self) -> dict[str, float]:
         """
-        Return the data in dictionary form.
+        Return used conditions, with warnings if defaults will be used.
 
         Returns
         -------
@@ -101,28 +103,44 @@ class ScipyOptConditions:
             A dictionary of optimiser conditions.
         """
         dct = asdict(self)
-        if self.ftol is None:
-            del dct["ftol"]
-            bluemira_warn("Scipy default tolerance in use")
-        if self.maxiter is None:
-            del dct["maxiter"]
-            bluemira_warn("Scipy default maxiter in use")
+        for key in list(dct.keys()):
+            if dct[key] is None:
+                bluemira_warn(f"Scipy default '{key}' in use")
+                del dct[key]
         return dct
 
     @classmethod
     def from_kwargs(cls, **kwargs):
         params = set(signature(cls).parameters)
 
-        native_args, new_args = {}, {}
-        for name, val in kwargs.items():
-            if name in params:
-                native_args[name] = val
-            else:
-                new_args[name] = val
+        mapping = {  # nlopt to scipy condition mapping
+            "ftol_rel": "ftol",
+            "ftol_abs": "ftol",  # override if both given
+            "xtol_rel": "xtol",
+            "xtol_abs": "xtol",
+            "max_eval": "maxiter",
+        }
 
+        translated = {}
+        for name, val in kwargs.items():
+            if name in mapping:
+                if name.endswith("_rel"):
+                    bluemira_warn(
+                        f"{name} provided; using as {mapping[name]}, unless"
+                        f" {mapping[name] + '_abs'} is provided (takes priority)"
+                    )
+                translated[mapping[name]] = val
+            else:
+                bluemira_warn(f"Scipy does not recognise '{name}'")
+                translated[name] = val
+
+        native_args = {k: v for k, v in translated.items() if k in params}
         inst = cls(**native_args)
-        for new_name, new_val in new_args.items():
-            setattr(inst, new_name, new_val)
+
+        for new_name, new_val in translated.items():
+            if new_name not in params:
+                setattr(inst, new_name, new_val)
+
         return inst
 
 
@@ -162,9 +180,9 @@ class ScipyOptimiser(Optimiser):
             ScipyAlgorithm.TRUST_CONSTR,
         }:
             raise OptimisationError(
-                f"Algorithm '{self.algorithm.name}' does not support {
+                f"""Algorithm '{self.algorithm.name}' does not support {
                     ctype
-                } constraints."
+                } constraints."""
             )
         constraint_list.append({
             "type": ctype,
