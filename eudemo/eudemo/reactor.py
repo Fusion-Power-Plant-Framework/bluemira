@@ -635,8 +635,8 @@ if __name__ == "__main__":
             "EUDEMO",
             n_sectors=reactor_config.global_params.n_TF.value,
         )
-
-        establish_material_cache(["eudemo.config.material", "eurofusion_materials.library", "matproplib"])
+        import eudemo
+        establish_material_cache([eudemo.materials, "eurofusion_materials.library", "matproplib"])
 
         process_start = time.time()
         radial_build(
