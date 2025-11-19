@@ -16,7 +16,7 @@ import pandas as pd
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.codes.openmc.make_csg import CellStage
@@ -58,8 +58,67 @@ def get_percent_err(row):
     return row["std. dev."] / row["mean"] * 100.0
 
 
+class OpenMCResultBase:
+    """Base class for openmc results"""
+
+    @staticmethod
+    def _load_dataframe_from_statepoint(
+        statepoint: openmc.StatePoint, tally_name: str
+    ) -> pd.DataFrame:
+        return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
+
+    @staticmethod
+    def _convert_dict_contents(dataset: dict[str, dict[int, list[str | float]]]):
+        for k, v in dataset.items():
+            vals = list(v.values()) if isinstance(v, dict) else v
+            dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
+        return dataset
+
+    @staticmethod
+    def dt_neuton_power(src_triton_rate):
+        """Calculate dt neutron power"""
+        return 0.8 * E_DT_fusion() * src_triton_rate
+
+    @staticmethod
+    def energy_multiplication(dt_neutron_power, total_power):
+        """Calculate energy multiplication"""
+        return total_power / dt_neutron_power
+
+    @staticmethod
+    def multiplication_power(energy_multiplication, dt_neutron_power):
+        """Calculate multiplication power"""
+        return (energy_multiplication - 1.0) * dt_neutron_power
+
+    @classmethod
+    def _load_filter_power_err(
+        cls, statepoint, src_rate: float, filter_name: str
+    ) -> tuple[float, float]:
+        """
+        Power is initially loaded as eV/source particle. To convert to Watt, we need the
+        source particle rate.
+
+        Parameters
+        ----------
+        filter_name:
+            the literal name that was used in tallying.py to refer to this tally.
+        src_rate:
+            source particle rate.
+
+        Returns
+        -------
+        power:
+            The total power [W].
+        errors:
+            The absolute error on the total power [W]. RMS of errors from each cell.
+        """
+        df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
+        powers = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+        errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
+        return powers.sum(), np.sqrt((errors**2).sum())
+
+
 @dataclass
-class OpenMCCSGResult:
+class OpenMCCSGResult(OpenMCResultBase):
     """
     Class that looks opens up the openmc universe from the statepoint file,
         so that the dataframes containing the relevant results
@@ -141,10 +200,10 @@ class OpenMCCSGResult:
             statepoint, src_rate, "total power"
         )
 
-        dt_neuton_power = 0.8 * E_DT_fusion() * src_triton_rate
-        e_mult = total_power / dt_neuton_power
-        e_mult_err = total_power_err / dt_neuton_power
-        mult_power = (e_mult - 1.0) * dt_neuton_power
+        dt_n_power = cls.dt_neuton_power(src_triton_rate)
+        e_mult = cls.energy_multiplication(dt_n_power, total_power)
+        e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
+        mult_power = cls.multiplication_power(e_mult, dt_n_power)
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
         damage = cls._load_damage(
             statepoint, cell_names, cell_vols, cell_arrays, src_rate
@@ -216,19 +275,6 @@ class OpenMCCSGResult:
 
         return vol_results, cell_volumes
 
-    @staticmethod
-    def _load_dataframe_from_statepoint(
-        statepoint: openmc.StatePoint, tally_name: str
-    ) -> pd.DataFrame:
-        return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
-
-    @staticmethod
-    def _convert_dict_contents(dataset: dict[str, dict[int, list[str | float]]]):
-        for k, v in dataset.items():
-            vals = list(v.values()) if isinstance(v, dict) else v
-            dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
-        return dataset
-
     @classmethod
     def _load_tbr(cls, statepoint, source_rate: float, source_triton_rate: float):
         """
@@ -246,33 +292,6 @@ class OpenMCCSGResult:
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         # Single tally, so std dev scales linearly
         return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
-
-    @classmethod
-    def _load_filter_power_err(
-        cls, statepoint, src_rate: float, filter_name: str
-    ) -> tuple[float, float]:
-        """
-        Power is initially loaded as eV/source particle. To convert to Watt, we need the
-        source particle rate.
-
-        Parameters
-        ----------
-        filter_name:
-            the literal name that was used in tallying.py to refer to this tally.
-        src_rate:
-            source particle rate.
-
-        Returns
-        -------
-        power:
-            The total power [W].
-        errors:
-            The absolute error on the total power [W]. RMS of errors from each cell.
-        """
-        df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
-        powers = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
-        errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
-        return powers.sum(), np.sqrt((errors**2).sum())
 
     @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
@@ -521,36 +540,43 @@ class OpenMCCSGResult:
 
 
 @dataclass
-class OpenMCDAGMCResult:
+class OpenMCDAGMCResult(OpenMCResultBase):
+    """
+    Open up the openmc universe from the statepoint file,
+    so that the dataframes containing the relevant results
+    can be generated and reformatted by its methods.
+    """
+
+    tbr: float
+    tbr_err: float
+    e_mult: float
+    e_mult_err: float
+    mult_power: float
+    src_rate: float
+
+    statepoint: openmc.StatePoint
+    statepoint_file: Path
+    statepoint_file: openmc.StatePoint
+
     @classmethod
-    def from_file(
+    def from_run(
         cls,
         universe: openmc.Universe,
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: Path,
     ):
+        """Create results class from run statepoint"""
         statepoint = openmc.StatePoint(statepoint_file.as_posix())
 
         tbr_cell_tally = statepoint.get_tally(name="tbr")
         tbr_mesh_tally = statepoint.get_tally(name="tbr_on_mesh")
-        heating_cell_tally = statepoint.get_tally(name="heating")
         heating_mesh_tally = statepoint.get_tally(name="heating_on_mesh")
         flux_mesh_tally = statepoint.get_tally(name="flux_on_mesh")
 
-        bluemira_print(f"The reactor has a TBR of {tbr_cell_tally.mean.sum()}")
-        bluemira_print(
-            f"Standard deviation on the TBR is {tbr_cell_tally.std_dev.sum()}"
+        total_power, total_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "heating"
         )
-
-        bluemira_print(
-            f"The heating of {heating_cell_tally.mean.sum() / 1e6} MeV "
-            "per source particle is deposited"
-        )
-        bluemira_print(
-            f"Standard deviation on the heating tally is {heating_cell_tally.std_dev.sum()}"
-        )
-
         mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
         mesh.write_data_to_vtk(
             filename="tbr_mesh_mean.vtk",
@@ -569,9 +595,25 @@ class OpenMCDAGMCResult:
         numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)
         numpy_to_vtk(flux_mesh_mean, "flux_mesh_mean", scaling)
 
+        dt_n_power = cls.dt_neuton_power(src_triton_rate)
+        e_mult = cls.energy_multiplication(dt_n_power, total_power)
+        e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
+        mult_power = cls.multiplication_power(e_mult, dt_n_power)
+        return cls(
+            tbr=tbr_cell_tally.mean.sum(),
+            tbr_err=tbr_cell_tally.std_dev.sum(),
+            e_mult=e_mult,
+            e_mult_err=e_mult_err,
+            src_rate=src_rate,
+            mult_power=mult_power,
+            statepoint_file=statepoint_file,
+            statepoint=statepoint,
+        )
 
-import vtk
-from vtkmodules.util import numpy_support
+
+# TODO @je-cook: move this function somewhere sensible  # noqa: TD003
+import vtk  # noqa: E402
+from vtkmodules.util import numpy_support  # noqa: E402
 
 
 def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
@@ -622,8 +664,29 @@ class NeutronicsOutputParams(ParameterFrame):
     peak_div_cu_dpa_rate: Parameter[float]
 
     @classmethod
-    def from_openmc_dagmc_result(cls, result: OpenMCDAGMCResult):
-        return cls()
+    def from_openmc_dag_result(cls, result: OpenMCDAGMCResult):
+        """
+        Produce output parameters from an OpenMC DAGMC result
+        """
+        source = "OpenMC DAGMC"
+
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", None, unit="W", source=source),
+            Parameter("P_n_divertor", None, unit="W", source=source),
+            Parameter("P_n_vessel", None, unit="W", source=source),
+            # No auxiliaries (e.g. HCD, port plugs modelled here)
+            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
+            Parameter(  # can't get this without coupling to D1S/R2S/involving fispact
+                "P_n_decay", 0.0, unit="W", source=source
+            ),
+            Parameter("peak_eurofer_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_bb_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", None, unit="dpa/fpy", source=source),
+        )
 
     @classmethod
     def from_openmc_csg_result(cls, result: OpenMCCSGResult):
@@ -632,10 +695,10 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         source = "OpenMC CSG"
 
-        peak_eurofer_dpa_rate = result.damage["eurofer damage"]["dpa/fpy"].max()
-        peak_bb_iron_dpa_rate = result.damage["blanket damage"]["dpa/fpy"].max()
-        peak_vv_iron_dpa_rate = result.damage["VV damage"]["dpa/fpy"].max()
-        peak_div_cu_dpa_rate = result.damage["divertor damage"]["dpa/fpy"].max()
+        peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
+        peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
+        peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
+        peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
@@ -645,32 +708,20 @@ class NeutronicsOutputParams(ParameterFrame):
             # No auxiliaries (e.g. HCD, port plugs modelled here)
             Parameter("P_n_aux", 0.0, unit="W", source=source),
             Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
-            Parameter(
+            Parameter(  # can't get this without coupling to D1S/R2S/involving fispact
                 "P_n_decay", 0.0, unit="W", source=source
-            ),  # can't get this without coupling to D1S/R2S/involving fispact
-            Parameter(
-                "peak_eurofer_dpa_rate",
-                peak_eurofer_dpa_rate,
-                unit="dpa/fpy",
-                source=source,
             ),
             Parameter(
-                "peak_bb_iron_dpa_rate",
-                peak_bb_iron_dpa_rate,
-                unit="dpa/fpy",
-                source=source,
+                "peak_eurofer_dpa_rate", peak_eurofer_dpa, unit="dpa/fpy", source=source
             ),
             Parameter(
-                "peak_vv_iron_dpa_rate",
-                peak_vv_iron_dpa_rate,
-                unit="dpa/fpy",
-                source=source,
+                "peak_bb_iron_dpa_rate", peak_bb_iron_dpa, unit="dpa/fpy", source=source
             ),
             Parameter(
-                "peak_div_cu_dpa_rate",
-                peak_div_cu_dpa_rate,
-                unit="dpa/fpy",
-                source=source,
+                "peak_vv_iron_dpa_rate", peak_vv_iron_dpa, unit="dpa/fpy", source=source
+            ),
+            Parameter(
+                "peak_div_cu_dpa_rate", peak_div_cu_dpa, unit="dpa/fpy", source=source
             ),
         )
 

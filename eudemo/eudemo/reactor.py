@@ -860,7 +860,8 @@ if __name__ == "__main__":
             n_TF=reactor_config.global_params.n_TF.value,
         )
 
-        run_dagmc_neutronics(
+        # TODO @je-cook: Put the results somewhere
+        dagmc_out = run_dagmc_neutronics(
             reactor,
             reactor_config.params_for("Neutronics", "DAGMC"),
             reactor_config.config_for("Neutronics", "DAGMC"),
@@ -883,13 +884,6 @@ if __name__ == "__main__":
 
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
         folder_name = f"results_v02/A_{a_string}"
-        run_dagmc_neutronics(
-            reactor,
-            reactor_config.params_for("Neutronics", "DAGMC"),
-            reactor_config.config_for("Neutronics", "DAGMC"),
-            reference_eq,
-        )
-
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:

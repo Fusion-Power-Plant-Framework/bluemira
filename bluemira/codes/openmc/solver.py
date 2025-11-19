@@ -566,7 +566,7 @@ class OpenMCDAGTeardown(CodesTeardown):
     ):
         """Plot stage for Teardown task"""
         fig.axis.get_figure().save_fig(fig.path)
-        return axis
+        return fig.axis
 
     def volume(
         self,
@@ -575,6 +575,7 @@ class OpenMCDAGTeardown(CodesTeardown):
         _statepoint_file,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
+        raise NotImplementedError
 
 
 TALLY_FUNCTION_TYPE = Callable[
