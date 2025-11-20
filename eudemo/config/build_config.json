@@ -106,12 +106,13 @@
   "Blanket": {
     "run_mode": "run",
     "material": {
-      "IBS": "Homogenised_HCPB_2015_v3_IB",
-      "OBS": "Homogenised_HCPB_2015_v3_OB"
+      "FW": "BB_FW_MATERIAL",
+      "BZ": "BB_BZ_MATERIAL",
+      "MANIFOLD": "BB_MANI_MATERIAL"
     }
   },
   "Vacuum vessel": {
-    "material": "SS316-LN"
+    "material": "VV_MATERIAL"
   },
   "Divertor": {
     "material": "Homogenised_Divertor_2015"
@@ -214,8 +215,8 @@
   },
   "Upper Port": {
     "material": {
-      "TS": "SS316-LN",
-      "VV": "SS316-LN"
+      "TS": "SS316_LN_MAT",
+      "VV": "SS316_LN_MAT"
     }
   },
   "Equatorial Port": {
@@ -240,8 +241,8 @@
       }
     },
     "material": {
-      "TS": "SS316-LN",
-      "VV": "SS316-LN"
+      "TS": "SS316_LN_MAT",
+      "VV": "SS316_LN_MAT"
     }
   },
   "Lower Port": {
@@ -272,8 +273,8 @@
       }
     },
     "material": {
-      "TS": "SS316-LN",
-      "VV": "SS316-LN"
+      "TS": "SS316_LN_MAT",
+      "VV": "SS316_LN_MAT"
     }
   },
   "Cryostat": {
@@ -298,14 +299,14 @@
       }
     },
     "material": {
-      "Body": "SS316-LN",
-      "Port Plug": "SS316-LN"
+      "Body": "SS316_LN_MAT",
+      "Port Plug": "SS316_LN_MAT"
     }
   },
   "Thermal shield": {
     "material": {
-      "VVTS": "SS316-LN",
-      "Cryostat TS": "SS316-LN"
+      "VVTS": "SS316_LN_MAT",
+      "Cryostat TS": "SS316_LN_MAT"
     }
   },
   "RadiationShield": {
@@ -329,13 +330,13 @@
         "long_name": "Castellation offset value."
       }
     },
-    "material": "SS316-LN"
+    "material": "HeavyConcrete"
   },
   "Coil structures": {
     "material": {
-      "PF ICS": "SS316-LN",
-      "TF OIS": "SS316-LN",
-      "GS": "SS316-LN"
+      "PF ICS": "SS316_LN_MAT",
+      "TF OIS": "SS316_LN_MAT",
+      "GS": "SS316_LN_MAT"
     }
   }
 }
