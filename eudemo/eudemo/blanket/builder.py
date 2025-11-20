@@ -9,8 +9,11 @@ EUDEMO builder for blanket
 
 from dataclasses import dataclass
 
+from matproplib.material import Material
+
 from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -29,6 +32,8 @@ from bluemira.geometry.tools import (
     offset_wire,
     slice_shape,
 )
+from bluemira.materials.cache import get_cached_material
+from bluemira.materials.error import MaterialsError
 
 
 @dataclass
@@ -127,16 +132,32 @@ class BlanketBuilder(Builder):
         :
             The xz component
         """
-        ib_fw = PhysicalComponent(f"{self.IBS}_{self.FW}", ib_fw)
-        ib_bz = PhysicalComponent(f"{self.IBS}_{self.BZ}", ib_bz)
-        ib_manifold = PhysicalComponent(f"{self.IBS}_{self.MANIFOLD}", ib_manifold)
+        ib_fw = PhysicalComponent(
+            f"{self.IBS}_{self.FW}", ib_fw, material=self.get_material(self.FW)
+        )
+        ib_bz = PhysicalComponent(
+            f"{self.IBS}_{self.BZ}", ib_bz, material=self.get_material(self.BZ)
+        )
+        ib_manifold = PhysicalComponent(
+            f"{self.IBS}_{self.MANIFOLD}",
+            ib_manifold,
+            material=self.get_material(self.MANIFOLD),
+        )
         apply_component_display_options(ib_fw, color=BLUE_PALETTE[self.BB][0])
         apply_component_display_options(ib_bz, color=BLUE_PALETTE[self.BB][1])
         apply_component_display_options(ib_manifold, color=BLUE_PALETTE[self.BB][2])
 
-        ob_fw = PhysicalComponent(f"{self.OBS}_{self.FW}", ob_fw)
-        ob_bz = PhysicalComponent(f"{self.OBS}_{self.BZ}", ob_bz)
-        ob_manifold = PhysicalComponent(f"{self.OBS}_{self.MANIFOLD}", ob_manifold)
+        ob_fw = PhysicalComponent(
+            f"{self.OBS}_{self.FW}", ob_fw, material=self.get_material(self.FW)
+        )
+        ob_bz = PhysicalComponent(
+            f"{self.OBS}_{self.BZ}", ob_bz, material=self.get_material(self.BZ)
+        )
+        ob_manifold = PhysicalComponent(
+            f"{self.OBS}_{self.MANIFOLD}",
+            ob_manifold,
+            material=self.get_material(self.MANIFOLD),
+        )
         apply_component_display_options(ob_fw, color=BLUE_PALETTE[self.BB][0])
         apply_component_display_options(ob_bz, color=BLUE_PALETTE[self.BB][1])
         apply_component_display_options(ob_manifold, color=BLUE_PALETTE[self.BB][2])
@@ -159,7 +180,9 @@ class BlanketBuilder(Builder):
         slices = []
         for segment in segments:
             single_slice = PhysicalComponent(
-                segment.name, BluemiraFace(slice_shape(segment.shape, xy_plane)[0])
+                segment.name,
+                BluemiraFace(slice_shape(segment.shape, xy_plane)[0]),
+                material=segment.material,
             )
             apply_component_display_options(
                 single_slice, color=segment.display_cad_options.color
@@ -233,7 +256,7 @@ class BlanketBuilder(Builder):
             segment = PhysicalComponent(
                 f"{name}_{sub_name}_{no}",
                 shape,
-                material=self.get_material(name),
+                material=self.get_material(sub_name),
             )
             apply_component_display_options(
                 segment, color=BLUE_PALETTE[self.BB][color_index]
