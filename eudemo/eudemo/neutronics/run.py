@@ -148,7 +148,7 @@ def export_dagmc_model(reactor, build_config):
                 ],
                 "group_by_materials": True,
             },
-            **build_config.get("converter_config", {}),
+            converter_config=build_config.get("converter_config", {}),
         )
 
 
