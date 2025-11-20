@@ -134,11 +134,27 @@
       "show_data": false
     },
     "DAGMC": {
-      "export_dagmc_model": false,
+      "export_dagmc_model": true,
       "dagmc_export_dir": "$path_expand:./dagmc_export",
       "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
       "particles": 10000,
-      "batches": 2
+      "batches": 2,
+      "converter_config": {
+          "converter_type": "fast_ctd",
+          "imprint_geometry": true, 
+          "imprint_per_compound": true,
+          "minimum_include_volume": 1.0,  
+          "fix_step_to_brep_geometry": false,
+          "merge_dist_tolerance": 0.001,
+          "lin_deflection_tol": 0.001,
+          "lin_deflection_is_absolute": false,
+          "angular_deflection_tol": 0.5, 
+          "run_make_watertight": true,  
+          "save_vtk_model": true,  
+          "enable_ext_debug_logging": false, 
+          "use_cached_files": false,  
+          "clean_up_cached": true
+      }
     }
   },
   "TF coils": {
