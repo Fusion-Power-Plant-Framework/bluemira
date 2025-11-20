@@ -97,7 +97,7 @@ class MaterialCache:
                 mod = _d(mod, n, initial_p)
                 if isinstance(mod, Material):
                     return mod
-        raise AttributeError("No such material")
+        raise AttributeError(f"No such material: {name}")
 
     def get_material(self, name: str, *, clone: bool = True):
         """
