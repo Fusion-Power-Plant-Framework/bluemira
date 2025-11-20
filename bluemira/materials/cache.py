@@ -94,11 +94,12 @@ class MaterialCache:
             return None
 
         for p in self._material_packages:
+            initial_p = p.__name__.replace(".", "/")
             if len(name) == 1:
-                return _d(p, name[0], p.__name__)
+                return _d(p, name[0], initial_p)
             mod = p
             for n in name:
-                mod = _d(mod, n, p.__name__)
+                mod = _d(mod, n, initial_p)
             return mod
         raise AttributeError("No such material")
 
