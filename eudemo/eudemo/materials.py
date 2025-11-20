@@ -9,10 +9,10 @@
 from matproplib.conditions import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
+from matproplib.library.concrete import HeavyConcrete
 from matproplib.library.fluids import Helium, Water
 from matproplib.library.steel import SS316_L
 from matproplib.library.tungsten import PlanseeTungsten
-from matproplib.library.concrete import HeavyConcrete
 from matproplib.material import material, mixture
 from matproplib.properties.group import props
 
