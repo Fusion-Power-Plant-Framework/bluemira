@@ -12,15 +12,12 @@ from __future__ import annotations
 
 import copy
 import types
-from typing import TYPE_CHECKING
 
 from matproplib.library.fluids import Void
+from matproplib.material import Material
 
 from bluemira.materials.error import MaterialsError
 from bluemira.utilities.tools import get_module
-
-if TYPE_CHECKING:
-    from matproplib.material import Material
 
 vacuum_void = Void(name="Vacuum")
 
@@ -95,12 +92,11 @@ class MaterialCache:
 
         for p in self._material_packages:
             initial_p = p.__name__.replace(".", "/")
-            if len(name) == 1:
-                return _d(p, name[0], initial_p)
             mod = p
             for n in name:
                 mod = _d(mod, n, initial_p)
-            return mod
+                if isinstance(mod, Material):
+                    return mod
         raise AttributeError("No such material")
 
     def get_material(self, name: str, *, clone: bool = True):
