@@ -6,20 +6,20 @@
 
 """Materials for the LAR example."""
 
-from bluemira.materials.neutronics import make_KALOS_ACB_mat
 from matproplib.conditions import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
 from matproplib.library.fluids import Helium, Water
 from matproplib.library.steel import SS316_L
 from matproplib.library.tungsten import PlanseeTungsten
-from matproplib.material import Material, material, mixture
+from matproplib.material import material, mixture
 from matproplib.properties.group import props
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.materials.neutronics import make_KALOS_ACB_mat
 
 try:
-    from eurofusion_materials.library.steel import EUROfer97, SS316_LN
+    from eurofusion_materials.library.steel import SS316_LN, EUROfer97
     from eurofusion_materials.library.tungsten import Tungsten
 
     EUROFER_MAT = EUROfer97()

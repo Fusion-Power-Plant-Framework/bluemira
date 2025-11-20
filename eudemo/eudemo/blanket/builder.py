@@ -9,11 +9,8 @@ EUDEMO builder for blanket
 
 from dataclasses import dataclass
 
-from matproplib.material import Material
-
 from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -32,8 +29,6 @@ from bluemira.geometry.tools import (
     offset_wire,
     slice_shape,
 )
-from bluemira.materials.cache import get_cached_material
-from bluemira.materials.error import MaterialsError
 
 
 @dataclass
