@@ -223,6 +223,11 @@ class BlanketBuilder(Builder):
         fw = self._find_union_face(silhouette, fw_cut)
         bz = self._find_union_face(silhouette, bz_cut)
         manifold = boolean_cut(silhouette, bz_cut)[0]
+
+ 
+        dodgy_wire = offset_wire(bz.wires[0], -0.001)  # avoid coincident faces
+        bz = BluemiraFace(dodgy_wire)
+
         return fw, bz, manifold
 
     def get_segments(
