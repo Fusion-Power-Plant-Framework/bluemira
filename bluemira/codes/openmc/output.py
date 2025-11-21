@@ -28,6 +28,7 @@ from bluemira.radiation_transport.neutronics.constants import (
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsResult,
 )
+from bluemira.utilities.tools import numpy_to_vtk
 
 
 def get_percent_err(row):
@@ -609,39 +610,6 @@ class OpenMCDAGMCResult(OpenMCResultBase):
             statepoint_file=statepoint_file,
             statepoint=statepoint,
         )
-
-
-# TODO @je-cook: move this function somewhere sensible  # noqa: TD003
-import vtk  # noqa: E402
-from vtkmodules.util import numpy_support  # noqa: E402
-
-
-def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
-    """Convert a numpy array to a VTK image data file."""
-    data_type = vtk.VTK_FLOAT
-    shape = data.shape
-
-    flat_data_array = data.flatten()
-    vtk_data = numpy_support.numpy_to_vtk(
-        num_array=flat_data_array, deep=True, array_type=data_type
-    )
-    vtk_data.SetName(output_name)
-
-    half_x = int(0.5 * scaling[0] * (shape[0] - 1))
-    half_y = int(0.5 * scaling[1] * (shape[1] - 1))
-    half_z = int(0.5 * scaling[2] * (shape[2] - 1))
-
-    img = vtk.vtkImageData()
-    img.GetPointData().SetScalars(vtk_data)
-    img.SetSpacing(scaling[0], scaling[1], scaling[2])
-    img.SetDimensions(shape[0], shape[1], shape[2])
-    img.SetOrigin(-half_x, -half_y, -half_z)
-
-    # Save the VTK file
-    writer = vtk.vtkXMLImageDataWriter()
-    writer.SetFileName(f"{output_name}.vti")
-    writer.SetInputData(img)
-    writer.Write()
 
 
 @dataclass
