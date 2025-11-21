@@ -660,7 +660,7 @@ class TFCoilConductorTechnology(PROCESSModel):
         """
         return "i_tf_sup"
 
-    COPPER = 0, ("tfootfi",)
+    COPPER = 0, ("f_dr_tf_outboard_inboard",)
     SC = 1
     CRYO_AL = 2
 

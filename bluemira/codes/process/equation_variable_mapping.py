@@ -630,7 +630,7 @@ ITERATION_VAR_MAPPING = {
     "fipir": 72,
     "dr_fw_plasma_gap_inboard": 73,
     "dr_fw_plasma_gap_outboard": 74,
-    "tfootfi": 75,
+    "f_dr_tf_outboard_inboard": 75,
     # 76, 77, 78 NOT USED
     "fbeta_poloidal": 79,
     # 80 NOT USED
