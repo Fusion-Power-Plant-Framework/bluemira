@@ -468,7 +468,7 @@ class ProcessInputs:
     plleni: float | None = None
     plsepi: float | None = None
     plsepo: float | None = None
-    tfootfi: float | None = None
+    f_dr_tf_outboard_inboard: float | None = None
 
     # Buildings
 

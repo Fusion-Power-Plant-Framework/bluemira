@@ -1948,7 +1948,7 @@
     "var_mod": "Divertor build and plasma position",
     "scan01": 1.848
   },
-  "tfoffset": {
+  "dz_tf_plasma_centre_offset": {
     "var_mod": "Divertor build and plasma position",
     "scan01": -0.75847
   },
