@@ -35,6 +35,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     TauLimit,
+    ToroidalHarmonicsParams,
     ToroidalHarmonicsSelectionResult,
     _approximation_direct_from_currents,
     _approximation_from_psi_fitting,
@@ -545,6 +546,374 @@ def test_legendre_q_function():
     assert all(test_result[:, 1] != np.inf)
 
 
+@pytest.mark.parametrize(
+    ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
+    [
+        # Case where max_n_dof is hit
+        (5, 5, 4, 4),
+        # Case where 2 * max_harmonic_mode is hit
+        (5, 2, 5, 4),
+        # Case where everything OK
+        (5, 5, 10, 5),
+        # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
+        (10, 4, 9, 8),
+        # Case where n_dof is not specified and defaults to max
+        (None, 5, 9, 9),
+        # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
+        (None, 4, 9, 8),
+    ],
+)
+def test_th_n_dof_limits(
+    n_dof: int | None,
+    max_harmonic_mode: int,
+    max_n_dof: int,
+    expected_dof: int,
+):
+    n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
+    assert n_dof == expected_dof
+
+
+@pytest.mark.parametrize(
+    (
+        "cos_m_chosen",
+        "sin_m_chosen",
+        "expected_Am_cos",
+        "expected_Am_sin",
+    ),
+    [
+        # Case where cos_m_chosen empty
+        (
+            np.array([]),
+            np.array([1]),
+            None,
+            np.array([[2.78003029e-09, -2.78003029e-09]]),
+        ),
+        # Case where sin_m_chosen empty
+        (
+            np.array([0]),
+            np.array([]),
+            np.array([[4.13778177e-09, 4.13778177e-09]]),
+            None,
+        ),
+        # Case where both empty
+        (np.array([]), np.array([]), None, None),
+        # Case where neither empty
+        (
+            np.array([1]),
+            np.array([2]),
+            np.array([[5.56006057e-09, 5.56006057e-09]]),
+            np.array([[6.24538906e-09, -6.24538906e-09]]),
+        ),
+        # Case where sin_m_chosen is 0
+        (
+            np.array([]),
+            np.array([0]),
+            None,
+            np.array([[0.0, -0.0]]),
+        ),
+        # Case with arrays chosen for each
+        (
+            np.array([2, 3, 4]),
+            np.array([2, 3, 4]),
+            np.array([
+                [4.68404177e-09, 4.68404177e-09],
+                [1.64194750e-09, 1.64194750e-09],
+                [-2.92277587e-09, -2.92277587e-09],
+            ]),
+            np.array([
+                [6.24538906e-09, -6.24538906e-09],
+                [9.03071139e-09, -9.03071139e-09],
+                [1.00209457e-08, -1.00209457e-08],
+            ]),
+        ),
+    ],
+)
+def test_coil_toroidal_harmonic_amplitude_matrix_unit(
+    cos_m_chosen: np.ndarray,
+    sin_m_chosen: np.ndarray,
+    expected_Am_cos: np.ndarray,  # noqa: N803
+    expected_Am_sin: np.ndarray,  # noqa: N803
+):
+    # Make a coilset for use in the test
+    circuit = SymmetricCircuit(
+        Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_1",
+        ),
+        Coil(
+            x=1.5,
+            z=-6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        ),
+    )
+
+    coilset = CoilSet(circuit)
+
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([0.0, 0.5, 1.0, 1.5, 2.0]),
+        Z=np.array([-10.0, -5.0, 0.0, 5.0, 10.0]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([0.0, 0.05459965, 1.60943791, 0.15374235, 0.05653073]),
+        sigma=np.array([-0.2977799, -0.57790194, 0.0, 0.5404195, 0.28671642]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
+        input_coils=coilset,
+        th_params=th_params,
+        cos_m_chosen=cos_m_chosen,
+        sin_m_chosen=sin_m_chosen,
+    )
+    # Can't use assert_array_almost_equal if Am_cos or Am_sin is None
+    if Am_cos is None:
+        assert Am_cos == expected_Am_cos
+    else:
+        np.testing.assert_array_almost_equal(Am_cos, expected_Am_cos)
+
+    if Am_sin is None:
+        assert Am_sin == expected_Am_sin
+    else:
+        np.testing.assert_array_almost_equal(Am_sin, expected_Am_sin)
+
+
+@pytest.mark.parametrize(
+    (
+        "n_allowed",
+        "expected_cos",
+        "expected_sin",
+        "expected_cos_collocation",
+        "expected_sin_collocation",
+    ),
+    [
+        # Testing certain entries instead of the whole arrays as they are large
+        (1, 0.04309788, 0.0, 1.57065987, 0.0),
+        (2, 0.05310297, -0.01625601, 0.32913602, -1.45709709),
+        (3, 3.41720539e-02, -0.02308498, -0.68552459, -0.3263508),
+        (4, 2.00939223e-02, -0.02486853, -2.43033551e-01, 3.08997293e-01),
+    ],
+)
+def test_toroidal_harmonics_to_positions(
+    n_allowed,
+    expected_cos,
+    expected_sin,
+    expected_cos_collocation,
+    expected_sin_collocation,
+):
+    # Dummy args
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([
+            [0.0, 0.5, 1.0, 1.5],
+            [0.1, 0.6, 1.1, 1.6],
+            [0.2, 0.7, 1.2, 1.7],
+            [0.3, 0.7, 1.3, 1.8],
+        ]),
+        Z=np.array([
+            [-10.0, -10.0, -10.0, -10.0],
+            [-5.0, -5.0, -5.0, -5.0],
+            [0.0, 0.0, 0.0, 0.0],
+            [5.0, 5.0, 5.0, 5.0],
+        ]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([
+            [0.0, 0.01463519, 0.02906387, 0.04308885],
+            [0.01100558, 0.06528637, 0.1164761, 0.16243346],
+        ]),
+        sigma=np.array([
+            [-0.2977799, -0.29706421, -0.29493706, -0.29145679],
+            [-0.58271165, -0.57572093, -0.55934928, -0.53499839],
+        ]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
+    z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
+    plasma_boundary = Coordinates({"x": x, "z": z})
+    # Use GRID_POINTS as this is what we use in toroidal_harmonic_approximation
+    point_type = PointType.GRID_POINTS
+    colloc = collocation_points(plasma_boundary, point_type)
+
+    # Test without collocation points
+    cos, sin = toroidal_harmonics_to_positions(th_params=th_params, n_allowed=n_allowed)
+    assert len(cos) == n_allowed
+    assert len(sin) == n_allowed
+    np.testing.assert_array_almost_equal(cos[n_allowed - 1][0][1], expected_cos)
+    np.testing.assert_array_almost_equal(sin[n_allowed - 1][0][1], expected_sin)
+
+    # Test with collocation points
+    cos, sin = toroidal_harmonics_to_positions(
+        th_params=th_params, n_allowed=n_allowed, collocation=colloc
+    )
+    assert len(cos) == n_allowed
+    assert len(sin) == n_allowed
+    np.testing.assert_almost_equal(cos[n_allowed - 1][0], expected_cos_collocation)
+    np.testing.assert_almost_equal(sin[n_allowed - 1][0], expected_sin_collocation)
+
+
+@pytest.mark.parametrize(
+    (
+        "n_degrees_of_freedom",
+        "mode_id",
+        "max_harmonic_mode",
+        "expected_error_mask_true",
+        "expected_error_mask_false",
+        "expected_psi",
+        "expected_cos",
+        "expected_sin",
+    ),
+    [  # expected_psi is first entry of the psi array
+        (
+            1,
+            np.array([1]),
+            4,
+            45.98654,
+            59.85169,
+            3.51624807e-02,
+            np.array([20.26314727]),
+            np.array([]),
+        ),
+        (
+            2,
+            np.array([1, 3]),
+            2,
+            45.23583,
+            61.36423,
+            3.34654676e-02,
+            np.array([20.26314727]),
+            np.array([2.58648763]),
+        ),
+        (
+            3,
+            np.array([1, 2, 4]),
+            3,
+            119.014431,
+            162.73504,
+            8.31457803e-02,
+            np.array([14.21691739, 30.49159348]),
+            np.array([7.2089677]),
+        ),
+        (
+            4,
+            np.array([2, 3, 4, 5]),
+            6,
+            241.32979,
+            312.35671,
+            0.23713494,
+            np.array([19.15133806, 45.5655092, 41.72481833, 60.8114398]),
+            np.array([]),
+        ),
+    ],
+)
+def test_approximation_from_psi_fitting(
+    n_degrees_of_freedom,
+    mode_id,
+    max_harmonic_mode,
+    expected_error_mask_true,
+    expected_error_mask_false,
+    expected_psi,
+    expected_cos,
+    expected_sin,
+):
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([
+            [0.1, 0.6, 1.1, 1.6],
+            [0.2, 0.7, 1.2, 1.7],
+            [0.3, 0.7, 1.3, 1.8],
+            [0.4, 0.8, 1.4, 1.9],
+        ]),
+        Z=np.array([
+            [-10.0, -10.0, -10.0, -10.0],
+            [-5.0, -5.0, -5.0, -5.0],
+            [0.1, 0.1, 0.1, 0.1],
+            [5.0, 5.0, 5.0, 5.0],
+        ]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([
+            [0.0, 0.01463519, 0.02906387, 0.04308885],
+            [0.01100558, 0.06528637, 0.1164761, 0.16243346],
+        ]),
+        sigma=np.array([
+            [-0.2977799, -0.29706421, -0.29493706, -0.29145679],
+            [-0.58271165, -0.57572093, -0.55934928, -0.53499839],
+        ]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
+    z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
+    plasma_boundary = Coordinates({"x": x, "z": z})
+    point_type = PointType.GRID_POINTS
+    colloc = collocation_points(plasma_boundary, point_type)
+    coilset_psi = np.array([
+        [0.0, 5.0, 10.0, 15.0],
+        [1.0, 6.0, 11.0, 16.0],
+        [2.0, 7.0, 12.0, 17.0],
+        [3.0, 8.0, 13.0, 18.0],
+    ])
+    collocation_psi = np.arange(64)
+    mask_true = np.array([[0, 0, 1, 1], [0, 0, 1, 1], [1, 0, 1, 0], [0, 1, 1, 0]])
+    mask_false = 1
+    error, psi, cos, sin = _approximation_from_psi_fitting(
+        th_params=th_params,
+        n_degrees_of_freedom=n_degrees_of_freedom,
+        collocation=colloc,
+        mode_id=mode_id,
+        max_harmonic_mode=max_harmonic_mode,
+        collocation_psi=collocation_psi,
+        mask=mask_true,
+        true_coilset_psi=coilset_psi,
+    )
+    np.testing.assert_almost_equal(error, expected_error_mask_true, decimal=5)
+    np.testing.assert_almost_equal(psi[0][0], expected_psi)
+    np.testing.assert_almost_equal(cos, expected_cos)
+    np.testing.assert_almost_equal(sin, expected_sin)
+
+    error, psi, cos, sin = _approximation_from_psi_fitting(
+        th_params=th_params,
+        n_degrees_of_freedom=n_degrees_of_freedom,
+        collocation=colloc,
+        mode_id=mode_id,
+        max_harmonic_mode=max_harmonic_mode,
+        collocation_psi=collocation_psi,
+        mask=mask_false,
+        true_coilset_psi=coilset_psi,
+    )
+
+    # Only the error should be different when the mask is different,
+    # but test them all to be sure
+    np.testing.assert_almost_equal(error, expected_error_mask_false, decimal=5)
+    np.testing.assert_almost_equal(psi[0][0], expected_psi)
+    np.testing.assert_almost_equal(cos, expected_cos)
+    np.testing.assert_almost_equal(sin, expected_sin)
+
+
 class TestRegressionTH:
     @staticmethod
     def _read_json(file_path: str) -> dict:
@@ -1031,33 +1400,6 @@ class TestRegressionTH:
             approx_derivative(test_constraint_function.f_constraint, vector)
         )
 
-    @pytest.mark.parametrize(
-        ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
-        [
-            # Case where max_n_dof is hit
-            (5, 5, 4, 4),
-            # Case where 2 * max_harmonic_mode is hit
-            (5, 2, 5, 4),
-            # Case where everything OK
-            (5, 5, 10, 5),
-            # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
-            (10, 4, 9, 8),
-            # Case where n_dof is not specified and defaults to max
-            (None, 5, 9, 9),
-            # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
-            (None, 4, 9, 8),
-        ],
-    )
-    def test_th_n_dof_limits(
-        self,
-        n_dof: int | None,
-        max_harmonic_mode: int,
-        max_n_dof: int,
-        expected_dof: int,
-    ):
-        n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
-        assert n_dof == expected_dof
-
     def test_separate_psi_contributions(self):
         # fmt: off
         expected_true_coilset_psi = self.param_dict["test_separate_psi_contributions"]["expected_true_coilset_psi_collocation"]  # noqa: E501
@@ -1128,95 +1470,6 @@ class TestRegressionTH:
             self.eq, self.test_th_params, self.psi_norm, plasma_mask=False
         )
         assert mask == expected_mask_false
-
-    def test_toroidal_harmonics_to_positions(self):
-        # test with collocation
-
-        # fmt: off
-        expected_collocation_cos = self.param_dict["test_toroidal_harmonics_to_positions"]["expected_collocation_cos"]  # noqa: E501
-        expected_collocation_sin = self.param_dict["test_toroidal_harmonics_to_positions"]["expected_collocation_sin"]  # noqa: E501
-        # fmt: on
-
-        harmonics_to_collocation_cos, harmonics_to_collocation_sin = (
-            toroidal_harmonics_to_positions(
-                th_params=self.test_th_params,
-                n_allowed=self.n_degrees_of_freedom,
-                collocation=self.collocation,
-            )
-        )
-
-        np.testing.assert_array_almost_equal(
-            expected_collocation_cos, harmonics_to_collocation_cos
-        )
-        np.testing.assert_array_almost_equal(
-            expected_collocation_sin, harmonics_to_collocation_sin
-        )
-
-        # test without collocation
-
-        # fmt:off
-        # test index [0][0]
-        expected_cos = self.param_dict["test_toroidal_harmonics_to_positions"]["expected_cos"]  # noqa: E501
-        # test index [1][1]
-        expected_sin = self.param_dict["test_toroidal_harmonics_to_positions"]["expected_sin"]  # noqa: E501
-
-        # fmt: on
-        harmonics_to_collocation_cos, harmonics_to_collocation_sin = (
-            toroidal_harmonics_to_positions(
-                th_params=self.test_th_params,
-                n_allowed=self.n_degrees_of_freedom,
-                collocation=None,
-            )
-        )
-
-        np.testing.assert_array_almost_equal(
-            expected_cos, harmonics_to_collocation_cos[0][0]
-        )
-        np.testing.assert_array_almost_equal(
-            expected_sin, harmonics_to_collocation_sin[1][1]
-        )
-
-    def test_approximation_from_psi_fitting(self):
-        # fmt: off
-        expected_error = 8.52104445428635
-
-        expected_psi_fit = self.param_dict["test_approximation_from_psi_fitting"]["expected_psi_fit"]  # noqa: E501
-
-        expected_cos_amps = np.array([-4.2389231, -3.58792624, -10.58312314,
-                                      -12.03133123, -15.05828234])
-
-        expected_sin_amps = np.array([-19.33699313])
-        # fmt: on
-
-        mask = _get_plasma_mask(
-            eq=self.eq,
-            th_params=self.test_th_params,
-            psi_norm=self.psi_norm,
-            plasma_mask=True,
-        )
-        true_coilset_psi, _, collocation_psi = _separate_psi_contributions(
-            self.eq, self.test_th_params, self.collocation
-        )
-        modes = np.array([0, 1, 2, 3, 4, 5])
-        error, psi_from_fit_to_collocation_points, cos_amps, sin_amps = (
-            _approximation_from_psi_fitting(
-                th_params=self.test_th_params,
-                n_degrees_of_freedom=6,
-                collocation=self.collocation,
-                mode_id=modes,
-                max_harmonic_mode=5,
-                collocation_psi=collocation_psi,
-                mask=mask,
-                true_coilset_psi=true_coilset_psi,
-            )
-        )
-
-        np.testing.assert_almost_equal(error, expected_error)
-        np.testing.assert_array_almost_equal(
-            psi_from_fit_to_collocation_points[0], expected_psi_fit
-        )
-        np.testing.assert_array_almost_equal(cos_amps, expected_cos_amps)
-        np.testing.assert_array_almost_equal(sin_amps, expected_sin_amps)
 
     def test_approximation_direct_from_currents(self):
         # fmt: off
