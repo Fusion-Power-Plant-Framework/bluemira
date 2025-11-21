@@ -142,7 +142,7 @@
       "converter_config": {
           "converter_type": "fast_ctd",
           "imprint_geometry": true, 
-          "imprint_per_compound": false,
+          "imprint_per_compound": true,
           "minimum_include_volume": 1.0,  
           "fix_step_to_brep_geometry": false,
           "merge_dist_tolerance": 0.001,
