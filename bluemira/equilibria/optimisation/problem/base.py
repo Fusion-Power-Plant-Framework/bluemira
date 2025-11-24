@@ -136,7 +136,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     ):
         self._coilset = coilset
         self.max_currents = max_currents
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        self.bounds = self.get_current_bounds(max_currents, self.scale)
 
         self.targets = targets or MagneticConstraintSet([])
         self.constraints = constraints or []

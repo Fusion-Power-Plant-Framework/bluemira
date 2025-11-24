@@ -698,8 +698,8 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         self,
         x: float | np.ndarray,
         z: float | np.ndarray,
-        ref_x: float,
-        ref_z: float,
+        ref_x: float | np.ndarray,
+        ref_z: float | np.ndarray,
         constraint_value: float = 0.0,
         weights: float | np.ndarray = 1.0,
         tolerance: float | None = None,
@@ -744,7 +744,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         We need to update the target value, as it is a relative constraint.
         """
-        self.target_value = float(eq.psi(self.ref_x, self.ref_z))
+        self.target_value = eq.psi(self.ref_x, self.ref_z)
 
     def plot(self, ax):
         """

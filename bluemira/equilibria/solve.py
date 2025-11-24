@@ -56,9 +56,11 @@ class ConvergenceCriterion(ABC):
 
     flag_psi: bool = True
 
-    def __init__(self, limit: float, math_string: str):
+    def __init__(self, limit: float, math_string: str, limit2: float | None = None):
         self.limit: float = limit
+        self.limit2: float = limit2
         self.progress: list[float] = []
+        self.progress2: list[float] = []
         self.math_string: str = math_string
         self._relax: int = 0
 
@@ -101,7 +103,7 @@ class ConvergenceCriterion(ABC):
             True if the convergence criterion is met, else False.
         """
 
-    def check_converged(self, value: float) -> bool:
+    def check_converged(self, value: float, value2: float | None = None) -> bool:
         """
         Check for convergence.
 
@@ -115,6 +117,9 @@ class ConvergenceCriterion(ABC):
         Whether or not convergence has been reached
         """
         self.progress.append(value)
+        if self.limit2 is not None:
+            self.progress2.append(value2)
+            return value <= self.limit or value2 <= self.limit2
         return value <= self.limit
 
     def plot(self, ax: plt.Axes | None = None):
@@ -146,8 +151,13 @@ class DudsonConvergence(ConvergenceCriterion):
         The limit at which the convergence criterion is met.
     """
 
-    def __init__(self, limit: float = PSI_REL_TOL):
-        super().__init__(limit, "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$")
+    def __init__(self, limit: float = PSI_REL_TOL, limit2: float = 1e-10):
+        super().__init__(
+            limit=limit,
+            limit2=limit2,
+            math_string="$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$",
+        )
+        self.math_string = "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$"
 
     def __call__(
         self,
@@ -182,7 +192,7 @@ class DudsonConvergence(ConvergenceCriterion):
             bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: relative delta_psi: {100 * dpsi_rel:.2f} %"
             )
-        return self.check_converged(dpsi_rel)
+        return self.check_converged(dpsi_rel, dpsi_max)
 
 
 class JrelConvergence(ConvergenceCriterion):

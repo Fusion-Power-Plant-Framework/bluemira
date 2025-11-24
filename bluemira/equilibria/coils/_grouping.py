@@ -1252,13 +1252,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def get_control_coils(self) -> CoilSet:
         """Get control coils"""  # noqa: DOC201
         coils = []
-        for c in self._coils:
-            if isinstance(c, CoilSet):
-                coils.extend(c.get_control_coils()._coils)
-            elif (isinstance(c, Coil) and c.name in self.control) or (
-                isinstance(c, CoilGroup) and any(n in self.control for n in c.name)
+        for item in self._coils:
+            if isinstance(item, CoilSet):
+                coils.extend(item.get_control_coils()._coils)
+            elif (isinstance(item, Coil) and item.name in self.control) or (
+                isinstance(item, CoilGroup) and any(n in self.control for n in item.name)
             ):
-                coils.append(c)
+                coils.append(item)
         return CoilSet(*coils)
 
     @property

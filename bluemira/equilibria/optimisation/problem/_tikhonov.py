@@ -8,6 +8,7 @@
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
@@ -198,6 +199,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(EqCoilsetOptimisationProblem):
 
         # Update parameterisation (coilset).
         opt_currents = self.coilset._opt_currents + current_adjustment
+        bluemira_print("opt_currents: ".join([str(s) for s in opt_currents]))
         self.coilset.set_optimisation_state(opt_currents=opt_currents, current_scale=1.0)
 
         # if the coilset contains circuits, we need to 'expand' the current vector,
