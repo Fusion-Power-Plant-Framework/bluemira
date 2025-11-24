@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": false
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "run",
+      "run_mode": "read",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -104,7 +104,7 @@
     "Divertor silhouette": {}
   },
   "Blanket": {
-    "run_mode": "run",
+    "run_mode": "read",
     "material": {
       "FW": "BB_FW_MATERIAL",
       "BZ": "BB_BZ_MATERIAL",
@@ -119,7 +119,7 @@
   },
   "Neutronics": {
     "CSG": {
-      "enabled": false,
+      "enabled": true,
       "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
       "particles": 10000,
       "batches": 2,
@@ -130,20 +130,23 @@
       "blanket_type": "HCPB",
       "plot_axis": "xz",
       "plot_pixel_per_metre": 100,
-      "neutronics_output_path": "$path_expand:./neutronics",
+      "neutronics_output_path": "$path_expand:./neutronics/csg",
       "show_data": false
     },
     "DAGMC": {
       "export_dagmc_model": true,
-      "dagmc_export_dir": "$path_expand:./dagmc_export",
+      "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
+      "neutronics_output_path": "$path_expand:./neutronics/dagmc",
       "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
       "particles": 10000,
       "batches": 2,
+      "photon_transport": true,
+      "electron_treatment": "ttb",
       "converter_config": {
           "converter_type": "fast_ctd",
           "imprint_geometry": true, 
           "imprint_per_compound": true,
-          "minimum_include_volume": 1.0,  
+          "minimum_include_volume": 0.001,
           "fix_step_to_brep_geometry": false,
           "merge_dist_tolerance": 0.001,
           "lin_deflection_tol": 0.001,
@@ -158,7 +161,7 @@
     }
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
@@ -188,7 +191,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",

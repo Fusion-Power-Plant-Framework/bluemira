@@ -604,6 +604,7 @@ if __name__ == "__main__":
         "Total": 0.0,
         "PROCESS": 0.0,
         "CSG neutronics": 0.0,
+        "CAD neutronics": 0.0,
     }
 
     try:
@@ -861,12 +862,14 @@ if __name__ == "__main__":
         )
 
         # TODO @je-cook: Put the results somewhere
+        neutronics_start = time.time()
         dagmc_out = run_dagmc_neutronics(
             reactor,
             reactor_config.params_for("Neutronics", "DAGMC"),
             reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
+        run_time_track["CAD neutronics"] = time.time() - neutronics_start
 
         sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
         sspc_result = sspc_solver.execute()

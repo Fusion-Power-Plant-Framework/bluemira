@@ -89,7 +89,7 @@ li6_enrich_atomic = 0.6
 KALOS_ACB_MATERIAL = make_KALOS_ACB_mat(li6_enrich_atomic)
 
 BB_FW_MATERIAL = mixture(
-    name="FW material",
+    name="FW_material",
     materials=[
         (TUNGSTEN_MAT, 2.0 / 27.0),
         (EUROFER_MAT, 25.0 * 0.573 / 27.0),
@@ -101,7 +101,7 @@ BB_FW_MATERIAL = mixture(
 )
 
 BB_BZ_MATERIAL = mixture(
-    name="BZ material",
+    name="BZ_material",
     materials=[
         (EUROFER_MAT, structural_fraction_vo),
         (Be12Ti(), multiplier_fraction_vo),
@@ -119,7 +119,7 @@ BB_BZ_MATERIAL = mixture(
 )
 
 BB_MANI_MATERIAL = mixture(
-    name="Manifold material",
+    name="Manifold_material",
     materials=[
         (EUROFER_MAT, 0.4724),
         (KALOS_ACB_MATERIAL, 0.0241),

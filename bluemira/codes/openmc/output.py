@@ -117,6 +117,23 @@ class OpenMCResultBase:
         errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
         return powers.sum(), np.sqrt((errors**2).sum())
 
+    @classmethod
+    def _load_tbr(cls, statepoint, source_rate: float, source_triton_rate: float):
+        """
+        Load the TBR value and uncertainty.
+
+        Returns
+        -------
+        mean:
+            average TBR, i.e. average (n,Xt) per source particle.
+        error:
+            absolute error, but since the table is only 1 row long, we can turn the array
+            into a float by .sum().
+        """
+        scale = source_rate / source_triton_rate
+        tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
+        # Single tally, so std dev scales linearly
+        return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
 
 @dataclass
 class OpenMCCSGResult(OpenMCResultBase):
@@ -570,8 +587,13 @@ class OpenMCDAGMCResult(OpenMCResultBase):
         """Create results class from run statepoint"""
         statepoint = openmc.StatePoint(statepoint_file.as_posix())
 
-        tbr_cell_tally = statepoint.get_tally(name="tbr")
+        # tbr_cell_tally = statepoint.get_tally(name="tbr")
         tbr_mesh_tally = statepoint.get_tally(name="tbr_on_mesh")
+        print(tbr_mesh_tally)
+
+        tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
+        breakpoint()
+
         heating_mesh_tally = statepoint.get_tally(name="heating_on_mesh")
         flux_mesh_tally = statepoint.get_tally(name="flux_on_mesh")
 
@@ -601,8 +623,8 @@ class OpenMCDAGMCResult(OpenMCResultBase):
         e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
         mult_power = cls.multiplication_power(e_mult, dt_n_power)
         return cls(
-            tbr=tbr_cell_tally.mean.sum(),
-            tbr_err=tbr_cell_tally.std_dev.sum(),
+            tbr=tbr,
+            tbr_err=tbr_err,
             e_mult=e_mult,
             e_mult_err=e_mult_err,
             src_rate=src_rate,

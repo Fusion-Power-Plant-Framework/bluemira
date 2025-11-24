@@ -144,6 +144,8 @@ def export_dagmc_model(reactor, build_config):
                 "without_components": [
                     reactor.plasma,
                     # reactor.blanket,
+                    reactor.tf_coils,
+                    reactor.pf_coils,
                     reactor.coil_structures,
                 ],
                 "group_by_materials": True,
