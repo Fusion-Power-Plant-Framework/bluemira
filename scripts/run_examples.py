@@ -21,6 +21,7 @@ from unittest import mock
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import pyvista as pv
 
 from bluemira.base.file import get_bluemira_path
 
@@ -124,6 +125,7 @@ def run_examples(
         # Disable CAD viewer by mocking out FreeCAD API's displayer.
         # Note that if we use a new CAD backend, this must be changed.
         mock.patch("bluemira.codes._freecadapi.show_cad").start()
+        mock.patch.object(pv.Plotter, "show", return_value=None).start()
 
     failed = []
     for example in example_files:
