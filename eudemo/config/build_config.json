@@ -358,7 +358,10 @@
         "long_name": "Castellation offset value."
       }
     },
-    "material": "HeavyConcrete"
+    "material": {
+      "Body": "HeavyConcrete",
+      "Port Plug": "HeavyConcrete"
+    }
   },
   "Coil structures": {
     "material": {

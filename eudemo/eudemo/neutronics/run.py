@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from matproplib.library.fluids import Void
 
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
@@ -137,17 +138,18 @@ def export_dagmc_model(reactor, build_config):
         The build configuration parameters.
     """
     if build_config.get("export_dagmc_model", False):
+        bluemira_print("Creating DAGMC Model")
         reactor.save_cad(
             directory=build_config.get("dagmc_export_dir", None),
             cad_format="dagmc",
             construction_params={
                 "without_components": [
                     reactor.plasma,
-                    reactor.blanket,
                     reactor.coil_structures,
                 ],
                 "group_by_materials": True,
             },
+            converter_config=build_config.get("converter_config", {}),
         )
 
 
