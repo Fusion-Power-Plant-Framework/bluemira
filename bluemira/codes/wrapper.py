@@ -119,6 +119,6 @@ def neutronics_code_solver(
         The solver object to be run
     """
     neutron = get_code_interface(module)
-    return neutron.Solver(
+    return neutron.CSGSolver(
         params, build_config, eq, source, neutronics_model, op_cond, tally_function
     )

@@ -135,6 +135,7 @@ class OpenMCResultBase:
         # Single tally, so std dev scales linearly
         return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
 
+
 @dataclass
 class OpenMCCSGResult(OpenMCResultBase):
     """
@@ -585,6 +586,7 @@ class OpenMCDAGMCResult(OpenMCResultBase):
         statepoint_file: Path,
     ):
         """Create results class from run statepoint"""
+        folder = statepoint_file.parent
         statepoint = openmc.StatePoint(statepoint_file.as_posix())
 
         # tbr_cell_tally = statepoint.get_tally(name="tbr")
@@ -602,7 +604,7 @@ class OpenMCDAGMCResult(OpenMCResultBase):
         )
         mesh = tbr_mesh_tally.find_filter(openmc.MeshFilter).mesh
         mesh.write_data_to_vtk(
-            filename="tbr_mesh_mean.vtk",
+            filename=Path(folder, "tbr_mesh_mean.vtk").as_posix(),
             datasets={"mean": tbr_mesh_tally.mean},
         )
 
@@ -615,8 +617,10 @@ class OpenMCDAGMCResult(OpenMCResultBase):
         )
         # If you want to view only the +ve x half of the tally, uncomment the next line
         # heating_mesh_mean[:, :, heating_mesh_mean.shape[2] // 2 : -1] = 0
-        numpy_to_vtk(heating_mesh_mean, "heating_mesh_mean", scaling)
-        numpy_to_vtk(flux_mesh_mean, "flux_mesh_mean", scaling)
+        numpy_to_vtk(
+            heating_mesh_mean, Path(folder, "heating_mesh_mean").as_posix(), scaling
+        )
+        numpy_to_vtk(flux_mesh_mean, Path(folder, "flux_mesh_mean").as_posix(), scaling)
 
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
         e_mult = cls.energy_multiplication(dt_n_power, total_power)

@@ -549,7 +549,7 @@ def save_reactor(reactor, reactor_config, folder_name):
     tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
     # Copy across PROCESS outputs
     for fn in ["OUT.DAT", "MFILE.DAT"]:
-        shutil.copyfile(f"{config_folder}/{fn}", f"{process_folder}/{fn}")
+        shutil.copyfile(f"{config_folder}/process/{fn}", f"{process_folder}/{fn}")
     # Save equilibria
     sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
     eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq

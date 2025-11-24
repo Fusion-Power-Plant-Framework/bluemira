@@ -6,8 +6,8 @@
   },
   "Radial build": {
     "run_mode": "read",
-    "read_dir": "$path_expand:./",
-    "run_dir": "$path_expand:./",
+    "read_dir": "$path_expand:./process",
+    "run_dir": "$path_expand:./process",
     "plot": false
   },
   "Fixed boundary equilibrium": {
@@ -121,6 +121,7 @@
     "CSG": {
       "enabled": true,
       "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+      "neutronics_output_path": "$path_expand:./neutronics/csg",
       "particles": 10000,
       "batches": 2,
       "photon_transport": true,
@@ -130,7 +131,6 @@
       "blanket_type": "HCPB",
       "plot_axis": "xz",
       "plot_pixel_per_metre": 100,
-      "neutronics_output_path": "$path_expand:./neutronics/csg",
       "show_data": false
     },
     "DAGMC": {
@@ -142,21 +142,25 @@
       "batches": 2,
       "photon_transport": true,
       "electron_treatment": "ttb",
+      "run_mode": "run",
+      "debug": false,
+      "plot_axis": "xz",
+      "plot_pixel_per_metre": 100,
       "converter_config": {
-          "converter_type": "fast_ctd",
-          "imprint_geometry": true, 
-          "imprint_per_compound": true,
-          "minimum_include_volume": 0.001,
-          "fix_step_to_brep_geometry": false,
-          "merge_dist_tolerance": 0.001,
-          "lin_deflection_tol": 0.001,
-          "lin_deflection_is_absolute": false,
-          "angular_deflection_tol": 0.5, 
-          "run_make_watertight": true,  
-          "save_vtk_model": true,  
-          "enable_ext_debug_logging": false, 
-          "use_cached_files": false,  
-          "clean_up_cached": true
+        "converter_type": "fast_ctd",
+        "imprint_geometry": true,
+        "imprint_per_compound": true,
+        "minimum_include_volume": 0.001,
+        "fix_step_to_brep_geometry": false,
+        "merge_dist_tolerance": 0.001,
+        "lin_deflection_tol": 0.001,
+        "lin_deflection_is_absolute": false,
+        "angular_deflection_tol": 0.5,
+        "run_make_watertight": true,
+        "save_vtk_model": true,
+        "enable_ext_debug_logging": false,
+        "use_cached_files": false,
+        "clean_up_cached": false
       }
     }
   },

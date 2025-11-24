@@ -143,14 +143,11 @@ def export_dagmc_model(reactor, build_config):
             construction_params={
                 "without_components": [
                     reactor.plasma,
-                    # reactor.blanket,
-                    reactor.tf_coils,
-                    reactor.pf_coils,
+                    reactor.blanket,
                     reactor.coil_structures,
                 ],
                 "group_by_materials": True,
             },
-            converter_config=build_config.get("converter_config", {}),
         )
 
 

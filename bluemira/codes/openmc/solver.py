@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
@@ -246,11 +246,19 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         )
 
     def _plot(
-        self, run_mode, runtime_params, bounding_box, *, debug: bool = False
+        self,
+        run_mode,
+        runtime_params,
+        bounding_box: Sequence[float] | None = None,
+        *,
+        debug: bool = False,
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot stage for setup openmc"""
         settings = self._base_setup(run_mode, debug=debug)
-        z_max, _z_min, r_max, _r_min = bounding_box
+        if bounding_box is None:
+            r_max, _y_max, z_max = self.universe.bounding_box.upper_right
+        else:
+            z_max, _z_min, r_max, _r_min = bounding_box
         plot_width_0 = r_max * 2.1
         plot_width_1 = z_max * 3.1
         basis = runtime_params.plot_axis
@@ -384,9 +392,7 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         *_args,
         debug: bool = False,
     ) -> tuple[openmc.Model, PlotConfig]:
-        return self._plot(
-            run_mode, runtime_params, self.universe.bounding_box, debug=debug
-        )
+        return self._plot(run_mode, runtime_params, debug=debug)
 
     def volume(
         self,
