@@ -225,7 +225,8 @@ class BlanketBuilder(Builder):
         manifold = boolean_cut(silhouette, bz_cut)[0]
 
  
-        dodgy_wire = offset_wire(bz.wires[0], -0.001)  # avoid coincident faces
+        dodgy_wire = offset_wire(bz.wires[0], -0.002)  # avoid coincident faces
+        dodgy_wire = offset_wire(dodgy_wire, 0.001)  # Superstition
         bz = BluemiraFace(dodgy_wire)
 
         return fw, bz, manifold

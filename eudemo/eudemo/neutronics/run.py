@@ -148,7 +148,9 @@ def export_dagmc_model(reactor, build_config):
                     reactor.coil_structures,
                 ],
                 "group_by_materials": True,
+  
             },
+
             converter_config=build_config.get("converter_config", {}),
         )
 
@@ -178,7 +180,7 @@ def run_dagmc_neutronics(
             build_config.get("dagmc_export_dir", Path.cwd()), f"{reactor.name}.h5m"
         ),
         materials=[
-            m.convert("openmc", {"temperature": 298, "pressure": 101325})
+            m.convert("openmc", {"temperature": 301, "pressure": 101325})
             for m in mats.values()
         ],
         tally_function=tally_function,

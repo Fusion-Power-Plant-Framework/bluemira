@@ -26,6 +26,7 @@ try:
     EUROFER_MAT = EUROfer97()
     SS316_LN_MAT = SS316_LN()
     TUNGSTEN_MAT = Tungsten()
+
 except ImportError:
     bluemira_warn(
         "You do have eurofusion_materials installed, or do not have access. "
@@ -54,30 +55,12 @@ HELIUM_MAT = Helium()
 HeavyConcrete = HeavyConcrete()
 
 VV_MATERIAL = mixture(
-    "Steel-water mixture",
-    [(SS316_LN_MAT, 0.6), (WATER_MAT, 0.4)],
-    fraction_type="mass",
-    mix_condition={"temperature": 300, "pressure": 101325},
-    converters=OpenMCNeutronicConfig(),
-)
-
-AL203_MATERIAL = material(
-    name="Aluminium Oxide",
-    elements={"Al27": 2 / 5, "O16": 3 / 5},
-    properties=props(density=(3.95, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-LINED_EUROFER_MATERIAL = mixture(
-    name="Eurofer with Al2O3 lining",
-    materials=[
-        (EUROFER_MAT, 2.0 / 2.4),
-        (AL203_MATERIAL, 0.4 / 2.4),
-    ],
-    fraction_type="volume",
-    mix_condition=OperationalConditions(temperature=673.15),
-    converters=OpenMCNeutronicConfig(),
-)
+        name="inb_vacuum_vessel",
+        materials=[(EUROFER_MAT, 0.8), (WATER_MAT, 0.2)],
+        fraction_type="volume",
+        mix_condition=OperationalConditions(temperature=673.15, pressure=1e5),
+        converters=OpenMCNeutronicConfig(material_id=104),
+    )
 
 
 structural_fraction_vo = 0.128
@@ -111,7 +94,7 @@ BB_BZ_MATERIAL = mixture(
     fraction_type="volume",
     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
     converters=OpenMCNeutronicConfig(
-        material_id=102,
+        material_id=192,
         enrichment=li6_enrich_atomic * 100,
         enrichment_target="Li6",
         enrichment_type="atomic",

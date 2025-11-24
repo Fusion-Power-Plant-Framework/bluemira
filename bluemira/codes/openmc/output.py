@@ -295,24 +295,6 @@ class OpenMCCSGResult(OpenMCResultBase):
         return vol_results, cell_volumes
 
     @classmethod
-    def _load_tbr(cls, statepoint, source_rate: float, source_triton_rate: float):
-        """
-        Load the TBR value and uncertainty.
-
-        Returns
-        -------
-        mean:
-            average TBR, i.e. average (n,Xt) per source particle.
-        error:
-            absolute error, but since the table is only 1 row long, we can turn the array
-            into a float by .sum().
-        """
-        scale = source_rate / source_triton_rate
-        tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
-        # Single tally, so std dev scales linearly
-        return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
-
-    @classmethod
     def _load_heating(cls, statepoint, mat_names, src_rate):
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
@@ -591,10 +573,7 @@ class OpenMCDAGMCResult(OpenMCResultBase):
 
         # tbr_cell_tally = statepoint.get_tally(name="tbr")
         tbr_mesh_tally = statepoint.get_tally(name="tbr_on_mesh")
-        print(tbr_mesh_tally)
-
         tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
-        breakpoint()
 
         heating_mesh_tally = statepoint.get_tally(name="heating_on_mesh")
         flux_mesh_tally = statepoint.get_tally(name="flux_on_mesh")
