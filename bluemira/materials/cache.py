@@ -95,7 +95,9 @@ class MaterialCache:
             mod = p
             for n in name:
                 mod = _d(mod, n, initial_p)
-                if isinstance(mod, Material):
+                if mod is not None and (
+                    isinstance(mod, Material) or issubclass(mod, Material)
+                ):
                     return mod
         raise AttributeError(f"No such material: {name}")
 

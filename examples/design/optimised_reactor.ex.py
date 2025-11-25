@@ -399,7 +399,10 @@ class OptimisedReactor(Reactor):  # noqa: D101
         """Initialise the optimised reactor."""
         self.params = reactor_params
         super().__init__("OptimisedReactor", n_sectors=reactor_params.n_TF.value)
-        establish_material_cache(["matproplib"])
+        establish_material_cache([
+            Path(Path(__file__).parent, "design_materials.py").resolve().as_posix(),
+            "matproplib",
+        ])
 
     def build_plasma(self):
         """Build the plasma component."""
@@ -448,8 +451,8 @@ r = OptimisedReactor(
 )
 
 r.build_plasma()
-r.build_bb("Homogenised_HCPB_2015_v3_BZ")
-r.build_tf_coils("Toroidal_Field_Coil_2015")
+r.build_bb("BB_BZ_MATERIAL")
+r.build_tf_coils("EUROFER_MAT")
 
 major_radius = r.params.R_0.value * 100
 aspect_ratio = r.params.A.value
