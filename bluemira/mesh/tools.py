@@ -15,11 +15,18 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import meshio
 import numpy as np
-from dolfinx.io import XDMFFile
-from dolfinx.mesh import Mesh
+import pyvista
+from dolfinx import io
+from dolfinx.plot import vtk_mesh
+
+if TYPE_CHECKING:
+    from dolfinx.mesh import Mesh
+
+from mpi4py import MPI
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -41,6 +48,30 @@ GMSH_BE = "gmsh:bounding_entities"
 DOMAIN_SUFFIX = "domain.xdmf"
 BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
+
+
+def plot_dolfinx_mesh(mesh, *, show: bool = True):
+    """
+    Plots the mesh structure, including nodes and faces.
+
+    Parameters
+    ----------
+    show : bool, optional
+        Flag to display the plot immediately (default is True).
+
+    Returns
+    -------
+    pyvista.Plotter
+        The PyVista plotter object with the mesh visualization.
+    """
+    plotter = pyvista.Plotter()
+    tdim = mesh.topology.dim
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, tdim))
+    plotter.add_mesh(grid, show_edges=True)
+    plotter.view_xy()
+    if show:
+        plotter.show()
+    return plotter
 
 
 def msh_to_xdmf(
@@ -92,36 +123,37 @@ def import_mesh(
     file_prefix: str = "mesh", *, subdomains: bool = False, directory: str = "."
 ) -> tuple[Mesh, Mesh, Mesh, dict]:
     """
-    Import a dolfin mesh.
+    Import a Dolfinx v0.9 mesh and optional boundary/subdomain tags.
 
     Parameters
     ----------
     file_prefix:
-        File prefix to use when importing a mesh (defaults to 'mesh')
+        File prefix for the mesh (defaults to 'mesh')
     subdomains:
-        Whether or not to subdomains are present (defaults to False)
+        Whether subdomains are present (defaults to False)
     directory:
-        Directory in which the MSH file and XDMF files exist
+        Directory containing the mesh and tag files
 
     Returns
     -------
     mesh:
         Dolfin Mesh object containing the domain
     boundaries_mf:
-        Dolfin MeshFunctionSizet object containing the geometry
+        Dolfin MeshFunctionSizet object containing the boundaries
     subdomains_mf:
-        Dolfin MeshFunctionSizet object containing the geometry
+        Dolfin MeshFunctionSizet object containing the subdomains
     link_dict:
         Link dictionary between MSH and XDMF objects
 
     Raises
     ------
     FileNotFoundError
-        no mesh file(s) found
+        If required mesh files are missing
     """
     domain_file = Path(directory, f"{file_prefix}_{DOMAIN_SUFFIX}")
     boundary_file = Path(directory, f"{file_prefix}_{BOUNDARY_SUFFIX}")
     link_file = Path(directory, f"{file_prefix}_{LINKFILE_SUFFIX}")
+
     files = [domain_file, boundary_file, link_file]
     exists = [file.exists() for file in files]
 
@@ -131,25 +163,47 @@ def import_mesh(
         ])
         raise FileNotFoundError(f"No mesh file(s) found:\n {msg}")
 
-    mesh = Mesh()
+    # --- Read mesh
+    with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
+        mesh = xdmf.read_mesh(name="Grid")
+        [mesh.topology.create_entities(i) for i in range(mesh.topology.dim)]
 
-    with XDMFFile(domain_file.as_posix()) as file:
-        file.read(mesh)
-
-    boundaries_mvc = None
-
-    with XDMFFile(boundary_file.as_posix()) as file:
-        file.read(boundaries_mvc, "boundaries")
-
+    # --- Read boundaries (if any)
     boundaries_mf = None
+    try:
+        with io.XDMFFile(MPI.COMM_WORLD, boundary_file.as_posix(), "r") as xdmf:
+            for name in ["boundaries", "FacetTags", "Grid", "boundaries", None]:
+                try:
+                    boundaries_mf = (
+                        xdmf.read_meshtags(mesh, name=name)
+                        if name is not None
+                        else xdmf.read_meshtags(mesh)
+                    )
+                    break
+                except RuntimeError:
+                    continue
+    except (OSError, RuntimeError):
+        boundaries_mf = None
 
+    # --- Read subdomains (optional)
+    subdomains_mf = None
     if subdomains:
-        subdomains_mvc = None
-        with XDMFFile(domain_file.as_posix()) as file:
-            file.read(subdomains_mvc, "subdomains")
-    else:
-        subdomains_mf = None
+        try:
+            with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
+                for name in ["subdomains", "CellTags", "Grid", None]:
+                    try:
+                        subdomains_mf = (
+                            xdmf.read_meshtags(mesh, name=name)
+                            if name is not None
+                            else xdmf.read_meshtags(mesh)
+                        )
+                        break
+                    except RuntimeError:
+                        continue
+        except (OSError, RuntimeError):
+            subdomains_mf = None
 
+    # --- Read link dictionary
     with open(link_file) as file:
         link_dict = json.load(file)
 
