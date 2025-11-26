@@ -61,9 +61,7 @@ class TestFields:
 
         targets = MagneticConstraintSet([isoflux, x_point])
 
-        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, targets, gamma=1e-8
-        )
+        opt_problem = UnconstrainedTikhonovCurrentGradientCOP(eq, targets, gamma=1e-8)
 
         program = PicardIterator(eq, opt_problem, relaxation=0.1)
         program()
@@ -265,7 +263,7 @@ class TestSolveEquilibrium:
         )
         eq = Equilibrium(deepcopy(self.coilset), self.grid, deepcopy(profiles))
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, self.targets, gamma=1e-8
+            eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
             eq,
@@ -288,7 +286,7 @@ class TestSolveEquilibrium:
         )
         eq = Equilibrium(deepcopy(self.coilset), self.grid, deepcopy(profiles))
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, self.targets, gamma=1e-8
+            eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
             eq,
@@ -323,7 +321,7 @@ class TestSolveEquilibrium:
             o_point_fallback=o_point_fallback,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq.coilset, eq, self.targets, gamma=1e-8
+            eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
             eq,

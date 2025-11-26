@@ -291,7 +291,7 @@ magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 # %%
 
 unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
-    coilset, eq, magnetic_targets, gamma=1e-8
+    eq, magnetic_targets, gamma=1e-8
 )
 unconstrained_iterator = PicardIterator(
     eq,

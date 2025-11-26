@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 
 
 def symmetrise_coilset(
-    coilset: CoilSet, *, symmetrise_singular: bool = False
+    coilset: CoilSet, *, rtol: float | None = None, symmetrise_singular: bool = False
 ) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
@@ -50,6 +50,11 @@ def symmetrise_coilset(
     ----------
     coilset:
         CoilSet to symmetrise
+    rtol:
+        Relative tolerance used when comparing coil values.
+        The values for the secondary coil in the pair will be
+        set to be equal to the primary coil values if they are
+        within rtol.
     symmetrise_singular:
         make singular coils symmetric about z=0
 
@@ -65,7 +70,7 @@ def symmetrise_coilset(
     """
     coilset = deepcopy(coilset)
 
-    _, counts, indexes = _get_symmetric_coils(coilset)
+    _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol or 1e-5)
     new_coils = []
     coils = coilset._coils
     for count, index in zip(counts, indexes, strict=True):
@@ -83,7 +88,7 @@ def symmetrise_coilset(
         else:
             raise EquilibriaError("There are super-posed Coils in this CoilSet.")
 
-    return CoilSet(*new_coils)
+    return CoilSet(*new_coils, control_names=coilset.control)
 
 
 class CoilGroup(CoilGroupFieldsMixin):
@@ -1212,6 +1217,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return removed_coils
 
     @property
+    def n_control(self) -> float:
+        """Number of coils being actively controlled"""
+        return len(self.control)
+
+    @property
     def control(self) -> list[str]:
         """Get control coil names"""
         return self._control
@@ -1229,11 +1239,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         names = self.name
         if isinstance(control_names, list):
-            self._control_ind = [names.index(c) for c in control_names]
+            control_ind = [names.index(c) for c in control_names]
         elif control_names or control_names is None:
-            self._control_ind = np.arange(len(names)).tolist()
+            control_ind = np.arange(len(names)).tolist()
         else:
-            self._control_ind = []
+            control_ind = []
+        # Sort to match self.names - so that we are not changing
+        # the order based on the input control_names ordering.
+        # For SymmetricCircuits, the list names will be returned
+        # in circuit pairs in order of primary coil name.
+        self._control_ind = np.sort(control_ind)
         self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self) -> CoilSet:
@@ -1314,6 +1329,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ) -> CoilSetOptimisationState:
         """
         Get the state of the CoilSet for optimisation.
+        If control coils are set then this is accounted for.
 
         Parameters
         ----------
@@ -1327,9 +1343,8 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         CoilSetOptimisationState
             The state of the CoilSet for optimisation
         """
-        cc = self.get_control_coils()
-        xs, zs = cc._get_opt_positions(position_coil_names)
-        currents = cc._opt_currents / current_scale
+        xs, zs = self._get_opt_positions(position_coil_names)
+        currents = self._opt_currents / current_scale
         return CoilSetOptimisationState(
             currents=currents,
             xs=xs,
@@ -1344,6 +1359,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     ):
         """
         Set the state of the CoilSet, post optimisation.
+        If control coils are set then this is accounted for.
 
         Used in conjunction with `get_optimisation_state`.
 
@@ -1356,16 +1372,19 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         current_scale:
             The scale of the currents
         """
-        cc = self.get_control_coils()
         if opt_currents is not None:
-            cc._opt_currents = opt_currents * current_scale
+            self._opt_currents = opt_currents * current_scale
         if coil_position_map is not None:
-            cc._set_opt_positions(coil_position_map)
+            self._set_opt_positions(coil_position_map)
 
     @property
     def n_current_optimisable_coils(self) -> int:
         """
         Get the number of all current optimisable coils.
+        If control coils are set then this is accounted for.
+
+        This will only count the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         return len(self.current_optimisable_coil_names)
 
@@ -1373,10 +1392,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def current_optimisable_coil_names(self) -> list[str]:
         """
         Get the names of all current optimisable coils.
+        If control coils are set then this is accounted for.
+
+        This will be the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         optimisable_coil_names = [
             c.primary_coil.name if isinstance(c, Circuit) else c.name
-            for c in self._coils
+            for c in self.get_control_coils()._coils
         ]
         return [*flatten_iterable(optimisable_coil_names)]
 
@@ -1384,14 +1407,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def all_current_optimisable_coils(self) -> list[Coil]:
         """
         Get a list of all coils that can be current optimised.
+        If control coils are set then this is accounted for.
         """
         return [self[cn] for cn in self.current_optimisable_coil_names]
 
     def get_current_optimisable_coils(
         self, coil_names: list[str] | None = None
-    ) -> list[Coil]:
+    ) -> CoilSet:
         """
-        Get a list of coils that can be current optimised.
+        Get a coils that can be current optimised.
+        If control coils are set then this is accounted for.
 
         If coil_names is given, only the coils with those names are returned.
         Names in coil_names must be a subset of current optimisable coils.
@@ -1408,22 +1433,23 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             If a name in `coil_names` in not in `all_current_optimisable_coils`.
         """  # noqa: DOC201
         if coil_names is None:
-            return self.all_current_optimisable_coils
+            return CoilSet(*self.all_current_optimisable_coils)
 
         opt_coils_map = {c.name: c for c in self.all_current_optimisable_coils}
-        rtn = []
+        coils = []
         for cn in coil_names:
             c = opt_coils_map.get(cn)
             if c is not None:
-                rtn.append(c)
+                coils.append(c)
             else:
                 raise ValueError(f"Coil {cn} is not a current optimisable coil")
-        return rtn
+        return CoilSet(*coils)
 
     @property
     def _opt_currents_inds(self) -> list[int]:
         """
         Get the indices of the coils that can be optimised.
+        If control coils are set then this is accounted for.
 
         These indices are used to extract the optimisable currents from the CoilSet
         and are based on the index of the coils in the name array.
@@ -1450,29 +1476,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ValueError
             Number of optimisable coils not equal number of groups/coils
         """
-        cc = self.get_control_coils()
-
-        n_all_coils = cc.n_coils()
-        n_opt_coils = cc.n_current_optimisable_coils
-        n_distinct_coils_and_groupings = len(cc._coils)
-
-        if not cc._contains_circuits:
-            return np.eye(n_all_coils)
-
-        # this should be true as, at the top level, the number
-        # of coil or group objects should be the same as the no
-        # of optimisable coils
-        if n_opt_coils != n_distinct_coils_and_groupings:
-            raise ValueError(
-                "The number of optimisable coils does not match the number "
-                "of distinct coils and groupings. Something's gone wrong."
-            )
+        if not self._contains_circuits:
+            return np.eye(self.n_control)
 
         # you are putting 1's in the col. corresponding
         # to all coils in the same Circuit
-        mat = np.zeros((n_all_coils, n_opt_coils))
+        mat = np.zeros((self.n_control, self.n_current_optimisable_coils))
         i_row = 0
-        for i_col, c in enumerate(cc._coils):
+        for i_col, c in enumerate(self.get_control_coils()._coils):
             if isinstance(c, Circuit):
                 n_coils_in_group = c.n_coils()
                 for n in range(n_coils_in_group):
@@ -1487,6 +1498,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def _opt_currents(self) -> np.ndarray:
         """
         Get the currents for the optimisable coils.
+        If control coils are set then this is accounted for.
         """
         return self.current[self._opt_currents_inds]
 
@@ -1494,35 +1506,41 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def _opt_currents(self, values: np.ndarray):
         """
         Set the currents for the optimisable coils.
+        If control coils are set then this is accounted for.
 
         Raises
         ------
         ValueError
             Number of values not equal to number of optimisable currents
         """
-        n_all_coils = self.n_coils()
-
+        n_opt, n_cc = self.n_current_optimisable_coils, self.n_control
+        all_currents = deepcopy(self.current)
         n_vals = values.shape[0]
-        n_curr_opt_coils = self.n_current_optimisable_coils
 
         if n_vals == 1:
             c = values[0]
-            self.current = np.ones(n_all_coils) * c
+            all_currents[self._control_ind] = np.ones(n_cc) * c
+            self.current = all_currents
             return
 
-        if n_vals != n_curr_opt_coils:
+        if n_vals != n_opt:
             raise ValueError(
                 f"The number of current elements {n_vals} "
                 "does not match the number of "
-                f"optimisable currents: {n_curr_opt_coils}"
+                f"optimisable currents: {n_opt}"
             )
 
-        self.current = self._opt_currents_expand_mat @ values
+        all_currents[self._control_ind] = self._opt_currents_expand_mat @ values
+        self.current = all_currents
 
     @property
     def n_position_optimisable_coils(self) -> int:
         """
         Get the number of coils that can be position optimised.
+        If control coils are set then this is accounted for.
+
+        This will only count the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         return len(self.position_optimisable_coil_names)
 
@@ -1530,10 +1548,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def position_optimisable_coil_names(self) -> list[str]:
         """
         Get the names of the coils that can be position optimised.
+        If control coils are set then this is accounted for.
+
+        This will be the primary coil in the case of
+        a SymmetricCircuit pair or coils.
         """
         optimisable_coil_names = (
             c.primary_coil.name if isinstance(c, SymmetricCircuit) else c.name
-            for c in self._coils
+            for c in self.get_control_coils()._coils
         )
         return [*flatten_iterable(optimisable_coil_names)]
 
@@ -1541,14 +1563,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def all_position_optimisable_coils(self) -> list[Coil]:
         """
         Get the names of all coils that can be position optimised.
+        If control coils are set then this is accounted for.
         """
         return [self[cn] for cn in self.position_optimisable_coil_names]
 
     def get_position_optimisable_coils(
         self, coil_names: list[str] | None = None
-    ) -> list[Coil]:
+    ) -> CoilSet:
         """
         Get the coils that can be position optimised.
+        If control coils are set then this is accounted for.
 
         Parameters
         ----------
@@ -1562,17 +1586,17 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             Coil's position not optimisable
         """  # noqa: DOC201
         if coil_names is None:
-            return self.all_position_optimisable_coils
+            return CoilSet(*self.all_position_optimisable_coils)
 
         opt_coils_map = {c.name: c for c in self.all_position_optimisable_coils}
-        rtn = []
+        coils = []
         for cn in coil_names:
             c = opt_coils_map.get(cn)
             if c is not None:
-                rtn.append(c)
+                coils.append(c)
             else:
                 raise ValueError(f"Coil {cn} is not a position optimisable coil")
-        return rtn
+        return CoilSet(*coils)
 
     def _get_opt_positions(
         self, position_coil_names: list[str] | None = None
@@ -1593,15 +1617,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         :
             The z coordinates
         """
-        coils = self.get_position_optimisable_coils(position_coil_names)
-        x, z = [c.x for c in coils], [c.z for c in coils]
-        return np.asarray(x), np.asarray(z)
+        pos_coilset = self.get_position_optimisable_coils(position_coil_names)
+        return pos_coilset.x, pos_coilset.z
 
     def _set_opt_positions(self, coil_position_map: dict[str, np.ndarray]) -> None:
         """
         Set the positions of the position optimisable coils.
         """
-        pos_opt_coil_names = self.get_control_coils().position_optimisable_coil_names
+        pos_opt_coil_names = self.position_optimisable_coil_names
         for coil_name, position in coil_position_map.items():
             if coil_name in pos_opt_coil_names:
                 c = self.get_coil_or_group_with_coil_name(coil_name)
