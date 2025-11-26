@@ -766,9 +766,9 @@ def find_LCFS_separatrix(
     x_points: list[Xpoint] | None = None,
     *,
     double_null: bool = False,
-    psi_n_tol: float = 1e-6,
+    psi_n_tol: float = 1e-9,
     delta_start: float = 0.01,
-    rtol: float = 1e-3,
+    rtol: float = 1e-6,
 ) -> tuple[Coordinates, Coordinates | list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -838,6 +838,7 @@ def find_LCFS_separatrix(
             high = middle
 
         delta = high - low
+   
 
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
