@@ -1122,7 +1122,9 @@ def _approximation_from_psi_fitting(
     Approximate psi by fitting for psi at collocation points using
     toroidal harmonic equations
 
-    Note: len(mode_id) must = n_degrees_of_freedom
+    Notes
+    -----
+    The length of mode_id must be equal to n_degrees_of_freedom
 
     Returns
     -------
