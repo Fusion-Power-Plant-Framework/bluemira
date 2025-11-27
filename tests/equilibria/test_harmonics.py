@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
+import pathlib
 from copy import deepcopy
 from pathlib import Path
 
@@ -916,7 +917,7 @@ def test_approximation_from_psi_fitting(
 
 class TestRegressionTH:
     @staticmethod
-    def _read_json(file_path: str) -> dict:
+    def _read_json(file_path: str | pathlib.PosixPath) -> dict:
         with open(file_path) as f:
             return json.load(f)
 
@@ -926,9 +927,8 @@ class TestRegressionTH:
             Path(TEST_PATH, "eqref_OOB.json").as_posix(),
             from_cocos=7,
         )
-        cls.param_dict = cls._read_json(
-            Path(TEST_PATH, "toroidal_harmonics_test_data.json")
-        )
+        file_path = Path(TEST_PATH, "toroidal_harmonics_test_data.json")
+        cls.param_dict = cls._read_json(file_path)
 
         cls.eq_cc_set = deepcopy(cls.eq)
         cls.eq_cc_set.coilset.control = cls.eq.coilset.get_coiltype("PF").name
