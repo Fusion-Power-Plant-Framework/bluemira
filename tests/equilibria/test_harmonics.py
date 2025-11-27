@@ -705,10 +705,10 @@ def test_coil_toroidal_harmonic_amplitude_matrix_unit(
     ),
     [
         # Testing certain entries instead of the whole arrays as they are large
-        (1, 0.04309788, 0.0, 1.57065987, 0.0),
-        (2, 0.05310297, -0.01625601, 0.32913602, -1.45709709),
-        (3, 3.41720539e-02, -0.02308498, -0.68552459, -0.3263508),
-        (4, 2.00939223e-02, -0.02486853, -2.43033551e-01, 3.08997293e-01),
+        (1, 1.73529216e-03, 0.0, 1.57065987, 0.0),
+        (2, 2.13803459e-03, -6.56107179e-04, 0.32913602, -1.45709709),
+        (3, 1.37513594e-03, -9.31729349e-04, -0.68552459, -0.3263508),
+        (4, 8.07476967e-04, -1.00356911e-03, -2.43033551e-01, 3.08997293e-01),
     ],
 )
 def test_toroidal_harmonics_to_positions(
@@ -724,15 +724,15 @@ def test_toroidal_harmonics_to_positions(
         Z_0=0.0,
         min_tau=0.0,
         R=np.array([
-            [0.0, 0.5, 1.0, 1.5],
             [0.1, 0.6, 1.1, 1.6],
             [0.2, 0.7, 1.2, 1.7],
             [0.3, 0.7, 1.3, 1.8],
+            [0.4, 0.8, 1.4, 1.9],
         ]),
         Z=np.array([
             [-10.0, -10.0, -10.0, -10.0],
             [-5.0, -5.0, -5.0, -5.0],
-            [0.0, 0.0, 0.0, 0.0],
+            [0.1, 0.1, 0.1, 0.1],
             [5.0, 5.0, 5.0, 5.0],
         ]),
         R_coils=np.array([1.5, 1.5]),
@@ -760,8 +760,8 @@ def test_toroidal_harmonics_to_positions(
     cos, sin = toroidal_harmonics_to_positions(th_params=th_params, n_allowed=n_allowed)
     assert len(cos) == n_allowed
     assert len(sin) == n_allowed
-    np.testing.assert_array_almost_equal(cos[n_allowed - 1][0][1], expected_cos)
-    np.testing.assert_array_almost_equal(sin[n_allowed - 1][0][1], expected_sin)
+    np.testing.assert_array_almost_equal(cos[n_allowed - 1][0][0], expected_cos)
+    np.testing.assert_array_almost_equal(sin[n_allowed - 1][0][0], expected_sin)
 
     # Test with collocation points
     cos, sin = toroidal_harmonics_to_positions(
