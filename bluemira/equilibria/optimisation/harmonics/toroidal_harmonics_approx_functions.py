@@ -31,6 +31,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.tools import (
     cylindrical_to_toroidal,
     sig_fig_round,
@@ -340,15 +341,34 @@ def toroidal_harmonic_grid_and_coil_setup(
     c_names = np.array(th_coilset.control)
 
     # Find coils that can be used in TH approximation, and those that cannot be used
-    if min_tau < np.min(tau_c):
-        not_too_close_coils = c_names[tau_c < min_tau].tolist()
-        bluemira_debug(
-            "Names of coils that can be used in the TH"
-            f" approximation: {not_too_close_coils}."
+
+    # Get coordinates of edges of coils and see if they are within the approximation
+    # region
+    # tau is maximum at the focus and minimum at the region edge
+    include = []
+    for n in c_names:
+        c = th_coilset[n]
+        wire = make_polygon(
+            {
+                "x": [c.x - c.dx, c.x + c.dx, c.x + c.dx, c.x - c.dx],
+                "z": [c.z - c.dz, c.z - c.dz, c.z + c.dz, c.z + c.dz],
+            },
+            closed=True,
         )
-        th_coil_names = not_too_close_coils
-        R_coils, Z_coils = R_coils[tau_c < min_tau], Z_coils[tau_c < min_tau]  # noqa: N806
-        tau_c, sigma_c = tau_c[tau_c < min_tau], sigma_c[tau_c < min_tau]
+        coil_coords = wire.discretise()
+        tau_edge_coords, _ = cylindrical_to_toroidal(
+            R_0=R_0, Z_0=Z_0, R=coil_coords.x, Z=coil_coords.z
+        )
+        include.append(all(tau_edge_coords < min_tau))
+
+    if any(include):
+        included_coils = c_names[include].tolist()
+        bluemira_debug(
+            f"Names of coils that can be used in the TH approximation: {included_coils}."
+        )
+        th_coil_names = included_coils
+        R_coils, Z_coils = R_coils[include], Z_coils[include]  # noqa: N806
+        tau_c, sigma_c = tau_c[include], sigma_c[include]
     else:
         th_coil_names = c_names.tolist()
 
@@ -649,7 +669,7 @@ def _separate_psi_contributions(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     collocation: Collocation | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Separate the psi contributions from fixed sources (plasma + excluded coils) and from
     potentially variable sources (coilset).
@@ -664,6 +684,8 @@ def _separate_psi_contributions(
         Bluemira Equilibrium
     th_params:
         Dataclass holding necessary parameters for the TH approximation
+    collocation:
+        Collocation points at which to calculate psi
 
     Returns
     -------
@@ -672,6 +694,9 @@ def _separate_psi_contributions(
         These coils are outside of our approximation region
     plasma_psi + excluded_coil_psi:
         The psi contribution from fixed sources
+    collocation_coilset_psi:
+        The psi contribution from the coilset at the specified collocation points.
+        If no collocation points are specified, this is None
     """
     excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
@@ -801,6 +826,15 @@ def toroidal_harmonics_to_positions(
     """
     Matrix for collocation psi fitting or psi calculation across
     grid with known amplitude values.
+
+    Parameters
+    ----------
+    th_params:
+        Dataclass holding necessary parameters for the TH approximation
+    n_allowed:
+        The number of harmonic functions (and amplitudes) to use
+    collocation:
+        Collocation points at which to calculate psi
 
     Returns
     -------
@@ -1087,6 +1121,10 @@ def _approximation_from_psi_fitting(
     """
     Approximate psi by fitting for psi at collocation points using
     toroidal harmonic equations
+
+    Notes
+    -----
+    The length of mode_id must be equal to n_degrees_of_freedom
 
     Returns
     -------

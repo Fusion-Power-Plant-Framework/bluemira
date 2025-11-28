@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+import json
+import pathlib
 from copy import deepcopy
 from pathlib import Path
 
@@ -33,16 +35,23 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
     ToroidalHarmonicConstraint,
 )
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
+    TauLimit,
+    ToroidalHarmonicsParams,
     ToroidalHarmonicsSelectionResult,
+    _approximation_direct_from_currents,
+    _approximation_from_psi_fitting,
     _get_plasma_mask,
+    _separate_psi_contributions,
     _set_n_degrees_of_freedom,
     coil_toroidal_harmonic_amplitude_matrix,
     f_hypergeometric,
     legendre_p,
     legendre_q,
+    plot_toroidal_harmonic_approximation,
     toroidal_harmonic_approximate_psi,
     toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
+    toroidal_harmonics_to_positions,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 from bluemira.optimisation._tools import approx_derivative
@@ -395,7 +404,9 @@ def test_hypergeometric_function():
     ]
     test_hypergeometric_values = [f_hypergeometric(1, 1, 1, z) for z in zs]
 
-    assert test_hypergeometric_values == expected_hypergeometric_values
+    np.testing.assert_almost_equal(
+        test_hypergeometric_values, expected_hypergeometric_values
+    )
 
 
 def test_legendre_p_function():
@@ -413,253 +424,33 @@ def test_legendre_p_function():
     ]
     tau_c = 1.317059523987338
     test_leg_p_values = [legendre_p(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
-    assert test_leg_p_values == expected_leg_p_values
+    np.testing.assert_almost_equal(test_leg_p_values, expected_leg_p_values)
 
     # test on array input for x
-    tau = [
-        [
-            0.0,
-            0.08372955,
-            0.16399749,
-            0.23765702,
-            0.30217625,
-            0.35588229,
-            0.39808616,
-            0.42904197,
-            0.44975039,
-            0.4616742,
-        ],
-        [
-            0.0,
-            0.12133246,
-            0.23644833,
-            0.33959315,
-            0.4260977,
-            0.49309235,
-            0.53997706,
-            0.56831107,
-            0.581127,
-            0.58202564,
-        ],
-        [
-            0.0,
-            0.18447222,
-            0.35851489,
-            0.51119464,
-            0.63214509,
-            0.7146438,
-            0.75862372,
-            0.77049285,
-            0.75971917,
-            0.73523295,
-        ],
-        [
-            0.0,
-            0.28770908,
-            0.56575751,
-            0.81555949,
-            1.00499185,
-            1.10298173,
-            1.11064294,
-            1.06120413,
-            0.98863453,
-            0.91246107,
-        ],
-        [
-            0.0,
-            0.41454837,
-            0.8554559,
-            1.34411363,
-            1.82028299,
-            1.92922411,
-            1.67339115,
-            1.41273933,
-            1.2137264,
-            1.06314908,
-        ],
-        [
-            0.0,
-            0.44040904,
-            0.92353766,
-            1.51526075,
-            2.29399827,
-            2.40455168,
-            1.8496136,
-            1.4901662,
-            1.25492087,
-            1.08800009,
-        ],
-        [
-            0.0,
-            0.32647169,
-            0.64856608,
-            0.94808807,
-            1.17801893,
-            1.28002018,
-            1.25564261,
-            1.16635152,
-            1.06229698,
-            0.9644803,
-        ],
-        [
-            0.0,
-            0.21072502,
-            0.40995364,
-            0.58446862,
-            0.72026324,
-            0.8075756,
-            0.84662664,
-            0.84744186,
-            0.82369049,
-            0.7870265,
-        ],
-        [
-            0.0,
-            0.13692432,
-            0.26647453,
-            0.3816919,
-            0.47680051,
-            0.54827125,
-            0.59560302,
-            0.62118671,
-            0.62924839,
-            0.62451388,
-        ],
-        [
-            0.0,
-            0.09310907,
-            0.18209437,
-            0.26320399,
-            0.33343162,
-            0.39084136,
-            0.43474237,
-            0.46563115,
-            0.48491198,
-            0.494502,
-        ],
-    ]
-    expected_leg_p_array_values = [
-        [
-            0.0,
-            0.04186784,
-            0.08202192,
-            0.11889972,
-            0.15123614,
-            0.17818564,
-            0.19938864,
-            0.21495697,
-            0.22538017,
-            0.23138509,
-        ],
-        [
-            0.0,
-            0.06067558,
-            0.11829428,
-            0.17000826,
-            0.2134756,
-            0.24721977,
-            0.27088564,
-            0.2852108,
-            0.29169647,
-            0.29215139,
-        ],
-        [
-            0.0,
-            0.09226917,
-            0.17950754,
-            0.25635186,
-            0.31755608,
-            0.35952973,
-            0.38199711,
-            0.38807258,
-            0.38255762,
-            0.37003928,
-        ],
-        [
-            0.0,
-            0.14398195,
-            0.28391901,
-            0.41119106,
-            0.50939919,
-            0.56100979,
-            0.56507249,
-            0.53892802,
-            0.50084333,
-            0.46119982,
-        ],
-        [
-            0.0,
-            0.20766601,
-            0.43172826,
-            0.69118788,
-            0.96779818,
-            1.03602741,
-            0.87903472,
-            0.72924805,
-            0.62017331,
-            0.53995338,
-        ],
-        [
-            0.0,
-            0.2206775,
-            0.46694506,
-            0.78710863,
-            1.28247932,
-            1.36364808,
-            0.98595564,
-            0.77282818,
-            0.64243886,
-            0.55307723,
-        ],
-        [
-            0.0,
-            0.16342341,
-            0.32589439,
-            0.47970191,
-            0.60099105,
-            0.65607995,
-            0.64283031,
-            0.59474588,
-            0.53950413,
-            0.48823783,
-        ],
-        [
-            0.0,
-            0.10541196,
-            0.20535533,
-            0.2933882,
-            0.36239668,
-            0.40708945,
-            0.42717724,
-            0.4275973,
-            0.41537099,
-            0.39654467,
-        ],
-        [
-            0.0,
-            0.06847561,
-            0.13333812,
-            0.19114936,
-            0.23900644,
-            0.27507714,
-            0.2990271,
-            0.31199578,
-            0.31608597,
-            0.31368365,
-        ],
-        [
-            0.0,
-            0.04655875,
-            0.09107898,
-            0.13169913,
-            0.16691592,
-            0.19574715,
-            0.21782546,
-            0.23337839,
-            0.24309511,
-            0.24793067,
-        ],
-    ]
+    tau = np.array([
+        0.0,
+        0.08372955,
+        0.16399749,
+        0.23765702,
+        0.30217625,
+        0.35588229,
+        0.39808616,
+        0.42904197,
+        0.44975039,
+        0.4616742,
+    ])
+    expected_leg_p_array_values = np.array([
+        0.0,
+        0.04186784,
+        0.08202192,
+        0.11889972,
+        0.15123614,
+        0.17818564,
+        0.19938864,
+        0.21495697,
+        0.22538017,
+        0.23138509,
+    ])
     test_leg_p_array_values = legendre_p(1 - 1 / 2, 1, np.cosh(tau))
     np.testing.assert_array_almost_equal(
         test_leg_p_array_values, expected_leg_p_array_values
@@ -681,254 +472,34 @@ def test_legendre_q_function():
     ]
     tau_c = 1.2824746787307681
     test_leg_q_values = [legendre_q(m - 1 / 2, 1, np.cosh(tau_c)) for m in range(6)]
-    np.testing.assert_almost_equal(test_leg_q_values, expected_leg_q_values)
+    np.testing.assert_array_almost_equal(test_leg_q_values, expected_leg_q_values)
 
     # test on array input for x
-    expected_leg_q_array_values = [
-        [
-            np.inf,
-            1.23904515,
-            1.92372849,
-            2.04343658,
-            1.89355154,
-            1.69645186,
-            1.53574682,
-            1.4249278,
-            1.35676829,
-            1.32131784,
-        ],
-        [
-            np.inf,
-            1.64513686,
-            2.0426168,
-            1.7448037,
-            1.41237249,
-            1.19371218,
-            1.06787662,
-            1.0034538,
-            0.97965134,
-            0.98350464,
-        ],
-        [
-            np.inf,
-            2.00767348,
-            1.65743101,
-            1.12066779,
-            0.84139608,
-            0.70633603,
-            0.65024658,
-            0.64160748,
-            0.6629882,
-            0.70390679,
-        ],
-        [
-            np.inf,
-            1.92592547,
-            0.9764955,
-            0.56041541,
-            0.38635565,
-            0.32581474,
-            0.32916628,
-            0.36912197,
-            0.4296457,
-            0.50176621,
-        ],
-        [
-            np.inf,
-            1.48799023,
-            0.54590827,
-            0.21698133,
-            0.08495667,
-            0.07183359,
-            0.1285417,
-            0.20972024,
-            0.2994839,
-            0.39255699,
-        ],
-        [
-            np.inf,
-            1.48799023,
-            0.54590827,
-            0.21698133,
-            0.08495667,
-            0.07183359,
-            0.1285417,
-            0.20972024,
-            0.2994839,
-            0.39255699,
-        ],
-        [
-            np.inf,
-            1.92592547,
-            0.9764955,
-            0.56041541,
-            0.38635565,
-            0.32581474,
-            0.32916628,
-            0.36912197,
-            0.4296457,
-            0.50176621,
-        ],
-        [
-            np.inf,
-            2.00767348,
-            1.65743101,
-            1.12066779,
-            0.84139608,
-            0.70633603,
-            0.65024658,
-            0.64160748,
-            0.6629882,
-            0.70390679,
-        ],
-        [
-            np.inf,
-            1.64513686,
-            2.0426168,
-            1.7448037,
-            1.41237249,
-            1.19371218,
-            1.06787662,
-            1.0034538,
-            0.97965134,
-            0.98350464,
-        ],
-        [
-            np.inf,
-            1.23904515,
-            1.92372849,
-            2.04343658,
-            1.89355154,
-            1.69645186,
-            1.53574682,
-            1.4249278,
-            1.35676829,
-            1.32131784,
-        ],
-    ]
+    expected_leg_q_array_values = np.array([
+        np.inf,
+        1.23904515,
+        1.92372849,
+        2.04343658,
+        1.89355154,
+        1.69645186,
+        1.53574682,
+        1.4249278,
+        1.35676829,
+        1.32131784,
+    ])
 
-    tau = [
-        [
-            0.0,
-            0.08824793,
-            0.17271863,
-            0.24997798,
-            0.31726988,
-            0.37279683,
-            0.41586667,
-            0.44684381,
-            0.46691519,
-            0.47775572,
-        ],
-        [
-            0.0,
-            0.12882178,
-            0.25086733,
-            0.35981143,
-            0.45047258,
-            0.51968076,
-            0.56687984,
-            0.59400448,
-            0.60463245,
-            0.60288812,
-        ],
-        [
-            0.0,
-            0.1971082,
-            0.38319882,
-            0.54623865,
-            0.67422941,
-            0.75913876,
-            0.8010357,
-            0.80790876,
-            0.79111267,
-            0.76086156,
-        ],
-        [
-            0.0,
-            0.30679727,
-            0.60606806,
-            0.87892896,
-            1.08645363,
-            1.18650918,
-            1.180427,
-            1.11297593,
-            1.02555129,
-            0.93885095,
-        ],
-        [
-            0.0,
-            0.42901091,
-            0.89299788,
-            1.43438632,
-            2.03536735,
-            2.14522972,
-            1.76656246,
-            1.4556128,
-            1.23691967,
-            1.07724722,
-        ],
-        [
-            0.0,
-            0.42901091,
-            0.89299788,
-            1.43438632,
-            2.03536735,
-            2.14522972,
-            1.76656246,
-            1.4556128,
-            1.23691967,
-            1.07724722,
-        ],
-        [
-            0.0,
-            0.30679727,
-            0.60606806,
-            0.87892896,
-            1.08645363,
-            1.18650918,
-            1.180427,
-            1.11297593,
-            1.02555129,
-            0.93885095,
-        ],
-        [
-            0.0,
-            0.1971082,
-            0.38319882,
-            0.54623865,
-            0.67422941,
-            0.75913876,
-            0.8010357,
-            0.80790876,
-            0.79111267,
-            0.76086156,
-        ],
-        [
-            0.0,
-            0.12882178,
-            0.25086733,
-            0.35981143,
-            0.45047258,
-            0.51968076,
-            0.56687984,
-            0.59400448,
-            0.60463245,
-            0.60288812,
-        ],
-        [
-            0.0,
-            0.08824793,
-            0.17271863,
-            0.24997798,
-            0.31726988,
-            0.37279683,
-            0.41586667,
-            0.44684381,
-            0.46691519,
-            0.47775572,
-        ],
-    ]
+    tau = np.array([
+        0.0,
+        0.08824793,
+        0.17271863,
+        0.24997798,
+        0.31726988,
+        0.37279683,
+        0.41586667,
+        0.44684381,
+        0.46691519,
+        0.47775572,
+    ])
     test_leg_q_array_values = legendre_q(1 - 1 / 2, 1, np.cosh(tau))
     np.testing.assert_array_almost_equal(
         test_leg_q_array_values, expected_leg_q_array_values
@@ -976,13 +547,389 @@ def test_legendre_q_function():
     assert all(test_result[:, 1] != np.inf)
 
 
+@pytest.mark.parametrize(
+    ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
+    [
+        # Case where max_n_dof is hit
+        (5, 5, 4, 4),
+        # Case where 2 * max_harmonic_mode is hit
+        (5, 2, 5, 4),
+        # Case where everything OK
+        (5, 5, 10, 5),
+        # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
+        (10, 4, 9, 8),
+        # Case where n_dof is not specified and defaults to max
+        (None, 5, 9, 9),
+        # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
+        (None, 4, 9, 8),
+    ],
+)
+def test_th_n_dof_limits(
+    n_dof: int | None,
+    max_harmonic_mode: int,
+    max_n_dof: int,
+    expected_dof: int,
+):
+    n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
+    assert n_dof == expected_dof
+
+
+@pytest.mark.parametrize(
+    (
+        "cos_m_chosen",
+        "sin_m_chosen",
+        "expected_Am_cos",
+        "expected_Am_sin",
+    ),
+    [
+        # Case where cos_m_chosen empty
+        (
+            np.array([]),
+            np.array([1]),
+            None,
+            np.array([[2.78003029e-09, -2.78003029e-09]]),
+        ),
+        # Case where sin_m_chosen empty
+        (
+            np.array([0]),
+            np.array([]),
+            np.array([[4.13778177e-09, 4.13778177e-09]]),
+            None,
+        ),
+        # Case where both empty
+        (np.array([]), np.array([]), None, None),
+        # Case where neither empty
+        (
+            np.array([1]),
+            np.array([2]),
+            np.array([[5.56006057e-09, 5.56006057e-09]]),
+            np.array([[6.24538906e-09, -6.24538906e-09]]),
+        ),
+        # Case where sin_m_chosen is 0
+        (
+            np.array([]),
+            np.array([0]),
+            None,
+            np.array([[0.0, -0.0]]),
+        ),
+        # Case with arrays chosen for each
+        (
+            np.array([2, 3, 4]),
+            np.array([2, 3, 4]),
+            np.array([
+                [4.68404177e-09, 4.68404177e-09],
+                [1.64194750e-09, 1.64194750e-09],
+                [-2.92277587e-09, -2.92277587e-09],
+            ]),
+            np.array([
+                [6.24538906e-09, -6.24538906e-09],
+                [9.03071139e-09, -9.03071139e-09],
+                [1.00209457e-08, -1.00209457e-08],
+            ]),
+        ),
+    ],
+)
+def test_coil_toroidal_harmonic_amplitude_matrix_unit(
+    cos_m_chosen: np.ndarray,
+    sin_m_chosen: np.ndarray,
+    expected_Am_cos: np.ndarray,  # noqa: N803
+    expected_Am_sin: np.ndarray,  # noqa: N803
+):
+    # Make a coilset for use in the test
+    circuit = SymmetricCircuit(
+        Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_1",
+        ),
+        Coil(
+            x=1.5,
+            z=-6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        ),
+    )
+
+    coilset = CoilSet(circuit)
+
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([0.0, 0.5, 1.0, 1.5, 2.0]),
+        Z=np.array([-10.0, -5.0, 0.0, 5.0, 10.0]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([0.0, 0.05459965, 1.60943791, 0.15374235, 0.05653073]),
+        sigma=np.array([-0.2977799, -0.57790194, 0.0, 0.5404195, 0.28671642]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    Am_cos, Am_sin = coil_toroidal_harmonic_amplitude_matrix(  # noqa: N806
+        input_coils=coilset,
+        th_params=th_params,
+        cos_m_chosen=cos_m_chosen,
+        sin_m_chosen=sin_m_chosen,
+    )
+    # Can't use assert_array_almost_equal if Am_cos or Am_sin is None
+    if Am_cos is None:
+        assert Am_cos == expected_Am_cos
+    else:
+        np.testing.assert_array_almost_equal(Am_cos, expected_Am_cos)
+
+    if Am_sin is None:
+        assert Am_sin == expected_Am_sin
+    else:
+        np.testing.assert_array_almost_equal(Am_sin, expected_Am_sin)
+
+
+@pytest.mark.parametrize(
+    (
+        "n_allowed",
+        "expected_cos",
+        "expected_sin",
+        "expected_cos_collocation",
+        "expected_sin_collocation",
+    ),
+    [
+        # Testing certain entries instead of the whole arrays as they are large
+        (1, 1.73529216e-03, 0.0, 1.57065987, 0.0),
+        (2, 2.13803459e-03, -6.56107179e-04, 0.32913602, -1.45709709),
+        (3, 1.37513594e-03, -9.31729349e-04, -0.68552459, -0.3263508),
+        (4, 8.07476967e-04, -1.00356911e-03, -2.43033551e-01, 3.08997293e-01),
+    ],
+)
+def test_toroidal_harmonics_to_positions(
+    n_allowed,
+    expected_cos,
+    expected_sin,
+    expected_cos_collocation,
+    expected_sin_collocation,
+):
+    # Dummy args
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([
+            [0.1, 0.6, 1.1, 1.6],
+            [0.2, 0.7, 1.2, 1.7],
+            [0.3, 0.7, 1.3, 1.8],
+            [0.4, 0.8, 1.4, 1.9],
+        ]),
+        Z=np.array([
+            [-10.0, -10.0, -10.0, -10.0],
+            [-5.0, -5.0, -5.0, -5.0],
+            [0.1, 0.1, 0.1, 0.1],
+            [5.0, 5.0, 5.0, 5.0],
+        ]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([
+            [0.0, 0.01463519, 0.02906387, 0.04308885],
+            [0.01100558, 0.06528637, 0.1164761, 0.16243346],
+        ]),
+        sigma=np.array([
+            [-0.2977799, -0.29706421, -0.29493706, -0.29145679],
+            [-0.58271165, -0.57572093, -0.55934928, -0.53499839],
+        ]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
+    z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
+    plasma_boundary = Coordinates({"x": x, "z": z})
+    # Use GRID_POINTS as this is what we use in toroidal_harmonic_approximation
+    point_type = PointType.GRID_POINTS
+    colloc = collocation_points(plasma_boundary, point_type)
+
+    # Test without collocation points
+    cos, sin = toroidal_harmonics_to_positions(th_params=th_params, n_allowed=n_allowed)
+    assert len(cos) == n_allowed
+    assert len(sin) == n_allowed
+    np.testing.assert_array_almost_equal(cos[n_allowed - 1][0][0], expected_cos)
+    np.testing.assert_array_almost_equal(sin[n_allowed - 1][0][0], expected_sin)
+
+    # Test with collocation points
+    cos, sin = toroidal_harmonics_to_positions(
+        th_params=th_params, n_allowed=n_allowed, collocation=colloc
+    )
+    assert len(cos) == n_allowed
+    assert len(sin) == n_allowed
+    np.testing.assert_almost_equal(cos[n_allowed - 1][0], expected_cos_collocation)
+    np.testing.assert_almost_equal(sin[n_allowed - 1][0], expected_sin_collocation)
+
+
+@pytest.mark.parametrize(
+    (
+        "n_degrees_of_freedom",
+        "mode_id",
+        "max_harmonic_mode",
+        "expected_error_mask_true",
+        "expected_error_mask_false",
+        "expected_psi",
+        "expected_cos",
+        "expected_sin",
+    ),
+    [  # expected_psi is first entry of the psi array
+        (
+            1,
+            np.array([1]),
+            4,
+            45.98654,
+            59.85169,
+            3.51624807e-02,
+            np.array([20.26314727]),
+            np.array([]),
+        ),
+        (
+            2,
+            np.array([1, 3]),
+            2,
+            45.23583,
+            61.36423,
+            3.34654676e-02,
+            np.array([20.26314727]),
+            np.array([2.58648763]),
+        ),
+        (
+            3,
+            np.array([1, 2, 4]),
+            3,
+            119.014431,
+            162.73504,
+            8.31457803e-02,
+            np.array([14.21691739, 30.49159348]),
+            np.array([7.2089677]),
+        ),
+        (
+            4,
+            np.array([2, 3, 4, 5]),
+            6,
+            241.32979,
+            312.35671,
+            0.23713494,
+            np.array([19.15133806, 45.5655092, 41.72481833, 60.8114398]),
+            np.array([]),
+        ),
+    ],
+)
+def test_approximation_from_psi_fitting(
+    n_degrees_of_freedom,
+    mode_id,
+    max_harmonic_mode,
+    expected_error_mask_true,
+    expected_error_mask_false,
+    expected_psi,
+    expected_cos,
+    expected_sin,
+):
+    th_params = ToroidalHarmonicsParams(
+        R_0=1.5,
+        Z_0=0.0,
+        min_tau=0.0,
+        R=np.array([
+            [0.1, 0.6, 1.1, 1.6],
+            [0.2, 0.7, 1.2, 1.7],
+            [0.3, 0.7, 1.3, 1.8],
+            [0.4, 0.8, 1.4, 1.9],
+        ]),
+        Z=np.array([
+            [-10.0, -10.0, -10.0, -10.0],
+            [-5.0, -5.0, -5.0, -5.0],
+            [0.1, 0.1, 0.1, 0.1],
+            [5.0, 5.0, 5.0, 5.0],
+        ]),
+        R_coils=np.array([1.5, 1.5]),
+        Z_coils=np.array([6.0, -6.0]),
+        tau=np.array([
+            [0.0, 0.01463519, 0.02906387, 0.04308885],
+            [0.01100558, 0.06528637, 0.1164761, 0.16243346],
+        ]),
+        sigma=np.array([
+            [-0.2977799, -0.29706421, -0.29493706, -0.29145679],
+            [-0.58271165, -0.57572093, -0.55934928, -0.53499839],
+        ]),
+        tau_c=np.array([0.11157178, 0.11157178]),
+        sigma_c=np.array([0.46364761, -0.46364761]),
+        th_coil_names=["PF_1", "PF_2"],
+    )
+    x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
+    z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
+    plasma_boundary = Coordinates({"x": x, "z": z})
+    point_type = PointType.GRID_POINTS
+    colloc = collocation_points(plasma_boundary, point_type)
+    coilset_psi = np.array([
+        [0.0, 5.0, 10.0, 15.0],
+        [1.0, 6.0, 11.0, 16.0],
+        [2.0, 7.0, 12.0, 17.0],
+        [3.0, 8.0, 13.0, 18.0],
+    ])
+    collocation_psi = np.arange(64)
+    mask_true = np.array([[0, 0, 1, 1], [0, 0, 1, 1], [1, 0, 1, 0], [0, 1, 1, 0]])
+    mask_false = 1
+    error, psi, cos, sin = _approximation_from_psi_fitting(
+        th_params=th_params,
+        n_degrees_of_freedom=n_degrees_of_freedom,
+        collocation=colloc,
+        mode_id=mode_id,
+        max_harmonic_mode=max_harmonic_mode,
+        collocation_psi=collocation_psi,
+        mask=mask_true,
+        true_coilset_psi=coilset_psi,
+    )
+    np.testing.assert_almost_equal(error, expected_error_mask_true, decimal=5)
+    np.testing.assert_almost_equal(psi[0][0], expected_psi)
+    np.testing.assert_almost_equal(cos, expected_cos)
+    np.testing.assert_almost_equal(sin, expected_sin)
+
+    error, psi, cos, sin = _approximation_from_psi_fitting(
+        th_params=th_params,
+        n_degrees_of_freedom=n_degrees_of_freedom,
+        collocation=colloc,
+        mode_id=mode_id,
+        max_harmonic_mode=max_harmonic_mode,
+        collocation_psi=collocation_psi,
+        mask=mask_false,
+        true_coilset_psi=coilset_psi,
+    )
+
+    # Only the error should be different when the mask is different,
+    # but test them all to be sure
+    np.testing.assert_almost_equal(error, expected_error_mask_false, decimal=5)
+    np.testing.assert_almost_equal(psi[0][0], expected_psi)
+    np.testing.assert_almost_equal(cos, expected_cos)
+    np.testing.assert_almost_equal(sin, expected_sin)
+
+
 class TestRegressionTH:
+    @staticmethod
+    def _read_json(file_path: str | pathlib.PosixPath) -> dict:
+        with open(file_path) as f:
+            return json.load(f)
+
     @classmethod
     def setup_class(cls):
         cls.eq = Equilibrium.from_eqdsk(
             Path(TEST_PATH, "eqref_OOB.json").as_posix(),
             from_cocos=7,
         )
+        file_path = Path(TEST_PATH, "toroidal_harmonics_test_data.json")
+        cls.param_dict = cls._read_json(file_path)
+
         cls.eq_cc_set = deepcopy(cls.eq)
         cls.eq_cc_set.coilset.control = cls.eq.coilset.get_coiltype("PF").name
         cls.R_0, cls.Z_0 = cls.eq.effective_centre()
@@ -995,9 +942,24 @@ class TestRegressionTH:
         cls.cos_m = np.array([0, 1, 2, 3])
         cls.sin_m = np.array([2, 4])
         cls.psi_norm = 0.95
+        cls.n_degrees_of_freedom = 6
+        cls.max_harmonic_mode = 5
+        cls.test_approx_result = toroidal_harmonic_approximation(
+            eq=cls.eq,
+            th_params=cls.test_th_params,
+            psi_norm=cls.psi_norm,
+            n_degrees_of_freedom=cls.n_degrees_of_freedom,
+            max_harmonic_mode=cls.max_harmonic_mode,
+            plasma_mask=True,
+        )
+        cls.collocation = collocation_points(
+            cls.eq.get_LCFS(),
+            PointType.GRID_POINTS,
+        )
 
     @pytest.mark.parametrize("cc_all", [True, False])
     def test_toroidal_harmonic_grid_and_coil_setup(self, cc_all):
+        # Testing with the default TauLimit=LCFS argument
         expected_th_number_of_coils = 11 if cc_all else 6
         expected_shape = (150, 200)
         eq = self.eq if cc_all else self.eq_cc_set
@@ -1019,82 +981,14 @@ class TestRegressionTH:
         assert eq.coilset.get_control_coils().z == pytest.approx(th_params.Z_coils)
 
         # fmt: off
-        expected_tau = [1.15773453, 1.18171853, 1.20570252, 1.22968651, 1.2536705,
-       1.27765449, 1.30163848, 1.32562247, 1.34960646, 1.37359045,
-       1.39757444, 1.42155843, 1.44554242, 1.46952641, 1.4935104,
-       1.51749439, 1.54147838, 1.56546237, 1.58944636, 1.61343036,
-       1.63741435, 1.66139834, 1.68538233, 1.70936632, 1.73335031,
-       1.7573343, 1.78131829, 1.80530228, 1.82928627, 1.85327026,
-       1.87725425, 1.90123824, 1.92522223, 1.94920622, 1.97319021,
-       1.9971742, 2.02115819, 2.04514219, 2.06912618, 2.09311017,
-       2.11709416, 2.14107815, 2.16506214, 2.18904613, 2.21303012,
-       2.23701411, 2.2609981, 2.28498209, 2.30896608, 2.33295007,
-       2.35693406, 2.38091805, 2.40490204, 2.42888603, 2.45287003,
-       2.47685402, 2.50083801, 2.524822, 2.54880599, 2.57278998,
-       2.59677397, 2.62075796, 2.64474195, 2.66872594, 2.69270993,
-       2.71669392, 2.74067791, 2.7646619, 2.78864589, 2.81262988,
-       2.83661387, 2.86059786, 2.88458186, 2.90856585, 2.93254984,
-       2.95653383, 2.98051782, 3.00450181, 3.0284858, 3.05246979,
-       3.07645378, 3.10043777, 3.12442176, 3.14840575, 3.17238974,
-       3.19637373, 3.22035772, 3.24434171, 3.2683257, 3.2923097,
-       3.31629369, 3.34027768, 3.36426167, 3.38824566, 3.41222965,
-       3.43621364, 3.46019763, 3.48418162, 3.50816561, 3.5321496,
-       3.55613359, 3.58011758, 3.60410157, 3.62808556, 3.65206955,
-       3.67605354, 3.70003753, 3.72402153, 3.74800552, 3.77198951,
-       3.7959735, 3.81995749, 3.84394148, 3.86792547, 3.89190946,
-       3.91589345, 3.93987744, 3.96386143, 3.98784542, 4.01182941,
-       4.0358134, 4.05979739, 4.08378138, 4.10776537, 4.13174936,
-       4.15573336, 4.17971735, 4.20370134, 4.22768533, 4.25166932,
-       4.27565331, 4.2996373, 4.32362129, 4.34760528, 4.37158927,
-       4.39557326, 4.41955725, 4.44354124, 4.46752523, 4.49150922,
-       4.51549321, 4.5394772, 4.5634612, 4.58744519, 4.61142918,
-       4.63541317, 4.65939716, 4.68338115, 4.70736514, 4.73134913,
-       4.75533312, 4.77931711, 4.8033011, 4.82728509, 4.85126908,
-       4.87525307, 4.89923706, 4.92322105, 4.94720504, 4.97118903,
-       4.99517303, 5.01915702, 5.04314101, 5.067125, 5.09110899,
-       5.11509298, 5.13907697, 5.16306096, 5.18704495, 5.21102894,
-       5.23501293, 5.25899692, 5.28298091, 5.3069649, 5.33094889,
-       5.35493288, 5.37891687, 5.40290087, 5.42688486, 5.45086885,
-       5.47485284, 5.49883683, 5.52282082, 5.54680481, 5.5707888,
-       5.59477279, 5.61875678, 5.64274077, 5.66672476, 5.69070875,
-       5.71469274, 5.73867673, 5.76266072, 5.78664471, 5.8106287,
-       5.8346127, 5.85859669, 5.88258068, 5.90656467, 5.93054866]
+        expected_tau = self.param_dict["test_toroidal_harmonic_grid_and_coil_setup"]["expected_tau"]  # noqa: E501
         # fmt: on
 
         np.testing.assert_array_almost_equal(expected_tau, th_params.tau[0])
         assert np.shape(th_params.tau) == expected_shape
 
         # fmt: off
-        expected_sigma = [-3.14159265, -3.09942362, -3.0572546, -3.01508557, -2.97291654,
-       -2.93074751, -2.88857848, -2.84640945, -2.80424042, -2.76207139,
-       -2.71990236, -2.67773334, -2.63556431, -2.59339528, -2.55122625,
-       -2.50905722, -2.46688819, -2.42471916, -2.38255013, -2.3403811,
-       -2.29821208, -2.25604305, -2.21387402, -2.17170499, -2.12953596,
-       -2.08736693, -2.0451979, -2.00302887, -1.96085984, -1.91869082,
-       -1.87652179, -1.83435276, -1.79218373, -1.7500147, -1.70784567,
-       -1.66567664, -1.62350761, -1.58133858, -1.53916956, -1.49700053,
-       -1.4548315, -1.41266247, -1.37049344, -1.32832441, -1.28615538,
-       -1.24398635, -1.20181732, -1.15964829, -1.11747927, -1.07531024,
-       -1.03314121, -0.99097218, -0.94880315, -0.90663412, -0.86446509,
-       -0.82229606, -0.78012703, -0.73795801, -0.69578898, -0.65361995,
-       -0.61145092, -0.56928189, -0.52711286, -0.48494383, -0.4427748,
-       -0.40060577, -0.35843675, -0.31626772, -0.27409869, -0.23192966,
-       -0.18976063, -0.1475916, -0.10542257, -0.06325354, -0.02108451,
-        0.02108451, 0.06325354, 0.10542257, 0.1475916, 0.18976063,
-        0.23192966, 0.27409869, 0.31626772, 0.35843675, 0.40060577,
-        0.4427748, 0.48494383, 0.52711286, 0.56928189, 0.61145092,
-        0.65361995, 0.69578898, 0.73795801, 0.78012703, 0.82229606,
-        0.86446509, 0.90663412, 0.94880315, 0.99097218, 1.03314121,
-        1.07531024, 1.11747927, 1.15964829, 1.20181732, 1.24398635,
-        1.28615538, 1.32832441, 1.37049344, 1.41266247, 1.4548315,
-        1.49700053, 1.53916956, 1.58133858, 1.62350761, 1.66567664,
-        1.70784567, 1.7500147, 1.79218373, 1.83435276, 1.87652179,
-        1.91869082, 1.96085984, 2.00302887, 2.0451979, 2.08736693,
-        2.12953596, 2.17170499, 2.21387402, 2.25604305, 2.29821208,
-        2.3403811, 2.38255013, 2.42471916, 2.46688819, 2.50905722,
-        2.55122625, 2.59339528, 2.63556431, 2.67773334, 2.71990236,
-        2.76207139, 2.80424042, 2.84640945, 2.88857848, 2.93074751,
-        2.97291654, 3.01508557, 3.0572546, 3.09942362, 3.14159265]
+        expected_sigma = self.param_dict["test_toroidal_harmonic_grid_and_coil_setup"]["expected_sigma"]  # noqa: E501
 
         # fmt: on
         np.testing.assert_array_almost_equal(expected_sigma, th_params.sigma[:, 0])
@@ -1156,6 +1050,94 @@ class TestRegressionTH:
         np.testing.assert_array_almost_equal(expected_sigma_c, th_params.sigma_c)
         assert len(th_params.sigma_c) == expected_th_number_of_coils
 
+        # Test with excluded coils by using the TauLimit.Manual and min_tau_value
+        # arguments
+        # fmt: off
+        expected_tau_c = np.array([0.2885049, 0.51950757, 0.15212496, 0.22407844]) if cc_all else np.array([0.2885049, 0.51950757])  # noqa: E501
+
+        expected_sigma_c = np.array([0.86775446, 0.62098295, 1.01835347, 1.26097536]) if cc_all else np.array([0.86775446, 0.62098295])  # noqa: E501
+        # fmt: on
+        lcfs = self.eq.get_LCFS()
+        arg = np.argmin(lcfs.z)
+        excluded_coils_R_0 = lcfs.x[arg]  # noqa: N806
+        excluded_coils_Z_0 = lcfs.z[arg]  # noqa: N806
+
+        excluded_coil_th_params = toroidal_harmonic_grid_and_coil_setup(
+            eq=eq,
+            R_0=excluded_coils_R_0,
+            Z_0=excluded_coils_Z_0,
+            tau_limit=TauLimit.MANUAL,
+            min_tau_value=0.6,
+        )
+        np.testing.assert_array_almost_equal(
+            expected_tau_c, excluded_coil_th_params.tau_c
+        )
+        np.testing.assert_array_almost_equal(
+            expected_sigma_c, excluded_coil_th_params.sigma_c
+        )
+
+        # Test TauLimit.Coil
+        expected_tau_c = (
+            np.array([
+                0.54743133,
+                0.91207134,
+                1.02497178,
+                1.05937582,
+                0.87854201,
+                0.49935848,
+                0.29062942,
+                0.41637489,
+                0.5559156,
+                0.41855603,
+                0.29235689,
+            ])
+            if cc_all
+            else np.array([
+                0.54743133,
+                0.91207134,
+                1.02497178,
+                1.05937582,
+                0.87854201,
+                0.49935848,
+            ])
+        )
+
+        expected_sigma_c = (
+            np.array([
+                1.31418168,
+                0.7621819,
+                0.23862408,
+                -0.2691331,
+                -0.80828933,
+                -1.28074456,
+                1.6158092,
+                2.08653842,
+                3.13527895,
+                -2.09555349,
+                -1.62195238,
+            ])
+            if cc_all
+            else np.array([
+                1.31418168,
+                0.7621819,
+                0.23862408,
+                -0.2691331,
+                -0.80828933,
+                -1.28074456,
+            ])
+        )
+
+        tau_limit_coil_th_params = toroidal_harmonic_grid_and_coil_setup(
+            eq=eq, R_0=self.R_0, Z_0=self.Z_0, tau_limit=TauLimit.COIL
+        )
+
+        np.testing.assert_array_almost_equal(
+            expected_tau_c, tau_limit_coil_th_params.tau_c
+        )
+        np.testing.assert_array_almost_equal(
+            expected_sigma_c, tau_limit_coil_th_params.sigma_c
+        )
+
     @pytest.mark.parametrize("cc_all", [True, False])
     def test_coil_toroidal_harmonic_amplitude_matrix(self, cc_all):
         eq = self.eq if cc_all else self.eq_cc_set
@@ -1170,22 +1152,7 @@ class TestRegressionTH:
         expected_sin_shape = (len(self.sin_m), 11 if cc_all else 6)
 
         # fmt: off
-        expected_Am_cos = np.array([[3.56396716e-08, 1.13470959e-07, 1.58806895e-07,  # noqa: N806
-         1.63547008e-07, 1.05077598e-07, 3.05896343e-08,
-         9.03590421e-09, 1.54525917e-08, 2.37410318e-08,
-         1.55733032e-08, 9.11630279e-09],
-       [1.40846784e-08, 1.36481306e-07, 2.63553188e-07,
-         2.71646853e-07, 1.19803799e-07, 1.35374182e-08,
-        -6.16359691e-10, -1.16813502e-08, -3.70087674e-08,
-        -1.19620390e-08, -7.06729931e-10],
-       [-6.74135465e-08, 1.46354017e-08, 4.31862082e-07,
-         4.43549836e-07, -1.30068041e-08, -5.42238507e-08,
-        -1.75970745e-08, -1.62092957e-08, 5.17758157e-08,
-        -1.58552348e-08, -1.77414406e-08],
-       [-7.47994051e-08, -3.72996690e-07, 7.26703422e-07,
-         7.28802461e-07, -3.75991626e-07, -6.69497567e-08,
-         2.92230837e-09, 4.08398396e-08, -7.22623580e-08,
-         4.12497200e-08, 3.35139782e-09]])
+        expected_Am_cos = np.array(self.param_dict["test_coil_toroidal_harmonic_amplitude_matrix"]["expected_Am_cos"])  # noqa: N806, E501
         if not cc_all:
             expected_Am_cos = expected_Am_cos[:, :6]  # noqa: N806
         # fmt: on
@@ -1194,14 +1161,7 @@ class TestRegressionTH:
         assert np.shape(test_Am_cos) == expected_cos_shape
 
         # fmt: off
-        expected_Am_sin = np.array([[3.79946851e-08, 3.14970654e-07, 2.23323725e-07,  # noqa: N806
-        -2.64832640e-07, -2.83902429e-07, -3.55337811e-08,
-        -1.58848333e-09, -2.70834275e-08, -6.53828975e-10,
-         2.76095960e-08, 1.82152436e-09],
-       [-1.30124437e-07, 1.01506708e-07, 1.68074189e-06,
-        -2.04990408e-06, 8.51665739e-08, 1.09780324e-07,
-         4.69448814e-09, 4.65830266e-08, -2.59963682e-09,
-        -4.61605764e-08, -5.38443604e-09]])
+        expected_Am_sin = np.array(self.param_dict["test_coil_toroidal_harmonic_amplitude_matrix"]["expected_Am_sin"])  # noqa: E501, N806
         if not cc_all:
             expected_Am_sin = expected_Am_sin[:, :6]  # noqa: N806
         # fmt: on
@@ -1228,58 +1188,7 @@ class TestRegressionTH:
 
         # fmt: off
         # Large array so test subset within LCFS is as expected
-        expected_coilset_psi = np.array([
-            -24.65091628, -24.8034873, -24.95459247, -25.10455675,
-            -25.25366744, -25.40217676, -25.55030437, -25.69823978,
-            -25.84614462, -25.99415484, -26.14238278, -26.29091918,
-            -26.43983498, -26.58918317, -26.73900039, -26.8893085,
-            -27.04011609, -27.19141979, -27.34320564, -27.49545018,
-            -27.64812167, -27.80118106, -27.95458298, -28.10827661,
-            -28.26220653, -28.41631345, -28.57053491, -28.72480593,
-            -28.87905958, -29.03322754, -29.18724052, -29.34102877,
-            -29.49452243, -29.64765192, -29.80034821, -29.95254317,
-            -30.10416975, -30.25516227, -30.40545659, -30.55499024,
-            -30.70370264, -30.85153517, -30.99843129, -31.14433662,
-            -31.28919904, -31.43296869, -31.57559805, -31.71704196,
-            -31.85725762, -31.99620462, -32.13384488, -32.27014273,
-            -32.40506479, -32.53858, -32.67065959, -32.801277,
-            -32.93040785, -33.05802994, -33.18412313, -33.30866931,
-            -33.43165238, -33.55305813, -33.67287422, -33.79109012,
-            -33.90769701, -34.02268778, -34.1360569, -34.24780039,
-            -34.35791576, -34.46640195, -34.57325924, -34.67848921,
-            -34.7820947, -34.88407968, -34.98444928, -35.08320967,
-            -35.18036802, -35.27593247, -35.36991203, -35.46231656,
-            -35.55315672, -35.6424439, -35.7301902, -35.81640835,
-            -35.9011117, -35.98431415, -36.06603011, -36.1462745,
-            -36.22506265, -36.3024103, -36.37833357, -36.45284889,
-            -36.52597301, -36.59772293, -36.66811591, -36.7371694,
-            -36.80490105, -36.87132865, -36.93647012, -37.00034351,
-            -37.06296693, -37.12435857, -37.18453665, -37.24351943,
-            -37.30132516, -37.35797209, -37.41347844, -37.46786239,
-            -37.52114205, -37.57333548, -37.62446065, -37.67453542,
-            -37.72357757, -37.77160474, -37.81863447, -37.86468413,
-            -37.90977098, -37.95391212, -37.99712449, -38.03942486,
-            -38.08082984, -38.12135586, -38.16101916, -38.19983582,
-            -38.23782171, -38.27499251, -38.31136372, -38.34695061,
-            -38.38176829, -38.41583163, -38.44915531, -38.48175381,
-            -38.5136414, -38.54483213, -38.57533986, -38.60517822,
-            -38.63436063, -38.66290033, -38.69081032, -38.71810341,
-            -38.74479218, -38.77088903, -38.79640613, -38.82135546,
-            -38.84574878, -38.86959766, -38.89291347, -38.91570737,
-            -38.93799033, -38.95977312, -38.98106631, -39.00188029,
-            -39.02222524, -39.04211118, -39.06154791, -39.08054507,
-            -39.09911212, -39.11725831, -39.13499275, -39.15232434,
-            -39.16926184, -39.18581382, -39.20198868, -39.21779466,
-            -39.23323983, -39.24833212, -39.26307928, -39.27748891,
-            -39.29156846, -39.30532522, -39.31876634, -39.33189881,
-            -39.34472951, -39.35726514, -39.36951228, -39.38147737,
-            -39.39316671, -39.40458647, -39.41574271, -39.42664134,
-            -39.43728814, -39.44768879, -39.45784883, -39.4677737,
-            -39.4774687, -39.48693904, -39.49618981, -39.50522597,
-            -39.51405242, -39.5226739, -39.53109507, -39.53932051,
-            -39.54735468, -39.55520192, -39.56286652, -39.57035264,
-            -39.57766437, -39.58480571, -39.59178055, -39.59859271
-        ])
+        expected_coilset_psi = self.param_dict["test_toroidal_harmonic_approximate_psi"]["expected_coilset_psi"]  # noqa: E501
         # fmt: on
 
         # Note R and Z positions at [149, :] chosen and then masked to get a
@@ -1313,9 +1222,6 @@ class TestRegressionTH:
         assert np.shape(test_Am_sin) == (len(self.sin_m),)
 
     def test_toroidal_harmonic_approximation(self):
-        n_degrees_of_freedom = 6
-        max_harmonic_mode = 5
-
         expected_cos_modes = np.array([0, 1, 2, 3, 4])
         expected_sin_modes = np.array([0])
         expected_cos_amplitudes = np.array([
@@ -1331,8 +1237,8 @@ class TestRegressionTH:
             eq=self.eq,
             th_params=self.test_th_params,
             psi_norm=self.psi_norm,
-            n_degrees_of_freedom=n_degrees_of_freedom,
-            max_harmonic_mode=max_harmonic_mode,
+            n_degrees_of_freedom=self.n_degrees_of_freedom,
+            max_harmonic_mode=self.max_harmonic_mode,
             plasma_mask=True,
         )
         mask = _get_plasma_mask(
@@ -1343,10 +1249,10 @@ class TestRegressionTH:
         )
 
         assert result.error < 10
-        assert len(result.cos_m) + len(result.sin_m) == n_degrees_of_freedom
+        assert len(result.cos_m) + len(result.sin_m) == self.n_degrees_of_freedom
         np.testing.assert_array_almost_equal(result.cos_m, expected_cos_modes)
         np.testing.assert_array_almost_equal(result.sin_m, expected_sin_modes)
-        assert np.max(np.append(result.cos_m, result.sin_m)) <= max_harmonic_mode
+        assert np.max(np.append(result.cos_m, result.sin_m)) <= self.max_harmonic_mode
 
         np.testing.assert_almost_equal(result.cos_amplitudes, expected_cos_amplitudes)
         np.testing.assert_almost_equal(result.sin_amplitudes, expected_sin_amplitudes)
@@ -1494,33 +1400,120 @@ class TestRegressionTH:
             approx_derivative(test_constraint_function.f_constraint, vector)
         )
 
-    @pytest.mark.parametrize(
-        ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
-        [
-            # Case where max_n_dof is hit
-            (5, 5, 4, 4),
-            # Case where 2 * max_harmonic_mode is hit
-            (5, 2, 5, 4),
-            # Case where everything OK
-            (5, 5, 10, 5),
-            # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
-            (10, 4, 9, 8),
-            # Case where n_dof is not specified and defaults to max
-            (None, 5, 9, 9),
-            # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
-            (None, 4, 9, 8),
-        ],
-    )
-    def test_th_n_dof_limits(
-        self,
-        n_dof: int | None,
-        max_harmonic_mode: int,
-        max_n_dof: int,
-        expected_dof: int,
-    ):
-        n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
-        assert n_dof == expected_dof
+    def test_separate_psi_contributions(self):
+        # fmt: off
+        expected_true_coilset_psi = self.param_dict["test_separate_psi_contributions"]["expected_true_coilset_psi_collocation"]  # noqa: E501
 
+        expected_fixed_psi = self.param_dict["test_separate_psi_contributions"]["expected_fixed_psi_collocation"]  # noqa: E501
 
-# TODO @clmould: add tests for TH collocation point function
-# 4099
+        expected_collocation_psi = self.param_dict["test_separate_psi_contributions"]["expected_collocation_psi_collocation"]  # noqa: E501
+        # fmt: on
+        # Test with collocation points
+        true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
+            self.eq, self.test_th_params, self.collocation
+        )
+
+        np.testing.assert_almost_equal(true_coilset_psi[0], expected_true_coilset_psi)
+        np.testing.assert_almost_equal(fixed_psi[0], expected_fixed_psi)
+        np.testing.assert_almost_equal(collocation_psi, expected_collocation_psi)
+
+        # Test without collocation points
+        true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
+            self.eq, self.test_th_params, collocation=None
+        )
+        np.testing.assert_almost_equal(true_coilset_psi[0], expected_true_coilset_psi)
+        np.testing.assert_almost_equal(fixed_psi[0], expected_fixed_psi)
+        assert collocation_psi is None
+
+        # Test with excluded coils - using a larger approx region so only 4 coils are
+        # included in the approximation
+
+        lcfs = self.eq.get_LCFS()
+        arg = np.argmin(lcfs.z)
+        R_0 = lcfs.x[arg]
+        Z_0 = lcfs.z[arg]
+        excluded_coil_th_params = toroidal_harmonic_grid_and_coil_setup(
+            eq=self.eq, R_0=R_0, Z_0=Z_0, tau_limit=TauLimit.MANUAL, min_tau_value=0.6
+        )
+        # fmt: off
+        expected_true_coilset_psi = self.param_dict["test_separate_psi_contributions"]["expected_true_coilset_psi_excluded_coils"]  # noqa: E501
+
+        expected_fixed_psi = self.param_dict["test_separate_psi_contributions"]["expected_fixed_psi_excluded_coils"]  # noqa: E501
+
+        expected_collocation_psi = self.param_dict["test_separate_psi_contributions"]["expected_collocation_psi_excluded_coils"]  # noqa: E501
+        # fmt: on
+
+        true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
+            self.eq, excluded_coil_th_params, collocation=self.collocation
+        )
+
+        # Check that 7 coils are excluded and 4 are included
+        assert len(excluded_coil_th_params.th_coil_names) == (
+            len(self.eq.coilset.name) - 7
+        )
+
+        np.testing.assert_almost_equal(true_coilset_psi[0], expected_true_coilset_psi)
+        np.testing.assert_almost_equal(fixed_psi[0], expected_fixed_psi)
+        np.testing.assert_almost_equal(collocation_psi, expected_collocation_psi)
+
+    def test_get_plasma_mask(self):
+        # fmt: off
+        expected_mask_true = self.param_dict["test_get_plasma_mask"]["expected_mask_true"]  # noqa: E501
+        # fmt: on
+        expected_mask_false = 1
+        mask = _get_plasma_mask(
+            self.eq, self.test_th_params, self.psi_norm, plasma_mask=True
+        )
+        np.testing.assert_almost_equal(mask[0], expected_mask_true)
+
+        mask = _get_plasma_mask(
+            self.eq, self.test_th_params, self.psi_norm, plasma_mask=False
+        )
+        assert mask == expected_mask_false
+
+    def test_approximation_direct_from_currents(self):
+        # fmt: off
+        expected_error = 9.41443590779587
+
+        expected_approx_coilset_psi = self.param_dict["test_approximation_direct_from_currents"]["expected_approx_coilset_psi"]  # noqa: E501
+
+        expected_cos_amps = np.array([-4.23864252, -3.58288708, -10.51447447, -11.673279,
+            -14.26727472])
+
+        expected_sin_amps = np.array([0.])
+        # fmt: on
+
+        mask = _get_plasma_mask(
+            eq=self.eq,
+            th_params=self.test_th_params,
+            psi_norm=self.psi_norm,
+            plasma_mask=True,
+        )
+        true_coilset_psi, _, _ = _separate_psi_contributions(
+            self.eq, self.test_th_params, self.collocation
+        )
+        cos_m = np.array([0, 1, 2, 3, 4])
+        sin_m = np.array([0])
+        error, approximate_coilset_psi, cos_amps, sin_amps = (
+            _approximation_direct_from_currents(
+                eq=self.eq,
+                th_params=self.test_th_params,
+                cos_m_chosen=cos_m,
+                sin_m_chosen=sin_m,
+                true_coilset_psi=true_coilset_psi,
+                mask=mask,
+            )
+        )
+
+        np.testing.assert_almost_equal(error, expected_error)
+        np.testing.assert_array_almost_equal(
+            approximate_coilset_psi[0], expected_approx_coilset_psi
+        )
+        np.testing.assert_array_almost_equal(cos_amps, expected_cos_amps)
+        np.testing.assert_array_almost_equal(sin_amps, expected_sin_amps)
+
+    def test_plot_toroidal_harmonic_approximation(self):
+        # Call the plotting function and check there are no exceptions raised
+        plot_toroidal_harmonic_approximation(
+            self.eq, self.test_th_params, self.test_approx_result
+        )
