@@ -159,7 +159,7 @@ class TestPlotOptions:
                         assert val[no] == d
                     except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
-            elif key.endswith("options"):
+            elif key.endswith("options") or key == "number_points":
                 assert getattr(the_options, key) == val
             else:
                 assert getattr(the_options, key) != val
