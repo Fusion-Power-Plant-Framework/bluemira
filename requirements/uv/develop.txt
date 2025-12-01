@@ -27,7 +27,7 @@ blosc2==3.11.1
     # via tables
 certifi==2025.11.12
     # via requests
-cfgv==3.4.0
+cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.4
     # via requests
@@ -44,7 +44,7 @@ contourpy==1.3.2
     #   matplotlib
 coolprop==7.2.0
     # via bluemira (pyproject.toml)
-coverage==7.11.3
+coverage==7.12.0
     # via pytest-cov
 cycler==0.12.1
     # via matplotlib
@@ -61,7 +61,7 @@ docutils==0.21.2
     #   sphinx-rtd-theme
 eqdsk==0.7.0
     # via bluemira (pyproject.toml)
-exceptiongroup==1.3.0
+exceptiongroup==1.3.1
     # via
     #   ipython
     #   pytest
@@ -75,7 +75,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.60.1
+fonttools==4.61.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -135,6 +135,8 @@ jupytext==1.18.1
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.9
     # via matplotlib
+librt==0.6.3
+    # via mypy
 llvmlite==0.45.1
     # via numba
 markdown-it-py==3.0.0
@@ -165,7 +167,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.2
     # via blosc2
-mypy==1.18.2
+mypy==1.19.0
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
@@ -183,7 +185,7 @@ nbformat==5.10.4
     #   jupytext
     #   myst-nb
     #   nbclient
-ndindex==1.10.0
+ndindex==1.10.1
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
@@ -262,7 +264,7 @@ pluggy==1.6.0
     #   pytest-cov
 pooch==1.8.2
     # via pyvista
-pre-commit==4.4.0
+pre-commit==4.5.0
     # via bluemira (pyproject.toml)
 prompt-toolkit==3.0.52
     # via ipython
@@ -278,7 +280,7 @@ py-cpuinfo==9.0.0
     #   tables
 pyclipper==1.3.0.post6
     # via bluemira (pyproject.toml)
-pydantic==2.12.4
+pydantic==2.12.5
     # via bluemira (pyproject.toml)
 pydantic-core==2.41.5
     # via pydantic
@@ -344,7 +346,7 @@ rich==14.2.0
     # via
     #   bluemira (pyproject.toml)
     #   meshio
-rpds-py==0.29.0
+rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
