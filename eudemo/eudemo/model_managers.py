@@ -143,8 +143,9 @@ class NeutronicsManager:
                     Path(__file__).parent.parent
                     / "config"
                     / "neutronics"
+                    / "csg"
                     / "plot"
-                    / "plot_1.png"
+                    / "geometry.png"
                 )
             )
         )
