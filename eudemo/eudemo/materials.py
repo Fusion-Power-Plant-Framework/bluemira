@@ -63,7 +63,7 @@ VV_MATERIAL = mixture(
 )
 
 
-structural_fraction_vo = 0.128
+structural_fraction_vo = 0.128 
 multiplier_fraction_vo = 0.493
 breeder_fraction_vo = 0.103
 helium_fraction_vo = 0.276
