@@ -87,7 +87,7 @@ class _Imprinter:
         ex = TopologyExplorer(res)
 
         # you have to update the occ_solid of the imprintable
-        # with the new imprinted solid. Imagen if there are
+        # with the new imprinted solid. Imagine if there are
         # two or more imprints on the same face, the final
         # shape needs to account for each.
         for resulting_solid in ex.solids():

@@ -138,7 +138,7 @@ def export_dagmc_model(reactor, build_config):
         The build configuration parameters.
     """
     if build_config.get("export_dagmc_model", False):
-        bluemira_print("Creating DAGMC Model")
+        bluemira_print("Collecting components for DAGMC Model")
         reactor.save_cad(
             directory=build_config.get("dagmc_export_dir", None),
             cad_format="dagmc",
@@ -148,9 +148,7 @@ def export_dagmc_model(reactor, build_config):
                     reactor.coil_structures,
                 ],
                 "group_by_materials": True,
-  
             },
-
             converter_config=build_config.get("converter_config", {}),
         )
 
