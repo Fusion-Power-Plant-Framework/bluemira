@@ -10,6 +10,7 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -245,7 +246,6 @@ def circular_pattern_component(
                         f"with search index: {search_index_i}"
                     )
                 phy_comp.shape = shape
-                from copy import deepcopy
                 phy_comp.material = deepcopy(comp.material)
 
     return sectors

@@ -55,12 +55,12 @@ HELIUM_MAT = Helium()
 HeavyConcrete = HeavyConcrete()
 
 VV_MATERIAL = mixture(
-        name="inb_vacuum_vessel",
-        materials=[(EUROFER_MAT, 0.8), (WATER_MAT, 0.2)],
-        fraction_type="volume",
-        mix_condition=OperationalConditions(temperature=673.15, pressure=1e5),
-        converters=OpenMCNeutronicConfig(material_id=104),
-    )
+    name="inb_vacuum_vessel",
+    materials=[(EUROFER_MAT, 0.8), (WATER_MAT, 0.2)],
+    fraction_type="volume",
+    mix_condition=OperationalConditions(temperature=673.15, pressure=1e5),
+    converters=OpenMCNeutronicConfig(material_id=104),
+)
 
 
 structural_fraction_vo = 0.128
