@@ -36,6 +36,7 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
+from bluemira.base.file import get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -399,11 +400,20 @@ class OptimisedReactor(Reactor):  # noqa: D101
         """Initialise the optimised reactor."""
         self.params = reactor_params
         super().__init__("OptimisedReactor", n_sectors=reactor_params.n_TF.value)
-        establish_material_cache(["matproplib"])
+        establish_material_cache([
+            Path(get_bluemira_root(), "examples", "design", "design_materials.py")
+            .resolve()
+            .as_posix(),
+            "matproplib",
+        ])
 
     def build_plasma(self):
         """Build the plasma component."""
         rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
+        rf_eq.to_eqdsk(
+            filename="OptimisedReactor.eq.json",
+            directory=Path(__file__).parent.as_posix(),
+        )
         lcfs_wire = make_polygon(rf_eq.get_LCFS().xyz, closed=True)
         self.plasma = Plasma(PlasmaBuilder(self.params, {}, lcfs_wire).build())
 
@@ -448,8 +458,8 @@ r = OptimisedReactor(
 )
 
 r.build_plasma()
-r.build_bb("Homogenised_HCPB_2015_v3_BZ")
-r.build_tf_coils("Toroidal_Field_Coil_2015")
+r.build_bb("BB_BZ_MATERIAL")
+r.build_tf_coils("EUROFER_MAT")
 
 major_radius = r.params.R_0.value * 100
 aspect_ratio = r.params.A.value
