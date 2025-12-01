@@ -290,7 +290,12 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         debug: bool = False,
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot stage for setup openmc"""
-        settings = self._base_setup(run_mode, debug=debug)
+        settings = self._base_setup(
+            run_mode,
+            runtime_params.rel_max_lost_particles,
+            runtime_params.max_lost_particles,
+            debug=debug,
+        )
         if bounding_box is None:
             r_max, _y_max, z_max = self.universe.bounding_box.upper_right
         else:
@@ -317,7 +322,12 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         min_xyz = (r_min, r_min, z_min)
         max_xyz = (r_max, r_max, z_max)
-        settings = self._base_setup(run_mode, debug=debug)
+        settings = self._base_setup(
+            run_mode,
+            runtime_params.rel_max_lost_particles,
+            runtime_params.max_lost_particles,
+            debug=debug,
+        )
         settings.volume_calculations = openmc.VolumeCalculation(
             domain,
             runtime_params.particles,
