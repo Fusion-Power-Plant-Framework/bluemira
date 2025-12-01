@@ -209,6 +209,7 @@ class DefaultPlotOptions:
     show_points: bool = False
     show_wires: bool = True
     show_faces: bool = True
+    number_points: bool = False
     # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
     # is specified, the default color plot of matplotlib is used.
     point_options: DictOptionsDescriptor = DictOptionsDescriptor(
@@ -517,6 +518,9 @@ class PointsPlotter(BasePlotter):
     def _make_plot_2d(self):
         if self.options.show_points:
             self.ax.scatter(*self._projected_data, **self.options.point_options)
+            if self.options.number_points:
+                for ind, point in enumerate(self._projected_data.T):
+                    self.ax.annotate(ind, point)
         self._set_aspect_2d()
 
     def _make_plot_3d(self, *args, **kwargs):  # noqa: ARG002

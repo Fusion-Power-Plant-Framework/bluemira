@@ -98,6 +98,7 @@ display.plot_2d(wire, my_options)
 
 # %%
 plotter_2d.options.show_points = True
+plotter_2d.options.number_points = True
 plotter_2d.options.ndiscr = 15
 plotter_2d.plot_2d(wire)
 
