@@ -31,6 +31,14 @@ from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
 from bluemira.utilities.tools import numpy_to_vtk
 
 
+def _get_std_dev_iloc(df):
+    return df["std. dev."].iloc[0] if "std. dev." in df else 0
+
+
+def _get_std_dev_numpy(df):
+    return df["std. dev."].to_numpy() if "std. dev." in df else 0
+
+
 def get_percent_err(row):
     """
     Calculate a percentage error to the required row,
@@ -53,10 +61,11 @@ def get_percent_err(row):
     where dataframe must have one row named "std. dev." and another named "mean".
     """
     # if percentage error > 1E7:)
-    if np.isclose(row["mean"], 0.0, rtol=0.0, atol=row["std. dev."] / 100000):
+    std_dev = row.get("std. dev.", 0)
+    if np.isclose(row["mean"], 0.0, rtol=0.0, atol=std_dev / 100000):
         return np.nan
     # else: normal mode of operation: divide std by mean, then multiply by 100.
-    return row["std. dev."] / row["mean"] * 100.0
+    return std_dev / row["mean"] * 100.0
 
 
 class OpenMCResultBase:
@@ -114,7 +123,7 @@ class OpenMCResultBase:
         """
         df = cls._load_dataframe_from_statepoint(statepoint, filter_name)
         powers = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
-        errors = raw_uc(df["std. dev."].to_numpy() * src_rate, "eV/s", "W")
+        errors = raw_uc(_get_std_dev_numpy(df) * src_rate, "eV/s", "W")
         return powers.sum(), np.sqrt((errors**2).sum())
 
     @classmethod
@@ -133,7 +142,8 @@ class OpenMCResultBase:
         scale = source_rate / source_triton_rate
         tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
         # Single tally, so std dev scales linearly
-        return scale * tbr_df["mean"].iloc[0], scale * tbr_df["std. dev."].iloc[0]
+
+        return scale * tbr_df["mean"].iloc[0], scale * _get_std_dev_iloc(tbr_df)
 
 
 @dataclass
@@ -305,7 +315,7 @@ class OpenMCCSGResult(OpenMCResultBase):
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
         )
         heating_df["err."] = raw_uc(
-            heating_df["std. dev."].to_numpy() * src_rate, "eV/s", "W"
+            _get_std_dev_numpy(heating_df) * src_rate, "eV/s", "W"
         )
         heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
         # rearrange dataframe into this desired order
@@ -456,7 +466,7 @@ class OpenMCCSGResult(OpenMCResultBase):
             p_hf_df["mean"].to_numpy() * src_rate, "eV/s", "W"
         )
         p_hf_df["heating std.dev."] = photon_heating_stddev = raw_uc(
-            p_hf_df["std. dev."].to_numpy() * src_rate, "eV/s", "W"
+            _get_std_dev_numpy(p_hf_df) * src_rate, "eV/s", "W"
         )
         p_hf_df["vol. heating (W/m3)"] = photon_heating / p_hf_df["vol (m^3)"]
         p_hf_df["vol. heating std.dev."] = photon_heating_stddev / p_hf_df["vol (m^3)"]
@@ -589,8 +599,10 @@ class OpenMCDAGMCResult(OpenMCResultBase):
 
         model_w = universe.bounding_box.width
 
-        heating_mesh_mean = heating_mesh_tally.mean.reshape(100, 100, 100)
-        flux_mesh_mean = flux_mesh_tally.mean.reshape(100, 100, 100)
+        size = int(np.round(heating_mesh_tally.mean.size ** (1 / 3)))
+
+        heating_mesh_mean = heating_mesh_tally.mean.reshape(size, size, size)
+        flux_mesh_mean = flux_mesh_tally.mean.reshape(size, size, size)
         scaling = tuple(
             round(t / c) for c, t in zip(heating_mesh_mean.shape, model_w, strict=False)
         )
