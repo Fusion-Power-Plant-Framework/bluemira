@@ -28,7 +28,6 @@ dependencies = [
     "matplotlib>=3.8",
     "matproplib",
     "meshio>=4.0",
-    "neutronics-material-maker>=1.1.4",
     "nlopt>=2.7.1",
     "numba>=0.59",
     # we should remove this once numba-scipy starts to be more regularly maintained
