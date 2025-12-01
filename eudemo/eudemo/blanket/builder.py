@@ -217,16 +217,13 @@ class BlanketBuilder(Builder):
         base_wire = make_polygon(self.panel_points.T)
         base_wire.close()
         fw_cut_wire = offset_wire(base_wire, fw_thickness)
-        bz_cut_wire = offset_wire(fw_cut_wire, bz_thickness)
-        fw_cut = BluemiraFace(fw_cut_wire)
-        bz_cut = BluemiraFace(bz_cut_wire)
-        fw = self._find_union_face(silhouette, fw_cut)
+        bz_cut = BluemiraFace(offset_wire(fw_cut_wire, bz_thickness))
+        fw = self._find_union_face(silhouette, BluemiraFace(fw_cut_wire))
         bz = self._find_union_face(silhouette, bz_cut)
         manifold = boolean_cut(silhouette, bz_cut)[0]
 
- 
-        dodgy_wire = offset_wire(bz.wires[0], -0.002)  # avoid coincident faces
-        dodgy_wire = offset_wire(dodgy_wire, 0.001)  # Superstition
+        dodgy_wire = offset_wire(bz.wires[0], 0.002)  # avoid coincident faces
+        dodgy_wire = offset_wire(dodgy_wire, -0.001)  # Superstition
         bz = BluemiraFace(dodgy_wire)
 
         return fw, bz, manifold
