@@ -16,7 +16,6 @@ import types
 from matproplib.library.fluids import Void
 from matproplib.material import Material
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.error import MaterialsError
 from bluemira.utilities.tools import get_module
 
@@ -64,18 +63,13 @@ class MaterialCache:
         try:
             super().__getattribute__(value)
         except AttributeError:
-            if value in self._material_packages:
-                return self._material_packages[value]
+            if value in self._material_package:
+                return self._material_package[value]
             raise
 
     def load_from_package(self, package):
         """Load material package"""
-        self._material_packages = []
-        for p in package:
-            try:
-                self._material_packages.append(get_module(p))
-            except ImportError as ie:  # noqa: PERF203
-                bluemira_warn(f"Unable to find {p}: {ie.msg}")
+        self._material_packages = [get_module(p) for p in package]
 
     def _get_material(self, name):
         name = name.replace("-", "_")
@@ -86,7 +80,7 @@ class MaterialCache:
                 return getattr(p, name)
             for dp in filter(lambda s: not s.startswith("__"), dir(p)):
                 attr = getattr(p, dp)
-                if dp == name:
+                if dp == name or getattr(attr, "name", "") == name:
                     return attr
                 if (
                     isinstance(attr, types.ModuleType)
@@ -101,7 +95,9 @@ class MaterialCache:
             mod = p
             for n in name:
                 mod = _d(mod, n, initial_p)
-                if isinstance(mod, Material):
+                if mod is not None and (
+                    isinstance(mod, Material) or issubclass(mod, Material)
+                ):
                     return mod
         raise AttributeError(f"No such material: {name}")
 
