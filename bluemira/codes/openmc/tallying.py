@@ -97,7 +97,7 @@ def csg_filter_cells(
 
 
 def dagmc_tallys(
-    material_list,
+    material_list,  # noqa: ARG001
     model: openmc.Geometry,
     mesh_shape: tuple[float, ...] = (350, 350, 350),
 ):

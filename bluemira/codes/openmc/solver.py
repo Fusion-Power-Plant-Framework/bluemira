@@ -107,6 +107,8 @@ class OpenMCSimulationRuntimeParameters:
     openmc_write_summary: bool = False
     plot_axis: str = "xz"
     plot_pixel_per_metre: int = 100
+    rel_max_lost_particles: float = 1e-6
+    max_lost_particles: int = 10
 
 
 # Signature for a function that creates an OpenMC neutron source
@@ -159,12 +161,24 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         self._source_triton_rate = 1.0
         self.materials = materials
 
-    def _base_setup(self, run_mode, *, debug: bool = False):
+    def _base_setup(
+        self,
+        run_mode,
+        rel_max_lost_particles,
+        max_lost_particles,
+        *,
+        debug: bool = False,
+    ):
         from openmc.config import config  # noqa: PLC0415
 
         config["cross_sections"] = self.cross_section_xml
 
-        settings = openmc.Settings(run_mode=run_mode.value, output={"summary": False})
+        settings = openmc.Settings(
+            run_mode=run_mode.value,
+            output={"summary": False},
+            rel_max_lost_particles=rel_max_lost_particles,
+            max_lost_particles=int(max_lost_particles),
+        )
 
         self.universe, self.geometry = self._create_geometry()
 
@@ -231,7 +245,12 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         debug: bool = False,
     ) -> tuple[openmc.Model, SourceInfo]:
         """Run stage for setup openmc"""
-        settings = self._base_setup(run_mode, debug=debug)
+        settings = self._base_setup(
+            run_mode,
+            runtime_params.rel_max_lost_particles,
+            runtime_params.max_lost_particles,
+            debug=debug,
+        )
         settings.particles = runtime_params.particles
         settings.source, source_rate, source_t_rate = self.source(eq, source_params)
         settings.batches = int(runtime_params.batches)
