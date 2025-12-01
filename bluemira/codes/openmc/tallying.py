@@ -101,6 +101,7 @@ def dagmc_tallys(
     model: openmc.Geometry,
     mesh_shape: tuple[float, ...] = (350, 350, 350),
 ):
+    """DAGMC default mesh tallys"""  # noqa: DOC201
     # mesh that covers the geometry
     mesh = openmc.RegularMesh.from_domain(model, dimension=mesh_shape)
     mesh_filter = openmc.MeshFilter(mesh)
