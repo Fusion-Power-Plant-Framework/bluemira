@@ -99,7 +99,7 @@ def csg_filter_cells(
 def dagmc_tallys(
     material_list,  # noqa: ARG001
     model: openmc.Geometry,
-    mesh_shape: tuple[float, ...] = (350, 350, 350),
+    mesh_shape: tuple[float, ...] = (100, 100, 100),
 ):
     """DAGMC default mesh tallys"""  # noqa: DOC201
     # mesh that covers the geometry

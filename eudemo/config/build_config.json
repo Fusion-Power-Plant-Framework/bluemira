@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./process",
     "run_dir": "$path_expand:./process",
     "plot": false
@@ -137,7 +137,7 @@
       "export_dagmc_model": true,
       "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
       "neutronics_output_path": "$path_expand:./neutronics/dagmc",
-      "particles": 1000000,
+      "particles": 10000,
       "batches": 2,
       "run_mode": "run",
       "rel_max_lost_particles": 1e-2,
