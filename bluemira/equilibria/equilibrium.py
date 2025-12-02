@@ -38,6 +38,7 @@ from bluemira.equilibria.find import (
     find_flux_surf,
     in_plasma,
     in_zone,
+    interpolate_psi,
 )
 from bluemira.equilibria.flux_surfaces import (
     ClosedFluxSurface,
@@ -1096,11 +1097,19 @@ class Equilibrium(CoilSetMHDState):
             **kwargs,
         )
 
+        if regrid_nx_nz:
+            xn, zn = np.meshgrid(grid.x[:, 0], grid.z[0, :], indexing="ij")
+            psi = interpolate_psi(
+                x_old=e.x, z_old=e.z, psi_old=e.psi, x_new=xn, z_new=zn
+            )
+        else:
+            psi = e.psi
+
         profiles = CustomProfile.from_eqdsk(e)
         o_points, x_points = find_OX_points(
             grid.x,
             grid.z,
-            e.psi,
+            psi,
             limiter=limiter,
             o_point_fallback=o_point_fallback,
             R_0=profiles.R_0,
@@ -1108,7 +1117,7 @@ class Equilibrium(CoilSetMHDState):
         jtor = profiles.jtor(
             grid.x,
             grid.z,
-            e.psi,
+            psi,
             o_points=o_points,
             x_points=x_points,
             o_point_fallback=o_point_fallback,
@@ -1120,7 +1129,7 @@ class Equilibrium(CoilSetMHDState):
             profiles=profiles,
             vcontrol=None,
             limiter=limiter,
-            psi=e.psi,
+            psi=psi,
             jtor=jtor,
             filename=filename,
             o_point_fallback=o_point_fallback,
@@ -1274,15 +1283,55 @@ class Equilibrium(CoilSetMHDState):
 
         self._solver = GSSolver(grid, force_symmetry=self.force_symmetry)
 
-    def reset_grid(self, grid: Grid, **kwargs):
+    def _calculate_jtor(self, grid, psi_plasma):
         """
-        Yeah, yeah...
+        Compute jtor from plasma psi.
+
+        Returns
+        -------
+        :
+            Recalculated jtor.
         """
-        super().reset_grid(grid, **kwargs)
+        o_points, x_points = self.get_OX_points(
+            psi=psi_plasma,
+            force_update=True,
+        )
+        return self.profiles.jtor(
+            grid.x,
+            grid.z,
+            psi_plasma,
+            o_points=o_points,
+            x_points=x_points,
+        )
+
+    def reset_grid(
+        self, grid: Grid, psi: npt.NDArray[np.float64] | None = None, **kwargs
+    ):
+        """
+        Reset the grid for the Equilibrium.
+
+        Parameters
+        ----------
+        grid:
+            The grid to set the Equilibrium on
+        psi:
+            Psi array to use
+        """
+        self.set_grid(grid)
+        self.boundary = FreeBoundary(grid)
+
+        self._clear_OX_points()
+        if psi is not None:
+            self._jtor = self._calculate_jtor(grid, psi)
+            self._remap_greens()
+            psi -= self.coilset.psi(grid.x, grid.z)
+            self._update_plasma(psi, self._jtor)
+        else:
+            self._set_init_plasma(grid)
+            self._jtor = self._calculate_jtor(grid, self.plasma.psi())
+            self._update_plasma(self.plasma.psi(), self._jtor)
         vcontrol = kwargs.get("vcontrol", self._kwargs["vcontrol"])
         self.set_vcontrol(vcontrol)
-        # TODO @CoronelBuendia: reinit psi and jtor?
-        # 3658
 
     def _set_init_plasma(
         self,

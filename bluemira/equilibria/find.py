@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 from contourpy import LineType, contour_generator
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import RectBivariateSpline, RegularGridInterpolator
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
@@ -1104,3 +1104,44 @@ def _in_plasma(
             if in_polygon(x[i, j], z[i, j], sep, include_edges):
                 mask[i, j] = 1
     return mask
+
+
+def interpolate_psi(
+    x_old: np.ndarray,
+    z_old: np.ndarray,
+    psi_old: np.ndarray,
+    x_new: np.ndarray,
+    z_new: np.ndarray,
+    *,
+    bounds_error: bool = False,
+    fill_value: float | None = None,
+):
+    """
+    Interpolates a psi(x, z) field from an old grid to a new grid.
+
+    Parameters
+    ----------
+    x_old, z_old:
+        1D arrays defining the original regular grid (shape [Nx], [Nz])
+    psi_old:
+        2D psi field on the old grid (shape [Nx, Nz])
+    x_new, z_new:
+        2D meshgrid arrays defining the target grid
+    bounds_error:
+        Passed to RegularGridInterpolator
+    fill_value:
+        Passed to RegularGridInterpolator
+
+    Returns
+    -------
+    psi_new:
+        2D array psi evaluated on (x_new, z_new)
+    """
+    interpolator = RegularGridInterpolator(
+        (x_old, z_old),
+        psi_old,
+        bounds_error=bounds_error,
+        fill_value=fill_value,
+    )
+
+    return interpolator((x_new, z_new))

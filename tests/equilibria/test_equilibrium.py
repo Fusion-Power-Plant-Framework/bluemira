@@ -17,6 +17,7 @@ from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_
 from bluemira.equilibria.coils import CoilGroup, CoilSet
 from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
+from bluemira.equilibria.find import find_OX_points, interpolate_psi
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
@@ -39,6 +40,15 @@ from bluemira.equilibria.shapes import flux_surface_kuiroukidis
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.utilities.tools import abs_rel_difference, compare_dicts
 from tests.equilibria.setup_methods import _coilset_setup
+
+
+def closest_dist(a_pts, b_pts):
+    if not a_pts or not b_pts:
+        return np.inf
+    A = np.array([(p.x, p.z) for p in a_pts])
+    B = np.array([(p.x, p.z) for p in b_pts])
+    d = np.sqrt(((A[:, None, :] - B[None, :, :]) ** 2).sum(axis=2))
+    return np.min(d)
 
 
 class TestFields:
@@ -426,16 +436,135 @@ class TestEqReadWrite:
             d2.pop("coil_names")
         assert compare_dicts(d1, d2, almost_equal=True)
 
-    def test_regrid_on_read(self):
+    @pytest.fixture
+    def eq_data(self):
         data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        file_name = "eqref_OOB.json"
+        return Path(data_path, "eqref_OOB.json")
 
-        eq_ng = Equilibrium.from_eqdsk(Path(data_path, file_name), from_cocos=7)
-        eq = Equilibrium.from_eqdsk(
-            Path(data_path, file_name), from_cocos=7, regrid_nx_nz=(100, 100)
+    @pytest.fixture
+    def eq_ng(self, eq_data):
+        return Equilibrium.from_eqdsk(eq_data, from_cocos=7)
+
+    @pytest.fixture
+    def eq_rg(self, eq_data):
+        return Equilibrium.from_eqdsk(eq_data, from_cocos=7, regrid_nx_nz=(100, 100))
+
+    def test_regrid_changes_resolution(self, eq_ng, eq_rg):
+        assert eq_ng.grid.nx != eq_rg.grid.nx
+        assert eq_ng.grid.nz != eq_rg.grid.nz
+        assert np.isclose(eq_ng.grid.x_min, eq_rg.grid.x_min)
+        assert np.isclose(eq_ng.grid.x_max, eq_rg.grid.x_max)
+        assert np.isclose(eq_ng.grid.z_min, eq_rg.grid.z_min)
+        assert np.isclose(eq_ng.grid.z_max, eq_rg.grid.z_max)
+
+    def test_regrid_preserves_psi_range(self, eq_ng, eq_rg):
+        assert eq_rg.psi().shape == (eq_rg.grid.nx, eq_rg.grid.nz)
+        assert np.isclose(np.nanmin(eq_ng.psi()), np.nanmin(eq_rg.psi()), rtol=1e-2)
+        assert np.isclose(np.nanmax(eq_ng.psi()), np.nanmax(eq_rg.psi()), rtol=1e-2)
+
+    def test_regrid_interpolation_back(self, eq_ng, eq_rg):
+        x_new, z_new = eq_rg.grid.x[:, 0], eq_rg.grid.z[0, :]
+        x_old, z_old = np.meshgrid(eq_ng.grid.x[:, 0], eq_ng.grid.z[0, :], indexing="ij")
+        psi_back = interpolate_psi(
+            x_old=x_new, z_old=z_new, psi_old=eq_rg.psi(), x_new=x_old, z_new=z_old
+        )
+        diff = psi_back - eq_ng.psi()
+        max_abs = np.nanmax(np.abs(diff))
+        mean_abs = np.nanmean(np.abs(diff))
+        rel_l2 = np.linalg.norm(diff.ravel()) / np.linalg.norm(eq_ng.psi().ravel())
+
+        assert rel_l2 < 0.03
+        assert mean_abs < 1.0
+        assert max_abs < 10.0
+
+    def test_regrid_preserves_ox_points(self, eq_ng, eq_rg):
+        o_old, x_old_pts = find_OX_points(eq_ng.grid.x, eq_ng.grid.z, eq_ng.psi())
+        o_new, x_new_pts = find_OX_points(eq_rg.grid.x, eq_rg.grid.z, eq_rg.psi())
+        assert closest_dist(o_old, o_new) < 0.05
+        assert closest_dist(x_old_pts, x_new_pts) < 0.1
+
+    def test_regrid_preserves_total_current(self, eq_ng, eq_rg):
+        o_old, x_old_pts = find_OX_points(eq_ng.grid.x, eq_ng.grid.z, eq_ng.psi())
+        o_new, x_new_pts = find_OX_points(eq_rg.grid.x, eq_rg.grid.z, eq_rg.psi())
+
+        j_old = eq_ng.profiles.jtor(
+            eq_ng.grid.x, eq_ng.grid.z, eq_ng.psi(), o_points=o_old, x_points=x_old_pts
+        )
+        j_new = eq_rg.profiles.jtor(
+            eq_rg.grid.x, eq_rg.grid.z, eq_rg.psi(), o_points=o_new, x_points=x_new_pts
         )
 
-        raise NotImplementedError
+        i_old = np.nansum(j_old) * eq_ng.grid.dx * eq_ng.grid.dz
+        i_new = np.nansum(j_new) * eq_rg.grid.dx * eq_rg.grid.dz
+        assert np.isclose(i_old, i_new, rtol=5e-2)
+
+
+class TestResetGrid:
+    @pytest.fixture
+    def eq_data(self):
+        data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+        return Path(data_path, "eqref_OOB.json")
+
+    @pytest.fixture
+    def eq_ng(self, eq_data):
+        return Equilibrium.from_eqdsk(eq_data, from_cocos=7)
+
+    @pytest.fixture
+    def new_grid(self, eq_ng):
+        old = eq_ng.grid
+        return Grid(old.x_min, old.x_max, old.z_min, old.z_max, nx=120, nz=140)
+
+    @pytest.fixture
+    def interpolated_psi(self, eq_ng, new_grid):
+        x_old, z_old = eq_ng.grid.x[:, 0], eq_ng.grid.z[0, :]
+        xn, zn = np.meshgrid(new_grid.x[:, 0], new_grid.z[0, :], indexing="ij")
+        return interpolate_psi(
+            x_old=x_old, z_old=z_old, psi_old=eq_ng.psi(), x_new=xn, z_new=zn
+        )
+
+    def test_reset_grid_updates_grid(self, eq_ng, new_grid, interpolated_psi):
+        eq_ng.reset_grid(new_grid, psi=interpolated_psi)
+
+        assert eq_ng.grid.nx == 120
+        assert eq_ng.grid.nz == 140
+
+    def test_reset_grid_remaps_fields(self, eq_ng, new_grid, interpolated_psi):
+        eq_ng.reset_grid(new_grid, psi=interpolated_psi)
+        psi = eq_ng.psi()
+        jtor = eq_ng._jtor
+
+        assert psi.shape == (120, 140)
+        assert jtor.shape == (120, 140)
+        assert np.isfinite(psi).any()
+
+    def test_reset_grid_recomputes_OX_points(self, eq_ng, new_grid, interpolated_psi):
+        o_old, x_old = eq_ng.get_OX_points()
+        eq_ng.reset_grid(new_grid, psi=interpolated_psi)
+        o_new, x_new = eq_ng.get_OX_points()
+
+        assert closest_dist(o_old, o_new) < 0.05
+        assert closest_dist(x_old, x_new) < 0.1
+
+    def test_reset_grid_preserves_total_current(self, eq_ng, new_grid, interpolated_psi):
+        j_old = eq_ng._jtor
+        i_old = np.nansum(j_old) * eq_ng.grid.dx * eq_ng.grid.dz
+
+        eq_ng.reset_grid(new_grid, psi=interpolated_psi)
+
+        j_new = eq_ng._jtor
+        i_new = np.nansum(j_new) * eq_ng.grid.dx * eq_ng.grid.dz
+
+        assert np.isclose(i_new, i_old, rtol=5e-2)
+
+    def test_reset_grid_initialises_plasma(self, eq_ng, new_grid):
+        eq_ng.reset_grid(new_grid, psi=None)
+
+        psi = eq_ng.psi()
+        jtor = eq_ng._jtor
+
+        assert psi.shape == (120, 140)
+        assert jtor.shape == (120, 140)
+        assert np.isfinite(psi).any()
 
 
 @pytest.mark.private
