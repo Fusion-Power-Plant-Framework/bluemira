@@ -706,6 +706,8 @@ if __name__ == "__main__":
             )
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+            print(f"CSG TBR: {reactor.neutronics.results.tbr}")
+     
 
             if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
                 reactor.neutronics.plot()
