@@ -97,7 +97,7 @@ def csg_filter_cells(
 
 
 def dagmc_tallys(
-    material_list,  # noqa: ARG001
+    material_list,
     model: openmc.Geometry,
     mesh_shape: tuple[float, ...] = (100, 100, 100),
 ):
@@ -105,6 +105,8 @@ def dagmc_tallys(
     # mesh that covers the geometry
     mesh = openmc.RegularMesh.from_domain(model, dimension=mesh_shape)
     mesh_filter = openmc.MeshFilter(mesh)
+
+    mat_filter = openmc.MaterialFilter(material_list)  # noqa: F841
 
     return [
         ("heating", "heating", None),
