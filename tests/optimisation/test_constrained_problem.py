@@ -11,11 +11,11 @@ Note that there is a typo in one of the equality constraints.
 See https://courses.mai.liu.se/GU/TAOP04/process-optimization.pdf
 """
 
-
 import numpy as np
 import pytest
 
 from bluemira.optimisation import Algorithm, optimise
+
 
 class AlkylationData:
     c1 = 0.063
@@ -33,38 +33,43 @@ class AlkylationData:
     d10u = 100.0 / 99.0
     dimension = 10
     lower_bounds = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 85.0, 90.0, 3.0, 1.2, 145.0])
-    upper_bounds = np.array(
-        [2000.0, 16000.0, 120.0, 5000.0, 2000.0, 93.0, 95.0, 12.0, 4.0, 162.0]
-    )
-    suggested_x0 = np.array(
-        [
-            1745.0,
-            12000.0,
-            110.0,
-            3048.0,
-            1974.0,
-            89.2,
-            92.8,
-            8.0,
-            3.6,
-            145.0,
-        ]
-    )
+    upper_bounds = np.array([
+        2000.0,
+        16000.0,
+        120.0,
+        5000.0,
+        2000.0,
+        93.0,
+        95.0,
+        12.0,
+        4.0,
+        162.0,
+    ])
+    suggested_x0 = np.array([
+        1745.0,
+        12000.0,
+        110.0,
+        3048.0,
+        1974.0,
+        89.2,
+        92.8,
+        8.0,
+        3.6,
+        145.0,
+    ])
     # Given to 1DP
-    true_x = np.array(
-        [
-            1698.0,
-            15818.0,
-            54.1,
-            3031.0,
-            2000.0,
-            90.1,
-            95.0,
-            10.5,
-            1.6,
-            154.0,
-        ]
-    )
+    true_x = np.array([
+        1698.0,
+        15818.0,
+        54.1,
+        3031.0,
+        2000.0,
+        90.1,
+        95.0,
+        10.5,
+        1.6,
+        154.0,
+    ])
     # Given to 0DP
     true_f_x = 1769.0
 
@@ -137,7 +142,7 @@ def df_equality3(x):
 
 def f_inequality1(x):
     a = 1.12 + 0.13167 * x[7] - 0.00667 * x[7] ** 2
-    return - x[0] * a + ALKYLATION_DATA.d4l * x[3]
+    return -x[0] * a + ALKYLATION_DATA.d4l * x[3]
 
 
 def df_inequality1(x):
@@ -164,9 +169,10 @@ def df_inequality2(x):
 
 
 def f_inequality3(x):
-    return -(
-        86.35 + 1.098 * x[7] - 0.038 * x[7] ** 2 + 0.325 * (x[5] - 89.0)
-    ) + ALKYLATION_DATA.d7l * x[6]
+    return (
+        -(86.35 + 1.098 * x[7] - 0.038 * x[7] ** 2 + 0.325 * (x[5] - 89.0))
+        + ALKYLATION_DATA.d7l * x[6]
+    )
 
 
 def df_inequality3(x):
@@ -179,16 +185,15 @@ def df_inequality3(x):
 
 def f_inequality4(x):
     return (
-        (86.35 + 1.098 * x[7] - 0.038 * x[7] ** 2 + 0.325 * (x[5] - 89.0))
-        - ALKYLATION_DATA.d7u * x[6]
-    )
+        86.35 + 1.098 * x[7] - 0.038 * x[7] ** 2 + 0.325 * (x[5] - 89.0)
+    ) - ALKYLATION_DATA.d7u * x[6]
 
 
 def df_inequality4(x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[5] = 0.325
     grad[6] = -ALKYLATION_DATA.d7u
-    grad[7] = (1.098 - 2.0 * 0.038 * x[7])
+    grad[7] = 1.098 - 2.0 * 0.038 * x[7]
     return grad
 
 
@@ -242,19 +247,63 @@ def test_alkylation_problem():
         x0=ALKYLATION_DATA.suggested_x0,
         df_objective=df_objective,
         eq_constraints=[
-            {"f_constraint": f_equality1, "df_constraint": df_equality1, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_equality2, "df_constraint": df_equality2, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_equality3, "df_constraint": df_equality3, "tolerance": np.array([1e-6])},
+            {
+                "f_constraint": f_equality1,
+                "df_constraint": df_equality1,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_equality2,
+                "df_constraint": df_equality2,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_equality3,
+                "df_constraint": df_equality3,
+                "tolerance": np.array([1e-6]),
+            },
         ],
         ineq_constraints=[
-            {"f_constraint": f_inequality1, "df_constraint": df_inequality1, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality2, "df_constraint": df_inequality2, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality3, "df_constraint": df_inequality3, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality4, "df_constraint": df_inequality4, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality5, "df_constraint": df_inequality5, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality6, "df_constraint": df_inequality6, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality7, "df_constraint": df_inequality7, "tolerance": np.array([1e-6])},
-            {"f_constraint": f_inequality8, "df_constraint": df_inequality8, "tolerance": np.array([1e-6])},
+            {
+                "f_constraint": f_inequality1,
+                "df_constraint": df_inequality1,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality2,
+                "df_constraint": df_inequality2,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality3,
+                "df_constraint": df_inequality3,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality4,
+                "df_constraint": df_inequality4,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality5,
+                "df_constraint": df_inequality5,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality6,
+                "df_constraint": df_inequality6,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality7,
+                "df_constraint": df_inequality7,
+                "tolerance": np.array([1e-6]),
+            },
+            {
+                "f_constraint": f_inequality8,
+                "df_constraint": df_inequality8,
+                "tolerance": np.array([1e-6]),
+            },
         ],
         bounds=(ALKYLATION_DATA.lower_bounds, ALKYLATION_DATA.upper_bounds),
         algorithm=Algorithm.SLSQP,
