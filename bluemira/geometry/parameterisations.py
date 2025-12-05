@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
+from matplotlib.patches import Arc
 from scipy.interpolate import interp1d
 from scipy.special import iv as bessel
 
@@ -347,6 +348,77 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             xytext=_get_rotated_point(centre, radius - 0.5, centre_angle),
             textcoords="offset points",
         )
+
+    @staticmethod
+    def _draw_angle_annotation(
+        ax,
+        start_angle: float,
+        angle: float,
+        label: str,
+        origin: tuple[float, float] = (0, 0),
+        length: float = 1.0,
+        arc_radius: float = 0.3,
+        label_offset: float = 0.1,
+    ):
+        """
+        Draw two lines forming an angle, an arc for the angle, and a label.
+
+        Parameters
+        ----------
+        ax:
+            The axis to draw on.
+        start_angle:
+            angle of the first line
+        angle:
+            Angle in degrees for the second line (measured from horizontal).
+        label:
+            Label of angle
+        origin:
+            (x, y) coordinates of the starting point.
+        length:
+            Length of the lines.
+        arc_radius:
+            Radius of the arc showing the angle.
+        label_offset:
+            Offset for the angle label.
+        """
+        x0, y0 = origin
+
+        start_angle = np.radians(start_angle)
+        angle = np.radians(angle)
+
+        # Compute endpoints for both lines
+        first_end = (
+            x0 + length * np.cos(start_angle),
+            y0 + length * np.sin(start_angle),
+        )
+        second_end = (
+            x0 + length * np.cos(start_angle + angle),
+            y0 + length * np.sin(start_angle + angle),
+        )
+
+        # Draw lines
+        ax.plot([x0, first_end[0]], [y0, first_end[1]], color="k", lw=0.8)
+        ax.plot([x0, second_end[0]], [y0, second_end[1]], color="k", lw=0.8)
+
+        # Draw arc for the angle
+        arc = Arc(
+            origin,
+            width=2 * arc_radius,
+            height=2 * arc_radius,
+            angle=np.degrees(start_angle),  # rotate arc to start_angle
+            theta1=0,
+            theta2=np.degrees(angle),
+            color="k",
+            lw=0.8,
+        )
+        ax.add_patch(arc)
+
+        # Add label at midpoint of arc
+        mid_angle = start_angle + angle / 2
+        label_x = x0 + (arc_radius + label_offset) * np.cos(mid_angle)
+        label_y = y0 + (arc_radius + label_offset) * np.sin(mid_angle)
+        ax.text(label_x, label_y, label, ha="center", va="center")
 
     def _label_function(self, ax: plt.Axes, shape: BluemiraWire) -> tuple[float, float]:
         """
@@ -1769,6 +1841,9 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     l0e - l3e: float
         Tension variable segment end
 
+    Tension variables control how strictly the spline adheres
+    to the initialisation points. Low tension makes the splines smoother.
+
     """
 
     __slots__ = ()
@@ -1924,9 +1999,6 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
-        # TODO @athoynilimanew: add labels for tilt l0s - l3s l0e - l3e
-        # 3587
-
         (
             x1,
             x2,
@@ -2053,6 +2125,17 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         )
         if flat == 0:
             ax.plot(xcors[0], zcors[0], "*", color="r")
+
+        self._draw_angle_annotation(
+            ax,
+            90 - tilt,
+            tilt,
+            "tilt",
+            (xcors[0], zcors[0]),
+            length=5,
+            arc_radius=4,
+            label_offset=1.5,
+        )
 
 
 class PictureFrameTools:
