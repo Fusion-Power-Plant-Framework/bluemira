@@ -240,8 +240,8 @@ def df_inequality8(x):
     grad[9] = -ALKYLATION_DATA.d10u
     return grad
 
-
-def test_alkylation_problem():
+@pytest.mark.parametrize("algorithm", [Algorithm.SLSQP, Algorithm.SLSQP_SCIPY])
+def test_alkylation_problem(algorithm):
     result = optimise(
         f_objective,
         x0=ALKYLATION_DATA.suggested_x0,
@@ -306,7 +306,7 @@ def test_alkylation_problem():
             },
         ],
         bounds=(ALKYLATION_DATA.lower_bounds, ALKYLATION_DATA.upper_bounds),
-        algorithm=Algorithm.SLSQP,
+        algorithm=algorithm,
         opt_conditions={"max_eval": 5000, "ftol_rel": 1e-9},
     )
 
