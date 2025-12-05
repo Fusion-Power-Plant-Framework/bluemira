@@ -105,7 +105,7 @@ def f_equality1(x):
     return 1.22 * x[3] - x[0] - x[4]
 
 
-def df_equality1(x):
+def df_equality1(_x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[0] = -1.0
     grad[3] = 1.22
@@ -201,7 +201,7 @@ def f_inequality5(x):
     return -(35.82 - 0.222 * x[9]) + ALKYLATION_DATA.d9l * x[8]
 
 
-def df_inequality5(x):
+def df_inequality5(_x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[8] = ALKYLATION_DATA.d9l
     grad[9] = 0.222
@@ -212,7 +212,7 @@ def f_inequality6(x):
     return (35.82 - 0.222 * x[9]) - ALKYLATION_DATA.d9u * x[8]
 
 
-def df_inequality6(x):
+def df_inequality6(_x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[8] = -ALKYLATION_DATA.d9u
     grad[9] = -0.222
@@ -223,7 +223,7 @@ def f_inequality7(x):
     return -(-133.0 + 3.0 * x[6]) + ALKYLATION_DATA.d10l * x[9]
 
 
-def df_inequality7(x):
+def df_inequality7(_x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[6] = -3.0
     grad[9] = ALKYLATION_DATA.d10l
@@ -234,13 +234,49 @@ def f_inequality8(x):
     return (-133.0 + 3.0 * x[6]) - ALKYLATION_DATA.d10u * x[9]
 
 
-def df_inequality8(x):
+def df_inequality8(_x):
     grad = np.zeros(ALKYLATION_DATA.dimension)
     grad[6] = 3.0
     grad[9] = -ALKYLATION_DATA.d10u
     return grad
 
-@pytest.mark.parametrize("algorithm", [Algorithm.SLSQP, Algorithm.SLSQP_SCIPY])
+
+def f_inequalities(x):
+    return np.array([
+        f_inequality1(x),
+        f_inequality2(x),
+        f_inequality3(x),
+        f_inequality4(x),
+        f_inequality5(x),
+        f_inequality6(x),
+        f_inequality7(x),
+        f_inequality8(x),
+    ])
+
+
+def df_inequalities(x):
+    return np.array([
+        df_inequality1(x),
+        df_inequality2(x),
+        df_inequality3(x),
+        df_inequality4(x),
+        df_inequality5(x),
+        df_inequality6(x),
+        df_inequality7(x),
+        df_inequality8(x),
+    ])
+
+
+@pytest.mark.parametrize(
+    "algorithm",
+    [
+        Algorithm.SLSQP,
+        Algorithm.SLSQP_SCIPY,
+        Algorithm.COBYLA,
+        Algorithm.COBYLA_SCIPY,
+        Algorithm.COBYQA,
+    ],
+)
 def test_alkylation_problem(algorithm):
     result = optimise(
         f_objective,
@@ -265,45 +301,10 @@ def test_alkylation_problem(algorithm):
         ],
         ineq_constraints=[
             {
-                "f_constraint": f_inequality1,
-                "df_constraint": df_inequality1,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality2,
-                "df_constraint": df_inequality2,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality3,
-                "df_constraint": df_inequality3,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality4,
-                "df_constraint": df_inequality4,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality5,
-                "df_constraint": df_inequality5,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality6,
-                "df_constraint": df_inequality6,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality7,
-                "df_constraint": df_inequality7,
-                "tolerance": np.array([1e-6]),
-            },
-            {
-                "f_constraint": f_inequality8,
-                "df_constraint": df_inequality8,
-                "tolerance": np.array([1e-6]),
-            },
+                "f_constraint": f_inequalities,
+                "df_constraint": df_inequalities,
+                "tolerance": 1e-6 * np.ones(8),
+            }
         ],
         bounds=(ALKYLATION_DATA.lower_bounds, ALKYLATION_DATA.upper_bounds),
         algorithm=algorithm,
