@@ -189,7 +189,10 @@ class TestSTEquilibrium:
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
 
         fbe_iterator = PicardIterator(
-            eq, opt_problem, relaxation=0.3, maxiter=400, convergence=criterion
+            opt_problem,
+            relaxation=0.3,
+            maxiter=400,
+            convergence=criterion,
         )
         fbe_iterator()
         self.eq = eq
