@@ -160,7 +160,6 @@ current_opt_problem = TikhonovCurrentCOP(
 )
 
 program = PicardIterator(
-    th_current_opt_eq,
     current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-3),

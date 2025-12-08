@@ -449,7 +449,6 @@ class PulsedCoilsetDesign(ABC):
             gamma=self.eq_config.gamma,
         )
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
@@ -470,7 +469,6 @@ class PulsedCoilsetDesign(ABC):
         )
 
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
@@ -554,7 +552,7 @@ class PulsedCoilsetDesign(ABC):
 
         return opt_problems
 
-    def converge_equilibrium(self, eq: Equilibrium, problem: CoilsetOptimisationProblem):
+    def converge_equilibrium(self, problem: EqCoilsetOptimisationProblem):
         """Converge an equilibrium problem from a 'frozen' plasma optimised state.
 
         Returns
@@ -563,7 +561,6 @@ class PulsedCoilsetDesign(ABC):
             The iterator
         """
         program = PicardIterator(
-            eq,
             problem,
             fixed_coils=True,
             convergence=deepcopy(self.eq_config.convergence),
@@ -575,15 +572,19 @@ class PulsedCoilsetDesign(ABC):
 
     def converge_and_snapshot(
         self,
-        sub_opt_problems: Iterable[CoilsetOptimisationProblem],
+        sub_opt_problems: Iterable[EqCoilsetOptimisationProblem],
         problem_names: Iterable[str] = (SOF, EOF),
     ):
         """Converge equilibrium optimisation problems and take snapshots."""
         for snap, problem in zip(problem_names, sub_opt_problems, strict=False):
-            eq = problem.eq
-            program = self.converge_equilibrium(eq, problem)
+            program = self.converge_equilibrium(problem)
             self.take_snapshot(
-                snap, eq, eq.coilset, problem, eq.profiles, iterator=program
+                snap,
+                problem.eq,
+                problem.eq.coilset,
+                problem,
+                problem.eq.profiles,
+                iterator=program,
             )
 
     def plot(self):

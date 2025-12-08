@@ -298,7 +298,7 @@ ref_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     gamma=1e-7,
 )
 
-program = PicardIterator(reference_eq, ref_opt_problem, fixed_coils=True, relaxation=0.2)
+program = PicardIterator(ref_opt_problem, fixed_coils=True, relaxation=0.2)
 program()
 
 sof_psi_boundary = PsiBoundaryConstraint(
@@ -319,7 +319,6 @@ sof_opt_problem = MinimalCurrentCOP(
 )
 
 iterator = PicardIterator(
-    sof,
     sof_opt_problem,
     fixed_coils=True,
     relaxation=0.2,
@@ -345,7 +344,6 @@ eof_opt_problem = MinimalCurrentCOP(
 
 diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 iterator = PicardIterator(
-    eof,
     eof_opt_problem,
     relaxation=0.2,
     fixed_coils=True,

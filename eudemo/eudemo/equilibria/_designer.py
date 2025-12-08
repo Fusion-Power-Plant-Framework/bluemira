@@ -158,7 +158,6 @@ class EquilibriumDesigner(Designer[Equilibrium]):
         eq = self._make_equilibrium()
         opt_problem = self._make_opt_problem(eq)
         iterator_program = PicardIterator(
-            eq,
             opt_problem,
             convergence=DudsonConvergence(),
             relaxation=0.2,
@@ -722,7 +721,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
 
         iter_err_max = settings.pop("iter_err_max")
         iterator_program = PicardIterator(
-            eq,
             self.opt_problem,
             convergence=DudsonConvergence(iter_err_max),
             diagnostic_plotting=self.diagnostic_plotting,

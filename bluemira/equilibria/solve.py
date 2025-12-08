@@ -30,8 +30,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.optimisation.problem import CoilsetOptimisationProblem
+    from bluemira.equilibria.optimisation.problem import EqCoilsetOptimisationProblem
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
 
 __all__ = [
@@ -440,8 +439,6 @@ class PicardIterator:
 
     Parameters
     ----------
-    eq:
-        The equilibrium to solve for
     optimisation_problem:
         The optimisation problem to use when iterating
     convergence:
@@ -460,8 +457,7 @@ class PicardIterator:
 
     def __init__(
         self,
-        eq: Equilibrium,
-        optimisation_problem: CoilsetOptimisationProblem,
+        optimisation_problem: EqCoilsetOptimisationProblem,
         diagnostic_plotting: PicardDiagnosticOptions | None = None,
         convergence: ConvergenceCriterion | None = None,
         *,
@@ -469,7 +465,7 @@ class PicardIterator:
         relaxation: float = 0,
         maxiter: int = 30,
     ):
-        self.eq = eq
+        self.eq = optimisation_problem.eq
         self.coilset = self.eq.coilset
         self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):

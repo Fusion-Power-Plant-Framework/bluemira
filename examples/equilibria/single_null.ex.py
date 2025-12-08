@@ -244,7 +244,6 @@ current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 )
 diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 program = PicardIterator(
-    eq,
     current_opt_problem,
     convergence=DudsonConvergence(1e-3),
     fixed_coils=True,
@@ -294,7 +293,6 @@ current_opt_problem = TikhonovCurrentCOP(
     constraints=[x_point, field_constraints, force_constraints],
 )
 program = PicardIterator(
-    eq,
     current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
@@ -326,7 +324,6 @@ minimal_current_opt_problem = MinimalCurrentCOP(
 )
 
 program = PicardIterator(
-    minimal_current_eq,
     minimal_current_opt_problem,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
@@ -511,7 +508,6 @@ for problem in [current_opt_problem_sof, current_opt_problem_eof]:
 
 # %%
 program = PicardIterator(
-    sof,
     current_opt_problem_sof,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
@@ -521,7 +517,6 @@ program = PicardIterator(
 program()
 
 program = PicardIterator(
-    eof,
     current_opt_problem_eof,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-4),
