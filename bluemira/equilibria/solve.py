@@ -178,10 +178,10 @@ class DudsonConvergence(ConvergenceCriterion):
         dpsi = psi_old - psi
         dpsi_max = np.amax(abs(dpsi))
         dpsi_rel = dpsi_max / (np.amax(psi) - np.amin(psi))
-        if print_status:
-            bluemira_print_flush(
-                f"EQUILIBRIA G-S iter {i}: relative delta_psi: {100 * dpsi_rel:.2f} %"
-            )
+        # if print_status:
+        bluemira_print(
+            f"EQUILIBRIA G-S iter {i}: relative delta_psi: {100 * dpsi_rel:.2f} %"
+        )
         return self.check_converged(dpsi_rel)
 
 

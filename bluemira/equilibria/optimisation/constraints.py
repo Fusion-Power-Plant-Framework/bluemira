@@ -605,7 +605,9 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         :
             Bx and Bz response of the equilibrium
         """
-        return np.array([eq.Bx(self.x, self.z), eq.Bz(self.x, self.z)])
+        temp = np.array([eq.Bx(self.x, self.z), eq.Bz(self.x, self.z)])
+        print(f"{temp=}")
+        return temp
 
     def plot(self, ax):
         """

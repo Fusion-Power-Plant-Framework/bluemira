@@ -1004,6 +1004,11 @@ def toroidal_harmonic_approximation(
         Problem not setup for harmonics
     ValueError
         Number of degrees of freedom inappropriate
+
+    Notes
+    -----
+    If no th_params are provided, the focus is set to the effective centre of
+    the plasma, and the region defaults to using the maximum extent of the LCFS
     """
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("Equilibrium has not been run yet.")

@@ -336,6 +336,8 @@ def _check_constraints(
         # Deal with scalar constraints
         c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
         tols = np.array(constraint["tolerance"])
+        print(f"{c_value=}")
+        print(f"{tols=}")
         indices = np.nonzero(condition(c_value, tols))[0]
         if indices.size > 0:
             return (constraint.get("name", None), indices, c_value, tols)
