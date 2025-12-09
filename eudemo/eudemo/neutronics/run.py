@@ -7,12 +7,14 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from matproplib.library.fluids import Void
 
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.codes.openmc.output import OpenMCCSGResult, OpenMCDAGMCResult
 from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.codes.wrapper import neutronics_code_solver
@@ -28,11 +30,11 @@ from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from matplotlib.axes import Axes
     from matproplib.conditions import OperationalConditions
 
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.reactor import ComponentManager
-    from bluemira.codes.openmc.output import OpenMCCSGResult
     from bluemira.codes.openmc.solver import NeutronSourceCreator
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.geometry.wire import BluemiraWire
@@ -59,6 +61,23 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
         )
 
 
+@dataclass
+class CSGOutput:
+    """CSG Neutronics output"""
+
+    reactor: EUDEMONeutronicsCSGReactor
+    results: OpenMCCSGResult | None = None
+    volume_calc: dict[int, float] | None = None
+
+
+@dataclass
+class DAGMCOutput:
+    """DAGMC Neutronics output"""
+
+    results: OpenMCDAGMCResult | None = None
+    plot: Axes | None = None
+
+
 def run_csg_neutronics(
     params: ParameterFrame,
     build_config: dict,
@@ -69,7 +88,7 @@ def run_csg_neutronics(
     op_cond: OperationalConditions,
     source: NeutronSourceCreator | None = None,
     tally_function=None,
-) -> tuple[EUDEMONeutronicsCSGReactor, OpenMCCSGResult | dict[int, float]]:
+) -> CSGOutput:
     """Runs the neutronics model
 
     Returns
@@ -99,7 +118,7 @@ def run_csg_neutronics(
                 "unit": "m",
             },
         },
-        source="Neutronics",
+        source="CSG Neutronics",
     )
     neutronics_csg = EUDEMONeutronicsCSGReactor(
         params, ivc_shapes, blanket, vacuum_vessel, material_library
@@ -120,10 +139,15 @@ def run_csg_neutronics(
     if len(outputs) == 2:  # noqa: PLR2004
         res = outputs[0]
         params.update_from_frame(outputs[1])
+        bluemira_print(f"CSG TBR: {res.tbr}")
     else:
         res = outputs
 
-    return neutronics_csg, res
+    return CSGOutput(
+        neutronics_csg,
+        res if isinstance(res, OpenMCCSGResult) else None,
+        res if isinstance(res, dict) else None,
+    )
 
 
 def export_dagmc_model(reactor, build_config):
@@ -160,7 +184,7 @@ def run_dagmc_neutronics(
     eq: Equilibrium,
     source: NeutronSourceCreator | None = None,
     tally_function=None,
-):
+) -> DAGMCOutput:
     """Creates and runs the DAGMC neutronics model"""  # noqa: DOC201
     export_dagmc_model(reactor, build_config)
 
@@ -184,4 +208,15 @@ def run_dagmc_neutronics(
         tally_function=tally_function,
     )
 
-    return solver.execute(build_config.get("run_mode", "run"))
+    outputs = solver.execute(build_config.get("run_mode", "run"))
+
+    if len(outputs) == 2:  # noqa: PLR2004
+        res = outputs[0]
+        params.update_from_frame(outputs[1])
+        bluemira_print(f"DAGMC TBR: {res.tbr}")
+        plot = None
+    else:
+        res = None
+        plot = outputs
+
+    return DAGMCOutput(res, plot)

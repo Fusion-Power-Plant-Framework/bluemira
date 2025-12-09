@@ -22,6 +22,7 @@ The EUDEMO reactor design routine.
 
 import json
 import shutil
+from copy import copy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -35,7 +36,6 @@ from bluemira.base.logs import set_log_level
 from bluemira.base.look_and_feel import (
     bluemira_error,
     bluemira_print,
-    bluemira_print_clean,
 )
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
@@ -61,6 +61,7 @@ from bluemira.materials.cache import establish_material_cache
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsModel,
 )
+from bluemira.utilities.tools import json_writer
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -547,24 +548,28 @@ def save_reactor(reactor, reactor_config, folder_name):
         f"{folder_name}/equilibria", subfolder="eudemo"
     )
     tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
+
     # Copy across PROCESS outputs
     for fn in ["OUT.DAT", "MFILE.DAT"]:
         shutil.copyfile(f"{config_folder}/process/{fn}", f"{process_folder}/{fn}")
     # Save equilibria
-    sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
-    eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
-    sof.to_eqdsk(
-        filename="BLUEMIRA_SOF.eqdsk",
-        filetype="eqdsk",
-        directory=equilibria_folder,
-        qpsi_calcmode=1,
-    )
-    eof.to_eqdsk(
-        filename="BLUEMIRA_not_EOF.eqdsk",
-        filetype="eqdsk",
-        directory=equilibria_folder,
-        qpsi_calcmode=1,
-    )
+    try:
+        sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
+        eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
+        sof.to_eqdsk(
+            filename="BLUEMIRA_SOF.eqdsk",
+            filetype="eqdsk",
+            directory=equilibria_folder,
+            qpsi_calcmode=1,
+        )
+        eof.to_eqdsk(
+            filename="BLUEMIRA_not_EOF.eqdsk",
+            filetype="eqdsk",
+            directory=equilibria_folder,
+            qpsi_calcmode=1,
+        )
+    except AttributeError:
+        pass
 
     # Save TF coils
     filename = f"{tf_folder}/BLUEMIRA_TF_3D_CAD.STP"
@@ -592,8 +597,38 @@ def save_reactor(reactor, reactor_config, folder_name):
 
     # Save params
     filename = f"{root}/BLUEMIRA_OUT.json"
-    with open(filename, "w") as f:
-        json.dump(reactor_config.global_params.to_dict(), f, indent=2)
+    json_writer(reactor_config.global_params.to_dict(), filename, indent=2)
+
+    # Save neutronics
+    n_root = Path(root, "neutronics")
+
+    shutil.copytree(Path(config_folder, "neutronics"), n_root, dirs_exist_ok=True)
+
+    n_root.mkdir(parents=True, exist_ok=True)
+    # CSG
+    csg_root = Path(n_root, "csg")
+    csg_root.mkdir(parents=True, exist_ok=True)
+
+    csg_out_dict = {}
+    for k, v in reactor.neutronics.csg.results.__dict__.items():
+        if isinstance(v, float | dict):
+            csg_out_dict[k] = v
+        elif k == "statepoint_file":
+            csg_out_dict[k] = Path(csg_root, "run", v.name).as_posix()
+
+    json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
+
+    # DAGMC
+    dag_root = Path(n_root, "dagmc")
+    dag_root.mkdir(parents=True, exist_ok=True)
+
+    openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
+    openmc_res.pop("statepoint")
+    openmc_res["statepoint_file"] = Path(
+        dag_root, "run", openmc_res["statepoint_file"].name
+    ).as_posix()
+
+    json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
 
 
 if __name__ == "__main__":
@@ -691,31 +726,26 @@ if __name__ == "__main__":
             cut_angle,
         )
 
-        if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
-            neutronics_start = time.time()
-            reactor.neutronics = NeutronicsManager(
-                *run_csg_neutronics(
-                    reactor_config.params_for("Neutronics", "CSG").global_params,
-                    reactor_config.config_for("Neutronics", "CSG"),
-                    blanket=reactor.blanket,
-                    vacuum_vessel=reactor.vacuum_vessel,
-                    ivc_shapes=ivc_shapes,
-                    eq=reference_eq,
-                    op_cond=OperationalConditions(temperature=298, pressure=101325),
-                )
-            )
-            neutronics_end = time.time()
-            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
-            print(f"CSG TBR: {reactor.neutronics.results.tbr}")
-     
+        zero_d_params = ZeroDNeutronicsModel(reactor_config.global_params).run()
 
+        reactor_config.global_params.update_from_frame(zero_d_params)
+        if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
+            neutronics_csg = run_csg_neutronics(
+                reactor_config.params_for("Neutronics", "CSG").global_params,
+                reactor_config.config_for("Neutronics", "CSG"),
+                blanket=reactor.blanket,
+                vacuum_vessel=reactor.vacuum_vessel,
+                ivc_shapes=ivc_shapes,
+                eq=reference_eq,
+                op_cond=OperationalConditions(temperature=298, pressure=101325),
+            )
             if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
                 reactor.neutronics.plot()
-                bluemira_print_clean(f"{reactor.neutronics}")
+                bluemira_print(f"{reactor.neutronics}")
         else:
-            model = ZeroDNeutronicsModel(reactor_config.global_params)
-            new_params = model.run()
-            reactor_config.global_params.update_from_frame(new_params)
+            neutronics_csg = None
+
+        reactor.neutronics = NeutronicsManager(zero_d_params, neutronics_csg)
 
         vv_thermal_shield = build_vacuum_vessel_thermal_shield(
             reactor_config.params_for("Thermal shield"),
@@ -863,15 +893,12 @@ if __name__ == "__main__":
             n_TF=reactor_config.global_params.n_TF.value,
         )
 
-        # TODO @je-cook: Put the results somewhere
-        neutronics_start = time.time()
-        dagmc_out = run_dagmc_neutronics(
+        reactor.neutronics.dagmc = run_dagmc_neutronics(
             reactor,
             reactor_config.params_for("Neutronics", "DAGMC"),
             reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
-        run_time_track["CAD neutronics"] = time.time() - neutronics_start
 
         sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
         sspc_result = sspc_solver.execute()
@@ -886,9 +913,11 @@ if __name__ == "__main__":
         end = time.time()
 
         run_time_track["Total"] = end - start
-
+        neutrons = f"{reactor_config.config_for('Neutronics')['particles']:.2g}".replace(
+            ".", "_"
+        ).replace("+", "")
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v02/A_{a_string}"
+        folder_name = f"results_v02/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:

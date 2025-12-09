@@ -9,6 +9,7 @@ EUDEMO model manager classes
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -21,9 +22,9 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
-    from bluemira.codes.openmc.output import OpenMCCSGResult
+    from bluemira.base.parameter_frame._frame import ParameterFrame
     from bluemira.equilibria.run import Snapshot
-    from eudemo.eudemo.neutronics.run import EUDEMONeutronicsCSGReactor
+    from eudemo.eudemo.neutronics.run import CSGOutput, DAGMCOutput
 
 
 class EquilibriumManager:
@@ -122,16 +123,13 @@ class EquilibriumManager:
         )
 
 
+@dataclass
 class NeutronicsManager:
     """Manager for neutronics"""
 
-    def __init__(
-        self,
-        csg_reactor: EUDEMONeutronicsCSGReactor,
-        results: OpenMCCSGResult | dict[int, float],
-    ):
-        self.csg_reactor = csg_reactor
-        self.results = results
+    zero_d: ParameterFrame
+    csg: CSGOutput | None = None
+    dagmc: DAGMCOutput | None = None
 
     def plot(self):
         """Plot neutronics results"""
@@ -150,7 +148,7 @@ class NeutronicsManager:
             )
         )
 
-        self.csg_reactor.plot_2d()
+        self.csg.reactor.plot_2d()
 
         plt.show()
 
@@ -161,8 +159,8 @@ class NeutronicsManager:
         :
             Tabulated results
         """
-        if hasattr(self.results, "_tabulate"):
-            return str(self.results)
+        if hasattr(self.csg.results, "_tabulate"):
+            return str(self.csg.results)
         raise NotImplementedError("Tabulate not available for volume calculation")
 
     def __str__(self) -> str:

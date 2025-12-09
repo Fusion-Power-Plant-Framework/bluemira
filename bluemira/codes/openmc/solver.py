@@ -686,7 +686,9 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     def tally_function(self, value: TALLY_FUNCTION_TYPE):
         self._tally_function = value
 
-    def execute(self, run_mode, *, debug=False) -> OpenMCCSGResult | dict[int, float]:
+    def execute(
+        self, run_mode, *, debug=False
+    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
@@ -712,7 +714,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> OpenMCCSGResult | dict[int, float]:
+    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
             model, config = setup(
@@ -775,7 +777,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> OpenMCCSGResult | dict[int, float]:
+    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]:
         self._setup = self.setup_cls(
             self.name,
             str(self.build_config["cross_section_xml"]),
@@ -839,7 +841,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> OpenMCCSGResult | dict[int, float]:
+    ) -> tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
         self._setup = self.setup_cls(
             self.name,
             str(self.build_config["cross_section_xml"]),
