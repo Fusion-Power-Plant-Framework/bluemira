@@ -549,7 +549,7 @@ def save_reactor(reactor, reactor_config, folder_name):
     tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
     # Copy across PROCESS outputs
     for fn in ["OUT.DAT", "MFILE.DAT"]:
-        shutil.copyfile(f"{config_folder}/{fn}", f"{process_folder}/{fn}")
+        shutil.copyfile(f"{config_folder}/process/{fn}", f"{process_folder}/{fn}")
     # Save equilibria
     sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
     eof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.EOF).eq
@@ -604,6 +604,7 @@ if __name__ == "__main__":
         "Total": 0.0,
         "PROCESS": 0.0,
         "CSG neutronics": 0.0,
+        "CAD neutronics": 0.0,
     }
 
     try:
@@ -705,6 +706,8 @@ if __name__ == "__main__":
             )
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+            print(f"CSG TBR: {reactor.neutronics.results.tbr}")
+     
 
             if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
                 reactor.neutronics.plot()
@@ -861,12 +864,14 @@ if __name__ == "__main__":
         )
 
         # TODO @je-cook: Put the results somewhere
+        neutronics_start = time.time()
         dagmc_out = run_dagmc_neutronics(
             reactor,
             reactor_config.params_for("Neutronics", "DAGMC"),
             reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
+        run_time_track["CAD neutronics"] = time.time() - neutronics_start
 
         sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
         sspc_result = sspc_solver.execute()

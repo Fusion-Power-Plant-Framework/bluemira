@@ -169,6 +169,7 @@ def step_to_dagmc_pipeline(
             if comp_name_to_material_name_map
             else [e[1] for e in comps_info]
         )
+
         with open(intm_materials_csv_file_path, "w") as f:
             for i, mat_name in enumerate(mats_list):
                 f.write(mat_name)
