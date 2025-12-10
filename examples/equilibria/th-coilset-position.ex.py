@@ -306,6 +306,11 @@ x_point = FieldNullConstraint(
     tolerance=1e-6,
 )
 
+x_point_2 = FieldNullConstraint(
+    xs[1].x,
+    xs[1].z,
+    tolerance=1e-6,
+)
 # %%
 f, ax = plt.subplots()
 size = [2, 1.8, 0.7, 2, 2]
@@ -333,6 +338,7 @@ th_current_opt_eq = deepcopy(eq)
 current_opt_problem = TikhonovCurrentCOP(
     th_current_opt_eq,
     targets=MagneticConstraintSet([
+        th_constraint,
         SN_moved_outer_leg_lower,
         isofluxinner,
     ]),
@@ -341,31 +347,20 @@ current_opt_problem = TikhonovCurrentCOP(
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
-    constraints=[th_constraint, o_point, x_point],
+    constraints=[o_point, x_point, x_point_2],
 )
 
-# position_opt_problem = NestedCoilsetPositionCOP(
-#     sub_opt=current_opt_problem,
-#     position_mapper=position_mapper,
-#     opt_algorithm=Algorithm.SBPLX,
-#     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
-#     constraints=[],
-# )
-# optimised_coilset = position_opt_problem.optimise().coilset
-
-
-position_opt_problem = PulsedNestedPositionCOP(
-    eq.coilset,
-    position_mapper,
-    sub_opt_problems=[current_opt_problem],
-    opt_algorithm="COBYLA",
-    opt_conditions={"max_eval": 100, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
-    debug=False,
+position_opt_problem = NestedCoilsetPositionCOP(
+    sub_opt=current_opt_problem,
+    position_mapper=position_mapper,
+    opt_algorithm=Algorithm.SBPLX,
+    opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
+    constraints=[],
 )
-optimised_coilset = position_opt_problem.optimise(verbose=True).coilset
+optimised_coilset = position_opt_problem.optimise().coilset
 
 
-# # %%
+# %%
 # th_current_opt_eq = deepcopy(nested_opt_eq)
 program = PicardIterator(
     th_current_opt_eq,
