@@ -897,20 +897,21 @@ def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
         Intersection indices
     """
     length = np.hypot(np.max(flux_surface.x), np.max(np.abs(flux_surface.z)))
-    tanget_line = two_point_tangent(op, xp, length)
+    tanget_line = two_point_angled_line(op, xp, length)  # default theta is tangent
     _, arg_inters = join_intersect(flux_surface, tanget_line, get_arg=True)
     return arg_inters.sort()
 
 
-def two_point_tangent(
+def two_point_angled_line(
     centre_point: PsiPoint | Coordinates,
     edge_point: PsiPoint | Coordinates,
     length: float,
+    theta: float = np.pi / 2,
 ):
     """
-    Make a Coordinate object for a line of a given length that is
-    tangent to a surface with a reference radial vector specified
-    by two points.
+    Make a Coordinate object for a line of a given length that is at a given
+    angle (default is tangent) to a surface with a reference radial vector
+    specified by two points.
 
     Parameters
     ----------
@@ -921,6 +922,8 @@ def two_point_tangent(
         where we will take the tangent.
     length:
         Length to make the tangent line Coordinate
+    theta:
+        CCW angle in radians
 
     Returns
     -------
@@ -931,9 +934,6 @@ def two_point_tangent(
     tp = np.array([[edge_point.x], [0.0], [edge_point.z]])
     a = cp - tp
     a_hat = a / np.linalg.norm(a)
-
-    # ccw angle
-    theta = np.pi / 2
 
     rot_matrix = np.array([
         [np.cos(theta), 0, -np.sin(theta)],
