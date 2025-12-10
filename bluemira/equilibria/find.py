@@ -22,7 +22,12 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.geometry.coordinates import Coordinates, get_area_2d, in_polygon
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    get_area_2d,
+    in_polygon,
+    join_intersect,
+)
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
@@ -819,13 +824,15 @@ def find_LCFS_separatrix(
     if o_points is None or x_points is None:
         o_points, x_points = find_OX_points(x, z, psi)
 
+    primary_xp, primary_op = x_points[0], o_points[0]
     delta = high - low
 
     while delta > psi_n_tol:
         middle = low + delta / 2
         flux_surface = get_flux_loop(middle)
 
-        if flux_surface.closed:
+        ixp = x_point_check(flux_surface, primary_op, primary_xp)
+        if flux_surface.closed and ixp is None:
             # Middle flux surface is still closed, shift search bounds
             low = middle
 
@@ -867,6 +874,78 @@ def find_LCFS_separatrix(
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
     return lcfs, separatrix
+
+
+def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
+    """
+    Check if there are intersections of a flux surface with the
+    line tangent to the o-point-x-point vector at the x-point.
+
+    Parameters
+    ----------
+    flux_surface:
+        Flux surface of interest, e.g., candidate closed
+        flux surfaces when finding LCFS
+    op:
+        Primary o-point for an equilibrium
+    xp:
+        X-point of interest, usually primary
+
+    Returns
+    -------
+    arg_inters:
+        Intersection indices
+    """
+    length = np.hypot(np.max(flux_surface.x), np.max(np.abs(flux_surface.z)))
+    tanget_line = two_point_tangent(op, xp, length)
+    _, arg_inters = join_intersect(flux_surface, tanget_line, get_arg=True)
+    return arg_inters.sort()
+
+
+def two_point_tangent(
+    centre_point: PsiPoint | Coordinates,
+    edge_point: PsiPoint | Coordinates,
+    length: float,
+):
+    """
+    Make a Coordinate object for a line of a given length that is
+    tangent to a surface with a reference radial vector specified
+    by two points.
+
+    Parameters
+    ----------
+    centre_point:
+        Start point of reference vector
+    edge_point:
+        End point of reference vector, on the surface
+        where we will take the tangent.
+    length:
+        Length to make the tangent line Coordinate
+
+    Returns
+    -------
+    :
+        Coordinates of the tangent line with length=length
+    """
+    cp = np.array([[centre_point.x], [0.0], [centre_point.z]])
+    tp = np.array([[edge_point.x], [0.0], [edge_point.z]])
+    a = cp - tp
+    a_hat = a / np.linalg.norm(a)
+
+    # ccw angle
+    theta = np.pi / 2
+
+    rot_matrix = np.array([
+        [np.cos(theta), 0, -np.sin(theta)],
+        [0, 0, 0],
+        [np.sin(theta), 0, np.cos(theta)],
+    ])  # ccw rotation about y-axis
+
+    b_hat = rot_matrix @ a_hat
+
+    p1 = tp - b_hat * length / 2
+    p2 = tp + b_hat * length / 2
+    return Coordinates(np.array([p1, p2]).T)
 
 
 def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
