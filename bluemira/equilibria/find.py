@@ -903,8 +903,8 @@ def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
 
 
 def two_point_angled_line(
-    centre_point: PsiPoint | Coordinates,
-    edge_point: PsiPoint | Coordinates,
+    centre_point: PsiPoint | Coordinates | np.ndarray,
+    edge_point: PsiPoint | Coordinates | np.ndarray,
     length: float,
     theta: float = np.pi / 2,
 ):
@@ -930,8 +930,16 @@ def two_point_angled_line(
     :
         Coordinates of the tangent line with length=length
     """
-    cp = np.array([[centre_point.x], [0.0], [centre_point.z]])
-    tp = np.array([[edge_point.x], [0.0], [edge_point.z]])
+    cp = (
+        np.array([[centre_point.x], [0.0], [centre_point.z]])
+        if isinstance(centre_point, PsiPoint | Coordinates)
+        else centre_point
+    )
+    tp = (
+        np.array([[edge_point.x], [0.0], [edge_point.z]])
+        if isinstance(edge_point, PsiPoint | Coordinates)
+        else edge_point
+    )
     a = cp - tp
     a_hat = a / np.linalg.norm(a)
 
