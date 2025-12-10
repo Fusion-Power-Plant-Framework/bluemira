@@ -20,7 +20,10 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor import ComponentManager
 from bluemira.builders.divertor import DivertorBuilder
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import (
+    find_flux_surface_through_point,
+    two_point_angled_line,
+)
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -215,9 +218,6 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         # i.e. towards the increasing leg length
         post_target_point = sol.value_at(distance=self.leg_length[leg].value + 0.1)
 
-        a = post_target_point - target_point
-        a_hat = a / np.linalg.norm(a)
-
         # ccw angle
         theta = (
             np.deg2rad(self.params.div_targ_angle_ib.value)
@@ -225,23 +225,15 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
             else np.deg2rad(self.params.div_targ_angle_ob.value)
         )
 
-        rot_matrix = np.array([
-            [np.cos(theta), 0, -np.sin(theta)],
-            [0, 0, 0],
-            [np.sin(theta), 0, np.cos(theta)],
-        ])  # ccw rotation about y-axis
-
-        b_hat = rot_matrix @ a_hat
-
-        target_half_length = (
-            0.5 * self.params.div_Ltarg_ib.value
+        target_length = (
+            self.params.div_Ltarg_ib.value
             if leg is LegPosition.INNER
-            else 0.5 * self.params.div_Ltarg_ob.value
+            else self.params.div_Ltarg_ob.value
         )
 
-        p1 = target_point - b_hat * target_half_length
-        p2 = target_point + b_hat * target_half_length
-        return np.array([p1, p2]).T
+        return two_point_angled_line(
+            post_target_point, target_point, target_length, theta
+        )
 
     def make_dome(self, start: np.ndarray, end: np.ndarray, label: str) -> BluemiraWire:
         """
