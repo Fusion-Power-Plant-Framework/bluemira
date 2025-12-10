@@ -184,6 +184,29 @@ class GmshFileType(Enum):
     GMSH = auto()
 
 
+class MshFileExtensionType(Enum):
+    """Gmsh file extensions"""
+
+    GEO = ".geo"
+    GEO_UNROLLED = ".geo_unrolled"
+    MSH = ".msh"
+    XDMF = ".xdmf"
+    H5 = ".h5"
+    ini = ".ini"
+
+    @classmethod
+    def _missing_(cls, value):
+        """
+        Called when value does not match any enum member.
+
+        Raises
+        ------
+        ValueError
+            Unsupported mesh file extension
+        """
+        raise ValueError(f"Unsupported mesh file extension: '{value}'")
+
+
 class Mesh:
     """
     A class for supporting the creation of meshes and writing out those meshes to files.
@@ -220,9 +243,6 @@ class Mesh:
         TypeError
             Meshfile must be a string or list of strings
         """
-        # TODO @ivanmaione: should be implemented also a check on the file extension.
-        # Only a limited type of file extensions is allowed by gmsh.
-        # 3656
         if isinstance(meshfile, str):
             meshfile = [meshfile]
         elif isinstance(meshfile, list):
@@ -230,6 +250,11 @@ class Mesh:
                 raise ValueError("meshfile is an empty list")
         else:
             raise TypeError("meshfile must be a string or a list of strings")
+
+        for filename in meshfile:
+            ext = Path(filename).suffix.lower()
+            MshFileExtensionType(ext)  # raises error if invalid
+
         return meshfile
 
     @property
