@@ -17,7 +17,6 @@ DATA_PATH = get_bluemira_path("mesh/test_data", subfolder="tests")
 
 
 class TestMSHtoXDMF:
-    @pytest.mark.xfail
     @pytest.mark.parametrize("dimensions", [2, (0, 1)])
     def test_conversion_from_msh_to_xdm_new(self, dimensions):
         """
@@ -36,7 +35,6 @@ class TestMSHtoXDMF:
             filecmp.cmp(generated, reference)
             generated.unlink()
 
-    @pytest.mark.xfail
     @pytest.mark.parametrize(
         "dimensions",
         [
@@ -58,7 +56,6 @@ class TestMSHtoXDMF:
         with pytest.raises(MeshConversionError):
             msh_to_xdmf("not_here.msh", dimensions=(0, 1), directory=DATA_PATH)
 
-    @pytest.mark.xfail
     def test_nofile_import(self):
-        with pytest.raises(MeshConversionError):
+        with pytest.raises(FileNotFoundError):
             import_mesh("not_here.msh", directory=DATA_PATH)
