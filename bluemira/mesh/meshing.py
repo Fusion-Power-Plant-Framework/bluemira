@@ -243,9 +243,6 @@ class Mesh:
         TypeError
             Meshfile must be a string or list of strings
         """
-        # TODO @ivanmaione: should be implemented also a check on the file extension.
-        # Only a limited type of file extensions is allowed by gmsh.
-        # 3656
         if isinstance(meshfile, str):
             meshfile = [meshfile]
         elif isinstance(meshfile, list):
