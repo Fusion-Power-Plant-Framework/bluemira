@@ -177,7 +177,7 @@ class Parameter(Generic[ParameterValueType]):
         :
             A dictionary representation of the parameter.
         """
-        last = self._last_param if use_last else self.history[-1]
+        last = self._last_param if use_last else self.history()[-1]
         out = {
             "name": self.name,
             "value": last.value,
