@@ -428,7 +428,9 @@ class OpenFluxSurface(FluxSurface):
         delta = 1e-1 if psi_point.x < x_mp else -1e-1
         radial_line = Coordinates({"x": [psi_point.x, x_mp + delta], "z": [z_mp, z_mp]})
         # Add the intersection point to the Coordinates
-        ref_coords, insertion_loc = join_intersect(ref_coords, radial_line, get_arg=True)
+        ref_coords, insertion_loc, _count_inters = join_intersect(
+            ref_coords, radial_line, get_arg=True
+        )
 
         # Split the flux surface geometry
         first_intersection = insertion_loc[0]
@@ -470,7 +472,9 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         first_wall:
             The geometry of the first wall to clip the OpenFluxSurface to
         """
-        coords_union_inters, args = join_intersect(self.coords, first_wall, get_arg=True)
+        coords_union_inters, args, _count_inters = join_intersect(
+            self.coords, first_wall, get_arg=True
+        )
 
         if not args:
             bluemira_warn(

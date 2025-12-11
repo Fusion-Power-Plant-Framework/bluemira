@@ -622,7 +622,8 @@ class TestIntersections:
         np.testing.assert_allclose(new_loop.points[10], [2.5, 0, 5])
 
     @pytest.mark.parametrize("file", ["", "2"])
-    def test_join_intersect_arg(self, file):
+    @pytest.mark.parametrize("counts", [0, 2])
+    def test_join_intersect_arg(self, file, counts):
         tf = Coordinates.from_json(Path(TEST_PATH, f"test_TF_intersect{file}.json"))
         lp = Coordinates.from_json(Path(TEST_PATH, f"test_LP_intersect{file}.json"))
         eq = Coordinates.from_json(Path(TEST_PATH, f"test_EQ_intersect{file}.json"))
@@ -636,10 +637,11 @@ class TestIntersections:
         intx, intz = [], []
         for coords in [lp, eq, up]:
             i = get_intersect(tf.xz, coords.xz)
-            tf, a = join_intersect(tf, coords, get_arg=True)
+            tf, a, count = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
+            assert count == counts
 
         for coords in [tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)
