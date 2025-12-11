@@ -2091,6 +2091,10 @@ def join_intersect(
     set of insertion_locations:
         Only returned if get_arg is True:
         The indices in tgt_poly in which the intersections were added.
+
+    number of insertions:
+        Only returned if get_arg is True:
+        The count of intersections added.
     """
     xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
