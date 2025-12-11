@@ -261,3 +261,17 @@ class Parameter(Generic[ParameterValueType]):
     def _add_history_record(self):
         history_entry = ParameterValue(self.value, self.source)
         self._history.append(history_entry)
+
+    @property
+    def last(self) -> ParameterValueType:
+        """Get the last value that isnt None from a parameter
+
+        Raises
+        ------
+        ValueError
+            All values in history are None
+        """
+        for p_val in reversed(self._history):
+            if p_val.value is not None:
+                return p_val.value
+        raise ValueError("All previous values are None")
