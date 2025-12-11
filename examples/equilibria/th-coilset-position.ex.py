@@ -51,9 +51,7 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
 )
 from bluemira.equilibria.optimisation.problem._nested_position import (
     NestedCoilsetPositionCOP,
-    PulsedNestedPositionCOP,
 )
-from bluemira.equilibria.optimisation.problem._position import CoilsetPositionCOP
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
@@ -87,19 +85,22 @@ result = toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
     psi_norm=psi_norm,
-    n_degrees_of_freedom=6,
-    max_harmonic_mode=5,
+    n_degrees_of_freedom=11,
+    max_harmonic_mode=10,
     plasma_mask=True,
 )
 f, ax = plot_toroidal_harmonic_approximation(
     eq=eq, th_params=th_params, result=result, psi_norm=psi_norm
 )
-eq.plot(ax=ax)
-eq.coilset.plot(ax=ax)
+# eq.plot(ax=ax)
+# eq.coilset.plot(ax=ax)
 ax.set_title("Comparison of bluemira coilset psi to TH approx.")
 plt.show()
 
 
+# TODO save the resulting plots of the psi comparison and save the mode numbers and
+# amplitudes and fit metric so can test later without rerunning
+# might also be worth saving the 6 5 combo i usually use
 # %%
 # Create a constraint
 th_constraint = ToroidalHarmonicConstraint(
@@ -252,14 +253,14 @@ outer_legs_x = np.array([
 outer_legs_z = np.array([6.5, 7.3, 7.8])
 
 # # 2
-outer_legs_x = np.array([
-    8.5,
-    9.0,
-    10.0,
-    10.9,
-])
+# outer_legs_x = np.array([
+#     8.5,
+#     9.0,
+#     10.0,
+#     10.9,
+# ])
 
-outer_legs_z = np.array([5.9, 6.2, 6.8, 7.2])
+# outer_legs_z = np.array([5.9, 6.2, 6.8, 7.2])
 
 
 SN_moved_outer_leg_lower = IsofluxConstraint(
@@ -280,20 +281,6 @@ SN_moved_inner_leg_lower = IsofluxConstraint(
 )
 
 
-# Plot the isoflux points and the starting equilibrium for reference
-f, ax = plt.subplots()
-eq.plot(ax=ax)
-# isofluxouter.plot(ax=ax)
-isofluxinner.plot(ax=ax)
-# isofluxinner_upper.plot(ax=ax)
-SN_moved_outer_leg_lower.plot(ax=ax)
-# isofluxouter.plot(ax=ax)
-# SN_moved_inner_leg_lower.plot(ax=ax)
-eq.coilset.plot(ax=ax)
-plt.show()
-
-
-# %%
 os, xs = eq.get_OX_points()
 o_point = FieldNullConstraint(
     os[0].x,
@@ -311,6 +298,24 @@ x_point_2 = FieldNullConstraint(
     xs[1].z,
     tolerance=1e-6,
 )
+
+
+# Plot the isoflux points and the starting equilibrium for reference
+f, ax = plt.subplots()
+eq.plot(ax=ax)
+# isofluxouter.plot(ax=ax)
+isofluxinner.plot(ax=ax)
+# isofluxinner_upper.plot(ax=ax)
+SN_moved_outer_leg_lower.plot(ax=ax)
+# isofluxouter.plot(ax=ax)
+# SN_moved_inner_leg_lower.plot(ax=ax)
+eq.coilset.plot(ax=ax)
+o_point.plot(ax=ax)
+x_point.plot(ax=ax)
+x_point_2.plot(ax=ax)
+plt.show()
+
+
 # %%
 f, ax = plt.subplots()
 size = [2, 1.8, 0.7, 2, 2]
@@ -339,15 +344,20 @@ current_opt_problem = TikhonovCurrentCOP(
     th_current_opt_eq,
     targets=MagneticConstraintSet([
         th_constraint,
-        SN_moved_outer_leg_lower,
         isofluxinner,
+        SN_moved_outer_leg_lower,
     ]),
     gamma=1e-12,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
-    constraints=[o_point, x_point, x_point_2],
+    constraints=[
+        th_constraint,
+        o_point,
+        x_point,
+        x_point_2,
+    ],
 )
 
 position_opt_problem = NestedCoilsetPositionCOP(
@@ -368,15 +378,16 @@ program = PicardIterator(
     fixed_coils=True,
     convergence=DudsonConvergence(1e-3),
     relaxation=0.0,
-    maxiter=30,
+    maxiter=60,
 )
 program()
 
-# %%
+
 f, ax = plt.subplots()
 th_current_opt_eq.plot(ax=ax)
 th_current_opt_eq.coilset.plot(ax=ax)
-
+SN_moved_outer_leg_lower.plot(ax=ax)
+isofluxinner.plot(ax=ax)
 # %%
 original_FS = (  # noqa: N816
     eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
