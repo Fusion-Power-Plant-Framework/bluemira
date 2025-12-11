@@ -1225,7 +1225,7 @@ def plot_toroidal_harmonic_approximation(
     )
     approx_fs = Coordinates({"x": approx_fs[0], "z": approx_fs[1]})
 
-    f, ax = plt.subplots(dpi=1200)
+    f, ax = plt.subplots(dpi=500)
     ax.contour(
         th_params.R,
         th_params.Z,
