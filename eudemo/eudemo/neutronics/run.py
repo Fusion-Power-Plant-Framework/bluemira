@@ -179,8 +179,8 @@ def export_dagmc_model(reactor, build_config):
 
 def run_dagmc_neutronics(
     reactor,
-    params,
-    build_config,
+    params: ParameterFrame,
+    build_config: dict,
     eq: Equilibrium,
     source: NeutronSourceCreator | None = None,
     tally_function=None,

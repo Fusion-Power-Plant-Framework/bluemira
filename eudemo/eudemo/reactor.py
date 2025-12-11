@@ -895,7 +895,7 @@ if __name__ == "__main__":
 
         reactor.neutronics.dagmc = run_dagmc_neutronics(
             reactor,
-            reactor_config.params_for("Neutronics", "DAGMC"),
+            reactor_config.params_for("Neutronics", "DAGMC").global_params,
             reactor_config.config_for("Neutronics", "DAGMC"),
             reference_eq,
         )
