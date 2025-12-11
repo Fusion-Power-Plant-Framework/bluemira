@@ -1225,52 +1225,54 @@ def plot_toroidal_harmonic_approximation(
     )
     approx_fs = Coordinates({"x": approx_fs[0], "z": approx_fs[1]})
 
-    f, ax = plt.subplots()
+    f, ax = plt.subplots(dpi=1200)
     ax.contour(
         th_params.R,
         th_params.Z,
         eq.coilset.psi(th_params.R, th_params.Z),
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
-        colors="black",
-        linewidths=1,
+        colors="red",
+        linewidths=1.5,
+        linestyles="dashed",
     )
     ax.contour(
         th_params.R,
         th_params.Z,
         result.coilset_psi,
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
-        colors="red",
-        linewidths=1,
+        colors="blue",
+        linewidths=1.5,
     )
     ax.plot(
         [9, 9],
         [-5, -5],
-        color="red",
+        color="blue",
         lw=1,
         label="TH coilset psi",
     )
     ax.plot(
         [9, 9],
         [-5.25, -5.25],
-        color="black",
+        color="red",
         lw=1,
         label="BM coilset psi",
+        linestyle="dashed",
     )
 
     ax.plot(
         approx_fs.x,
         approx_fs.z,
-        color="r",
+        color="blue",
         label="TH FS",
-        linestyle="dashed",
         lw=5,
     )
     ax.plot(
         original_fs.x,
         original_fs.z,
-        color="blue",
+        color="red",
         label="BM FS",
         lw=5,
+        linestyle="dashed",
     )
     ax.legend(loc="upper right")
     ax.set_xlabel("x [m]")
