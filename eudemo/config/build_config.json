@@ -123,6 +123,8 @@
     "electron_treatment": "ttb",
     "plot_axis": "xz",
     "plot_pixel_per_metre": 100,
+    "batches": 2,
+    "particles": 10000,
     "CSG": {
       "enabled": true,
       "neutronics_output_path": "$path_expand:./neutronics/csg",

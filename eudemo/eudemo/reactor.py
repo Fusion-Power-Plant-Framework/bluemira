@@ -913,9 +913,9 @@ if __name__ == "__main__":
         end = time.time()
 
         run_time_track["Total"] = end - start
-        neutrons = f"{reactor_config.config_for('Neutronics')['particles']:.2g}".replace(
-            ".", "_"
-        ).replace("+", "")
+        n_config = reactor_config.config_for("Neutronics")
+        particles = n_config.get("particles", n_config["DAGMC"]["particles"])
+        neutrons = f"{particles:.2g}".replace(".", "_").replace("+", "")
         a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
         folder_name = f"results_v02/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
