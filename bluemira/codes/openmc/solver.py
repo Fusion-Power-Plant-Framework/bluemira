@@ -824,15 +824,14 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         self.dagmc_model_path = dagmc_model_path
         self.materials = materials
 
-        self.tally_function = (
-            lambda mat, model: dagmc_tallys(
+        def tally(mat, model):
+            return dagmc_tallys(
                 mat,
                 model,
                 mesh_shape=tuple(build_config.get("tally_mesh_size", (100, 100, 100))),
             )
-            if tally_function is None
-            else tally_function
-        )
+
+        self.tally_function = tally if tally_function is None else tally_function
 
     def _single_run(
         self,

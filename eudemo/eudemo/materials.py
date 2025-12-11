@@ -29,7 +29,7 @@ try:
 
 except ImportError:
     bluemira_warn(
-        "You do have eurofusion_materials installed, or do not have access. "
+        "You do not have eurofusion_materials installed, or do not have access. "
         "We're going to use some representative imitation materials instead, "
         "as opposed to the official, material descriptions."
     )

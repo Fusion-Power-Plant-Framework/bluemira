@@ -53,11 +53,8 @@ eq_data_path = par / "OptimisedReactor.eq.json"
 
 # Fill me in eg "/a/path/to/"
 cross_section_folder = ""
-cross_section_folder = (
-    "/home/james/Documents/BLUEPRINT/cross_section_data/cross_section_data/"
-)
 
-if cross_section_folder:
+if not cross_section_folder:
     raise ValueError("Please fill in the path to your cross_section xml file")
 
 cross_section_xml = Path(cross_section_folder, "cross_sections.xml")
