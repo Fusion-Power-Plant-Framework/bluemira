@@ -108,13 +108,16 @@ def json_writer(
         bluemira_warn("No json action to take")
         return None
 
-    if "indent" not in kwargs:
-        kwargs["indent"] = 4
-
-    the_json = dumps(data, cls=cls, **kwargs)
+    the_json = dumps(
+        data,
+        cls=cls,
+        ensure_ascii=kwargs.pop("ensure_ascii", False),
+        indent=kwargs.pop("indent", 4),
+        **kwargs,
+    )
 
     if file is not None:
-        with open(file, "w") as fh:
+        with open(file, "w", encoding="utf-8") as fh:
             fh.write(the_json)
             fh.write("\n")
 

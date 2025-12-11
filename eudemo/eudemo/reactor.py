@@ -597,7 +597,7 @@ def save_reactor(reactor, reactor_config, folder_name):
 
     # Save params
     filename = f"{root}/BLUEMIRA_OUT.json"
-    json_writer(reactor_config.global_params.to_dict(), filename, indent=2)
+    json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
     # Save neutronics
     n_root = Path(root, "neutronics")

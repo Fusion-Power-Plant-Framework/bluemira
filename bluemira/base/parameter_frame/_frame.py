@@ -429,7 +429,7 @@ class ParameterFrame:
             _value_types=value_type,
         )
 
-    def to_dict(self) -> dict[str, dict[str, Any]]:
+    def to_dict(self, *, use_last: bool = False) -> dict[str, dict[str, Any]]:
         """Serialise this ParameterFrame to a dictionary.
 
         Returns
@@ -441,7 +441,7 @@ class ParameterFrame:
         for param_name in self.__dataclass_fields__:
             if self.__dataclass_fields__[param_name].type == ClassVar:
                 continue
-            param_data = getattr(self, param_name).to_dict()
+            param_data = getattr(self, param_name).to_dict(use_last=use_last)
             # We already have the name of the param, and use it as a
             # key. No need to repeat the name in the data, so pop it.
             param_data.pop("name")
