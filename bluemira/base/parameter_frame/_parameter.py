@@ -182,7 +182,7 @@ class Parameter(Generic[ParameterValueType]):
             "name": self.name,
             "value": last.value,
             "unit": "dimensionless" if not self.unit else self.unit,
-            **({"source": last.source} if last.source is not None else {}),
+            **({"source": last.source} if last.source else {}),
         }
         for field in ["description", "long_name"]:
             if value := getattr(self, field):
