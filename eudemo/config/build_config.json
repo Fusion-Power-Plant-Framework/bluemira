@@ -5,9 +5,9 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
-    "read_dir": "$path_expand:./",
-    "run_dir": "$path_expand:./",
+    "run_mode": "read",
+    "read_dir": "$path_expand:./process",
+    "run_dir": "$path_expand:./process",
     "plot": false
   },
   "Fixed boundary equilibrium": {
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "run",
+      "run_mode": "read",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -118,26 +118,52 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "enabled": true,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
-    "particles": 10000,
-    "batches": 2,
     "photon_transport": true,
     "electron_treatment": "ttb",
-    "run_mode": "run_and_plot",
-    "openmc_write_summary": false,
-    "blanket_type": "HCPB",
     "plot_axis": "xz",
     "plot_pixel_per_metre": 100,
-    "neutronics_output_path": "$path_expand:./neutronics",
-    "show_data": false
-  },
-  "CAD_Neutronics": {
-    "export_dagmc_model": false,
-    "dagmc_export_dir": "$path_expand:./dagmc_export"
+    "CSG": {
+      "enabled": true,
+      "neutronics_output_path": "$path_expand:./neutronics/csg",
+      "particles": 10000,
+      "batches": 2,
+      "run_mode": "run_and_plot",
+      "openmc_write_summary": false,
+      "blanket_type": "HCPB",
+      "show_data": false
+    },
+    "DAGMC": {
+      "export_dagmc_model": true,
+      "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
+      "neutronics_output_path": "$path_expand:./neutronics/dagmc",
+      "particles": 10000,
+      "batches": 2,
+      "run_mode": "run",
+      "rel_max_lost_particles": 1e-2,
+      "max_lost_particles": 1e4,
+      "tally_mesh_size": [100, 100, 100],
+      "debug": false,
+      "converter_config": {
+        "converter_type": "fast_ctd",
+        "imprint_geometry": true,
+        "imprint_per_compound": true,
+        "minimum_include_volume": 0.001,
+        "fix_step_to_brep_geometry": false,
+        "merge_dist_tolerance": 0.001,
+        "lin_deflection_tol": 0.001,
+        "lin_deflection_is_absolute": false,
+        "angular_deflection_tol": 0.5,
+        "run_make_watertight": true,
+        "save_vtk_model": true,
+        "enable_ext_debug_logging": false,
+        "use_cached_files": false,
+        "clean_up_cached": false
+      }
+    }
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
@@ -167,7 +193,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
@@ -330,7 +356,10 @@
         "long_name": "Castellation offset value."
       }
     },
-    "material": "HeavyConcrete"
+    "material": {
+      "Body": "HeavyConcrete",
+      "Port Plug": "HeavyConcrete"
+    }
   },
   "Coil structures": {
     "material": {

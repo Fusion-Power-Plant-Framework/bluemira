@@ -130,5 +130,5 @@ class RadiationShieldBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE[self.RS][0],
             degree,
-            material=self.get_material(),
+            material=self.get_material("Body"),
         )

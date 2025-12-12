@@ -26,9 +26,10 @@ try:
     EUROFER_MAT = EUROfer97()
     SS316_LN_MAT = SS316_LN()
     TUNGSTEN_MAT = Tungsten()
+
 except ImportError:
     bluemira_warn(
-        "You do have eurofusion_materials installed, or do not have access. "
+        "You do not have eurofusion_materials installed, or do not have access. "
         "We're going to use some representative imitation materials instead, "
         "as opposed to the official, material descriptions."
     )
@@ -54,29 +55,11 @@ HELIUM_MAT = Helium()
 HeavyConcrete = HeavyConcrete()
 
 VV_MATERIAL = mixture(
-    "Steel-water mixture",
-    [(SS316_LN_MAT, 0.6), (WATER_MAT, 0.4)],
-    fraction_type="mass",
-    mix_condition={"temperature": 300, "pressure": 101325},
-    converters=OpenMCNeutronicConfig(),
-)
-
-AL203_MATERIAL = material(
-    name="Aluminium Oxide",
-    elements={"Al27": 2 / 5, "O16": 3 / 5},
-    properties=props(density=(3.95, "g/cm^3")),
-    converters=OpenMCNeutronicConfig(),
-)()
-
-LINED_EUROFER_MATERIAL = mixture(
-    name="Eurofer with Al2O3 lining",
-    materials=[
-        (EUROFER_MAT, 2.0 / 2.4),
-        (AL203_MATERIAL, 0.4 / 2.4),
-    ],
+    name="inb_vacuum_vessel",
+    materials=[(EUROFER_MAT, 0.8), (WATER_MAT, 0.2)],
     fraction_type="volume",
-    mix_condition=OperationalConditions(temperature=673.15),
-    converters=OpenMCNeutronicConfig(),
+    mix_condition=OperationalConditions(temperature=673.15, pressure=1e5),
+    converters=OpenMCNeutronicConfig(material_id=104),
 )
 
 
@@ -89,7 +72,7 @@ li6_enrich_atomic = 0.6
 KALOS_ACB_MATERIAL = make_KALOS_ACB_mat(li6_enrich_atomic)
 
 BB_FW_MATERIAL = mixture(
-    name="FW material",
+    name="FW_material",
     materials=[
         (TUNGSTEN_MAT, 2.0 / 27.0),
         (EUROFER_MAT, 25.0 * 0.573 / 27.0),
@@ -101,7 +84,7 @@ BB_FW_MATERIAL = mixture(
 )
 
 BB_BZ_MATERIAL = mixture(
-    name="BZ material",
+    name="BZ_material",
     materials=[
         (EUROFER_MAT, structural_fraction_vo),
         (Be12Ti(), multiplier_fraction_vo),
@@ -111,7 +94,7 @@ BB_BZ_MATERIAL = mixture(
     fraction_type="volume",
     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
     converters=OpenMCNeutronicConfig(
-        material_id=102,
+        material_id=192,
         enrichment=li6_enrich_atomic * 100,
         enrichment_target="Li6",
         enrichment_type="atomic",
@@ -119,7 +102,7 @@ BB_BZ_MATERIAL = mixture(
 )
 
 BB_MANI_MATERIAL = mixture(
-    name="Manifold material",
+    name="Manifold_material",
     materials=[
         (EUROFER_MAT, 0.4724),
         (KALOS_ACB_MATERIAL, 0.0241),

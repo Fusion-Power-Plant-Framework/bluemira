@@ -471,15 +471,15 @@ class BalanceOfPlantModel:
         p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
 
-        p_n_blk = self.params.P_n_blanket.value
-        p_n_div = self.params.P_n_divertor.value
-        p_n_vv = self.params.P_n_vessel.value
-        p_n_aux = self.params.P_n_aux.value
-        p_nrgm = self.params.P_n_e_mult.value
+        p_n_blk = self.params.P_n_blanket.last
+        p_n_div = self.params.P_n_divertor.last
+        p_n_vv = self.params.P_n_vessel.last
+        p_n_aux = self.params.P_n_aux.last
+        p_nrgm = self.params.P_n_e_mult.last
         # "Lost" neutron power that doesn't go into any of the defined components
         p_n_other = p_neutron + p_nrgm - p_n_blk - p_n_div - p_n_vv - p_n_aux
 
-        p_blk_decay = self.params.P_n_decay.value
+        p_blk_decay = self.params.P_n_decay.last
 
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix

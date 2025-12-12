@@ -28,7 +28,6 @@ dependencies = [
     "matplotlib>=3.8",
     "matproplib",
     "meshio>=4.0",
-    "neutronics-material-maker>=1.1.4",
     "nlopt>=2.7.1",
     "numba>=0.59",
     # we should remove this once numba-scipy starts to be more regularly maintained
@@ -91,13 +90,14 @@ process = ["process @ git+https://github.com/ukaea/process@v3.2.2"]
 openmc = [
     "openmc>=0.14.0",
     "openmc_data==2.3.2",
-    "tokamak-neutron-source >=0.1.1",
+    "tokamak-neutron-source >=0.1.4",
 ]
 polyscope = ["polyscope"]
 radiation = ["cherab"]
 dagmc = [
     "cgal>=6.0.1",
     "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
+    "bluemira[openmc]"
 ]
 
 [build-system]

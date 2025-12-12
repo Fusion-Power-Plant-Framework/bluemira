@@ -169,7 +169,7 @@ class Parameter(Generic[ParameterValueType]):
         self._source = source
         self._add_history_record()
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, *, use_last: bool = False) -> dict[str, Any]:
         """Serialise the parameter to a dictionary.
 
         Returns
@@ -177,12 +177,14 @@ class Parameter(Generic[ParameterValueType]):
         :
             A dictionary representation of the parameter.
         """
+        last = self._last_param if use_last else self.history()[-1]
         out = {
             "name": self.name,
-            "value": self.value,
+            "value": last.value,
             "unit": "dimensionless" if not self.unit else self.unit,
+            **({"source": last.source} if last.source else {}),
         }
-        for field in ["source", "description", "long_name"]:
+        for field in ["description", "long_name"]:
             if value := getattr(self, field):
                 out[field] = value
         return out
@@ -261,3 +263,26 @@ class Parameter(Generic[ParameterValueType]):
     def _add_history_record(self):
         history_entry = ParameterValue(self.value, self.source)
         self._history.append(history_entry)
+
+    @property
+    def _last_param(self) -> ParameterValue:
+        for p_val in reversed(self._history):
+            if p_val.value is not None:
+                return p_val
+        return self._history[-1]
+
+    @property
+    def last(self) -> ParameterValue:
+        """Get the last value that isnt None from a parameter
+
+        Raises
+        ------
+        ValueError
+            All values in history are None
+        """
+        val = copy.deepcopy(self._last_param)
+
+        if val.value is None:
+            raise ValueError("All previous values are None")
+
+        return val.value

@@ -261,7 +261,6 @@ class EUDEMOReactorParams(ParameterFrame):
 
     # CSG neutronics
     # TODO: What ever happened to these...? They never got used.
-    peaking_factor: Parameter[float]
     vertical_shift: Parameter[float]
     inboard_fw_tk: Parameter[float]
     outboard_fw_tk: Parameter[float]

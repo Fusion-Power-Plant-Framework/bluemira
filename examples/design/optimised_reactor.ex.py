@@ -410,6 +410,10 @@ class OptimisedReactor(Reactor):  # noqa: D101
     def build_plasma(self):
         """Build the plasma component."""
         rf_eq = ref_eq(self.params.R_0.value, self.params.A.value)
+        rf_eq.to_eqdsk(
+            filename="OptimisedReactor.eq.json",
+            directory=Path(__file__).parent.as_posix(),
+        )
         lcfs_wire = make_polygon(rf_eq.get_LCFS().xyz, closed=True)
         self.plasma = Plasma(PlasmaBuilder(self.params, {}, lcfs_wire).build())
 

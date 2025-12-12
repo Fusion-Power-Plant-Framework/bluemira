@@ -1,6 +1,6 @@
 {
   "A": {
-    "value": 2.8,
+    "value": 2.6,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma aspect ratio"
@@ -1147,12 +1147,6 @@
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
   },
-  "peaking_factor": {
-    "value": 1.508,
-    "unit": "",
-    "source": "Input",
-    "long_name": "neutronics peaking factor"
-  },
   "vertical_shift": {
     "value": 0,
     "unit": "m",
@@ -1321,7 +1315,7 @@
     "long_name": "Breeding blanket first wall outboard thickness"
   },
   "tk_bb_bz_ob": {
-    "value": 0.5,
+    "value": 0.4,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket breeding zone outboard thickness"

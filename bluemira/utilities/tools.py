@@ -28,8 +28,10 @@ from typing import TYPE_CHECKING, Any
 import nlopt
 import numpy as np
 import numpy.typing as npt
+import vtk
 from PySide6.QtWidgets import QApplication
 from matplotlib import colors
+from vtkmodules.util import numpy_support
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
 from bluemira.base.file import force_file_extension
@@ -106,19 +108,55 @@ def json_writer(
         bluemira_warn("No json action to take")
         return None
 
-    if "indent" not in kwargs:
-        kwargs["indent"] = 4
-
-    the_json = dumps(data, cls=cls, **kwargs)
+    the_json = dumps(
+        data,
+        cls=cls,
+        ensure_ascii=kwargs.pop("ensure_ascii", False),
+        indent=kwargs.pop("indent", 4),
+        **kwargs,
+    )
 
     if file is not None:
-        with open(file, "w") as fh:
+        with open(file, "w", encoding="utf-8") as fh:
             fh.write(the_json)
             fh.write("\n")
 
     if return_output:
         return the_json
     return None
+
+
+# =====================================================
+# vtk utilities
+# =====================================================
+
+
+def numpy_to_vtk(data, output_name, scaling=(1, 1, 1)):
+    """Convert a numpy array to a VTK image data file."""
+    data_type = vtk.VTK_FLOAT
+    shape = data.shape
+
+    flat_data_array = data.flatten()
+    vtk_data = numpy_support.numpy_to_vtk(
+        num_array=flat_data_array, deep=True, array_type=data_type
+    )
+    vtk_data.SetName(output_name)
+
+    half_x = int(0.5 * scaling[0] * (shape[0] - 1))
+    half_y = int(0.5 * scaling[1] * (shape[1] - 1))
+    half_z = int(0.5 * scaling[2] * (shape[2] - 1))
+
+    img = vtk.vtkImageData()
+    img.GetPointData().SetScalars(vtk_data)
+    img.SetSpacing(scaling[0], scaling[1], scaling[2])
+    img.SetDimensions(shape[0], shape[1], shape[2])
+    img.SetOrigin(-half_x, -half_y, -half_z)
+
+    # Save the VTK file
+    writer = vtk.vtkXMLImageDataWriter()
+    writer.SetFileName(f"{output_name}.vti")
+    writer.SetInputData(img)
+    writer.Write()
 
 
 # =====================================================

@@ -7,9 +7,7 @@ annotated-types==0.7.0
 anytree==2.13.0
     # via bluemira (pyproject.toml)
 asteval==1.0.6
-    # via
-    #   bluemira (pyproject.toml)
-    #   neutronics-material-maker
+    # via bluemira (pyproject.toml)
 astroid==3.3.11
     # via sphinx-autoapi
 asttokens==3.0.0
@@ -201,8 +199,6 @@ ndindex==1.10.0
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
-neutronics-material-maker==1.2.1
-    # via bluemira (pyproject.toml)
 nlopt==2.7.1
     # via bluemira (pyproject.toml)
 nodeenv==1.9.1

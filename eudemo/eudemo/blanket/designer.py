@@ -151,6 +151,7 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
             The panel points of the blanket
         """
         segments = self.segment_blanket()
+
         # Inboard
         ib_panels = self.panel_boundary(segments.inboard_boundary)
         ib_panels_face = BluemiraFace(ib_panels)
@@ -163,9 +164,14 @@ class BlanketDesigner(Designer[tuple[BluemiraFace, BluemiraFace, Coordinates]]):
         # to get the panel points, we must remove the gap points
         # introduced in the ib <-> ob slice
         ib_verts = ib_panels.vertexes.points
+        min_ib_point = cut_ib.vertexes.points[cut_ib.vertexes.argmin(ib_verts[0])]
+        ib_verts = ib_verts[Coordinates(ib_verts).argmin(min_ib_point) :]
+        ib_verts[0] = min_ib_point
+
         ob_verts = ob_panels.vertexes.points
-        ib_verts[0] = cut_ib.vertexes.points[cut_ib.vertexes.argmin(ib_verts[0])]
-        ob_verts[-1] = cut_ob.vertexes.points[cut_ob.vertexes.argmin(ob_verts[-1])]
+        min_ob_point = cut_ob.vertexes.points[cut_ob.vertexes.argmin(ob_verts[-1])]
+        ob_verts = ob_verts[: Coordinates(ob_verts).argmin(min_ob_point) + 1]
+        ob_verts[-1] = min_ob_point
 
         panel_points = self._remove_gap_and_merge(
             Coordinates(ib_verts), Coordinates(ob_verts)

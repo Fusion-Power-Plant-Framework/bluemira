@@ -136,7 +136,7 @@ class Builder(abc.ABC):
                 f"No corresponding material found for {component_name} in {mats}"
             )
 
-        return mat
+        return mat() if callable(mat) else mat
 
     def component_tree(
         self,

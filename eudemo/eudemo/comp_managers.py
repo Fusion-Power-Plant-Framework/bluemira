@@ -263,14 +263,16 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         vv_xyz = vvts_xyz.get_component("Sector 1")
         vvts_target_name = f"{VVTSBuilder.VVTS} 1"
         vvts_void_name = f"{VVTSBuilder.VOID} 1"
-        vvts_target_shape = vv_xyz.get_component(vvts_target_name).shape
+        vvts_target_comp = vv_xyz.get_component(vvts_target_name)
+        vvts_target_shape = vvts_target_comp.shape
         vvts_target_void = vv_xyz.get_component(vvts_void_name).shape
 
         cts_xyz = cts.get_component("xyz")
         cr_xyz = cts_xyz.get_component("Sector 1")
         cts_target_name = f"{CryostatTSBuilder.CRYO_TS} 1"
         cts_void_name = f"{CryostatTSBuilder.VOID} 1"
-        cts_target_shape = cr_xyz.get_component(cts_target_name).shape
+        cts_target_comp = cr_xyz.get_component(cts_target_name)
+        cts_target_shape = cts_target_comp.shape
         cts_target_void = cr_xyz.get_component(cts_void_name).shape
 
         final_shape, final_void, tool_voids = self._join_ports_to_vvts(
@@ -283,12 +285,16 @@ class ThermalShield(PortManagerMixin, ComponentManager):
 
         cts_target_shape = boolean_cut(cts_target_shape, tool_voids)[0]
 
-        vvts_sector_body = PhysicalComponent(vvts_target_name, final_shape)
+        vvts_sector_body = PhysicalComponent(
+            vvts_target_name, final_shape, material=vvts_target_comp.material
+        )
         vvts_sector_void = PhysicalComponent(
             vvts_void_name, final_void, material=Void(name="vacuum")
         )
 
-        cts_sector_body = PhysicalComponent(cts_target_name, cts_target_shape)
+        cts_sector_body = PhysicalComponent(
+            cts_target_name, cts_target_shape, material=cts_target_comp.material
+        )
         cts_sector_void = PhysicalComponent(
             cts_void_name, cts_target_void, material=Void(name="vacuum")
         )
