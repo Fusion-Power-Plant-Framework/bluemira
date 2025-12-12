@@ -237,6 +237,8 @@ def fallback_to(fallback_func, exception):
             try:
                 return func(*args, **kwargs)
             except exception:
+                if not kwargs.get("allow_fallback", True):
+                    raise
                 bluemira_warn(
                     f"{func.__name__} failed, falling back to {fallback_func.__name__}."
                 )
@@ -599,6 +601,7 @@ def interpolate_bspline(
     closed: bool = False,
     start_tangent: Iterable | None = None,
     end_tangent: Iterable | None = None,
+    allow_fallback: bool = True,  # noqa: ARG001,
 ) -> BluemiraWire:
     """
     Make a bspline from a set of points.
@@ -904,6 +907,7 @@ def offset_wire(
     fallback_method: str = "square",  # noqa: ARG001
     byedges: bool = True,  # noqa: ARG001
     ndiscr: int = 400,  # noqa: ARG001
+    allow_fallback: bool = True,  # noqa: ARG001
     **fallback_kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
