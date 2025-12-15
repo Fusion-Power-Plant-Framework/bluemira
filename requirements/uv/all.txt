@@ -227,7 +227,7 @@ lark==1.3.1
     # via rfc3987-syntax
 librt==0.6.3
     # via mypy
-llvmlite==0.45.1
+llvmlite==0.46.0
     # via numba
 lxml==6.0.2
     # via citeproc-py
@@ -307,7 +307,7 @@ notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numba==0.62.1
+numba==0.63.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
