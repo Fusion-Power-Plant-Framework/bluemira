@@ -627,7 +627,6 @@ class TestIntersections:
         lp = Coordinates.from_json(Path(TEST_PATH, f"test_LP_intersect{file}.json"))
         eq = Coordinates.from_json(Path(TEST_PATH, f"test_EQ_intersect{file}.json"))
         up = Coordinates.from_json(Path(TEST_PATH, f"test_UP_intersect{file}.json"))
-        counts = 0 if file == "2" else 2
 
         _, ax = plt.subplots()
         for coords in [tf, up, eq, lp]:
@@ -641,7 +640,7 @@ class TestIntersections:
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
-            assert count == counts
+            assert count == 2
 
         for coords in [tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)

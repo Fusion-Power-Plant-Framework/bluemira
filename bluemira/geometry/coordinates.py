@@ -2122,7 +2122,7 @@ def join_intersect(
 
     if get_arg:
         insertion_locations = [dest_poly.argmin([x, 0, z]) for x, z in xz_inter]
-        return dest_poly, list(set(insertion_locations)), num_inserted
+        return dest_poly, list(set(insertion_locations)), len(insertion_locations)
     return dest_poly
 
 
