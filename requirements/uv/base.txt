@@ -65,7 +65,7 @@ lxml==6.0.2
     # via citeproc-py
 markdown-it-py==4.0.0
     # via rich
-matplotlib==3.10.7
+matplotlib==3.10.8
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
