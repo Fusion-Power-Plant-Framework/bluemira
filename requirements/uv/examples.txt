@@ -193,7 +193,7 @@ markupsafe==3.0.3
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.10.7
+matplotlib==3.10.8
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
