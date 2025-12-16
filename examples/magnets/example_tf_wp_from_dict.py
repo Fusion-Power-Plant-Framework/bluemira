@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from bluemira.base.look_and_feel import bluemira_print
 import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
@@ -9,6 +8,8 @@ from eurofusion_materials.library.magnet_branch_mats import (
     SS316_LN_MAG,
 )
 from matproplib import OperationalConditions
+
+from bluemira.base.look_and_feel import bluemira_print
 
 op_cond = OperationalConditions(temperature=5.7, magnetic_field=10.0, strain=0.0055)
 
@@ -259,3 +260,80 @@ print(I_max)
 print(I_TF_max)
 I_TF = R0 * B0 / (MU_0_2PI * n_TF)
 print(I_TF)
+
+
+from pathlib import Path
+
+from bluemira.base.file import get_bluemira_path
+from bluemira.mesh import meshing
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf, plot_dolfinx_mesh
+
+directory = Path(get_bluemira_path("", subfolder="generated_data/"))
+directory = directory.joinpath("examples", "TF")
+directory.mkdir(parents=True, exist_ok=True)
+meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
+m = meshing.Mesh(meshfile=meshfiles)
+
+
+# wp_comp = case_tf.WPs[0].create_component(0,0, homogenized=False)
+
+from bluemira.base.components import (
+    Component,
+    PhysicalComponent,
+    get_properties_from_components,
+)
+from bluemira.geometry.tools import BluemiraFace, boolean_cut, make_polygon
+
+homogenized = False
+tf_cross_section_comp = Component("tf_cross_section_comp")
+
+poly = case_tf.build_polygon()
+case_tf_wire_out = make_polygon({"x": poly[:, 0], "y": poly[:, 1]}, closed=True)
+case_tf_wire_out.mesh_options.physical_group = "case_tf_wire_out"
+case_tf_face = BluemiraFace([case_tf_wire_out])
+
+
+for i, wp in enumerate(case_tf.WPs):
+    xc_wp = 0.0
+    yc_wp = case_tf.R_wp_i[i] - wp.dy / 2
+    conductor = wp.conductor
+    lcar_cable = min([conductor.cable.dx / 5, conductor.cable.dy / 5])
+    lcar_jacket = min([conductor.dx_jacket, conductor.dy_jacket]) * 2
+    lcar_ins = min([conductor.dx_ins, conductor.dy_ins]) * 2
+    lcar = np.array([lcar_cable, lcar_jacket, lcar_ins])
+    lcar = min(lcar)
+    wp_comp = wp.create_component(xc=xc_wp, yc=yc_wp, homogenized=False, lcar=lcar)
+    wp_comp.plot_options.view = "xy"
+    # wp_comp.plot_2d(show=True)
+    wp_comp.parent = tf_cross_section_comp
+    case_tf_face = boolean_cut(
+        case_tf_face, get_properties_from_components(wp_comp, "shape")
+    )
+    case_tf_face = case_tf_face[0]
+
+case_tf_face.mesh_options.physical_group = "case_tf_face"
+case_tf_face.mesh_options.lcar = case_tf.dx_ps / 40
+case_tf_comp = PhysicalComponent(
+    name="case_tf_comp", shape=case_tf_face, parent=tf_cross_section_comp
+)
+
+tf_cross_section_comp.plot_options.view = "xy"
+tf_cross_section_comp.plot_2d(show=True)
+
+c = meshing.Mesh(meshfile=meshfiles)
+c(tf_cross_section_comp)
+
+# %%
+msh_to_xdmf(
+    "Mesh.msh",
+    dimensions=(0, 2),
+    directory=directory,
+)
+
+mesh, boundaries, subdomains, labels = import_mesh(
+    "Mesh",
+    directory=directory,
+    subdomains=True,
+)
+
+plot_dolfinx_mesh(mesh)

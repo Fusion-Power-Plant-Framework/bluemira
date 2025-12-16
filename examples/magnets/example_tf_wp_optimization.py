@@ -390,7 +390,7 @@ bluemira_print(
 T_for_hts = T_op
 result = cable.optimize_n_stab_ths(
     t0,
-    tf,
+    5 * tf,
     T_for_hts,
     hotspot_target_temperature,
     B_fun,

@@ -38,9 +38,6 @@ Some examples of using bluemira mesh module.
 # %%
 from pathlib import Path
 
-import dolfin
-import matplotlib.pyplot as plt
-
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level
@@ -49,7 +46,7 @@ from bluemira.geometry import tools
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf, plot_dolfinx_mesh
 
 set_log_level("DEBUG")
 
@@ -117,7 +114,9 @@ c_coil_out = PhysicalComponent(name="coil_out", shape=coil_out, parent=c_coil)
 # Initialise and create the mesh
 
 # %%
-directory = get_bluemira_path("", subfolder="generated_data")
+directory = Path(get_bluemira_path("", subfolder="generated_data/"))
+directory = directory.joinpath("examples", "mesh_tutorial")
+directory.mkdir(parents=True, exist_ok=True)
 
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 m = meshing.Mesh(meshfile=meshfiles)
@@ -140,7 +139,7 @@ mesh, boundaries, subdomains, labels = import_mesh(
     directory=directory,
     subdomains=True,
 )
-dolfin.plot(mesh)
-plt.show()
 
-print(mesh.coordinates())
+plot_dolfinx_mesh(mesh)
+
+print(mesh.geometry.x)

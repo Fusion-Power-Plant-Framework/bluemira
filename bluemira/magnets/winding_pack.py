@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matproplib import OperationalConditions
 
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.geometry.face import BluemiraFace
 from bluemira.magnets.conductor import Conductor, create_conductor_from_dict
 from bluemira.magnets.registry import RegistrableMeta
 
@@ -243,6 +245,62 @@ class WindingPack(metaclass=RegistrableMeta):
             ny=windingpack_dict["ny"],
             name=name or windingpack_dict.get("name"),
         )
+
+    def create_component(
+        self, xc: float, yc: float, homogenized: bool = True, lcar: np.array = None
+    ) -> BluemiraFace:
+        """
+        2D geometric representation of the strand.
+
+        Returns
+        -------
+        BluemiraFace
+            Circular face of the strand.
+        """
+        from bluemira.geometry.tools import make_polygon
+
+        comp_name = self.name
+
+        if homogenized:
+            wp_wire = make_polygon(
+                {
+                    "x": [
+                        xc - self.dx / 2.0,
+                        xc + self.dx / 2.0,
+                        xc + self.dx / 2.0,
+                        xc - self.dx / 2.0,
+                    ],
+                    "y": [
+                        yc - self.dy / 2.0,
+                        yc - self.dy / 2.0,
+                        yc + self.dy / 2.0,
+                        yc + self.dy / 2.0,
+                    ],
+                },
+                closed=True,
+            )
+            wp_wire.mesh_options.lcar = lcar
+            wp_wire.mesh_options.physical_group = f"{comp_name}_boundary"
+            wp_face = BluemiraFace([wp_wire])
+            wp_face.mesh_options.physical_group = f"{comp_name}_face"
+            wp_comp = PhysicalComponent(self.name, wp_face)
+
+        else:
+            wp_comp = Component(self.name)
+            initial_conductor_name = self.conductor.name
+            n = 0
+            for i in range(self.nx):
+                for j in range(self.ny):
+                    n = n + 1
+                    self.conductor.name = f"{wp_comp.name}.cond{n}"
+                    xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx
+                    yc_c = yc - self.dy / 2 + (j + 0.5) * self.conductor.dy
+                    cond_comp = self.conductor.create_component(
+                        xc=xc_c, yc=yc_c, homogenized=homogenized, lcar=lcar
+                    )
+                    cond_comp.parent = wp_comp
+            self.conductor.name = initial_conductor_name
+        return wp_comp
 
 
 def create_wp_from_dict(

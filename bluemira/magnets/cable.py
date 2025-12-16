@@ -17,6 +17,7 @@ from scipy.integrate import solve_ivp
 from scipy.optimize import minimize_scalar
 
 from bluemira.base.look_and_feel import bluemira_error, bluemira_print, bluemira_warn
+from bluemira.geometry.face import BluemiraFace
 from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.strand import (
     Strand,
@@ -796,6 +797,45 @@ class ABCCable(ABC, metaclass=RegistrableMeta):
             cos_theta=cable_dict.get("cos_theta", 0.97),
             name=name or cable_dict.get("name"),
         )
+
+    def create_shape(
+        self, xc: float, yc: float, homogenized: bool = True
+    ) -> BluemiraFace:
+        """
+        2D geometric representation of the strand.
+
+        Returns
+        -------
+        BluemiraFace
+            Circular face of the strand.
+        """
+        from bluemira.geometry.tools import make_polygon
+
+        if homogenized:
+            shape = BluemiraFace([
+                make_polygon(
+                    {
+                        "x": [
+                            xc - self.dx / 2.0,
+                            xc + self.dx / 2.0,
+                            xc + self.dx / 2.0,
+                            xc - self.dx / 2.0,
+                        ],
+                        "y": [
+                            yc - self.dy / 2.0,
+                            yc - self.dy / 2.0,
+                            yc + self.dy / 2.0,
+                            yc + self.dy / 2.0,
+                        ],
+                    },
+                    closed=True,
+                )
+            ])
+        else:
+            raise NotImplementedError(
+                "Not homogeneous shapes not implemented for Cable."
+            )
+        return shape
 
 
 class RectangularCable(ABCCable):

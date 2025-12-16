@@ -14,7 +14,9 @@ from matproplib import OperationalConditions
 from matproplib.material import Material
 from scipy.optimize import minimize_scalar
 
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.geometry.face import BluemiraFace, BluemiraWire
 from bluemira.magnets.cable import ABCCable, create_cable_from_dict
 from bluemira.magnets.registry import RegistrableMeta
 from bluemira.magnets.utils import (
@@ -795,6 +797,119 @@ class Conductor(metaclass=RegistrableMeta):
             f"dx_ins: {self.dx_ins}\n"
             f"dy_ins: {self.dy_ins}"
         )
+
+    def create_component(
+        self, xc: float, yc: float, homogenized: bool = True, lcar: np.array = None
+    ) -> Component:
+        """
+        2D geometric representation of the strand.
+
+        Returns
+        -------
+        BluemiraFace
+            Circular face of the strand.
+        """
+        from bluemira.geometry.tools import make_polygon
+
+        comp_name = self.name
+
+        if homogenized:
+            cond_wire = make_polygon(
+                {
+                    "x": [
+                        xc - self.dx / 2.0,
+                        xc + self.dx / 2.0,
+                        xc + self.dx / 2.0,
+                        xc - self.dx / 2.0,
+                    ],
+                    "y": [
+                        yc - self.dy / 2.0,
+                        yc - self.dy / 2.0,
+                        yc + self.dy / 2.0,
+                        yc + self.dy / 2.0,
+                    ],
+                },
+                closed=True,
+            )
+            cond_wire.mesh_options.physical_group = f"{comp_name}_boundary"
+            cond_wire.mesh_options.lcar = lcar
+            cond_face = BluemiraFace([cond_wire])
+            cond_face.mesh_options.physical_group = f"{comp_name}_face"
+            cond_comp = PhysicalComponent(comp_name, cond_face)
+
+        else:
+            cond_comp = Component(comp_name)
+
+            dx = self.cable.dx / 2.0
+            dy = self.cable.dy / 2.0
+            cable_wire = BluemiraWire([
+                make_polygon(
+                    {
+                        "x": [xc - dx, xc + dx, xc + dx, xc - dx],
+                        "y": [yc - dy, yc - dy, yc + dy, yc + dy],
+                    },
+                    closed=True,
+                )
+            ])
+            cable_face = BluemiraFace([cable_wire])
+
+            cable_wire.mesh_options.physical_group = f"{comp_name}_boundary"
+            if lcar is not None:
+                if isinstance(lcar, np.ndarray):
+                    cable_wire.mesh_options.lcar = lcar[0]
+                elif isinstance(lcar, float):
+                    cable_wire.mesh_options.lcar = lcar
+
+            cable_face.mesh_options.physical_group = f"{comp_name}_face"
+
+            dx = self.cable.dx / 2.0 + self.dx_jacket
+            dy = self.cable.dy / 2.0 + self.dy_jacket
+            jacket_wire_in = cable_wire
+            jacket_wire_out = BluemiraWire([
+                make_polygon(
+                    {
+                        "x": [xc - dx, xc + dx, xc + dx, xc - dx],
+                        "y": [yc - dy, yc - dy, yc + dy, yc + dy],
+                    },
+                    closed=True,
+                )
+            ])
+            jacket_face = BluemiraFace([jacket_wire_out, jacket_wire_in])
+
+            jacket_wire_out.mesh_options.physical_group = f"{comp_name}_jacket_wire_out"
+            if lcar is not None:
+                if isinstance(lcar, np.ndarray):
+                    jacket_wire_out.mesh_options.lcar = lcar[1]
+                elif isinstance(lcar, float):
+                    jacket_wire_out.mesh_options.lcar = lcar
+            jacket_face.mesh_options.physical_group = f"{comp_name}_jacket_face"
+
+            dx = self.cable.dx / 2.0 + self.dx_jacket + self.dx_ins
+            dy = self.cable.dy / 2.0 + self.dy_jacket + self.dy_ins
+            ins_wire_in = jacket_wire_out
+            ins_wire_out = BluemiraWire([
+                make_polygon(
+                    {
+                        "x": [xc - dx, xc + dx, xc + dx, xc - dx],
+                        "y": [yc - dy, yc - dy, yc + dy, yc + dy],
+                    },
+                    closed=True,
+                )
+            ])
+            ins_face = BluemiraFace([ins_wire_out, ins_wire_in])
+
+            ins_wire_out.mesh_options.physical_group = f"{comp_name}_ins_wire_out"
+            if lcar is not None:
+                if isinstance(lcar, np.ndarray):
+                    ins_wire_out.mesh_options.lcar = lcar[2]
+                elif isinstance(lcar, float):
+                    ins_wire_out.mesh_options.lcar = lcar
+            ins_face.mesh_options.physical_group = f"{comp_name}_ins_face"
+
+            PhysicalComponent(f"{self.name}.cable", cable_face, parent=cond_comp)
+            PhysicalComponent(f"{self.name}.jacket", jacket_face, parent=cond_comp)
+            PhysicalComponent(f"{self.name}.insulator", ins_face, parent=cond_comp)
+        return cond_comp
 
 
 class SymmetricConductor(Conductor):
