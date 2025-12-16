@@ -85,8 +85,8 @@ result = toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
     psi_norm=psi_norm,
-    n_degrees_of_freedom=11,
-    max_harmonic_mode=10,
+    n_degrees_of_freedom=6,
+    max_harmonic_mode=5,
     plasma_mask=True,
 )
 f, ax = plot_toroidal_harmonic_approximation(
@@ -129,46 +129,6 @@ lcfs = eq.get_LCFS()
 x_bdry, z_bdry = lcfs.x, lcfs.z
 arg_inner = np.argmin(x_bdry)
 
-# # Define points to use for the isoflux constraints
-inner_leg_points_x = np.array([
-    6.5,
-    7.0,
-    7.5,
-])
-
-inner_leg_points_z = (
-    np.array([
-        6.25,
-        5.95,
-        5.7,
-    ])
-    + 0.3  # originally 0.3
-)
-
-
-outer_legs_x = (
-    np.array([
-        9.7,
-        9.89,
-        10.1,
-    ])
-    + 1.0
-)
-
-outer_legs_z = np.array([6.5, 7.0, 7.5]) + 1.0
-
-
-# outer_legs_x = np.array([
-#     10.2,
-#     10.8,
-#     11.5,
-# ])
-
-# outer_legs_z = np.array([6.8, 8.0, 9.0])
-
-
-# # Create the necessary isoflux constraints for the inner and outer legs, for
-# # the upper and lower divertors.
 
 leg_choice = "outer"
 
@@ -303,12 +263,8 @@ x_point_2 = FieldNullConstraint(
 # Plot the isoflux points and the starting equilibrium for reference
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-# isofluxouter.plot(ax=ax)
 isofluxinner.plot(ax=ax)
-# isofluxinner_upper.plot(ax=ax)
 SN_moved_outer_leg_lower.plot(ax=ax)
-# isofluxouter.plot(ax=ax)
-# SN_moved_inner_leg_lower.plot(ax=ax)
 eq.coilset.plot(ax=ax)
 o_point.plot(ax=ax)
 x_point.plot(ax=ax)
@@ -353,10 +309,9 @@ current_opt_problem = TikhonovCurrentCOP(
     opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
     constraints=[
-        th_constraint,
         o_point,
-        x_point,
-        x_point_2,
+        # x_point,
+        # x_point_2,
     ],
 )
 
@@ -370,8 +325,6 @@ position_opt_problem = NestedCoilsetPositionCOP(
 optimised_coilset = position_opt_problem.optimise().coilset
 
 
-# %%
-# th_current_opt_eq = deepcopy(nested_opt_eq)
 program = PicardIterator(
     th_current_opt_eq,
     current_opt_problem,
