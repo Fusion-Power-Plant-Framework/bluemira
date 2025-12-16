@@ -41,7 +41,7 @@ class TestMeshing:
             subdomains=True,
         )
 
-        arr = boundaries.array()
+        arr = boundaries.values
         assert (arr == labels["poly"]).sum() == nodes_num
 
     @pytest.mark.xfail
@@ -70,5 +70,5 @@ class TestMeshing:
             subdomains=True,
         )
 
-        arr = boundaries.array()
+        arr = boundaries.values
         assert (arr == labels["poly"]).sum() == nodes_num * 2
