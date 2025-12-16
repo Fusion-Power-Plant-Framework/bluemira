@@ -992,6 +992,11 @@ def toroidal_harmonic_approximation(
         Problem not setup for harmonics
     ValueError
         Number of degrees of freedom inappropriate
+
+    Notes
+    -----
+    If no th_params are provided, the focus is set to the effective centre of
+    the plasma, and the region defaults to using the maximum extent of the LCFS
     """
     if eq.grid is None or eq.plasma is None:
         raise EquilibriaError("Equilibrium has not been run yet.")
@@ -1203,22 +1208,30 @@ def plot_toroidal_harmonic_approximation(
         th_params.Z,
         eq.coilset.psi(th_params.R, th_params.Z),
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
-        colors="black",
-        linewidths=1,
+        colors="red",
+        linewidths=1.5,
+        linestyles="dashed",
     )
     ax.contour(
         th_params.R,
         th_params.Z,
         result.coilset_psi,
         levels=PLOT_DEFAULTS["psi"]["nlevels"],
-        colors="red",
-        linewidths=1,
+        colors="blue",
+        linewidths=1.5,
     )
-    ax.plot([9, 9], [-5, -5], color="red", lw=1, label="TH coilset psi")
-    ax.plot([9, 9], [-5.25, -5.25], color="black", lw=1, label="BM coilset psi")
+    ax.plot([9, 9], [-5, -5], color="blue", lw=1, label="TH coilset psi")
+    ax.plot(
+        [9, 9],
+        [-5.25, -5.25],
+        color="red",
+        lw=1,
+        label="BM coilset psi",
+        linestyle="dashed",
+    )
 
-    ax.plot(approx_fs.x, approx_fs.z, color="r", label="TH FS", linestyle="dashed", lw=5)
-    ax.plot(original_fs.x, original_fs.z, color="blue", label="BM FS", lw=5)
+    ax.plot(approx_fs.x, approx_fs.z, color="blue", label="TH FS", lw=5)
+    ax.plot(original_fs.x, original_fs.z, color="red", label="BM FS", lw=5)
     ax.legend(loc="upper right")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
