@@ -386,8 +386,9 @@ plt.show()
 
 # raise EquilibriaError
 # %%
-sof_factor = psi_sof / psi_at_ref_lcfs
-eof_factor = psi_eof / psi_at_ref_lcfs
+# factor of 2 pi coming from original eudemo nb ?
+sof_factor = np.abs(psi_sof) / (2 * np.pi * psi_at_ref_lcfs)
+eof_factor = np.abs(psi_eof) / (2 * np.pi * psi_at_ref_lcfs)
 
 print(f"{psi_sof=}")
 print(f"{psi_eof=}")
@@ -432,6 +433,7 @@ axs[0].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[0].set_title("SOF")
 
 
 axs[1].contourf(
@@ -441,6 +443,7 @@ axs[1].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[1].set_title("EOF")
 
 
 axs[2].contourf(
@@ -450,6 +453,8 @@ axs[2].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[2].set_title("Ref psi from ref harmonics")
+
 
 axs[3].contourf(
     ref_result.th_params.R,
@@ -458,6 +463,7 @@ axs[3].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[3].set_title("Coilset psi from th approx result")
 
 
 axs[4].contourf(
@@ -467,6 +473,8 @@ axs[4].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[4].set_title("Bluemira coilset psi")
+
 
 axs[0].set_aspect("equal")
 axs[1].set_aspect("equal")
@@ -482,19 +490,21 @@ f, axs = plt.subplots(1, 5)
 axs[0].contourf(
     ref_result.th_params.R,
     ref_result.th_params.Z,
-    psi_calc_sof.T,
+    psi_calc_sof.T + ref_result.fixed_psi,
     levels=nlevels,
     cmap=cmap,
 )
+axs[0].set_title("SOF + fixed psi from approx")
 
 
 axs[1].contourf(
     ref_result.th_params.R,
     ref_result.th_params.Z,
-    psi_calc_eof.T,
+    psi_calc_eof.T + ref_result.fixed_psi,
     levels=nlevels,
     cmap=cmap,
 )
+axs[1].set_title("EOF + fixed psi from approx")
 
 
 axs[2].contourf(
@@ -504,6 +514,7 @@ axs[2].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[2].set_title("Ref psi from ref harmonics \n+ fixed psi from approx")
 
 axs[3].contourf(
     ref_result.th_params.R,
@@ -512,6 +523,7 @@ axs[3].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[3].set_title("Coilset psi from th approx result \n+ fixed psi from approx")
 
 
 axs[4].contourf(
@@ -521,13 +533,15 @@ axs[4].contourf(
     levels=nlevels,
     cmap=cmap,
 )
+axs[4].set_title("Bluemira coilset psi \n+ fixed psi")
+
 
 axs[0].set_aspect("equal")
 axs[1].set_aspect("equal")
 axs[2].set_aspect("equal")
 axs[3].set_aspect("equal")
 axs[4].set_aspect("equal")
-
+# TODO titles are overlapping
 
 # %%
 # make sof and eof results - same th params
@@ -550,6 +564,14 @@ eof_constraint = ToroidalHarmonicConstraint(
     th_result=eof_result, constraint_type="inequality"
 )
 
+
+os, xs = reference_eq.get_OX_points()
+x_point_constraint = FieldNullConstraint(
+    xs[0].x,
+    xs[0].z,
+    tolerance=1e-3,
+)
+o_point_constraint = FieldNullConstraint(os[0].x, os[0].z, tolerance=1e-3)
 # %%
 # optimisations
 # sof
@@ -567,7 +589,7 @@ current_opt_problem = TikhonovCurrentCOP(
     # opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
     # opt_parameters={"initial_step": 0.1},
     max_currents=3e10,
-    constraints=[],
+    constraints=[x_point_constraint, o_point_constraint],
 )
 
 program = PicardIterator(
@@ -587,7 +609,50 @@ reference_eq.plot(ax=ax_1)
 ax_1.set_title("Starting Equilibrium")
 
 sof_opt_eq.plot(ax=ax_2)
-ax_2.set_title("Optimised Equilibrium")
+ax_2.set_title("Optimised Equilibrium SOF")
 plt.show()
 
 # %%
+eof_opt_eq = deepcopy(reference_eq)
+eof_opt_eq.coilset.control = ref_result.th_params.th_coil_names
+
+
+current_opt_problem = TikhonovCurrentCOP(
+    eof_opt_eq,
+    targets=MagneticConstraintSet([
+        eof_constraint,
+    ]),
+    gamma=1e-12,
+    opt_algorithm="SLSQP",
+    # opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
+    # opt_parameters={"initial_step": 0.1},
+    max_currents=3e10,
+    constraints=[x_point_constraint, o_point_constraint],
+)
+
+current_opt_problem.optimise()
+eof_opt_eq.solve()
+
+f, ax = plt.subplots()
+eof_opt_eq.plot(ax=ax)
+
+# %%
+program = PicardIterator(
+    eof_opt_eq,
+    current_opt_problem,
+    fixed_coils=True,
+    convergence=DudsonConvergence(1e-3),
+    relaxation=0.0,
+    maxiter=50,
+)
+program()
+
+# Plot
+f, (ax_1, ax_2) = plt.subplots(1, 2)
+
+reference_eq.plot(ax=ax_1)
+ax_1.set_title("Starting Equilibrium")
+
+eof_opt_eq.plot(ax=ax_2)
+ax_2.set_title("Optimised Equilibrium EOF")
+plt.show()
