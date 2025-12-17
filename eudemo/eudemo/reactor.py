@@ -900,8 +900,8 @@ if __name__ == "__main__":
 
         run_time_track["Total"] = end - start
 
-        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v02/A_{a_string}"
+        a_string = f"{reactor_config.global_params.A.value:.3f}".replace(".", "_")
+        folder_name = f"results_v04/A_{a_string}"
         import os
         os.makedirs(folder_name, exist_ok=True) 
         filename = f"{folder_name}/run_time.json"

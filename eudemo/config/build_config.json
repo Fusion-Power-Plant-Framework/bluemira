@@ -119,7 +119,7 @@
   "Neutronics": {
     "enabled": true,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
-    "particles": 10000,
+    "particles": 100000,
     "batches": 2,
     "photon_transport": true,
     "electron_treatment": "ttb",
