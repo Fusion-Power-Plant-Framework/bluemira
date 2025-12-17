@@ -13,6 +13,4 @@ from importlib.metadata import PackageNotFoundError, version
 try:
     __version__ = version("bluemira")
 except PackageNotFoundError:
-    from setuptools_scm import get_version
-
-    __version__ = get_version()
+    __version__ = "0.0.0.Unknown"

@@ -8,12 +8,14 @@ description = """An integrated inter-disciplinary design tool for future fusion
 readme = "README.md"
 requires-python = ">=3.10"
 dynamic = ['version']
+license = "LGPL-2.1-or-later"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPLv2.1+)",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)",
     "Operating System :: POSIX :: Linux",
 ]
+
 dependencies = [
     "anytree>=2.5",
     "asteval>=1.0",
@@ -101,14 +103,18 @@ dagmc = [
 ]
 
 [build-system]
-requires = ["setuptools>=62", "setuptools_scm[toml]>=7.0"]
+requires      = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["bluemira*"]
-exclude = ["tests*"]
+[tool.hatch.version]
+source           = "vcs"
+fallback-version = "0.0.0"
 
-[tool.setuptools_scm]
+[tool.hatch.build.hooks.vcs]
+version-file = "bluemira/_version.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true  # remove after reference published
 
 [tool.coverage.report]
 "exclude_also" = [
