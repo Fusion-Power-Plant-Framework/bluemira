@@ -21,7 +21,7 @@ class EUDEMOReactorParams(ParameterFrame):
     B_premag_stray_max: Parameter[float]
     B_tf_peak: Parameter[float]
     beta_p: Parameter[float]
-    beta: Parameter[float]
+    beta_total_vol_avg: Parameter[float]
     bb_min_angle: Parameter[float]
     C_Ejima: Parameter[float]
     condrad_cryo_heat: Parameter[float]
@@ -261,7 +261,6 @@ class EUDEMOReactorParams(ParameterFrame):
 
     # CSG neutronics
     # TODO: What ever happened to these...? They never got used.
-    peaking_factor: Parameter[float]
     vertical_shift: Parameter[float]
     inboard_fw_tk: Parameter[float]
     outboard_fw_tk: Parameter[float]
