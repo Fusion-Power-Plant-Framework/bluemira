@@ -898,8 +898,8 @@ if __name__ == "__main__":
         n_config = reactor_config.config_for("Neutronics")
         particles = n_config.get("particles", n_config["DAGMC"]["particles"])
         neutrons = f"{particles:.2g}".replace(".", "_").replace("+", "")
-        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v02/A_{a_string}_neut_{neutrons}"
+        a_string = f"{reactor_config.global_params.A.value:.3f}".replace(".", "_")
+        folder_name = f"results_v04/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
