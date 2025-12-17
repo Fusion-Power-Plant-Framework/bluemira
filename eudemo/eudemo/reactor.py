@@ -619,16 +619,16 @@ def save_reactor(reactor, reactor_config, folder_name):
     json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
 
     # DAGMC
-    dag_root = Path(n_root, "dagmc")
-    dag_root.mkdir(parents=True, exist_ok=True)
+    #dag_root = Path(n_root, "dagmc")
+    #dag_root.mkdir(parents=True, exist_ok=True)
 
-    openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
-    openmc_res.pop("statepoint")
-    openmc_res["statepoint_file"] = Path(
-        dag_root, "run", openmc_res["statepoint_file"].name
-    ).as_posix()
+    #openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
+    #openmc_res.pop("statepoint")
+    #openmc_res["statepoint_file"] = Path(
+    #    dag_root, "run", openmc_res["statepoint_file"].name
+    #).as_posix()
 
-    json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
+    #json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
 
 
 if __name__ == "__main__":
@@ -892,8 +892,8 @@ if __name__ == "__main__":
             rs_plugs,
             n_TF=reactor_config.global_params.n_TF.value,
         )
-
-        reactor.neutronics.dagmc = run_dagmc_neutronics(
+        if False:
+            reactor.neutronics.dagmc = run_dagmc_neutronics(
             reactor,
             reactor_config.params_for("Neutronics", "DAGMC").global_params,
             reactor_config.config_for("Neutronics", "DAGMC"),
@@ -916,8 +916,8 @@ if __name__ == "__main__":
         n_config = reactor_config.config_for("Neutronics")
         particles = n_config.get("particles", n_config["DAGMC"]["particles"])
         neutrons = f"{particles:.2g}".replace(".", "_").replace("+", "")
-        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v02/A_{a_string}_neut_{neutrons}"
+        a_string = f"{reactor_config.global_params.A.value:.3f}".replace(".", "_")
+        folder_name = f"results_v03/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:

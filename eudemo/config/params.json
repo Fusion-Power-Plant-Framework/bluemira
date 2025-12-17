@@ -1,6 +1,6 @@
 {
   "A": {
-    "value": 2.6,
+    "value": 3.43,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma aspect ratio"
@@ -186,25 +186,25 @@
     "long_name": "Separatrix plasma electron temperature"
   },
   "n_e": {
-    "value": 1e20,
+    "value": 1e+20,
     "unit": "1/m^3",
     "source": "Input",
     "long_name": "Volume-averaged plasma electron density"
   },
   "n_e_core": {
-    "value": 1.5e20,
+    "value": 1.5e+20,
     "unit": "1/m^3",
     "source": "Input",
     "long_name": "Core plasma electron density"
   },
   "n_e_ped": {
-    "value": 8e19,
+    "value": 8e+19,
     "unit": "1/m^3",
     "source": "Input",
     "long_name": "Pedestal plasma electron density"
   },
   "n_e_sep": {
-    "value": 3e19,
+    "value": 3e+19,
     "unit": "1/m^3",
     "source": "Input",
     "long_name": "Separatrix plasma electron density"
@@ -240,7 +240,7 @@
     "long_name": "Ratio of ion to electron temperature."
   },
   "n_i_fuel": {
-    "value": 8e19,
+    "value": 8e+19,
     "unit": "1/m^3",
     "source": "Input",
     "long_name": "Fuel ion density (volume-averaged)"
@@ -1142,7 +1142,7 @@
     "long_name": "Electron cyclotron resonce heating wallplug efficiency"
   },
   "gamma_ecrh": {
-    "value": 3e19,
+    "value": 3e+19,
     "unit": "A/W/m^2",
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"

@@ -1,11 +1,7 @@
 {
   "params": "$path:params.json",
-  "materials_path": {
-    "materials": "$path_expand:./materials_data/materials.json",
-    "mixtures": "$path_expand:./materials_data/mixtures.json"
-  },
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "$path_expand:./process",
     "run_dir": "$path_expand:./process",
     "plot": false
@@ -64,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -88,7 +84,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -118,7 +114,7 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+    "cross_section_xml": "$path_expand:../bluemira_openmc_data/cross_sections.xml",
     "photon_transport": true,
     "electron_treatment": "ttb",
     "plot_axis": "xz",
@@ -126,15 +122,17 @@
     "CSG": {
       "enabled": true,
       "neutronics_output_path": "$path_expand:./neutronics/csg",
-      "particles": 10000,
-      "batches": 2,
+      "particles": 100000,
+      "batches": 5,
+      "rel_max_lost_particles": 1e-2,
+      "max_lost_particles": 1e3,
       "run_mode": "run_and_plot",
       "openmc_write_summary": false,
       "blanket_type": "HCPB",
       "show_data": false
     },
     "DAGMC": {
-      "export_dagmc_model": true,
+      "export_dagmc_model": false,
       "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
       "neutronics_output_path": "$path_expand:./neutronics/dagmc",
       "particles": 10000,
@@ -163,7 +161,7 @@
     }
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
@@ -193,7 +191,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
