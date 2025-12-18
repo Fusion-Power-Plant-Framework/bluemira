@@ -13,18 +13,9 @@ from enum import Enum, auto
 from matproplib import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
-from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-
-tungsten_mat = PlanseeTungsten()
-
-# Elements
-HELIUM_MAT = Helium()
-
-water_mat = Water()
-
 
 # Debugging replacements (to be removed)
 EUROFER_MAT = material(
@@ -443,7 +434,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 (HELIUM_MAT, 0.5035),
             ],
             fraction_type="volume",
-            volume_conditions=OperationalConditions(temperature=673.15, pressure=8e6),
+            mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(
                 material_id=103,
                 enrichment=li_enrich_ao * 100,
