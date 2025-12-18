@@ -180,9 +180,9 @@ class OpenMCResult:
             mult_power=mult_power,
             peak_bb_fe_damage=peak_bb_fe_damage,
             peak_bb_fe_damage_err=peak_bb_fe_damage_err,
-            photon_heat_flux=cls._load_photon_heat_flux(
-                statepoint, cell_names, cell_vols, src_rate
-            ),
+            photon_heat_flux=None,#cls._load_photon_heat_flux(
+                #statepoint, cell_names, cell_vols, src_rate
+            #),
         )
 
     @staticmethod
