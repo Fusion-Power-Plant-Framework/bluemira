@@ -45,7 +45,8 @@ class VacuumVesselThermalShield(ComponentManager):
             A wire representing the VVTS poloidal silhouette.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(VVTSBuilder.VVTS)
             .shape.boundary[0]
@@ -66,7 +67,8 @@ class CryostatThermalShield(ComponentManager):
             A wire representing the VVTS poloidal silhouette.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(CryostatTSBuilder.CRYO_TS)
             .shape.boundary[0]
@@ -361,7 +363,8 @@ class Cryostat(PlugManagerMixin, ComponentManager):
             A wire representing the Cryostat poloidal silhouette.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(CryostatBuilder.CRYO)
             .shape.boundary[0]
@@ -390,7 +393,8 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
             A wire representing the RadiationShield poloidal silhouette.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(RadiationShieldBuilder.BODY)
             .shape.boundary[0]
