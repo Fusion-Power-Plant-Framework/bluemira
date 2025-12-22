@@ -20,7 +20,7 @@ asteval==1.0.7
     # via
     #   bluemira (pyproject.toml)
     #   neutronics-material-maker
-astroid>=3.3.11
+astroid==3.3.11
     # via sphinx-autoapi
 asttokens==3.0.1
     # via
@@ -514,7 +514,7 @@ rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-ruff==0.14.9
+ruff==0.14.10
     # via bluemira (pyproject.toml)
 scikit-learn==1.7.2
     # via bluemira (pyproject.toml)
