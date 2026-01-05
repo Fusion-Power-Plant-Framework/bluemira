@@ -2072,7 +2072,7 @@ def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
 
 def join_intersect(
     tgt_poly: Coordinates, ref_poly: Coordinates, *, get_arg: bool = False
-) -> tuple[Coordinates, list[int] | None, int | None]:
+) -> tuple[Coordinates, list[int] | None, int | None] | Coordinates:
     """
     Add the intersection points between tgt_poly and ref_poly to tgt_poly.
 
