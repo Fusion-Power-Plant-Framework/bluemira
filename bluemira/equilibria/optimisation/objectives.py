@@ -76,9 +76,12 @@ class RegularisedLsqObjective(ObjectiveFunction):
         a_mat: npt.NDArray[np.float64],
         b_vec: npt.NDArray[np.float64],
         gamma: float,
+        currents_expand_mat: npt.NDArray | None = None,
     ) -> None:
         self.scale = scale
-        self.a_mat = a_mat
+        self.a_mat = (
+            a_mat if currents_expand_mat is None else a_mat @ currents_expand_mat
+        )
         self.b_vec = b_vec
         self.gamma = gamma
 
@@ -343,6 +346,7 @@ def tikhonov_ridge_solution(
     a_mat: np.ndarray,
     b_vec: np.ndarray,
     alpha: np.ndarray,
+    currents_expand_mat: np.ndarray | None,
 ):
     """
     Ridge a.k.a Tikhonov a.k.a. L2 Regression.
@@ -369,6 +373,7 @@ def tikhonov_ridge_solution(
     x:
         The result vector
     """
+    a_mat = a_mat if currents_expand_mat is None else a_mat @ currents_expand_mat
     try:
         return np.dot(
             np.linalg.inv(np.dot(a_mat.T, a_mat) + alpha**2 * np.eye(a_mat.shape[1])),

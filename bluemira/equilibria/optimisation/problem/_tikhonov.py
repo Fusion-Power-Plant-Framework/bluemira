@@ -116,13 +116,6 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
         else:
             x0 = np.clip(x0 / self.scale, *self.bounds)
 
-        # Get the optimisation currents expansion matrix.
-        currents_expand_mat = self.eq.coilset._opt_currents_expand_mat
-        # If it is not None then, use to convert the optimisable
-        # currents to the full set of currents in the CoilSet.
-        if currents_expand_mat is not None:
-            a_mat = a_mat @ currents_expand_mat  # nlopt read only  # noqa: PLR6104
-
         objective = RegularisedLsqObjective(
             scale=self.scale,
             a_mat=a_mat,

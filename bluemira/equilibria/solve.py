@@ -30,9 +30,10 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.optimisation.problem import CoilsetOptimisationProblem
-    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
+    from bluemira.equilibria.optimisation.problem.base import (
+        CoilsetOptimiserResult,
+        EqCoilsetOptimisationProblem,
+    )
 
 __all__ = [
     "CunninghamConvergence",
@@ -460,8 +461,7 @@ class PicardIterator:
 
     def __init__(
         self,
-        eq: Equilibrium,
-        optimisation_problem: CoilsetOptimisationProblem,
+        optimisation_problem: EqCoilsetOptimisationProblem,
         diagnostic_plotting: PicardDiagnosticOptions | None = None,
         convergence: ConvergenceCriterion | None = None,
         *,
@@ -471,7 +471,7 @@ class PicardIterator:
         keep_history: bool = False,
         check_constraints: bool = False,
     ):
-        self.eq = eq
+        self.eq = optimisation_problem.eq
         self.coilset = self.eq.coilset
         self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):

@@ -826,13 +826,9 @@ def find_LCFS_separatrix(
         middle = low + 0.5 * delta
         flux_surface = get_flux_loop(middle)
 
-        if flux_surface.closed and flux_surface.length < 1.1 * perimeter:
-            # NOTE: Perimeter check is for the case in which the separatrix
-            # loops around coils on the grid, thus still technically closed.
-            # 1.1 was chosen as it represents a 10 % increase in perimeter from
-            # one small increment in flux value, something which is only likely to occur
-            # in closed flux surfaces if the perimeter loops around X-point
-            # coils
+        intersection_count, _ = x_point_check(flux_surface, primary_op, primary_xp)
+        if flux_surface.closed and intersection_count == 0:
+            # Middle flux surface is still closed, shift search bounds
             low = middle
         else:
             # Middle flux surface is open, shift search bounds
@@ -875,6 +871,32 @@ def find_LCFS_separatrix(
         separatrix = loops[:2]
 
     return lcfs, separatrix
+
+
+def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
+    """
+    Check if there are intersections of a flux surface with the
+    line tangent to the o-point-x-point vector at the x-point.
+
+    Parameters
+    ----------
+    flux_surface:
+        Flux surface of interest, e.g., candidate closed
+        flux surfaces when finding LCFS
+    op:
+        Primary o-point for an equilibrium
+    xp:
+        X-point of interest, usually primary
+
+    Returns
+    -------
+    arg_inters:
+        Intersection indices
+    """
+    length = np.hypot(np.max(flux_surface.x), np.max(np.abs(flux_surface.z)))
+    tanget_line = two_point_angled_line(op, xp, length)  # default theta is tangent
+    _, _, intersection_count = join_intersect(flux_surface, tanget_line, get_arg=True)
+    return (intersection_count, tanget_line)
 
 
 def two_point_angled_line(

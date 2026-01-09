@@ -184,7 +184,6 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
     )
     diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
     program = PicardIterator(
-        eq,
         current_opt_problem,
         fixed_coils=True,
         relaxation=0.2,

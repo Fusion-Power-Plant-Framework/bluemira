@@ -2110,10 +2110,9 @@ def join_intersect(
                 [xz_int[i, 0], 0, xz_int[i, 1]], index=insert_loc + num_inserted + bump
             )
             num_inserted += 1
-
     if get_arg:
         insertion_locations = [dest_poly.argmin([x, 0, z]) for x, z in xz_inter]
-        return dest_poly, list(set(insertion_locations))
+        return dest_poly, list(set(insertion_locations)), num_inserted
     return dest_poly
 
 

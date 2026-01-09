@@ -52,27 +52,28 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         sh_approximation_result: SphericalHarmonicsResult,
         tolerance: float | npt.NDArray = 1e-3,
         constraint_type: str = "equality",
+        weights: float | np.ndarray = 1.0,
     ):
         self.degrees = sh_approximation_result.degrees
         target_harmonics = sh_approximation_result.amplitudes
         self.sh_coil_names = sh_approximation_result.coil_names
         self.r_t = sh_approximation_result.r_t
-
         self.constraint_type = constraint_type
+        self.weights = weights
         tolerance = np.abs(tolerance * target_harmonics)
 
         if constraint_type == "equality":
-            self.target_harmonics = target_harmonics
+            self.target_value = target_harmonics
             self.tolerance = tolerance
         else:
-            self.target_harmonics = np.append(
-                target_harmonics, -target_harmonics, axis=0
+            self.target_value = np.append(
+                target_harmonics, -1 * target_harmonics, axis=0
             )
             self.tolerance = np.tile(tolerance, 2)
 
         self._args = {
             "a_mat": None,
-            "b_vec": self.target_harmonics,
+            "b_vec": self.target_value,
             "value": 0.0,
             "scale": 1e6,
         }
@@ -137,7 +138,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
-        return np.zeros(len(self.target_harmonics))
+        return np.zeros(len(self.target_value))
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
@@ -150,6 +151,12 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         Plot the constraint onto an Axes.
         """
         ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
+
+    def __len__(self) -> int:
+        """
+        Length of SH constraint.
+        """  # noqa: DOC201
+        return len(self.target_value)
 
 
 class ToroidalHarmonicConstraint(UpdateableConstraint):
@@ -247,10 +254,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
-        if not fixed_coils:
-            raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
+        # if not fixed_coils:
+        #     raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
 
-        if self._args["a_mat"] is None:
+        if self._args["a_mat"] is None or not fixed_coils:
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:

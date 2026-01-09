@@ -66,7 +66,6 @@ def symmetrise_coilset(
         Superposition of coils or unrecognised type
     """
     coilset = deepcopy(coilset)
-    sym_stack, sym_inds = _get_symmetric_coils(coilset)
 
     _, counts, indexes = _get_symmetric_coils(coilset, rtol=rtol or 1e-5)
     new_coils = []

@@ -199,7 +199,7 @@ def collocation_points(
 
 def coil_harmonic_amplitude_matrix(
     input_coils: CoilSet,
-    degrees: np.ndarray,
+    degrees: int | np.ndarray,
     r_t: float,
     sh_coil_names: list,
 ) -> np.ndarray:
@@ -243,6 +243,7 @@ def coil_harmonic_amplitude_matrix(
         SH coil current matrix
 
     """
+    degrees = np.array([degrees]) if isinstance(degrees, int) else degrees
     x_f = []
     z_f = []
     for n in sh_coil_names:
@@ -420,7 +421,7 @@ def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
 
 def coils_outside_fs_sphere(
     eq: Equilibrium, psi_norm: float | None = None
-) -> tuple[list, float]:
+) -> tuple[list, float, Coordinates]:
     """
     Find the coils located outside of the sphere containing the core plasma,
     i.e., a chosen closed (FS) of the equilibrium state.
@@ -530,23 +531,23 @@ class SphericalHarmonicsParams:
     Method for creating a set of points: 'arc', 'arc_plus_extrema',
     'random', or 'random_plus_extrema', 'grid_points'
     """
-    grid_num: tuple[int, int]
+    grid_num: tuple[int, int] | None
     """
     Tuple with the number of desired grid points in the x and z direction.
     For use with 'grid_points' point_type.
     """
-    psi_norm: float
+    psi_norm: float | None
     """
     Normalised psi of the plasma boundary that we would like to create
     an approximation within.
     """
-    seed: int
+    seed: int | None
     """
     Seed value to use with a random point distribution, defaults
     to `RNGSeeds.equilibria_harmonics.value`. For use with 'random'
     or 'random_plus_extrema' point_type.
     """
-    gamma_max: int
+    gamma_max: float
     """
     Maximum value of gamma to use in optimisation.
     Range of 0 to gamma_max is used.
@@ -555,6 +556,11 @@ class SphericalHarmonicsParams:
     """
     Maximum value for harmonic amplitude coefficient of variation.
     Threshold for significant harmonic selection.
+    """
+    plot_find_significant_degrees: bool
+    """
+    Plot the details of finding the significant harmonic contributions for
+    the approximation.
     """
 
 
@@ -600,8 +606,6 @@ class SphericalHarmonicsResult:
     Measure of how 'good' the approximation is,
     total area within one but not both FSs / (input FS area + approximation FS area)
     """
-    currents: np.ndarray
-    """Currents from approximation"""
     sh_approx_coilset_psi: np.ndarray
     """Approximated coilset psi"""
     sh_approx_currents_coilset_psi: np.ndarray
@@ -649,20 +653,34 @@ class SphericalHarmonicApproximation:
             seed=None,
             gamma_max=0.1,
             amplitude_variation_thresh=2.0,
+            plot_find_significant_degrees=False,
         )
 
         self.eq = eq
+        self.sh_eq = deepcopy(eq)
+        self._result = None
+        self._psi_contributions = None
         self._calculate_sh()
 
     @property
-    def result(self) -> str:
-        """See colour"""
-        return self.result
+    def result(self) -> SphericalHarmonicsResult | None:
+        """SH Result"""
+        return self._result
 
     @result.setter
     def result(self, value: SphericalHarmonicsResult):
-        """See colour"""
-        self.result = value
+        """SH Result"""
+        self._result = value
+
+    @property
+    def psi_contributions(self) -> PsiContributions | None:
+        """Psi Contributions"""
+        return self._psi_contributions
+
+    @psi_contributions.setter
+    def psi_contributions(self, value: PsiContributions):
+        """Psi Contributions"""
+        self._psi_contributions = value
 
     def _separate_psi_contributions(self):
         """
@@ -681,7 +699,7 @@ class SphericalHarmonicApproximation:
         # Psi from excluded coils i.e.,
         # from coils located outside of the approximation region.
         excluded_coil_psi = np.zeros_like(plasma_psi)
-        for n in self.sh_coil_names:
+        for n in excluded_coils:
             excluded_coil_psi = np.sum(
                 [
                     excluded_coil_psi,
@@ -851,7 +869,9 @@ class SphericalHarmonicApproximation:
 
         # Spherical Harmonic (SH) degrees and amplitudes needed to produce
         # an approximation of vacuum psi contribution.
-        degrees, amplitudes = self._get_psi_harmonic_amplitudes(plot=False)
+        degrees, amplitudes = self._get_psi_harmonic_amplitudes(
+            plot=self.params.plot_find_significant_degrees
+        )
 
         # Construct SH coil current matrix
         currents2harmonics = coil_harmonic_amplitude_matrix(
@@ -872,7 +892,6 @@ class SphericalHarmonicApproximation:
         )
 
         # Set currents in copy of eq
-        self.sh_eq = deepcopy(self.eq)
         for n, i in zip(self.sh_coil_names, currents, strict=False):
             self.sh_eq.coilset[n].current = i
 
@@ -907,7 +926,7 @@ class SphericalHarmonicApproximation:
 
         # Calculate the SH approximation of vacuum psi contribution.
         sh_approx_coilset_psi = sh_approx_psi(
-            self.psi_contibutions.coilset_psi,
+            self.psi_contributions.coilset_psi,
             self.eq.grid,
             degrees,
             amplitudes,
@@ -920,7 +939,6 @@ class SphericalHarmonicApproximation:
             degrees=degrees,
             r_t=self.r_t,
             fit_metric_value=fit_metric_value,
-            currents=self.sh_eq.coilset.current,
             sh_approx_coilset_psi=sh_approx_coilset_psi,
             sh_approx_currents_coilset_psi=sh_approx_currents_coilset_psi,
             original_fs=original_fs,
@@ -945,6 +963,7 @@ class SphericalHarmonicApproximation:
             self.params = params
         if control_coil_names is not None:
             self.coilset.control = control_coil_names
+        self.sh_eq = deepcopy(self.eq)
         self._calculate_sh()
 
     def plot(self, ax: plt.Axes | None = None):
