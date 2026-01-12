@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Spherical harmonics classes and calculations.
+Spherical harmonics classes and functions.
 """
 
 from copy import deepcopy
@@ -39,7 +39,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon
 
 class PointType(Enum):
     """
-    Class for use with collocation_points function.
+    Dataclass for use with collocation_points function.
     User can choose how the collocation points are distributed.
     """
 
@@ -212,7 +212,7 @@ def coil_harmonic_amplitude_matrix(
 
     A_l = matrix harmonic amplitudes @ vector of coil currents
 
-    A_l can be used as constraints in optimisation, see spherical_harmonics_constraint.
+    A_l can be used as constraints in optimisation, see SphericalHarmonicConstraint.
 
     N.B. for a single filament (coil):
 
@@ -336,7 +336,7 @@ def harmonic_amplitude_marix(
 
 def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     """
-    Calculate the value of the metric used for evaluating the SH&TH approximation.
+    Calculate the value of the metric used for evaluating the SH or TH approximations.
     This is equal to 1 for non-intersecting flux surfaces, and 0 for identical surfaces.
     The flux surface of interest is usually the LCFS, or a closed flux surface that
     is close to the last closed flux surface., e.g., psi_norm = 0.95 or 0.98.
@@ -619,7 +619,7 @@ class SphericalHarmonicsResult:
 class SphericalHarmonicApproximation:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
-    needed as a reference value for the 'spherical_harmonics_constraint'
+    needed as a reference value for the 'SphericalHarmonicConstraint'
     used in coilset optimisation.
 
     Parameters
@@ -632,12 +632,6 @@ class SphericalHarmonicApproximation:
         we do not need to re-solve for the equilibria during optimisation.
     params:
         Parameters used in the spherical harmonic calculations.
-
-    Note
-    ----
-    The coil_harmonic_amplitude_matrix often has a high sensitivity to small numbers.
-    To address numerical reproducibility across different machines currents found using
-    np.lstsq are rounded before being used to calculate the FS fit metric.
     """
 
     def __init__(
@@ -833,20 +827,13 @@ class SphericalHarmonicApproximation:
     ):
         """
         Calculate the spherical harmonic (SH) amplitudes/coefficients
-        needed as a reference value for the 'spherical_harmonics_constraint'
+        needed as a reference value for the 'SphericalHarmonicConstraint'
         used in coilset optimisation.
 
         Raises
         ------
         EquilibriaError
             Flux surface found for approximation psi is not closed.
-
-        Note
-        ----
-        The coil_harmonic_amplitude_matrix often has a high sensitivity to small numbers.
-        To address numerical reproducibility across different machines,
-        currents found using np.lstsq are rounded before being used to calculate
-        the FS fit metric.
         """
         # Get the names of coils located outside of the sphere containing the chosen
         # closed Flux Surface (FS), the 'typical length scale' for use in approximation

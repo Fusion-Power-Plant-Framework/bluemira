@@ -105,8 +105,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
-        if not fixed_coils:
-            raise ValueError("SphericalHarmonicConstraint requires fixed coils")
+        # if not fixed_coils:
+        #    raise ValueError("SphericalHarmonicConstraint requires fixed coils")
+
+        if self._args["a_mat"] is None or not fixed_coils:
+            self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
         a_mat = self.control_response(equilibrium.coilset)
         self._args["a_mat"] = (
