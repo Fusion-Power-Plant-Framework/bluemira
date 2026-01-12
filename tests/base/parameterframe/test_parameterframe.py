@@ -52,7 +52,8 @@ class TestParameterFrame:
         assert self.frame.height.unit == "m"
         assert (
             self.frame.age.value
-            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            == pint
+            .Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
             .to("s")
             .magnitude
         )
@@ -220,7 +221,8 @@ class TestParameterFrame:
         assert self.frame.height.source == "a test"
         assert (
             self.frame.age.value
-            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            == pint
+            .Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
             .to("s")
             .magnitude
         )
@@ -232,7 +234,8 @@ class TestParameterFrame:
         assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert (
             self.frame.age.value
-            == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
+            == pint
+            .Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
             .to("s")
             .magnitude
         )

@@ -51,7 +51,8 @@ class Divertor(ComponentManager):
             A wire representing the divertor poloidal silhouette.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(DivertorBuilder.BODY)
             .shape.boundary[0]

@@ -75,7 +75,8 @@ def get_git_branch(directory: str) -> str:
         The git branch string
     """
     return (
-        subprocess.check_output(
+        subprocess
+        .check_output(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],  # noqa: S607
             cwd=directory,
         )
@@ -101,7 +102,8 @@ def get_git_files(directory: str, branch: str) -> list[str]:
         The list of git-controlled path strings
     """
     return (
-        subprocess.check_output(  # noqa: S603
+        subprocess
+        .check_output(  # noqa: S603
             ["git", "ls-tree", "-r", branch, "--name-only"],  # noqa: S607
             cwd=directory,
         )
