@@ -466,9 +466,7 @@ def _extract_leg(
         "x": [x_cut - delta_x, x_cut + delta_x],
         "z": [z_cut, z_cut],
     })
-    new_flux_line, arg_inters, _count_inters = join_intersect(
-        flux_line, radial_line, get_arg=True
-    )
+    new_flux_line, arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
     arg_inters.sort()
     # Lower null vs upper null
     func = operator.lt if z_cut < o_point_z else operator.gt
