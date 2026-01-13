@@ -125,12 +125,13 @@ class TestFindLCFSSeparatrix:
             "x": fs["sleepy_snowman"]["x"],
             "z": fs["sleepy_snowman"]["z"],
         })
+        theta = 2 * np.pi * np.arange(0, 100)
+        coords3 = Coordinates({"x": 2 * np.cos(theta), "z": 2 * np.sin(theta)})
 
-        c1, _ = x_point_check(coords1, op, xp1)
-        c2, _ = x_point_check(coords2, op, xp2)
-
-        assert c1 == 2
-        assert c2 == 2
+        assert x_point_check(coords1, op, xp1, tangent_length=2.0) == 2
+        assert x_point_check(coords2, op, xp2, tangent_length=2.0) == 2
+        assert x_point_check(coords3, op, xp1) == 0
+        assert x_point_check(coords3, op, xp2) == 0
 
 
 class TestInPlasma:
