@@ -20,6 +20,7 @@ from enum import Enum, auto
 class Algorithm(Enum):
     """Enumeration of available optimisation algorithms."""
 
+    # NLOpt algorithms
     SLSQP = auto()
     COBYLA = auto()
     SBPLX = auto()
@@ -30,21 +31,18 @@ class Algorithm(Enum):
     CRS = auto()
     ISRES = auto()
 
+    # SciPy algorithms
+    # Bounds only
     NELDER_MEAD = auto()
     POWELL = auto()
-    CG = auto()
-    BFGS_SCIPY = auto()
-    NEWTON_CG = auto()
     L_BFGS_B = auto()
     TNC = auto()
+    # Bounds + ineq constraints
     COBYLA_SCIPY = auto()
+    # Bounds + ineq + eq constraints
     COBYQA = auto()
     SLSQP_SCIPY = auto()
     TRUST_CONSTR = auto()
-    DOGLEG = auto()
-    TRUST_NCG = auto()
-    TRUST_EXACT = auto()
-    TRUST_KRYLOV = auto()
 
     def __new__(cls, value):
         """Create Enum and debug attribute"""

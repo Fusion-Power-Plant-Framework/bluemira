@@ -14,14 +14,8 @@ class COBYLAParams:
     catol: float = 1e-4
 
 
-@dataclass
-class COBYQAParams:
-    initial_tr_radius: float = 0.3
-
-
 PARAMETER_CLS = {
     "COBYLA": COBYLAParams,
-    "COBYQA": COBYQAParams,
 }
 
 

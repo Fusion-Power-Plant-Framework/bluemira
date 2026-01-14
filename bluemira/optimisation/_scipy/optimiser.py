@@ -32,21 +32,14 @@ if TYPE_CHECKING:
 
 
 SCIPY_ALG_MAPPING = {
-    Algorithm.BFGS_SCIPY: "BFGS",
-    Algorithm.CG: "CG",
     Algorithm.COBYLA_SCIPY: "COBYLA",
     Algorithm.COBYQA: "COBYQA",
-    Algorithm.DOGLEG: "DOGLEG",
     Algorithm.L_BFGS_B: "L_BFGS_B",
     Algorithm.NELDER_MEAD: "NELDER_MEAD",
-    Algorithm.NEWTON_CG: "NEWTON_CG",
     Algorithm.POWELL: "POWELL",
     Algorithm.SLSQP_SCIPY: "SLSQP",
     Algorithm.TNC: "TNC",
     Algorithm.TRUST_CONSTR: "TRUST_CONSTR",
-    Algorithm.TRUST_EXACT: "TRUST_EXACT",
-    Algorithm.TRUST_KRYLOV: "TRUST_KRYLOV",
-    Algorithm.TRUST_NCG: "TRUST_NCG",
 }
 
 DF_SUPPORTED = {
@@ -320,33 +313,15 @@ class ScipyOptimiser(Optimiser):
         if x0 is None:
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
 
-        def safe_obj(x):
-            x_safe = np.clip(x, 0.0, 1.0)
-            return self.f_objective(x_safe)
-
-        def wrap_constraint(c):
-            def safe_constraint(x):
-                x_safe = np.clip(x, 0.0, 1.0)
-                return c["fun"](x_safe)
-
-            new_c = c.copy()
-            new_c["fun"] = safe_constraint
-            return new_c
-
         try:
             result = minimize(
-                fun=safe_obj
-                if self.algorithm == Algorithm.COBYLA_SCIPY
-                else self.f_objective,
+                fun=self.f_objective,
                 x0=x0,
                 args=(),
                 method=SCIPY_ALG_MAPPING[self.algorithm],
                 jac=self.df_objective if self.algorithm in DF_SUPPORTED else None,
                 hess=None,  # algorithms that use this are not yet implemented
-                constraints=[
-                    wrap_constraint(c) if self.algorithm == Algorithm.COBYLA_SCIPY else c
-                    for c in self._eq_constraints + self._ineq_constraints
-                ],
+                constraints=self._eq_constraints + self._ineq_constraints,
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
                 tol=None,  # ignore - provide specific tolerance in opt_conditions
                 options={**self.opt_parameters, **self.opt_conditions},

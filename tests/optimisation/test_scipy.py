@@ -173,17 +173,10 @@ class TestScipyOptimiser:
     @pytest.mark.parametrize(
         "alg",
         [
-            "BFGS_SCIPY",
-            "CG",
-            "DOGLEG",
             "L_BFGS_B",
             "NELDER_MEAD",
-            "NEWTON_CG",
             "POWELL",
             "TNC",
-            "TRUST_EXACT",
-            "TRUST_KRYLOV",
-            "TRUST_NCG",
         ],
     )
     def test_optimisationerror_adding_eq_constraint_on_unsupported_algorithm_scipy(
@@ -223,17 +216,10 @@ class TestScipyOptimiser:
     @pytest.mark.parametrize(
         "alg",
         [
-            "BFGS_SCIPY",
-            "CG",
-            "DOGLEG",
             "L_BFGS_B",
             "NELDER_MEAD",
-            "NEWTON_CG",
             "POWELL",
             "TNC",
-            "TRUST_EXACT",
-            "TRUST_KRYLOV",
-            "TRUST_NCG",
         ],
     )
     def test_optimisationerror_adding_ineq_constraint_on_unsupported_algorithm_scipy(
