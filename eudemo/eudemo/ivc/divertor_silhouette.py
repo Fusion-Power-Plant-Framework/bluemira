@@ -100,15 +100,7 @@ class DivertorSilhouetteDesigner(DivertorDesigner):
             self.INNER_BAFFLE,
             target_baffle_join_point=inner_target_start,
             target_dome_join_point=inner_target_end,
-        inner_baffle = self.make_baffle(
-            self.INNER_BAFFLE,
-            target_baffle_join_point=inner_target_start,
-            target_dome_join_point=inner_target_end,
         )
-        outer_baffle = self.make_baffle(
-            self.OUTER_BAFFLE,
-            target_baffle_join_point=outer_target_end,
-            target_dome_join_point=outer_target_start,
         outer_baffle = self.make_baffle(
             self.OUTER_BAFFLE,
             target_baffle_join_point=outer_target_end,

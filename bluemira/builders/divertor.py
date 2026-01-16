@@ -28,7 +28,10 @@ from bluemira.builders.tools import (
     pattern_revolved_silhouette,
 )
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import (
+    find_flux_surface_through_point,
+    two_point_angled_line,
+)
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -157,10 +160,14 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             Divertor designer parameters
         equilibrium:
             The equilibrium to design around
-        wall:
-            wall boundary keep out zone (cut at divertor)
+        x_limits: tuple[float]:
+            start and end x-coords of divertor silhouette
+            i.e., for points on silhouette closest to plasma
+        z_limits: tuple[float]:
+            start and end z-coords of divertor silhouette
+            i.e., for points on silhouette closest to plasma
         build_config:
-            Build configuration options for the divertor designer.
+            Build configuration options for the divertor designer
         keep_in_zone_wire:
             divertor keep in zone
         keep_out_zone_wires:
@@ -220,9 +227,6 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         # i.e. towards the increasing leg length
         post_target_point = sol.value_at(distance=self.leg_length[leg].value + 0.1)
 
-        a = post_target_point - target_point
-        a_hat = a / np.linalg.norm(a)
-
         # ccw angle
         theta = (
             np.deg2rad(self.params.div_targ_angle_ib.value)
@@ -230,37 +234,15 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             else np.deg2rad(self.params.div_targ_angle_ob.value)
         )
 
-        rot_matrix = np.array([
-            [np.cos(theta), 0, -np.sin(theta)],
-            [0, 0, 0],
-            [np.sin(theta), 0, np.cos(theta)],
-        ])  # ccw rotation about y-axis
+        target_length = (
+            self.params.div_Ltarg_ib.value
+            if leg is LegPosition.INNER
+            else self.params.div_Ltarg_ob.value
+        )
 
-        b_hat = rot_matrix @ a_hat
-
-        if leg is LegPosition.INNER:
-            pfr_side_length = (
-                self.params.strike_loc_ib.value * self.params.div_Ltarg_ib.value
-            )
-            sol_side_length = (
-                1 - self.params.strike_loc_ib.value
-            ) * self.params.div_Ltarg_ib.value
-            p1 = target_point - b_hat * sol_side_length
-            p2 = target_point + b_hat * pfr_side_length
-        else:
-            pfr_side_length = (
-                self.params.strike_loc_ob.value * self.params.div_Ltarg_ob.value
-            )
-            sol_side_length = (
-                1 - self.params.strike_loc_ob.value
-            ) * self.params.div_Ltarg_ob.value
-            p1 = target_point - b_hat * pfr_side_length
-            p2 = target_point + b_hat * sol_side_length
-
-        # return two_point_angled_line(
-        #    post_target_point, target_point, target_length, theta
-        # )
-        return np.array([p1, p2]).T
+        return two_point_angled_line(
+            post_target_point, target_point, target_length, theta
+        )
 
     def _get_sols_for_leg(
         self, leg: LegPosition, layers: Iterable[int] = (0, -1)
@@ -508,7 +490,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             The label to give the returned Component.
         wall_join_point:
             The position (in x-z) where the wall connects to the baffle.
-        target_baffle_join_point:
+        target_join_point:
             The position (in x-z) where the target connects to the baffle.
         target_start:
             Determines which flux surface is selected to create the baffle shape.
@@ -550,10 +532,10 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         ----------
         label:
             The label to give the returned Component.
-        target_baffle_join_point:
-            The position (in x-z) where the target connects to the baffle.
-        target_dome_join_point:
-            The position (in x-z) where the target connects to the dome.
+        wall_join_point:
+            The position (in x-z) where the baffle connects to the wall.
+        target_join_point:
+            The position (in x-z) where the baffle connects to the target.
         target_gradient:
             The gradient (in x-z) of the divertor target.
 
