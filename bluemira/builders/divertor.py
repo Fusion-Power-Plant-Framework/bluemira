@@ -257,6 +257,9 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             p1 = target_point - b_hat * pfr_side_length
             p2 = target_point + b_hat * sol_side_length
 
+        # return two_point_angled_line(
+        #    post_target_point, target_point, target_length, theta
+        # )
         return np.array([p1, p2]).T
 
     def _get_sols_for_leg(
