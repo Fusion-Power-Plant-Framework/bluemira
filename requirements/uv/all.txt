@@ -18,7 +18,7 @@ arrow==1.4.0
     # via isoduration
 asteval==1.0.8
     # via bluemira (pyproject.toml)
-astroid==3.3.11
+astroid>=3.3.11
     # via sphinx-autoapi
 asttokens==3.0.1
     # via
