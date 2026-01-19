@@ -36,7 +36,8 @@ class EquatorialPort(ComponentManager):
             A wire defining the x-z boundary of the Equatorial Port
         """
         return (
-            self.component.get_component("xz")
+            self.component
+            .get_component("xz")
             .get_component(EquatorialPortDuctBuilder.NAME)
             .shape.boundary[0]
         )
