@@ -59,7 +59,8 @@ class PFCoil(ComponentManager):
         """
         return [
             pf.get_component("Casing").shape.boundary[0]
-            for pf in self.component()
+            for pf in self
+            .component()
             .get_component("PF coils")
             .get_component("xz", first=False)
         ]
@@ -74,7 +75,8 @@ class PFCoil(ComponentManager):
         """
         return [
             pf.get_component("Casing").shape.boundary[0]
-            for pf in self.component()
+            for pf in self
+            .component()
             .get_component("CS coils")
             .get_component("xz", first=False)
         ]
