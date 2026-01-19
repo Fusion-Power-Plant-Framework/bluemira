@@ -65,10 +65,6 @@ jobs:
         os: ["ubuntu-latest"]
         python-version: ["3.11", "3.12"]
         with-process: ["v3.2.2", "process_disabled"]
-        include:
-          - os: "ubuntu-latest"
-            python-version: "3.11"
-            with-process: "process_disabled"
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
