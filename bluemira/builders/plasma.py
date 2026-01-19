@@ -53,7 +53,8 @@ class Plasma(ComponentManager):
             A wire representing the last-closed flux surface.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component(PlasmaBuilder.LCFS)
             .shape.boundary[0]

@@ -68,7 +68,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.14.9",
+    "ruff==0.14.13",
     "sphinx",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -192,6 +192,7 @@ ignore = [
     "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
     "RUF052",  # not dummy variables just private
+    "RUF067",  # things in init
     "TRY003",  # put error messages in error class
     "FURB152",  # 3.14 != pi
     # should remove
