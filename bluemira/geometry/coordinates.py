@@ -2072,7 +2072,7 @@ def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
 
 def join_intersect(
     tgt_poly: Coordinates, ref_poly: Coordinates, *, get_arg: bool = False
-) -> list[int] | None:
+) -> tuple[Coordinates, list[int] | None, int | None]:
     """
     Add the intersection points between tgt_poly and ref_poly to tgt_poly.
 
@@ -2096,6 +2096,10 @@ def join_intersect(
     set of insertion_locations:
         Only returned if get_arg is True:
         The indices in tgt_poly in which the intersections were added.
+
+    number of insertions:
+        Only returned if get_arg is True:
+        The count of intersections added.
     """
     xz_inter = get_intersect(tgt_poly.xz, ref_poly.xz).T
 
@@ -2118,7 +2122,7 @@ def join_intersect(
 
     if get_arg:
         insertion_locations = [dest_poly.argmin([x, 0, z]) for x, z in xz_inter]
-        return dest_poly, list(set(insertion_locations))
+        return dest_poly, list(set(insertion_locations)), len(insertion_locations)
     return dest_poly
 
 

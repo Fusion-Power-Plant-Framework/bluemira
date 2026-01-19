@@ -359,7 +359,9 @@ def toroidal_harmonic_grid_and_coil_setup(
         tau_edge_coords, _ = cylindrical_to_toroidal(
             R_0=R_0, Z_0=Z_0, R=coil_coords.x, Z=coil_coords.z
         )
-        include.append(all(tau_edge_coords < min_tau))
+        # Coil edge/corner sitting exactly on the boundary edge
+        # will still be included
+        include.append(all(tau_edge_coords <= min_tau))
 
     if any(include):
         included_coils = c_names[include].tolist()

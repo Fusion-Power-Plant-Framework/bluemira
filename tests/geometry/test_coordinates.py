@@ -636,10 +636,11 @@ class TestIntersections:
         intx, intz = [], []
         for coords in [lp, eq, up]:
             i = get_intersect(tf.xz, coords.xz)
-            tf, a = join_intersect(tf, coords, get_arg=True)
+            tf, a, count = join_intersect(tf, coords, get_arg=True)
             args.extend(a)
             intx.extend(i[0])
             intz.extend(i[1])
+            assert count == 2
 
         for coords in [tf, up, eq, lp]:
             plot_coordinates(coords, ax=ax, fill=False, points=True)
