@@ -99,7 +99,8 @@ class TFCoil(ComponentManager):
             The outer xz-boundary of the TF Coils.
         """
         return (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component("Casing")
             .get_component("outer")
@@ -116,7 +117,8 @@ class TFCoil(ComponentManager):
         """
         outer = self.xz_outer_boundary
         inner = (
-            self.component()
+            self
+            .component()
             .get_component("xz")
             .get_component("Casing")
             .get_component("inner")
