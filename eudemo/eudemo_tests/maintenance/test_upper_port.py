@@ -10,6 +10,7 @@ Tests for EU-DEMO Maintenance
 
 import numpy as np
 import pytest
+from numba.np.extensions import cross2d
 
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter
@@ -146,7 +147,7 @@ class TestDuctConnection:
             # Are the edges of the internal and external wires parallel
             v1 = (e1.end_point().xy - e1.start_point().xy).flatten()
             v2 = (e2.end_point().xy - e2.start_point().xy).flatten()
-            assert np.isclose(np.cross(v1, v2), 0)
+            assert np.isclose(cross2d(v1, v2), 0)
 
             # Are they the right distance apart
             if no in {0, 3}:

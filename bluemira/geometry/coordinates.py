@@ -263,7 +263,7 @@ def get_normal_vector(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
             if np.all(np.abs(v2) < EPS):
                 continue
 
-        n_hat[:] = np.cross(v1, v2)
+        n_hat[:] = cross2d(v1, v2)
 
         if not np.all(np.abs(n_hat) < EPS):
             break
@@ -441,7 +441,7 @@ def get_area_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
     m[2, :] = z
     a = np.array([0.0, 0.0, 0.0])
     for i in range(len(z)):
-        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
+        a += cross2d(m[:, i], m[:, (i + 1) % len(z)])
     a *= 0.5
     return abs(np.dot(a, v3))
 
@@ -746,7 +746,7 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     v2 /= np.linalg.norm(v2)
 
     cos_angle = np.dot(v1, v2)
-    d = np.cross(v1, v2)
+    d = cross2d(v1, v2)
     sin_angle = np.linalg.norm(d)
 
     if sin_angle == 0:
@@ -1033,7 +1033,7 @@ def vector_intersect(
     da = p2 - p1
     db = p4 - p3
 
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+    if np.isclose(cross2d(da, db), 0):  # vectors parallel
         # NOTE: careful modifying this, different behaviour required...
         point = p2
     else:
@@ -1751,7 +1751,7 @@ class Coordinates:
 
         k = count(1)
         for i, (p, t) in enumerate(zip(points[1:], t_vector, strict=False)):
-            c_mag = np.linalg.norm(np.cross(t0, t))
+            c_mag = np.linalg.norm(cross2d(t0, t))
             dx = np.linalg.norm(p - p0)  # segment length
             if (c_mag > angle_crit and dx > dx_min) or dx + median_dt > dx_max:
                 j = next(k)
