@@ -14,7 +14,7 @@ babel==2.17.0
     #   matproplib
 blosc2==3.12.2
     # via tables
-certifi==2025.11.12
+certifi==2026.1.4
     # via requests
 charset-normalizer==3.4.4
     # via requests
@@ -128,7 +128,7 @@ periodictable==2.0.2
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-pillow==12.0.0
+pillow==12.1.0
     # via
     #   imageio
     #   matplotlib
@@ -160,7 +160,7 @@ pydantic-core==2.41.5
     # via pydantic
 pygments==2.19.2
     # via rich
-pyparsing==3.2.5
+pyparsing==3.3.1
     # via
     #   matplotlib
     #   periodictable
@@ -170,7 +170,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 pytz==2025.2
     # via pandas
-pyvista==0.46.4
+pyvista==0.46.5
     # via bluemira (pyproject.toml)
 requests==2.32.5
     # via
@@ -217,7 +217,7 @@ typing-inspection==0.4.2
     # via pydantic
 tzdata==2025.3
     # via pandas
-urllib3==2.6.2
+urllib3==2.6.3
     # via requests
 vtk==9.3.1
     # via
