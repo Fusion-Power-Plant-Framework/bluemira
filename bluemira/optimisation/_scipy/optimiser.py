@@ -190,18 +190,17 @@ class ScipyOptimiser(Optimiser):
             such as COBYLA.
 
         """
-        if self.algorithm == Algorithm.COBYLA_SCIPY:
-            self._eq_constraints.extend([
-                {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t - f(x)},
-                {"type": "ineq", "fun": lambda x, f=f_constraint, t=tolerance: t + f(x)},
-            ])
-        elif self.algorithm == Algorithm.SLSQP_SCIPY:
+        if self.algorithm == Algorithm.SLSQP_SCIPY:
             self._eq_constraints.append({
                 "type": "eq",
                 "fun": f_constraint,
                 "jac": df_constraint,
             })
-        elif self.algorithm == Algorithm.COBYQA:
+        elif self.algorithm in {
+            Algorithm.COBYLA_SCIPY,
+            Algorithm.COBYQA,
+            Algorithm.TRUST_CONSTR,
+        }:
             self._eq_constraints.append(
                 NonlinearConstraint(
                     fun=f_constraint,
@@ -262,21 +261,22 @@ class ScipyOptimiser(Optimiser):
             * COBYQA
 
         """
-        if self.algorithm in {
-            Algorithm.SLSQP_SCIPY,
-            Algorithm.COBYLA_SCIPY,
-        }:
+        if self.algorithm == Algorithm.SLSQP_SCIPY:
             self._ineq_constraints.append({
                 "type": "ineq",
                 "fun": lambda x, f=f_constraint: -f(x),
                 "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
             })
-        elif self.algorithm == Algorithm.COBYQA:
+        elif self.algorithm in {
+            Algorithm.COBYLA_SCIPY,
+            Algorithm.COBYQA,
+            Algorithm.TRUST_CONSTR,
+        }:
             self._ineq_constraints.append(
-                NonlinearConstraint(
-                    fun=lambda x, f=f_constraint: -f(x),
-                    lb=-tolerance,  # nlopt constr is f(x) <= 0
-                    ub=np.inf * np.ones_like(tolerance),
+                NonlinearConstraint(  # lb <= fun(x) <= ub
+                    fun=lambda x, f=f_constraint: f(x),  # no need to flip
+                    lb=-np.inf * np.ones_like(tolerance),
+                    ub=tolerance * np.ones_like(tolerance),
                     jac=(lambda x, df=df_constraint: -df(x)) if df_constraint else None,
                 )
             )
