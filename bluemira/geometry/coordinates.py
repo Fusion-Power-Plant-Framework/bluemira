@@ -30,7 +30,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
-from bluemira.utilities.tools import cross_2d_3d, json_writer
+from bluemira.utilities.tools import cross_2d, cross_2d_3d, json_writer
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -1033,7 +1033,7 @@ def vector_intersect(
     da = p2 - p1
     db = p4 - p3
 
-    if np.isclose(cross2d(da, db), 0):  # vectors parallel
+    if np.isclose(cross_2d(da, db), 0):  # vectors parallel
         # NOTE: careful modifying this, different behaviour required...
         point = p2
     else:
