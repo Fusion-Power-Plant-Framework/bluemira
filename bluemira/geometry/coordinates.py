@@ -263,7 +263,7 @@ def get_normal_vector(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
             if np.all(np.abs(v2) < EPS):
                 continue
 
-        n_hat[:] = cross_2d_3d(v1, v2)
+        n_hat[:] = np.cross(v1, v2)
 
         if not np.all(np.abs(n_hat) < EPS):
             break
@@ -441,7 +441,7 @@ def get_area_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
     m[2, :] = z
     a = np.array([0.0, 0.0, 0.0])
     for i in range(len(z)):
-        a += cross_2d_3d(m[:, i], m[:, (i + 1) % len(z)])
+        a += np.cross(m[:, i], m[:, (i + 1) % len(z)])
     a *= 0.5
     return abs(np.dot(a, v3))
 
