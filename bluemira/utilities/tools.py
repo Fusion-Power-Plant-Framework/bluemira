@@ -748,7 +748,7 @@ def sig_fig_round(x, s, low_lim=-16):
     return x_round * (tp >= low_lim)
 
 
-def cross_2d(v1, v2) -> np.float64:
+def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64:
     """
     Cross products of 2d vectors,
     since numpy >= v2 deprecated support for 2d vector inputs in np.cross.
@@ -756,21 +756,21 @@ def cross_2d(v1, v2) -> np.float64:
     Parameters
     ----------
     v1:
-        Vector 1, may be list or np.array
+        2d vector
     v2:
-        Vector 2, may be list or np.array
+        2d vector
 
     Returns
     -------
     :
         The cross product of the two vectors
     """
-    x = np.array(v1)
-    y = np.array(v2)
+    x = np.asarray(v1)
+    y = np.asarray(v2)
     return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
 
 
-def cross_2d_3d(v1, v2) -> np.ndarray:
+def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     """
     Cross products of pairs of 2d or 3d vectors,
     since numpy >= v2 deprecated support for 2d vector inputs in np.cross.
@@ -789,8 +789,8 @@ def cross_2d_3d(v1, v2) -> np.ndarray:
     :
         The cross product of the two vectors
     """
-    v1 = np.array(v1)
-    v2 = np.array(v2)
+    v1 = np.asarray(v1)
+    v2 = np.asarray(v2)
     if v1.shape[0] == 2 and v2.shape[0] == 2:  # noqa: PLR2004
         return cross_2d(v1, v2)
     return np.cross(v1, v2)
