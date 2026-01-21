@@ -398,6 +398,7 @@ class TestCoreRadiation:
         assert np.all(pfr_z_down < x_point_z - 0.01)
 
     def test_make_wall_detectors(self):
+        raysect = pytest.importorskip("raysect")
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
         wall_detectors = make_wall_detectors(
