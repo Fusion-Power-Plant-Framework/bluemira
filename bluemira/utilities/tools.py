@@ -31,6 +31,7 @@ import numpy.typing as npt
 import vtk
 from PySide6.QtWidgets import QApplication
 from matplotlib import colors
+from numba.np.extensions import cross2d
 from vtkmodules.util import numpy_support
 
 from bluemira.base.constants import E_I, E_IJ, E_IJK
@@ -746,6 +747,32 @@ def sig_fig_round(x, s, low_lim=-16):
     tp = ten_power(x)
     x_round = np.round(x / 10.0**tp, s - 1) * 10.0**tp
     return x_round * (tp >= low_lim)
+
+
+def cross_2d_3d(v1, v2) -> np.ndarray:
+    """
+    Cross products of pairs of 2d or 3d vectors,
+    since numpy >= v2 deprecated support for 2d vector inputs in np.cross.
+    For when needing to handle both cases
+
+
+    Parameters
+    ----------
+    v1:
+        Vector 1, may be list or np.array
+    v2:
+        Vector 2, may be list or np.array
+
+    Returns
+    -------
+    :
+        The cross product of the two vectors
+    """
+    v1 = np.array(v1)
+    v2 = np.array(v2)
+    if v1.shape[0] == 2 and v2.shape[0] == 2:  # noqa: PLR2004
+        return cross2d(v1, v2)
+    return np.cross(v1, v2)
 
 
 # ======================================================================================
