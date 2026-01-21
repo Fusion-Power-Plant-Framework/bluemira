@@ -408,6 +408,7 @@ class TestCoreRadiation:
         assert len(wall_detectors) == 532
 
     def test_FirstWallRadiationSolver(self):
+        cherab = pytest.importorskip("cherab")
         # Coversion required for CHERAB
         f_sol = linear_interpolator(
             self.source.sol_rad.x_tot,

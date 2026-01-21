@@ -13,7 +13,6 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from numba.np.extensions import cross2d
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.utilities.tools import (
@@ -24,6 +23,7 @@ from bluemira.utilities.tools import (
     compare_dicts,
     consec_repeat_elem,
     cross,
+    cross_2d_3d,
     cylindrical_to_toroidal,
     deprecation_wrapper,
     dot,
@@ -186,7 +186,7 @@ class TestEinsumCross:
         val = self.rng.random(999)
 
         for _i, v in enumerate([val2, val3], start=2):
-            np.testing.assert_allclose(cross(v, v), cross2d(v, v))
+            np.testing.assert_allclose(cross(v, v), cross_2d_3d(v, v))
 
         np.testing.assert_allclose(cross(val, val), val**2)
 

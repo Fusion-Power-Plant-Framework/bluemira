@@ -780,9 +780,9 @@ def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     Parameters
     ----------
     v1:
-        Vector 1, may be list or np.array
+        Vector 1
     v2:
-        Vector 2, may be list or np.array
+        Vector 2
 
     Returns
     -------
@@ -791,7 +791,7 @@ def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     """
     v1 = np.asarray(v1)
     v2 = np.asarray(v2)
-    if v1.shape[0] == 2 and v2.shape[0] == 2:  # noqa: PLR2004
+    if v1.shape[-1] == 2 and v2.shape[-1] == 2:  # noqa: PLR2004
         return cross_2d(v1, v2)
     return np.cross(v1, v2)
 
