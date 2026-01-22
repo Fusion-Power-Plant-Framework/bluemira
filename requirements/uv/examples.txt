@@ -236,7 +236,7 @@ ndindex==1.10.1
     # via blosc2
 nest-asyncio==1.6.0
     # via ipykernel
-nlopt==2.7.1
+nlopt==2.10.0
     # via bluemira (pyproject.toml)
 notebook==7.5.2
     # via bluemira (pyproject.toml)
@@ -254,7 +254,7 @@ numexpr==2.14.1
     # via
     #   blosc2
     #   tables
-numpy==1.26.4
+numpy==2.2.6
     # via
     #   bluemira (pyproject.toml)
     #   blosc2

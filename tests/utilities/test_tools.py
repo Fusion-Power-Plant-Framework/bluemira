@@ -23,6 +23,7 @@ from bluemira.utilities.tools import (
     compare_dicts,
     consec_repeat_elem,
     cross,
+    cross_2d_3d,
     cylindrical_to_toroidal,
     deprecation_wrapper,
     dot,
@@ -185,7 +186,7 @@ class TestEinsumCross:
         val = self.rng.random(999)
 
         for _i, v in enumerate([val2, val3], start=2):
-            np.testing.assert_allclose(cross(v, v), np.cross(v, v))
+            np.testing.assert_allclose(cross(v, v), cross_2d_3d(v, v))
 
         np.testing.assert_allclose(cross(val, val), val**2)
 

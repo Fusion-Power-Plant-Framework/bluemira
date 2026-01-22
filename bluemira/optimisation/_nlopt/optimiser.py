@@ -255,6 +255,16 @@ class NloptOptimiser(Optimiser):
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
             x_star, f_x = self._get_previous_iter_result()
+        except nlopt.nlopt.runtime_error as error:
+            if self._opt.last_optimize_result() in {
+                nlopt.FAILURE,
+                nlopt.MAXEVAL_REACHED,
+                nlopt.MAXTIME_REACHED,
+            }:  # Potentially useable solution.
+                x_star, f_x = self._get_previous_iter_result()
+            else:
+                _process_nlopt_result(self._opt, self.algorithm)
+                raise OptimisationError(str(error)) from None
         except OptVariablesError:
             # Probably still some rounding errors due to numerical gradients
             # It's likely that the last call was still a reasonably good solution.
