@@ -30,7 +30,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
-from bluemira.utilities.tools import json_writer
+from bluemira.utilities.tools import cross_2d, cross_2d_3d, json_writer
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -744,7 +744,7 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     v2 /= np.linalg.norm(v2)
 
     cos_angle = np.dot(v1, v2)
-    d = np.cross(v1, v2)
+    d = cross_2d_3d(v1, v2)
     sin_angle = np.linalg.norm(d)
 
     if sin_angle == 0:
@@ -1031,7 +1031,7 @@ def vector_intersect(
     da = p2 - p1
     db = p4 - p3
 
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+    if np.isclose(cross_2d(da, db), 0):  # vectors parallel
         # NOTE: careful modifying this, different behaviour required...
         point = p2
     else:
@@ -1746,7 +1746,7 @@ class Coordinates:
 
         k = count(1)
         for i, (p, t) in enumerate(zip(points[1:], t_vector, strict=False)):
-            c_mag = np.linalg.norm(np.cross(t0, t))
+            c_mag = np.linalg.norm(cross_2d_3d(t0, t))
             dx = np.linalg.norm(p - p0)  # segment length
             if (c_mag > angle_crit and dx > dx_min) or dx + median_dt > dx_max:
                 j = next(k)
