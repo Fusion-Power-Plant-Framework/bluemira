@@ -7,8 +7,8 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
+from contextlib import contextmanager
 from dataclasses import dataclass, fields
 from enum import auto
 from operator import attrgetter
@@ -19,6 +19,7 @@ import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.tools import _timing
 from bluemira.codes.interface import (
@@ -29,33 +30,22 @@ from bluemira.codes.interface import (
     CodesTeardown,
 )
 from bluemira.codes.openmc.make_csg import (
+    BlanketCellArray,
     BluemiraNeutronicsCSG,
-    CellStage,
+    DivertorCellArray,
     make_cell_arrays,
 )
 from bluemira.codes.openmc.material import MaterialsLibrary
-from bluemira.codes.openmc.output import (
-    NeutronicsOutputParams,
-    OpenMCCSGResult,
-    OpenMCDAGMCResult,
-)
+from bluemira.codes.openmc.output import OpenMCCSGResult
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.codes.openmc.tallying import csg_filter_cells, dagmc_tallys
+from bluemira.codes.openmc.tallying import csg_filter_cells
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-    NeutronicsReactor,
-)
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
     from matproplib.conditions import OperationalConditions
-
-    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-        NeutronicsReactor,
-    )
 
 
 class OpenMCRunModes(BaseRunMode):
@@ -78,8 +68,6 @@ class OpenMCSimulationRuntimeParameters:
     ----------
     particles:
         Number of neutrons emitted by the plasma source per batch.
-    cross_section_xml:
-        Where the xml file for cross-section is stored locally.
     batches:
         How many batches to simulate.
     photon_transport:
@@ -96,14 +84,8 @@ class OpenMCSimulationRuntimeParameters:
         https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
     openmc_write_summary:
         whether openmc should write a 'summary.h5' file or not.
-    plot_axis:
-        axis to use for openmc plotter
-    plot_pixel_per_metre:
-        number of pixels to plot in openmc plotter
-    rel_max_lost_particles:
-        relative max number of particles to lose before error
-    max_lost_particles:
-        max number of particles to lose before error
+    cross_section_xml:
+        Where the xml file for cross-section is stored locally.
     """
 
     particles: int  # number of particles used in the neutronics simulation
@@ -116,9 +98,6 @@ class OpenMCSimulationRuntimeParameters:
     openmc_write_summary: bool = False
     plot_axis: str = "xz"
     plot_pixel_per_metre: int = 100
-    rel_max_lost_particles: float = 1e-6
-    max_lost_particles: int = 10
-    tally_mesh_size: Sequence[float] = (100, 100, 100)
 
 
 # Signature for a function that creates an OpenMC neutron source
@@ -127,234 +106,34 @@ NeutronSourceCreator: TypeAlias = Callable[
 ]
 
 
-@dataclass
-class PlotConfig:
-    """Plot configuration helper"""
-
-    width: list[float]
-    pixels: list[int]
-    basis: str = "xz"
-    colour_by: str = "cell"
-    show_overlaps: bool = True
-
-
-@dataclass
-class SourceInfo:
-    """Source info storage"""
-
-    rate: float
-    triton_rate: float
-
-
-@dataclass
-class FigureData:
-    """Figure data storage"""
-
-    axis: Axes
-    path: Path
-
-
-class OpenMCBaseSetup(CodesSetup, ABC):
+class Setup(CodesSetup):
     """Setup task for OpenMC solver"""
-
-    tally_mats: openmc.Materials
-    tally_geom: openmc.Geometry | CellStage
 
     def __init__(
         self,
+        out_path: str,
         codes_name: str,
         cross_section_xml: str,
         eq: Equilibrium,
         source,
+        cell_arrays,
+        pre_cell_model,
         materials,
     ):
         super().__init__(None, codes_name)
 
+        self.out_path = out_path
+        self.cells = cell_arrays.cells
         self.cross_section_xml = cross_section_xml
         self.eq = eq
         self.source = source
         self._source_rate = 1.0
         self._source_triton_rate = 1.0
-        self.materials = materials
-
-    def _base_setup(
-        self,
-        run_mode,
-        rel_max_lost_particles,
-        max_lost_particles,
-        *,
-        debug: bool = False,
-    ):
-        from openmc.config import config  # noqa: PLC0415
-
-        config["cross_sections"] = self.cross_section_xml
-
-        settings = openmc.Settings(
-            run_mode=run_mode.value,
-            output={"summary": False},
-            rel_max_lost_particles=rel_max_lost_particles,
-            max_lost_particles=int(max_lost_particles),
-        )
-
-        self.universe, self.geometry = self._create_geometry()
-
-        settings.verbosity = 10 if debug else 6
-
-        return settings
-
-    def _create_model(
-        self, settings: openmc.Settings, tallies: openmc.Tallies | None = None
-    ) -> openmc.Model:
-        model = openmc.Model(geometry=self.geometry, tallies=tallies, settings=settings)
-        if isinstance(self.materials, MaterialsLibrary):
-            model.materials = self.materials.get_all_materials()
-        else:
-            model.materials = self.materials
-        return model
-
-    @abstractmethod
-    def _create_geometry(self) -> tuple[openmc.Universe, openmc.geometry]: ...
-
-    def _create_tallies(self, tally_function: TALLY_FUNCTION_TYPE) -> openmc.Tallies:
-        tallies_list = []
-        for name, scores, filters in tally_function(self.tally_mats, self.tally_geom):
-            tally = openmc.Tally(name=name)
-            tally.scores = [scores]
-            if filters is not None:
-                tally.filters = filters
-            tallies_list.append(tally)
-
-        return openmc.Tallies(tallies_list)
-
-    @abstractmethod
-    def plot(
-        self,
-        run_mode,
-        runtime_params,
-        eq,
-        source_params,
-        tally_function,
-        *,
-        debug: bool = False,
-    ):
-        """Plot an openmc run"""
-
-    @abstractmethod
-    def volume(
-        self,
-        run_mode,
-        runtime_params,
-        eq,
-        source_params,
-        tally_function,
-        *,
-        debug: bool = False,
-    ):
-        """Volume calculation on openmc run"""
-
-    def run(
-        self,
-        run_mode,
-        runtime_params,
-        eq,
-        source_params,
-        tally_function,
-        *,
-        debug: bool = False,
-    ) -> tuple[openmc.Model, SourceInfo]:
-        """Run stage for setup openmc"""
-        settings = self._base_setup(
-            run_mode,
-            runtime_params.rel_max_lost_particles,
-            runtime_params.max_lost_particles,
-            debug=debug,
-        )
-        settings.particles = runtime_params.particles
-        settings.source, source_rate, source_t_rate = self.source(eq, source_params)
-        settings.batches = int(runtime_params.batches)
-        settings.photon_transport = runtime_params.photon_transport
-        settings.electron_treatment = runtime_params.electron_treatment
-
-        tallies = self._create_tallies(tally_function)
-
-        return (
-            self._create_model(settings, tallies),
-            SourceInfo(source_rate, source_t_rate),
-        )
-
-    def _plot(
-        self,
-        run_mode,
-        runtime_params,
-        bounding_box: Sequence[float] | None = None,
-        *,
-        debug: bool = False,
-    ) -> tuple[openmc.Model, PlotConfig]:
-        """Plot stage for setup openmc"""
-        settings = self._base_setup(
-            run_mode,
-            runtime_params.rel_max_lost_particles,
-            runtime_params.max_lost_particles,
-            debug=debug,
-        )
-        if bounding_box is None:
-            r_max, _y_max, z_max = self.universe.bounding_box.upper_right
-        else:
-            z_max, _z_min, r_max, _r_min = bounding_box
-        plot_width_0 = r_max * 2.1
-        plot_width_1 = z_max * 3.1
-        basis = runtime_params.plot_axis
-        pixels = [
-            int(plot_width_0 * runtime_params.plot_pixel_per_metre),
-            int(plot_width_1 * runtime_params.plot_pixel_per_metre),
-        ]
-        width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
-
-        return (
-            self._create_model(settings),
-            PlotConfig(width, pixels, basis),
-        )
-
-    def _volume(
-        self, run_mode, runtime_params, domain, bounding_box, *, debug: bool = False
-    ) -> tuple[openmc.Model, None]:
-        """Stochastic volume stage for setup openmc"""
-        z_max, z_min, r_max, r_min = bounding_box
-
-        min_xyz = (r_min, r_min, z_min)
-        max_xyz = (r_max, r_max, z_max)
-        settings = self._base_setup(
-            run_mode,
-            runtime_params.rel_max_lost_particles,
-            runtime_params.max_lost_particles,
-            debug=debug,
-        )
-        settings.volume_calculations = openmc.VolumeCalculation(
-            domain,
-            runtime_params.particles,
-            raw_uc(min_xyz, "m", "cm"),
-            raw_uc(max_xyz, "m", "cm"),
-        )
-        return self._create_model(settings), None
-
-
-class OpenMCCSGSetup(OpenMCBaseSetup):
-    """Setup for openmc CSG run"""
-
-    def __init__(
-        self,
-        codes_name: str,
-        cross_section_xml: str,
-        eq: Equilibrium,
-        source,
-        materials,
-        cell_arrays,
-        pre_cell_model,
-    ):
-        super().__init__(codes_name, cross_section_xml, eq, source, materials)
-        self.cell_arrays = cell_arrays
+        self.blanket_cell_array = cell_arrays.blanket
+        self.divertor_cell_array = cell_arrays.divertor
         self.pre_cell_model = pre_cell_model
-        self.mat_list = attrgetter(
+        self.materials = materials
+        self.matlist = attrgetter(
             "outb_sf_mat",
             "outb_fw_mat",
             "outb_bz_mat",
@@ -365,111 +144,145 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
             "tf_coil_mat",
         )
 
-    @property
-    def tally_mats(self) -> list[openmc.Material]:
-        """Tally materials"""
-        return self.mat_list(self.materials)
+    @contextmanager
+    def _base_setup(self, run_mode, *, debug: bool = False):
+        from openmc.config import config  # noqa: PLC0415
 
-    @property
-    def tally_geom(self) -> CellStage:
-        """Tally geometry"""
-        return self.cell_arrays
+        self.files_created = set()
+        folder = run_mode.name.lower()
+        cwd = Path(self.out_path, folder)
+        cwd.mkdir(parents=True, exist_ok=True)
 
-    def _create_geometry(self):
-        universe = openmc.Universe(cells=self.cell_arrays.cells)
-        geometry = openmc.Geometry(universe)
-        return universe, geometry
+        config["cross_sections"] = self.cross_section_xml
 
-    def plot(
+        self.settings = openmc.Settings(
+            run_mode=run_mode.value, output={"summary": False}
+        )
+        self.universe = openmc.Universe(cells=self.cells)
+        self.geometry = openmc.Geometry(self.universe)
+        self.settings.verbosity = 10 if debug else 6
+        try:
+            yield
+        finally:
+            for obj, pth in (
+                (self.settings, Path(self.out_path, folder, "settings.xml")),
+                (self.geometry, Path(self.out_path, folder, "geometry.xml")),
+                (self.materials, Path(self.out_path, folder, "materials.xml")),
+            ):
+                obj.export_to_xml(pth)
+                self.files_created.add(pth)
+
+    def _set_tallies(
         self,
         run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
-    ) -> tuple[openmc.Model, PlotConfig]:
-        """Plot an openmc run"""
-        return self._plot(
-            run_mode, runtime_params, self.pre_cell_model.bounding_box, debug=debug
-        )
-
-    def volume(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
-    ) -> tuple[openmc.Model, None]:
-        """Volume calculation on openmc run"""
-        return self._volume(
-            run_mode,
-            runtime_params,
-            self.cell_arrays.cells,
-            self.pre_cell_model.bounding_box,
-            debug=debug,
-        )
-
-
-class OpenMCDAGSetup(OpenMCBaseSetup):
-    """Setup for openmc DAGMC run"""
-
-    def __init__(
-        self,
-        codes_name: str,
-        cross_section_xml: str,
-        eq: Equilibrium,
-        source,
-        materials,
-        dag_model_path: Path,
+        tally_function: TALLY_FUNCTION_TYPE,
+        blanket_cell_array: BlanketCellArray,
+        divertor_cell_array: DivertorCellArray,
+        material_list: list[openmc.Material],
     ):
-        super().__init__(codes_name, cross_section_xml, eq, source, materials)
-        self.dag_model_path = dag_model_path
+        out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
+        tallies_list = []
+        for name, scores, filters in tally_function(
+            material_list, blanket_cell_array, divertor_cell_array
+        ):
+            tally = openmc.Tally(name=name)
+            tally.scores = [scores]
+            tally.filters = filters
+            tallies_list.append(tally)
 
-    def _create_geometry(self):
-        universe = openmc.DAGMCUniverse(
-            filename=self.dag_model_path.as_posix(),
-            auto_geom_ids=True,
-        ).bounded_universe()
-        geometry = openmc.Geometry(universe)
-        return universe, geometry
+        openmc.Tallies(tallies_list).export_to_xml(out_path)
+        self.files_created.add(out_path)
 
-    @property
-    def tally_mats(self) -> list[openmc.Material]:
-        """Tally materials"""
-        return self.materials
+    def run(
+        self,
+        run_mode,
+        runtime_params,
+        eq,
+        source_params,
+        tally_function,
+        *,
+        debug: bool = False,
+    ):
+        """Run stage for setup openmc"""
+        with self._base_setup(run_mode, debug=debug):
+            self.settings.particles = runtime_params.particles
+            self.settings.source, source_rate, source_t_rate = self.source(
+                eq, source_params
+            )
+            self.settings.batches = int(runtime_params.batches)
+            self.settings.photon_transport = runtime_params.photon_transport
+            self.settings.electron_treatment = runtime_params.electron_treatment
 
-    @property
-    def tally_geom(self) -> openmc.Geometry:
-        """Tally geometry"""
-        return self.geometry
+            self._set_tallies(
+                run_mode,
+                tally_function,
+                self.blanket_cell_array,
+                self.divertor_cell_array,
+                self.matlist(self.materials),
+            )
+        self._source_rate = source_rate
+        self._source_triton_rate = source_t_rate
+        self.files_created.add(f"statepoint.{runtime_params.batches}.h5")
+        self.files_created.add("tallies.out")
 
     def plot(
         self,
         run_mode,
         runtime_params,
-        *_args,
+        _eq,
+        _source_params,
+        _tally_function,
+        *,
         debug: bool = False,
-    ) -> tuple[openmc.Model, PlotConfig]:
-        """Plot an openmc run"""
-        return self._plot(run_mode, runtime_params, debug=debug)
+    ):
+        """Plot stage for setup openmc"""
+        with self._base_setup(run_mode, debug=debug):
+            z_max, _z_min, r_max, _r_min = self.pre_cell_model.bounding_box
+            plot_width_0 = r_max * 2.1
+            plot_width_1 = z_max * 3.1
+            plot = openmc.Plot()
+            plot.basis = runtime_params.plot_axis
+            plot.pixels = [
+                int(plot_width_0 * runtime_params.plot_pixel_per_metre),
+                int(plot_width_1 * runtime_params.plot_pixel_per_metre),
+            ]
+            plot.width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
+            plot.show_overlaps = True
+
+            plot_pth = Path(self.out_path, run_mode.name.lower(), "plots.xml")
+            openmc.Plots([plot]).export_to_xml(plot_pth)
+            self.files_created.add(plot_pth)
 
     def volume(
         self,
         run_mode,
         runtime_params,
-        *_args,
+        _source_params,
+        _tally_function,
+        *,
         debug: bool = False,
-    ) -> tuple[openmc.Model, None]:
-        """Volume calculation on openmc run"""
-        return self._volume(
-            run_mode,
-            runtime_params,
-            self.universe,
-            self.universe.bounding_box,
-            debug=debug,
+    ):
+        """Stochastic volume stage for setup openmc"""
+        z_max, z_min, r_max, r_min = self.pre_cell_model.bounding_box
+
+        min_xyz = (r_min, r_min, z_min)
+        max_xyz = (r_max, r_max, z_max)
+
+        with self._base_setup(run_mode, debug=debug):
+            self.settings.volume_calculations = openmc.VolumeCalculation(
+                self.cells,
+                runtime_params.particles,
+                raw_uc(min_xyz, "m", "cm"),
+                raw_uc(max_xyz, "m", "cm"),
+            )
+        self.files_created.add(Path(self.out_path, run_mode.name.lower(), "summary.h5"))
+        # single batch
+        self.files_created.add(
+            Path(self.out_path, run_mode.name.lower(), "statepoint.1.h5")
         )
 
 
-class OpenMCRun(CodesTask):
+class Run(CodesTask):
     """Run task for OpenMC solver"""
 
     def __init__(self, out_path: Path, codes_name: str):
@@ -477,162 +290,129 @@ class OpenMCRun(CodesTask):
 
         self.out_path = out_path
 
-    @staticmethod
-    def _run(run_mode, function, **kwargs):
+    def _run(self, run_mode, *, debug: bool = False):
         """Run openmc"""
         folder = run_mode.name.lower()
-        return _timing(
-            function,
+        cwd = Path(self.out_path, folder)
+        cwd.mkdir(parents=True, exist_ok=True)
+        _timing(
+            openmc.run,
             "Executed in",
             f"Running OpenMC in {folder} mode",
             debug_info_str=False,
         )(
-            openmc_exec="openmc",
-            **kwargs,
-        )
-
-    def run(
-        self, run_mode, model: openmc.Model, _config: SourceInfo, *, debug: bool = False
-    ):
-        """Run stage for run task"""
-        folder = run_mode.name.lower()
-        cwd = Path(self.out_path, folder)
-        cwd.mkdir(parents=True, exist_ok=True)
-        return self._run(
-            run_mode,
-            model.run,
-            cwd=cwd,
-            path=cwd,
             output=debug,
+            threads=None,
             geometry_debug=False,
             restart_file=None,
             tracks=False,
+            cwd=cwd,
+            openmc_exec="openmc",
             mpi_args=None,
             event_based=False,
-            threads=None,
+            path_input=None,
         )
 
-    def plot(self, run_mode, model: openmc.Model, config: PlotConfig, **_kwargs):
+    def run(self, run_mode, *, debug: bool = False):
+        """Run stage for run task"""
+        self._run(run_mode, debug=debug)
+
+    def plot(self, run_mode, *, debug: bool = False):
         """Plot stage for run task"""
-        folder = run_mode.name.lower()
-        cwd = Path(self.out_path, folder)
-        cwd.mkdir(parents=True, exist_ok=True)
-        return FigureData(
-            self._run(
-                run_mode,
-                model.plot,
-                width=config.width,
-                pixels=config.pixels,
-                basis=config.basis,
-                color_by=config.colour_by,
-                show_overlaps=config.show_overlaps,
-            ),
-            cwd / "geometry.png",
-        )
+        self._run(run_mode, debug=debug)
 
-    def volume(
-        self, run_mode, model: openmc.Model, _config: None, *, debug: bool = False
-    ):
+    def volume(self, run_mode, *, debug: bool = False):
         """Stochastic volume stage for run task"""
-        folder = run_mode.name.lower()
-        cwd = Path(self.out_path, folder)
-        cwd.mkdir(parents=True, exist_ok=True)
-        return self._run(
-            run_mode,
-            model.calculate_volumes,
-            cwd=cwd,
-            path=cwd,
-            output=debug,
-            mpi_args=None,
-        )
+        self._run(run_mode, debug=debug)
 
 
-class OpenMCCSGTeardown(CodesTeardown):
+class Teardown(CodesTeardown):
     """Teardown task for OpenMC solver"""
 
     def __init__(
         self,
-        cell_arrays: CellStage,
-        pre_cell_model: NeutronicsReactor,
+        cells,
         out_path: str,
         codes_name: str,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
-        self.cell_arrays = cell_arrays
-        self.pre_cell_model = pre_cell_model
+        self.cells = cells
+
+    @staticmethod
+    def delete_files(files_created):
+        """Remove files generated during the run (mainly .xml files.)"""
+        removed_files, failed_to_remove_files = [], []
+        for file_name in files_created:
+            if (f := file_name).exists():
+                f.unlink()
+                removed_files.append(file_name)
+            else:
+                failed_to_remove_files.append(file_name)
+
+        if removed_files:
+            bluemira_debug(f"Removed files {removed_files}")
+        if failed_to_remove_files:
+            bluemira_debug(
+                f"Attempted to remove files {failed_to_remove_files} but "
+                "they don't exists."
+            )
 
     def run(
         self,
         universe,
-        source_info: SourceInfo,
+        files_created,
+        source_rate: float,
+        source_triton_rate: float,
         statepoint_file,
+        *,
+        delete_files: bool = False,
     ):
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
             universe,
-            self.cell_arrays,
-            source_info.rate,
-            source_info.triton_rate,
-            Path(statepoint_file),
+            source_rate,
+            source_triton_rate,
+            statepoint_file,
         )
-        output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
+        if delete_files:
+            self.delete_files(files_created)
+        return result
 
-        return result, output_params
-
-    @staticmethod
-    def plot(_universe, _source_info, fig: FigureData, **_kwargs):
+    def plot(
+        self,
+        _universe,
+        files_created,
+        *_args,
+        delete_files: bool = False,
+    ):
         """Plot stage for Teardown task"""
-        fig.axis.get_figure().savefig(fig.path)
-        return fig.axis
+        if delete_files:
+            self.delete_files(files_created)
 
     def volume(
         self,
         _universe,
+        files_created,
         _source_params,
         _statepoint_file,
+        *,
+        delete_files: bool = False,
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
+        if delete_files:
+            self.delete_files(files_created)
         return {
             cell.id: raw_uc(
                 np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
             )
-            for cell in self.cell_arrays.cells
+            for cell in self.cells
         }
 
 
-class OpenMCDAGTeardown(CodesTeardown):
-    """Teardown for DAGMC run"""
-
-    def __init__(self, out_path: str, codes_name: str):
-        super().__init__(None, codes_name)
-
-        self.out_path = out_path
-
-    @staticmethod
-    def run(universe, source_info: SourceInfo, statepoint_file):
-        """Run stage for Teardown task"""
-        result = OpenMCDAGMCResult.from_run(
-            universe, source_info.rate, source_info.triton_rate, Path(statepoint_file)
-        )
-        output_params = NeutronicsOutputParams.from_openmc_dag_result(result)
-
-        return result, output_params
-
-    @staticmethod
-    def plot(_universe, _source_info, fig: FigureData, **_kwargs):
-        """Plot stage for Teardown task"""
-        fig.axis.get_figure().save_fig(fig.path)
-        return fig.axis
-
-    def volume(self, _universe, _source_params, _statepoint_file) -> dict[int, float]:
-        """Stochastic volume stage for teardown task"""
-        raise NotImplementedError
-
-
 TALLY_FUNCTION_TYPE = Callable[
-    [list[openmc.Material], CellStage | openmc.Geometry],
+    [list[openmc.Material], BlanketCellArray, DivertorCellArray],
     tuple[
         str,
         str,
@@ -641,24 +421,26 @@ TALLY_FUNCTION_TYPE = Callable[
 ]
 
 
-class OpenMCNeutronicsSolver(CodesSolver, ABC):
+class OpenMCDAGMCNeutronicsSolver(CodesSolver):
     """OpenMC 2D neutronics solver"""
-
-    params: OpenMCNeutronicsSolverParams
-    setup_cls: type[OpenMCBaseSetup]
-    teardown_cls: type[CodesTeardown]
 
     name: str = OPENMC_NAME
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
+    params: OpenMCNeutronicsSolverParams
     run_mode_cls: type[OpenMCRunModes] = OpenMCRunModes
-    run_cls: type[OpenMCRun] = OpenMCRun
+    setup_cls: type[Setup] = Setup
+    run_cls: type[Run] = Run
+    teardown_cls: type[Teardown] = Teardown
 
     def __init__(
         self,
         params: dict | ParameterFrame,
         build_config: dict,
+        neutronics_pre_cell_model,
         eq: Equilibrium,
         source: NeutronSourceCreator,
+        op_cond: OperationalConditions,
+        tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
@@ -667,6 +449,19 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 
         self.eq = eq
         self.source = source
+
+        self.pre_cell_model = neutronics_pre_cell_model
+        self.materials = MaterialsLibrary.from_neutronics_materials(
+            self.pre_cell_model.material_library, op_cond
+        )
+
+        self.cell_arrays = make_cell_arrays(
+            self.pre_cell_model, BluemiraNeutronicsCSG(), self.materials, control_id=True
+        )
+
+        self.tally_function = (
+            csg_filter_cells if tally_function is None else tally_function
+        )
 
     @property
     def source(self) -> NeutronSourceCreator:
@@ -686,10 +481,9 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     def tally_function(self, value: TALLY_FUNCTION_TYPE):
         self._tally_function = value
 
-    def execute(
-        self, run_mode, *, debug=False
-    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
+    def execute(self, *, debug=False) -> OpenMCCSGResult | dict[int, float]:
         """Execute the setup, run, and teardown tasks, in order."""
+        run_mode = self.build_config.get("run_mode", self.run_mode_cls.RUN)
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
 
@@ -714,10 +508,25 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
+    ) -> OpenMCCSGResult | dict[int, float]:
+        self._setup = self.setup_cls(
+            self.out_path,
+            self.name,
+            str(self.build_config["cross_section_xml"]),
+            self.eq,
+            self.source,
+            self.cell_arrays,
+            self.pre_cell_model,
+            self.materials,
+        )
+        self._run = self.run_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(
+            self.cell_arrays.cells, self.out_path, self.name
+        )
+
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
-            model, config = setup(
+            result = setup(
                 run_mode,
                 runtime_params,
                 self.eq,
@@ -726,133 +535,17 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
                 debug=debug,
             )
         if run := self._get_execution_method(self._run, run_mode):
-            result = run(run_mode, model, config, debug=debug)
+            result = run(run_mode, debug=debug)
         if teardown := self._get_execution_method(self._teardown, run_mode):
-            result = teardown(self._setup.universe, config, result)
-        return result
-
-
-class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
-    """Solver for OpenMC CSG neutronics"""
-
-    setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup
-    teardown_cls: type[CodesTeardown] = OpenMCCSGTeardown
-
-    def __init__(
-        self,
-        params: dict | ParameterFrame,
-        build_config: dict,
-        eq: Equilibrium,
-        source: NeutronSourceCreator,
-        neutronics_model: NeutronicsReactor,
-        op_cond: OperationalConditions,
-        tally_function: TALLY_FUNCTION_TYPE | None = None,
-    ):
-        super().__init__(
-            params,
-            build_config,
-            eq,
-            source,
-        )
-        self.neutronics_model = neutronics_model
-        self.materials = MaterialsLibrary.from_neutronics_materials(
-            self.neutronics_model.material_library, op_cond
-        )
-
-        self.cell_arrays = make_cell_arrays(
-            self.neutronics_model,
-            BluemiraNeutronicsCSG(),
-            self.materials,
-            control_id=True,
-        )
-
-        self.tally_function = (
-            csg_filter_cells if tally_function is None else tally_function
-        )
-
-    def _single_run(
-        self,
-        run_mode: OpenMCRunModes,
-        source_params: PlasmaSourceParameters,
-        runtime_params: OpenMCSimulationRuntimeParameters,
-        *,
-        debug=False,
-    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]:
-        self._setup = self.setup_cls(
-            self.name,
-            str(self.build_config["cross_section_xml"]),
-            self.eq,
-            self.source,
-            self.materials,
-            self.cell_arrays,
-            self.neutronics_model,
-        )
-
-        self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(
-            self.cell_arrays,
-            self.neutronics_model,
-            self.out_path,
-            self.name,
-        )
-
-        return super()._single_run(run_mode, source_params, runtime_params, debug=debug)
-
-
-class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
-    """Solver for OpenMC DAGMC neutronics"""
-
-    setup_cls: type[OpenMCDAGSetup] = OpenMCDAGSetup
-    teardown_cls: type[CodesTeardown] = OpenMCDAGTeardown
-
-    def __init__(
-        self,
-        params: dict | ParameterFrame,
-        build_config: dict,
-        eq: Equilibrium,
-        source: NeutronSourceCreator,
-        dagmc_model_path: Path,
-        materials,
-        tally_function: TALLY_FUNCTION_TYPE | None = None,
-    ):
-        super().__init__(
-            params,
-            build_config,
-            eq,
-            source,
-        )
-        self.dagmc_model_path = dagmc_model_path
-        self.materials = materials
-
-        def tally(mat, model):
-            return dagmc_tallys(
-                mat,
-                model,
-                mesh_shape=tuple(build_config.get("tally_mesh_size", (100, 100, 100))),
+            result = teardown(
+                self._setup.universe,
+                self._setup.files_created,
+                self._setup._source_rate,
+                self._setup._source_triton_rate,
+                Path(
+                    self.out_path,
+                    run_mode.name.lower(),
+                    f"statepoint.{runtime_params.batches}.h5",
+                ),
             )
-
-        self.tally_function = tally if tally_function is None else tally_function
-
-    def _single_run(
-        self,
-        run_mode: OpenMCRunModes,
-        source_params: PlasmaSourceParameters,
-        runtime_params: OpenMCSimulationRuntimeParameters,
-        *,
-        debug=False,
-    ) -> tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
-        self._setup = self.setup_cls(
-            self.name,
-            str(self.build_config["cross_section_xml"]),
-            self.eq,
-            self.source,
-            self.materials,
-            self.dagmc_model_path,
-        )
-
-        self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(
-            self.out_path,
-            self.name,
-        )
-        return super()._single_run(run_mode, source_params, runtime_params, debug=debug)
+        return result
