@@ -406,6 +406,8 @@ def electron_density_and_temperature_sol_decay(
         [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
             Nuclear Fusion, 47(6), S203.
     """
+    # TODO @je-cook: add check for if dx_mp >> lambda_q and when true add warning.
+    # 4207
     # temperature and density decay factors
     if f_exp == 1:
         t_factor = 7 / 2
