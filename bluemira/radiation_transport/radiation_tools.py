@@ -1435,9 +1435,6 @@ class FirstWallRadiationSolver:
         x_width: float = 0.01,
         n_samples: int = 500,
         ray_stepsize=1.0,
-        # TODO @DarioV86: '2.0e-4' was commented out for ray_stepsize,
-        # is it important to keep a record of this number?
-        # 3939
         *,
         plot: bool = True,
         verbose: bool = False,
@@ -1473,8 +1470,9 @@ class FirstWallRadiationSolver:
         height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
         emitter = VolumeTransform(
             RadiationFunction(self.rad_3d, step=ray_stepsize * 0.1),
-            # TODO @DarioV86: Why is ray_stepsize multiplied by 0.1 here?
-            # 3939
+            # ray_stepsize multiplied by 0.1 as the CHERAB default value of 1
+            # results in undersampling. 0.1 was found as the best compromise
+            # between run time and sampling.
             translate(0, 0, np.max(self.fw_shape.z)),
         )
         world = World()
