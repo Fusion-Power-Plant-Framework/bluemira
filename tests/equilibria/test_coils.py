@@ -177,6 +177,9 @@ class TestCoil:
     def test_bp(self):
         callable_tester(self.coil.Bp)
 
+    def test_db_d(self):
+        callable_tester(self.coil.dB_d)
+
     @pytest.mark.parametrize("analytic", [True, False])
     def test_psi(self, analytic):
         self.coil._psi_analytic = analytic
@@ -304,7 +307,7 @@ class TestCoilGroup:
 
         self.group = CoilGroup(
             *(
-                Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max)
+                Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max, resistance=1)
                 for _x, _z, _ct, _n in zip(x, z, ctype, name, strict=False)
             )
         )
@@ -365,6 +368,9 @@ class TestCoilGroup:
 
     def test_bp(self):
         callable_tester(self.group.Bp, self.group.n_coils())
+
+    def test_db_d(self):
+        callable_tester(self.group.dB_d, self.group.n_coils())
 
 
 class TestSymmetricCircuit:
