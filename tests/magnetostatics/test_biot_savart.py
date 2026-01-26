@@ -228,3 +228,58 @@ class TestSelfInductance:
             )
         )
         assert abs(1 - inductance / exact) < f_error
+
+    @pytest.mark.parametrize(
+        ("a", "b", "p", "f_error"),
+        [
+            (10, 5, 0.001, 0.2),
+            (10, 5, 0.0005, 0.2),
+            (100, 20, 0.001, 0.05),
+            (100, 20, 0.0005, 0.05),
+            (10, 10, 0.001, 0.14),
+            (10, 10, 0.0005, 0.13),
+            (100, 100, 0.001, 0.01),
+            (100, 100, 0.0005, 0.01),
+        ],
+    )
+    def test_rectangular_inductance_rosa(self, a, b, p, f_error):
+        """
+        Comparison against the self inductance of a rectangular filament as found in:
+        https://nvlpubs.nist.gov/nistpubs/bulletin/04/nbsbulletinv4n2p301_a2b.pdf.
+        Here a is the length and b is breadth of the rectangle, p is the radius of the
+        filament, and f_error is a set error. Tests against both rectangular and square
+        shapes using the separate methods found in the Rosa paper.
+        """
+        edge_points = Coordinates({
+            "x": [-a / 2, a / 2, a / 2, -a / 2],
+            "y": [0, 0, 0, 0],
+            "z": [-b / 2, -b / 2, b / 2, b / 2],
+        })
+        square = make_polygon(edge_points, closed=True)
+        filament = square.discretise(dl=square.length / 100)
+        bsf = BiotSavartFilament(filament, p)
+        inductance = bsf.inductance()
+        if a == b:
+            a_cm = 100 * a
+            p_cm = 100 * p
+            test_inductance = (
+                (8 * a_cm) * (np.log(a_cm / p_cm) + p_cm / a_cm - 0.524) / 1000
+            )
+            assert np.abs(1 - test_inductance / (inductance * 1e6)) < f_error
+        else:
+            a_cm = 100 * a
+            b_cm = 100 * b
+            p_cm = 100 * p
+            d = np.sqrt(a_cm**2 + b_cm**2)
+            test_inductance = (
+                4
+                * (
+                    (a_cm + b_cm) * np.log(2 * a_cm * b_cm / p_cm)
+                    - a_cm * np.log(a_cm + d)
+                    - b_cm * np.log(b_cm + d)
+                    - 7 / 4 * (a_cm + b_cm)
+                    + 2 * (d + p_cm)
+                )
+                / 1000
+            )
+            assert np.abs(1 - test_inductance / (inductance * 1e6)) < f_error
