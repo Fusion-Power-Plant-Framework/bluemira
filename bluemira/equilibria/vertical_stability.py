@@ -157,7 +157,7 @@ def stab_destab(
         Inductance matrix of passive and active structures
     control_ind:
         indicies of active structures
-    uncontrollled_ind:
+    uncontrolled_ind:
         indicies of passive structures
     r_struct:
         flattened array of eq R points duplicated by number of coils
@@ -185,12 +185,14 @@ def stab_destab(
             np.hstack([l_ac_ac, l_ac_ps]),
             np.hstack([l_ac_ps.T, l_ps_ps]),
         ])
+        br_size = len(uncontrolled_ind) + len(control_ind)
     else:
         mss = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
         r_struct = r_struct[uncontrolled_ind, :]
         br_struct_grid = br_struct_grid[uncontrolled_ind, ...]
+        br_size = len(uncontrolled_ind)
     shape = np.shape(br_struct_grid)
-    br = br_struct_grid.reshape((len(uncontrolled_ind), shape[1] * shape[2]))
+    br = br_struct_grid.reshape((br_size, shape[1] * shape[2]))
     dbrdz = dbrdz_struct_grid[control_ind, ...]
     dbrdz = dbrdz.reshape((len(control_ind), shape[1] * shape[2]))
     msp_prime = (2 * np.pi * r_struct * br).T
