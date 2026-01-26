@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 
 def calculate_rzip_stability_criterion(
-    eq: Equilibrium, *, with_active: bool = False
+    eq: Equilibrium,
 ) -> float:
     """
     Calculate the rzip stability criterion for a given equilibrium and coilset
@@ -34,8 +34,6 @@ def calculate_rzip_stability_criterion(
     ----------
     eq:
         The equilibrium object
-    with_active:
-        Include the stabilising effect of acitve coils along with passive structures
 
     Returns
     -------
@@ -46,7 +44,7 @@ def calculate_rzip_stability_criterion(
     -----
     See ~:class:`~bluemira.equilibria.vertical_stability.RZIp` for details
     """
-    return RZIp(eq.coilset)(eq, with_active=with_active)
+    return RZIp(eq.coilset)(eq)
 
 
 class RZIp:
@@ -100,8 +98,6 @@ class RZIp:
     def __call__(
         self,
         eq: Equilibrium,
-        *,
-        with_active: bool = False,
     ) -> float:
         """
         Parameters
@@ -130,7 +126,6 @@ class RZIp:
             i_plasma=eq._jtor * eq.grid.step,
             br_struct_grid=np.rollaxis(eq._bx_green, 2, 0),
             dbrdz_struct_grid=np.rollaxis(eq._db_green, 2, 0),
-            with_active=with_active,
         )
 
 
@@ -143,8 +138,6 @@ def stab_destab(
     i_plasma: npt.NDArray,
     br_struct_grid: npt.NDArray,
     dbrdz_struct_grid: npt.NDArray,
-    *,
-    with_active: bool = False,
 ) -> float:
     """
     Calculate the stabilising / destabilising effect of the equilibria and structures
@@ -157,7 +150,7 @@ def stab_destab(
         Inductance matrix of passive and active structures
     control_ind:
         indicies of active structures
-    uncontrollled_ind:
+    uncontrolled_ind:
         indicies of passive structures
     r_struct:
         flattened array of eq R points duplicated by number of coils
@@ -167,8 +160,6 @@ def stab_destab(
         Bx field
     dbrdz_struct_grid:
         dBxdz field
-    with_active:
-        Include the stabilising effect of acitve coils along with passive structures
 
     Returns
     -------
@@ -176,19 +167,9 @@ def stab_destab(
         The stability criterion
     """
     r_active = r_struct[control_ind, :]
-    if with_active:
-        l_ps_ps = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
-        l_ac_ps = ind_mat[control_ind][:, uncontrolled_ind]
-        l_ac_ac = ind_mat[control_ind][:, control_ind]
-
-        mss = np.vstack([
-            np.hstack([l_ac_ac, l_ac_ps]),
-            np.hstack([l_ac_ps.T, l_ps_ps]),
-        ])
-    else:
-        mss = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
-        r_struct = r_struct[uncontrolled_ind, :]
-        br_struct_grid = br_struct_grid[uncontrolled_ind, ...]
+    mss = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
+    r_struct = r_struct[uncontrolled_ind, :]
+    br_struct_grid = br_struct_grid[uncontrolled_ind, ...]
     shape = np.shape(br_struct_grid)
     br = br_struct_grid.reshape((len(uncontrolled_ind), shape[1] * shape[2]))
     dbrdz = dbrdz_struct_grid[control_ind, ...]
