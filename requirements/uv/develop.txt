@@ -49,7 +49,7 @@ coolprop==7.2.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-coverage==7.13.1
+coverage==7.13.2
     # via pytest-cov
 csl-reference==0.1.1
     # via matproplib
@@ -90,7 +90,7 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.0
     # via bluemira (pyproject.toml)
-greenlet==3.3.0
+greenlet==3.3.1
     # via sqlalchemy
 identify==2.6.16
     # via pre-commit
@@ -138,7 +138,7 @@ jupyter-core==5.9.1
     #   jupyter-client
     #   nbclient
     #   nbformat
-jupytext==1.19.0
+jupytext==1.19.1
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.9
     # via matplotlib
@@ -239,7 +239,7 @@ numpy==2.2.6
     #   tables
 numpydantic==1.7.0
     # via matproplib
-packaging==25.0
+packaging==26.0
     # via
     #   ipykernel
     #   jupytext
@@ -252,7 +252,7 @@ pandas==2.3.3
     # via seaborn
 parso==0.8.5
     # via jedi
-pathspec==1.0.3
+pathspec==1.0.4
     # via mypy
 periodictable==2.0.2
     # via
@@ -312,7 +312,7 @@ pygments==2.19.2
     #   pytest
     #   rich
     #   sphinx
-pyparsing==3.3.1
+pyparsing==3.3.2
     # via
     #   matplotlib
     #   periodictable
@@ -364,7 +364,7 @@ requests==2.32.5
     #   blosc2
     #   pooch
     #   sphinx
-rich==14.2.0
+rich==14.3.1
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -418,7 +418,7 @@ sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
-sqlalchemy==2.0.45
+sqlalchemy==2.0.46
     # via jupyter-cache
 stack-data==0.6.3
     # via ipython
@@ -486,7 +486,7 @@ vtk==9.3.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
-wcwidth==0.2.14
+wcwidth==0.5.0
     # via prompt-toolkit
 zipp==3.23.0
     # via importlib-metadata
