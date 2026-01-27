@@ -551,7 +551,7 @@ def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> list[float]:
         cx += (x[i] + x[i + 1]) * a
         cz += (z[i] + z[i + 1]) * a
 
-    if area != 0:
+    if not np.isclose(area, 0.0):
         # Zero division protection
         cx /= 6 * area
         cz /= 6 * area
