@@ -21,7 +21,8 @@ from bluemira.optimisation._algorithm import (
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._scipy.optimiser import SCIPY_ALG_MAPPING, ScipyOptimiser
+from bluemira.optimisation._scipy.optimiser import ScipyOptimiser
+from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY
 from bluemira.optimisation.error import OptimisationError
 from bluemira.optimisation.typed import ConstraintT, ObjectiveCallable, OptimiserCallable
 
@@ -265,7 +266,7 @@ def _make_optimiser(
     """
     if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
         optimiser = NloptOptimiser
-    elif alg in SCIPY_ALG_MAPPING:
+    elif alg in SCIPY_REGISTRY:
         optimiser = ScipyOptimiser
     else:
         raise OptimisationError("Unknown algorithm") from None
@@ -346,11 +347,12 @@ def _check_constraints(
         :
             the items in the constraint vector that violate the condition.
         """
+        epsilon = 1e-15
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
         c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
         tols = np.array(constraint["tolerance"])
-        indices = np.nonzero(condition(c_value, tols))[0]
+        indices = np.nonzero(condition(c_value, tols + epsilon))[0]
         if indices.size > 0:
             return (constraint.get("name", None), indices, c_value, tols)
         return None

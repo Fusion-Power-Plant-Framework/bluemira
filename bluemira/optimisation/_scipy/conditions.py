@@ -8,17 +8,13 @@ from dataclasses import asdict, dataclass
 
 from bluemira.base.look_and_feel import bluemira_warn
 
-CONDITION_MAP = {
-    "COMMON": {
-        "ftol_rel": "ftol",
-        "ftol_abs": "ftol",  # override if both given
-        "xtol_rel": "xtol",
-        "xtol_abs": "xtol",
-        "max_eval": "maxiter",
-        "stop_val": "f_target",
-    },
-    "COBYLA": {"ftol_abs": "tol"},
-    "COBYQA": {"ftol_abs": "feasibility_tol"},
+COMMON_CONDITION_MAP = {
+    "max_eval": "maxiter",
+    "ftol_rel": "ftol",
+    "ftol_abs": "ftol",  # if both provided, logic below handles priority
+    "xtol_rel": "xtol",
+    "xtol_abs": "xtol",
+    "stop_val": "f_target",
 }
 
 
@@ -55,7 +51,8 @@ class ScipyConditions:
 
 
 def _convert_to_scipy(
-    conds: Mapping[str, int | float], alg: str
+    conds: Mapping[str, int | float],
+    overrides: dict[str, str],
 ) -> dict[str, int | float]:
     """
     Translate optimiser conditions from NLopt to SciPy format.
@@ -65,13 +62,13 @@ def _convert_to_scipy(
     :
         The data in dictionary form as each SciPy algorithm expects.
     """
-    map_ = CONDITION_MAP["COMMON"].copy()
-    map_.update(CONDITION_MAP.get(alg, {}))
+    map_ = COMMON_CONDITION_MAP.copy()
+    map_.update(overrides)
     translated = {}
     for name, val in map_.items():
         if key := conds.get(name):
             translated[val] = key
             conds.pop(name)
     if conds:
-        bluemira_warn(f"Condition(s) '{conds}' not recognised by SciPy ({alg})")
+        bluemira_warn(f"Condition(s) '{conds}' not recognised by SciPy.")
     return translated

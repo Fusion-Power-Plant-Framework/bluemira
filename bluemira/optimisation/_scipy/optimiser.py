@@ -17,6 +17,7 @@ from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._scipy.conditions import ScipyConditions, _convert_to_scipy
 from bluemira.optimisation._scipy.parameters import _make_alg_params
+from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
 from bluemira.optimisation._tools import (
     _check_bounds,
     _initial_guess_from_bounds,
@@ -29,24 +30,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
-
-
-SCIPY_ALG_MAPPING = {
-    Algorithm.COBYLA_SCIPY: "COBYLA",
-    Algorithm.COBYQA: "COBYQA",
-    Algorithm.L_BFGS_B: "L_BFGS_B",
-    Algorithm.NELDER_MEAD: "NELDER_MEAD",
-    Algorithm.POWELL: "POWELL",
-    Algorithm.SLSQP_SCIPY: "SLSQP",
-    Algorithm.TNC: "TNC",
-    Algorithm.TRUST_CONSTR: "TRUST_CONSTR",
-}
-
-DF_SUPPORTED = {
-    SCIPY_ALG_MAPPING[Algorithm.NELDER_MEAD],
-    SCIPY_ALG_MAPPING[Algorithm.POWELL],
-    SCIPY_ALG_MAPPING[Algorithm.COBYLA_SCIPY],
-}
 
 
 class ScipyOptimiser(Optimiser):
@@ -65,13 +48,18 @@ class ScipyOptimiser(Optimiser):
         self.n_variables = n_variables
         self.f_objective = f_objective
         self.df_objective = df_objective
+
+        self._eq_constraints = []
+        self._ineq_constraints = []
+
+        self._config = self._get_scipy_config()
+
         self._set_conditions(opt_conditions or {})
         self._set_parameters(opt_parameters or {})
+
         self.set_lower_bounds(np.ones(n_variables) * -np.inf)
         self.set_upper_bounds(np.ones(n_variables) * np.inf)
         self.keep_history = keep_history
-        self._eq_constraints = []
-        self._ineq_constraints = []
 
     @property
     def algorithm(self) -> AlgorithmType:
@@ -123,6 +111,26 @@ class ScipyOptimiser(Optimiser):
         """
         return self._upper_bounds
 
+    def _get_scipy_config(self) -> ScipyAlgConfig:
+        """
+        Helper to safely retrieve config or raise an error.
+
+        Returns
+        -------
+        The associated entry in the scipy registry, which contains
+        configuration information specific to each algorithm.
+
+        Raises
+        ------
+        OptimisationError
+            Algorithm is not supported by SciPy.
+        """
+        if self.algorithm not in SCIPY_REGISTRY:
+            raise OptimisationError(
+                f"Algorithm {self.algorithm} is not a supported SciPy algorithm."
+            )
+        return SCIPY_REGISTRY[self.algorithm]
+
     def _set_algorithm(self, alg: AlgorithmType) -> None:
         """Set the optimiser's algorithm."""
         self._algorithm = Algorithm(alg)
@@ -130,13 +138,14 @@ class ScipyOptimiser(Optimiser):
     def _set_conditions(self, opt_conditions: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's conditions."""
         self._opt_conditions = ScipyConditions(
-            **_convert_to_scipy((opt_conditions), SCIPY_ALG_MAPPING[self.algorithm])
+            **_convert_to_scipy(opt_conditions, self._config.condition_overrides),
         )
 
     def _set_parameters(self, opt_parameters: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's parameters."""
         self._opt_parameters = _make_alg_params(
-            opt_parameters, SCIPY_ALG_MAPPING[self.algorithm]
+            opt_parameters,
+            self._config.param_cls,
         )
 
     def add_eq_constraint(
@@ -190,17 +199,17 @@ class ScipyOptimiser(Optimiser):
             such as COBYLA.
 
         """
+        if not self._config.supports_eq_constraints:
+            raise OptimisationError(
+                f"Algorithm '{self.algorithm}' does not support equality constraints."
+            )
         if self.algorithm == Algorithm.SLSQP_SCIPY:
             self._eq_constraints.append({
                 "type": "eq",
                 "fun": f_constraint,
                 "jac": df_constraint,
             })
-        elif self.algorithm in {
-            Algorithm.COBYLA_SCIPY,
-            Algorithm.COBYQA,
-            Algorithm.TRUST_CONSTR,
-        }:
+        else:
             self._eq_constraints.append(
                 NonlinearConstraint(
                     fun=f_constraint,
@@ -208,10 +217,6 @@ class ScipyOptimiser(Optimiser):
                     ub=tolerance,
                     jac=df_constraint,
                 )
-            )
-        else:
-            raise OptimisationError(
-                f"Algorithm '{self.algorithm}' does not support equality constraints."
             )
 
     def add_ineq_constraint(
@@ -261,28 +266,24 @@ class ScipyOptimiser(Optimiser):
             * COBYQA
 
         """
+        if not self._config.supports_ineq_constraints:
+            raise OptimisationError(
+                f"Algorithm '{self.algorithm}' does not support inequality constraints."
+            )
         if self.algorithm == Algorithm.SLSQP_SCIPY:
             self._ineq_constraints.append({
                 "type": "ineq",
                 "fun": lambda x, f=f_constraint: -f(x),
                 "jac": (lambda x, df=df_constraint: -df(x)) if df_constraint else None,
             })
-        elif self.algorithm in {
-            Algorithm.COBYLA_SCIPY,
-            Algorithm.COBYQA,
-            Algorithm.TRUST_CONSTR,
-        }:
+        else:
             self._ineq_constraints.append(
                 NonlinearConstraint(  # lb <= fun(x) <= ub
                     fun=lambda x, f=f_constraint: f(x),  # no need to flip
                     lb=-np.inf * np.ones_like(tolerance),
                     ub=tolerance * np.ones_like(tolerance),
-                    jac=(lambda x, df=df_constraint: -df(x)) if df_constraint else None,
+                    jac=(lambda x, df=df_constraint: df(x)) if df_constraint else None,
                 )
-            )
-        else:
-            raise OptimisationError(
-                f"Algorithm '{self.algorithm}' does not support inequality constraints."
             )
 
     def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
@@ -318,8 +319,8 @@ class ScipyOptimiser(Optimiser):
                 fun=self.f_objective,
                 x0=x0,
                 args=(),
-                method=SCIPY_ALG_MAPPING[self.algorithm],
-                jac=self.df_objective if self.algorithm in DF_SUPPORTED else None,
+                method=self._config.alg_name,
+                jac=self.df_objective if self._config.supports_grad else None,
                 hess=None,  # algorithms that use this are not yet implemented
                 constraints=self._eq_constraints + self._ineq_constraints,
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
@@ -338,7 +339,7 @@ class ScipyOptimiser(Optimiser):
                 "your optimisation problem and termination conditions."
             ) from None
 
-        process_scipy_result(result, SCIPY_ALG_MAPPING[self.algorithm])
+        process_scipy_result(result, self._config.alg_name)
         return OptimiserResult(
             f_x=result.fun,
             x=result.x,

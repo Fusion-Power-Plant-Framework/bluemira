@@ -35,7 +35,7 @@ class TestScipyOptimiser:
         [
             (Algorithm["SLSQP_SCIPY"], {}),
             (Algorithm["COBYLA_SCIPY"], {"ftol_abs": "tol"}),
-            (Algorithm["COBYQA"], {"ftol_abs": "feasibility_tol"}),
+            (Algorithm["COBYQA"], {}),
         ],
     )
     def test_opt_conditions_set_on_scipy_optimiser(self, alg, alg_conds):
@@ -125,25 +125,6 @@ class TestScipyOptimiser:
         opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_parameters=params)
         assert opt.opt_parameters == params
 
-    @pytest.mark.parametrize(
-        ("alg", "params"),
-        [
-            ("COBYLA_SCIPY", {"rhobeg": 0.2, "catol": 1e-4}),
-            ("COBYQA", {"initial_tr_radius": 0.3}),
-        ],
-    )
-    def test_algorithm_default_parameters_set(self, alg, params):
-        opt = ScipyOptimiser(alg, 5, no_op)
-        assert opt.opt_parameters == params
-
-    def test_override_algorithm_default_parameters(self):
-        opt = ScipyOptimiser(
-            "COBYLA_SCIPY", 5, no_op, opt_parameters={"rhobeg": 0.3, "disp": True}
-        )
-        np.testing.assert_allclose(opt.opt_parameters["rhobeg"], 0.3)
-        np.testing.assert_allclose(opt.opt_parameters["catol"], 1e-4)
-        assert opt.opt_parameters["disp"]
-
     def test_minimising_objective_function_set_on_init_scipy(self):
         opt = ScipyOptimiser(
             algorithm="SLSQP_SCIPY",
@@ -195,17 +176,9 @@ class TestScipyOptimiser:
         np.testing.assert_equal(result, -1)
         np.testing.assert_equal(grad, 2)
 
-    def test_add_eq_constraint_cobyla_scipy(self):
-        opt = ScipyOptimiser("COBYLA_SCIPY", 5, no_op)
-        opt.add_eq_constraint(lambda _: -1, np.array(1), lambda _: 2)
-        assert len(opt._eq_constraints) == 2
-        result1 = opt._eq_constraints[0]["fun"](np.zeros(1))
-        result2 = opt._eq_constraints[1]["fun"](np.zeros(1))
-        np.testing.assert_equal(result1, 2)
-        np.testing.assert_equal(result2, 0)
-
-    def test_add_eq_constraint_cobyqa_scipy(self):
-        opt = ScipyOptimiser("COBYQA", 5, no_op)
+    @pytest.mark.parametrize("alg", ["COBYLA_SCIPY", "COBYQA"])
+    def test_add_eq_constraint_cobyqa_scipy(self, alg):
+        opt = ScipyOptimiser(alg, 5, no_op)
         opt.add_eq_constraint(lambda _: -1, np.array(1), lambda _: 2)
         assert len(opt._eq_constraints) == 1
         result = opt._eq_constraints[0].fun(np.zeros(1))
@@ -229,24 +202,24 @@ class TestScipyOptimiser:
         with pytest.raises(OptimisationError):
             opt.add_ineq_constraint(no_op, np.zeros(2))
 
-    @pytest.mark.parametrize("alg", ["SLSQP_SCIPY", "COBYLA_SCIPY"])
-    def test_add_ineq_constraint_sets_ineq_constraint_scipy(self, alg):
-        opt = ScipyOptimiser(alg, 5, no_op)
+    def test_add_ineq_constraint_sets_ineq_constraint_scipy(self):
+        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op)
         opt.add_ineq_constraint(lambda _: -1, np.array(1), lambda _: 2)
         assert len(opt._ineq_constraints) == 1
         result = opt._ineq_constraints[0]["fun"](np.zeros(1))
         grad = opt._ineq_constraints[0]["jac"](np.zeros(1))
-        np.testing.assert_equal(result, 1)  # ineq flipped for scipy
+        np.testing.assert_equal(result, 1)  # ineq flipped for scipy slsqp only
         np.testing.assert_equal(grad, -2)
 
-    def test_add_ineq_constraint_cobyqa_scipy(self):
-        opt = ScipyOptimiser("COBYQA", 5, no_op)
+    @pytest.mark.parametrize("alg", ["COBYLA_SCIPY", "COBYQA"])
+    def test_add_ineq_constraint_cobyqa_scipy(self, alg):
+        opt = ScipyOptimiser(alg, 5, no_op)
         opt.add_ineq_constraint(lambda _: -1, np.array(1), lambda _: 2)
         assert len(opt._ineq_constraints) == 1
         result = opt._ineq_constraints[0].fun(np.zeros(1))
         grad = opt._ineq_constraints[0].jac(np.zeros(1))
-        np.testing.assert_equal(result, 1)  # ineq flipped for scipy
-        np.testing.assert_equal(grad, -2)
+        np.testing.assert_equal(result, -1)
+        np.testing.assert_equal(grad, 2)
 
     def test_valueerror_setting_lower_bounds_with_wrong_dims_scipy(self):
         opt = ScipyOptimiser("SLSQP_SCIPY", 2, no_op)
