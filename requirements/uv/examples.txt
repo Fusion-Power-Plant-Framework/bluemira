@@ -170,7 +170,7 @@ jupyter-server==2.17.0
     #   notebook-shim
 jupyter-server-terminals==0.5.4
     # via jupyter-server
-jupyterlab==4.5.2
+jupyterlab==4.5.3
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -180,7 +180,7 @@ jupyterlab-server==2.28.0
     #   notebook
 jupyterlab-widgets==3.0.16
     # via ipywidgets
-jupytext==1.19.0
+jupytext==1.19.1
     # via bluemira (pyproject.toml)
 kiwisolver==1.4.9
     # via matplotlib
@@ -238,7 +238,7 @@ nest-asyncio==1.6.0
     # via ipykernel
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
-notebook==7.5.2
+notebook==7.5.3
     # via bluemira (pyproject.toml)
 notebook-shim==0.2.4
     # via
@@ -280,7 +280,7 @@ numpydantic==1.7.0
     # via matproplib
 overrides==7.7.0
     # via jupyter-server
-packaging==25.0
+packaging==26.0
     # via
     #   ipykernel
     #   jupyter-events
@@ -339,7 +339,7 @@ py-cpuinfo==9.0.0
     #   tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pycparser==2.23
+pycparser==3.0
     # via cffi
 pydantic==2.12.5
     # via
@@ -354,7 +354,7 @@ pygments==2.19.2
     #   ipython
     #   nbconvert
     #   rich
-pyparsing==3.3.1
+pyparsing==3.3.2
     # via
     #   matplotlib
     #   periodictable
@@ -399,7 +399,7 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rfc3987-syntax==1.1.0
     # via jsonschema
-rich==14.2.0
+rich==14.3.1
     # via
     #   bluemira (pyproject.toml)
     #   meshio
@@ -420,13 +420,13 @@ seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==2.1.0
     # via jupyter-server
-setuptools==80.9.0
+setuptools==80.10.2
     # via jupyterlab
 six==1.17.0
     # via
     #   python-dateutil
     #   rfc3339-validator
-soupsieve==2.8.2
+soupsieve==2.8.3
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
@@ -503,7 +503,7 @@ vtk==9.3.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
-wcwidth==0.2.14
+wcwidth==0.5.0
     # via prompt-toolkit
 webcolors==25.10.0
     # via jsonschema
