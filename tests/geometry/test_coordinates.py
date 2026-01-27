@@ -326,7 +326,7 @@ class TestCoordinates:
         assert not c.check_ccw(axis=[0, 1, 0])
 
     def test_complicated(self):
-        xyz = trace_torus_orbit(50, 1, 10, 999)
+        xyz = trace_torus_orbit(5, 1, 10, 999)
         c = Coordinates(xyz)
 
         assert not c.is_planar
