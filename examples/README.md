@@ -32,6 +32,21 @@ You should see a bunch of files, which correspond to what's in your bluemira dir
 
 You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 
+## Running Notebooks in VSCode
+
+If you see this error when running VSCode notebook
+
+```bash
+Could not render content for 'application/vnd.jupyter.widget-view+json'
+{"model_id":"...","version_major":2,"version_minor":0}
+```
+VSCode may require these additional settings to be added in order to display widgets (and therefore progress bars) properly.
+This is described in [this article](https://github.com/microsoft/vscode-jupyter/wiki/IPyWidget-Support-in-VS-Code-Python) which states you should add the following to your vscode configuration json file.
+
+```json
+"jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
+```
+
 ## Running Notebooks in Jupyter Notebook v7.x (nb7)
 
 Previous versions of Jupyter Notebook (a.k.a nb classic) will open python scripts and markdown documents as notebooks by default. From v7 onwards, to open and run a text notebook (.py or .md extension) as a notebook in Jupyter:
