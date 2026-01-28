@@ -75,7 +75,7 @@ dev = [
     "sphinx-rtd-theme>=2.0.0",
     "sybil",
 ]
-examples = ["notebook", "jupytext"]
+examples = ["notebook", "jupytext", "rich[jupyter]"]
 pinned = [
     "nlopt==2.7.1",
     "numba==0.63.1",

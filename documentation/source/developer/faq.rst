@@ -50,6 +50,27 @@ On MacOS the ``envsubst`` command cannot be found
 
         brew install gettext
 
+.. _vscode:
+
+VSCode Notebook rendering
+-------------------------
+
+
+If you see this error when running VSCode notebook
+
+.. code-block:: bash
+
+    Could not render content for 'application/vnd.jupyter.widget-view+json'
+    {"model_id":"....","version_major":2,"version_minor":0}
+
+VSCode may require these additional settings to be added in order to display widgets (and therefore progress bars) properly.
+This is described in `this article <https://github.com/microsoft/vscode-jupyter/wiki/IPyWidget-Support-in-VS-Code-Python>`_ which states you should add the following to your vscode configuration json file.
+
+.. code-block:: json
+
+    "jupyter.widgetScriptSources": ["jsdelivr.com", "unpkg.com"],
+
+
 .. _wsl:
 
 WSL installation
