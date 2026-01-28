@@ -15,6 +15,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 class NelderMeadParams:
     """Options for Nelder-Mead."""
 
+    maxiter: int | None = None
     disp: bool | None = None
     maxfev: int | None = None
     return_all: bool | None = None
@@ -28,6 +29,7 @@ class NelderMeadParams:
 class PowellParams:
     """Options for Powell."""
 
+    maxiter: int | None = None
     disp: bool | None = None
     xtol: float | None = None
     ftol: float | None = None
@@ -40,6 +42,7 @@ class PowellParams:
 class LBFGSBParams:
     """Options for L-BFGS-B."""
 
+    maxiter: int | None = None
     disp: int | None = None  # deprecated - will be removed in v1.18.0
     maxcor: int | None = None
     ftol: float | None = None
@@ -56,6 +59,7 @@ class LBFGSBParams:
 class TNCParams:
     """Options for TNC."""
 
+    maxiter: int | None = None
     eps: float | Any | None = None
     scale: list[float] | None = None
     offset: float | None = None
@@ -78,6 +82,7 @@ class TNCParams:
 class COBYLAParams:
     """Options for COBYLA."""
 
+    maxiter: int | None = None
     rhobeg: float | None = None
     tol: float | None = None
     disp: int | None = None
@@ -89,6 +94,7 @@ class COBYLAParams:
 class COBYQAParams:
     """Options for COBYQA."""
 
+    maxiter: int | None = None
     disp: bool | None = None
     maxfev: int | None = None
     f_target: float | None = None
@@ -102,6 +108,7 @@ class COBYQAParams:
 class SLSQPParams:
     """Options for SLSQP."""
 
+    maxiter: int | None = None
     ftol: float | None = None
     eps: float | None = None
     disp: bool | None = None
@@ -113,6 +120,7 @@ class SLSQPParams:
 class TrustConstrParams:
     """Options for Trust-Constr."""
 
+    maxiter: int | None = None
     gtol: float | None = None
     xtol: float | None = None
     barrier_tol: float | None = None
@@ -130,7 +138,8 @@ class TrustConstrParams:
 
 def _make_alg_params(
     user_params: Mapping[str, int | float],
-    param_cls: type | None,
+    param_cls: type,
+    overrides: dict[str, str],
 ) -> Mapping[str, int | float]:
     """
     Algorithm parameter factory.
@@ -140,16 +149,31 @@ def _make_alg_params(
     The dataclass associated with the given algorithm,
     with user parameters merged into the default parameters.
     """
-    if not param_cls:
-        return user_params  # no defaults
-    known_keys = asdict(param_cls()).keys()
-    valid_params = {
-        k: v for k, v in user_params.items() if k in known_keys and v is not None
-    }
-    extras = {k: v for k, v in user_params.items() if k not in known_keys}
+    params = dict(user_params)
+
+    if overrides:
+        for old_name, new_name in overrides.items():
+            if old_name in params:
+                params[new_name] = params.pop(old_name)
+
+    known_keys = set(asdict(param_cls()).keys())
+
+    clean_params = {}
+    extras = []
+
+    for key, val in params.items():
+        if key in known_keys:
+            if val is not None:
+                clean_params[key] = val
+        else:
+            clean_params[key] = val
+            extras.append(key)
+
     if extras:
         bluemira_warn(
-            f"Unknown parameters {list(extras)}. They will be passed through anyway."
+            f"Unknown parameters {extras} for {param_cls.__name__}. "
+            "They will be passed through anyway."
         )
         bluemira_print(f"Available parameters are: {list(known_keys)}.")
-    return {**valid_params, **extras}
+
+    return clean_params

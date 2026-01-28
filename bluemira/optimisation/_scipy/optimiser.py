@@ -15,7 +15,6 @@ from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._scipy.conditions import ScipyConditions, _convert_to_scipy
 from bluemira.optimisation._scipy.parameters import _make_alg_params
 from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
 from bluemira.optimisation._tools import (
@@ -54,8 +53,7 @@ class ScipyOptimiser(Optimiser):
 
         self._config = self._get_scipy_config()
 
-        self._set_conditions(opt_conditions or {})
-        self._set_parameters(opt_parameters or {})
+        self._set_parameters({**(opt_conditions or {}), **(opt_parameters or {})})
 
         self.set_lower_bounds(np.ones(n_variables) * -np.inf)
         self.set_upper_bounds(np.ones(n_variables) * np.inf)
@@ -70,16 +68,6 @@ class ScipyOptimiser(Optimiser):
             the optimiser's algorithm.
         """
         return self._algorithm
-
-    @property
-    def opt_conditions(self) -> dict[str, float]:
-        """
-        Returns
-        -------
-        :
-            the optimiser's stopping conditions.
-        """
-        return self._opt_conditions.to_dict()
 
     @property
     def opt_parameters(self) -> Mapping[str, int | float]:
@@ -135,17 +123,12 @@ class ScipyOptimiser(Optimiser):
         """Set the optimiser's algorithm."""
         self._algorithm = Algorithm(alg)
 
-    def _set_conditions(self, opt_conditions: Mapping[str, int | float]) -> None:
-        """Initialise the optimiser's conditions."""
-        self._opt_conditions = ScipyConditions(
-            **_convert_to_scipy(opt_conditions, self._config.condition_overrides),
-        )
-
     def _set_parameters(self, opt_parameters: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's parameters."""
         self._opt_parameters = _make_alg_params(
             opt_parameters,
             self._config.param_cls,
+            self._config.condition_overrides,
         )
 
     def add_eq_constraint(
@@ -325,7 +308,7 @@ class ScipyOptimiser(Optimiser):
                 constraints=self._eq_constraints + self._ineq_constraints,
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
                 tol=None,  # ignore - provide specific tolerance in opt_conditions
-                options={**self.opt_parameters, **self.opt_conditions},
+                options=self.opt_parameters,
             )
         except OptVariablesError as err:
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")
