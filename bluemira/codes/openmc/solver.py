@@ -129,8 +129,7 @@ class Setup(CodesSetup):
         self.source = source
         self._source_rate = 1.0
         self._source_triton_rate = 1.0
-        self.blanket_cell_array = cell_arrays.blanket
-        self.divertor_cell_array = cell_arrays.divertor
+        self.cell_arrays = cell_arrays
         self.pre_cell_model = pre_cell_model
         self.materials = materials
         self.matlist = attrgetter(
@@ -176,14 +175,13 @@ class Setup(CodesSetup):
         self,
         run_mode,
         tally_function: TALLY_FUNCTION_TYPE,
-        blanket_cell_array: BlanketCellArray,
-        divertor_cell_array: DivertorCellArray,
         material_list: list[openmc.Material],
     ):
         out_path = Path(self.out_path, run_mode.name.lower(), "tallies.xml")
         tallies_list = []
         for name, scores, filters in tally_function(
-            material_list, blanket_cell_array, divertor_cell_array
+            material_list,
+            self.cell_arrays,
         ):
             tally = openmc.Tally(name=name)
             tally.scores = [scores]
@@ -216,8 +214,6 @@ class Setup(CodesSetup):
             self._set_tallies(
                 run_mode,
                 tally_function,
-                self.blanket_cell_array,
-                self.divertor_cell_array,
                 self.matlist(self.materials),
             )
         self._source_rate = source_rate
@@ -331,14 +327,15 @@ class Teardown(CodesTeardown):
 
     def __init__(
         self,
-        cells,
+        cell_arrays,
         out_path: str,
         codes_name: str,
     ):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
-        self.cells = cells
+        self.cell_arrays = cell_arrays
+        self.cells = cell_arrays.cells
 
     @staticmethod
     def delete_files(files_created):
@@ -372,6 +369,7 @@ class Teardown(CodesTeardown):
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
             universe,
+            self.cell_arrays,
             source_rate,
             source_triton_rate,
             statepoint_file,
@@ -520,9 +518,7 @@ class OpenMCDAGMCNeutronicsSolver(CodesSolver):
             self.materials,
         )
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(
-            self.cell_arrays.cells, self.out_path, self.name
-        )
+        self._teardown = self.teardown_cls(self.cell_arrays, self.out_path, self.name)
 
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):

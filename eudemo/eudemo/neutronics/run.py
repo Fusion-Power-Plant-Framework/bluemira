@@ -134,9 +134,9 @@ def run_csg_neutronics(
         tally_function=tally_function,
     )
 
-    outputs = solver.execute(build_config.get("run_mode", "run"))
+    outputs = solver.execute()
 
-    if len(outputs) == 2:  # noqa: PLR2004
+    if isinstance(outputs, tuple) and len(outputs) == 2:  # noqa: PLR2004
         res = outputs[0]
         params.update_from_frame(outputs[1])
         bluemira_print(f"CSG TBR: {res.tbr}")
