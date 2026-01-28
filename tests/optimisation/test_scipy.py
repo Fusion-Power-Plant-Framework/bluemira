@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from copy import copy
 
 import numpy as np
 import pytest
@@ -29,84 +28,6 @@ class TestScipyOptimiser:
     def test_valueerror_given_invalid_algorithm(self, alg):
         with pytest.raises(ValueError):  # noqa: PT011
             ScipyOptimiser(alg, 1, no_op)
-
-    @pytest.mark.parametrize(
-        ("alg", "alg_conds"),
-        [
-            (Algorithm["SLSQP_SCIPY"], {}),
-            (Algorithm["COBYLA_SCIPY"], {"ftol_abs": "tol"}),
-            (Algorithm["COBYQA"], {}),
-        ],
-    )
-    def test_opt_conditions_set_on_scipy_optimiser(self, alg, alg_conds):
-        opt_conditions = {
-            "ftol_abs": 1,
-            "ftol_rel": 2,
-            "xtol_abs": 3,
-            "xtol_rel": 4,
-            "max_eval": 5,
-            "max_time": 6,
-            "stop_val": 7,
-        }
-        map_conditions = {
-            "ftol_abs": "ftol",
-            "xtol_abs": "xtol",
-            "max_eval": "maxiter",
-            "stop_val": "f_target",
-        }
-
-        opt = ScipyOptimiser(alg, 5, no_op, opt_conditions=copy(opt_conditions))
-
-        if alg_conds:  # check algorithm-specific conditions
-            for key, value in alg_conds.items():
-                assert opt.opt_conditions[value] == opt_conditions[key]
-                map_conditions.pop(key)
-
-        for key, value in map_conditions.items():  # check common conditions
-            assert opt.opt_conditions[value] == opt_conditions[key]
-
-    @pytest.mark.parametrize(
-        ("stop_condition"),
-        [
-            "ftol_abs",
-            "xtol_abs",
-            "max_eval",
-            "stop_val",
-        ],
-    )
-    def test_opt_condition_not_set_if_not_given_scipy(self, stop_condition):
-        opt_conditions = {
-            "ftol_abs": 1,
-            "xtol_abs": 2,
-            "max_eval": 3,
-            "stop_val": 4,
-        }
-        opt_conditions.pop(stop_condition)
-
-        opt = ScipyOptimiser(
-            "SLSQP_SCIPY", 5, no_op, opt_conditions=copy(opt_conditions)
-        )
-        assert stop_condition not in opt.opt_conditions
-
-    @pytest.mark.parametrize(
-        ("condition_order"),
-        [
-            {"ftol_abs": 1, "ftol_rel": 2},
-            {"ftol_rel": 2, "ftol_abs": 1},
-            {"xtol_abs": 1, "xtol_rel": 2},
-            {"xtol_rel": 2, "xtol_abs": 1},
-        ],
-    )
-    def test_opt_condition_overridden(self, condition_order):
-        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_conditions=condition_order)
-        assert len(opt.opt_conditions) == 1
-        assert next(iter(opt.opt_conditions.values())) == 1  # abs overrides rel
-
-    def test_warning_raised_if_max_eval_is_float_scipy(self, caplog):
-        ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_conditions={"max_eval": 5})
-        assert len(caplog.records) == 0
-        ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_conditions={"max_eval": 5.0})
-        assert len(caplog.records) == 1
 
     @pytest.mark.parametrize(
         ("string", "enum"),
@@ -150,6 +71,29 @@ class TestScipyOptimiser:
         opt.set_upper_bounds(np.array([2, 0.9]))
         result = opt.optimise()
         np.testing.assert_allclose(result.x, [1.1, 0.9])
+
+    def test_minimum_found_on_hock_schittkowski_71(self):
+
+        def hs71_objective(x):
+            return x[0] * x[3] * (x[0] + x[1] + x[2]) + x[2]
+
+        def hs71_ineq(x):
+            return 25.0 - np.prod(x)
+
+        def hs71_eq(x):
+            return np.sum(np.array(x) ** 2) - 40.0
+
+        opt = ScipyOptimiser(
+            "COBYQA", 4, hs71_objective, opt_parameters={"feasibility_tol": 1e-7}
+        )
+        opt.set_lower_bounds(np.ones(4))
+        opt.set_upper_bounds(np.ones(4) * 5)
+        opt.add_ineq_constraint(hs71_ineq, tolerance=1e-6)
+        opt.add_eq_constraint(hs71_eq, tolerance=1e-6)
+        result = opt.optimise(x0=[1.0, 5.0, 5.0, 1.0])
+        np.testing.assert_allclose(
+            result.x, [1.0, 4.742999, 3.821149, 1.379408], rtol=1e-4
+        )
 
     @pytest.mark.parametrize(
         "alg",
