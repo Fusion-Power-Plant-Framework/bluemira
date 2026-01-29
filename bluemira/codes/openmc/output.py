@@ -225,8 +225,9 @@ class OpenMCCSGResult(OpenMCResultBase):
             statepoint, src_rate, "vacuum vessel power"
         )
 
-        total_power, total_power_err = cls._load_filter_power_err(
-            statepoint, src_rate, "total power"
+        total_power = blanket_power + divertor_power + vessel_power
+        total_power_err = np.sqrt(
+            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
         )
 
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
