@@ -360,7 +360,8 @@ class Teardown(CodesTeardown):
         self,
         universe,
         files_created,
-        source,
+        source_rate,
+        source_triton_rate,
         statepoint_file,
         *,
         delete_files: bool = False,
@@ -369,7 +370,8 @@ class Teardown(CodesTeardown):
         result = OpenMCCSGResult.from_run(
             universe,
             self.cell_arrays,
-            source,
+            source_rate,
+            source_triton_rate,
             statepoint_file,
         )
         if delete_files:
@@ -534,7 +536,8 @@ class OpenMCDAGMCNeutronicsSolver(CodesSolver):
             result = teardown(
                 self._setup.universe,
                 self._setup.files_created,
-                self._setup.settings.source,
+                self._setup._source_rate,
+                self._setup._source_triton_rate,
                 Path(
                     self.out_path,
                     run_mode.name.lower(),
