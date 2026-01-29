@@ -198,7 +198,7 @@ class OpenMCCSGResult(OpenMCResultBase):
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
-        src_rate, src_triton_rate = source.src_rate, source.src_triton_rate
+        src_rate, src_triton_rate = source.source_rate, source.source_triton_rate
         cell_names = {}
         mat_names = {}
         for cell_id, _cell in universe.cells.items():
