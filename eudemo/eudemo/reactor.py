@@ -746,6 +746,9 @@ if __name__ == "__main__":
             neutronics_csg = None
 
         reactor.neutronics = NeutronicsManager(zero_d_params, neutronics_csg)
+        import sys
+
+        sys.exit()
 
         vv_thermal_shield = build_vacuum_vessel_thermal_shield(
             reactor_config.params_for("Thermal shield"),
