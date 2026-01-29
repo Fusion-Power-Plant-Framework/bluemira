@@ -14,6 +14,7 @@ import numpy as np
 import openmc
 import pandas as pd
 from tabulate import tabulate
+from tokamak_neutron_source import TokamakNeutronSource
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
@@ -179,6 +180,8 @@ class OpenMCCSGResult(OpenMCResultBase):
     universe: openmc.Universe
     cell_arrays: CellStage
     src_rate: float
+    src_triton_rate: float
+    source: TokamakNeutronSource
     statepoint: openmc.StatePoint
     statepoint_file: str
     cell_names: dict
@@ -190,12 +193,12 @@ class OpenMCCSGResult(OpenMCResultBase):
         cls,
         universe: openmc.Universe,
         cell_arrays: CellStage,
-        src_rate: float,
-        src_triton_rate: float,
+        source: TokamakNeutronSource,
         statepoint_file: Path,
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
+        src_rate, src_triton_rate = source.src_rate, source.src_triton_rate
         cell_names = {}
         mat_names = {}
         for cell_id, _cell in universe.cells.items():
@@ -245,6 +248,8 @@ class OpenMCCSGResult(OpenMCResultBase):
             universe=universe,
             cell_arrays=cell_arrays,
             src_rate=src_rate,
+            src_triton_rate=src_triton_rate,
+            source=source,
             statepoint_file=statepoint_file,
             statepoint=statepoint,
             cell_names=cell_names,
