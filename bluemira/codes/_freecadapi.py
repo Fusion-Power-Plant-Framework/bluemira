@@ -701,7 +701,7 @@ def offset_wire(
     except (ValueError, Base.FreeCADError) as error:
         msg = "\n".join([
             "FreeCAD was unable to make an offset of wire:",
-            f"{error.args[0]['sErrMsg']}",
+            f"{error.args[0]}",
         ])
         raise FreeCADError(msg) from None
 
