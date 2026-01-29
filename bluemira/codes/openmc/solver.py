@@ -534,7 +534,7 @@ class OpenMCDAGMCNeutronicsSolver(CodesSolver):
             result = teardown(
                 self._setup.universe,
                 self._setup.files_created,
-                self.source,
+                self._setup.settings.source,
                 Path(
                     self.out_path,
                     run_mode.name.lower(),
