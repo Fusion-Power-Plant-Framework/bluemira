@@ -79,7 +79,8 @@ def csg_filter_cells(
     return (
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
-        ("total power", "heating", [mat_filter, cell_filter]),
+        ("total power in known materials", "heating", [mat_filter, cell_filter]),
+        ("total power", "heating", [cell_filter]),
         ("divertor power", "heating", [div_cell_filter]),
         ("vacuum vessel power", "heating", [vv_filter]),
         ("breeding blanket power", "heating", [blanket_cell_filter]),

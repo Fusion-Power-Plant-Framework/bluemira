@@ -225,11 +225,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         vessel_power, vessel_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "vacuum vessel power"
         )
-        total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = np.sqrt(
-            blanket_power_err**2 + divertor_power_err**2 + vessel_power_err**2
+        total_power, total_power_err = cls._load_filter_power_err(
+            statepoint, src_rate, "total power"
         )
-
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
         e_mult = cls.energy_multiplication(dt_n_power, total_power)
         e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
@@ -311,7 +309,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
+        heating_df = cls._load_dataframe_from_statepoint(
+            statepoint, "total power in known materials"
+        )
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
