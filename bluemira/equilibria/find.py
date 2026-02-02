@@ -25,8 +25,8 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
+    get_intersect,
     in_polygon,
-    join_intersect,
 )
 from bluemira.utilities.tools import floatify
 
@@ -831,8 +831,8 @@ def find_LCFS_separatrix(
         middle = low + delta / 2
         flux_surface = get_flux_loop(middle)
 
-        ixp = x_point_check(flux_surface, primary_op, primary_xp)
-        if flux_surface.closed and ixp is None:
+        intersection_count = x_point_check(flux_surface, primary_op, primary_xp)
+        if flux_surface.closed and intersection_count <= 1:
             # Middle flux surface is still closed, shift search bounds
             low = middle
 
@@ -876,7 +876,12 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
-def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
+def x_point_check(
+    flux_surface: Coordinates,
+    op: Opoint,
+    xp: Xpoint,
+    tangent_length: float | None = None,
+):
     """
     Check if there are intersections of a flux surface with the
     line tangent to the o-point-x-point vector at the x-point.
@@ -890,16 +895,23 @@ def x_point_check(flux_surface: Coordinates, op: Opoint, xp: Xpoint):
         Primary o-point for an equilibrium
     xp:
         X-point of interest, usually primary
+    tangent_length:
+        Set tangent length, otherwise small default value used
 
     Returns
     -------
     arg_inters:
         Intersection indices
     """
-    length = np.hypot(np.max(flux_surface.x), np.max(np.abs(flux_surface.z)))
-    tanget_line = two_point_angled_line(op, xp, length)  # default theta is tangent
-    _, arg_inters = join_intersect(flux_surface, tanget_line, get_arg=True)
-    return arg_inters.sort()
+    if tangent_length is None:
+        tangent_length = (
+            np.max(flux_surface.x) - np.min(flux_surface.x) * 1e-2
+        )  # small and accounts for plasma size
+    tanget_line = two_point_angled_line(
+        op, xp, tangent_length
+    )  # default theta is tangent
+    inter = np.shape(get_intersect(flux_surface.xz, tanget_line.xz))
+    return inter[1]
 
 
 def two_point_angled_line(

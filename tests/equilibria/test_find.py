@@ -18,8 +18,10 @@ from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_local_minima,
     inv_2x2_matrix,
+    x_point_check,
 )
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
+from bluemira.geometry.coordinates import Coordinates
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -110,6 +112,26 @@ class TestFindLCFSSeparatrix:
                 assert not loop.closed
                 distances = loop.distance_to([primary_xp.x, 0, primary_xp.z])
                 assert np.amin(distances) <= grid_tol
+
+    def test_x_point_check(self):
+        file_path = Path(DATA, "mock_flux_surfaces.json")
+        with open(file_path) as f:
+            fs = json.load(f)
+
+        xp1, xp2 = np.array([[0.0], [0.0], [2.0]]), np.array([[2.0], [0.0], [0.0]])
+        op = np.array([[0.0], [0.0], [0.0]])
+        coords1 = Coordinates({"x": fs["snowman"]["x"], "z": fs["snowman"]["z"]})
+        coords2 = Coordinates({
+            "x": fs["sleepy_snowman"]["x"],
+            "z": fs["sleepy_snowman"]["z"],
+        })
+        theta = 2 * np.pi * np.arange(0, 100)
+        coords3 = Coordinates({"x": 2 * np.cos(theta), "z": 2 * np.sin(theta)})
+
+        assert x_point_check(coords1, op, xp1, tangent_length=2.0) == 2
+        assert x_point_check(coords2, op, xp2, tangent_length=2.0) == 2
+        assert x_point_check(coords3, op, xp1) == 0
+        assert x_point_check(coords3, op, xp2) == 0
 
 
 class TestInPlasma:
