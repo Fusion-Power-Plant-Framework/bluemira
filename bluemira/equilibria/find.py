@@ -905,7 +905,7 @@ def x_point_check(
     """
     if tangent_length is None:
         tangent_length = (
-            np.hypot(np.max(flux_surface.x), np.min(flux_surface.x)) * 1e-2
+            np.max(flux_surface.x) - np.min(flux_surface.x) * 1e-2
         )  # small and accounts for plasma size
     tanget_line = two_point_angled_line(
         op, xp, tangent_length
