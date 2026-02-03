@@ -194,7 +194,6 @@ sh_con_len_opt = MinimalCurrentCOP(
 
 # SOLVE
 program = PicardIterator(
-    sh_eq_solved,
     sh_con_len_opt,
     fixed_coils=True,
     convergence=DudsonConvergence(1e-2),

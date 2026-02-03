@@ -294,7 +294,6 @@ unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
     eq, magnetic_targets, gamma=1e-8
 )
 unconstrained_iterator = PicardIterator(
-    eq,
     unconstrained_cop,
     fixed_coils=True,
     relaxation=0.3,
@@ -375,7 +374,6 @@ opt_problem = TikhonovCurrentCOP(
     constraints=[field_constraints, x_point, lcfs_isoflux, legs_isoflux],
 )
 constrained_iterator = PicardIterator(
-    eq,
     opt_problem,
     fixed_coils=True,
     relaxation=0.1,

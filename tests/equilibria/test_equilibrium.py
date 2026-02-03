@@ -63,7 +63,7 @@ class TestFields:
 
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(eq, targets, gamma=1e-8)
 
-        program = PicardIterator(eq, opt_problem, relaxation=0.1)
+        program = PicardIterator(opt_problem, relaxation=0.1)
         program()
         cls.eq = eq
 
@@ -266,7 +266,6 @@ class TestSolveEquilibrium:
             eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
@@ -289,7 +288,6 @@ class TestSolveEquilibrium:
             eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=DudsonConvergence(1e-1),
             fixed_coils=True,
@@ -324,7 +322,6 @@ class TestSolveEquilibrium:
             eq, self.targets, gamma=1e-8
         )
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=DudsonConvergence(1e-2),
             fixed_coils=True,
