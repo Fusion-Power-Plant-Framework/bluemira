@@ -121,7 +121,12 @@ class TestComponentDisplayer:
 
 
 class TestGeometryDisplayer:
-    square_points = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0))
+    square_points = (
+        (0.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+        (1.0, 1.0, 0.0),
+        (0.0, 1.0, 0.0),
+    )
 
     def setup_method(self):
         displayer.ViewerBackend.get_module.cache_clear()
