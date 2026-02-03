@@ -286,14 +286,14 @@ def toroidal_harmonic_grid_and_coil_setup(
     if tau_limit is TauLimit.LCFS:
         lcfs = eq.get_LCFS()
         lcfs_tau, _ = cylindrical_to_toroidal(R_0=R_0, Z_0=Z_0, R=lcfs.x, Z=lcfs.z)
-        min_tau = np.min(lcfs_tau)
+        min_tau = np.min(lcfs_tau) * 1.1
     elif tau_limit is TauLimit.COIL:
         R_corners = np.concatenate((  # noqa: N806
             R_coils + th_coilset.dx,
             R_coils - th_coilset.dx,
             R_coils + th_coilset.dx,
             R_coils - th_coilset.dx,
-        ))
+        )) 
         Z_corners = np.concatenate((  # noqa: N806
             Z_coils - th_coilset.dz,
             Z_coils - th_coilset.dz,
@@ -303,7 +303,7 @@ def toroidal_harmonic_grid_and_coil_setup(
         tau_corners, _ = cylindrical_to_toroidal(
             R_0=R_0, Z_0=Z_0, R=R_corners, Z=Z_corners
         )
-        min_tau = np.max(tau_corners)
+        min_tau = np.max(tau_corners) * 1.01
     else:
         if min_tau_value is None:
             raise EquilibriaError(
@@ -1239,20 +1239,20 @@ def plot_toroidal_harmonic_approximation(
         colors="red",
         linewidths=1,
     )
-    ax.plot(
-        [9, 9],
-        [-5, -5],
-        color="red",
-        lw=1,
-        label="TH coilset psi",
-    )
-    ax.plot(
-        [9, 9],
-        [-5.25, -5.25],
-        color="black",
-        lw=1,
-        label="BM coilset psi",
-    )
+    # ax.plot(
+    #     [9, 9],
+    #     [-5, -5],
+    #     color="red",
+    #     lw=1,
+    #     label="TH coilset psi",
+    # )
+    # ax.plot(
+    #     [9, 9],
+    #     [-5.25, -5.25],
+    #     color="black",
+    #     lw=1,
+    #     label="BM coilset psi",
+    # )
 
     ax.plot(
         approx_fs.x,
