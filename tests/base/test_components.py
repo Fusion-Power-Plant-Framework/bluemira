@@ -224,22 +224,13 @@ class TestComponentClass:
             xyz = Component("xyz", parent=comp)
 
             PhysicalComponent(
-                "pc_xy",
-                parent=xy,
-                shape="pc_xy shape",
-                material="pc_xy material",
+                "pc_xy", parent=xy, shape="pc_xy shape", material="pc_xy material"
             )
             PhysicalComponent(
-                "pc_xz",
-                parent=xz,
-                shape="pc_xz shape",
-                material="pc_xz material",
+                "pc_xz", parent=xz, shape="pc_xz shape", material="pc_xz material"
             )
             PhysicalComponent(
-                "pc_xyz",
-                parent=xyz,
-                shape="pc_xyz shape",
-                material="pc_xyz material",
+                "pc_xyz", parent=xyz, shape="pc_xyz shape", material="pc_xyz material"
             )
 
         attach_dims_and_physical_comps_to(child1a)
@@ -270,22 +261,13 @@ class TestComponentClass:
             xyz = Component("xyz", parent=comp)
 
             PhysicalComponent(
-                "pc_xy",
-                parent=xy,
-                shape="pc_xy shape",
-                material="pc_xy material",
+                "pc_xy", parent=xy, shape="pc_xy shape", material="pc_xy material"
             )
             PhysicalComponent(
-                "pc_xz",
-                parent=xz,
-                shape="pc_xz shape",
-                material="pc_xz material",
+                "pc_xz", parent=xz, shape="pc_xz shape", material="pc_xz material"
             )
             PhysicalComponent(
-                "pc_xyz",
-                parent=xyz,
-                shape="pc_xyz shape",
-                material="pc_xyz material",
+                "pc_xyz", parent=xyz, shape="pc_xyz shape", material="pc_xyz material"
             )
 
         attach_dims_and_physical_comps_to(child1a)

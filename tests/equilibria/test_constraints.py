@@ -132,11 +132,7 @@ class TestConstraintMechanics:
         constraint_set(self.eq)
 
         # Test that weights have been applied
-        problem = TikhonovCurrentCOP(
-            self.eq,
-            constraint_set,
-            gamma=1e-8,
-        )
+        problem = TikhonovCurrentCOP(self.eq, constraint_set, gamma=1e-8)
         problem.optimise(fixed_coils=True)
         _, w_a_mat, w_b_vec = problem.targets.get_weighted_arrays()
         assert np.allclose(w_b_vec, weights * constraint_set.b)

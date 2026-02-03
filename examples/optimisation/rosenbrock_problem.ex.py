@@ -143,7 +143,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
                 "f_constraint": f_constraint,
                 "df_constraint": df_constraint,
                 "tolerance": 1e-6 * np.ones(2),
-            },
+            }
         ],
     )
     t2 = time.time()

@@ -184,9 +184,7 @@ def _interpolate_points(linterp, x, y, z) -> tuple[np.ndarray, np.ndarray, np.nd
 
 
 def interpolate_midpoints(
-    x: np.ndarray,
-    y: np.ndarray,
-    z: np.ndarray,
+    x: np.ndarray, y: np.ndarray, z: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Interpolate the points adding the midpoint of each segment to the points.
@@ -1690,10 +1688,7 @@ class Coordinates:
         self._update_plane_props()
 
     def simplify(
-        self,
-        max_angle: float,
-        dx_min: float,
-        dx_max: float = np.inf,
+        self, max_angle: float, dx_min: float, dx_max: float = np.inf
     ) -> tuple[Coordinates, npt.NDArray[np.int64]]:
         """
         Generate a set of pivot points along the given boundary.

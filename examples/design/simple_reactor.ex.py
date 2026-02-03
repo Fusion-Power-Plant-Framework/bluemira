@@ -201,9 +201,7 @@ class PlasmaBuilder(Builder):
         """
         xz = self.build_xz()
         return self.component_tree(
-            xz=[xz],
-            xy=[Component("")],
-            xyz=[self.build_xyz(xz.shape)],
+            xz=[xz], xy=[Component("")], xyz=[self.build_xyz(xz.shape)]
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -331,9 +329,7 @@ class TFCoilBuilder(Builder):
         Run the full build for the TF coils.
         """
         return self.component_tree(
-            xz=[self.build_xz()],
-            xy=[Component("")],
-            xyz=[self.build_xyz()],
+            xz=[self.build_xz()], xy=[Component("")], xyz=[self.build_xyz()]
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -415,8 +411,8 @@ build_config = {
                 "phi_pos_u": {"value": 0, "unit": "degree", "source": "Input"},
                 "phi_neg_l": {"value": 0, "unit": "degree", "source": "Input"},
                 "phi_pos_l": {"value": 0, "unit": "degree", "source": "Input"},
-            },
-        },
+            }
+        }
     },
     "TF Coil": {
         "params": {},
@@ -442,7 +438,7 @@ build_config = {
                     "source": "Input",
                     "long_name": "Depth of TF coil winding pack",
                 },
-            },
+            }
         },
     },
 }
@@ -468,8 +464,7 @@ plasma_designer = PlasmaDesigner(
 plasma_parameterisation = plasma_designer.execute()
 
 plasma_builder = PlasmaBuilder(
-    plasma_parameterisation.create_shape(),
-    reactor_config.config_for("Plasma"),
+    plasma_parameterisation.create_shape(), reactor_config.config_for("Plasma")
 )
 plasma = Plasma(plasma_builder.build())
 
@@ -484,8 +479,7 @@ tf_coil_designer = TFCoilDesigner(
 tf_parameterisation = tf_coil_designer.execute()
 
 tf_coil_builder = TFCoilBuilder(
-    reactor_config.params_for("TF Coil", "builder"),
-    tf_parameterisation.create_shape(),
+    reactor_config.params_for("TF Coil", "builder"), tf_parameterisation.create_shape()
 )
 tf_coil = TFCoil(tf_coil_builder.build())
 

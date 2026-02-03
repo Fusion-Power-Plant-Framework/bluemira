@@ -345,11 +345,7 @@ class CoilGroupFieldsMixin:
         return np.squeeze(response)
 
     def _points_inside_coil(
-        self,
-        x: float | np.array,
-        z: float | np.array,
-        *,
-        atol: float = X_TOLERANCE,
+        self, x: float | np.array, z: float | np.array, *, atol: float = X_TOLERANCE
     ) -> np.ndarray:
         """
         Determine which points lie inside or on the coil boundary.
@@ -374,14 +370,8 @@ class CoilGroupFieldsMixin:
             np.ascontiguousarray(z)[..., np.newaxis],
         )
 
-        x_min, x_max = (
-            self.x - self.dx - atol,
-            self.x + self.dx + atol,
-        )
-        z_min, z_max = (
-            self.z - self.dz - atol,
-            self.z + self.dz + atol,
-        )
+        x_min, x_max = (self.x - self.dx - atol, self.x + self.dx + atol)
+        z_min, z_max = (self.z - self.dz - atol, self.z + self.dz + atol)
         return (
             (x >= x_min[np.newaxis])
             & (x <= x_max[np.newaxis])
@@ -441,13 +431,7 @@ class CoilGroupFieldsMixin:
             z[..., np.newaxis],
         )
 
-        return np.squeeze(
-            np.einsum(
-                self._einsum_str,
-                out,
-                _quad_weight,
-            )
-        )
+        return np.squeeze(np.einsum(self._einsum_str, out, _quad_weight))
 
     def _response_analytical(
         self,
@@ -754,11 +738,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
     __slots__ = ()
 
     def _points_inside_coil(
-        self,
-        x: float | np.array,
-        z: float | np.array,
-        *,
-        atol: float = X_TOLERANCE,
+        self, x: float | np.array, z: float | np.array, *, atol: float = X_TOLERANCE
     ) -> np.ndarray:
         """
         Determine which points lie inside or on the coil boundary.
@@ -783,14 +763,8 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
             np.ascontiguousarray(z)[..., np.newaxis],
         )
 
-        x_min, x_max = (
-            self.x - self.dx - atol,
-            self.x + self.dx + atol,
-        )
-        z_min, z_max = (
-            self.z - self.dz - atol,
-            self.z + self.dz + atol,
-        )
+        x_min, x_max = (self.x - self.dx - atol, self.x + self.dx + atol)
+        z_min, z_max = (self.z - self.dz - atol, self.z + self.dz + atol)
         return (x >= x_min) & (x <= x_max) & (z >= z_min) & (z <= z_max)
 
     def _combined_control(
@@ -841,12 +815,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         return response
 
     def _response_analytical(
-        self,
-        semianalytic: Callable,
-        x: np.ndarray,
-        z: np.ndarray,
-        *_args,
-        **_kwargs,
+        self, semianalytic: Callable, x: np.ndarray, z: np.ndarray, *_args, **_kwargs
     ) -> np.ndarray:
         """
         Calculate [psi, Bx, Bz] response at (x, z) due to a unit

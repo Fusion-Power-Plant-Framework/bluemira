@@ -67,11 +67,7 @@ default_params = BoPModelParams.from_dict({
 
 # %%
 rad_sep_strat = RadChargedPowerStrategy(
-    f_core_rad_fw=0.9,
-    f_sol_rad=0.75,
-    f_sol_rad_fw=0.8,
-    f_sol_ch_fw=0.8,
-    f_fw_aux=0.09,
+    f_core_rad_fw=0.9, f_sol_rad=0.75, f_sol_rad_fw=0.8, f_sol_ch_fw=0.8, f_fw_aux=0.09
 )
 
 # %% [markdown]

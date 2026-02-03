@@ -162,9 +162,7 @@ def _convertion_progress(*string, **_kwargs):
 
 
 def combine_xml(
-    lib_names: tuple[str, ...],
-    thermal_files: tuple[str, ...],
-    thermal_prefix: Path,
+    lib_names: tuple[str, ...], thermal_files: tuple[str, ...], thermal_prefix: Path
 ):
     """Combine cross_section.xml files from all libraries.
 
@@ -204,9 +202,7 @@ def combine_xml(
 
 
 def download_data(
-    download: Callable,
-    libs: tuple[ModuleType, ...],
-    lib_names: tuple[str, ...],
+    download: Callable, libs: tuple[ModuleType, ...], lib_names: tuple[str, ...]
 ):
     """Download neutronics data"""
     for name, lib in zip(lib_names, libs, strict=False):

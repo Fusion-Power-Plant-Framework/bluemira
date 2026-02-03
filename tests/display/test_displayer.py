@@ -147,9 +147,7 @@ class TestGeometryDisplayer:
 
         displayer.show_cad(wire1, backend=viewer)
         displayer.show_cad(
-            box1,
-            displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
-            backend=viewer,
+            box1, displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)), backend=viewer
         )
         displayer.show_cad([wire1, box1], backend=viewer)
         displayer.show_cad(
@@ -167,10 +165,7 @@ class TestGeometryDisplayer:
             backend=viewer,
         )
         displayer.show_cad(
-            [wire1, box1],
-            color=(1.0, 0.0, 0.0),
-            transparency=0.2,
-            backend=viewer,
+            [wire1, box1], color=(1.0, 0.0, 0.0), transparency=0.2, backend=viewer
         )
 
         with pytest.raises(DisplayError):

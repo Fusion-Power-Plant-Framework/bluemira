@@ -156,14 +156,7 @@ class TestArbitraryPlanarXSCircuit:
     p_inputs = (pd_inputs, ta_inputs, pf_inputs)
     clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
     p_inputs *= 2
-    parameterisations = tuple(
-        [
-            PrincetonD,
-            TripleArc,
-            PictureFrame,
-        ]
-        * 2
-    )
+    parameterisations = tuple([PrincetonD, TripleArc, PictureFrame] * 2)
 
     @pytest.mark.parametrize(
         ("parameterisation", "inputs", "clockwise"),
@@ -177,12 +170,7 @@ class TestArbitraryPlanarXSCircuit:
         coords.set_ccw((0, -1, 0))
         if clockwise:
             coords.set_ccw((0, 1, 0))
-        circuit = ArbitraryPlanarRectangularXSCircuit(
-            coords,
-            0.25,
-            0.5,
-            1.0,
-        )
+        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
         open_circuit = ArbitraryPlanarRectangularXSCircuit(
             coords[:, :25].T, 0.25, 0.5, 1.0
         )
@@ -200,12 +188,7 @@ class TestArbitraryPlanarXSCircuit:
             coords.set_ccw((0, 0, 1))
         else:
             coords.set_ccw((0, 0, -1))
-        circuit = ArbitraryPlanarRectangularXSCircuit(
-            coords,
-            0.25,
-            0.5,
-            1.0,
-        )
+        circuit = ArbitraryPlanarRectangularXSCircuit(coords, 0.25, 0.5, 1.0)
         assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
         assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
 
@@ -225,27 +208,18 @@ class TestArbitraryPlanarXSCircuit:
 
 
 class TestArbitraryPlanarPolyhedralCircuit:
-    discretisations = (
-        make_circle(10).discretise(15),
-        make_circle(5).discretise(5),
-    )
+    discretisations = (make_circle(10).discretise(15), make_circle(5).discretise(5))
 
     @pytest.mark.parametrize("coordinates", discretisations)
     @pytest.mark.parametrize("clockwise", [True, False])
-    def test_circuits_are_continuous_and_chained(
-        self,
-        coordinates,
-        clockwise,
-    ):
+    def test_circuits_are_continuous_and_chained(self, coordinates, clockwise):
         if clockwise:
             coordinates.set_ccw((0, -1, 0))
         else:
             coordinates.set_ccw((0, 1, 0))
 
         circuit = ArbitraryPlanarPolyhedralXSCircuit(
-            coordinates,
-            make_xs_from_bd(0.25, 0.5),
-            1.0,
+            coordinates, make_xs_from_bd(0.25, 0.5), 1.0
         )
 
         n_chain = int(self._calc_daisychain(circuit))
@@ -425,10 +399,7 @@ class TestPolyhedral2DRing:
         np.testing.assert_allclose(psi_calc, psi_true, rtol=0.015)
 
     @pytest.mark.longrun
-    @pytest.mark.parametrize(
-        ("point"),
-        [(2, 0, 6), (6, 0, 6), (2, 0, 2), (6, 0, 2)],
-    )
+    @pytest.mark.parametrize(("point"), [(2, 0, 6), (6, 0, 6), (2, 0, 2), (6, 0, 2)])
     def test_continuity(self, point):
         cBx = semianalytic_Bx(self.radius, self.z, point[0], point[2], 1.0, 1.0)
         cBz = semianalytic_Bz(self.radius, self.z, point[0], point[2], 1.0, 1.0)

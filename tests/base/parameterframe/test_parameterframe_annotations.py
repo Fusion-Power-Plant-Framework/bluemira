@@ -23,10 +23,7 @@ def test_future_annotations_are_typed():
     when we've imported annotations (because of delayed evaluations).
     """
 
-    d = {
-        "a": {"value": 3.14, "unit": ""},
-        "b": {"value": 1, "unit": ""},
-    }
+    d = {"a": {"value": 3.14, "unit": ""}, "b": {"value": 1, "unit": ""}}
 
     f = PFrame.from_dict(d)
 

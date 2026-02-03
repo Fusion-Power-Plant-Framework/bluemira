@@ -58,8 +58,7 @@ class TestLoggingLevel:
         assert exc_info.type is LogsError
 
     @pytest.mark.parametrize(
-        "input_level",
-        [1, "DEBUG", 2, "INFO", 3, "WARNING", 4, "ERROR", 5, "CRITICAL"],
+        "input_level", [1, "DEBUG", 2, "INFO", 3, "WARNING", 4, "ERROR", 5, "CRITICAL"]
     )
     def test_not_error(self, input_level):
         """Testing if errors for invalid log levels are caught."""

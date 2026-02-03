@@ -75,14 +75,8 @@ class OptProblemNoGrad(OptimisationProblem):
 
     def ineq_constraints(self) -> list[ConstraintT]:
         return [
-            {
-                "f_constraint": self.constraint_1,
-                "tolerance": np.full(1, 1e-8),
-            },
-            {
-                "f_constraint": self.constraint_2,
-                "tolerance": np.full(1, 1e-8),
-            },
+            {"f_constraint": self.constraint_1, "tolerance": np.full(1, 1e-8)},
+            {"f_constraint": self.constraint_2, "tolerance": np.full(1, 1e-8)},
         ]
 
     def bounds(self) -> tuple[np.ndarray, np.ndarray]:

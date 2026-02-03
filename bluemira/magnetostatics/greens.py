@@ -371,9 +371,7 @@ def calc_a_k2(
 
 
 @nb.jit(nopython=True)
-def calc_e_k(
-    k2: float | np.ndarray,
-):
+def calc_e_k(k2: float | np.ndarray):
     """
     Calculate the elliptic integral of both the first and second kind.
 

@@ -255,28 +255,11 @@ class TestPolyhedralCoordinates:
             ],
         })
         cls.hexagon = PolyhedralPrismCurrentSource(
-            [0, 0, 0],
-            [10, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            coords,
-            10,
-            10,
-            1e6,
+            [0, 0, 0], [10, 0, 0], [0, 1, 0], [0, 0, 1], coords, 10, 10, 1e6
         )
-        coords = Coordinates({
-            "x": [-1, 1, 0],
-            "z": [-0.5, -0.5, 0.25],
-        })
+        coords = Coordinates({"x": [-1, 1, 0], "z": [-0.5, -0.5, 0.25]})
         cls.triangle = PolyhedralPrismCurrentSource(
-            [0, 0, 0],
-            [10, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            coords,
-            10,
-            10,
-            1e6,
+            [0, 0, 0], [10, 0, 0], [0, 1, 0], [0, 0, 1], coords, 10, 10, 1e6
         )
 
     @pytest.mark.parametrize("plane", ["y", "z"])
@@ -322,14 +305,7 @@ class TestCombinedShapes:
         current = 1e6
         coords = Coordinates({"x": [-1, -1, 1, 1], "z": [1, -1, -1, 1]})
         cls.square = PolyhedralPrismCurrentSource(
-            [0, 0, 0],
-            [10, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            coords,
-            10,
-            10,
-            current,
+            [0, 0, 0], [10, 0, 0], [0, 1, 0], [0, 0, 1], coords, 10, 10, current
         )
         coords = Coordinates({"x": [-1, -1, 1], "z": [1, -1, -1]})
         offset_yz = 1 / 3
@@ -397,24 +373,10 @@ class TestXSCoordinateInputting:
         xs = Coordinates({"x": [-1, -1, 1, 1], "z": [1, -1, -1, 1]})
         xs2 = Coordinates({"x": [1, 1, 3, 3], "z": [3, 1, 1, 3]})
         cls.source1 = PolyhedralPrismCurrentSource(
-            [0, 2, 2],
-            [10, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            xs,
-            10,
-            10,
-            current,
+            [0, 2, 2], [10, 0, 0], [0, 1, 0], [0, 0, 1], xs, 10, 10, current
         )
         cls.source2 = PolyhedralPrismCurrentSource(
-            [0, 2, 2],
-            [10, 0, 0],
-            [0, 1, 0],
-            [0, 0, 1],
-            xs2,
-            10,
-            10,
-            current,
+            [0, 2, 2], [10, 0, 0], [0, 1, 0], [0, 0, 1], xs2, 10, 10, current
         )
 
     def test_coords(self):

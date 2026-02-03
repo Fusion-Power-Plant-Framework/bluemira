@@ -161,12 +161,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
     tally_geom: openmc.Geometry | CellStage
 
     def __init__(
-        self,
-        codes_name: str,
-        cross_section_xml: str,
-        eq: Equilibrium,
-        source,
-        materials,
+        self, codes_name: str, cross_section_xml: str, eq: Equilibrium, source, materials
     ):
         super().__init__(None, codes_name)
 
@@ -310,10 +305,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         ]
         width = raw_uc([plot_width_0, plot_width_1], "m", "cm")
 
-        return (
-            self._create_model(settings),
-            PlotConfig(width, pixels, basis),
-        )
+        return (self._create_model(settings), PlotConfig(width, pixels, basis))
 
     def _volume(
         self, run_mode, runtime_params, domain, bounding_box, *, debug: bool = False
@@ -381,11 +373,7 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         return universe, geometry
 
     def plot(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
+        self, run_mode, runtime_params, *_args, debug: bool = False
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot an openmc run"""
         return self._plot(
@@ -393,11 +381,7 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         )
 
     def volume(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
+        self, run_mode, runtime_params, *_args, debug: bool = False
     ) -> tuple[openmc.Model, None]:
         """Volume calculation on openmc run"""
         return self._volume(
@@ -426,8 +410,7 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
 
     def _create_geometry(self):
         universe = openmc.DAGMCUniverse(
-            filename=self.dag_model_path.as_posix(),
-            auto_geom_ids=True,
+            filename=self.dag_model_path.as_posix(), auto_geom_ids=True
         ).bounded_universe()
         geometry = openmc.Geometry(universe)
         return universe, geometry
@@ -443,21 +426,13 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         return self.geometry
 
     def plot(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
+        self, run_mode, runtime_params, *_args, debug: bool = False
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot an openmc run"""
         return self._plot(run_mode, runtime_params, debug=debug)
 
     def volume(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
+        self, run_mode, runtime_params, *_args, debug: bool = False
     ) -> tuple[openmc.Model, None]:
         """Volume calculation on openmc run"""
         return self._volume(
@@ -486,10 +461,7 @@ class OpenMCRun(CodesTask):
             "Executed in",
             f"Running OpenMC in {folder} mode",
             debug_info_str=False,
-        )(
-            openmc_exec="openmc",
-            **kwargs,
-        )
+        )(openmc_exec="openmc", **kwargs)
 
     def run(
         self, run_mode, model: openmc.Model, _config: SourceInfo, *, debug: bool = False
@@ -563,12 +535,7 @@ class OpenMCCSGTeardown(CodesTeardown):
         self.cell_arrays = cell_arrays
         self.pre_cell_model = pre_cell_model
 
-    def run(
-        self,
-        universe,
-        source_info: SourceInfo,
-        statepoint_file,
-    ):
+    def run(self, universe, source_info: SourceInfo, statepoint_file):
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
             universe,
@@ -587,12 +554,7 @@ class OpenMCCSGTeardown(CodesTeardown):
         fig.axis.get_figure().savefig(fig.path)
         return fig.axis
 
-    def volume(
-        self,
-        _universe,
-        _source_params,
-        _statepoint_file,
-    ) -> dict[int, float]:
+    def volume(self, _universe, _source_params, _statepoint_file) -> dict[int, float]:
         """Stochastic volume stage for teardown task"""
         return {
             cell.id: raw_uc(
@@ -634,9 +596,7 @@ class OpenMCDAGTeardown(CodesTeardown):
 TALLY_FUNCTION_TYPE = Callable[
     [list[openmc.Material], CellStage | openmc.Geometry],
     tuple[
-        str,
-        str,
-        list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter],
+        str, str, list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter]
     ],
 ]
 
@@ -748,12 +708,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         op_cond: OperationalConditions,
         tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
-        super().__init__(
-            params,
-            build_config,
-            eq,
-            source,
-        )
+        super().__init__(params, build_config, eq, source)
         self.neutronics_model = neutronics_model
         self.materials = MaterialsLibrary.from_neutronics_materials(
             self.neutronics_model.material_library, op_cond
@@ -790,10 +745,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(
-            self.cell_arrays,
-            self.neutronics_model,
-            self.out_path,
-            self.name,
+            self.cell_arrays, self.neutronics_model, self.out_path, self.name
         )
 
         return super()._single_run(run_mode, source_params, runtime_params, debug=debug)
@@ -815,12 +767,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         materials,
         tally_function: TALLY_FUNCTION_TYPE | None = None,
     ):
-        super().__init__(
-            params,
-            build_config,
-            eq,
-            source,
-        )
+        super().__init__(params, build_config, eq, source)
         self.dagmc_model_path = dagmc_model_path
         self.materials = materials
 
@@ -851,8 +798,5 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         )
 
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(
-            self.out_path,
-            self.name,
-        )
+        self._teardown = self.teardown_cls(self.out_path, self.name)
         return super()._single_run(run_mode, source_params, runtime_params, debug=debug)

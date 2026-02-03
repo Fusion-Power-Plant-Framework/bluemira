@@ -790,12 +790,7 @@ class TFCoilJointsModel(PROCESSModel):
     NO_JOINTS = 0
     SLIDING_JOINTS = (
         1,
-        (
-            "tho_tf_joints",
-            "n_tf_joints_contact",
-            "n_tf_joints",
-            "th_joint_contact",
-        ),
+        ("tho_tf_joints", "n_tf_joints_contact", "n_tf_joints", "th_joint_contact"),
     )
 
 
@@ -1393,16 +1388,8 @@ class BBCoolantSwitch(PROCESSModel):
         """
         return "i_blkt_dual_coolant"
 
-    SINGLE_FOR_SB = (
-        0,
-        (),
-        "Single coolant, Solid Breeder",
-    )
-    SINGLE_FOR_LB = (
-        1,
-        ("n_liq_recirc",),
-        "Single coolant, Liquid metal breeder",
-    )
+    SINGLE_FOR_SB = 0, (), "Single coolant, Solid Breeder"
+    SINGLE_FOR_LB = 1, ("n_liq_recirc",), "Single coolant, Liquid metal breeder"
     DUAL = 2, (), "Dual coolant"
 
 
@@ -1418,16 +1405,8 @@ class FlowChannelInsertSwitch(PROCESSModel):
         """
         return "i_blkt_liquid_breeder_channel_type"
 
-    THIN = (
-        0,
-        ("bz_channel_conduct_liq",),
-        "Thin conducting walls",
-    )
-    INS_PERFECT = (
-        1,
-        (),
-        "Insulating Material, perfect electrical insulator",
-    )
+    THIN = 0, ("bz_channel_conduct_liq",), "Thin conducting walls"
+    INS_PERFECT = 1, (), "Insulating Material, perfect electrical insulator"
     INS_INPUT = (
         2,
         ("bz_channel_conduct_liq",),

@@ -155,12 +155,7 @@ class PlugManagerMixin(OrphanerMixin):
 
         angle = 180 / n_TF
         self._make_2d_views(
-            component,
-            xyz_comp,
-            plugs,
-            angle,
-            color_list[0],
-            color_list[1],
+            component, xyz_comp, plugs, angle, color_list[0], color_list[1]
         )
 
 

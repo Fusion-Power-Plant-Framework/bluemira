@@ -232,6 +232,5 @@ class TestTFCoilBuilder:
             + self.params["tk_tf_front_ib"]["value"]
         )
         assert np.isclose(
-            ib_cas.shape.bounding_box.x_max - ib_cas.shape.bounding_box.x_min,
-            case_thick,
+            ib_cas.shape.bounding_box.x_max - ib_cas.shape.bounding_box.x_min, case_thick
         )

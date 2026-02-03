@@ -10,7 +10,4 @@ The API for Python OCC.
 from bluemira.codes.python_occ.imprint_solids import imprint_solids
 from bluemira.codes.python_occ.imprintable_solid import ImprintableSolid
 
-__all__ = [
-    "ImprintableSolid",
-    "imprint_solids",
-]
+__all__ = ["ImprintableSolid", "imprint_solids"]

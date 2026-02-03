@@ -348,10 +348,7 @@ class NloptOptimiser(Optimiser):
         self._algorithm = _check_algorithm(alg)
 
     def _set_objective_function(
-        self,
-        func: ObjectiveCallable,
-        df: OptimiserCallable | None,
-        n_variables: int,
+        self, func: ObjectiveCallable, df: OptimiserCallable | None, n_variables: int
     ) -> None:
         """Wrap and set the objective function."""
         self._objective = ObjectiveFunction(

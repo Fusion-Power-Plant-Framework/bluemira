@@ -34,12 +34,7 @@ class TestSimpleABConstraintFuntions:
         cls.scale = [1.0, 0.1]
 
     def constraint_setup(self, v, s, constraint):
-        return constraint(
-            a_mat=self.a_mat,
-            b_vec=self.b_vec,
-            value=v,
-            scale=s,
-        )
+        return constraint(a_mat=self.a_mat, b_vec=self.b_vec, value=v, scale=s)
 
     def test_AxBConstraint(self):
         f_res = [-1.0, -1.0]
@@ -157,10 +152,7 @@ class TestEquilibriumInput:
         constraint = [0.2, -0.2, 0.1, -0.1]
         for b, r, c in zip(ib_bool, radius, constraint, strict=False):
             cmc = CurrentMidplanceConstraint(
-                eq=self.eq,
-                radius=r,
-                scale=self.scale,
-                inboard=b,
+                eq=self.eq, radius=r, scale=self.scale, inboard=b
             )
             assert cmc.f_constraint(self.vector) == pytest.approx(c)
 

@@ -38,13 +38,7 @@ except ImportError:
 class _Imprinter:
     """Imprints solids together using the BOPAlgo_MakeConnected algorithm."""
 
-    def __init__(
-        self,
-        *,
-        run_parallel=False,
-        parallel_mode=False,
-        use_obb=False,
-    ):
+    def __init__(self, *, run_parallel=False, parallel_mode=False, use_obb=False):
         self._imprint_builder = BOPAlgo_MakeConnected()
         self._imprint_builder.SetRunParallel(run_parallel)
         self._imprint_builder.SetParallelMode(parallel_mode)
@@ -185,10 +179,7 @@ class ImprintResult:
 
 @occ_guard
 def imprint_solids(
-    solids: Collection[BluemiraSolid],
-    labels: Collection[str] | str,
-    *,
-    use_cgal=True,
+    solids: Collection[BluemiraSolid], labels: Collection[str] | str, *, use_cgal=True
 ) -> ImprintResult:
     """Imprints solids together.
 

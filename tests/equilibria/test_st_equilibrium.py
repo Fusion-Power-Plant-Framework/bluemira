@@ -165,11 +165,7 @@ class TestSTEquilibrium:
 
         constraint_set = MagneticConstraintSet([
             IsofluxConstraint(
-                xx,
-                zz,
-                ref_x=inboard_iso[0],
-                ref_z=inboard_iso[1],
-                constraint_value=0.0,
+                xx, zz, ref_x=inboard_iso[0], ref_z=inboard_iso[1], constraint_value=0.0
             )
         ])
 
@@ -193,11 +189,7 @@ class TestSTEquilibrium:
         criterion = DudsonConvergence(build_tweaks["fbe_convergence_crit"])
 
         fbe_iterator = PicardIterator(
-            eq,
-            opt_problem,
-            relaxation=0.3,
-            maxiter=400,
-            convergence=criterion,
+            eq, opt_problem, relaxation=0.3, maxiter=400, convergence=criterion
         )
         fbe_iterator()
         self.eq = eq

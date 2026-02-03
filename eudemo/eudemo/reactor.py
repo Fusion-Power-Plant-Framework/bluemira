@@ -33,10 +33,7 @@ from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.logs import set_log_level
-from bluemira.base.look_and_feel import (
-    bluemira_error,
-    bluemira_print,
-)
+from bluemira.base.look_and_feel import bluemira_error, bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
@@ -146,10 +143,7 @@ def build_reference_equilibrium(
         The reference equilibrium
     """
     designer = ReferenceFreeBoundaryEquilibriumDesigner(
-        params,
-        build_config,
-        lcfs_coords,
-        profiles,
+        params, build_config, lcfs_coords, profiles
     )
     reference_eq = designer.execute()
     constraints = None
@@ -221,12 +215,7 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
     :
         Cryostat thermal shield component manager
     """
-    cts_builder = CryostatTSBuilder(
-        params,
-        build_config,
-        pf_kozs,
-        tf_koz,
-    )
+    cts_builder = CryostatTSBuilder(params, build_config, pf_kozs, tf_koz)
     return CryostatThermalShield(cts_builder.build())
 
 
@@ -344,11 +333,7 @@ def build_pf_coils(
 
 
 def build_coil_structures(
-    params,
-    build_config,
-    tf_coil_xz_face,
-    pf_coil_xz_wires,
-    pf_coil_keep_out_zones,
+    params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
 ) -> CoilStructures:
     """
     Design and build the coil structures for the reactor.
@@ -645,10 +630,7 @@ if __name__ == "__main__":
     try:
         start = time.time()
         reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
-        reactor = EUDEMO(
-            "EUDEMO",
-            n_sectors=reactor_config.global_params.n_TF.value,
-        )
+        reactor = EUDEMO("EUDEMO", n_sectors=reactor_config.global_params.n_TF.value)
 
         establish_material_cache([
             "eudemo.materials",
@@ -884,13 +866,11 @@ if __name__ == "__main__":
         )
 
         reactor.cryostat.add_plugs(
-            cr_plugs,
-            n_TF=reactor_config.global_params.n_TF.value,
+            cr_plugs, n_TF=reactor_config.global_params.n_TF.value
         )
 
         reactor.radiation_shield.add_plugs(
-            rs_plugs,
-            n_TF=reactor_config.global_params.n_TF.value,
+            rs_plugs, n_TF=reactor_config.global_params.n_TF.value
         )
 
         reactor.neutronics.dagmc = run_dagmc_neutronics(

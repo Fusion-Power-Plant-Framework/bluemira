@@ -298,11 +298,7 @@ def calc_energy(eq: Equilibrium) -> float:
         Stored poloidal magnetic energy
     """
     return _calc_Bp2_int(
-        Bp=eq.Bp(),
-        mask=in_plasma(eq.x, eq.z, eq.psi()),
-        x=eq.x,
-        dx=eq.dx,
-        dz=eq.dz,
+        Bp=eq.Bp(), mask=in_plasma(eq.x, eq.z, eq.psi()), x=eq.x, dx=eq.dx, dz=eq.dz
     ) / (2 * MU_0)
 
 
@@ -479,13 +475,7 @@ def calc_p_average(eq: Equilibrium) -> float:
     -------
     The average plasma pressure [Pa]
     """
-    return _calc_p_average(
-        eq.pressure_map(),
-        eq.get_LCFS(),
-        eq.x,
-        eq.dz,
-        eq.dz,
-    )
+    return _calc_p_average(eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dz, eq.dz)
 
 
 def _calc_p_average(
@@ -593,12 +583,7 @@ def calc_beta_p(eq: Equilibrium) -> float:
     Ratio of plasma to magnetic pressure
     """
     return _calc_beta_p(
-        eq.pressure_map(),
-        eq.Bp(),
-        eq._get_core_mask(),
-        eq.x,
-        eq.dx,
-        eq.dz,
+        eq.pressure_map(), eq.Bp(), eq._get_core_mask(), eq.x, eq.dx, eq.dz
     )
 
 
@@ -789,12 +774,7 @@ class EqSummary(ParameterFrame):
             V=Parameter(
                 "V", calc_volume(f100.coords), "m^3", eq_name, long_name="plasma_volume"
             ),
-            beta_p=Parameter(
-                "beta_p",
-                calc_beta_p(eq),
-                "",
-                eq_name,
-            ),
+            beta_p=Parameter("beta_p", calc_beta_p(eq), "", eq_name),
             q_95=Parameter("q_95", f95.safety_factor(eq), "", eq_name),
             R_0=Parameter("R_0", f100.major_radius, "m", eq_name),
             A=Parameter("A", f100.aspect_ratio, "", eq_name, long_name="aspect_ratio"),

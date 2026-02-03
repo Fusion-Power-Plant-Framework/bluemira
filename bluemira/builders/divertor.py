@@ -67,9 +67,7 @@ class DivertorBuilder(Builder):
         Build the divertor component.
         """  # noqa: DOC201
         return self.component_tree(
-            xz=[self.build_xz()],
-            xy=[],
-            xyz=self.build_xyz(degree=0),
+            xz=[self.build_xz()], xy=[], xyz=self.build_xyz(degree=0)
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -96,9 +94,7 @@ class DivertorBuilder(Builder):
         segments = []
         for no, shape in enumerate(shapes):
             segment = PhysicalComponent(
-                f"{self.SEGMENT_PREFIX}_{no}",
-                shape,
-                material=self.get_material(),
+                f"{self.SEGMENT_PREFIX}_{no}", shape, material=self.get_material()
             )
             apply_component_display_options(segment, BLUE_PALETTE[self.DIV][no])
             segments.append(segment)

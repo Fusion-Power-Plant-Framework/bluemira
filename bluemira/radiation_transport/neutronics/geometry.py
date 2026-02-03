@@ -53,11 +53,7 @@ class BlanketThickness:
         :
             Depths of the interface between layers.
         """
-        return np.cumsum([
-            self.surface,
-            self.first_wall,
-            self.breeding_zone,
-        ])
+        return np.cumsum([self.surface, self.first_wall, self.breeding_zone])
 
 
 @dataclass

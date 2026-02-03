@@ -23,10 +23,7 @@ from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin, CoilSetFieldsMixin
-from bluemira.equilibria.coils._tools import (
-    _get_symmetric_coils,
-    get_max_current,
-)
+from bluemira.equilibria.coils._tools import _get_symmetric_coils, get_max_current
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
@@ -104,13 +101,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         Coils and groups of Coils to group
     """
 
-    __slots__ = (
-        "_Bx_analytic",
-        "_Bz_analytic",
-        "_coils",
-        "_pad_size",
-        "_psi_analytic",
-    )
+    __slots__ = ("_Bx_analytic", "_Bz_analytic", "_coils", "_pad_size", "_psi_analytic")
 
     def __init__(
         self,
@@ -519,10 +510,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         result._einsum_str = self._einsum_str
         return result
 
-    def _pad_discretisation(
-        self,
-        _to_pad: list[np.ndarray],
-    ):
+    def _pad_discretisation(self, _to_pad: list[np.ndarray]):
         """
         Convert quadrature list of array to rectangular arrays.
         Padding quadrature arrays with zeros to allow array operations
@@ -1345,11 +1333,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         xs, zs = self._get_opt_positions(position_coil_names)
         currents = self._opt_currents / current_scale
-        return CoilSetOptimisationState(
-            currents=currents,
-            xs=xs,
-            zs=zs,
-        )
+        return CoilSetOptimisationState(currents=currents, xs=xs, zs=zs)
 
     def set_optimisation_state(
         self,

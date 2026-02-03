@@ -45,9 +45,7 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    MagneticConstraintSet,
-)
+from bluemira.equilibria.optimisation.constraints import MagneticConstraintSet
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     fs_fit_metric,
 )
@@ -63,10 +61,7 @@ from bluemira.equilibria.optimisation.problem._tikhonov import (
     TikhonovCurrentCOP,  # noqa: PLC2701
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
-)
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Data from EQDSK file
@@ -132,8 +127,7 @@ plt.show()
 # %%
 # Create a constraint
 th_constraint = ToroidalHarmonicConstraint(
-    th_result=result,
-    constraint_type="inequality",
+    th_result=result, constraint_type="inequality"
 )
 # Ensure control coils are set to those that can be used in the toroidal
 # harmonic approximation

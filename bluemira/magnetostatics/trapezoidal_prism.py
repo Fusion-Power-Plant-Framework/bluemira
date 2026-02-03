@@ -20,10 +20,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import MU_0_4PI
-from bluemira.magnetostatics.baseclass import (
-    CrossSectionCurrentSource,
-    PrismEndCapMixin,
-)
+from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource, PrismEndCapMixin
 from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["TrapezoidalPrismCurrentSource"]

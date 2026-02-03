@@ -444,9 +444,7 @@ class PulsedCoilsetDesign(ABC):
             o_point_fallback=self.eq_config.o_point_fallback,
         )
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-            eq,
-            MagneticConstraintSet(self.eq_constraints),
-            gamma=self.eq_config.gamma,
+            eq, MagneticConstraintSet(self.eq_constraints), gamma=self.eq_config.gamma
         )
         program = PicardIterator(
             eq,
@@ -753,9 +751,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
     def _prepare_coilset(self, coilset: CoilSet) -> CoilSet:
         coilset = deepcopy(coilset)
         coilset.discretisation = np.where(
-            coilset._flag_sizefix,
-            self.eq_config.coil_mesh_size,
-            coilset.discretisation,
+            coilset._flag_sizefix, self.eq_config.coil_mesh_size, coilset.discretisation
         )
         return coilset
 

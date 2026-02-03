@@ -128,16 +128,10 @@ print(m.get_gmsh_dict(buffer))
 # ## Convert to xdmf
 
 # %%
-msh_to_xdmf(
-    "Mesh.msh",
-    dimensions=(0, 2),
-    directory=directory,
-)
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
 mesh, boundaries, subdomains, labels = import_mesh(
-    "Mesh",
-    directory=directory,
-    subdomains=True,
+    "Mesh", directory=directory, subdomains=True
 )
 
 plot_dolfinx_mesh(mesh)

@@ -215,10 +215,7 @@ class LegFlux:
         # --- Single Null ---
         if self.n_null == NumNull.SN:
             leg_dict = get_single_null_legs(
-                self.separatrix,
-                self.delta,
-                self.o_point,
-                self.x_points,
+                self.separatrix, self.delta, self.o_point, self.x_points
             )
             if self.dx_offsets is not None:
                 return self.get_leg_offsets(leg_dict)
@@ -238,10 +235,7 @@ class LegFlux:
             return leg_dict
 
         leg_dict = get_legs_double_null_xsplit(
-            self.separatrix,
-            self.delta,
-            self.x_points,
-            self.o_point,
+            self.separatrix, self.delta, self.x_points, self.o_point
         )
         if self.dx_offsets is not None:
             return self.get_leg_offsets(leg_dict)
@@ -297,13 +291,7 @@ def get_single_null_legs(separatrix, delta, o_point, x_points, imin=None):
     :
         The legs from a single null separatrix as a dictionary.
     """
-    sorted_legs = get_leg_list(
-        separatrix,
-        delta,
-        o_p=o_point,
-        x_p=x_points,
-        imin=imin,
-    )
+    sorted_legs = get_leg_list(separatrix, delta, o_p=o_point, x_p=x_points, imin=imin)
     return add_pair_to_dict(sorted_legs, x_p=x_points, o_p=o_point)
 
 
@@ -369,12 +357,7 @@ def get_legs_double_null_zsplit(separatrix, delta, x_points, o_point, x_range_lc
     if z_range.any():
         i = np.argmin(np.abs(z_range))
         imin = i_range[i]
-        no_plasma_legs = get_leg_list(
-            separatrix[1],
-            delta,
-            o_p=o_point,
-            imin=imin,
-        )
+        no_plasma_legs = get_leg_list(separatrix[1], delta, o_p=o_point, imin=imin)
     else:
         no_plasma_legs = None
 
@@ -433,12 +416,7 @@ def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> 
     for dx in dx_offsets:
         x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
         xl, zl = find_flux_surface_through_point(
-            eq.x,
-            eq.z,
-            eq.psi(),
-            x,
-            z,
-            eq.psi(x, z),
+            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
         )
         offset_legs.append(
             _extract_leg(Coordinates({"x": xl, "z": zl}), x, z, delta_offsets, o_p.z)
@@ -452,28 +430,15 @@ def add_pair_to_dict(sorted_legs, x_p, o_p):
     """  # noqa: DOC201
     location = "lower" if x_p.z < o_p.z else "upper"
     if sorted_legs is None:
-        return {
-            f"{location}_inner": [None],
-            f"{location}_outer": [None],
-        }
+        return {f"{location}_inner": [None], f"{location}_outer": [None]}
     if len(sorted_legs) <= 1:
-        return {
-            f"{location}_inner": [None],
-            f"{location}_outer": [None],
-        }
+        return {f"{location}_inner": [None], f"{location}_outer": [None]}
     # Legs always sorted IN then OUT
-    return {
-        f"{location}_inner": [sorted_legs[0]],
-        f"{location}_outer": [sorted_legs[1]],
-    }
+    return {f"{location}_inner": [sorted_legs[0]], f"{location}_outer": [sorted_legs[1]]}
 
 
 def _extract_leg(
-    flux_line: Coordinates,
-    x_cut: float,
-    z_cut: float,
-    delta_x: float,
-    o_point_z: float,
+    flux_line: Coordinates, x_cut: float, z_cut: float, delta_x: float, o_point_z: float
 ):
     """Extract legs from a flux surface using a chosen intersection point.
 
@@ -528,10 +493,7 @@ def _extract_leg(
     return flux_legs
 
 
-def _extract_leg_using_index_value(
-    flux_line: Coordinates,
-    i_cut: float,
-):
+def _extract_leg_using_index_value(flux_line: Coordinates, i_cut: float):
     """
     Extract legs from a flux surface using
     an intersection point chosen by index value.
@@ -653,12 +615,7 @@ def calculate_connection_length(
                 "Please use flux surface geometry method or input a target location."
             )
 
-        legflux = LegFlux(
-            eq=eq,
-            psi_n_tol=psi_n_tol,
-            delta_start=delta_start,
-            rtol=rtol,
-        )
+        legflux = LegFlux(eq=eq, psi_n_tol=psi_n_tol, delta_start=delta_start, rtol=rtol)
 
         if legflux.n_null == NumNull.DN:
             if legflux.sort_split == SortSplit.X:
@@ -705,12 +662,7 @@ def calculate_connection_length(
 
     if calculation_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
         return calculate_connection_length_fs(
-            eq=eq,
-            x=x,
-            z=z,
-            forward=forward,
-            first_wall=first_wall,
-            f_s=f_s,
+            eq=eq, x=x, z=z, forward=forward, first_wall=first_wall, f_s=f_s
         )
 
     raise BluemiraError("Please select a valid calculation_method option.")

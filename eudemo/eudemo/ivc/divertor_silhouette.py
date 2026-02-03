@@ -25,11 +25,7 @@ from bluemira.equilibria.find import (
     two_point_angled_line,
 )
 from bluemira.equilibria.find_legs import LegFlux
-from bluemira.geometry.tools import (
-    interpolate_bspline,
-    make_circle,
-    make_polygon,
-)
+from bluemira.geometry.tools import interpolate_bspline, make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
@@ -135,10 +131,7 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
     params: DivertorSilhouetteParams
 
     def __init__(
-        self,
-        params: dict | ParameterFrame,
-        equilibrium: Equilibrium,
-        wall: BluemiraWire,
+        self, params: dict | ParameterFrame, equilibrium: Equilibrium, wall: BluemiraWire
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
@@ -346,15 +339,9 @@ class DivertorSilhouetteDesigner(Designer[tuple[BluemiraWire, ...]]):
         idx_outer = np.argmax(self.x_limits)
 
         blanket_join_point = (
-            np.array([
-                self.x_limits[idx_inner],
-                self.z_limits[idx_inner],
-            ])
+            np.array([self.x_limits[idx_inner], self.z_limits[idx_inner]])
             if label == self.INNER_BAFFLE
-            else np.array([
-                self.x_limits[idx_outer],
-                self.z_limits[idx_outer],
-            ])
+            else np.array([self.x_limits[idx_outer], self.z_limits[idx_outer]])
         )
         target_gradient = grad_xz(target_baffle_join_point, target_dome_join_point)
 

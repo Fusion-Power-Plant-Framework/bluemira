@@ -336,11 +336,7 @@ def solve_transport_fixed_boundary(
             plt.pause(PLT_PAUSE)
             if debug or gif:
                 save_figure(
-                    f,
-                    figname + str(n_iter),
-                    save=True,
-                    folder=folder,
-                    dpi=DPI_GIF,
+                    f, figname + str(n_iter), save=True, folder=folder, dpi=DPI_GIF
                 )
 
         plasma = create_plasma_xz_cross_section(
@@ -353,11 +349,7 @@ def solve_transport_fixed_boundary(
             f"from equilibrium iteration {n_iter}",
         )
 
-        (mesh, _ct, _ft), _labels = create_mesh(
-            plasma,
-            directory,
-            mesh_name_msh,
-        )
+        (mesh, _ct, _ft), _labels = create_mesh(plasma, directory, mesh_name_msh)
 
         # store the created mesh as coarse mesh
         coarse_mesh = mesh
@@ -389,10 +381,7 @@ def solve_transport_fixed_boundary(
             )
 
             x1d, flux_surfaces = get_flux_surfaces_from_mesh(
-                mesh,
-                gs_solver.psi_norm_2d,
-                x_1d=x_psi_plasmod,
-                ny_fs_min=ny_fs_min,
+                mesh, gs_solver.psi_norm_2d, x_1d=x_psi_plasmod, ny_fs_min=ny_fs_min
             )
 
             x1d, volume, _, g2, g3 = calc_metric_coefficients(
@@ -434,18 +423,11 @@ def solve_transport_fixed_boundary(
                 gs_solver.set_mesh(mesh)
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
-            gs_solver.psi_norm_2d,
-            mesh,
-            np.sqrt(0.95),
+            gs_solver.psi_norm_2d, mesh, np.sqrt(0.95)
         )
 
         iter_err = _update_delta_kappa(
-            paramet_params,
-            kappa_95,
-            kappa95_t,
-            delta_95,
-            delta95_t,
-            relaxation,
+            paramet_params, kappa_95, kappa95_t, delta_95, delta95_t, relaxation
         )
 
         bluemira_print(

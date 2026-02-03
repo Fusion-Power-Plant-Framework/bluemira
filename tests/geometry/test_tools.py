@@ -250,7 +250,7 @@ class TestWirePlaneIntersect:
         for plane in [
             BluemiraPlane.from_3_points(
                 [0, shift, 0], [1, shift, 0], [0, shift, 1]
-            ),  # x-z
+            )  # x-z
         ]:
             intersect = slice_shape(generic_wire, plane)
             assert intersect is None
@@ -571,10 +571,7 @@ class TestFindClockwiseAngle2d:
     @pytest.mark.parametrize("value", [[0, 1], 100, "not np.ndarray"])
     @pytest.mark.parametrize("vector_name", ["base", "vector"])
     def test_TypeError_given_input_is_not_ndarray(self, value, vector_name):
-        params = {
-            "base": np.array([0, 1]),
-            "vector": np.array([0, 1]),
-        }
+        params = {"base": np.array([0, 1]), "vector": np.array([0, 1])}
         params[vector_name] = value
 
         with pytest.raises(TypeError):
@@ -583,10 +580,7 @@ class TestFindClockwiseAngle2d:
     @pytest.mark.parametrize("size", [0, 3, 10])
     @pytest.mark.parametrize("vector_name", ["base", "vector"])
     def test_ValueError_given_inputs_axis_0_size_not_2(self, size, vector_name):
-        params = {
-            "base": np.array([0, 1]),
-            "vector": np.array([0, 1]),
-        }
+        params = {"base": np.array([0, 1]), "vector": np.array([0, 1])}
         params[vector_name] = np.zeros((size, 1))
 
         with pytest.raises(ValueError):  # noqa: PT011

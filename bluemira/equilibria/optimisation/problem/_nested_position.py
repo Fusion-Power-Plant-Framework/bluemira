@@ -38,9 +38,7 @@ from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.optimisation.constraints import (
-        UpdateableConstraint,
-    )
+    from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
     from bluemira.utilities.positioning import PositionMapper
 

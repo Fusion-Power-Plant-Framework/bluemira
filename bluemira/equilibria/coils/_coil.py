@@ -422,9 +422,7 @@ class Coil(CoilFieldsMixin):
         self._discretise()
 
     def assign_material(
-        self,
-        j_max: float = NBTI_J_MAX,
-        b_max: float = NBTI_B_MAX,
+        self, j_max: float = NBTI_J_MAX, b_max: float = NBTI_B_MAX
     ) -> None:
         """
         Assigns EM material properties to coil

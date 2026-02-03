@@ -597,12 +597,7 @@ def toroidal_harmonic_approximate_psi(
         )
     )
 
-    def _make_matrix(
-        current_func,
-        sigma_term,
-        factoral_term,
-        m,
-    ):
+    def _make_matrix(current_func, sigma_term, factoral_term, m):
         """
         Construct matrix for toroidal harmonics calculations.
 
@@ -617,12 +612,7 @@ def toroidal_harmonic_approximate_psi(
             current_func,
             sigma_term,
             factoral_term,
-            legendre_q(
-                m[:, None, None] - 1 / 2,
-                1,
-                np.cosh(th_params.tau),
-                n_max=30,
-            ),
+            legendre_q(m[:, None, None] - 1 / 2, 1, np.cosh(th_params.tau), n_max=30),
         )
 
         epsilon = 2 * np.ones(len(m))
@@ -630,11 +620,7 @@ def toroidal_harmonic_approximate_psi(
 
         return np.sqrt(2 / np.pi) * (
             np.einsum(
-                "ijkl, i, kl, j -> kl",
-                Am_matrix,
-                epsilon,
-                np.sqrt(Delta),
-                currents,
+                "ijkl, i, kl, j -> kl", Am_matrix, epsilon, np.sqrt(Delta), currents
             )
         )
 
@@ -1015,14 +1001,9 @@ def toroidal_harmonic_approximation(
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
     n_degrees_of_freedom = _set_n_degrees_of_freedom(
-        n_degrees_of_freedom,
-        max_harmonic_mode,
-        len(th_params.th_coil_names),
+        n_degrees_of_freedom, max_harmonic_mode, len(th_params.th_coil_names)
     )
-    collocation = collocation_points(
-        eq.get_LCFS(),
-        PointType.GRID_POINTS,
-    )
+    collocation = collocation_points(eq.get_LCFS(), PointType.GRID_POINTS)
 
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
         eq, th_params, collocation
@@ -1099,10 +1080,7 @@ def _approximation_direct_from_currents(
         Selected sine toroidal harmonic amplitudes
     """
     approximate_coilset_psi, cos_amps, sin_amps = toroidal_harmonic_approximate_psi(
-        eq=eq,
-        th_params=th_params,
-        cos_m_chosen=cos_m_chosen,
-        sin_m_chosen=sin_m_chosen,
+        eq=eq, th_params=th_params, cos_m_chosen=cos_m_chosen, sin_m_chosen=sin_m_chosen
     )
     # Calculate L2 norm of the error between the approximated coilset psi and the
     # true coilset psi
@@ -1142,9 +1120,7 @@ def _approximation_from_psi_fitting(
     """
     harmonics2collocation_cos, harmonics2collocation_sin = (
         toroidal_harmonics_to_positions(
-            th_params=th_params,
-            n_allowed=n_degrees_of_freedom,
-            collocation=collocation,
+            th_params=th_params, n_allowed=n_degrees_of_freedom, collocation=collocation
         )
     )
     harmonics2collocation_cos = harmonics2collocation_cos[mode_id < max_harmonic_mode, :]
@@ -1161,8 +1137,7 @@ def _approximation_from_psi_fitting(
     )
 
     harmonics2grid_cos, harmonics2grid_sin = toroidal_harmonics_to_positions(
-        th_params=th_params,
-        n_allowed=n_degrees_of_freedom,
+        th_params=th_params, n_allowed=n_degrees_of_freedom
     )
     harmonics2grid_cos = harmonics2grid_cos[mode_id < max_harmonic_mode, :]
     harmonics2grid_sin = harmonics2grid_sin[mode_id >= max_harmonic_mode, :]
@@ -1239,36 +1214,11 @@ def plot_toroidal_harmonic_approximation(
         colors="red",
         linewidths=1,
     )
-    ax.plot(
-        [9, 9],
-        [-5, -5],
-        color="red",
-        lw=1,
-        label="TH coilset psi",
-    )
-    ax.plot(
-        [9, 9],
-        [-5.25, -5.25],
-        color="black",
-        lw=1,
-        label="BM coilset psi",
-    )
+    ax.plot([9, 9], [-5, -5], color="red", lw=1, label="TH coilset psi")
+    ax.plot([9, 9], [-5.25, -5.25], color="black", lw=1, label="BM coilset psi")
 
-    ax.plot(
-        approx_fs.x,
-        approx_fs.z,
-        color="r",
-        label="TH FS",
-        linestyle="dashed",
-        lw=5,
-    )
-    ax.plot(
-        original_fs.x,
-        original_fs.z,
-        color="blue",
-        label="BM FS",
-        lw=5,
-    )
+    ax.plot(approx_fs.x, approx_fs.z, color="r", label="TH FS", linestyle="dashed", lw=5)
+    ax.plot(original_fs.x, original_fs.z, color="blue", label="BM FS", lw=5)
     ax.legend(loc="upper right")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")

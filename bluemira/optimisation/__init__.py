@@ -8,11 +8,7 @@
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimise import optimise
 from bluemira.optimisation.problem import OptimisationProblem
-from bluemira.optimisation.typed import (
-    ConstraintT,
-    ObjectiveCallable,
-    OptimiserCallable,
-)
+from bluemira.optimisation.typed import ConstraintT, ObjectiveCallable, OptimiserCallable
 
 __all__ = [
     "Algorithm",
