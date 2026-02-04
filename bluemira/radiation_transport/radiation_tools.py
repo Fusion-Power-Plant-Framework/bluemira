@@ -1091,6 +1091,8 @@ def detect_radiation(
 
     i.e. This models a wall detector as representative of a full ring in a
     cylindrically symmetric system.
+
+    For more information on observers please see the `Raysect documentation <https://www.raysect.org/how_it_works.html>`_
     """
     # Storage lists for results
     power_density = []
