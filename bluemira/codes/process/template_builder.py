@@ -140,33 +140,6 @@ class PROCESSTemplateBuilder:
         else:
             self._constraints.append(constraint)
 
-    def add_fvalue_constraint(
-        self,
-        constraint: Constraint,
-        value: float | None = None,
-        lower_bound: float | None = None,
-        upper_bound: float | None = None,
-    ):
-        """
-        Add an f-value constraint to the PROCESS run
-
-        Raises
-        ------
-        ValueError
-            Constraint not an f-value constraint
-        """
-        if constraint.value not in FV_CONSTRAINT_ITVAR_MAPPING:
-            raise ValueError(
-                f"Constraint '{constraint.name}' is not an f-value constraint."
-            )
-        self._constraints.append(constraint)
-
-        itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint.value]
-        if itvar not in self.ixc:
-            self.add_variable(
-                VAR_ITERATION_MAPPING[itvar], value, lower_bound, upper_bound
-            )
-
     def add_variable(
         self,
         name: str,
