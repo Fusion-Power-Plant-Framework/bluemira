@@ -826,21 +826,36 @@ def find_LCFS_separatrix(
 
     primary_xp, primary_op = x_points[0], o_points[0]
     delta = high - low
+    area = get_area_2d(*get_flux_loop(low).xz)
 
     while delta > psi_n_tol:
-        middle = low + delta / 2
+        middle = low + 0.5 * delta
         flux_surface = get_flux_loop(middle)
+        new_area = get_area_2d(*flux_surface.xz)
 
         intersection_count = x_point_check(flux_surface, primary_op, primary_xp)
-        if flux_surface.closed and intersection_count <= 1:
+        if flux_surface.closed and intersection_count < 2:
+            # NOTE: There may be 0, 1, or 2 intersections of the flux surface with the tangent line at the X-point.
+            # Because the line is short, this means X-point is either:
+            # 0: outside the LCFS (marginally)
+            # 1: on the LCFS (exactly - unlikely to occur)
+            # 2: inside the LCFS (marginally)
+            # If the line were long, it could pick up spurious intersections with other flux surfaces.
             # Middle flux surface is still closed, shift search bounds
+
             low = middle
+        elif flux_surface.closed and new_area > 1.01 * area:
+            # Case 
+            # NOTE: The area check is for the case where the true separatrix loops around coils close 
+            # to the plasma and is still closed.
+            high = middle
 
         else:
             # Middle flux surface is open, shift search bounds
             high = middle
 
         delta = high - low
+        area = new_area
 
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
