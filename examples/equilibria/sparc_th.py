@@ -115,7 +115,7 @@ full_coilset = CoilSet(*circuits)
 full_coilset.control = [n for n in full_coilset.name]
 simple_coilset.control = [n for n in simple_coilset.name]
 
-eq = Equilibrium.from_eqdsk("SPARC_equilibrium.eqdsk", from_cocos=7, force_symmetry=True)
+eq = Equilibrium.from_eqdsk("SPARC_equilibrium.eqdsk", from_cocos=7, force_symmetry=False)
 eq.coilset = full_coilset
 eq.limiter = None#limiter
 eq.solve()
@@ -180,11 +180,25 @@ x_leg_in = np.array([1.3, rx_down, 1.53656704, 1.48805959, 1.43955214, 1.3910446
 
 z_leg_in = np.array([0.0, zx_down,-1.14243024, -1.19216021, -1.24189018, -1.29162016, -1.34135013,
        -1.3910801 , -1.44081008, -1.49054005, -1.54027003, -1.59      ])
-upper_leg = IsofluxConstraint(x=x_leg_in, z=-z_leg_in, ref_x=x_leg_in[0], ref_z=-z_leg_in[0], tolerance=1e-6, weights=100)
-lower_leg = IsofluxConstraint(x=x_leg_in, z=z_leg_in, ref_x=x_leg_in[0], ref_z=z_leg_in[0], tolerance=1e-6, weights=100)
+
+x_leg_out = np.array([1.53976778, 1.56568171, 1.5897555 , 1.61451708, 1.63994519,
+       1.66565352, 1.69303675, 1.72155301, 1.75229153, 1.78482571,
+       1.82031686, 1.85815546, 1.89845581, 1.94104739, 1.9854674 ,
+       2.03121983, 2.0777302 , 2.1244036])
+z_leg_out = np.array([-1.15525158, -1.19870816, -1.24425173, -1.28955424, -1.33445179,
+       -1.37923415, -1.42300444, -1.46605025, -1.5075437 , -1.54764426,
+       -1.58516093, -1.62030534, -1.65260046, -1.68181544, -1.70817689,
+       -1.73216185, -1.75464813, -1.77679415])
+
+
+weight= 1.0
+upper_leg_in = IsofluxConstraint(x=x_leg_in, z=-z_leg_in, ref_x=x_leg_in[0], ref_z=-z_leg_in[0], tolerance=1e-6, weights=weight)
+lower_leg_in = IsofluxConstraint(x=x_leg_in, z=z_leg_in, ref_x=x_leg_in[0], ref_z=z_leg_in[0], tolerance=1e-6, weights=weight)
+upper_leg_out = IsofluxConstraint(x=x_leg_out, z=-z_leg_out, ref_x=x_leg_out[0], ref_z=-z_leg_out[0], tolerance=1e-6, weights=weight)
+lower_leg_out = IsofluxConstraint(x=x_leg_out, z=z_leg_out, ref_x=x_leg_out[0], ref_z=z_leg_out[0], tolerance=1e-6, weights=weight)
 th_eq_leg = deepcopy(th_eq)
 
-constraint_set = MagneticConstraintSet([upper_leg, lower_leg])
+constraint_set = MagneticConstraintSet([upper_leg_in, lower_leg_in, upper_leg_out, lower_leg_out])
 
 current_opt_problem = TikhonovCurrentCOP(
     th_eq_leg,
@@ -203,8 +217,8 @@ program = PicardIterator(
     fixed_coils=True,
     diagnostic_plotting=PicardDiagnosticOptions(PicardDiagnostic.EQ),
     convergence=DudsonConvergence(1e-3),
-    relaxation=0.3,
-    maxiter=20,
+    relaxation=0.35,
+    maxiter=30,
 )
 program()
 
@@ -221,15 +235,16 @@ th_eq_leg.plot(ax[2])
 th_eq_leg.coilset.plot(ax[2])
 
 
-ax[0].contour(
-    setu.R,
-    setu.Z,
-    th_approx.coilset_psi,
-    levels=20,
-    colors="red",
-    linewidths=1,
-)
+# ax[0].contour(
+#     setu.R,
+#     setu.Z,
+#     th_approx.coilset_psi,
+#     levels=20,
+#     colors="red",
+#     linewidths=1,
+# )
 constraint_set.plot(ax[2])
+
 for s in ref_sep:
     ax[2].plot(s.x, s.z, color="b")
     
