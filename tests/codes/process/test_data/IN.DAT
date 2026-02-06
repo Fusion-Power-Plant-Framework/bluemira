@@ -35,14 +35,12 @@ ixc = 9 * fdene
 boundu(9) = 1.2
 ixc = 10 * hfact
 boundu(10) = 1.1
-ixc = 14 * fpflux_fw_neutron_max_mw
 ixc = 16 * ohcth
 boundl(16) = 0.4
 ixc = 18 * q95
 boundl(18) = 3.0
 ixc = 29 * dr_bore
 boundl(29) = 0.5
-ixc = 36 * fbeta_max
 ixc = 37 * j_cs_flat_top_end
 ixc = 38 * fjohc
 boundu(38) = 0.25
@@ -53,12 +51,8 @@ ixc = 42 * dr_cs_tf_gap
 boundl(42) = 0.05
 boundu(42) = 0.1
 ixc = 44 * f_c_plasma_non_inductive
-ixc = 48 * fstrcase
-ixc = 49 * fstrcond
 ixc = 50 * fiooic
 boundu(50) = 0.5
-ixc = 51 * fvdump
-ixc = 53 * fjprot
 ixc = 56 * t_tf_superconductor_quench
 boundl(56) = 30.0
 ixc = 57 * dr_tf_nose_case
@@ -126,23 +120,11 @@ dz_xpoint_divertor    = 1.60 * vertical gap between x-point and divertor (m) (if
 *---------------Constraint Variables---------------*
 
 b_tf_inboard_max   = 14.0 * maximum peak toroidal field (T) (`constraint equation 25`)
-fbeta_max = 4.8361e-01 * f-value for beta limit (`constraint equation 24`; `iteration variable 36`)
 fdene    = 1.2000e+00 * f-value for density limit (`constraint equation 5`; `iteration variable 9`)
-fp_fusion_total_max_mw  = 1 * f-value for maximum fusion power (`constraint equation 9`; `iteration variable 26`)
-fpflux_div_heat_load_mw   = 2.0e0 * f-value for divertor heat load (`constraint equation 18`; `iteration variable 27`)
 fiooic   = 3.6068e-01 * f-value for TF coil operating current / critical current ratio
 fjohc    = 2.5000e-01 * f-value for central solenoid current at end-of-flattop
 fjohc0   = 2.5000e-01 * f-value for central solenoid current at beginning of pulse
-fjprot   = 1.0000e+00 * f-value for TF coil winding pack current density
 fl_h_threshold = 7.8585e-01 * f-value for L-H power threshold (`constraint equation 15`; `iteration variable 103`)
-fb_tf_inboard_max   = 9.2290d-1 * f-value for maximum toroidal field (`constraint equation 25`; `iteration variable 35`)
-fp_hcd_injected_max    = 1.0 * f-value for injection power (`constraint equation 30`; `iteration variable 46`)
-fp_plant_electric_net_required_mw  = 1.0 * f-value for net electric power (`constraint equation 16`; `iteration variable 25`)
-fstrcase = 1.0000e+00 * f-value for maximum TF coil case TRESCA stress
-fstrcond = 8.6890e-01 * f-value for maxiumum TF coil conduit TRESCA stress
-ft_burn_min   = 1.00e+00 * f-value for minimum burn time (`constraint equation 13`; `iteration variable 21`)
-fvdump   = 6.1211e-01 * f-value for dump voltage (`constraint equation 34`; `iteration variable 51`)
-fpflux_fw_neutron_max_mw   = 1.3024e-01 * f-value for maximum wall load (`constraint equation 8`; `iteration variable 14`)
 p_plant_electric_net_required_mw = 500.0 * required net electric power (MW) (`constraint equation 16`)
 pseprmax = 17.0 * maximum ratio of power crossing the separatrix to plasma major radius (Psep/R) (MW/m)
 t_burn_min   = 7.2e3 * minimum burn time (s) (KE - no longer itv;; see issue #706)
@@ -155,17 +137,17 @@ pflux_fw_neutron_max_mw   = 8.0 * allowable neutron wall-load (MW/m2) (`constrai
 
 abktflnc = 15 * allowable first wall/blanket neutron fluence (MW-yr/m2) (`blktmodel=0`)
 adivflnc = 20.0 * allowable divertor heat fluence (MW-yr/m2)
-cfactr   = 0.75 * Total plant availability fraction; input if `iavail=0`
+f_t_plant_available   = 0.75 * Total plant availability fraction; input if `i_plant_availability=0`
 dintrt   = 0.00 * diff between borrowing and saving interest rates
 fcap0    = 1.15 * average cost of money for construction of plant assuming design/construction time of six years
 fcap0cp  = 1.06 * average cost of money for replaceable components assuming lead time for these of two years
 fcontng  = 0.15 * project contingency factor
 fcr0     = 0.065 * fixed charge rate during construction
 fkind    = 1.0 * multiplier for Nth of a kind costs
-iavail   = 0 * Switch for plant availability model;
+i_plant_availability   = 0 * Switch for plant availability model;
 ifueltyp = 1 * Switch for fuel type;
 lsa      = 2 * Level of safety assurance switch (generally; use 3 or 4);
-tlife    = 40 * Full power year plant lifetime (years)
+life_plant    = 40 * Full power year plant lifetime (years)
 ucblvd   = 280.0 * unit cost for blanket vanadium ($/kg)
 ucdiv    = 5.0d5 * cost of divertor blade ($)
 ucme     = 3.0d8 * cost of maintenance equipment ($)
@@ -391,16 +373,16 @@ alphaj   = 2.0 * current profile index
 alphan   = 1.0 * density profile index
 alphat   = 1.45 * temperature profile index
 aspect   = 3.5 * aspect ratio (`iteration variable 1`)
-beta_total_vol_avg     = 3.0810e-02 * total plasma beta (`iteration variable 5`) (calculated if `i_plasma_pedestal=3` or stellarator)
+beta_total_vol_avg     = 3.0810e-02 * total plasma beta_total_vol_avg (`iteration variable 5`) (calculated if `i_plasma_pedestal=3` or stellarator)
 b_plasma_toroidal_on_axis       = 5.6476e+00 * toroidal field on axis (T) (`iteration variable 2`)
 nd_plasma_electrons_vol_avg     = 7.9759e+19 * electron density (/m3) (`iteration variable 6`) (calculated if `i_plasma_pedestal=3`)
-beta_norm_max   = 3.0 * Troyon-like coefficient for beta scaling calculated
+beta_norm_max   = 3.0 * Troyon-like coefficient for beta_total_vol_avg scaling calculated
 fkzohm   = 1.0245 * Zohm elongation scaling adjustment factor (`i_plasma_geometry=2; 3`)
 f_c_plasma_non_inductive = 4.4628e-01 * fraction of the plasma current produced by non-inductive means (`iteration variable 44`)
 ejima_coeff    = 0.3 * Ejima coefficient for resistive startup V-s formula
 hfact    = 1.1000e+00 * H factor on energy confinement times; radiation corrected (`iteration variable 10`); If
 i_bootstrap_current     = 4 * switch for bootstrap current scaling
-i_beta_component   = 1 * switch for beta limit scaling (`constraint equation 24`)
+i_beta_component   = 1 * switch for beta_total_vol_avg limit scaling (`constraint equation 24`)
 i_plasma_current   = 4 * switch for plasma current scaling to use
 i_density_limit   = 7 * switch for density limit to enforce (`constraint equation 5`)
 i_beta_fast_alpha = 1 * switch for fast alpha pressure calculation
@@ -409,7 +391,7 @@ nd_plasma_pedestal_electron    = 0.678e20 * electron density of pedestal [m-3] (
 nd_plasma_separatrix_electron    = 0.2e20 * electron density at separatrix [m-3] (`i_plasma_pedestal=1;2; calculated if 3`)
 radius_plasma_pedestal_density_norm  = 0.94 * r/a of density pedestal (`i_plasma_pedestal>=1`)
 radius_plasma_pedestal_temp_norm  = 0.94 * r/a of temperature pedestal (`i_plasma_pedestal>=1`)
-tbeta    = 2.0 * temperature profile index beta  (`i_plasma_pedestal=1;2`)
+tbeta    = 2.0 * temperature profile index beta_total_vol_avg  (`i_plasma_pedestal=1;2`)
 temp_plasma_pedestal_kev    = 5.5 * electron temperature of pedestal (keV) (`i_plasma_pedestal>=1; ieped=0; calculated for ieped=1`)
 temp_plasma_separatrix_kev    = 0.1 * electron temperature at separatrix (keV) (`i_plasma_pedestal>=1`) calculated if reinke
 i_ind_plasma_internal_norm = 1 * Switch for current profile consistency;
@@ -519,7 +501,7 @@ dx_tf_side_case_min   = 0.10 * inboard TF coil sidewall case thickness (m) (calc
 c_tf_turn    = 6.5e+04 * TF coil current per turn (A); (calculated for stellarators) (calculated for
 f_a_tf_turn_cable_copper  = 0.6667 * copper fraction of cable conductor (TF coils)
 oacdcp   = 9.9963e+06 * Overall current density in TF coil inboard legs midplane (A/m2)
-ripple_b_tf_plasma_edge_max   = 0.6 * aximum allowable toroidal field ripple amplitude at plasma edge (%)
+ripple_b_tf_plasma_edge_max   = 0.6 * aximum allowable toroidal field ripple_b_tf_plasma_edge amplitude at plasma edge (%)
 t_tf_superconductor_quench   = 3.0000e+01 * fast discharge time for TF coil in event of quench (s) (`iteration variable 56`)
 n_tf_coils     = 18 * Number of TF coils (default = 50 for stellarators); Number of TF coils outer legs for ST
 tftmp    = 4.75 * peak helium coolant temperature in TF coils and PF coils (K)

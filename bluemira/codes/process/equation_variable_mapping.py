@@ -87,12 +87,17 @@ class Constraint(ConstraintSelection, Model):
         (),
         "DEPRECATED - Electron Power Balance Consistency",
     )
-    DENSITY_UPPER_LIMIT = (5, (1, 2, 3, 4, 6, 9), (), "Density Upper Limit (Greenwald)")
+    DENSITY_UPPER_LIMIT = (
+        5,
+        (1, 2, 3, 4, 6),
+        (),
+        "Density Upper Limit (Greenwald)",
+    )
     EPS_BETA_POL_UPPER_LIMIT = (
         6,
         (1, 2, 3, 4, 6, 8),
         ("epbetmax",),
-        "Equation for epsilon beta_total_vol_avg-poloidal upper limit",
+        "Equation for epsilon beta-poloidal upper limit",
     )
     HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
@@ -132,14 +137,14 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation to fix number of NBI decay lengths to plasma centre",
     )
-    LH_THRESHHOLD_LIMIT = (15, (103,), (), "L-H Power ThresHhold Limit")
+    LH_THRESHHOLD_LIMIT = (15, (,), (), "L-H Power ThresHhold Limit")
     NET_ELEC_LOWER_LIMIT = (
         16,
         (1, 2, 3),
         ("p_plant_electric_net_required_mw",),
         "Net electric power lower limit",
     )
-    RAD_POWER_UPPER_LIMIT = (17, (28,), (), "Equation for radiation power upper limit")
+    RAD_POWER_UPPER_LIMIT = (17, (,), (), "Equation for radiation power upper limit")
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
         (),
@@ -156,7 +161,7 @@ class Constraint(ConstraintSelection, Model):
     AMINOR_LOWER_LIMIT = (21, (), (), "Equation for minor radius lower limit")
     DIV_COLL_CONN_UPPER_LIMIT = (
         22,
-        (34),
+        (34,),
         (),
         "Equation for divertor collision/connection length ratio upper limit",
     )
@@ -175,13 +180,13 @@ class Constraint(ConstraintSelection, Model):
     )
     CS_EOF_DENSITY_LIMIT = (
         26,
-        (37, 38, 41),
+        (37, 41),
         (),
         "Central solenoid EOF current density upper limit",
     )
     CS_BOP_DENSITY_LIMIT = (
         27,
-        (37, 38, 41),
+        (37, 41),
         (),
         "Central solenoid bop current density upper limit",
     )
@@ -217,7 +222,7 @@ class Constraint(ConstraintSelection, Model):
     )
     TF_JCRIT_RATIO_UPPER_LIMIT = (
         33,
-        (50, 56, 57, 58, 59, 60),
+        (56, 57, 58, 59, 60),
         (),
         "TF superconductor operating current / critical current density",
     )
@@ -381,7 +386,7 @@ class Constraint(ConstraintSelection, Model):
     )
     TSEP_CONSISTENCY = (
         70,
-        (119),
+        (119,),
         (),
         "ensure that temp = separatrix in the pedestal profile",
     )
@@ -404,7 +409,7 @@ class Constraint(ConstraintSelection, Model):
     TF_CROCO_T_UPPER_LIMIT = (74, (141,), ("temp_croco_quench_max",), "TFC quench")
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
-        (143),
+        (143,),
         ("coppera_m2_max",),
         "TFC current / copper area < maximum",
     )
@@ -424,7 +429,7 @@ class Constraint(ConstraintSelection, Model):
     BMAX_CS_UPPER_LIMIT = (79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit")
     PDIVT_LOWER_LIMIT = (
         80,
-        (153),
+        (153,),
         ("p_plasma_separatrix_min_mw",),
         "Divertor power lower limit",
     )
@@ -432,7 +437,7 @@ class Constraint(ConstraintSelection, Model):
     STELLARATOR_COIL_CONSISTENCY = (82, (171,), ("toroidalgap",))
     STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
         83,
-        (172),
+        (172,),
         (),
         "Radial build consistency for stellarators",
     )
@@ -458,7 +463,7 @@ class Constraint(ConstraintSelection, Model):
     )
     OH_CROCO_CU_AREA_CONSTRAINT = (
         89,
-        (166),
+        (166,),
         ("copperaoh_m2_max",),
         "Constraint for CS coil quench protection",
     )
@@ -499,7 +504,7 @@ ITERATION_VAR_MAPPING = {
     "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
-    # 9 was "fdene", f-VALUE NO LONGER ITERABLE
+    "fdene": 9,
     "hfact": 10,
     "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
@@ -515,7 +520,7 @@ ITERATION_VAR_MAPPING = {
     "fcoolcp": 23,
     # 24 NOT USED
     # 25, 26, 27 PREVIOUS f-VALUE
-    # "fradpwr": 28, f-VALUE NO LONGER ITERABLE
+    "fradpwr": 28,
     "dr_bore": 29,
     # 30 PREVIOUS f-VALUE
     "gapomin": 31,
@@ -523,7 +528,8 @@ ITERATION_VAR_MAPPING = {
     "fdivcol": 34,
     # 35, 36 PREVIOUS f-VALUE
     "j_cs_flat_top_end": 37,
-    # "fjohc": 38, "fjohc0": 39 - f-VALUE NO LONGER ITERABLE
+    "fjohc": 38,
+    "fjohc0": 39,
     # 40 PREVIOUS f-VALUE
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
@@ -532,7 +538,7 @@ ITERATION_VAR_MAPPING = {
     # 45, 46 PREVIOUS f-VALUE
     "feffcd": 47,
     # 48, 49 PREVIOUS f-VALUE
-    # 50 was "fiooic", f-VALUE NO LONGER ITERABLE
+    "fiooic": 50,
     # 51 PREVIOUS f-VALUE
     # 52 NOT USED
     # 53, 54 PREVIOUS f-VALUE
@@ -571,7 +577,7 @@ ITERATION_VAR_MAPPING = {
     # 95, 96, 97 PREVIOUS f-VALUE
     "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
-    # 103 was "fl_h_threshold", f-VALUE NO LONGER ITERABLE
+    "fl_h_threshold": 103,
     "fcwr": 104,
     # 105, 106 PREVIOUS f-VALUE
     "favail": 107,

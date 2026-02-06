@@ -476,10 +476,10 @@ class TestInDatOneForOne:
             "qnuc": 1.292e4,
             "v_tf_coil_dump_quench_max_kv": 10.0,
             # Inputs we don't care about but must specify
-            "cfactr": 0.75,  # Ha!
+            "f_t_plant_available": 0.75,  # Ha!
             "kappa": 1.848,  # Should be overwritten
             "pflux_fw_neutron_max_mw": 8.0,  # Should never get even close to this
-            "tlife": 40.0,
+            "life_plant": 40.0,
             "abktflnc": 15.0,
             "adivflnc": 20.0,
             # For sanity...
