@@ -68,7 +68,7 @@ class Constraint(ConstraintSelection, Model):
     Enum for PROCESS constraints
     """
 
-    BETA_CONSISTENCY = (1, (5,), (), "Beta consistency")
+    BETA_CONSISTENCY = (1, (5,,), (), "Beta consistency")
     GLOBAL_POWER_CONSISTENCY = (
         2,
         (1, 2, 3, 4, 6, 10, 11),
@@ -99,7 +99,7 @@ class Constraint(ConstraintSelection, Model):
         ("epbetmax",),
         "Equation for epsilon beta-poloidal upper limit",
     )
-    HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density")
+    HOT_BEAM_ION_DENSITY = (7, (7,,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
         8,
         (1, 2, 3, 4, 6),
@@ -192,7 +192,7 @@ class Constraint(ConstraintSelection, Model):
     )
     Q_LOWER_LIMIT = (
         28,
-        (47),
+        (47,),
         ("big_q_plasma_min",),
         "Equation for fusion gain (big Q) lower limit",
     )
@@ -246,7 +246,7 @@ class Constraint(ConstraintSelection, Model):
     )
     CD_GAMMA_UPPER_LIMIT = (
         37,
-        (47),
+        (47,),
         ("eta_cd_norm_hcd_primary_max",),
         "Equation for current drive gamma upper limit",
     )
@@ -260,7 +260,7 @@ class Constraint(ConstraintSelection, Model):
     )
     IP_RAMP_LOWER_LIMIT = (
         41,
-        (65),
+        (65,),
         ("tohsmn",),
         "Plasma ramp-up time lower limit (PULSE)",
     )
@@ -297,7 +297,7 @@ class Constraint(ConstraintSelection, Model):
         "Poloidal beta_total_vol_avg upper limit",
     ))
     # 49 NOT USED
-    REP_RATE_UPPER_LIMIT = (50, (86,), (), "IFE repetition rate upper limit (IFE)")
+    REP_RATE_UPPER_LIMIT = (50, (86,,), (), "IFE repetition rate upper limit (IFE)")
     CS_FLUX_CONSISTENCY = (
         51,
         (1, 3, 16, 29),
@@ -337,7 +337,7 @@ class Constraint(ConstraintSelection, Model):
         "Central solenoid temperature margin lower limit (SCTF)[sic.."
         " I guess they mean SCCS]",
     )
-    AVAIL_LOWER_LIMIT = (61, (107,), ("avail_min",), "Minimum availability value")
+    AVAIL_LOWER_LIMIT = (61, (107,,), ("avail_min",), "Minimum availability value")
     CONFINEMENT_RATIO_LOWER_LIMIT = (
         62,
         (),
@@ -356,13 +356,13 @@ class Constraint(ConstraintSelection, Model):
     ZEFF_UPPER_LIMIT = (64, (), ("zeff_max",), "Zeff less than or equal to zeff_max")
     DUMP_TIME_LOWER_LIMIT = (
         65,
-        (56),
+        (56,),
         ("max_vv_stress",),
         "Dump time set by VV loads",
     )
     PF_ENERGY_RATE_UPPER_LIMIT = (
         66,
-        (65),
+        (65,),
         ("t_plant_pulse_plasma_current_ramp_up",),
         "Limit on rate of change of energy in poloidal field",
     )
@@ -380,7 +380,7 @@ class Constraint(ConstraintSelection, Model):
     )
     PSEP_KALLENBACH_UPPER_LIMIT = (
         69,
-        (118),
+        (118,),
         (),
         "ensure the separatrix power = the value from Kallenbach divertor",
     )
@@ -405,7 +405,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Central solenoid shear stress limit (Tresca yield criterion)",
     )
-    PSEP_LH_AUX_CONSISTENCY = (73, (137,), (), "Psep >= Plh + Paux")
+    PSEP_LH_AUX_CONSISTENCY = (73, (137,,), (), "Psep >= Plh + Paux")
     TF_CROCO_T_UPPER_LIMIT = (74, (141,), ("temp_croco_quench_max",), "TFC quench")
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
@@ -426,7 +426,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Reinke criterion impurity fraction lower limit",
     )
-    BMAX_CS_UPPER_LIMIT = (79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit")
+    BMAX_CS_UPPER_LIMIT = (79, (149,,), ("b_cs_limit_max",), "Peak CS field upper limit")
     PDIVT_LOWER_LIMIT = (
         80,
         (153,),
@@ -441,7 +441,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Radial build consistency for stellarators",
     )
-    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta")
+    BETA_LOWER_LIMIT = (84, (173,,), (), "Lower limit for beta")
     CP_LIFETIME_LOWER_LIMIT = (
         85,
         (),
