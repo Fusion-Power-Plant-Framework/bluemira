@@ -1,0 +1,294 @@
+
+*--------------------------------------------------*
+
+
+*---------------Constraint Equations---------------*
+
+icc = 1 *
+icc = 2 *
+icc = 5 *
+icc = 11 *
+icc = 13 *
+icc = 15 *
+icc = 16 *
+icc = 31 *
+icc = 32 *
+icc = 33 *
+icc = 34 *
+icc = 35 *
+icc = 36 *
+icc = 60 *
+icc = 62 *
+icc = 65 *
+icc = 72 *
+icc = 81 *
+icc = 68 *
+
+*---------------Iteration Variables----------------*
+
+ixc = 2 * b_plasma_toroidal_on_axis
+boundu(2) = 20.0
+ixc = 3 * rmajor
+boundl(3) = 8.0
+boundu(3) = 9.0
+ixc = 4 * temp_plasma_electron_vol_avg_kev
+boundu(4) = 100.0
+ixc = 5 * beta_total_vol_avg
+ixc = 6 * nd_plasma_electrons_vol_avg
+ixc = 11 * p_hcd_primary_extra_heat_mw
+ixc = 16 * dr_cs
+boundl(16) = 0.3
+ixc = 18 * q95
+boundl(18) = 3.0
+ixc = 29 * dr_bore
+boundl(29) = 0.1
+ixc = 44 * f_c_plasma_non_inductive
+ixc = 56 * t_tf_superconductor_quench
+ixc = 57 * dr_tf_nose_case
+ixc = 58 * dx_tf_turn_steel
+boundl(58) = 0.008
+ixc = 59 * f_a_tf_turn_cable_copper
+boundl(59) = 0.5
+boundu(59) = 0.94
+ixc = 60 * c_tf_turn
+boundl(60) = 65000.0
+boundu(60) = 90000.0
+ixc = 109 * f_nd_alpha_electron
+boundu(109) = 0.1
+ixc = 122 * f_a_cs_turn_steel
+ixc = 135 * f_nd_impurity_electrons(13)
+ixc = 140 * dr_tf_wp_with_insulation
+boundl(140) = 0.4
+
+*-----------------Blanket Library------------------*
+
+
+*-----------------Build Variables------------------*
+
+dr_blkt_inboard = 0.7 *
+dr_blkt_outboard = 1.0 *
+dr_bore  = 2.0 *
+dr_cryostat = 0.15 *
+dr_vv_inboard = 0.3 *
+dr_vv_outboard = 0.3 *
+dz_vv_upper = 0.3 *
+dz_vv_lower = 0.3 *
+iohcl    = 1 *
+dr_cs    = 0.5 *
+dr_fw_plasma_gap_inboard = 0.25 *
+dr_fw_plasma_gap_outboard = 0.25 *
+dr_shld_inboard = 0.3 *
+dr_shld_outboard = 0.8 *
+dr_shld_blkt_gap = 0.02 *
+
+*---------------Buildings Variables----------------*
+
+
+*-----------------Ccfe Hcpb Module-----------------*
+
+
+*---------------Constraint Variables---------------*
+
+p_plant_electric_net_required_mw = 400.0 *
+psepbqarmax = 10.0 *
+t_burn_min = 7200.0 *
+
+*---------------Cost 2015 Variables----------------*
+
+
+*------------------Cost Variables------------------*
+
+cost_model = 0 *
+i_plant_availability = 0 *
+output_costs = 0 *
+
+*---------------Cs Fatigue Variables---------------*
+
+
+*-------------Current Drive Variables--------------*
+
+f_c_plasma_bootstrap_max = 0.95 *
+eta_ecrh_injector_wall_plug = 0.5 *
+eta_cd_norm_ecrh = 0.3 *
+i_hcd_primary = 10 *
+p_hcd_primary_extra_heat_mw = 75.0 *
+p_hcd_injected_max = 200.0 *
+
+*------------------Dcll Variables------------------*
+
+
+*----------------Divertor Variables----------------*
+
+dz_divertor = 0.62 *
+
+*------------------Fwbs Variables------------------*
+
+inuclear = 1 *
+qnuc     = 13000.0 *
+i_p_coolant_pumping = 3 *
+i_thermal_electric_conversion = 2 *
+vfshld   = 0.6 *
+etaiso   = 0.9 *
+eta_coolant_pump_electric = 0.87 *
+
+*-----------------Global Variables-----------------*
+
+runtitle = Example that should converge *
+maxcal   = 200 *
+
+*-------------Heat Transport Variables-------------*
+
+eta_turbine = 0.4 *
+ipowerflow = 0 *
+i_shld_primary_heat = 1 *
+
+*------------------Ife Variables-------------------*
+
+
+*------------Impurity Radiation Module-------------*
+
+radius_plasma_core_norm = 0.75 *
+f_p_plasma_core_rad_reduction = 0.6 *
+f_nd_impurity_electrons(1) = 1.0
+f_nd_impurity_electrons(2) = 0.1
+f_nd_impurity_electrons(3) = 0.0
+f_nd_impurity_electrons(4) = 0.0
+f_nd_impurity_electrons(5) = 0.0
+f_nd_impurity_electrons(6) = 0.0
+f_nd_impurity_electrons(7) = 0.0
+f_nd_impurity_electrons(8) = 0.0
+f_nd_impurity_electrons(9) = 0.0
+f_nd_impurity_electrons(10) = 0.0
+f_nd_impurity_electrons(11) = 0.0
+f_nd_impurity_electrons(12) = 0.0
+f_nd_impurity_electrons(13) = 0.00038
+f_nd_impurity_electrons(14) = 5e-05
+
+*--------------Neoclassics Variables---------------*
+
+
+*---------------------Numerics---------------------*
+
+ioptimz  = 1 * for optimisation VMCON only
+minmax   = 1 *
+epsvmc   = 1e-08 *
+
+*----------------Pf Power Variables----------------*
+
+
+*-----------------Pfcoil Variables-----------------*
+
+alstroh  = 750000000.0 *
+c_pf_coil_turn_peak_input = 40000.0, 40000.0, 40000.0, 40000.0, 40000.0, 40000.0, 40000.0, 40000.0 *
+fcuohsu  = 0.7 *
+i_pf_location = 2, 2, 3, 3 *
+i_cs_superconductor = 5 *
+i_pf_superconductor = 3 *
+n_pf_coils_in_group = 1, 1, 2, 2 *
+n_pf_coil_groups = 4 *
+f_z_cs_tf_internal = 0.9 *
+f_a_cs_turn_steel = 0.8 *
+j_pf_coil_wp_peak = 11000000.0, 11000000.0, 6000000.0, 6000000.0, 8000000.0, 8000000.0, 8000000.0, 8000000.0 *
+rpf2     = -1.825 *
+
+*----------------Physics Variables-----------------*
+
+alphan   = 1.0 *
+alphat   = 1.45 *
+aspect   = 3.0 *
+beta_total_vol_avg = 0.03 *
+b_plasma_toroidal_on_axis = 5.7 *
+nd_plasma_electrons_vol_avg = 7.5e+19 *
+beta_norm_max = 3.0 *
+f_c_plasma_non_inductive = 0.8 *
+ejima_coeff = 0.3 *
+hfact    = 1.1 *
+i_bootstrap_current = 4 *
+i_beta_component = 1 *
+i_plasma_current = 4 *
+i_density_limit = 7 *
+i_beta_fast_alpha = 1 *
+i_plasma_pedestal = 1 *
+nd_plasma_pedestal_electron = 5e+19 *
+nd_plasma_separatrix_electron = 2e+19 *
+plasma_res_factor = 0.7 *
+radius_plasma_pedestal_density_norm = 0.94 *
+radius_plasma_pedestal_temp_norm = 0.94 *
+tbeta    = 2.0 *
+temp_plasma_pedestal_kev = 5.5 *
+temp_plasma_separatrix_kev = 0.1 *
+i_beta_norm_max = 1 *
+i_ind_plasma_internal_norm = 1 *
+i_alphaj = 1 *
+i_confinement_time = 34 *
+i_plasma_geometry = 10 *
+q0       = 1.0 *
+q95      = 3.5 *
+f_nd_alpha_electron = 0.06894 *
+rmajor   = 8.0 *
+i_single_null = 1 *
+f_sync_reflect = 0.6 *
+temp_plasma_electron_vol_avg_kev = 27.33 *
+triang   = 0.5 *
+
+*-----------------Power Variables------------------*
+
+
+*------------Primary Pumping Variables-------------*
+
+
+*-----------------Pulse Variables------------------*
+
+i_pulsed_plant = 1 *
+
+*-----------------Rebco Variables------------------*
+
+
+*-----------------Reinke Variables-----------------*
+
+
+*------------------Scan Variables------------------*
+
+
+*------------Stellarator Configuration-------------*
+
+
+*--------------Stellarator Variables---------------*
+
+
+*---------------Structure Variables----------------*
+
+
+*--------Superconducting Tf Coil Variables---------*
+
+
+*-----------------Tfcoil Variables-----------------*
+
+sig_tf_case_max = 750000000.0 *
+sig_tf_wp_max = 750000000.0 *
+dr_tf_plasma_case = 0.06 *
+dx_tf_side_case_min = 0.05 *
+c_tf_turn = 65000.0 *
+dia_tf_turn_coolant_channel = 0.01 *
+f_a_tf_turn_cable_copper = 0.8 *
+i_tf_sc_mat = 5 *
+ripple_b_tf_plasma_edge_max = 0.6 *
+t_tf_superconductor_quench = 25.0 *
+n_tf_coils = 16 *
+tftmp    = 4.75 *
+dr_tf_nose_case = 0.5 *
+dr_tf_wp_with_insulation = 0.5 *
+dx_tf_turn_steel = 0.008 *
+dx_tf_wp_insulation = 0.008 *
+tmargmin = 1.5 *
+f_a_tf_turn_cable_space_extra_void = 0.3 *
+
+*-----------------Times Variables------------------*
+
+t_plant_pulse_dwell = 1800.0 *
+t_plant_pulse_coil_precharge = 500.0 *
+
+*-----------------Vacuum Variables-----------------*
+
+
+*--------------Water Usage Variables---------------*

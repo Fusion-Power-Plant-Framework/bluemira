@@ -138,7 +138,7 @@ for constraint in (
 # Many of these constraints require certain iteration variables to have been
 # specified, or certain input values. The novice user can easily not be
 # aware that this is the case, or simply forget to specify these.
-
+#
 # The :py:class:`PROCESSTemplateBuilder` will warn the user if certain
 # values have not been specified. For example, if we try to make a set of
 # inputs for an IN.DAT now, we will get many warning messages:
@@ -173,16 +173,6 @@ template_builder.add_variable(
 template_builder.add_variable("f_c_plasma_non_inductive", 0.8)
 template_builder.add_variable("dr_tf_wp_with_insulation", 0.5, lower_bound=0.4)
 template_builder.add_variable("f_a_cs_turn_steel", 0.8)
-
-# %% [markdown]
-# Many of the PROCESS constraints use so-called 'f-values', which are automatically
-# added to the iteration variables using this API. However, often one wants to modify
-# the defaults of these f-values, which one can do as such:
-
-# %%
-# Modified f-values and bounds w.r.t. defaults
-template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-template_builder.adjust_variable("foh_stress", 1.0, upper_bound=1.0)
 
 # %% [markdown]
 # Often one wants to specify certain impurity concentrations, and even use
@@ -371,6 +361,9 @@ solver = systems_code_solver(
     params={}, build_config={"template_in_dat": template_builder.make_inputs()}
 )
 
-result = solver.execute("run")
+try:
+    result = solver.execute("run")
+except CodesError as ce:
+    bluemira_error(ce)
 # %%
 # Now PROCESS has found a feasible solution!
