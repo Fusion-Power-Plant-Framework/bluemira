@@ -499,7 +499,7 @@ ITERATION_VAR_MAPPING = {
     "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
-    "fdene": 9,
+    # 9 was "fdene", f-VALUE NO LONGER ITERABLE
     "hfact": 10,
     "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
@@ -515,7 +515,7 @@ ITERATION_VAR_MAPPING = {
     "fcoolcp": 23,
     # 24 NOT USED
     # 25, 26, 27 PREVIOUS f-VALUE
-    "fradpwr": 28,
+    # "fradpwr": 28, f-VALUE NO LONGER ITERABLE
     "dr_bore": 29,
     # 30 PREVIOUS f-VALUE
     "gapomin": 31,
@@ -523,8 +523,7 @@ ITERATION_VAR_MAPPING = {
     "fdivcol": 34,
     # 35, 36 PREVIOUS f-VALUE
     "j_cs_flat_top_end": 37,
-    "fjohc": 38,
-    "fjohc0": 39,
+    # "fjohc": 38, "fjohc0": 39 - f-VALUE NO LONGER ITERABLE
     # 40 PREVIOUS f-VALUE
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
@@ -533,7 +532,7 @@ ITERATION_VAR_MAPPING = {
     # 45, 46 PREVIOUS f-VALUE
     "feffcd": 47,
     # 48, 49 PREVIOUS f-VALUE
-    "fiooic": 50,
+    # 50 was "fiooic", f-VALUE NO LONGER ITERABLE
     # 51 PREVIOUS f-VALUE
     # 52 NOT USED
     # 53, 54 PREVIOUS f-VALUE
@@ -572,7 +571,7 @@ ITERATION_VAR_MAPPING = {
     # 95, 96, 97 PREVIOUS f-VALUE
     "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
-    "fl_h_threshold": 103,
+    # 103 was "fl_h_threshold", f-VALUE NO LONGER ITERABLE
     "fcwr": 104,
     # 105, 106 PREVIOUS f-VALUE
     "favail": 107,
