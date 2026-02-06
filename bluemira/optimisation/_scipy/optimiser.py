@@ -113,10 +113,6 @@ class ScipyOptimiser(Optimiser):
         OptimisationError
             Algorithm is not supported by SciPy.
         """
-        if self.algorithm not in SCIPY_REGISTRY:
-            raise OptimisationError(
-                f"Algorithm {self.algorithm} is not a supported SciPy algorithm."
-            )
         return SCIPY_REGISTRY[self.algorithm]
 
     def _set_algorithm(self, alg: AlgorithmType) -> None:

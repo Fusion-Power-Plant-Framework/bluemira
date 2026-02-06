@@ -41,10 +41,31 @@ class TestScipyOptimiser:
         opt = ScipyOptimiser(string, 5, no_op)
         assert opt.algorithm == enum
 
-    def test_algorithm_parameters_set_if_they_exist_scipy(self):
-        params = {"workers": 8}
+    def test_keeps_known_non_none_parameters_scipy(self):
+        params = {"maxiter": 100, "ftol": 1e-6}
         opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_parameters=params)
         assert opt.opt_parameters == params
+
+    def test_drops_known_none_parameters_scipy(self):
+        params = {"maxiter": None, "ftol": 1e-6}
+        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_parameters=params)
+        assert opt.opt_parameters == {"ftol": 1e-6}
+
+    def test_passes_through_unknown_parameters_with_warning(self, caplog):
+        params = {"maxiter": 100, "unknown_param": 2}
+        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_parameters=params)
+        assert opt.opt_parameters == params
+        assert (
+            "Unknown parameters ['unknown_param'] for SLSQPParams." in caplog.messages[0]
+        )
+
+    def test_override_renames_parameter_scipy(self):
+        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op, opt_parameters={"max_eval": 100})
+        assert opt.opt_parameters == {"maxiter": 100}
+
+    def test_no_user_parameters_given_scipy(self):
+        opt = ScipyOptimiser("SLSQP_SCIPY", 5, no_op)
+        assert opt.opt_parameters == {}
 
     def test_minimising_objective_function_set_on_init_scipy(self):
         opt = ScipyOptimiser(
@@ -224,3 +245,11 @@ class TestScipyOptimiser:
             process_scipy_result(res, "SLSQP")
         assert len(caplog.records) == 1
         assert "Failed without status." in caplog.messages[0]
+
+    def test_optimisation_error_given_unknown_scipy_alg(self, caplog):
+        with pytest.raises(OptimisationError):
+            _ = ScipyOptimiser("INVALID_ALG", 2, no_op)
+        assert (
+            "Algorithm INVALID_ALG is not a support SciPy algorithm."
+            in caplog.messages[0]
+        )
