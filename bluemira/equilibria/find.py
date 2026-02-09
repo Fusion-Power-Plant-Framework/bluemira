@@ -844,7 +844,7 @@ def find_LCFS_separatrix(
         # the separatrix
         # NOTE: This is required for "leg" processing, and to avoid issues in
         # quasi-DN situations, where the separatrix only has two legs, instead
-        # of foud.
+        # of four.
 
         low = high
         high = low + 0.02
