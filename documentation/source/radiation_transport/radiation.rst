@@ -242,7 +242,7 @@ The more voxels the longer the simulation will take to run.
 For more information on the internals of how cherab functions please see the
 `Cherab <https://www.cherab.info/index.html>`_ and `Raysect documentation <https://www.raysect.org/how_it_works.html>`_. The Raysect documentation has a very good section on how it works.
 
-There are currently limits for the SOL power/radiation source where past them the
+There are currently limits for the SOL power/radiation source, if exceeded the
 source becomes under-resolved. The source profile decays over a length :math:`lambda_q`
 and is sampled on a grid :math:`dx_{mp}`. If :math:`dx_{mp} >> lambda_q` most or all of
 the sample points will fall into the near-zero tail, resulting in the discretised source
