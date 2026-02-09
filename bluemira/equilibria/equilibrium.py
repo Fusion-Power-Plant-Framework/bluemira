@@ -1868,7 +1868,7 @@ class Equilibrium(CoilSetMHDState):
 
     def get_separatrix(
         self, psi: npt.NDArray[np.float64] | None = None, psi_n_tol: float = 1e-6
-    ) -> Coordinates | list[Coordinates]:
+    ) -> list[Coordinates]:
         """
         Get the plasma separatrix(-ices).
 
@@ -1893,7 +1893,6 @@ class Equilibrium(CoilSetMHDState):
             psi,
             o_points,
             x_points,
-            double_null=self.is_double_null,
             psi_n_tol=psi_n_tol,
         )[1]
 

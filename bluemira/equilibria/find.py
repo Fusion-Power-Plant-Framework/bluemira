@@ -766,11 +766,9 @@ def find_LCFS_separatrix(
     o_points: list[Opoint] | None = None,
     x_points: list[Xpoint] | None = None,
     *,
-    double_null: bool = False,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
-    rtol: float = 1e-3,
-) -> tuple[Coordinates, Coordinates | list[Coordinates]]:
+) -> tuple[Coordinates, list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
@@ -819,76 +817,36 @@ def find_LCFS_separatrix(
 
     low = 1 - delta_start  # Guaranteed (?) to be a closed flux surface
     high = 1 + delta_start  # Guaranteed (?) to be an open flux surface
+    delta = 2.0 * delta_start
 
     # Speed optimisations (avoid recomputing psi and O, X points)
-    if o_points is None or x_points is None:
+    if o_points is None or x_points is None: 
         o_points, x_points = find_OX_points(x, z, psi)
 
-    primary_xp, primary_op = x_points[0], o_points[0]
-    delta = high - low
-    area = get_area_2d(*get_flux_loop(low).xz)
+    perimeter = get_flux_loop(low).length
 
     while delta > psi_n_tol:
         middle = low + 0.5 * delta
         flux_surface = get_flux_loop(middle)
-        new_area = get_area_2d(*flux_surface.xz)
-
-        intersection_count = x_point_check(flux_surface, primary_op, primary_xp)
-        if flux_surface.closed and intersection_count < 2:
-            # NOTE: There may be 0, 1, or 2 intersections of the flux surface with the tangent line at the X-point.
-            # Because the line is short, this means X-point is either:
-            # 0: outside the LCFS (marginally)
-            # 1: on the LCFS (exactly - unlikely to occur)
-            # 2: inside the LCFS (marginally)
-            # If the line were long, it could pick up spurious intersections with other flux surfaces.
-            # Middle flux surface is still closed, shift search bounds
-
-            low = middle
-        elif flux_surface.closed and new_area > 1.01 * area:
-            # Case 
-            # NOTE: The area check is for the case where the true separatrix loops around coils close 
-            # to the plasma and is still closed.
-            high = middle
-
+    
+        if flux_surface.closed and flux_surface.length < 1.1 * perimeter:
+            # NOTE: Perimeter check is for the case in which the separatrix
+            # loops around coils on the grid, thus still technically closed.
+            low = middle        
         else:
             # Middle flux surface is open, shift search bounds
             high = middle
 
-        delta = high - low
-        area = new_area
-
+        delta  = high - low
+  
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
     lcfs = get_flux_loop(low)
-    separatrix = get_flux_loop(high)
+    coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
+    separatrices = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
+    separatrices.sort(key=lambda loop: -loop.length)
 
-    if double_null:
-        # We already have the LCFS, just need to find the two open Coordinates for
-        # the separatrix
-
-        low = high
-        high = low + 0.02
-        delta = high - low
-        # Need to find two open Coordinates, not just the first open one...
-        z_ref = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
-        while delta > psi_n_tol:
-            middle = low + delta / 2
-            flux_surface = get_flux_loop(middle)
-            z_new = min(abs(min(flux_surface.z)), abs(max(flux_surface.z)))
-            if np.isclose(z_new, z_ref, rtol=rtol):
-                # Flux surface only open at one end
-                low = middle
-            else:
-                # Flux surface open at both ends
-                high = middle
-
-            delta = high - low
-
-        coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
-        loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
-        loops.sort(key=lambda loop: -loop.length)
-        separatrix = loops[:2]
-    return lcfs, separatrix
+    return lcfs, separatrices
 
 
 def x_point_check(
