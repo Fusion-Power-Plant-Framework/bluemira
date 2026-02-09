@@ -769,7 +769,7 @@ def find_LCFS_separatrix(
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
     rtol: float = 1e-3,
-) -> tuple[Coordinates, list[Coordinates]]:
+) -> tuple[Coordinates, Coordinates | list[Coordinates]]::
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
