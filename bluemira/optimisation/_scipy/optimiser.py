@@ -293,6 +293,12 @@ class ScipyOptimiser(Optimiser):
         if x0 is None:
             x0 = _initial_guess_from_bounds(self._lower_bounds, self._upper_bounds)
 
+        if self.df_objective and not self._config.supports_grad:
+            bluemira_warn(
+                f"""Gradient information (df_objective) was given but """
+                f"""{self.algorithm.name} does not use it. It will be ignored."""
+            )
+
         try:
             result = minimize(
                 fun=self.f_objective,
