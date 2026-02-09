@@ -25,7 +25,6 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
-    get_intersect,
     in_polygon,
 )
 from bluemira.utilities.tools import floatify
@@ -825,17 +824,17 @@ def find_LCFS_separatrix(
     while delta > psi_n_tol:
         middle = low + 0.5 * delta
         flux_surface = get_flux_loop(middle)
-    
+
         if flux_surface.closed and flux_surface.length < 1.1 * perimeter:
             # NOTE: Perimeter check is for the case in which the separatrix
             # loops around coils on the grid, thus still technically closed.
-            low = middle        
+            low = middle
         else:
             # Middle flux surface is open, shift search bounds
             high = middle
 
-        delta  = high - low
-  
+        delta = high - low
+
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
     lcfs = get_flux_loop(low)
@@ -843,8 +842,8 @@ def find_LCFS_separatrix(
     if double_null:
         # We already have the LCFS, just need to find the two open Coordinates for
         # the separatrix
-        # NOTE: This is required for "leg" processing, and to avoid issues in 
-        # quasi-DN situations, where the separatrix only has two legs, instead 
+        # NOTE: This is required for "leg" processing, and to avoid issues in
+        # quasi-DN situations, where the separatrix only has two legs, instead
         # of foud.
 
         low = high
