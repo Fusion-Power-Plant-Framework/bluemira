@@ -820,11 +820,6 @@ def find_LCFS_separatrix(
     low = 1 - delta_start  # Guaranteed (?) to be a closed flux surface
     high = 1 + delta_start  # Guaranteed (?) to be an open flux surface
     delta = 2.0 * delta_start
-
-    # Speed optimisations (avoid recomputing psi and O, X points)
-    if o_points is None or x_points is None: 
-        o_points, x_points = find_OX_points(x, z, psi)
-
     perimeter = get_flux_loop(low).length
 
     while delta > psi_n_tol:
@@ -848,6 +843,9 @@ def find_LCFS_separatrix(
     if double_null:
         # We already have the LCFS, just need to find the two open Coordinates for
         # the separatrix
+        # NOTE: This is required for "leg" processing, and to avoid issues in 
+        # quasi-DN situations, where the separatrix only has two legs, instead 
+        # of foud.
 
         low = high
         high = low + 0.02
@@ -873,98 +871,6 @@ def find_LCFS_separatrix(
         separatrix = loops[:2]
 
     return lcfs, separatrix
-
-
-def x_point_check(
-    flux_surface: Coordinates,
-    op: Opoint,
-    xp: Xpoint,
-    tangent_length: float | None = None,
-):
-    """
-    Check if there are intersections of a flux surface with the
-    line tangent to the o-point-x-point vector at the x-point.
-
-    Parameters
-    ----------
-    flux_surface:
-        Flux surface of interest, e.g., candidate closed
-        flux surfaces when finding LCFS
-    op:
-        Primary o-point for an equilibrium
-    xp:
-        X-point of interest, usually primary
-    tangent_length:
-        Set tangent length, otherwise small default value used
-
-    Returns
-    -------
-    arg_inters:
-        Intersection indices
-    """
-    if tangent_length is None:
-        tangent_length = (
-            np.max(flux_surface.x) - np.min(flux_surface.x) * 1e-2
-        )  # small and accounts for plasma size
-    tanget_line = two_point_angled_line(
-        op, xp, tangent_length
-    )  # default theta is tangent
-    inter = np.shape(get_intersect(flux_surface.xz, tanget_line.xz))
-    return inter[1]
-
-
-def two_point_angled_line(
-    centre_point: PsiPoint | Coordinates | np.ndarray,
-    edge_point: PsiPoint | Coordinates | np.ndarray,
-    length: float,
-    theta: float = np.pi / 2,
-):
-    """
-    Make a Coordinate object for a line of a given length that is at a given
-    angle (default is tangent) to a surface with a reference radial vector
-    specified by two points.
-
-    Parameters
-    ----------
-    centre_point:
-        Start point of reference vector
-    edge_point:
-        End point of reference vector, on the surface
-        where we will take the tangent.
-    length:
-        Length to make the tangent line Coordinate
-    theta:
-        CCW angle in radians
-
-    Returns
-    -------
-    :
-        Coordinates of the tangent line with length=length
-    """
-    cp = (
-        np.array([[centre_point.x], [0.0], [centre_point.z]])
-        if isinstance(centre_point, PsiPoint | Coordinates)
-        else centre_point
-    )
-    tp = (
-        np.array([[edge_point.x], [0.0], [edge_point.z]])
-        if isinstance(edge_point, PsiPoint | Coordinates)
-        else edge_point
-    )
-    a = cp - tp
-    a_hat = a / np.linalg.norm(a)
-
-    rot_matrix = np.array([
-        [np.cos(theta), 0, -np.sin(theta)],
-        [0, 0, 0],
-        [np.sin(theta), 0, np.cos(theta)],
-    ])  # ccw rotation about y-axis
-
-    b_hat = rot_matrix @ a_hat
-
-    p1 = tp - b_hat * length / 2
-    p2 = tp + b_hat * length / 2
-    return Coordinates(np.array([p1, p2]).T)
 
 
 def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
