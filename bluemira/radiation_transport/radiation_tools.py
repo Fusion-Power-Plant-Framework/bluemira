@@ -22,7 +22,7 @@ from scipy.interpolate import LinearNDInterpolator, RectBivariateSpline, interp1
 from scipy.spatial import Delaunay
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
-from bluemira.base.look_and_feel import bluemira_error
+from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -389,8 +389,15 @@ def electron_density_and_temperature_sol_decay(
         [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
             Nuclear Fusion, 47(6), S203.
     """
-    # TODO @je-cook: add check for if dx_mp >> lambda_q and when true add warning.
-    # 4207
+    # Add check for if dx_mp >> lambda_q and add warning if it is the case.
+    threshold = 10
+    if dx_mp > threshold * lambda_q_near or dx_mp > threshold * lambda_q_far:
+        bluemira_warn(
+            "dx_mp is much larger than lambda_q. This may"
+            "underestimate the SOL source. Consider reducing dx_mp"
+            "or increasing lambda_q."
+        )
+
     # temperature and density decay factors
     if f_exp == 1:
         t_factor = 7 / 2
