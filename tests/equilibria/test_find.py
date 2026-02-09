@@ -18,7 +18,6 @@ from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_local_minima,
     inv_2x2_matrix,
-    x_point_check,
 )
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 from bluemira.geometry.coordinates import Coordinates

@@ -872,6 +872,60 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
+def two_point_angled_line(
+    centre_point: PsiPoint | Coordinates | np.ndarray,
+    edge_point: PsiPoint | Coordinates | np.ndarray,
+    length: float,
+    theta: float = np.pi / 2,
+):
+    """
+    Make a Coordinate object for a line of a given length that is at a given
+    angle (default is tangent) to a surface with a reference radial vector
+    specified by two points.
+
+    Parameters
+    ----------
+    centre_point:
+        Start point of reference vector
+    edge_point:
+        End point of reference vector, on the surface
+        where we will take the tangent.
+    length:
+        Length to make the tangent line Coordinate
+    theta:
+        CCW angle in radians
+
+    Returns
+    -------
+    :
+        Coordinates of the tangent line with length=length
+    """
+    cp = (
+        np.array([[centre_point.x], [0.0], [centre_point.z]])
+        if isinstance(centre_point, PsiPoint | Coordinates)
+        else centre_point
+    )
+    tp = (
+        np.array([[edge_point.x], [0.0], [edge_point.z]])
+        if isinstance(edge_point, PsiPoint | Coordinates)
+        else edge_point
+    )
+    a = cp - tp
+    a_hat = a / np.linalg.norm(a)
+
+    rot_matrix = np.array([
+        [np.cos(theta), 0, -np.sin(theta)],
+        [0, 0, 0],
+        [np.sin(theta), 0, np.cos(theta)],
+    ])  # ccw rotation about y-axis
+
+    b_hat = rot_matrix @ a_hat
+
+    p1 = tp - b_hat * length / 2
+    p2 = tp + b_hat * length / 2
+    return Coordinates(np.array([p1, p2]).T)
+
+
 def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Grid a smooth contour and get the outline of the cells it encompasses.
