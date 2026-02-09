@@ -766,8 +766,10 @@ def find_LCFS_separatrix(
     o_points: list[Opoint] | None = None,
     x_points: list[Xpoint] | None = None,
     *,
+    double_null: bool = False,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
+    rtol: float = 1e-3,
 ) -> tuple[Coordinates, list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -842,11 +844,35 @@ def find_LCFS_separatrix(
     # NOTE: choosing "low" and "high" here is always right, and avoids more
     # "if" statements...
     lcfs = get_flux_loop(low)
-    coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
-    separatrices = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
-    separatrices.sort(key=lambda loop: -loop.length)
+    separatrix = get_flux_loop(high)
+    if double_null:
+        # We already have the LCFS, just need to find the two open Coordinates for
+        # the separatrix
 
-    return lcfs, separatrices
+        low = high
+        high = low + 0.02
+        delta = high - low
+        # Need to find two open Coordinates, not just the first open one...
+        z_ref = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
+        while delta > psi_n_tol:
+            middle = low + delta / 2
+            flux_surface = get_flux_loop(middle)
+            z_new = min(abs(min(flux_surface.z)), abs(max(flux_surface.z)))
+            if np.isclose(z_new, z_ref, rtol=rtol):
+                # Flux surface only open at one end
+                low = middle
+            else:
+                # Flux surface open at both ends
+                high = middle
+
+            delta = high - low
+
+        coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
+        loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
+        loops.sort(key=lambda loop: -loop.length)
+        separatrix = loops[:2]
+
+    return lcfs, separatrix
 
 
 def x_point_check(
