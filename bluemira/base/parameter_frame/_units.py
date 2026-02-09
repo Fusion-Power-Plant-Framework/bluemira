@@ -102,7 +102,7 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
             fix_list.append(no)
         else:
             ind_list.append(no)
-        unit_list.append(ureg.Quantity(f"{q.magnitude}{q.units}^{multiplier}"))
+        unit_list.append(ureg.Quantity(f"{q.magnitude}({q.units})^{multiplier}"))
 
     return _combine_commutative(unit_list, ind_list) * _convert_non_commutative(
         unit_list, fix_list
