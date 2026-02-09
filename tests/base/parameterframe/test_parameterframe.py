@@ -531,6 +531,7 @@ class CombinedFrame(ParameterFrame):
     test1: Parameter[float]
     test2: Parameter[float]
     test3: Parameter[float]
+    test4: Parameter[float]
 
 
 class TestParameterFrameUnits:
@@ -574,6 +575,7 @@ class TestParameterFrameUnits:
         "test1": {"value": 5, "unit": "W/m^2"},
         "test2": {"value": 5, "unit": "W/in^2"},
         "test3": {"value": 5, "unit": "degree/radian"},
+        "test4": {"value": 5, "unit": "A/W/m^2"},
     }
 
     def test_simple_units_to_defaults(self):
@@ -642,6 +644,8 @@ class TestParameterFrameUnits:
         assert frame.test2.unit == "W/m²"
         assert frame.test3.value == pytest.approx(0.0872665)
         assert frame.test3.unit == ""
+        assert frame.test4.value == 5
+        assert frame.test4.unit == "1/m²/V"  # is this a conversion we want?
 
     def test_bad_unit(self):
         frame_data = deepcopy(self.SIMPLE_FRAME_DATA)
