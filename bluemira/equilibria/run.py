@@ -480,7 +480,6 @@ class PulsedCoilsetDesign(ABC):
             relaxation=self.eq_config.relaxation,
             fixed_coils=True,
             diagnostic_plotting=self.eq_config.diagnostic_plotting,
-            keep_history=True,
             check_constraints=True,
         )
         program()

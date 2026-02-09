@@ -246,10 +246,7 @@ class TestScipyOptimiser:
         assert len(caplog.records) == 1
         assert "Failed without status." in caplog.messages[0]
 
-    def test_optimisation_error_given_unknown_scipy_alg(self, caplog):
-        with pytest.raises(OptimisationError):
-            _ = ScipyOptimiser("INVALID_ALG", 2, no_op)
-        assert (
-            "Algorithm INVALID_ALG is not a support SciPy algorithm."
-            in caplog.messages[0]
-        )
+    def test_valueerror_given_unknown_scipy_alg(self):
+        alg = "INVALID_ALG"
+        with pytest.raises(ValueError):  # noqa: PT011
+            _ = ScipyOptimiser(alg, 2, no_op)

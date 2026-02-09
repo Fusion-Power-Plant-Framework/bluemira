@@ -26,6 +26,8 @@ from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY
 from bluemira.optimisation.error import OptimisationError
 from bluemira.optimisation.typed import ConstraintT, ObjectiveCallable, OptimiserCallable
 
+EPS = 10 * np.finfo(float).eps  # accumulated floating-point error margin
+
 
 def optimise(
     f_objective: ObjectiveCallable,
@@ -268,6 +270,8 @@ def _make_optimiser(
         optimiser = NloptOptimiser
     elif alg in SCIPY_REGISTRY:
         optimiser = ScipyOptimiser
+        if keep_history:
+            bluemira_warn("History storage is not implemented for scipy optimisers.")
     else:
         raise OptimisationError("Unknown algorithm") from None
 
@@ -347,12 +351,11 @@ def _check_constraints(
         :
             the items in the constraint vector that violate the condition.
         """
-        epsilon = 1e-15
         c_value = constraint["f_constraint"](x_star)
         # Deal with scalar constraints
         c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
         tols = np.array(constraint["tolerance"])
-        indices = np.nonzero(condition(c_value, tols + epsilon))[0]
+        indices = np.nonzero(condition(c_value, tols))[0]
         if indices.size > 0:
             return (constraint.get("name", None), indices, c_value, tols)
         return None
@@ -395,9 +398,10 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
     Returns
     -------
     :
-        Condition under which an inequality constraint is violated.
+        Condition under which an inequality constraint is violated, accounding for
+        machine epsilon.
     """
-    return c_value > tols
+    return c_value > tols + EPS * np.maximum(1.0, np.abs(tols))
 
 
 def _set_default_termination_conditions(
