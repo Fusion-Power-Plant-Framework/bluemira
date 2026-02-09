@@ -391,7 +391,8 @@ def electron_density_and_temperature_sol_decay(
     """
     # Add check for if dx_mp >> lambda_q and add warning if it is the case.
     threshold = 10
-    if dx_mp > threshold * lambda_q_near or dx_mp > threshold * lambda_q_far:
+
+    if dx_mp.any() > threshold * lambda_q_near or dx_mp.any() > threshold * lambda_q_far:
         bluemira_warn(
             "dx_mp is much larger than lambda_q. This may"
             "underestimate the SOL source. Consider reducing dx_mp"
