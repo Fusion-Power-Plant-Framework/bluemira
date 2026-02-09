@@ -112,12 +112,15 @@ class TestFindLCFSSeparatrix:
                 distances = loop.distance_to([primary_xp.x, 0, primary_xp.z])
                 assert np.amin(distances) <= grid_tol
 
-    @pytest.mark.parametrize(("name", "lcfs_length", "sep_length"), [
-        ["mastu_lcfs_sep_test.json", 5.1464133, 10.498305],
-        ["sof_lcfs_sep_test.json", 25.1725887, 36.4210786],
-        ["eof_lcfs_sep_test.json", 25.145622847, 52.396147128],
-        ["steplike_lcfs_sep_test.json", 20.481355260848282, 25.990406336039094],
-    ])
+    @pytest.mark.parametrize(
+        ("name", "lcfs_length", "sep_length"),
+        [
+            ["mastu_lcfs_sep_test.json", 5.1464133, 10.498305],
+            ["sof_lcfs_sep_test.json", 25.1725887, 36.4210786],
+            ["eof_lcfs_sep_test.json", 25.145622847, 52.396147128],
+            ["steplike_lcfs_sep_test.json", 20.481355260848282, 25.990406336039094],
+        ],
+    )
     def test_regression(self, name, lcfs_length, sep_length):
         eq = Equilibrium.from_eqdsk(Path(DATA, name), from_cocos=3)
         lcfs = eq.get_LCFS()
@@ -127,6 +130,7 @@ class TestFindLCFSSeparatrix:
         assert lcfs.closed
         assert np.isclose(lcfs.length, lcfs_length, rtol=1e-4)
         assert np.isclose(sep.length, sep_length, rtol=1e-4)
+
 
 class TestInPlasma:
     def test_recursion(self):
