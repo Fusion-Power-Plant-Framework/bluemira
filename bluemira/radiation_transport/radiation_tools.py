@@ -389,7 +389,6 @@ def electron_density_and_temperature_sol_decay(
         [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
             Nuclear Fusion, 47(6), S203.
     """
-
     if dx_mp.any() > (10 * max(lambda_q_near, lambda_q_far)):
         # warn if dx_mp >> lambda_q
         bluemira_warn(
