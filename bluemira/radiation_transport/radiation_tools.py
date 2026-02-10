@@ -389,10 +389,9 @@ def electron_density_and_temperature_sol_decay(
         [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
             Nuclear Fusion, 47(6), S203.
     """
-    # Add check for if dx_mp >> lambda_q and add warning if it is the case.
-    threshold = 10
 
-    if dx_mp.any() > threshold * lambda_q_near or dx_mp.any() > threshold * lambda_q_far:
+    if dx_mp.any() > (10 * max(lambda_q_near, lambda_q_far)):
+        # warn if dx_mp >> lambda_q
         bluemira_warn(
             "dx_mp is much larger than lambda_q. This may"
             "underestimate the SOL source. Consider reducing dx_mp"
