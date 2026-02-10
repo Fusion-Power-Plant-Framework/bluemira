@@ -25,7 +25,6 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
-    get_intersect,
     in_polygon,
 )
 from bluemira.utilities.tools import floatify
@@ -819,23 +818,21 @@ def find_LCFS_separatrix(
 
     low = 1 - delta_start  # Guaranteed (?) to be a closed flux surface
     high = 1 + delta_start  # Guaranteed (?) to be an open flux surface
-
-    # Speed optimisations (avoid recomputing psi and O, X points)
-    if o_points is None or x_points is None:
-        o_points, x_points = find_OX_points(x, z, psi)
-
-    primary_xp, primary_op = x_points[0], o_points[0]
-    delta = high - low
+    delta = 2.0 * delta_start
+    perimeter = get_flux_loop(low).length
 
     while delta > psi_n_tol:
-        middle = low + delta / 2
+        middle = low + 0.5 * delta
         flux_surface = get_flux_loop(middle)
 
-        intersection_count = x_point_check(flux_surface, primary_op, primary_xp)
-        if flux_surface.closed and intersection_count <= 1:
-            # Middle flux surface is still closed, shift search bounds
+        if flux_surface.closed and flux_surface.length < 1.1 * perimeter:
+            # NOTE: Perimeter check is for the case in which the separatrix
+            # loops around coils on the grid, thus still technically closed.
+            # 1.1 was chosen as it represents a 10 % increase in perimeter from
+            # one small increment in flux value, something which is only likely to occur
+            # in closed flux surfaces if the perimeter loops around X-point
+            # coils
             low = middle
-
         else:
             # Middle flux surface is open, shift search bounds
             high = middle
@@ -846,10 +843,12 @@ def find_LCFS_separatrix(
     # "if" statements...
     lcfs = get_flux_loop(low)
     separatrix = get_flux_loop(high)
-
     if double_null:
         # We already have the LCFS, just need to find the two open Coordinates for
         # the separatrix
+        # NOTE: This is required for "leg" processing, and to avoid issues in
+        # quasi-DN situations, where the separatrix only has two legs, instead
+        # of four.
 
         low = high
         high = low + 0.02
@@ -873,45 +872,8 @@ def find_LCFS_separatrix(
         loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
+
     return lcfs, separatrix
-
-
-def x_point_check(
-    flux_surface: Coordinates,
-    op: Opoint,
-    xp: Xpoint,
-    tangent_length: float | None = None,
-):
-    """
-    Check if there are intersections of a flux surface with the
-    line tangent to the o-point-x-point vector at the x-point.
-
-    Parameters
-    ----------
-    flux_surface:
-        Flux surface of interest, e.g., candidate closed
-        flux surfaces when finding LCFS
-    op:
-        Primary o-point for an equilibrium
-    xp:
-        X-point of interest, usually primary
-    tangent_length:
-        Set tangent length, otherwise small default value used
-
-    Returns
-    -------
-    arg_inters:
-        Intersection indices
-    """
-    if tangent_length is None:
-        tangent_length = (
-            np.max(flux_surface.x) - np.min(flux_surface.x) * 1e-2
-        )  # small and accounts for plasma size
-    tanget_line = two_point_angled_line(
-        op, xp, tangent_length
-    )  # default theta is tangent
-    inter = np.shape(get_intersect(flux_surface.xz, tanget_line.xz))
-    return inter[1]
 
 
 def two_point_angled_line(

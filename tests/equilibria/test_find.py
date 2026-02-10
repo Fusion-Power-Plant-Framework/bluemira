@@ -18,10 +18,8 @@ from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_local_minima,
     inv_2x2_matrix,
-    x_point_check,
 )
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
-from bluemira.geometry.coordinates import Coordinates
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -113,25 +111,24 @@ class TestFindLCFSSeparatrix:
                 distances = loop.distance_to([primary_xp.x, 0, primary_xp.z])
                 assert np.amin(distances) <= grid_tol
 
-    def test_x_point_check(self):
-        file_path = Path(DATA, "mock_flux_surfaces.json")
-        with open(file_path) as f:
-            fs = json.load(f)
-
-        xp1, xp2 = np.array([[0.0], [0.0], [2.0]]), np.array([[2.0], [0.0], [0.0]])
-        op = np.array([[0.0], [0.0], [0.0]])
-        coords1 = Coordinates({"x": fs["snowman"]["x"], "z": fs["snowman"]["z"]})
-        coords2 = Coordinates({
-            "x": fs["sleepy_snowman"]["x"],
-            "z": fs["sleepy_snowman"]["z"],
-        })
-        theta = 2 * np.pi * np.arange(0, 100)
-        coords3 = Coordinates({"x": 2 * np.cos(theta), "z": 2 * np.sin(theta)})
-
-        assert x_point_check(coords1, op, xp1, tangent_length=2.0) == 2
-        assert x_point_check(coords2, op, xp2, tangent_length=2.0) == 2
-        assert x_point_check(coords3, op, xp1) == 0
-        assert x_point_check(coords3, op, xp2) == 0
+    @pytest.mark.parametrize(
+        ("name", "lcfs_length", "sep_length"),
+        [
+            ("mastu_lcfs_sep_test.json", 5.1464133, 10.498305),
+            ("sof_lcfs_sep_test.json", 25.1725887, 36.4210786),
+            ("eof_lcfs_sep_test.json", 25.145622847, 52.396147128),
+            ("steplike_lcfs_sep_test.json", 20.481355260848282, 25.990406336039094),
+        ],
+    )
+    def test_regression(self, name, lcfs_length, sep_length):
+        eq = Equilibrium.from_eqdsk(Path(DATA, name), from_cocos=3)
+        lcfs = eq.get_LCFS()
+        sep = eq.get_separatrix()
+        if isinstance(sep, list):
+            sep = sep[0]
+        assert lcfs.closed
+        assert np.isclose(lcfs.length, lcfs_length, rtol=1e-4)
+        assert np.isclose(sep.length, sep_length, rtol=1e-4)
 
 
 class TestInPlasma:
