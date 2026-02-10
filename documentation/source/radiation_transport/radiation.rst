@@ -232,6 +232,22 @@ temperature value and an electron density value. Having access to an atomic data
 for impurities (e.g., ADAS) for the radiative power loss rates, it is possible to
 calculate the 2-D distribution of the total radiated power density :math:`[MW/m^3]`.
 
+Working with the radiation solver
+---------------------------------
+
+Bluemira creates the source terms for the radiation transport calculation in cherab.
+The source terms are constructed from axis-symmetric voxels which are calculated from
+the user specified discretisation length.
+The more voxels the longer the simulation will take to run.
+For more information on the internals of how cherab functions please see the
+`Cherab <https://www.cherab.info/index.html>`_ and `Raysect documentation <https://www.raysect.org/how_it_works.html>`_. The Raysect documentation has a very good section on how it works.
+
+There are currently limits for the SOL power/radiation source, if exceeded the
+source becomes under-resolved. The source profile decays over a length :math:`lambda_q`
+and is sampled on a grid :math:`dx_{mp}`. If :math:`dx_{mp} >> lambda_q` most or all of
+the sample points will fall into the near-zero tail, resulting in the discretised source
+vanishing.
+
 .. rubric:: References
 
 .. [Post_1995] Post et al., Physics of Plasmas 2, 2328-2336 (1995).
