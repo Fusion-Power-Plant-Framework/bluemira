@@ -46,6 +46,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.diagnostics import (
+    PicardDiagnostic,
+    PicardDiagnosticOptions,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -171,9 +175,9 @@ Z_0 = 0
 B_t = 1.9
 I_p = 16e6
 
-r0, r1 = 0.2, 8
-z0, z1 = -8, 8
-nx, nz = 129, 257
+r0, r1 = 0.2, 16
+z0, z1 = -16, 16
+nx, nz = 300, 600
 grid = Grid(r0, r1, z0, z1, nx, nz)
 
 # fmt: off
@@ -299,6 +303,7 @@ unconstrained_iterator = PicardIterator(
     fixed_coils=True,
     relaxation=0.3,
     convergence=DudsonConvergence(1e-6),
+    diagnostic_plotting=PicardDiagnosticOptions(plot=PicardDiagnostic.EQ),
 )
 
 # %% [markdown]
@@ -381,6 +386,7 @@ constrained_iterator = PicardIterator(
     relaxation=0.1,
     maxiter=100,
     convergence=DudsonConvergence(1e-4),
+    diagnostic_plotting=PicardDiagnosticOptions(plot=PicardDiagnostic.EQ),
 )
 
 constrained_iterator()

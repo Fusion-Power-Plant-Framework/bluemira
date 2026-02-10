@@ -828,6 +828,10 @@ def find_LCFS_separatrix(
         if flux_surface.closed and flux_surface.length < 1.1 * perimeter:
             # NOTE: Perimeter check is for the case in which the separatrix
             # loops around coils on the grid, thus still technically closed.
+            # 1.1 was chosen as it represents a 10 % increase in perimeter from
+            # one small increment in flux value, something which is only likely to occur
+            # in closed flux surfaces if the perimeter loops around X-point
+            # coils
             low = middle
         else:
             # Middle flux surface is open, shift search bounds
