@@ -20,7 +20,6 @@ from bluemira.equilibria.find import (
     inv_2x2_matrix,
 )
 from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
-from bluemira.geometry.coordinates import Coordinates
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -115,10 +114,10 @@ class TestFindLCFSSeparatrix:
     @pytest.mark.parametrize(
         ("name", "lcfs_length", "sep_length"),
         [
-            ["mastu_lcfs_sep_test.json", 5.1464133, 10.498305],
-            ["sof_lcfs_sep_test.json", 25.1725887, 36.4210786],
-            ["eof_lcfs_sep_test.json", 25.145622847, 52.396147128],
-            ["steplike_lcfs_sep_test.json", 20.481355260848282, 25.990406336039094],
+            ("mastu_lcfs_sep_test.json", 5.1464133, 10.498305),
+            ("sof_lcfs_sep_test.json", 25.1725887, 36.4210786),
+            ("eof_lcfs_sep_test.json", 25.145622847, 52.396147128),
+            ("steplike_lcfs_sep_test.json", 20.481355260848282, 25.990406336039094),
         ],
     )
     def test_regression(self, name, lcfs_length, sep_length):
