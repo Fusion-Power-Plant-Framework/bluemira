@@ -62,6 +62,7 @@ SCIPY_REGISTRY: dict[Algorithm, ScipyAlgConfig] = {
             "ftol_rel": "ftol",
             "ftol_abs": "ftol",
         },
+        supports_grad=True,
     ),
     Algorithm.TNC: ScipyAlgConfig(
         alg_name="tnc",
@@ -71,6 +72,7 @@ SCIPY_REGISTRY: dict[Algorithm, ScipyAlgConfig] = {
             "ftol_rel": "ftol",
             "ftol_abs": "ftol",
         },
+        supports_grad=True,
     ),
     Algorithm.COBYLA_SCIPY: ScipyAlgConfig(
         alg_name="cobyla",
@@ -104,6 +106,7 @@ SCIPY_REGISTRY: dict[Algorithm, ScipyAlgConfig] = {
             "ftol_rel": "ftol",
             "ftol_abs": "ftol",
         },
+        supports_grad=True,
         supports_eq_constraints=True,
         supports_ineq_constraints=True,
     ),
@@ -115,6 +118,7 @@ SCIPY_REGISTRY: dict[Algorithm, ScipyAlgConfig] = {
             "ftol_rel": "gtol",
             "ftol_abs": "gtol",
         },
+        supports_grad=True,
         supports_eq_constraints=True,
         supports_ineq_constraints=True,
     ),
