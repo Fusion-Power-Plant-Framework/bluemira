@@ -40,6 +40,7 @@ from bluemira.equilibria.find import (
     _in_plasma,
     get_contours,
     grid_2d_contour,
+    interpolate_psi,
 )
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi
@@ -1304,33 +1305,20 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             nz = np.max([ref_grid.nz, input_grid.nz])
         return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
-    def interpolate_psi(self, psi, psi_grid):
-        """
-        Interpolate psi over new comparison grid
-
-        Returns
-        -------
-        :
-            interpolated psi values
-
-        """
-        psi_func = RectBivariateSpline(psi_grid.x[:, 0], psi_grid.z[0, :], psi)
-        return psi_func.ev(self.grid.x, self.grid.z)
-
     def _interpolate_psi_for_comparison(self):
         """Interpolate all psi components over new grid."""
-        self.ref_coilset_psi = self.interpolate_psi(
-            self.ref_coilset_psi, self.reference.grid
+        self.ref_coilset_psi = interpolate_psi(
+            self.ref_coilset_psi, self.reference.grid, self.grid
         )
-        self.ref_plasma_psi = self.interpolate_psi(
-            self.ref_plasma_psi, self.reference.grid
+        self.ref_plasma_psi = interpolate_psi(
+            self.ref_plasma_psi, self.reference.grid, self.grid
         )
-        self.ref_total_psi = self.interpolate_psi(
-            self.ref_total_psi, self.reference.grid
+        self.ref_total_psi = interpolate_psi(
+            self.ref_total_psi, self.reference.grid, self.grid
         )
-        self.coilset_psi = self.interpolate_psi(self.coilset_psi, self.eq.grid)
-        self.plasma_psi = self.interpolate_psi(self.plasma_psi, self.eq.grid)
-        self.total_psi = self.interpolate_psi(self.total_psi, self.eq.grid)
+        self.coilset_psi = interpolate_psi(self.coilset_psi, self.eq.grid, self.grid)
+        self.plasma_psi = interpolate_psi(self.plasma_psi, self.eq.grid, self.grid)
+        self.total_psi = interpolate_psi(self.total_psi, self.eq.grid, self.grid)
 
     def _make_lcfs_mask(self, mask_type):
         """

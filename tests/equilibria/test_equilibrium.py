@@ -404,6 +404,17 @@ class TestEquilibrium:
         self.dn.plot(plasma=plasma)
 
 
+@pytest.fixture
+def eq_data():
+    data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+    return Path(data_path, "eqref_OOB.json")
+
+
+@pytest.fixture
+def eq_ng(eq_data):
+    return Equilibrium.from_eqdsk(eq_data, from_cocos=7)
+
+
 class TestEqReadWrite:
     @pytest.mark.parametrize("qpsi_calcmode", [0, 1])
     @pytest.mark.parametrize("file_format", ["json", "eqdsk"])
@@ -437,15 +448,6 @@ class TestEqReadWrite:
         assert compare_dicts(d1, d2, almost_equal=True)
 
     @pytest.fixture
-    def eq_data(self):
-        data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        return Path(data_path, "eqref_OOB.json")
-
-    @pytest.fixture
-    def eq_ng(self, eq_data):
-        return Equilibrium.from_eqdsk(eq_data, from_cocos=7)
-
-    @pytest.fixture
     def eq_rg(self, eq_data):
         return Equilibrium.from_eqdsk(eq_data, from_cocos=7, regrid_nx_nz=(100, 100))
 
@@ -463,19 +465,15 @@ class TestEqReadWrite:
         assert np.isclose(np.nanmax(eq_ng.psi()), np.nanmax(eq_rg.psi()), rtol=1e-2)
 
     def test_regrid_interpolation_back(self, eq_ng, eq_rg):
-        x_new, z_new = eq_rg.grid.x[:, 0], eq_rg.grid.z[0, :]
-        x_old, z_old = np.meshgrid(eq_ng.grid.x[:, 0], eq_ng.grid.z[0, :], indexing="ij")
-        psi_back = interpolate_psi(
-            x_old=x_new, z_old=z_new, psi_old=eq_rg.psi(), x_new=x_old, z_new=z_old
-        )
+        psi_back = interpolate_psi(eq_rg.psi(), eq_rg.grid, eq_ng.grid)
         diff = psi_back - eq_ng.psi()
         max_abs = np.nanmax(np.abs(diff))
         mean_abs = np.nanmean(np.abs(diff))
         rel_l2 = np.linalg.norm(diff.ravel()) / np.linalg.norm(eq_ng.psi().ravel())
 
-        assert rel_l2 < 0.03
-        assert mean_abs < 1.0
-        assert max_abs < 10.0
+        assert rel_l2 < 1e-6
+        assert mean_abs < 6e-6
+        assert max_abs < 2e-4
 
     def test_regrid_preserves_ox_points(self, eq_ng, eq_rg):
         o_old, x_old_pts = find_OX_points(eq_ng.grid.x, eq_ng.grid.z, eq_ng.psi())
@@ -501,26 +499,13 @@ class TestEqReadWrite:
 
 class TestResetGrid:
     @pytest.fixture
-    def eq_data(self):
-        data_path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-        return Path(data_path, "eqref_OOB.json")
-
-    @pytest.fixture
-    def eq_ng(self, eq_data):
-        return Equilibrium.from_eqdsk(eq_data, from_cocos=7)
+    def interpolated_psi(self, eq_ng, new_grid):
+        return interpolate_psi(eq_ng.psi(), eq_ng.grid, new_grid)
 
     @pytest.fixture
     def new_grid(self, eq_ng):
         old = eq_ng.grid
         return Grid(old.x_min, old.x_max, old.z_min, old.z_max, nx=120, nz=140)
-
-    @pytest.fixture
-    def interpolated_psi(self, eq_ng, new_grid):
-        x_old, z_old = eq_ng.grid.x[:, 0], eq_ng.grid.z[0, :]
-        xn, zn = np.meshgrid(new_grid.x[:, 0], new_grid.z[0, :], indexing="ij")
-        return interpolate_psi(
-            x_old=x_old, z_old=z_old, psi_old=eq_ng.psi(), x_new=xn, z_new=zn
-        )
 
     def test_reset_grid_updates_grid(self, eq_ng, new_grid, interpolated_psi):
         eq_ng.reset_grid(new_grid, psi=interpolated_psi)

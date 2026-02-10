@@ -24,7 +24,11 @@ from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0, raw_uc
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush, bluemira_warn
+from bluemira.base.look_and_feel import (
+    bluemira_print,
+    bluemira_print_flush,
+    bluemira_warn,
+)
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
@@ -149,7 +153,7 @@ class MHDState:
         full_coil: bool = False,
         regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
-    ) -> tuple[EQDSKInterface, Grid]:
+    ) -> tuple[EQDSKInterface, Grid, tuple[int, int] | None]:
         """
         Get eqdsk data from file for read in
 
@@ -167,6 +171,8 @@ class MHDState:
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
+        regrid_nx_nz:
+            Modify grid to use new nx and nz values
 
         Returns
         -------
@@ -201,8 +207,15 @@ class MHDState:
 
         grid = Grid.from_eqdsk(e)
         if regrid_nx_nz is not None:
-            grid = grid.regrid(*regrid_nx_nz)
-        return e, grid
+            if (grid.nx, grid.nz) == regrid_nx_nz:
+                regrid_nx_nz = None
+            else:
+                bluemira_print(
+                    "NOTE: Loading an Equilibrium from a file using a different grid "
+                    "will result in changes with respect to the original data."
+                )
+                grid = grid.regrid(*regrid_nx_nz)
+        return e, grid, regrid_nx_nz
 
     def to_eqdsk(
         self,
@@ -320,8 +333,10 @@ class FixedPlasmaEquilibrium(MHDState):
         full_coil:
             Whether the eqdsk dxc and dzc represents
             the full coil width or half coil width
+        regrid_nx_nz:
+            Modify grid to use new nx and nz values
         """  # noqa: DOC201
-        e, grid = super()._get_eqdsk(
+        e, grid, regrid_nx_nz = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             full_coil=full_coil,
@@ -499,13 +514,13 @@ class CoilSetMHDState(MHDState):
         from_cocos: int | None = 11,
         *,
         qpsi_positive: bool | None = None,
+        full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         user_coils: CoilSet | None = None,
         force_symmetry: bool = False,
         force_symmetry_rtol: float | None = None,
-        full_coil: bool = False,
-        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
-    ) -> tuple[EQDSKInterface, Grid, CoilSet, Limiter | None]:
+    ) -> tuple[EQDSKInterface, Grid, tuple[int, int] | None, CoilSet, Limiter | None]:
         """
         Get eqdsk data from file for read in
 
@@ -520,6 +535,11 @@ class CoilSetMHDState(MHDState):
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
+        regrid_nx_nz:
+            Modify grid to use new nx and nz values
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
@@ -530,9 +550,6 @@ class CoilSetMHDState(MHDState):
             The values for the secondary coil in the pair will be
             set to be equal to the primary coil values if they are
             within force_symmetry_rtol.
-        full_coil:
-            Whether the eqdsk dxc and dzc represents
-            the full coil width or half coil width
 
         Returns
         -------
@@ -540,6 +557,9 @@ class CoilSetMHDState(MHDState):
             Instance if EQDSKInterface with the EQDSK file read in
         psi:
             psi array
+        regrid_nx_nz:
+            modified regrid argument, possibly overwritten if previous grid
+            states matched
         coilset:
             Coilset from eqdsk
         grid:
@@ -547,7 +567,7 @@ class CoilSetMHDState(MHDState):
         limiter:
             Limiter instance if any limiters are in file
         """
-        e, grid = super()._get_eqdsk(
+        e, grid, regrid_nx_nz = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             qpsi_positive=qpsi_positive,
@@ -561,7 +581,7 @@ class CoilSetMHDState(MHDState):
 
         limiter = None if e.nlim > 5 or e.nlim == 0 else Limiter(e.xlim, e.zlim)  # noqa: PLR2004
 
-        return e, grid, coilset, limiter
+        return e, grid, regrid_nx_nz, coilset, limiter
 
     def _remap_greens(self):
         """
@@ -692,10 +712,10 @@ class Breakdown(CoilSetMHDState):
         from_cocos: int | None = 11,
         *,
         qpsi_positive: bool | None = None,
-        force_symmetry: bool,
-        user_coils: CoilSet | None = None,
         full_coil: bool = False,
         regrid_nx_nz: tuple[int, int] | None = None,
+        force_symmetry: bool,
+        user_coils: CoilSet | None = None,
         **kwargs,
     ):
         """
@@ -713,16 +733,18 @@ class Breakdown(CoilSetMHDState):
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
+        regrid_nx_nz:
+            Modify grid to use new nx and nz values
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
-        full_coil:
-            Whether the eqdsk dxc and dzc represents
-            the full coil width or half coil width
         """  # noqa: DOC201
-        eqdsk, grid, coilset, limiter = super()._get_eqdsk(
+        eqdsk, grid, _, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
             qpsi_positive=qpsi_positive,
@@ -1051,11 +1073,11 @@ class Equilibrium(CoilSetMHDState):
         from_cocos: int | None = 11,
         *,
         qpsi_positive: bool | None = None,
+        full_coil: bool = False,
+        regrid_nx_nz: tuple[int, int] | None = None,
         force_symmetry: bool = False,
         user_coils: CoilSet | None = None,
-        full_coil: bool = False,
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
-        regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
     ):
         """
@@ -1077,16 +1099,18 @@ class Equilibrium(CoilSetMHDState):
         qpsi_positive:
             Whether qpsi is positive or not, required for identification
             when qpsi is not present in the file.
+        full_coil:
+            Whether the eqdsk dxc and dzc represents
+            the full coil width or half coil width
+        regrid_nx_nz:
+            Modify grid to use new nx and nz values
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
         user_coils:
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
-        full_coil:
-            Whether the eqdsk dxc and dzc represents
-            the full coil width or half coil width
         """  # noqa: DOC201
-        e, grid, coilset, limiter = super()._get_eqdsk(
+        e, grid, regrid_nx_nz, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos=from_cocos,
             qpsi_positive=qpsi_positive,
@@ -1098,10 +1122,7 @@ class Equilibrium(CoilSetMHDState):
         )
 
         if regrid_nx_nz:
-            xn, zn = np.meshgrid(grid.x[:, 0], grid.z[0, :], indexing="ij")
-            psi = interpolate_psi(
-                x_old=e.x, z_old=e.z, psi_old=e.psi, x_new=xn, z_new=zn
-            )
+            psi = interpolate_psi(psi=e.psi, psi_grid=Grid.from_eqdsk(e), new_grid=grid)
         else:
             psi = e.psi
 

@@ -148,6 +148,11 @@ class Grid:
         :
             New grid object
         """
+        if (self.nx, self.nz) == (nx, nz):
+            bluemira_warn(
+                "No regridding undertaken, previous number of grid points is the same"
+            )
+            return self
         return type(self)(self.x_min, self.x_max, self.z_min, self.z_max, nx, nz)
 
     @classmethod
