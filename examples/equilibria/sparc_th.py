@@ -129,7 +129,7 @@ eq.solve()
 orig_eq = deepcopy(eq)
 
 
-setu = toroidal_harmonic_grid_and_coil_setup(eq, *eq.effective_centre(), TauLimit.MANUAL, min_tau_value=1.3)
+setu = toroidal_harmonic_grid_and_coil_setup(eq, *eq.effective_centre(), TauLimit.MANUAL, min_tau_value=1.2)
 
 eq.coilset.control = setu.th_coil_names
 orig_eq.coilset.control = setu.th_coil_names
@@ -145,8 +145,8 @@ rx_up = x_points[1].x
 zx_up = x_points[1].z
 
 nulls = [
-    FieldNullConstraint(rx_down, zx_down, tolerance=1e-6),
-    FieldNullConstraint(rx_down, zx_up, tolerance=1e-6),
+    FieldNullConstraint(rx_down, zx_down, tolerance=1e-5),
+    FieldNullConstraint(rx_down, -zx_down, tolerance=1e-5),
 ]
 th_eq = deepcopy(eq)
 
@@ -181,11 +181,11 @@ x_leg_in = np.array([1.3, rx_down, 1.53656704, 1.48805959, 1.43955214, 1.3910446
 z_leg_in = np.array([0.0, zx_down,-1.14243024, -1.19216021, -1.24189018, -1.29162016, -1.34135013,
        -1.3910801 , -1.44081008, -1.49054005, -1.54027003, -1.59      ])
 
-x_leg_out = np.array([1.53976778, 1.56568171, 1.5897555 , 1.61451708, 1.63994519,
+x_leg_out = np.array([1.3, rx_down, 1.53976778, 1.56568171, 1.5897555 , 1.61451708, 1.63994519,
        1.66565352, 1.69303675, 1.72155301, 1.75229153, 1.78482571,
        1.82031686, 1.85815546, 1.89845581, 1.94104739, 1.9854674 ,
        2.03121983, 2.0777302 , 2.1244036])
-z_leg_out = np.array([-1.15525158, -1.19870816, -1.24425173, -1.28955424, -1.33445179,
+z_leg_out = np.array([0.0, zx_down, -1.15525158, -1.19870816, -1.24425173, -1.28955424, -1.33445179,
        -1.37923415, -1.42300444, -1.46605025, -1.5075437 , -1.54764426,
        -1.58516093, -1.62030534, -1.65260046, -1.68181544, -1.70817689,
        -1.73216185, -1.75464813, -1.77679415])
@@ -198,7 +198,7 @@ upper_leg_out = IsofluxConstraint(x=x_leg_out, z=-z_leg_out, ref_x=x_leg_out[0],
 lower_leg_out = IsofluxConstraint(x=x_leg_out, z=z_leg_out, ref_x=x_leg_out[0], ref_z=z_leg_out[0], tolerance=1e-6, weights=weight)
 th_eq_leg = deepcopy(th_eq)
 
-constraint_set = MagneticConstraintSet([upper_leg_in, lower_leg_in, upper_leg_out, lower_leg_out])
+constraint_set = MagneticConstraintSet(nulls+[upper_leg_out, lower_leg_out])
 
 current_opt_problem = TikhonovCurrentCOP(
     th_eq_leg,
@@ -216,8 +216,8 @@ program = PicardIterator(
     current_opt_problem,
     fixed_coils=True,
     diagnostic_plotting=PicardDiagnosticOptions(PicardDiagnostic.EQ),
-    convergence=DudsonConvergence(1e-3),
-    relaxation=0.35,
+    convergence=DudsonConvergence(5e-4),
+    relaxation=0.0,
     maxiter=30,
 )
 program()
