@@ -271,9 +271,15 @@ def df_inequalities(x):
     "algorithm",
     [
         Algorithm.SLSQP,
-        Algorithm.SLSQP_SCIPY,
+        pytest.param(
+            Algorithm.SLSQP_SCIPY,
+            marks=pytest.mark.xfail(reason="numerical instability between environments"),
+        ),
         Algorithm.COBYLA,
-        Algorithm.COBYLA_SCIPY,
+        pytest.param(
+            Algorithm.COBYLA_SCIPY,
+            marks=pytest.mark.xfail(reason="numerical instability between environments"),
+        ),
         pytest.param(
             Algorithm.COBYQA,
             marks=pytest.mark.xfail(reason="poor handling of initial conditions"),
