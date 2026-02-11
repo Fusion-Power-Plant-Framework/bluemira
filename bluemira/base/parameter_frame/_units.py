@@ -63,6 +63,7 @@ def _ensure_SI_unit_system(
         unit_q = quantity
 
     if unit_q.units != quantity.units and param_data["value"] is not None:
+        # Convert to new units
         val = raw_uc(quantity.magnitude, quantity.units, unit_q.units)
         if isinstance(param_data["value"], int) and int in value_type:
             val = int(val)
@@ -98,7 +99,7 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
         if q.units not in {ureg.fpy, ureg.dpa}:
             q = q.to_preferred()  # individually preferred (SI)
         if q.units in {ureg.fpy, ureg.dpa} or not q.dimensionality:
-            # is not commutative or is angle (as their dimensionless in pint)
+            # is not commutative or is angle (as they're dimensionless in pint)
             fix_list.append(no)
         else:
             ind_list.append(no)
@@ -114,6 +115,7 @@ def _convert_non_commutative(
 ) -> Quantity:
     """Converts angle units and combines non commutative units"""  # noqa: DOC201
 
+    # There is only one unit in _units of 'i' therefore extract the key/value
     def get_key(i: Quantity) -> str:
         return next(iter(i._units.keys()))
 
@@ -147,6 +149,8 @@ def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> 
     if not isinstance(quantity, ureg.Quantity):
         return quantity
 
+    # Prefer the users SI converted unit
+    # if the number of constituent units is <= the number in the new unit
     pq = quantity.to_preferred()
     if len(quantity._units.keys()) <= len(pq._units.keys()):
         return quantity
