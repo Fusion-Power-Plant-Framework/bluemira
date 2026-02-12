@@ -30,10 +30,12 @@ Benchmark with FreeGNSKE on a MAST-U equilibrium.
 
 # %%
 import pickle  # noqa: S403
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.coils import (
     Circuit,
@@ -66,8 +68,11 @@ plot_defaults()
 # We "fix" the solenoid here, but other overlaps are not addressed.
 
 # %%
-with open("MAST-U_like_active_coils.pickle", "rb") as f:
-    coil_dict = pickle.load(f)  # noqa: S301
+path = get_bluemira_path("equilibria", subfolder="examples")
+name = "MAST-U_like_active_coils.pickle"
+
+with open(Path(path, name), "rb") as file:
+    coil_dict = pickle.load(file)  # noqa: S301
 
 circuits = []
 count = []
@@ -130,7 +135,8 @@ full_coilset.control = [n for n in full_coilset.name if "Solenoid" not in n]
 # Note sure which COCOS FreeGSNKE uses... probably 7 or 8
 
 # %%
-freegsnke_eq = Equilibrium.from_eqdsk("MASTU-FREEGSNKE.eqdsk", from_cocos=7)
+name = "MASTU-FREEGSNKE.eqdsk"
+freegsnke_eq = Equilibrium.from_eqdsk(Path(path, name), from_cocos=7)
 
 # %% [markdown]
 # Match the profiles from the FreeGSNKE equilibrium with a CustomProfile
