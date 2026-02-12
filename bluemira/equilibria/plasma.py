@@ -284,7 +284,7 @@ class PlasmaCoil:
         :
             A simple string representation of the PlasmaCoil.
         """
-        n_filaments = len(np.nonzero(self._j_tor > 0)[0])
+        n_filaments = np.count_nonzero(self._j_tor)
         return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 

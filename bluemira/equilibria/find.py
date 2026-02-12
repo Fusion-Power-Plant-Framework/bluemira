@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    from bluemira.equilibria.grid import Grid
     from bluemira.equilibria.limiter import Limiter
 
 __all__ = [
@@ -1066,3 +1067,17 @@ def _in_plasma(
             if in_polygon(x[i, j], z[i, j], sep, include_edges):
                 mask[i, j] = 1
     return mask
+
+
+def interpolate_psi(psi, psi_grid: Grid, new_grid: Grid):
+    """
+    Interpolate psi over new comparison grid
+
+    Returns
+    -------
+    :
+        interpolated psi values
+
+    """
+    psi_func = RectBivariateSpline(psi_grid.x[:, 0], psi_grid.z[0, :], psi)
+    return psi_func.ev(new_grid.x, new_grid.z)
