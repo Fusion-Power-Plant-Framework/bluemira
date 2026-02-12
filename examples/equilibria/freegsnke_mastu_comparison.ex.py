@@ -25,7 +25,7 @@ Test MAST-U.
 """
 
 # %%
-import pickle
+import pickle  # noqa: S403
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,8 +44,10 @@ from bluemira.equilibria.optimisation.constraints import (
     IsofluxConstraint,
     MagneticConstraintSet,
 )
-from bluemira.equilibria.optimisation.problem._tikhonov import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.profiles import BetaIpProfile, DoublePowerFunc
+from bluemira.equilibria.optimisation.problem import (
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
+from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
@@ -53,43 +55,45 @@ from bluemira.equilibria.solve import (
 
 plot_defaults()
 
-# %%
+# %% [markdown]
 # Get MAST-U coils used by FreeGSNKE and convert to
-# BM coilset of circuits. 
+# BM coilset of circuits.
 # NOTE: Some coils appear to overlap in the FreeGSNKE example.
 # We "fix" the solenoid here, but other overlaps are not addressed.
+
+# %%
 with open("MAST-U_like_active_coils.pickle", "rb") as f:
-    coil_dict = pickle.load(f)
+    coil_dict = pickle.load(f)  # noqa: S301
 
 circuits = []
 count = []
 for n, d in coil_dict.items():
     coils = []
     if n == "Solenoid":
-        i = 0
         count.append(len(d["R"]))
-        for r, z in zip(d["R"], d["Z"], strict=False):
+        for i, (r, z) in enumerate(zip(d["R"], d["Z"], strict=False)):
             coil = Coil(
                 r,
                 z,
                 current=5000,
                 dx=d["dR"] / 2,
-                dz=0.00489474,  # NOTE: Not quite sure how FreeGSNKE handles dZ - appears to 
-                # create overlaps
+                dz=0.00489474,  # NOTE: Not quite sure how FreeGSNKE handles dZ
+                # appears to create overlaps
                 ctype="CS",
                 name=n + "_" + str(i),
             )
             coils.append(coil)
-            i += 1
+
     else:
-        i = 0
         count.append(len(d["1"]["R"]))
-        for r1, z1, r2, z2 in zip(
-            d["1"]["R"],
-            d["1"]["Z"],
-            d["2"]["R"],
-            d["2"]["Z"],
-            strict=False,
+        for i, (r1, z1, r2, z2) in enumerate(
+            zip(
+                d["1"]["R"],
+                d["1"]["Z"],
+                d["2"]["R"],
+                d["2"]["Z"],
+                strict=False,
+            )
         ):
             coil_up = Coil(
                 r1,
@@ -109,66 +113,73 @@ for n, d in coil_dict.items():
                 ctype="PF",
                 name=n + "L_" + str(i),
             )
-            coils.append(coil_up)
-            coils.append(coil_low)
-            i += 1
+            coils.extend((coil_up, coil_low))
+
     circuit = Circuit(*coils)
     circuits.append(circuit)
 full_coilset = CoilSet(*circuits)
 
 full_coilset.control = [n for n in full_coilset.name if "Solenoid" not in n]
 
-# %%
-# Grid
-grid = Grid(0.1, 2.0, -2.2, 2.2, 65, 129)
-
-# Profile params
-I_p = 6e5  # A
-R_0 = 0.85  # m
-A = 1.3
-B_0 = 0.588  # T, in FreeGSNKE fvac = R * B_0 = 0.5
-betap = 0.274207  # using Paxis profile in FreeGSNKE, we find the beta to be this
-
-# Use DoublePowerFunc to match FreeGSNKE
-profiles = BetaIpProfile(
-    betap=betap,
-    I_p=I_p,
-    R_0=R_0,
-    B_0=B_0,
-    shape=DoublePowerFunc([1.8, 1.2]),  # FreeGSNKE: alpha_m=1.8, alpha_n=1.2
-)
-
-
-# Equilibrium
+# %% [markdown]
+# Load up the FreeGSNKE equilibrium for comparison purposes
 # Note sure which COCOS FreeGSNKE uses... probably 7 or 8
+
+# %%
 freegsnke_eq = Equilibrium.from_eqdsk("MASTU-FREEGSNKE.eqdsk", from_cocos=7)
 
-# Forcing symmetry does not appear to be necessary here.
-eq = Equilibrium(full_coilset, grid, profiles, force_symmetry=True)
+# %% [markdown]
+# Match the profiles from the FreeGSNKE equilibrium with a CustomProfile
 
 # %%
-# Constraints (straight from FreeGSNKE example)
-Rx = 0.6      # X-point radius
-Zx = 1.1      # X-point height
-Ra = .85
-Rout = 1.4    # outboard midplane radius
-Rin = 0.34    # inboard midplane radius
+I_p = 6e5  # A
+R_0 = 0.85  # m
+B_0 = 0.588  # T, in FreeGSNKE fvac = R * B_0 = 0.5
+
+pn = np.linspace(0, 1, 50)
+profiles = CustomProfile(
+    freegsnke_eq.profiles.pprime(pn), freegsnke_eq.ffprime(pn), R_0, B_0, I_p=I_p
+)
+
+# %% [markdown]
+# Instantiate a new equilibrium
+
+# %%
+grid = Grid(0.1, 2.0, -2.2, 2.2, 65, 129)
+eq = Equilibrium(full_coilset, grid, profiles, force_symmetry=True)
+
+# %% [markdown]
+# Match constraints (straight from FreeGSNKE example)
+
+# %%
+Rx = 0.6  # X-point radius
+Zx = 1.1  # X-point height
+Ra = 0.85
+Rout = 1.4  # outboard midplane radius
+Rin = 0.34  # inboard midplane radius
 x_point_u = FieldNullConstraint(Rx, Zx, tolerance=1e-6)  # FreeGSNKE target tolerence
 x_point_l = FieldNullConstraint(Rx, -Zx, tolerance=1e-6)
-isoflux = IsofluxConstraint([Rx, Rx, Rin, Rout, 1.3, 1.3, .8,.8], [Zx, -Zx, 0.,0., 2.1, -2.1,1.62,-1.62], Rx, Zx, tolerance=1e-6)
+isoflux = IsofluxConstraint(
+    [Rx, Rx, Rin, Rout, 1.3, 1.3, 0.8, 0.8],
+    [Zx, -Zx, 0.0, 0.0, 2.1, -2.1, 1.62, -1.62],
+    Rx,
+    Zx,
+    tolerance=1e-6,
+)
 
 constraints_list = [isoflux, x_point_u, x_point_l]
 constraints_set = MagneticConstraintSet(constraints_list)
 
+# %% [markdown]
+# Set up an optimisation problem and converge an equilibrium.
 # FreeGSNKE uses least squares problem with Tikhonov regularisation term
-# I think that SLSQP is aapropriate algo, constrained least squares
+# (weights vary across coils - here we just use a floating point term)
+
+# %%
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
     eq,
     targets=constraints_set,
     gamma=1e-8,
-    opt_algorithm="SLSQP",
-    opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6},
-    opt_parameters={},
 )
 
 program = PicardIterator(
@@ -183,35 +194,44 @@ program = PicardIterator(
     maxiter=50,
 )
 _ = program()
-f, ax = plt.subplots()
-eq.plot(ax=ax)
-constraints_set.plot(ax=ax)
-eq.coilset.plot(ax=ax)
-plt.show()
 
+# %% [markdown]
+# Compare the equilibria and profiles
+
+# %%
+f, ax = plt.subplots(1, 3)
+freegsnke_eq.plot(ax=ax[0])
+ax[0].set_title("FreeGSNKE")
+eq.plot(ax=ax[1])
+ax[1].set_title("BLUEMIRA")
 
 sep = eq.get_separatrix()
 fsep = freegsnke_eq.get_separatrix()
 
-f, ax = plt.subplots(figsize=[10, 9])
-eq.coilset.plot(ax=ax)
-ax.contour(eq.x, eq.z, eq.psi(), levels=20, cmap="viridis")
-constraints_set.plot(ax=ax)
+eq.coilset.plot(ax=ax[2])
+ax[2].contour(eq.x, eq.z, eq.psi(), levels=20, cmap="viridis")
+constraints_set.plot(ax=ax[2])
 for fs in fsep:
-    ax.plot(fs.x, fs.z, color="r")
+    ax[2].plot(fs.x, fs.z, color="r")
 
 for fs in sep:
-    ax.plot(fs.x, fs.z, color="b", linestyle="--")
+    ax[2].plot(fs.x, fs.z, color="b", linestyle="--")
 
-ax.set_aspect("equal")
-f.savefig("mast_u_equilibrium.pdf", dpi=600, format="pdf", bbox_inches="tight")
+ax[2].set_title("Comparison")
+ax[2].set_aspect("equal")
+plt.show()
 
 
 pn = np.linspace(0, 1, 50)
 f, ax = plt.subplots(1, 2)
-ax[0].plot(pn, eq.ffprime(pn), color="b", ls="--")
-ax[0].plot(pn, freegsnke_eq.ffprime(pn), color="r")
-ax[1].plot(pn, eq.pprime(pn), color="b", ls="--")
-ax[1].plot(pn, freegsnke_eq.pprime(pn), color="r")
+ax[0].plot(pn, eq.ffprime(pn), color="b", ls="--", label="BLUEMIRA")
+ax[0].plot(pn, freegsnke_eq.ffprime(pn), color="r", label="FreeGSNKE")
+ax[0].set_title("p'")
+ax[0].set_xlabel(r"$\psi_n$")
+ax[1].plot(pn, eq.pprime(pn), color="b", ls="--", label="BLUEMIRA")
+ax[1].set_title("FF'")
+ax[1].set_xlabel(r"$\psi_n$")
+ax[1].plot(pn, freegsnke_eq.pprime(pn), color="r", label="FreeGSNKE")
+ax[0].legend()
+ax[1].legend()
 plt.show()
-
