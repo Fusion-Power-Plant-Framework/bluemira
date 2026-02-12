@@ -21,8 +21,12 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Test MAST-U.
+Benchmark with FreeGNSKE on a MAST-U equilibrium.
 """
+
+# %% [markdown]
+#
+# # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
 # %%
 import pickle  # noqa: S403
