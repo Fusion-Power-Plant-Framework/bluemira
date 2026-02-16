@@ -10,7 +10,7 @@ from typing import Any, NoReturn
 
 import numpy as np
 from scipy.optimize._numdiff import (
-    approx_derivative as _approx_derivative,  # noqa: PLC2701
+    approx_derivative as _approx_derivative,
 )
 from scipy.optimize._optimize import OptimizeResult
 
