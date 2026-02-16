@@ -226,6 +226,8 @@ class ProcessInputs:
     oacdcp: float | None = None
     dx_tf_turn_general: int | None = None
     len_tf_bus: float | None = None
+    rrr_tf_cu: float | None = None
+    t_tf_quench_detection: float | None = None
 
     # PF Power
     i_pf_energy_storage_source: int | None = None
@@ -550,6 +552,7 @@ class ProcessInputs:
     b_cs_limit_max: float | None = None
     fb_cs_limit_max: float | None = None
     ld_ratio_cst: float | None = None
+    temp_cs_superconductor_margin_min: float | None = None
 
     # Physics
     alphaj: float | None = None

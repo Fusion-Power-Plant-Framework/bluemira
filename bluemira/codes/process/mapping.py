@@ -41,6 +41,9 @@ IN_mappings = {
     # Note: PROCESS has both radius_plasma_pedestal_temp_norm and
     # radius_plasma_pedestal_density_norm - they are usually the same...
     "profile_rho_ped": ("radius_plasma_pedestal_temp_norm", "dimensionless"),
+    "rrr_tf_cu": ("rrr_tf_cu", "dimensionless"),
+    "t_tf_quench_detection": ("t_tf_quench_detection", "dimensionless"),
+    "nflutfmax": ("nflutfmax", "1/m^2"),
 }
 
 OUT_mappings = {
