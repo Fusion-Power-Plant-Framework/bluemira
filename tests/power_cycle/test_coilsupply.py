@@ -11,7 +11,8 @@ with the results for EU-DEMO that is found in the following IDM link:
       for baseline DEMO1 2017 (for use in Bluemira & PowerFactory), EUROfusion,
       2024. https://idm.euro-fusion.org/?uid=2RRCMT.
 
-which should be stored in a 'bluemira_private_data' directory as indicated
+The JSON files in "breakdown.zip" and "pulse_full.zip" from the "processed"
+folder should be stored in a 'bluemira_private_data' directory, as indicated
 below, otherwise the variable 'data_dir' should be adapted.
 
 (common root)
@@ -27,9 +28,10 @@ below, otherwise the variable 'data_dir' should be adapted.
                 ├── coilsupply_data_design.json
                 ├── coilsupply_data_breakdown.json
                 ├── coilsupply_data_pulse_full.json
-                └── coilsupply_data_pulse_partial.json
+                ├── coilsupply_data_pulse_semi.json
+                └── coilsupply_data_pulse_trim.json
 
-and discussed in more details in the following IDM report and thesis:
+More details about them can be found in the following IDM report and thesis:
     - A. Ferro, Update of the ITER-like design of CS-PF power supplies
       and FDU, EUROfusion, 2022. https://idm.euro-fusion.org/?uid=2Q6988.
     - F. Lunardon, Studies on the reactive power demand in DEMO and
@@ -65,14 +67,31 @@ root_dir = Path(get_bluemira_root())
 private_data_dir = root_dir.parent / "bluemira-private-data"
 data_dir = private_data_dir / "power_cycle" / "coilsupply_verification"
 
+# Select which pulse data file to use for the pulse verification.
+# (full = original, trim = downsampled, semi = downsampled + original in breakdown)
+# data_type = "trim"
+data_type = "semi"
+# data_type = "full"
+
+verification_dict = {
+    "full": {"active": 0.03, "reactive": 0.27},
+    "semi": {"active": 0.78, "reactive": 0.17},
+    "trim": {"active": 0.78, "reactive": 0.17},
+}
+
 
 class _PlotOptions:
-    title_figure = "coilsupply_verification"
+    title_figure = f"coilsupply_verification_{data_type}"
     title_time = "Time (s)"
     title_voltage = "Voltage (V)"
     title_current = "Current (A)"
     title_active = "Active Power (W)"
     title_reactive = "Reactive Power (var)"
+
+    scale_voltage = "k"
+    scale_current = "k"
+    scale_active = "G"
+    scale_reactive = "G"
 
     colormap_choice = "cool"
     line_width = 2
@@ -103,6 +122,63 @@ class _PlotOptions:
 
     def _make_colormap(self, n):
         return cmap[self.colormap_choice].resampled(n)
+
+    def _get_scale_factor(self, scale):
+        scale_map = {"k": 1e3, "M": 1e6, "G": 1e9}
+        return scale_map.get(scale, 1)
+
+    def _get_param_dict(self, dict_type=None):
+        if dict_type == "scale":
+            return {
+                "voltage": self.scale_voltage,
+                "current": self.scale_current,
+                "active": self.scale_active,
+                "reactive": self.scale_reactive,
+            }
+        if dict_type == "title":
+            return {
+                "voltage": self.title_voltage,
+                "current": self.title_current,
+                "active": self.title_active,
+                "reactive": self.title_reactive,
+            }
+        raise ValueError(f"Unknown param dict type: {dict_type}")
+
+    def _get_param_scale(self, param):
+        param_to_scale = self._get_param_dict(dict_type="scale")
+        return param_to_scale.get(param, "")
+
+    def _get_param_from_variable(self, variable):
+        param_to_scale = self._get_param_dict(dict_type="scale")
+        for param in param_to_scale:
+            if param in variable:
+                return param
+        raise ValueError(f"Could not infer parameter from variable: {variable}")
+
+    def _get_param_title(self, param):
+        param_to_title = self._get_param_dict(dict_type="title")
+        if param not in param_to_title:
+            raise ValueError(f"Unknown parameter for title: {param}")
+        return param_to_title[param]
+
+    def _scale_data(self, data, param):
+        scale = self._get_param_scale(param)
+        factor = self._get_scale_factor(scale)
+        return np.array(data) / factor
+
+    def _get_scaled_title(self, param):
+        base_title = self._get_param_title(param)
+        scale = self._get_param_scale(param)
+        if (
+            scale
+            and scale in {"k", "M", "G"}
+            and "(" in base_title
+            and ")" in base_title
+        ):
+            param_name = base_title[: base_title.find("(")].strip()
+            unit = base_title[base_title.find("(") + 1 : base_title.find(")")].strip()
+            return f"{param_name} ({scale}{unit})"
+        return base_title
 
     def _side_color(self, side):
         if side == "left":
@@ -190,7 +266,7 @@ class _PlotOptions:
 
     def _save_fig(self, fig, fname, fpath=None, extra_format=None):
         fig_name = f"{self.title_figure}_{fname}"
-        save_path = data_dir / "test_plots" if fpath is None else fpath
+        save_path = data_dir / f"test_plots_{data_type}" if fpath is None else fpath
         save_path.mkdir(exist_ok=True)
         if extra_format is not None:
             fig.savefig(
@@ -401,7 +477,7 @@ def plot_breakdown_verification(breakdown_data, t_start_breakdown):
         for label, style in v_labels_and_styles.items():
             ax_left.plot(
                 breakdown_per_coil["coil_times"][coil],
-                breakdown_per_coil[label][coil],
+                options._scale_data(breakdown_per_coil[label][coil], "voltage"),
                 f"{style}",
                 linewidth=options._line_thick,
                 color="k",
@@ -409,23 +485,23 @@ def plot_breakdown_verification(breakdown_data, t_start_breakdown):
             )
             ax_left.plot(
                 breakdown_per_coil["coil_times"][coil],
-                wallplug_info[label],
+                options._scale_data(wallplug_info[label], "voltage"),
                 f"{style}",
                 linewidth=options._line_thin,
                 color=v_colors(plot_index),
                 label=label,
             )
-        ax_left.set_ylabel(options.title_voltage)
+        ax_left.set_ylabel(options._get_scaled_title("voltage"))
         options._color_yaxis(ax_left, "left")
         ax_left.set_xlabel(options.title_time)
         ax_left.grid()
 
         ax_right = ax_left.twinx()
-        ax_right.set_ylabel(options.title_current)
+        ax_right.set_ylabel(options._get_scaled_title("current"))
         options._color_yaxis(ax_right, "right")
         ax_right.plot(
             breakdown_per_coil["coil_times"][coil],
-            breakdown_per_coil["coil_currents"][coil],
+            options._scale_data(breakdown_per_coil["coil_currents"][coil], "current"),
             "-",
             linewidth=options._line_thick,
             color="k",
@@ -433,7 +509,7 @@ def plot_breakdown_verification(breakdown_data, t_start_breakdown):
         )
         ax_right.plot(
             breakdown_per_coil["coil_times"][coil],
-            wallplug_info["coil_currents"],
+            options._scale_data(wallplug_info["coil_currents"], "current"),
             "-",
             linewidth=options._line_thin,
             color=options.ax_right_color,
@@ -495,8 +571,8 @@ def save_breakdown_verification(breakdown_data, t_start_breakdown, fpath=None):
 #
 
 # %%
-# pulse_path = data_dir / "coilsupply_data_pulse_partial.json"
-pulse_path = data_dir / "coilsupply_data_pulse_full.json"
+data_file = f"coilsupply_data_pulse_{data_type}.json"
+pulse_path = data_dir / data_file
 pulse_data = read_json(pulse_path)
 t_end_rampdown = 7890
 
@@ -548,45 +624,45 @@ def prepare_pulse_verification(pulse_data, t_range_breakdown):
         if key in {"coil_voltages", "THY_voltages"}:
             coil_subplots_settings[key]["fig_ind"] = 1
             coil_subplots_settings[key]["side"] = "left"
-            coil_subplots_settings[key]["y_title"] = options.title_voltage
             coil_subplots_settings[key]["plot_color"] = "map"
             coil_subplots_settings[key]["variable"] = key
         elif key == "coil_currents":
             coil_subplots_settings[key]["fig_ind"] = 1
             coil_subplots_settings[key]["side"] = "right"
-            coil_subplots_settings[key]["y_title"] = options.title_current
             coil_subplots_settings[key]["plot_color"] = "side"
             coil_subplots_settings[key]["variable"] = key
         elif key == "coil_active":
             coil_subplots_settings[key]["fig_ind"] = 2
             coil_subplots_settings[key]["side"] = "left"
-            coil_subplots_settings[key]["y_title"] = options.title_active
             coil_subplots_settings[key]["plot_color"] = "map"
             coil_subplots_settings[key]["variable"] = "power_active"
         elif key == "coil_reactive":
             coil_subplots_settings[key]["fig_ind"] = 2
             coil_subplots_settings[key]["side"] = "right"
-            coil_subplots_settings[key]["y_title"] = options.title_reactive
             coil_subplots_settings[key]["plot_color"] = "side"
             coil_subplots_settings[key]["variable"] = "power_reactive"
         else:
             raise ValueError(f"Unknown subplot settings for: {key}")
+        variable = coil_subplots_settings[key]["variable"]
+        param = options._get_param_from_variable(variable)
+        coil_subplots_settings[key]["y_title"] = options._get_scaled_title(param)
 
     total_subplots_settings = {}
     for key in pulse_totals:
         total_subplots_settings[key] = {}
         if key == "total_active":
             total_subplots_settings[key]["side"] = "left"
-            total_subplots_settings[key]["y_title"] = options.title_active
             total_subplots_settings[key]["plot_color"] = "side"
             total_subplots_settings[key]["variable"] = "power_active"
         elif key == "total_reactive":
             total_subplots_settings[key]["side"] = "right"
-            total_subplots_settings[key]["y_title"] = options.title_reactive
             total_subplots_settings[key]["plot_color"] = "side"
             total_subplots_settings[key]["variable"] = "power_reactive"
         else:
             raise ValueError(f"Unknown subplot settings for: {key}")
+        variable = total_subplots_settings[key]["variable"]
+        param = options._get_param_from_variable(variable)
+        total_subplots_settings[key]["y_title"] = options._get_scaled_title(param)
         total_subplots_settings[key]["sum_time"] = []
         total_subplots_settings[key]["sum_power"] = []
 
@@ -629,12 +705,12 @@ def plot_pulse_verification(
     all_axes = {}
 
     for key in per_coil_keys_to_plot:
-        fig_ind = coil_subplots_settings[key]["fig_ind"]
-        side = coil_subplots_settings[key]["side"]
-        y_title = coil_subplots_settings[key]["y_title"]
-        plot_color = coil_subplots_settings[key]["plot_color"]
-        variable = coil_subplots_settings[key]["variable"]
+        fig_ind, side, y_title, plot_color, variable = (
+            coil_subplots_settings[key][name]
+            for name in ("fig_ind", "side", "y_title", "plot_color", "variable")
+        )
 
+        param = options._get_param_from_variable(variable)
         if fig_ind not in all_figs:
             fig, axs = plt.subplots(
                 nrows=n_rows,
@@ -670,7 +746,7 @@ def plot_pulse_verification(
             )
             ax.plot(
                 pulse_per_coil["coil_times"][coil],
-                pulse_per_coil[key][coil],
+                options._scale_data(pulse_per_coil[key][coil], param),
                 "-",
                 linewidth=options._line_thick,
                 color=color_verification,
@@ -678,7 +754,7 @@ def plot_pulse_verification(
             )
             ax.plot(
                 pulse_per_coil["coil_times"][coil],
-                wallplug_info[variable],
+                options._scale_data(wallplug_info[variable], param),
                 "--",
                 linewidth=options._line_thin,
                 color=color_computation,
@@ -707,13 +783,19 @@ def plot_pulse_verification(
 
     totals_rms = {}
     for key in pulse_totals:
-        side = total_subplots_settings[key]["side"]
-        y_title = total_subplots_settings[key]["y_title"]
-        plot_color = total_subplots_settings[key]["plot_color"]
-        variable = total_subplots_settings[key]["variable"]
-        sum_time = total_subplots_settings[key]["sum_time"]
-        sum_power = total_subplots_settings[key]["sum_power"]
+        side, y_title, plot_color, variable, sum_time, sum_power = (
+            total_subplots_settings[key][name]
+            for name in (
+                "side",
+                "y_title",
+                "plot_color",
+                "variable",
+                "sum_time",
+                "sum_power",
+            )
+        )
 
+        param = options._get_param_from_variable(variable)
         for coil in coil_names:
             wallplug_info = getattr(pulse_wallplug, coil)
             sum_time.append(pulse_per_coil["coil_times"][coil])
@@ -740,7 +822,7 @@ def plot_pulse_verification(
             )
             last_ax.plot(
                 pulse_totals[key]["time"],
-                pulse_totals[key]["power"],
+                options._scale_data(pulse_totals[key]["power"], param),
                 "-",
                 linewidth=options._line_thick,
                 color=color_verification,
@@ -748,7 +830,7 @@ def plot_pulse_verification(
             )
             last_ax.plot(
                 sum_time,
-                sum_power,
+                options._scale_data(sum_power, param),
                 "--",
                 linewidth=options._line_thin,
                 color=color_computation,
@@ -938,7 +1020,7 @@ def save_pulse_verification(
 #
 
 
-def test_CoilSupplySystem(tmp_path):
+def test_CoilSupplySystem(tmp_path, data_type):
     display_inputs(coilsupply, summary=False)
     display_subsystems(coilsupply, summary=True)
     t_range_breakdown = save_breakdown_verification(
@@ -954,10 +1036,10 @@ def test_CoilSupplySystem(tmp_path):
         zoom_time_range=None,
         fpath=tmp_path,
     )
-    assert totals_rms["total_active"] < 0.78
-    assert totals_rms["total_reactive"] < 0.17
+    assert totals_rms["total_active"] < verification_dict[data_type]["active"]
+    assert totals_rms["total_reactive"] < verification_dict[data_type]["reactive"]
     plt.show()
 
 
 if __name__ == "__main__":
-    test_CoilSupplySystem(None)
+    test_CoilSupplySystem(None, data_type=data_type)
