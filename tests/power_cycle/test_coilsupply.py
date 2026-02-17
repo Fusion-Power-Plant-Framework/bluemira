@@ -11,11 +11,23 @@ with the results for EU-DEMO that is found in the following IDM link:
       for baseline DEMO1 2017 (for use in Bluemira & PowerFactory), EUROfusion,
       2024. https://idm.euro-fusion.org/?uid=2RRCMT.
 
-stored in the working directory as:
-    - coilsupply_data_design.json
-    - coilsupply_data_breakdown.json
-    - coilsupply_data_pulse_full.json
-    - coilsupply_data_pulse_partial.json
+which should be stored in a 'bluemira_private_data' directory as indicated
+below, otherwise the variable 'data_dir' should be adapted.
+
+(common root)
+    ├── bluemira
+    │   └── tests
+    │       └── power_cycle
+    │           ├── test_coilsupply.py          (THIS FILE!)
+    │           └── test_data
+    │               └──config_coilsupply.json
+    └── bluemira-private-data
+        └── power_cycle
+            └── coilsupply_verification
+                ├── coilsupply_data_design.json
+                ├── coilsupply_data_breakdown.json
+                ├── coilsupply_data_pulse_full.json
+                └── coilsupply_data_pulse_partial.json
 
 and discussed in more details in the following IDM report and thesis:
     - A. Ferro, Update of the ITER-like design of CS-PF power supplies
@@ -37,6 +49,7 @@ from matplotlib import (
     pyplot as plt,
 )
 
+from bluemira.base.file import get_bluemira_root
 from bluemira.power_cycle.coilsupply import CoilSupplyInputs, CoilSupplySystem
 from bluemira.power_cycle.tools import (
     match_domains,
@@ -47,16 +60,19 @@ from bluemira.power_cycle.tools import (
 )
 
 script_dir = Path(__file__).resolve().parent
-data_dir = script_dir / "test_data"
+config_dir = script_dir / "test_data"
+root_dir = Path(get_bluemira_root())
+private_data_dir = root_dir.parent / "bluemira-private-data"
+data_dir = private_data_dir / "power_cycle" / "coilsupply_verification"
 
 
 class _PlotOptions:
     title_figure = "coilsupply_verification"
-    title_time = "Time [s]"
-    title_voltage = "Voltage [V]"
-    title_current = "Current [A]"
-    title_active = "Active Power [W]"
-    title_reactive = "Reactive Power [VAR]"
+    title_time = "Time (s)"
+    title_voltage = "Voltage (V)"
+    title_current = "Current (A)"
+    title_active = "Active Power (W)"
+    title_reactive = "Reactive Power (var)"
 
     colormap_choice = "cool"
     line_width = 2
@@ -174,7 +190,7 @@ class _PlotOptions:
 
     def _save_fig(self, fig, fname, fpath=None, extra_format=None):
         fig_name = f"{self.title_figure}_{fname}"
-        save_path = script_dir / "test_figures" if fpath is None else fpath
+        save_path = data_dir / "test_plots" if fpath is None else fpath
         save_path.mkdir(exist_ok=True)
         if extra_format is not None:
             fig.savefig(
@@ -210,7 +226,7 @@ options = _PlotOptions()
 #
 
 # %%
-config_path = data_dir / "config_coilsupply.json"
+config_path = config_dir / "config_coilsupply.json"
 coilsupply_data = read_json(config_path)
 
 coilsupply_config = coilsupply_data["coilsupply_config"]
@@ -684,7 +700,7 @@ def plot_pulse_verification(
                     label="Breakdown",
                 )
             if y_title is not None:
-                ax.set_ylabel(f"{y_title} (RMS dev.: {rms:.0%})")
+                ax.set_ylabel(f"{y_title} (RMS dev.: {rms:.2%})")
             ax.grid(visible=True, axis="y", linestyle=":", color=ax_color)
 
             plot_index += 1
@@ -752,7 +768,7 @@ def plot_pulse_verification(
                     hatch=True,
                     label="Breakdown",
                 )
-            last_ax.set_ylabel(f"{y_title} (RMS dev.: {totals_rms[key]:.0%})")
+            last_ax.set_ylabel(f"{y_title} (RMS dev.: {totals_rms[key]:.2%})")
             last_ax.grid(visible=True, axis="y", linestyle=":", color=ax_color)
 
     for fig in all_figs.values():
