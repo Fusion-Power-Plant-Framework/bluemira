@@ -250,8 +250,17 @@ pulse_active_data = get_pulse_data(
     load_unit="MW",
     extra_points=0,
 )
-export_filename = config_path / "EUDEMO17_pulse_active_data.json"
-export_pulse_data(pulse_active_data, filename=export_filename)
+pulse_reactive_data = get_pulse_data(
+    power_cycle,
+    pulse_label="std",
+    load_type="reactive",
+    load_unit="Mvar",
+    extra_points=0,
+)
+active_filename = config_path / "EUDEMO17_pulse_active_data.json"
+reactive_filename = config_path / "EUDEMO17_pulse_reactive_data.json"
+export_pulse_data(pulse_active_data, filename=active_filename)
+export_pulse_data(pulse_reactive_data, filename=reactive_filename)
 
 production_minucci_turbine_hcpb = 790 * 0.95 * 0.85
 consumption_minucci_ssen_hcpb_ftt = sum([
