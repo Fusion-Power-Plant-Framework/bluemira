@@ -1546,7 +1546,7 @@ class Equilibrium(CoilSetMHDState):
                 bounds=bounds,
                 options={"maxiter": 30, "eps": 1e-4},
             )
-            alpha_star = process_scipy_result(res)
+            alpha_star = process_scipy_result(res, "SLSQP")
             self.profiles.shape.adjust_parameters(alpha_star)
 
         except StopIteration:
