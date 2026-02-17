@@ -86,7 +86,12 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
             )
 
     def optimise(
-        self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True
+        self,
+        x0: npt.NDArray | None = None,
+        *,
+        fixed_coils: bool = True,
+        keep_history: bool = False,
+        check_constraints: bool = False,
     ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem
@@ -122,6 +127,8 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
             opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
         )
         opt_currents = opt_result.x
         self.coilset.set_optimisation_state(
