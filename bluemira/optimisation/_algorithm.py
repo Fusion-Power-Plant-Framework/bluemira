@@ -13,22 +13,42 @@ algorithms it supports.
 
 from __future__ import annotations
 
-import enum
 from dataclasses import asdict, dataclass, field
+from enum import Enum, auto
 
 
-class Algorithm(enum.Enum):
+class Algorithm(Enum):
     """Enumeration of available optimisation algorithms."""
 
-    SLSQP = enum.auto()
-    COBYLA = enum.auto()
-    SBPLX = enum.auto()
-    MMA = enum.auto()
-    BFGS = enum.auto()
-    DIRECT = enum.auto()
-    DIRECT_L = enum.auto()
-    CRS = enum.auto()
-    ISRES = enum.auto()
+    # NLOpt algorithms
+    SLSQP = auto()
+    COBYLA = auto()
+    SBPLX = auto()
+    MMA = auto()
+    BFGS = auto()
+    DIRECT = auto()
+    DIRECT_L = auto()
+    CRS = auto()
+    ISRES = auto()
+
+    # SciPy algorithms
+    # Bounds only
+    NELDER_MEAD = auto()
+    POWELL = auto()
+    L_BFGS_B = auto()
+    TNC = auto()
+    # Bounds + ineq constraints
+    COBYLA_SCIPY = auto()
+    # Bounds + ineq + eq constraints
+    COBYQA = auto()
+    SLSQP_SCIPY = auto()
+    TRUST_CONSTR = auto()
+
+    def __new__(cls, value):
+        """Create Enum and debug attribute"""
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj
 
     @classmethod
     def _missing_(cls, value: str) -> Algorithm:
@@ -56,7 +76,7 @@ class Algorithm(enum.Enum):
                 return cls.DIRECT_L
             return cls[value]
         except (KeyError, AttributeError):
-            raise ValueError(f"No such Algorithm '{value}'.") from None
+            raise ValueError(f"No such Algorithm value '{value}'.") from None
 
 
 AlgorithmType = str | Algorithm

@@ -14,9 +14,21 @@ from tests.optimisation.tools import d_rosenbrock, rosenbrock
 
 class TestOptimise:
     @pytest.mark.parametrize(
-        "algorithm", ["SLSQP", Algorithm.SBPLX, "MMA", Algorithm.BFGS]
+        ("algorithm", "tol"),
+        [
+            ("SLSQP", 1e-7),
+            (Algorithm.SBPLX, 1e-7),
+            ("MMA", 1e-7),
+            (Algorithm.BFGS, 1e-7),
+            ("SLSQP_SCIPY", 5e-3),
+            ("NELDER_MEAD", 1e-4),
+            ("POWELL", 1e-7),
+            ("L_BFGS_B", 1e-4),
+            ("TNC", 1e-2),
+            ("TRUST_CONSTR", 1e-5),
+        ],
     )
-    def test_minimum_found_on_rosenbrock_no_bounds(self, algorithm):
+    def test_minimum_found_on_rosenbrock_no_bounds(self, algorithm, tol):
         result = optimise(
             rosenbrock,
             algorithm=algorithm,
@@ -25,7 +37,7 @@ class TestOptimise:
             opt_conditions={"ftol_rel": 1e-6},
         )
 
-        np.testing.assert_allclose(result.x, [1, 1])
+        np.testing.assert_allclose(result.x, [1, 1], rtol=tol)
 
     def test_history_recorded_given_keep_history_is_True(self):
         result = optimise(
@@ -54,6 +66,12 @@ class TestOptimise:
             "DIRECT",
             Algorithm.DIRECT_L,
             "ISRES",
+            "SLSQP_SCIPY",
+            "NELDER_MEAD",
+            "POWELL",
+            "L_BFGS_B",
+            "TNC",
+            "TRUST_CONSTR",
         ],
     )
     def test_grad_based_algs_find_min_on_rosenbrock_within_bounds(self, algorithm):
@@ -90,7 +108,9 @@ class TestOptimise:
                 bounds=(np.array([0.5, 1.05]), np.array([0.95, 2])),
             )
 
-    @pytest.mark.parametrize("alg", ["SLSQP", "COBYLA"])
+    @pytest.mark.parametrize(
+        "alg", ["SLSQP", "COBYLA", "SLSQP_SCIPY", "COBYLA_SCIPY", "COBYQA"]
+    )
     def test_nonlinear_constrain_optimisation(self, alg):
         """
         Test an optimisation with nonlinear constraints.

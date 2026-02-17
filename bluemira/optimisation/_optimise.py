@@ -19,8 +19,14 @@ from bluemira.optimisation._algorithm import (
     AlgorithmType,
 )
 from bluemira.optimisation._nlopt import NloptOptimiser
+from bluemira.optimisation._nlopt.optimiser import NLOPT_ALG_MAPPING
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
+from bluemira.optimisation._scipy.optimiser import ScipyOptimiser
+from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY
+from bluemira.optimisation.error import OptimisationError
 from bluemira.optimisation.typed import ConstraintT, ObjectiveCallable, OptimiserCallable
+
+EPS = 10 * np.finfo(float).eps  # accumulated floating-point error margin
 
 
 def optimise(
@@ -243,13 +249,33 @@ def _make_optimiser(
     *,
     keep_history: bool = False,
 ) -> Optimiser:
-    """
+    """Make a new optimiser object.
+
     Returns
     -------
     :
-        a new optimiser object.
+        An initialised optimiser object.
+
+    Raises
+    ------
+    OptimisationError
+        Unknown Algorithm
+
+    Returns
+    -------
+    :
+        Configured optimiser.
     """
-    opt = NloptOptimiser(
+    if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
+        optimiser = NloptOptimiser
+    elif alg in SCIPY_REGISTRY:
+        optimiser = ScipyOptimiser
+        if keep_history:
+            bluemira_warn("History storage is not implemented for scipy optimisers.")
+    else:
+        raise OptimisationError("Unknown algorithm") from None
+
+    opt = optimiser(
         algorithm,
         dimensions,
         f_objective=f_objective,
@@ -372,9 +398,10 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
     Returns
     -------
     :
-        Condition under which an inequality constraint is violated.
+        Condition under which an inequality constraint is violated, accounding for
+        machine epsilon.
     """
-    return c_value > tols
+    return c_value > tols + EPS * np.maximum(1.0, np.abs(tols))
 
 
 def _set_default_termination_conditions(
@@ -393,5 +420,8 @@ def _set_default_termination_conditions(
         if not isinstance(algorithm, Algorithm):
             return opt_conditions
 
-        return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
+        try:
+            return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
+        except AttributeError:
+            return opt_conditions  # SciPy algorithm
     return opt_conditions

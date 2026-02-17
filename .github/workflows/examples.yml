@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.11", "3.12"]
         process-version: ["v3.2.2"]
 
       fail-fast: false
@@ -42,8 +42,6 @@ jobs:
           version: ${{ matrix.process-version }}
 
       - name: Run examples
-        env:
-          RUN_DAGMC_EX: ${{ matrix.python-version == '3.10' && '-e design/optimised_reactor' || '' }}
         shell: bash -l {0}
         run: |
           # Exclude examples using plasmod or process, as these aren't available
@@ -58,5 +56,4 @@ jobs:
             -e 'plasmod_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
-            -e 'radiation_transport/run_cad_neutronics' \
-            ${RUN_DAGMC_EX}
+            -e 'radiation_transport/run_cad_neutronics'

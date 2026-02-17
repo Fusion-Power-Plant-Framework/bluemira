@@ -151,6 +151,7 @@ class Constraint(_NloptFunction):
         self.constraint_type = constraint_type
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
+        self.history: list[tuple[np.ndarray, ...]] = []
 
     def call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray) -> None:
         """
@@ -164,3 +165,9 @@ class Constraint(_NloptFunction):
         self.f0 = result
         if grad.size > 0:
             grad[:] = self.df(x)
+
+    def call_with_history(
+        self, result: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ) -> None:
+        self.call(result, x, grad)
+        self.history.append((np.copy(x), np.copy(result)))

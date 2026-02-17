@@ -80,7 +80,15 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
         )
         self.gamma = gamma
 
-    def optimise(self, x0=None, *, fixed_coils=True) -> CoilsetOptimiserResult:
+    def optimise(
+        self,
+        x0=None,
+        *,
+        fixed_coils=True,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+        verbose: bool = False,
+    ) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem
 
@@ -123,6 +131,9 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
             opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=verbose,
         )
 
         opt_currents = opt_result.x

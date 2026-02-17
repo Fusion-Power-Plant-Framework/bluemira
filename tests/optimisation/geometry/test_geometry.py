@@ -48,7 +48,8 @@ class TestGeometry:
                 PictureFrame(), f_objective=lambda _: 1, keep_out_zones=kozs
             )
 
-    def test_simple_optimisation_with_keep_out_zone(self):
+    @pytest.mark.parametrize("alg", ["SLSQP", "SLSQP_SCIPY"])
+    def test_simple_optimisation_with_keep_out_zone(self, alg):
         def length(geom: GeometryParameterisation):
             return geom.create_shape().length
 
@@ -75,7 +76,7 @@ class TestGeometry:
             parameterisation,
             length,
             keep_out_zones=[keep_out_zone],
-            algorithm="SLSQP",
+            algorithm=alg,
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
 
