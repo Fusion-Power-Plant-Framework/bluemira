@@ -667,7 +667,7 @@ def offset_wire(
     FreeCADError
         offset failed
     """
-    if thickness == 0.0:
+    if thickness == 0.0:  # noqa: RUF069
         return wire.copy()
 
     if _wire_is_straight(wire):
@@ -1090,7 +1090,7 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     :
         Wire point value at distance
     """
-    if distance == 0.0:
+    if distance == 0.0:  # noqa: RUF069
         return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)

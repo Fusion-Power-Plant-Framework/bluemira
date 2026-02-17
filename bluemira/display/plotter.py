@@ -982,7 +982,7 @@ def _get_plan_dims(array: npt.ArrayLike) -> list[str]:
         # Stops error when flat lines are given (same coords in two axes)
         axes.remove(dims[0])  # remove variable axis
         # both all equal to something
-        temp = [k for i, k in enumerate(axes) if array[i][0] != 0.0]
+        temp = [k for i, k in enumerate(axes) if array[i][0] != 0.0]  # noqa: RUF069
         if len(temp) == 1:
             dims.append(temp[0])
         else:

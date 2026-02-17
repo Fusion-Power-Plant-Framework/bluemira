@@ -57,7 +57,7 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
-from bluemira.equilibria.optimisation.problem._tikhonov import (
+from bluemira.equilibria.optimisation.problem._tikhonov import (  # noqa: PLC2701
     TikhonovCurrentCOP,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS

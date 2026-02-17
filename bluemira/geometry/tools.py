@@ -1813,7 +1813,7 @@ def signed_distance(
     """
     d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
-    if d == 0.0:
+    if d == 0.0:  # noqa: RUF069
         if len(vectors) <= 1:
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0
