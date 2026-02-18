@@ -68,14 +68,14 @@ private_data_dir = root_dir.parent / "bluemira-private-data"
 data_dir = private_data_dir / "power_cycle" / "coilsupply_verification"
 
 # Select which pulse data file to use for the pulse verification.
-# (full = original, trim = downsampled, semi = downsampled + original in breakdown)
+# (full = original, trim = downsampled, semi = original breakdown + downsampled rest)
 # data_type = "trim"
-data_type = "semi"
-# data_type = "full"
+# data_type = "semi"
+data_type = "full"
 
 verification_dict = {
     "full": {"active": 0.03, "reactive": 0.27},
-    "semi": {"active": 0.78, "reactive": 0.17},
+    "semi": {"active": 0.29, "reactive": 0.29},
     "trim": {"active": 0.78, "reactive": 0.17},
 }
 
@@ -266,7 +266,7 @@ class _PlotOptions:
 
     def _save_fig(self, fig, fname, fpath=None, extra_format=None):
         fig_name = f"{self.title_figure}_{fname}"
-        save_path = data_dir / f"test_plots_{data_type}" if fpath is None else fpath
+        save_path = script_dir / "test_figures" / data_type if fpath is None else fpath
         save_path.mkdir(exist_ok=True)
         if extra_format is not None:
             fig.savefig(
@@ -776,7 +776,7 @@ def plot_pulse_verification(
                     label="Breakdown",
                 )
             if y_title is not None:
-                ax.set_ylabel(f"{y_title} (RMS dev.: {rms:.2%})")
+                ax.set_ylabel(f"{y_title} - RMS dev.: {rms:.2%}")
             ax.grid(visible=True, axis="y", linestyle=":", color=ax_color)
 
             plot_index += 1
@@ -850,7 +850,7 @@ def plot_pulse_verification(
                     hatch=True,
                     label="Breakdown",
                 )
-            last_ax.set_ylabel(f"{y_title} (RMS dev.: {totals_rms[key]:.2%})")
+            last_ax.set_ylabel(f"{y_title} - RMS dev.: {totals_rms[key]:.2%}")
             last_ax.grid(visible=True, axis="y", linestyle=":", color=ax_color)
 
     for fig in all_figs.values():
@@ -883,7 +883,7 @@ def plot_pulse_verification(
     return all_figs, all_axes, totals_rms
 
 
-def plot_standalone_fig(all_axes, fig_index, subplot_index):
+def plot_standalone_fig(all_axes, fig_index, subplot_index, y_scale=None):
     """
     Extract single subplot from the verification for pulse data.
 
@@ -897,6 +897,10 @@ def plot_standalone_fig(all_axes, fig_index, subplot_index):
     subplot_index: int
         Index of subplot to be extracted.
         Subplots: CS coils (0-4); PF coils (5-10); totals (11).
+    y_scale: str or None
+        If "log", sets both y-axes to log scale.
+        If "lin", sets both y-axes to linear scale.
+        If None, keeps original axis scales.
     """
     n_coils = len(all_axes[fig_index]["left"]) - 1
     coil_colors = options._make_colormap(n_coils)
@@ -905,6 +909,14 @@ def plot_standalone_fig(all_axes, fig_index, subplot_index):
 
     standalone_axes = {"left": plt.axes()}
     standalone_axes["right"] = standalone_axes["left"].twinx()
+
+    if y_scale == "log":
+        for ax in standalone_axes.values():
+            ax.set_yscale("log")
+    elif y_scale == "lin":
+        for ax in standalone_axes.values():
+            ax.set_yscale("linear")
+
     for side in ["left", "right"]:
         standalone_ax = standalone_axes[side]
         ax = all_axes[fig_index][side][subplot_index]
@@ -944,6 +956,7 @@ def save_pulse_verification(
     t_range_breakdown,
     t_end_rampdown,
     standalone_indexes=None,
+    standalone_scale=None,
     zoom_time_range=None,
     fpath=None,
 ):
@@ -979,7 +992,9 @@ def save_pulse_verification(
 
     fig_index, subplot_index = standalone_indexes
     if fig_index and subplot_index:
-        standalone_fig = plot_standalone_fig(axes_normal, fig_index, subplot_index)
+        standalone_fig = plot_standalone_fig(
+            axes_normal, fig_index, subplot_index, y_scale=standalone_scale
+        )
         data = f"fig{fig_index}_sub{subplot_index}"
         options._save_fig(
             fig=standalone_fig,
@@ -1033,6 +1048,7 @@ def test_CoilSupplySystem(tmp_path, data_type):
         t_range_breakdown,
         t_end_rampdown,
         standalone_indexes=(1, 11),
+        standalone_scale="lin",
         zoom_time_range=None,
         fpath=tmp_path,
     )
