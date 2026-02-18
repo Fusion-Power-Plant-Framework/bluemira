@@ -324,6 +324,11 @@ inputs = template_builder.make_inputs()
 
 # %%
 template_builder.add_input_value("qnuc", 1.3e4)
+template_builder.add_input_values({
+    "nflutfmax": 0,
+    "rrr_tf_cu": 30.0,
+    "t_tf_quench_detection": 0.0,
+})
 
 
 # %% [markdown]
@@ -361,9 +366,6 @@ solver = systems_code_solver(
     params={}, build_config={"template_in_dat": template_builder.make_inputs()}
 )
 
-try:
-    result = solver.execute("run")
-except CodesError as ce:
-    bluemira_error(ce)
+result = solver.execute("run")
 # %%
 # Now PROCESS has found a feasible solution!

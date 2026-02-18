@@ -98,6 +98,7 @@ class Constraint(ConstraintSelection, Model):
         (1, 2, 3, 4, 6, 8),
         ("epbetmax",),
         "Equation for epsilon beta-poloidal upper limit",
+        "Equation for epsilon beta-poloidal upper limit",
     )
     HOT_BEAM_ION_DENSITY = (7, (7,,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
@@ -294,7 +295,7 @@ class Constraint(ConstraintSelection, Model):
         (48,
         (2, 3, 18),
         ("betpmax",),
-        "Poloidal beta_total_vol_avg upper limit",
+        "Poloidal beta upper limit",
     ))
     # 49 NOT USED
     REP_RATE_UPPER_LIMIT = (50, (86,,), (), "IFE repetition rate upper limit (IFE)")
@@ -441,7 +442,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Radial build consistency for stellarators",
     )
-    BETA_LOWER_LIMIT = (84, (173,,), (), "Lower limit for beta")
+    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta"_
     CP_LIFETIME_LOWER_LIMIT = (
         85,
         (),
