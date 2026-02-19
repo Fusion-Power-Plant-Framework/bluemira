@@ -57,7 +57,12 @@ class TestSafetyFactors:
 
 @pytest.mark.parametrize(
     ("kappa_95", "correct_bv"),
-    [(None, -7.64556171125926998e-01), (1.73909054753973802, -0.684353456250895)],
+    [
+        # PROCESS comparison (no kappa_95 term included in PROCESS calculation)
+        (None, -7.64556171125926998e-01),
+        # Regression
+        (1.73909054753973802, -0.684353456250895),
+    ],
 )
 def test_vertical_field(kappa_95, correct_bv):
     R_0, A, I_p = 8.63198, 2.8, 1.98017476836342539e07

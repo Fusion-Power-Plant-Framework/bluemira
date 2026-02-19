@@ -636,11 +636,11 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         target_value: float,
-        weights: Union[float, np.ndarray] = 1.0,
-        tolerance: Union[float, np.ndarray] = 1e-6,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
     ):
         super().__init__(
             x,
@@ -655,12 +655,22 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            Bz response of the coilset
         """
         return coilset.Bz_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            Bz value of the equilibrium
         """
         return eq.Bz(self.x, self.z)
 
