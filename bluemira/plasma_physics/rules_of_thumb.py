@@ -8,11 +8,9 @@
 A collection of simple 0-D rules of thumb for tokamak plasmas.
 """
 
-from typing import Optional
-
 import numpy as np
 
-from bluemira.base.constants import MU_0, raw_uc, MU_0_4PI
+from bluemira.base.constants import MU_0, MU_0_4PI, raw_uc
 from bluemira.plasma_physics.collisions import coulomb_logarithm, spitzer_conductivity
 
 
@@ -306,7 +304,7 @@ def estimate_vertical_field(
     I_p: float,
     beta_p_th: float,
     l_i: float,
-    kappa_95: Optional[float] = None,
+    kappa_95: float | None = None,
 ) -> float:
     """
     Estimate the vertical field to keep the plasma in equilibrium.
@@ -323,8 +321,13 @@ def estimate_vertical_field(
         Thermal poloidal beta
     l_i:
         Normalised internal inductance
-    kappa:
+    kappa_95:
         Plasma elongation at the 95th percentile flux surface
+
+    Returns
+    -------
+    :
+        Plasma equilibrium vertical field [T]
 
     Notes
     -----
