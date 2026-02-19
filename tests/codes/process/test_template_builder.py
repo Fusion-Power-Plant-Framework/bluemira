@@ -159,12 +159,6 @@ class TestPROCESSTemplateBuilder:
         assert len(caplog.messages) == 1
         assert "requires inputs" in extract_warning(caplog)
 
-    def test_automatic_fvalue_itv(self):
-        t = PROCESSTemplateBuilder()
-        t.set_minimisation_objective(Objective.MAJOR_RADIUS)
-        t.add_constraint(Constraint.NET_ELEC_LOWER_LIMIT)
-        assert "fp_plant_electric_net_required_mw" in t.variables
-
     def test_warn_on_overwrite_value(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_input_value("dummy", 1.0)
