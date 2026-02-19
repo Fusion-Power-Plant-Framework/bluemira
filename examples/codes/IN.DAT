@@ -1,13 +1,13 @@
 
 *--------------------------------------------------*
-
+neqns = 3
 
 *---------------Constraint Equations---------------*
 
 icc = 1 *
 icc = 2 *
-icc = 5 *
 icc = 11 *
+icc = 5 *
 icc = 13 *
 icc = 15 *
 icc = 16 *
@@ -89,6 +89,7 @@ dr_shld_blkt_gap = 0.02 *
 
 *---------------Constraint Variables---------------*
 
+nflutfmax = 0.0 *
 p_plant_electric_net_required_mw = 400.0 *
 psepbqarmax = 10.0 *
 t_burn_min = 7200.0 *
@@ -282,6 +283,8 @@ dx_tf_turn_steel = 0.008 *
 dx_tf_wp_insulation = 0.008 *
 tmargmin = 1.5 *
 f_a_tf_turn_cable_space_extra_void = 0.3 *
+t_tf_quench_detection = 0.0 *
+rrr_tf_cu = 30.0 *
 
 *-----------------Times Variables------------------*
 

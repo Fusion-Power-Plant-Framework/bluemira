@@ -98,7 +98,6 @@ class Constraint(ConstraintSelection, Model):
         (1, 2, 3, 4, 6, 8),
         ("epbetmax",),
         "Equation for epsilon beta-poloidal upper limit",
-        "Equation for epsilon beta-poloidal upper limit",
     )
     HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
