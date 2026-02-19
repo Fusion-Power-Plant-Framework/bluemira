@@ -87,6 +87,8 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         ----------
         variables:
             Set of optimisation variables of the GeometryParameterisation
+        kwargs:
+            Keyword arguments for use in subclasses of GeometryParameterisation
         """
         self.name = self.__class__.__name__
         self._variables = variables
