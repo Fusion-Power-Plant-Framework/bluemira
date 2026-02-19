@@ -13,6 +13,7 @@ from bluemira.plasma_physics.rules_of_thumb import (
     calc_qstar_uckan,
     estimate_Le,
     estimate_M,
+    estimate_vertical_field,
 )
 
 
@@ -52,3 +53,15 @@ class TestSafetyFactors:
         qstar_uckan = calc_qstar_freidberg(R_0, A, B_0, I_p, 1.0)
         qstar_cyl = calc_cyl_safety_factor(R_0, A, B_0, I_p)
         np.testing.assert_almost_equal(qstar_uckan, qstar_cyl)
+
+
+@pytest.mark.parametrize(
+    ("kappa_95", "correct_bv"),
+    [(None, -7.64556171125926998e-01), (1.73909054753973802, -0.684353456250895)],
+)
+def test_vertical_field(kappa_95, correct_bv):
+    R_0, A, I_p = 8.63198, 2.8, 1.98017476836342539e07
+    l_i = 1.21205242021182746
+    beta_p = 1.11776595023442682
+    b_v = estimate_vertical_field(R_0, A, I_p, beta_p, l_i, kappa_95)
+    np.testing.assert_almost_equal(b_v, correct_bv, decimal=6)
