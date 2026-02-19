@@ -1,14 +1,15 @@
 
 *--------------------------------------------------*
 
+neqns = 3
 
 *---------------Constraint Equations---------------*
 
 icc = 1 * Beta
 icc = 2 * Global power balance
+icc = 11 * Radial build
 icc = 5 * Density upper limit
 icc = 8 * Neutron wall load upper limit
-icc = 11 * Radial build
 icc = 13 * Burn time lower limit
 icc = 16 * Net electric power lower limit
 icc = 24 * Beta upper limit
@@ -129,6 +130,7 @@ p_plant_electric_net_required_mw = 500.0 * required net electric power (MW) (`co
 pseprmax = 17.0 * maximum ratio of power crossing the separatrix to plasma major radius (Psep/R) (MW/m)
 t_burn_min   = 7.2e3 * minimum burn time (s) (KE - no longer itv;; see issue #706)
 pflux_fw_neutron_max_mw   = 8.0 * allowable neutron wall-load (MW/m2) (`constraint equation 8`)
+nflutfmax = 0.0
 
 *-------------------Constraints--------------------*
 
