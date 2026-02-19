@@ -81,7 +81,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
     __slots__ = ("_variables", "name")
 
-    def __init__(self, variables: OptVariablesFrameT):
+    def __init__(self, variables: OptVariablesFrameT, **kwargs):  # noqa: ARG002
         """
         Parameters
         ----------
