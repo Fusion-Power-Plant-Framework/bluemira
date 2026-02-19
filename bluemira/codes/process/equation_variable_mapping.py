@@ -68,7 +68,7 @@ class Constraint(ConstraintSelection, Model):
     Enum for PROCESS constraints
     """
 
-    BETA_CONSISTENCY = (1, (5,,), (), "Beta consistency")
+    BETA_CONSISTENCY = (1, (5,), (), "Beta consistency")
     GLOBAL_POWER_CONSISTENCY = (
         2,
         (1, 2, 3, 4, 6, 10, 11),
@@ -100,7 +100,7 @@ class Constraint(ConstraintSelection, Model):
         "Equation for epsilon beta-poloidal upper limit",
         "Equation for epsilon beta-poloidal upper limit",
     )
-    HOT_BEAM_ION_DENSITY = (7, (7,,), (), "Equation for hot beam ion density")
+    HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
         8,
         (1, 2, 3, 4, 6),
@@ -138,14 +138,14 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation to fix number of NBI decay lengths to plasma centre",
     )
-    LH_THRESHHOLD_LIMIT = (15, (,), (), "L-H Power ThresHhold Limit")
+    LH_THRESHHOLD_LIMIT = (15, (), (), "L-H Power ThresHhold Limit")
     NET_ELEC_LOWER_LIMIT = (
         16,
         (1, 2, 3),
         ("p_plant_electric_net_required_mw",),
         "Net electric power lower limit",
     )
-    RAD_POWER_UPPER_LIMIT = (17, (,), (), "Equation for radiation power upper limit")
+    RAD_POWER_UPPER_LIMIT = (17, (), (), "Equation for radiation power upper limit")
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
         (),
@@ -292,13 +292,13 @@ class Constraint(ConstraintSelection, Model):
     )
     # 47 NOT USED (or maybe it is, WTF?!)
     BETAPOL_UPPER_LIMIT = (
-        (48,
+        48,
         (2, 3, 18),
         ("betpmax",),
         "Poloidal beta upper limit",
-    ))
+    )
     # 49 NOT USED
-    REP_RATE_UPPER_LIMIT = (50, (86,,), (), "IFE repetition rate upper limit (IFE)")
+    REP_RATE_UPPER_LIMIT = (50, (86,), (), "IFE repetition rate upper limit (IFE)")
     CS_FLUX_CONSISTENCY = (
         51,
         (1, 3, 16, 29),
@@ -338,7 +338,7 @@ class Constraint(ConstraintSelection, Model):
         "Central solenoid temperature margin lower limit (SCTF)[sic.."
         " I guess they mean SCCS]",
     )
-    AVAIL_LOWER_LIMIT = (61, (107,,), ("avail_min",), "Minimum availability value")
+    AVAIL_LOWER_LIMIT = (61, (107,), ("avail_min",), "Minimum availability value")
     CONFINEMENT_RATIO_LOWER_LIMIT = (
         62,
         (),
@@ -406,7 +406,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Central solenoid shear stress limit (Tresca yield criterion)",
     )
-    PSEP_LH_AUX_CONSISTENCY = (73, (137,,), (), "Psep >= Plh + Paux")
+    PSEP_LH_AUX_CONSISTENCY = (73, (137,), (), "Psep >= Plh + Paux")
     TF_CROCO_T_UPPER_LIMIT = (74, (141,), ("temp_croco_quench_max",), "TFC quench")
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
@@ -427,7 +427,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Reinke criterion impurity fraction lower limit",
     )
-    BMAX_CS_UPPER_LIMIT = (79, (149,,), ("b_cs_limit_max",), "Peak CS field upper limit")
+    BMAX_CS_UPPER_LIMIT = (79, (149,), ("b_cs_limit_max",), "Peak CS field upper limit")
     PDIVT_LOWER_LIMIT = (
         80,
         (153,),
@@ -442,7 +442,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Radial build consistency for stellarators",
     )
-    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta"_
+    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta")
     CP_LIFETIME_LOWER_LIMIT = (
         85,
         (),
