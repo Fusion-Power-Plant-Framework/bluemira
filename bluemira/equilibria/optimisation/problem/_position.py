@@ -91,7 +91,14 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
 
-    def optimise(self, x0: npt.NDArray | None = None, **_) -> CoilsetOptimiserResult:
+    def optimise(
+        self,
+        x0: npt.NDArray | None = None,
+        *,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+        **_,
+    ) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 
@@ -121,6 +128,8 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
             algorithm=self.opt_algorithm,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
         )
 
         # Updates the coilset with the final optimised state vector

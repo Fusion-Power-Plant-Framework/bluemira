@@ -119,7 +119,13 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
         )
         return self.position_mapper.to_L(cs_opt_state.xs, cs_opt_state.zs)
 
-    def optimise(self, x0: npt.NDArray | None = None):
+    def optimise(
+        self,
+        x0: npt.NDArray | None = None,
+        *,
+        keep_history: bool = False,
+        check_constraints: bool = False,
+    ):
         """
         Run the optimisation.
 
@@ -140,6 +146,8 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
             opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
+            keep_history=keep_history,
+            check_constraints=check_constraints,
         )
 
         optimal_positions = opt_result.x
