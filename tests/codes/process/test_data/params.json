@@ -584,6 +584,12 @@
     "source": "Input",
     "long_name": "Effective particle radiation atomic mass"
   },
+  "nflutfmax": {
+    "value": 0.0,
+    "unit": "1/m^2",
+    "source": "Input",
+    "long_name": "Max fast neutron fluence on TF coil"
+  },
   "f_ni": {
     "value": 0.1,
     "unit": "dimensionless",
