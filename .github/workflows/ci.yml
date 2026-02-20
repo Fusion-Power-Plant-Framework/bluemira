@@ -52,7 +52,7 @@ jobs:
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
-        run: pytest bluemira documentation eudemo/eudemo
+        run: pytest bluemira documentation
 
       - name: Build Documentation bluemira
         shell: bash -l {0}
@@ -102,7 +102,7 @@ jobs:
                  --reactor \
                  ${PYTEST_PRIVATE} \
                  ${PYTEST_LONGRUN} \
-                 tests eudemo/eudemo_tests
+                 tests
 
       - name: Upload test report
         uses: actions/upload-artifact@v6

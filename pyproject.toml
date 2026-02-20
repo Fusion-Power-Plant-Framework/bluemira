@@ -152,7 +152,7 @@ markers = [
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning',
                   'ignore:FigureCanvasAgg is non-interactive:UserWarning']
-pythonpath = ['.', 'eudemo']
+pythonpath = ['.']
 
 [tool.ruff]
 target-version = "py310"
@@ -202,7 +202,7 @@ ignore = [
 
 [tool.ruff.lint.isort]
 case-sensitive = true
-known-first-party = ["bluemira", "eudemo", "eudemo_tests"]
+known-first-party = ["bluemira"]
 force-to-top = ["freecad", "FreeCAD"]
 
 [tool.ruff.lint.flake8-tidy-imports]
@@ -335,12 +335,10 @@ ignore-names = [
 "examples/geometry/optimisation_tutorial.ex.py" = ["W505", "E501"]
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = ["E402", "W505"]
-"eudemo/eudemo/*" = ["TD"]
-"eudemo/eudemo/reactor.py" = ["ARG001"]
 "bluemira/codes/plasmod/mapping.py" = ["TD"]
 "bluemira/balance_of_plant/calculations.py" = ["TD"]
 "bluemira/fuel_cycle/*" = ["TD"]
-"{tests,eudemo/eudemo_tests}/*" = [
+"{tests}/*" = [
     "INP001",
     "PLR2004",
     "PLR6301",
