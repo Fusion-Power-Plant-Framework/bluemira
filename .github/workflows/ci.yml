@@ -52,7 +52,7 @@ jobs:
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
-        run: pytest bluemira documentation eudemo/eudemo
+        run: pytest bluemira documentation
 
       - name: Build Documentation bluemira
         shell: bash -l {0}
@@ -112,7 +112,7 @@ jobs:
                  --json-report-indent=2 \
                  --reactor \
                  ${PYTEST_PRIVATE} \
-                 tests eudemo/eudemo_tests
+                 tests
 
       - name: Upload test report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
