@@ -16,7 +16,7 @@ import pytest
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import try_get_bluemira_private_data_root
-from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
     AlphaJModel,
@@ -159,6 +159,12 @@ class TestPROCESSTemplateBuilder:
         assert len(caplog.messages) == 1
         assert "requires inputs" in extract_warning(caplog)
 
+    def test_automatic_fvalue_itv(self):
+        t = PROCESSTemplateBuilder()
+        t.set_minimisation_objective(Objective.MAJOR_RADIUS)
+        t.add_constraint(Constraint.NET_ELEC_LOWER_LIMIT)
+        assert "fp_plant_electric_net_required_mw" in t.variables
+
     def test_warn_on_overwrite_value(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_input_value("dummy", 1.0)
@@ -212,8 +218,7 @@ def read_indat(filename):
 
 
 @pytest.mark.private
-# @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
-@pytest.mark.skip(reason="Updates to private data needed")
+@pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestInDatOneForOne:
     @classmethod
     def setup_class(cls):
@@ -290,11 +295,40 @@ class TestInDatOneForOne:
         template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
         template_builder.add_variable("f_nd_impurity_electrons(13)", 3.573e-04)
 
+        # Some constraints require multiple f-values, but they are getting
+        # ridding of those, so no fancy mechanics for now...
+        template_builder.add_variable(
+            "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
+        )
+        template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
         template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
+        template_builder.add_variable("fncycle", 1.0)
 
         # Modified f-values and bounds w.r.t. defaults
         template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
-        template_builder.add_input_value("fdene", 1.2)  # f-value no longer iterable
+        template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
+        template_builder.adjust_variable(
+            "fl_h_threshold", 0.833, lower_bound=0.833, upper_bound=0.909
+        )
+        template_builder.adjust_variable("ft_burn_min", 1.0, upper_bound=1.0)
+
+        # Modifying the initial variable vector to improve convergence
+        template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
+        template_builder.adjust_variable("fstrcase", 1.0)
+        template_builder.adjust_variable("ftmargtf", 1.0)
+        template_builder.adjust_variable("ftmargoh", 1.0)
+        template_builder.adjust_variable("falpha_energy_confinement", 1.0)
+        template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
+        template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
+        template_builder.adjust_variable("foh_stress", 1.0)
+        template_builder.adjust_variable("fbeta_max", 0.48251)
+        template_builder.adjust_variable("fpflux_fw_neutron_max_mw", 0.131)
+        template_builder.adjust_variable("fmaxvvstress", 1.0)
+        template_builder.adjust_variable("fpsepbqar", 1.0)
+        template_builder.adjust_variable("fvdump", 1.0)
+        template_builder.adjust_variable("fstrcond", 0.92007)
+        template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
+        template_builder.adjust_variable("fjprot", 1.0)
 
         # Set model switches
         for model_choice in (
@@ -442,16 +476,18 @@ class TestInDatOneForOne:
             "qnuc": 1.292e4,
             "v_tf_coil_dump_quench_max_kv": 10.0,
             # Inputs we don't care about but must specify
-            "f_t_plant_available": 0.75,  # Ha!
+            "cfactr": 0.75,  # Ha!
             "kappa": 1.848,  # Should be overwritten
             "pflux_fw_neutron_max_mw": 8.0,  # Should never get even close to this
-            "life_plant": 40.0,
+            "tlife": 40.0,
             "abktflnc": 15.0,
             "adivflnc": 20.0,
             # For sanity...
             "pflux_div_heat_load_max_mw": 10,
             "prn1": 0.4,
             "b_tf_inboard_max": 11.2,
+            "fp_fusion_total_max_mw": 1.0,
+            "fb_tf_inboard_max": 1.0,
             "ibkt_life": 1,
             "fkzohm": 1.0245,
             "dintrt": 0.0,
@@ -468,6 +504,7 @@ class TestInDatOneForOne:
             "ucme": 3.0e8,
             # Suspicous stuff
             "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            "fp_hcd_injected_max": 1.0,
         })
 
         cls.template = template_builder.make_inputs().to_invariable()

@@ -41,9 +41,6 @@ IN_mappings = {
     # Note: PROCESS has both radius_plasma_pedestal_temp_norm and
     # radius_plasma_pedestal_density_norm - they are usually the same...
     "profile_rho_ped": ("radius_plasma_pedestal_temp_norm", "dimensionless"),
-    "rrr_tf_cu": ("rrr_tf_cu", "dimensionless"),
-    "t_tf_quench_detection": ("t_tf_quench_detection", "dimensionless"),
-    "nflutfmax": ("nflutfmax", "1/m^2"),
 }
 
 OUT_mappings = {
@@ -73,7 +70,7 @@ OUT_mappings = {
     "j_cs_critical": ("j_cs_critical_pulse_start", "A/m^2"),
     "tau_e": ("t_energy_confinement", "s"),
     "v_burn": ("v_plasma_loop_burn", "V"),
-    "T_e": ("temp_plasma_electron_vol_avg_kev", "keV"),
+    "T_e": ("te", "keV"),
     "tk_fw_in": ("dr_fw_inboard", "m"),
     "tk_fw_out": ("dr_fw_outboard", "m"),
     "tk_tf_inboard": ("dr_tf_inboard", "m"),

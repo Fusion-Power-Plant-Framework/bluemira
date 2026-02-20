@@ -206,10 +206,10 @@ class ProcessInputs:
     fcoolcp: float | None = None
     f_a_tf_cool_outboard: float | None = None
     ptempalw: float | None = None
-    radius_cp_coolant_channel: float | None = None
-    temp_cp_coolant_inlet: float | None = None
+    rcool: float | None = None
+    tcoolin: float | None = None
     tcpav: float | None = None
-    vel_cp_coolant_midplane: float | None = None
+    vcool: float | None = None
     theta1_coil: float | None = None
     theta1_vv: float | None = None
     max_vv_stress: float | None = None
@@ -224,10 +224,8 @@ class ProcessInputs:
     tmargmin: float | None = None
     tmargmin_cs: float | None = None
     oacdcp: float | None = None
-    dx_tf_turn_general: int | None = None
+    t_turn_tf: int | None = None
     len_tf_bus: float | None = None
-    rrr_tf_cu: float | None = None
-    t_tf_quench_detection: float | None = None
 
     # PF Power
     i_pf_energy_storage_source: int | None = None
@@ -239,7 +237,7 @@ class ProcessInputs:
     cconfix: float | None = None
     cconshpf: float | None = None
     cconshtf: float | None = None
-    f_t_plant_available: float | None = None
+    cfactr: float | None = None
     cfind: list[float] | None = None
     cland: float | None = None
     costexp: float | None = None
@@ -269,7 +267,7 @@ class ProcessInputs:
     fcontng: float | None = None
     fcr0: float | None = None
     fkind: float | None = None
-    i_plant_availability: int | None = None
+    iavail: int | None = None
     life_dpa: float | None = None
     avail_min: float | None = None
     favail: float | None = None
@@ -284,9 +282,9 @@ class ProcessInputs:
     fwbs_prob_fail: float | None = None
     fwbs_umain_time: float | None = None
     redun_vacp: float | None = None
-    t_blkt_replace_yrs: float | None = None
+    tbktrepl: float | None = None
     tcomrepl: float | None = None
-    t_div_replace_yrs: float | None = None
+    tdivrepl: float | None = None
     uubop: float | None = None
     uucd: float | None = None
     uudiv: float | None = None
@@ -302,7 +300,7 @@ class ProcessInputs:
     lsa: int | None = None
     discount_rate: float | None = None
     startupratio: float | None = None
-    life_plant: float | None = None
+    tlife: float | None = None
     bkt_life_csf: int | None = None
     i_bldgs_size: int | None = None
     # ...
@@ -323,12 +321,12 @@ class ProcessInputs:
     fracture_toughness: float | None = None
 
     # REBCO
-    dx_hts_tape_rebco: float | None = None
-    dx_hts_tape_copper: float | None = None
-    dx_hts_tape_hastelloy: float | None = None
-    dr_hts_tape: float | None = None
-    dx_hts_tape_total: float | None = None
-    dx_croco_strand_copper: float | None = None
+    rebco_thickness: float | None = None
+    copper_thick: float | None = None
+    hastelloy_thickness: float | None = None
+    tape_width: float | None = None
+    tape_thickness: float | None = None
+    croco_thick: float | None = None
     copper_rrr: float | None = None
     copper_m2_max: float | None = None
     f_coppera_m2: float | None = None
@@ -349,15 +347,58 @@ class ProcessInputs:
     big_q_plasma_min: float | None = None
     b_tf_inboard_max: float | None = None
     dr_tf_wp_with_insulation: float | None = None
+    fp_hcd_injected_min_mw: float | None = None
     fbeta: float | None = None
+    fbeta_poloidal: float | None = None
+    fbeta_max: float | None = None
     fbetatry_lower: float | None = None
     fcwr: float | None = None
     fdene: float | None = None
+    fdtmp: float | None = None
+    fecrh_ignition: float | None = None
+    fflutf: float | None = None
+    fp_fusion_total_max_mw: float | None = None
+    feta_cd_norm_hcd_primary_max: float | None = None
+    fpflux_div_heat_load_mw: float | None = None
     fiooic: float | None = None
+    fipir: float | None = None
     fjohc: float | None = None
     fjohc0: float | None = None
+    fjprot: float | None = None
     fl_h_threshold: float | None = None
+    fmva: float | None = None
+    fnbshinef: float | None = None
+    fncycle: float | None = None
+    fnesep: float | None = None
+    foh_stress: float | None = None
+    fb_tf_inboard_max: float | None = None
+    fp_hcd_injected_max: float | None = None
+    fp_plant_electric_net_required_mw: float | None = None
+    fradius_beam_tangency: float | None = None
+    fpsepbqar: float | None = None
+    fpsepr: float | None = None
+    fptemp: float | None = None
+    fq95_min: float | None = None
+    fbig_q_plasma_min: float | None = None
     fradpwr: float | None = None
+    fpflux_fw_rad_max: float | None = None
+    freinke: float | None = None
+    fstrcase: float | None = None
+    fstrcond: float | None = None
+    fstr_wp: float | None = None
+    fmaxvvstress: float | None = None
+    ftbr: float | None = None
+    ft_burn_min: float | None = None
+    ft_cycle_min: float | None = None
+    ftmargoh: float | None = None
+    ftmargtf: float | None = None
+    ft_current_ramp_up: float | None = None
+    ftemp_fw_max: float | None = None
+    fvdump: float | None = None
+    fvs_plasma_total_required: float | None = None
+    fvvhe: float | None = None
+    fpflux_fw_neutron_max_mw: float | None = None
+    fzeff_max: float | None = None
     eta_cd_norm_hcd_primary_max: float | None = None
     pflux_fw_rad_max: float | None = None
     mvalim: float | None = None
@@ -374,7 +415,11 @@ class ProcessInputs:
     t_burn_min: float | None = None
     pflux_fw_neutron_max_mw: float | None = None
     f_alpha_energy_confinement_min: float | None = None
+    falpha_energy_confinement: float | None = None
+    fniterpump: float | None = None
     zeff_max: float | None = None
+    fpoloidalpower: float | None = None
+    ftemp_croco_quench_max: float | None = None
 
     # Build variables
     aplasmin: float | None = None
@@ -552,7 +597,6 @@ class ProcessInputs:
     b_cs_limit_max: float | None = None
     fb_cs_limit_max: float | None = None
     ld_ratio_cst: float | None = None
-    temp_cs_superconductor_margin_min: float | None = None
 
     # Physics
     alphaj: float | None = None

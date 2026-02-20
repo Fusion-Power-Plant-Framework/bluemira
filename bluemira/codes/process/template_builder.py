@@ -16,6 +16,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import (
+    FV_CONSTRAINT_ITVAR_MAPPING,
     ITERATION_VAR_MAPPING,
     OBJECTIVE_MIN_ONLY,
     VAR_ITERATION_MAPPING,
@@ -131,8 +132,40 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
+        if (constraint.value in FV_CONSTRAINT_ITVAR_MAPPING) and (self.neqns == 0):
+            # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
+            # f-value constraints. If equality constraints are used then no f-values
+            # are enforced so the config consistencey is not checked
+            self.add_fvalue_constraint(constraint, None, None, None)
         else:
             self._constraints.append(constraint)
+
+    def add_fvalue_constraint(
+        self,
+        constraint: Constraint,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
+    ):
+        """
+        Add an f-value constraint to the PROCESS run
+
+        Raises
+        ------
+        ValueError
+            Constraint not an f-value constraint
+        """
+        if constraint.value not in FV_CONSTRAINT_ITVAR_MAPPING:
+            raise ValueError(
+                f"Constraint '{constraint.name}' is not an f-value constraint."
+            )
+        self._constraints.append(constraint)
+
+        itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint.value]
+        if itvar not in self.ixc:
+            self.add_variable(
+                VAR_ITERATION_MAPPING[itvar], value, lower_bound, upper_bound
+            )
 
     def add_variable(
         self,

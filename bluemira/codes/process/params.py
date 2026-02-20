@@ -394,17 +394,6 @@ class ProcessSolverParams(MappedParameterFrame):
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
-    nflutfmax: Parameter[float]
-    """max fast neutron fluence on TF coil (n/m2)"""
-
-    rrr_tf_cu: Parameter[float]
-    """
-    TF coil copper residual-resistance-ratio (RRR). Only used for quench protection.
-    """
-
-    t_tf_quench_detection: Parameter[float]
-    """TF coil quench detection time (s). Only used for TF coil quench protection."""
-
     _mappings = deepcopy(mappings)
 
     @property

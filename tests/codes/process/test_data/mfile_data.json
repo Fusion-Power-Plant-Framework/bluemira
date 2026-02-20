@@ -683,15 +683,15 @@
     "var_mod": "Plant Availability",
     "scan01": 3.6014
   },
-  "life_hcd_fpy": {
+  "cdrlife": {
     "var_mod": "Plant Availability",
     "scan01": 15.556
   },
-  "life_plant": {
+  "tlife": {
     "var_mod": "Plant Availability",
     "scan01": 40.0
   },
-  "f_t_plant_available": {
+  "cfactr": {
     "var_mod": "Plant Availability",
     "scan01": 0.75
   },
@@ -2596,7 +2596,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 660000000.0
   },
-  "stress_z_cs_self_peak_midplane": {
+  "sig_axial": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -825420000.0
   },
@@ -2604,7 +2604,7 @@
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": 660000000.0
   },
-  "forc_z_cs_self_peak_midplane": {
+  "axial_force": {
     "var_mod": "Central Solenoid and PF Coils",
     "scan01": -812070000.0
   },
@@ -3612,7 +3612,7 @@
     "var_mod": "Electric Power Requirements",
     "scan01": 38.466
   },
-  "p_coolant_pump_elec_total_mw..": {
+  "htpmw..": {
     "var_mod": "Electric Power Requirements",
     "scan01": 382.36
   },
@@ -3696,7 +3696,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 3.0
   },
-  "p_fw_coolant_pump_mw": {
+  "htpmw_fw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
@@ -3704,19 +3704,19 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.0
   },
-  "p_fw_blkt_coolant_pump_elec_mw": {
+  "htpmwe_fw_blkt": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 379.35
   },
-  "p_shld_coolant+pump_elec_mw": {
+  "htpmwe_shld": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.014517
   },
-  "p_div_coolant_pump_elec_mw": {
+  "htpmwe_div": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 2.996
   },
-  "p_coolant_pump_elec_total_mw": {
+  "htpmw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 382.36
   },
@@ -3820,7 +3820,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 225.0
   },
-  "p_coolant_pump_total_mw": {
+  "htpmw_mech": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 332.65
   },
@@ -3856,7 +3856,7 @@
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 0.73638
   },
-  "p_plant_electric_gross_mw": {
+  "pgrossmw": {
     "var_mod": "Plant Power / Heat Transport Balance",
     "scan01": 1580.8
   },

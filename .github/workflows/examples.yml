@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: ["ubuntu-latest"]
         python-version: ["3.11", "3.12"]
-        process-version: ["v3.3.0"]
+        process-version: ["v3.2.2"]
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -56,6 +56,4 @@ jobs:
             -e 'plasmod_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
-            -e 'radiation_transport/run_cad_neutronics' \
-            -e 'codes/run_process_example'
-            ${RUN_DAGMC_EX}
+            -e 'radiation_transport/run_cad_neutronics'
