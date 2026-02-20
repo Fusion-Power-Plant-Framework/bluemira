@@ -289,40 +289,11 @@ class TestInDatOneForOne:
         template_builder.add_variable("t_tf_superconductor_quench", 2.5829e01)
         template_builder.add_variable("f_nd_impurity_electrons(13)", 3.573e-04)
 
-        # Some constraints require multiple f-values, but they are getting
-        # ridding of those, so no fancy mechanics for now...
-        template_builder.add_variable(
-            "f_a_tf_turn_cable_copper", 0.80884, lower_bound=0.5, upper_bound=0.94
-        )
-        template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
         template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
-        template_builder.add_variable("fncycle", 1.0)
 
         # Modified f-values and bounds w.r.t. defaults
         template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
-        template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-        template_builder.adjust_variable(
-            "fl_h_threshold", 0.833, lower_bound=0.833, upper_bound=0.909
-        )
-        template_builder.adjust_variable("ft_burn_min", 1.0, upper_bound=1.0)
-
-        # Modifying the initial variable vector to improve convergence
-        template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
-        template_builder.adjust_variable("fstrcase", 1.0)
-        template_builder.adjust_variable("ftmargtf", 1.0)
-        template_builder.adjust_variable("ftmargoh", 1.0)
-        template_builder.adjust_variable("falpha_energy_confinement", 1.0)
-        template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
-        template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
-        template_builder.adjust_variable("foh_stress", 1.0)
-        template_builder.adjust_variable("fbeta_max", 0.48251)
-        template_builder.adjust_variable("fpflux_fw_neutron_max_mw", 0.131)
-        template_builder.adjust_variable("fmaxvvstress", 1.0)
-        template_builder.adjust_variable("fpsepbqar", 1.0)
-        template_builder.adjust_variable("fvdump", 1.0)
-        template_builder.adjust_variable("fstrcond", 0.92007)
-        template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
-        template_builder.adjust_variable("fjprot", 1.0)
+        template_builder.add_input_value("fdene", 1.2)  # f-value no longer iterable
 
         # Set model switches
         for model_choice in (
@@ -480,8 +451,6 @@ class TestInDatOneForOne:
             "pflux_div_heat_load_max_mw": 10,
             "prn1": 0.4,
             "b_tf_inboard_max": 11.2,
-            "fp_fusion_total_max_mw": 1.0,
-            "fb_tf_inboard_max": 1.0,
             "ibkt_life": 1,
             "fkzohm": 1.0245,
             "dintrt": 0.0,
@@ -498,7 +467,6 @@ class TestInDatOneForOne:
             "ucme": 3.0e8,
             # Suspicous stuff
             "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            "fp_hcd_injected_max": 1.0,
         })
 
         cls.template = template_builder.make_inputs().to_invariable()
