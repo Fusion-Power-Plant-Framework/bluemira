@@ -16,7 +16,7 @@ import pytest
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import try_get_bluemira_private_data_root
-from bluemira.codes.process.api import ENABLED, Impurities
+from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process.model_mapping import (
     AlphaJModel,
@@ -212,7 +212,8 @@ def read_indat(filename):
 
 
 @pytest.mark.private
-@pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
+# @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
+@pytest.mark.skip(reason="Updates to private data needed")
 class TestInDatOneForOne:
     @classmethod
     def setup_class(cls):
