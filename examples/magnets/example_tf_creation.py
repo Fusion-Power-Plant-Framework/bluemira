@@ -10,6 +10,7 @@ This involves the design and optimisation of each module: strand, cable,
 conductor, winding pack and casing.
 """
 
+import numpy as np
 from eurofusion_materials.library.magnet_branch_mats import (
     COPPER_100,
     COPPER_300,
@@ -18,7 +19,54 @@ from eurofusion_materials.library.magnet_branch_mats import (
     SS316_LN_MAG,
 )
 
+from bluemira.base.constants import MU_0, MU_0_2PI
 from bluemira.magnets.tfcoil_designer import TFCoilXYDesigner
+
+params = {
+    # base
+    "R0": {"value": 8.6, "unit": "m"},
+    "B0": {"value": 4.39, "unit": "T"},
+    "A": {"value": 2.8, "unit": "dimensionless"},
+    "n_TF": {"value": 16, "unit": "dimensionless"},
+    "ripple": {"value": 6e-3, "unit": "dimensionless"},
+    "d": {"value": 1.82, "unit": "m"},
+    "S_VV": {"value": 100e6, "unit": "dimensionless"},
+    "safety_factor": {"value": 1.5 * 1.3, "unit": "dimensionless"},
+    "B_ref": {"value": 15, "unit": "T"},
+    # misc params
+    "Iop": {"value": 50.0e3, "unit": "A"},
+    "T_sc": {"value": 4.2, "unit": "K"},
+    "T_margin": {"value": 1.5, "unit": "K"},
+    "t_delay": {"value": 3, "unit": "s"},
+    "strain": {"value": 0.0055, "unit": ""},
+}
+
+
+def tau_discharge1(params, derived_params):
+    R0 = params.R0.value
+    n_TF = params.n_TF.value
+    L = (
+        MU_0
+        * R0
+        * (n_TF * derived_params.n_cond) ** 2
+        * (1 - np.sqrt(1 - (R0 - derived_params.Ri) / R0))
+        / n_TF
+        * 1.1
+    )
+    v_max = (7 * R0 - 3) / 6 * 1.1e3
+    return L * params.Iop.value / v_max
+
+
+def tau_discharge2(params, derived_params):
+    R_VV = derived_params.Ri * 1.05  # Vacuum vessel radius
+    return (
+        params.B0.value
+        * derived_params.tf_current
+        * params.n_TF.value
+        * (params.R0.value / params.A.value) ** 2
+        / (R_VV * params.S_VV.value)
+    )
+
 
 config = {
     "stabilising_strand": {
@@ -42,13 +90,12 @@ config = {
     },
     "cable": {
         "class": "RectangularCable",
-        "n_sc_strand": 321,
-        "n_stab_strand": 476,
+        "n_stab_strand": 500,
         "params": {
             "d_cooling_channel": {"value": 0.01, "unit": "m"},
             "void_fraction": {"value": 0.7, "unit": ""},
             "cos_theta": {"value": 0.97, "unit": ""},
-            "dx": {"value": 0.017324217577247843 * 2, "unit": "m"},
+            "dx": {"value": 0.05, "unit": "m"},
             "E": {"value": 0.1e9, "unit": ""},
         },
     },
@@ -82,7 +129,7 @@ config = {
     },
     "optimisation_params": {
         "t0": 0,
-        "Tau_discharge": 20,
+        "Tau_discharge": [tau_discharge1, tau_discharge2],
         "hotspot_target_temperature": 250,
         "layout": "auto",
         "wp_reduction_factor": 0.75,
@@ -94,26 +141,31 @@ config = {
     },
 }
 
-params = {
-    # base
-    "R0": {"value": 8.6, "unit": "m"},
-    "B0": {"value": 4.39, "unit": "T"},
-    "A": {"value": 2.8, "unit": "dimensionless"},
-    "n_TF": {"value": 16, "unit": "dimensionless"},
-    "ripple": {"value": 6e-3, "unit": "dimensionless"},
-    "d": {"value": 1.82, "unit": "m"},
-    "S_VV": {"value": 100e6, "unit": "dimensionless"},
-    "safety_factor": {"value": 1.5 * 1.3, "unit": "dimensionless"},
-    "B_ref": {"value": 15, "unit": "T"},
-    # misc params
-    "Iop": {"value": 70.0e3, "unit": "A"},
-    "T_sc": {"value": 4.2, "unit": "K"},
-    "T_margin": {"value": 1.5, "unit": "K"},
-    "t_delay": {"value": 3, "unit": "s"},
-    "strain": {"value": 0.0055, "unit": ""},
-}
 
 tf_coil_xy = TFCoilXYDesigner(params=params, build_config=config).execute()
 tf_coil_xy.plot(show=True, homogenised=False)
 tf_coil_xy.plot_convergence(show=True)
 tf_coil_xy.plot_summary(100, show=True)
+
+
+from matproplib import OperationalConditions
+
+op_cond = OperationalConditions(
+    temperature=tf_coil_xy.derived_params.T_op,
+    magnetic_field=tf_coil_xy.derived_params.B_TF_i,
+    strain=MU_0_2PI * tf_coil_xy.derived_params._params.strain.value,
+)
+I_sc = tf_coil_xy.case.wps[0].conductor.cable.sc_strand.Ic(op_cond)
+I_max = I_sc * tf_coil_xy.case.wps[0].conductor.cable.n_sc_strand
+I_TF_max = I_max * tf_coil_xy.case.n_conductors
+print(f"I_max: {I_max}")
+print(f"I_TF_max: {I_TF_max}")
+
+from bluemira.base.constants import MU_0_2PI
+
+I_TF = (
+    tf_coil_xy.derived_params._params.R0.value
+    * tf_coil_xy.derived_params._params.B0.value
+    / (MU_0_2PI * tf_coil_xy.derived_params._params.n_TF.value)
+)
+print(f"I_TF: {I_TF}")

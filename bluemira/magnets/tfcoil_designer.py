@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
@@ -93,6 +93,7 @@ class CableParams(ParameterFrame):
     void_fraction: Parameter[float]
     cos_theta: Parameter[float]
     dx: Parameter[float]
+    Iop: Parameter[float]
 
 
 @dataclass
@@ -138,6 +139,7 @@ class DerivedTFCoilXYDesignerParams:
     Ri: float
     """External radius of the TF coil case [m]."""
     Re: float
+    tf_current: float
     B_TF_i: float
     pm: float
     t_z: float
@@ -145,8 +147,25 @@ class DerivedTFCoilXYDesignerParams:
     s_y: float
     n_cond: int
     min_gap_x: float
-    I_fun: Callable[[float], float]
-    B_fun: Callable[[float], float]
+    I_fun: Callable[[float], float] = field(init=False)
+    B_fun: Callable[[float], float] = field(init=False)
+    tau_discharge: float = field(init=False)
+
+    _tau_discharge_functions: list[
+        Callable[[TFCoilXYDesignerParams, DerivedTFCoilXYDesignerParams], float]
+    ] = field(repr=False)
+    _params: TFCoilXYDesignerParams = field(repr=False)
+
+    def __post_init__(self):
+        self.tau_discharge = max(
+            tf(self._params, self) for tf in self._tau_discharge_functions
+        )
+        self.I_fun = delayed_exp_func(
+            self._params.Iop.value, self.tau_discharge, self._params.t_delay.value
+        )
+        self.B_fun = delayed_exp_func(
+            self.B_TF_i, self.tau_discharge, self._params.t_delay.value
+        )
 
 
 @dataclass
@@ -197,7 +216,7 @@ class TFCoilXY:
     def plot_I_B(self, ax, n_steps=300):  # noqa: N802
         """Plot current and magnetic field evolution in optimisation"""
         time_steps = np.linspace(
-            self.op_config.t0, self.op_config.Tau_discharge, n_steps
+            self.op_config.t0, self.derived_params.tau_discharge, n_steps
         )
         I_values = [self.derived_params.I_fun(t) for t in time_steps]  # noqa: N806
         B_values = [self.derived_params.B_fun(t) for t in time_steps]
@@ -229,7 +248,7 @@ class TFCoilXY:
 
         ax.plot(solution.t, solution.y[0], "r*", label="Simulation points")
         time_steps = np.linspace(
-            self.op_config.t0, self.op_config.Tau_discharge, n_steps
+            self.op_config.t0, self.derived_params.tau_discharge, n_steps
         )
         ax.plot(time_steps, solution.sol(time_steps)[0], "b", label="Interpolated curve")
         ax.grid(visible=True)
@@ -346,30 +365,28 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         a = R0 / self.params.A.value
         Ri = R0 - a - self.params.d.value  # noqa: N806
         Re = (R0 + a) * (1 / self.params.ripple.value) ** (1 / n_TF)  # noqa: N806
-        B_TF_i = 1.08 * (MU_0_2PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) / Ri)
+        tf_current = B0 * R0 / MU_0_2PI / n_TF
+        B_TF_i = 1.08 * (MU_0_2PI * n_TF * tf_current / Ri)
         t_z = 0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * (B0 * R0 / MU_0_2PI / n_TF) ** 2
+
+        n_cond = int(
+            (self.params.B0.value * R0 / MU_0_2PI / n_TF) // self.params.Iop.value
+        )
         return DerivedTFCoilXYDesignerParams(
             a=a,
             Ri=Ri,
             Re=Re,
             B_TF_i=B_TF_i,
+            tf_current=tf_current,
             pm=B_TF_i**2 / (2 * MU_0),
             t_z=t_z,
             T_op=self.params.T_sc.value + self.params.T_margin.value,
             s_y=1e9 / self.params.safety_factor.value,
-            n_cond=int(
-                self.params.B0.value * R0 / MU_0_2PI / n_TF // self.params.Iop.value
-            ),
+            n_cond=n_cond,
             # 2 * thickness of the plate before the WP
             min_gap_x=2 * (R0 * 2 / 3 * 1e-2),
-            I_fun=delayed_exp_func(
-                self.params.Iop.value,
-                op_config.Tau_discharge,
-                self.params.t_delay.value,
-            ),
-            B_fun=delayed_exp_func(
-                B_TF_i, op_config.Tau_discharge, self.params.t_delay.value
-            ),
+            _tau_discharge_functions=op_config.Tau_discharge,
+            _params=self.params,
         )
 
     def B_TF_r(self, tf_current: float, r: float):
@@ -406,19 +423,27 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         optimisation_params = OptimisationConfig(
             **self.build_config.get("optimisation_params")
         )
-        derived_params = self._derived_values(optimisation_params)
+        self.derived_params = self._derived_values(optimisation_params)
 
         # Only a singular type of cable and conductor currently possible
+        op_cond = OperationalConditions(
+            temperature=self.derived_params.T_op,
+            magnetic_field=self.derived_params.B_TF_i,
+            strain=self.params.strain.value,
+        )
         cable = self.optimise_cable_n_stab_ths(
-            self._make_cable(wp_i=0),
+            self._make_cable(wp_i=0, op_cond=op_cond),
             t0=optimisation_params.t0,
-            tf=optimisation_params.Tau_discharge,
-            initial_temperature=derived_params.T_op,
+            tf=5 * self.derived_params.tau_discharge,
+            initial_temperature=self.derived_params.T_op,
             target_temperature=optimisation_params.hotspot_target_temperature,
-            B_fun=derived_params.B_fun,
-            I_fun=derived_params.I_fun,
+            B_fun=self.derived_params.B_fun,
+            I_fun=self.derived_params.I_fun,
             bounds=[1, 10000],
         )
+        import ipdb
+
+        ipdb.set_trace()
         conductor = self._make_conductor(cable.cable, wp_i=0)
         winding_pack = [
             self._make_winding_pack(conductor, wp_i, wp_config) for wp_i in range(n_wp)
@@ -426,27 +451,23 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
 
         # param frame optimisation stuff?
         case, convergence_array = self.optimise_jacket_and_vault(
-            self._make_case(winding_pack, derived_params, optimisation_params),
-            pm=derived_params.pm,
-            fz=derived_params.t_z,
-            op_cond=OperationalConditions(
-                temperature=derived_params.T_op,
-                magnetic_field=derived_params.B_TF_i,
-                strain=self.params.strain.value,
-            ),
-            allowable_sigma=derived_params.s_y,
+            self._make_case(winding_pack, self.derived_params, optimisation_params),
+            pm=self.derived_params.pm,
+            fz=self.derived_params.t_z,
+            op_cond=op_cond,
+            allowable_sigma=self.derived_params.s_y,
             bounds_cond_jacket=optimisation_params.bounds_cond_jacket,
             bounds_dy_vault=optimisation_params.bounds_dy_vault,
             layout=optimisation_params.layout,
             wp_reduction_factor=optimisation_params.wp_reduction_factor,
-            min_gap_x=derived_params.min_gap_x,
+            min_gap_x=self.derived_params.min_gap_x,
             n_layers_reduction=optimisation_params.n_layers_reduction,
             max_niter=optimisation_params.max_niter,
             eps=optimisation_params.eps,
-            n_conds=derived_params.n_cond,
+            n_conds=self.derived_params.n_cond,
         )
         return TFCoilXY(
-            case, cable, convergence_array, derived_params, optimisation_params
+            case, cable, convergence_array, self.derived_params, optimisation_params
         )
 
     @staticmethod
@@ -936,6 +957,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         wp_i: int,
         config: dict[str, float | str],
         params: CableParams,
+        op_cond: OperationalConditions,
     ) -> ABCCable:
         cls_name = config["class"]
         cable_cls = get_class_from_module(
@@ -949,7 +971,9 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         return cable_cls(
             sc_strand=sc_strand,
             stab_strand=stab_strand,
-            n_sc_strand=self._check_iterable(wp_i, config["n_sc_strand"]),
+            n_sc_strand=self._check_iterable(
+                wp_i, int(np.ceil(params.Iop.value / sc_strand.Ic(op_cond)))
+            ),
             n_stab_strand=self._check_iterable(wp_i, config["n_stab_strand"]),
             d_cooling_channel=self._check_iterable(wp_i, params.d_cooling_channel.value),
             void_fraction=self._check_iterable(wp_i, params.void_fraction.value),
@@ -958,14 +982,19 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
             **extras,
         )
 
-    def _make_cable(self, wp_i: int) -> ABCCable:
+    def _make_cable(self, wp_i: int, op_cond: OperationalConditions) -> ABCCable:
         stab_strand_config = self.build_config.get("stabilising_strand")
         sc_strand_config = self.build_config.get("superconducting_strand")
         cable_config = self.build_config.get("cable")
 
         stab_strand_params = StrandParams.from_dict(stab_strand_config.pop("params"))
         sc_strand_params = StrandParams.from_dict(sc_strand_config.pop("params"))
-        cable_params = cable_config.pop("params")
+        Iop = self.derived_params._params.Iop.to_dict()
+        Iop.pop("name")
+        cable_params = {
+            **cable_config.pop("params"),
+            "Iop": Iop,
+        }
 
         cable_params = (
             CableParamsWithE.from_dict(cable_params)
@@ -976,7 +1005,7 @@ class TFCoilXYDesigner(Designer[TFCoilXY]):
         stab_strand = self._make_strand(wp_i, stab_strand_config, stab_strand_params)
         sc_strand = self._make_strand(wp_i, sc_strand_config, sc_strand_params)
         return self._make_cable_cls(
-            stab_strand, sc_strand, wp_i, cable_config, cable_params
+            stab_strand, sc_strand, wp_i, cable_config, cable_params, op_cond
         )
 
     def _make_conductor(self, cable: ABCCable, wp_i: int = 0) -> Conductor:
