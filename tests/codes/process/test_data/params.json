@@ -584,6 +584,24 @@
     "source": "Input",
     "long_name": "Effective particle radiation atomic mass"
   },
+  "nflutfmax": {
+    "value": 0.0,
+    "unit": "1/m^2",
+    "source": "Input",
+    "long_name": "Max fast neutron fluence on TF coil"
+  },
+  "rrr_tf_cu": {
+    "value": 30.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "TF coil copper residual-resistance-ratio (RRR). Only used for quench protection."
+  },
+  "t_tf_quench_detection": {
+    "value": 0.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "TTF coil quench detection time (s). Only used for TF coil quench protection.."
+  },
   "f_ni": {
     "value": 0.1,
     "unit": "dimensionless",

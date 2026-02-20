@@ -733,7 +733,10 @@ class TFWindingPackTurnModel(PROCESSModel):
         """
         return "i_tf_turns_integer"
 
-    CURRENT_PER_TURN = 0, ("c_tf_turn",)  # or t_cable_tf or t_turn_tf
+    CURRENT_PER_TURN = (
+        0,
+        ("c_tf_turn",),
+    )  # or dx_tf_turn_cable_space_general or dx_tf_turn_general
 
 
 class TFCoilShapeModel(PROCESSModel):
@@ -1214,7 +1217,7 @@ class AvailabilityModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iavail"
+        return "i_plant_availability"
 
     INPUT = 0
     TAYLOR_WARD = 1
