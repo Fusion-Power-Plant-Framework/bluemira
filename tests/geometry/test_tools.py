@@ -135,7 +135,7 @@ class TestSignedDistanceFunctions:
         d3 = _signed_distance_2D(p3, self.subject_2D_array)
         assert d3 > 0
         d4 = _signed_distance_2D(p4, self.subject_2D_array)
-        assert d4 == -0.1
+        assert d4 == -0.1  # noqa: RUF069
         d = np.array([d1, d2, d3, d4])
 
         d_array = signed_distance_2D_polygon(
@@ -453,10 +453,10 @@ class TestConvexHullWires2d:
         assert hull.is_closed
         assert np.allclose(hull.center_of_mass, [0, 0, 0])
         bounding_box = hull.bounding_box
-        assert bounding_box.z_min == -1.5
-        assert bounding_box.z_max == 1.5
-        assert bounding_box.x_min == -1.5
-        assert bounding_box.x_max == 1.5
+        assert bounding_box.z_min == -1.5  # noqa: RUF069
+        assert bounding_box.z_max == 1.5  # noqa: RUF069
+        assert bounding_box.x_min == -1.5  # noqa: RUF069
+        assert bounding_box.x_max == 1.5  # noqa: RUF069
         assert bounding_box.y_min == bounding_box.y_max == 0
 
     def test_hull_around_two_circles_xy_plane(self):
@@ -538,16 +538,16 @@ class TestMakeBSpline:
         # first != last, closed = True
         points = {"x": [0, 1, 1, 0], "y": 0, "z": [0, 0, 1, 1]}
         spline = interpolate_bspline(points, closed=True)
-        assert spline.length == 4.520741504557154
+        assert spline.length == pytest.approx(4.520741504557154)
 
         # first == last, closed = True
         points = {"x": [0, 1, 1, 0, 0], "y": 0, "z": [0, 0, 1, 1, 0]}
         spline = interpolate_bspline(points, closed=True)
-        assert spline.length == 4.520741504557154
+        assert spline.length == pytest.approx(4.520741504557154)
 
         # first == last, closed = False (closed is enforced)
         spline = interpolate_bspline(points, closed=False)
-        assert spline.length == 4.520741504557154
+        assert spline.length == pytest.approx(4.520741504557154)
 
 
 class TestFindClockwiseAngle2d:

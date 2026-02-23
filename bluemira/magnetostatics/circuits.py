@@ -177,7 +177,7 @@ class PlanarCircuit(SourceGroup):
             Tranformed coordinates.
         """
         normal_vector = shape.normal_vector
-        if abs(normal_vector[1]) == 1.0:
+        if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
             return shape
         shape.translate(-np.array(shape.center_of_mass))
 
