@@ -91,7 +91,7 @@ conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 process = ["process @ git+https://github.com/ukaea/process@v3.3.0"]
 openmc = [
     "openmc>=0.14.0",
-    "openmc_data==2.3.4",
+    "openmc_data==2.3.5",
     "tokamak-neutron-source >=0.1.4",
 ]
 polyscope = ["polyscope"]
