@@ -470,7 +470,6 @@ typing-extensions==4.15.0
     #   pyvista
     #   referencing
     #   sqlalchemy
-    #   tables
     #   typeguard
     #   typing-inspection
 typing-inspection==0.4.2
