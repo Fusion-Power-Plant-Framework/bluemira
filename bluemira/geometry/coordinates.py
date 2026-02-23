@@ -1650,7 +1650,7 @@ class Coordinates:
         CoordinatesError
             Base and direction must be of size 3
         """
-        if degree == 0.0:
+        if degree == 0.0:  # noqa: RUF069
             return
 
         base = np.array(base, dtype=float)
