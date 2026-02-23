@@ -20,7 +20,7 @@ asttokens==3.0.1
     # via
     #   matproplib
     #   stack-data
-async-lru==2.1.0
+async-lru==2.2.0
     # via jupyterlab
 attrs==25.4.0
     # via
@@ -69,7 +69,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.5.3
+cyclopts==4.5.4
     # via pyvista
 debugpy==1.8.20
     # via ipykernel
@@ -81,7 +81,7 @@ docstring-parser==0.17.0
     # via cyclopts
 docutils==0.22.4
     # via rich-rst
-eqdsk==0.7.0
+eqdsk==0.8.0
     # via bluemira (pyproject.toml)
 executing==2.2.1
     # via stack-data
@@ -297,7 +297,7 @@ packaging==26.0
     #   nbconvert
     #   pooch
     #   tables
-pandas==3.0.0
+pandas==3.0.1
     # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
@@ -369,7 +369,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==4.0.0
     # via jupyter-events
-pyvista==0.47.0
+pyvista==0.47.1
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -400,7 +400,7 @@ rfc3986-validator==0.1.1
     #   jupyter-events
 rfc3987-syntax==1.1.0
     # via jsonschema
-rich==14.3.2
+rich==14.3.3
     # via
     #   bluemira (pyproject.toml)
     #   cyclopts
@@ -435,7 +435,7 @@ soupsieve==2.8.3
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
-tables==3.10.2
+tables==3.11.0
     # via bluemira (pyproject.toml)
 tabulate==0.9.0
     # via bluemira (pyproject.toml)
@@ -469,7 +469,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typeguard==4.5.0
+typeguard==4.5.1
     # via bluemira (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -483,7 +483,6 @@ typing-extensions==4.15.0
     #   pydantic-core
     #   pyvista
     #   referencing
-    #   tables
     #   typeguard
     #   typing-inspection
 typing-inspection==0.4.2
