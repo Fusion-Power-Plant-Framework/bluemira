@@ -131,6 +131,8 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
+        elif constraint.equality:
+            self._constraints.insert(0, constraint)
         else:
             self._constraints.append(constraint)
 
@@ -296,6 +298,7 @@ class PROCESSTemplateBuilder:
 
         self._check_constraint_inputs()
         icc = [con.value for con in self._constraints]
+        neqns = sum(con.equality for con in self._constraints)
         self._check_model_inputs()
         models = {k: v.value for k, v in self._models.items()}
 
@@ -307,7 +310,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
-            neqns=self.neqns or None,
+            neqns=self.neqns or neqns,
             f_nd_impurity_electrons=self.f_nd_impurity_electrons,
             **self.values,
             **models,
