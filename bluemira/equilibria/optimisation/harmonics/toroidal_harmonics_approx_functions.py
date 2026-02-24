@@ -1013,8 +1013,8 @@ def toroidal_harmonic_approximation(
         eq=eq, th_params=th_params, psi_norm=psi_norm, plasma_mask=plasma_mask
     )
 
-    dof_id = np.arange(0, 2 * max_harmonic_mode)
-    mode_values = np.tile(np.arange(max_harmonic_mode), 2)
+    dof_id = np.arange(0, 2 * max_harmonic_mode - 1)
+    mode_values = np.r[np.arange(max_harmonic_mode), np.arange(1, max_harmonic_mode)]
 
     error = np.inf
 
