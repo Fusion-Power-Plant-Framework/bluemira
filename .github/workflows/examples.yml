@@ -56,6 +56,5 @@ jobs:
             -e 'plasmod_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
-            -e 'radiation_transport/run_cad_neutronics' \
-            -e 'codes/run_process_example'
+            -e 'radiation_transport/run_cad_neutronics'
             ${RUN_DAGMC_EX}
