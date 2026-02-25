@@ -106,32 +106,34 @@ print("\n".join(str(o) for o in list(Objective)))
 
 # %% [markdown]
 # Now we will add a series of constraint equations to the PROCESS problem
-# we wish to solve. You can read more about these constraints an what
+# we wish to solve. State True if you wish the constraint to be an equality,
+# or False for an inequality.
+# You can read more about these constraints an what
 # they mean in the PROCESS documentation
 
 # %%
-for constraint in (
-    Constraint.BETA_CONSISTENCY,
-    Constraint.GLOBAL_POWER_CONSISTENCY,
-    Constraint.DENSITY_UPPER_LIMIT,
-    Constraint.RADIAL_BUILD_CONSISTENCY,
-    Constraint.BURN_TIME_LOWER_LIMIT,
-    Constraint.LH_THRESHHOLD_LIMIT,
-    Constraint.NET_ELEC_LOWER_LIMIT,
-    Constraint.TF_CASE_STRESS_UPPER_LIMIT,
-    Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
-    Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
-    Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
-    Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
-    Constraint.TF_T_MARGIN_LOWER_LIMIT,
-    Constraint.CS_T_MARGIN_LOWER_LIMIT,
-    Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
-    Constraint.DUMP_TIME_LOWER_LIMIT,
-    Constraint.CS_STRESS_UPPER_LIMIT,
-    Constraint.DENSITY_PROFILE_CONSISTENCY,
-    Constraint.PSEPB_QAR_UPPER_LIMIT,
+for constraint, equality in (
+    (Constraint.BETA_CONSISTENCY, True),
+    (Constraint.GLOBAL_POWER_CONSISTENCY, True),
+    (Constraint.DENSITY_UPPER_LIMIT, False),
+    (Constraint.RADIAL_BUILD_CONSISTENCY, True),
+    (Constraint.BURN_TIME_LOWER_LIMIT, False),
+    (Constraint.LH_THRESHHOLD_LIMIT, False),
+    (Constraint.NET_ELEC_LOWER_LIMIT, False),
+    (Constraint.TF_CASE_STRESS_UPPER_LIMIT, False),
+    (Constraint.TF_JACKET_STRESS_UPPER_LIMIT, False),
+    (Constraint.TF_JCRIT_RATIO_UPPER_LIMIT, False),
+    (Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT, False),
+    (Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT, False),
+    (Constraint.TF_T_MARGIN_LOWER_LIMIT, False),
+    (Constraint.CS_T_MARGIN_LOWER_LIMIT, False),
+    (Constraint.CONFINEMENT_RATIO_LOWER_LIMIT, False),
+    (Constraint.DUMP_TIME_LOWER_LIMIT, False),
+    (Constraint.CS_STRESS_UPPER_LIMIT, False),
+    (Constraint.DENSITY_PROFILE_CONSISTENCY, False),
+    (Constraint.PSEPB_QAR_UPPER_LIMIT, False),
 ):
-    template_builder.add_constraint(constraint)
+    template_builder.add_constraint(constraint, equality=equality)
 
 
 # %% [markdown]
