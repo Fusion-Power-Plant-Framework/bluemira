@@ -123,16 +123,19 @@ class PROCESSTemplateBuilder:
             bluemira_warn(f"Over-writing model choice {model_choice}.")
         self._models[model_choice.switch_name] = model_choice
 
-    def add_constraint(self, constraint: Constraint):
+    def add_constraint(self, constraint: Constraint, *, equality: bool):
         """
         Add a constraint to the PROCESS run
+
+        It must be stated whether the constraint is intended as an equality constraint
         """
         if constraint in self._constraints:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
-        elif constraint.equality:
+        elif equality:
             self._constraints.insert(0, constraint)
+            self.neqns += 1
         else:
             self._constraints.append(constraint)
 
@@ -298,7 +301,6 @@ class PROCESSTemplateBuilder:
 
         self._check_constraint_inputs()
         icc = [con.value for con in self._constraints]
-        neqns = sum(con.equality for con in self._constraints)
         self._check_model_inputs()
         models = {k: v.value for k, v in self._models.items()}
 
@@ -310,7 +312,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
-            neqns=self.neqns or neqns,
+            neqns=self.neqns,
             f_nd_impurity_electrons=self.f_nd_impurity_electrons,
             **self.values,
             **models,

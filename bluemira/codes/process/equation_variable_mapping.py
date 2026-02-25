@@ -55,15 +55,12 @@ class ConstraintSelection:
         List of required inputs for the constraint
     description:
         Short description of the model constraint
-    equality:
-        If true, the constraint is an equality
     """
 
     _value_: int
     requires_variables: tuple[int] = field(default_factory=tuple)
     requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
-    equality: bool = False
 
 
 class Constraint(ConstraintSelection, Model):
@@ -71,56 +68,49 @@ class Constraint(ConstraintSelection, Model):
     Enum for PROCESS constraints
     """
 
-    BETA_CONSISTENCY = (1, (5,), (), "Beta consistency", True)
+    BETA_CONSISTENCY = (1, (5,), (), "Beta consistency")
     GLOBAL_POWER_CONSISTENCY = (
         2,
         (1, 2, 3, 4, 6, 10, 11),
         (),
         "Global Power Balance Consistency",
-        True,
     )
     ION_POWER_CONSISTENCY = (
         3,
         (1, 2, 3, 4, 6, 10, 11),
         (),
         "DEPRECATED - Ion Power Balance Consistency",
-        True,
     )
     ELECTRON_POWER_CONSISTENCY = (
         4,
         (1, 2, 3, 4, 6, 10, 11),
         (),
         "DEPRECATED - Electron Power Balance Consistency",
-        True,
     )
     DENSITY_UPPER_LIMIT = (
         5,
         (1, 2, 3, 4, 6),
         (),
         "Density Upper Limit (Greenwald)",
-        False,
     )
     EPS_BETA_POL_UPPER_LIMIT = (
         6,
         (1, 2, 3, 4, 6, 8),
         ("epbetmax",),
         "Equation for epsilon beta-poloidal upper limit",
-        False,
     )
-    HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density", True)
+    HOT_BEAM_ION_DENSITY = (7, (7,), (), "Equation for hot beam ion density")
     NWL_UPPER_LIMIT = (
         8,
         (1, 2, 3, 4, 6),
         ("pflux_fw_neutron_max_mw",),
         "Neutron wall load upper limit",
-        False,
     )
     FUSION_POWER_UPPER_LIMIT = (
         9,
         (1, 2, 3, 4, 6),
         ("p_fusion_total_max_mw",),
         "Equation for fusion power upper limit",
-        False,
     )
     # 10 NOT USED
     RADIAL_BUILD_CONSISTENCY = (
@@ -128,216 +118,186 @@ class Constraint(ConstraintSelection, Model):
         (1, 3, 13, 16, 29, 42, 61),
         (),
         "Radial Build Consistency",
-        True,
     )
     VS_LOWER_LIMIT = (
         12,
         (1, 2, 3),
         (),
         "Equation for volt-second capability lower limit",
-        False,
     )
     BURN_TIME_LOWER_LIMIT = (
         13,
         (1, 2, 3, 6, 16, 17, 19, 29, 42, 44, 61),
         (),
         "Burn time lower limit",
-        False,
     )
     NBI_LAMBDA_CENTRE = (
         14,
         (),
         (),
         "Equation to fix number of NBI decay lengths to plasma centre",
-        True,
     )
-    LH_THRESHHOLD_LIMIT = (15, (), (), "L-H Power ThresHhold Limit", False)
+    LH_THRESHHOLD_LIMIT = (15, (), (), "L-H Power ThresHhold Limit")
     NET_ELEC_LOWER_LIMIT = (
         16,
         (1, 2, 3),
         ("p_plant_electric_net_required_mw",),
         "Net electric power lower limit",
-        False,
     )
     RAD_POWER_UPPER_LIMIT = (
         17,
         (),
         (),
         "Equation for radiation power upper limit",
-        False,
     )
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
         (),
         (),
         "Equation for divertor heat load upper limit",
-        False,
     )
-    MVA_UPPER_LIMIT = (19, (), ("mvalim",), "Equation for MVA upper limit", False)
+    MVA_UPPER_LIMIT = (19, (), ("mvalim",), "Equation for MVA upper limit")
     NBI_TANGENCY_UPPER_LIMIT = (
         20,
         (3, 13, 31),
         (),
         "Equation for neutral beam tangency radius upper limit",
-        False,
     )
-    AMINOR_LOWER_LIMIT = (21, (), (), "Equation for minor radius lower limit", False)
+    AMINOR_LOWER_LIMIT = (21, (), (), "Equation for minor radius lower limit")
     DIV_COLL_CONN_UPPER_LIMIT = (
         22,
         (34,),
         (),
         "Equation for divertor collision/connection length ratio upper limit",
-        False,
     )
     COND_SHELL_R_RATIO_UPPER_LIMIT = (
         23,
         (1, 74, 104),
         ("cwrmax",),
         "Equation for conducting shell radius / rminor upper limit",
-        False,
     )
-    BETA_UPPER_LIMIT = (24, (1, 2, 3, 4, 6, 18), (), "Beta Upper Limit", False)
+    BETA_UPPER_LIMIT = (24, (1, 2, 3, 4, 6, 18), (), "Beta Upper Limit")
     PEAK_TF_UPPER_LIMIT = (
         25,
         (3, 13, 29),
         ("b_tf_inboard_max",),
         "Peak toroidal field upper limit",
-        False,
     )
     CS_EOF_DENSITY_LIMIT = (
         26,
         (37, 41),
         (),
         "Central solenoid EOF current density upper limit",
-        False,
     )
     CS_BOP_DENSITY_LIMIT = (
         27,
         (37, 41),
         (),
         "Central solenoid bop current density upper limit",
-        False,
     )
     Q_LOWER_LIMIT = (
         28,
         (47,),
         ("big_q_plasma_min",),
         "Equation for fusion gain (big Q) lower limit",
-        False,
     )
     IB_RADIAL_BUILD_CONSISTENCY = (
         29,
         (1, 3, 13, 16, 29, 42, 61),
         (),
         "Equation for minor radius lower limit OR Inboard radial build consistency",
-        True,
     )
     PINJ_UPPER_LIMIT = (
         30,
         (11, 47),
         ("p_hcd_injected_max",),
         "Injection Power Upper Limit",
-        False,
     )
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
         (56, 57, 58, 59, 60),
         ("sig_tf_case_max",),
         "TF coil case stress upper limit",
-        False,
     )
     TF_JACKET_STRESS_UPPER_LIMIT = (
         32,
         (56, 57, 58, 59, 60),
         ("sig_tf_wp_max",),
         "TF WP steel jacket/conduit stress upper limit",
-        False,
     )
     TF_JCRIT_RATIO_UPPER_LIMIT = (
         33,
         (56, 57, 58, 59, 60),
         (),
         "TF superconductor operating current / critical current density",
-        False,
     )
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
         (56, 57, 58, 59, 60),
         ("v_tf_coil_dump_quench_max_kv",),
         "TF dump voltage upper limit",
-        False,
     )
     TF_CURRENT_DENSITY_UPPER_LIMIT = (
         35,
         (56, 57, 58, 59, 60),
         (),
         "TF winding pack current density upper limit",
-        False,
     )
     TF_T_MARGIN_LOWER_LIMIT = (
         36,
         (56, 57, 58, 59, 60),
         ("tftmp",),
         "TF temperature margin upper limit",
-        False,
     )
     CD_GAMMA_UPPER_LIMIT = (
         37,
         (47,),
         ("eta_cd_norm_hcd_primary_max",),
         "Equation for current drive gamma upper limit",
-        False,
     )
     # 38 NOT USED
-    FW_TEMP_UPPER_LIMIT = (39, (), (), "First wall peak temperature upper limit", False)
+    FW_TEMP_UPPER_LIMIT = (39, (), (), "First wall peak temperature upper limit")
     PAUX_LOWER_LIMIT = (
         40,
         (),
         ("p_hcd_injected_min",),
         "Start-up injection power upper limit (PULSE)",
-        False,
     )
     IP_RAMP_LOWER_LIMIT = (
         41,
         (65,),
         ("tohsmn",),
         "Plasma ramp-up time lower limit (PULSE)",
-        False,
     )
     CYCLE_TIME_LOWER_LIMIT = (
         42,
         (17, 65),
         ("t_cycle_min",),
         "Cycle time lower limit (PULSE)",
-        False,
     )
     CENTREPOST_TEMP_AVERAGE = (
         43,
         (13, 20, 69, 70),
         (),
         "Average centrepost temperature (TART) consistency equation",
-        True,
     )
     CENTREPOST_TEMP_UPPER_LIMIT = (
         44,
         (69, 70),
         ("ptempalw",),
         "Peak centrepost temperature upper limit (TART)",
-        False,
     )
     QEDGE_LOWER_LIMIT = (
         45,
         (1, 2, 3, 70),
         (),
         "Edge safety factor lower limit (TART)",
-        False,
     )
     IP_IROD_UPPER_LIMIT = (
         46,
         (2, 60),
         (),
         "Equation for Ip/Irod upper limit (TART)",
-        False,
     )
     # 47 NOT USED (or maybe it is, WTF?!)
     BETAPOL_UPPER_LIMIT = (
@@ -345,7 +305,6 @@ class Constraint(ConstraintSelection, Model):
         (2, 3, 18),
         ("betpmax",),
         "Poloidal beta upper limit",
-        False,
     )
     # 49 NOT USED
     REP_RATE_UPPER_LIMIT = (
@@ -353,42 +312,36 @@ class Constraint(ConstraintSelection, Model):
         (86,),
         (),
         "IFE repetition rate upper limit (IFE)",
-        False,
     )
     CS_FLUX_CONSISTENCY = (
         51,
         (1, 3, 16, 29),
         (),
         "Startup volt-seconds consistency (PULSE)",
-        True,
     )
     TBR_LOWER_LIMIT = (
         52,
         (90, 91),
         ("tbrmin",),
         "Tritium breeding ratio lower limit",
-        False,
     )
     NFLUENCE_TF_UPPER_LIMIT = (
         53,
         (93, 94),
         ("nflutfmax",),
         "Neutron fluence on TF coil upper limit",
-        False,
     )
     PNUCL_TF_UPPER_LIMIT = (
         54,
         (93, 94),
         ("ptfnucmax",),
         "Peak TF coil nuclear heating upper limit",
-        False,
     )
     PSEPR_UPPER_LIMIT = (
         56,
         (1, 3),
         ("pseprmax",),
         "Pseparatrix/Rmajor upper limit",
-        False,
     )
     # 57, 58 NOT USED
     NBI_SHINETHROUGH_UPPER_LIMIT = (
@@ -396,7 +349,6 @@ class Constraint(ConstraintSelection, Model):
         (4, 6, 19),
         ("f_p_beam_shine_through_max",),
         "Neutral beam shinethrough fraction upper limit (NBI)",
-        False,
     )
     CS_T_MARGIN_LOWER_LIMIT = (
         60,
@@ -404,9 +356,8 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Central solenoid temperature margin lower limit (SCTF)[sic.."
         " I guess they mean SCCS]",
-        False,
     )
-    AVAIL_LOWER_LIMIT = (61, (107,), ("avail_min",), "Minimum availability value", False)
+    AVAIL_LOWER_LIMIT = (61, (107,), ("avail_min",), "Minimum availability value")
     CONFINEMENT_RATIO_LOWER_LIMIT = (
         62,
         (),
@@ -415,63 +366,54 @@ class Constraint(ConstraintSelection, Model):
             "t_alpha_confinement/t_energy_confinement "
             "the ratio of particle to energy confinement times"
         ),
-        False,
     )
     NITERPUMP_UPPER_LIMIT = (
         63,
         (),
         (),
         "The number of ITER-like vacuum pumps n_iter_vacuum_pumps < tfno",
-        False,
     )
     ZEFF_UPPER_LIMIT = (
         64,
         (),
         ("zeff_max",),
         "Zeff less than or equal to zeff_max",
-        False,
     )
     DUMP_TIME_LOWER_LIMIT = (
         65,
         (56,),
         ("max_vv_stress",),
         "Dump time set by VV loads",
-        False,
     )
     PF_ENERGY_RATE_UPPER_LIMIT = (
         66,
         (65,),
         ("t_plant_pulse_plasma_current_ramp_up",),
         "Limit on rate of change of energy in poloidal field",
-        False,
     )
     WALL_RADIATION_UPPER_LIMIT = (
         67,
         (4, 6),
         ("f_fw_rad_max", "pflux_fw_rad_max_mw"),
         "Simple radiation wall load limit",
-        False,
     )
     PSEPB_QAR_UPPER_LIMIT = (
         68,
         (),
         ("psepbqarmax",),
         "P_separatrix Bt / q A R upper limit",
-        False,
     )
     PSEP_KALLENBACH_UPPER_LIMIT = (
         69,
         (118,),
         (),
         "ensure the separatrix power = the value from Kallenbach divertor",
-        False,
     )
     TSEP_CONSISTENCY = (
         70,
         (119,),
         (),
         "ensure that temp = separatrix in the pedestal profile",
-        True,
     )
     NSEP_CONSISTENCY = (
         71,
@@ -481,97 +423,84 @@ class Constraint(ConstraintSelection, Model):
             "ensure that neomp "
             "= separatrix density (nd_plasma_separatrix_electron) x neratio"
         ),
-        True,
     )
     CS_STRESS_UPPER_LIMIT = (
         72,
         (),
         (),
         "Central solenoid shear stress limit (Tresca yield criterion)",
-        False,
     )
-    PSEP_LH_AUX_CONSISTENCY = (73, (137,), (), "Psep >= Plh + Paux", False)
+    PSEP_LH_AUX_CONSISTENCY = (73, (137,), (), "Psep >= Plh + Paux")
     TF_CROCO_T_UPPER_LIMIT = (
         74,
         (141,),
         ("temp_croco_quench_max",),
         "TFC quench",
-        False,
     )
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
         (143,),
         ("coppera_m2_max",),
         "TFC current / copper area < maximum",
-        False,
     )
-    EICH_SEP_DENSITY_CONSTRAINT = (76, (), (), "Eich critical separatrix density", False)
+    EICH_SEP_DENSITY_CONSTRAINT = (76, (), (), "Eich critical separatrix density")
     TF_TURN_CURRENT_UPPER_LIMIT = (
         77,
         (),
         ("c_tf_turn_max",),
         "TF coil current per turn upper limit",
-        False,
     )
     REINKE_IMP_FRAC_LOWER_LIMIT = (
         78,
         (),
         (),
         "Reinke criterion impurity fraction lower limit",
-        False,
     )
     BMAX_CS_UPPER_LIMIT = (
         79,
         (149,),
         ("b_cs_limit_max",),
         "Peak CS field upper limit",
-        False,
     )
     PDIVT_LOWER_LIMIT = (
         80,
         (153,),
         ("p_plasma_separatrix_min_mw",),
         "Divertor power lower limit",
-        False,
     )
-    DENSITY_PROFILE_CONSISTENCY = (81, (154,), (), "Ne(0) > ne(ped) constraint", False)
-    STELLARATOR_COIL_CONSISTENCY = (82, (171,), ("toroidalgap",), False)
+    DENSITY_PROFILE_CONSISTENCY = (81, (154,), (), "Ne(0) > ne(ped) constraint")
+    STELLARATOR_COIL_CONSISTENCY = (82, (171,), ("toroidalgap",))
     STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
         83,
         (172,),
         (),
         "Radial build consistency for stellarators",
-        False,
     )
-    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta", False)
+    BETA_LOWER_LIMIT = (84, (173,), (), "Lower limit for beta")
     CP_LIFETIME_LOWER_LIMIT = (
         85,
         (),
         ("nflutfmax",),
         "Constraint for centrepost lifetime",
-        True,
     )
     TURN_SIZE_UPPER_LIMIT = (
         86,
         (),
         ("t_turn_tf_max",),
         "Constraint for TF coil turn dimension",
-        False,
     )
-    CRYOPOWER_UPPER_LIMIT = (87, (), (), "Constraint for cryogenic power", False)
+    CRYOPOWER_UPPER_LIMIT = (87, (), (), "Constraint for cryogenic power")
     TF_STRAIN_UPPER_LIMIT = (
         88,
         (),
         ("str_wp_max",),
         "Constraint for TF coil strain absolute value",
-        False,
     )
     OH_CROCO_CU_AREA_CONSTRAINT = (
         89,
         (166,),
         ("copperaoh_m2_max",),
         "Constraint for CS coil quench protection",
-        False,
     )
     CS_FATIGUE = (
         90,
@@ -592,14 +521,12 @@ class Constraint(ConstraintSelection, Model):
             "fracture_toughness",
         ),
         "CS fatigue constraints",
-        False,
     )
     ECRH_IGNITABILITY = (
         91,
         (),
         (),
         "Checking if the design point is ECRH ignitable",
-        False,
     )
 
 
