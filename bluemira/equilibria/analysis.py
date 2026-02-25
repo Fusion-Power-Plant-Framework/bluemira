@@ -358,30 +358,40 @@ def get_target_flux(
     if eq._o_points is None:
         _, _ = eq.get_OX_points()
 
+    x = (
+        target_coords.x[np.argmin(target_coords.z)]
+        if vertical
+        else np.min(target_coords.x)
+    )
+    z = (
+        np.min(target_coords.z)
+        if vertical
+        else target_coords.z[np.argmin(target_coords.x)]
+    )
+
+    x_size = np.abs(np.max(target_coords.x) - np.min(target_coords.x))
+    z_size = np.abs(np.max(target_coords.z) - np.min(target_coords.z))
+
     if not vertical:
-        x = np.min(target_coords.x)
-        z = target_coords.z[np.argmin(target_coords.x)]
-        target_size = np.abs(np.max(target_coords.x) - np.min(target_coords.x))
-        if target_size == 0:
+        if x_size == 0:
             raise BluemiraError(
                 "No x-range found for target coords,"
                 " perhaps you are using a vertical target (set vertical=True)."
             )
-        target_offsets = np.linspace(0, target_size, n_layers)[1:]
-        dx = x + target_offsets
-        dz = np.full(n_layers, z)
-    else:
-        x = target_coords.x[np.argmin(target_coords.z)]
-        z = np.min(target_coords.z)
-        target_size = np.abs(np.max(target_coords.z) - np.min(target_coords.z))
-        if target_size == 0:
-            raise BluemiraError(
-                "No z-range found for target coords,"
-                " perhaps you are using a horizontal target (set vertical=False)."
-            )
-        target_offsets = np.linspace(0, target_size, n_layers)[1:]
-        dx = np.full(n_layers, x)
-        dz = z + target_offsets
+    elif z_size == 0:
+        raise BluemiraError(
+            "No z-range found for target coords,"
+            " perhaps you are using a horizontal target (set vertical=False)."
+        )
+
+    target_offsets = (
+        np.linspace(0, z_size, n_layers)[1:]
+        if vertical
+        else np.linspace(0, x_size, n_layers)[1:]
+    )
+
+    dx = x + target_offsets * (x_size / z_size) if vertical else x + target_offsets
+    dz = z + target_offsets if vertical else z + target_offsets * (z_size / x_size)
 
     fs_list = []
     for x, z in zip(dx, dz, strict=False):
@@ -390,13 +400,13 @@ def get_target_flux(
         )
         # Only need to plot from midpoint
         select_idx = (fs_z >= 0) if target.find("lower") == -1 else (fs_z <= 0)
-        if all(fs_z >= 0) or all(fs_z <= 0):
-            select_idx_x = (
-                (fs_x <= eq._x_points[0].x)
-                if target.find("inner") != -1
-                else (fs_x >= eq._x_points[0].x)
-            )
-            select_idx &= select_idx_x
+        # Only need to plot one side
+        select_idx_x = (
+            (fs_x <= eq._x_points[0].x)
+            if target.find("inner") != -1
+            else (fs_x >= eq._x_points[0].x)
+        )
+        select_idx &= select_idx_x
         fs_list.append(Coordinates({"x": fs_x[select_idx], "z": fs_z[select_idx]}))
 
     return fs_list
@@ -954,6 +964,8 @@ class EqAnalysis:
                     linestyle="--",
                     label=ref.label + " LCFS",
                 )
+        else:
+            ref_target_flux = None
 
         eq = self._get_input()
 
