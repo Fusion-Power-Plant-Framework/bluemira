@@ -31,6 +31,7 @@ from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,
 )
+from bluemira.codes._freecadapi import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -593,6 +594,7 @@ class TFCoilBuilder(Builder):
         )
 
         wp_sector = self._build_xyz_wp()
+        show_cad(wp_sector)
 
         ins_sector = self._build_xyz_ins(wp_sector.shape, ins_inner_face)
 
@@ -744,6 +746,7 @@ class TFCoilBuilder(Builder):
             Winding pack x-y-z
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
+        show_cad([wp_solid])
         winding_pack = PhysicalComponent(
             self.WP,
             wp_solid,
