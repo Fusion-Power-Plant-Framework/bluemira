@@ -12,7 +12,6 @@ import pytest
 from bluemira.base import constants
 from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
-from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import (
@@ -40,14 +39,10 @@ TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests"
 EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 
-@pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
-class TestCoreRadiation:
-    @classmethod
-    def setup_class(cls):
-        eq_name = "DN-DEMO_eqref.json"
+class ExampleCoreRadiation:
+    def __init__(self, eq_name, fw_name):
         filename = Path(EQ_PATH, eq_name)
         eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_positive=False)
-        fw_name = "DN_fw_shape.json"
         filename = Path(TEST_PATH, fw_name)
         fw_shape = Coordinates.from_json(filename)
 
@@ -67,7 +62,7 @@ class TestCoreRadiation:
             "T_e_ped": {"value": 5.059, "unit": "keV"},
             "T_e_sep": {"value": 0.16, "unit": "keV"},
         }
-        cls.params = {
+        self.params = {
             "sep_corrector_omp": {"value": 5e-3, "unit": "dimensionless"},
             "sep_corrector_imp": {"value": 5e-3, "unit": "dimensionless"},
             "det_t": {"value": 0.0015, "unit": "keV"},
@@ -91,7 +86,7 @@ class TestCoreRadiation:
             **midplane_params,
         }
 
-        cls.config = {
+        self.config = {
             "f_imp_core": {"H": 1e-2, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
             "f_imp_sol": {"H": 0, "He": 0, "Ar": 1e-3, "Xe": 0, "W": 0},
             "confinement_core": 0.1,
@@ -103,221 +98,234 @@ class TestCoreRadiation:
         source = RadiationSource(
             eq=eq,
             firstwall_shape=fw_shape,
-            params=cls.params,
+            params=self.params,
             midplane_profiles=profiles,
-            core_impurities=cls.config["f_imp_core"],
-            sol_impurities=cls.config["f_imp_sol"],
-            confinement_time_core=cls.config["confinement_core"],
-            confinement_time_sol=cls.config["confinement_sol"],
+            core_impurities=self.config["f_imp_core"],
+            sol_impurities=self.config["f_imp_sol"],
+            confinement_time_core=self.config["confinement_core"],
+            confinement_time_sol=self.config["confinement_sol"],
         )
         source.analyse(firstwall_geom=fw_shape)
         source.rad_map(fw_shape)
 
-        cls.profiles = profiles
-        cls.source = source
-        cls.fw_shape = fw_shape
+        self.profiles = profiles
+        self.source = source
+        self.fw_shape = fw_shape
 
-    def test_get_impurity_data(self):
+
+@pytest.fixture(
+    scope="class",
+    params=[
+        ("DN-DEMO_eqref.json", "DN_fw_shape.json"),
+        ("EU-DEMO_EOF.json", "first_wall.json"),
+    ],
+)
+def rad(request):
+    return ExampleCoreRadiation(*request.param)
+
+
+class TestCoreRadiation:
+    def test_get_impurity_data(self, rad):
         core_impurities = get_impurity_data(
-            self.config["f_imp_core"], self.config["confinement_core"]
+            rad.config["f_imp_core"], rad.config["confinement_core"]
         )
         core_shape = core_impurities["H"]["T_ref"].shape
-        assert len(core_impurities) == len(self.config["f_imp_core"])
+        assert len(core_impurities) == len(rad.config["f_imp_core"])
         for values in core_impurities.values():
             assert np.shape(values["T_ref"]) == core_shape
             assert np.shape(values["L_ref"]) == core_shape
             assert np.shape(values["z_ref"]) == core_shape
 
         sol_impurities = get_impurity_data(
-            self.config["f_imp_sol"], self.config["confinement_sol"]
+            rad.config["f_imp_sol"], rad.config["confinement_sol"]
         )
         sol_shape = sol_impurities["H"]["T_ref"].shape
-        assert len(sol_impurities) == len(self.config["f_imp_sol"])
+        assert len(sol_impurities) == len(rad.config["f_imp_sol"])
         for values in sol_impurities.values():
             assert np.shape(values["T_ref"]) == sol_shape
             assert np.shape(values["L_ref"]) == sol_shape
             assert np.shape(values["z_ref"]) == sol_shape
 
-    def test_collect_flux_tubes(self):
+    def test_collect_flux_tubes(self, rad):
         psi = np.linspace(1, 1.5, 5)
-        ft = self.source.core_rad.collect_flux_tubes(psi)
+        ft = rad.source.core_rad.collect_flux_tubes(psi)
         assert len(ft) == 5
 
-    def test_rho_core(self):
+    def test_rho_core(self, rad):
         rho_ped = (
-            self.params["rho_ped_n"]["value"] + self.params["rho_ped_t"]["value"]
+            rad.params["rho_ped_n"]["value"] + rad.params["rho_ped_t"]["value"]
         ) / 2
         rho_core = collect_rho_core_values(rho_ped, 30, 15, 10)
         assert rho_core[0] > 0
         assert rho_core[-1] < 1
 
-    def test_rad_sol_by_psi_n(self):
-        rad_centre = self.source.rad_sol_by_psi_n(0.1).max()
-        rad_edge = self.source.rad_sol_by_psi_n(0.9).max()
+    def test_rad_sol_by_psi_n(self, rad):
+        rad_centre = rad.source.rad_sol_by_psi_n(0.1).max()
+        rad_edge = rad.source.rad_sol_by_psi_n(0.9).max()
         assert rad_centre > rad_edge
 
-    def test_rad_by_psi_n(self):
-        rad_centre = self.source.rad_by_psi_n(0.1).max()
-        rad_edge = self.source.rad_by_psi_n(0.9).max()
+    def test_rad_by_psi_n(self, rad):
+        rad_centre = rad.source.rad_by_psi_n(0.1).max()
+        rad_edge = rad.source.rad_by_psi_n(0.9).max()
         assert rad_centre > rad_edge
 
-    def test_rad_sol_by_points(self):
+    def test_rad_sol_by_points(self, rad):
         """The rad_sol value of the flux surface intersecting the chosen point of x-z
         should include the rad_sol value of that chosen point of x-z.
         """
-        eq = self.source.eq
+        eq = rad.source.eq
         x, z = eq.x.flatten(), eq.z.flatten()
         psi_n = eq.psi_norm().flatten()
         interp_grid = linear_interpolator(x, z, psi_n)
 
-        i = len(self.source.rad_tot) // 2  # pick a random index within range
-        x_tot, z_tot = self.source.x_tot.flatten()[i], self.source.z_tot.flatten()[i]
+        i = len(rad.source.rad_tot) // 2  # pick a random index within range
+        x_tot, z_tot = rad.source.x_tot.flatten()[i], rad.source.z_tot.flatten()[i]
         psi_norm_tot = interpolated_field_values(x_tot, z_tot, interp_grid)
 
-        rad_sol_pt = self.source.rad_sol_by_points([x_tot], [z_tot]).flatten()[0]
-        rad_sol_psi = self.source.rad_sol_by_psi_n(psi_norm_tot[0][0]).flatten()
+        rad_sol_pt = rad.source.rad_sol_by_points([x_tot], [z_tot]).flatten()[0]
+        rad_sol_psi = rad.source.rad_sol_by_psi_n(psi_norm_tot[0][0]).flatten()
         assert rad_sol_pt in rad_sol_psi
 
-    def test_rad_by_points(self):
+    def test_rad_by_points(self, rad):
         """The 'rad' value of the flux surface intersecting the chosen point of x-z
         should include the 'rad' value of that chosen point of x-z.
         """
-        eq = self.source.eq
+        eq = rad.source.eq
         x, z = eq.x.flatten(), eq.z.flatten()
         psi_n = eq.psi_norm().flatten()
         interp_grid = linear_interpolator(x, z, psi_n)
 
-        i = len(self.source.rad_tot) // 2  # pick a point in the SOL.
-        x_tot, z_tot = self.source.x_tot.flatten()[i], self.source.z_tot.flatten()[i]
+        i = len(rad.source.rad_tot) // 2  # pick a point in the SOL.
+        x_tot, z_tot = rad.source.x_tot.flatten()[i], rad.source.z_tot.flatten()[i]
         psi_norm_tot = interpolated_field_values(x_tot, z_tot, interp_grid)
 
-        rad_tot_pt = self.source.rad_by_points(x_tot, z_tot).flatten()[0]
-        rad_tot_psi = self.source.rad_by_psi_n(psi_norm_tot[0][0]).flatten()
+        rad_tot_pt = rad.source.rad_by_points(x_tot, z_tot).flatten()[0]
+        rad_tot_psi = rad.source.rad_by_psi_n(psi_norm_tot[0][0]).flatten()
         assert rad_tot_pt in rad_tot_psi
 
-    def test_core_electron_density_temperature_profile(self):
-        ne_core = self.profiles.ne
-        te_core = self.profiles.te
-        psi_n = self.profiles.psi_n
+    def test_core_electron_density_temperature_profile(self, rad):
+        ne_core = rad.profiles.ne
+        te_core = rad.profiles.te
+        psi_n = rad.profiles.psi_n
         assert len(ne_core) == len(te_core) == len(psi_n)
 
         # Ensure values are within expected ranges
-        assert np.all(ne_core >= self.params["n_e_sep"]["value"])
-        assert np.all(te_core >= self.params["T_e_sep"]["value"])
-        assert np.all(ne_core <= self.params["n_e_0"]["value"])
-        assert np.all(te_core <= self.params["T_e_0"]["value"])
+        assert np.all(ne_core >= rad.params["n_e_sep"]["value"])
+        assert np.all(te_core >= rad.params["T_e_sep"]["value"])
+        assert np.all(ne_core <= rad.params["n_e_0"]["value"])
+        assert np.all(te_core <= rad.params["T_e_0"]["value"])
 
         # Ensure the density and temperature are decreasing towards the edge
         assert ne_core[0] > ne_core[-1]
         assert te_core[0] > te_core[-1]
 
-    def test_calculate_mp_radiation_profile(self):
-        self.source.core_rad.calculate_mp_radiation_profile()
-        rad_tot = np.sum(np.array(self.source.core_rad.rad_mp, dtype=object), axis=0)
-        assert len(self.source.core_rad.rad_mp) == 4
+    def test_calculate_mp_radiation_profile(self, rad):
+        rad.source.core_rad.calculate_mp_radiation_profile()
+        rad_tot = np.sum(np.array(rad.source.core_rad.rad_mp, dtype=object), axis=0)
+        assert len(rad.source.core_rad.rad_mp) == 4
         assert rad_tot[0] > rad_tot[-1]
 
-    def test_calculate_core_distribution(self):
+    def test_calculate_core_distribution(self, rad):
         # calls calculate_core_distribution() internally
-        self.source.core_rad.calculate_core_radiation_map()
-        assert np.sum(self.source.core_rad.rad_tot) == pytest.approx(1295.7477)
-        assert np.sum(self.source.core_rad.x_tot) == pytest.approx(55614.0533)
-        assert np.sum(self.source.core_rad.z_tot) == pytest.approx(239.84336)
+        rad.source.core_rad.calculate_core_radiation_map()
+        assert np.sum(rad.source.core_rad.rad_tot) == pytest.approx(1295.7477)
+        assert np.sum(rad.source.core_rad.x_tot) == pytest.approx(55614.0533)
+        assert np.sum(rad.source.core_rad.z_tot) == pytest.approx(239.84336)
 
-    def test_core_flux_tube_pol_t(self):
-        flux_tube = self.source.eq.get_flux_surface(0.99)
-        te = self.source.core_rad.flux_tube_pol_t(flux_tube, 100, core=True)
+    def test_core_flux_tube_pol_t(self, rad):
+        flux_tube = rad.source.eq.get_flux_surface(0.99)
+        te = rad.source.core_rad.flux_tube_pol_t(flux_tube, 100, core=True)
         assert te[0] == te[-1]
         assert len(te) == len(flux_tube)
 
-    def test_core_flux_tube_pol_n(self):
-        flux_tube = self.source.eq.get_flux_surface(0.99)
+    def test_core_flux_tube_pol_n(self, rad):
+        flux_tube = rad.source.eq.get_flux_surface(0.99)
         ne_mp = 2e20
-        ne = self.source.core_rad.flux_tube_pol_n(flux_tube, ne_mp, core=True)
+        ne = rad.source.core_rad.flux_tube_pol_n(flux_tube, ne_mp, core=True)
         assert ne[0] == ne[-1]
         assert len(ne) == len(flux_tube)
 
-    def test_mp_electron_density_temperature_profiles(self):
+    def test_mp_electron_density_temperature_profiles(self, rad):
         te_sol_omp, ne_sol_omp = (
-            self.source.sol_rad.mp_electron_density_temperature_profiles()
+            rad.source.sol_rad.mp_electron_density_temperature_profiles()
         )
         te_sol_imp, ne_sol_imp = (
-            self.source.sol_rad.mp_electron_density_temperature_profiles(omp=False)
+            rad.source.sol_rad.mp_electron_density_temperature_profiles(omp=False)
         )
         assert te_sol_omp[0] > te_sol_omp[-1]
         assert ne_sol_omp[0] > ne_sol_omp[-1]
         assert te_sol_imp[0] > te_sol_imp[-1]
         assert ne_sol_imp[0] > ne_sol_imp[-1]
 
-    def test_key_temperatures(self):
+    def test_key_temperatures(self, rad):
         t_u = upstream_temperature(
-            b_pol=self.source.sol_rad.b_pol_sep_omp,
-            b_tot=self.source.sol_rad.b_tot_sep_omp,
-            lambda_q_near=self.source.params.fw_lambda_q_near_omp.value,
-            p_sol=self.source.params.P_sep.value,
-            eq=self.source.eq,
-            r_sep_mp=self.source.sol_rad.r_sep_omp,
-            z_mp=self.source.sol_rad.z_mp,
-            k_0=self.source.params.k_0.value,
-            firstwall_geom=self.fw_shape,
+            b_pol=rad.source.sol_rad.b_pol_sep_omp,
+            b_tot=rad.source.sol_rad.b_tot_sep_omp,
+            lambda_q_near=rad.source.params.fw_lambda_q_near_omp.value,
+            p_sol=rad.source.params.P_sep.value,
+            eq=rad.source.eq,
+            r_sep_mp=rad.source.sol_rad.r_sep_omp,
+            z_mp=rad.source.sol_rad.z_mp,
+            k_0=rad.source.params.k_0.value,
+            firstwall_geom=rad.fw_shape,
         )
         t_u_eV = constants.raw_uc(t_u, "keV", "eV")
-        f_ion_t = self.source.params.f_ion_t.value_as("eV")
+        f_ion_t = rad.source.params.f_ion_t.value_as("eV")
 
         t_tar_det = target_temperature(
-            self.source.params.P_sep.value,
+            rad.source.params.P_sep.value,
             t_u_eV,
-            self.source.params.n_e_sep.value,
-            self.source.params.gamma_sheath.value,
-            self.source.params.eps_cool.value_as("eV"),
+            rad.source.params.n_e_sep.value,
+            rad.source.params.gamma_sheath.value,
+            rad.source.params.eps_cool.value_as("eV"),
             f_ion_t,
-            self.source.sol_rad.b_pol_out_tar,
-            self.source.sol_rad.b_pol_sep_omp,
-            self.source.params.theta_outer_target.value,
-            self.source.sol_rad.r_sep_omp,
-            self.source.sol_rad.x_strike_lfs,
-            self.source.params.fw_lambda_q_near_omp.value,
-            self.source.sol_rad.b_tot_out_tar,
+            rad.source.sol_rad.b_pol_out_tar,
+            rad.source.sol_rad.b_pol_sep_omp,
+            rad.source.params.theta_outer_target.value,
+            rad.source.sol_rad.r_sep_omp,
+            rad.source.sol_rad.x_strike_lfs,
+            rad.source.params.fw_lambda_q_near_omp.value,
+            rad.source.sol_rad.b_tot_out_tar,
         )
 
         t_tar_no_det = target_temperature(
-            self.source.params.P_sep.value,
+            rad.source.params.P_sep.value,
             t_u_eV,
             3e10,
-            self.source.params.gamma_sheath.value,
-            self.source.params.eps_cool.value_as("eV"),
+            rad.source.params.gamma_sheath.value,
+            rad.source.params.eps_cool.value_as("eV"),
             f_ion_t,
-            self.source.sol_rad.b_pol_out_tar,
-            self.source.sol_rad.b_pol_sep_omp,
-            self.source.params.theta_outer_target.value,
-            self.source.sol_rad.r_sep_omp,
-            self.source.sol_rad.x_strike_lfs,
-            self.source.params.fw_lambda_q_near_omp.value,
-            self.source.sol_rad.b_tot_out_tar,
+            rad.source.sol_rad.b_pol_out_tar,
+            rad.source.sol_rad.b_pol_sep_omp,
+            rad.source.params.theta_outer_target.value,
+            rad.source.sol_rad.r_sep_omp,
+            rad.source.sol_rad.x_strike_lfs,
+            rad.source.params.fw_lambda_q_near_omp.value,
+            rad.source.sol_rad.b_tot_out_tar,
         )
         assert t_u < 5e-1
-        assert t_tar_det <= self.source.params.f_ion_t.value_as("eV")
-        assert t_tar_no_det > self.source.params.f_ion_t.value_as("eV")
+        assert t_tar_det <= rad.source.params.f_ion_t.value_as("eV")
+        assert t_tar_no_det > rad.source.params.f_ion_t.value_as("eV")
 
-    def test_sol_decay(self):
-        t_u = self.source.params.T_e_sep.value_as("keV")
-        n_u = self.source.params.n_e_sep.value
+    def test_sol_decay(self, rad):
+        t_u = rad.source.params.T_e_sep.value_as("keV")
+        n_u = rad.source.params.n_e_sep.value
         decayed_t, decayed_n = electron_density_and_temperature_sol_decay(
             t_u,
             n_u,
-            self.source.params.fw_lambda_q_near_omp.value,
-            self.source.params.fw_lambda_q_far_omp.value,
-            self.source.dx_omp,
+            rad.source.params.fw_lambda_q_near_omp.value,
+            rad.source.params.fw_lambda_q_far_omp.value,
+            rad.source.dx_omp,
         )
         assert decayed_t[0] > decayed_t[-1]
         assert decayed_n[0] > decayed_n[-1]
 
-    def test_ion_front_distance(self):
+    def test_ion_front_distance(self, rad):
         distance = ion_front_distance(
             6,
             -9,
-            self.source.eq,
-            self.source.sol_rad.points["x_point"]["z_low"],
+            rad.source.eq,
+            rad.source.sol_rad.points["x_point"]["z_low"],
             1e-3,
             1,
             1,
@@ -326,60 +334,60 @@ class TestCoreRadiation:
         assert distance is not None
         assert distance == pytest.approx(2.619, rel=1e-3)
 
-    def test_radiation_region_boundary(self):
-        low_z_main, low_z_pfr = self.source.sol_rad.x_point_radiation_z_ext()
-        up_z_main, up_z_pfr = self.source.sol_rad.x_point_radiation_z_ext(low_div=False)
+    def test_radiation_region_boundary(self, rad):
+        low_z_main, low_z_pfr = rad.source.sol_rad.x_point_radiation_z_ext()
+        up_z_main, up_z_pfr = rad.source.sol_rad.x_point_radiation_z_ext(low_div=False)
         assert low_z_main > low_z_pfr
         assert up_z_main < up_z_pfr
         in_x_lfs, in_z_low, out_x_lfs, out_z_low = (
-            self.source.sol_rad.radiation_region_ends(low_z_main, low_z_pfr)
+            rad.source.sol_rad.radiation_region_ends(low_z_main, low_z_pfr)
         )
-        _, in_z_up, _, out_z_up = self.source.sol_rad.radiation_region_ends(
+        _, in_z_up, _, out_z_up = rad.source.sol_rad.radiation_region_ends(
             up_z_main, up_z_pfr
         )
-        in_x_hfs, _, out_x_hfs, _ = self.source.sol_rad.radiation_region_ends(
+        in_x_hfs, _, out_x_hfs, _ = rad.source.sol_rad.radiation_region_ends(
             low_z_main, low_z_pfr, lfs=False
         )
-        assert in_x_lfs > self.source.sol_rad.points["x_point"]["x"]
-        assert out_x_lfs > self.source.sol_rad.points["x_point"]["x"]
-        assert in_x_hfs < self.source.sol_rad.points["x_point"]["x"]
-        assert out_x_hfs < self.source.sol_rad.points["x_point"]["x"]
+        assert in_x_lfs > rad.source.sol_rad.points["x_point"]["x"]
+        assert out_x_lfs > rad.source.sol_rad.points["x_point"]["x"]
+        assert in_x_hfs < rad.source.sol_rad.points["x_point"]["x"]
+        assert out_x_hfs < rad.source.sol_rad.points["x_point"]["x"]
         assert in_z_low > out_z_low
         assert in_z_up < out_z_up
 
-    def test_tar_electron_densitiy_temperature_profiles(self):
+    def test_tar_electron_densitiy_temperature_profiles(self, rad):
         ne_array = np.linspace(1e20, 1e19, 5)
         te_array = np.linspace(15, 8, 5)
-        te_det, ne_det = self.source.sol_rad.tar_electron_densitiy_temperature_profiles(
+        te_det, ne_det = rad.source.sol_rad.tar_electron_densitiy_temperature_profiles(
             ne_array, te_array, detachment=True
         )
-        te_att, ne_att = self.source.sol_rad.tar_electron_densitiy_temperature_profiles(
+        te_att, ne_att = rad.source.sol_rad.tar_electron_densitiy_temperature_profiles(
             ne_array, te_array, detachment=False
         )
         assert all(t_d < t_a for t_d, t_a in zip(te_det, te_att, strict=False))
         assert all(n_d < n_a for n_d, n_a in zip(ne_det, ne_att, strict=False))
 
-    def test_rad_core_by_psi_n(self):
-        rad_centre = self.source.rad_core_by_psi_n(0.1)
-        rad_edge = self.source.rad_core_by_psi_n(0.9)
+    def test_rad_core_by_psi_n(self, rad):
+        rad_centre = rad.source.rad_core_by_psi_n(0.1)
+        rad_edge = rad.source.rad_core_by_psi_n(0.9)
         assert rad_centre > rad_edge
 
-    def test_rad_core_by_points(self):
-        rad_centre = self.source.rad_core_by_points(10.5, -1)
-        rad_edge = self.source.rad_core_by_points(12, -1)
+    def test_rad_core_by_points(self, rad):
+        rad_centre = rad.source.rad_core_by_points(10.5, -1)
+        rad_edge = rad.source.rad_core_by_points(12, -1)
         assert rad_centre > rad_edge
 
-    def test_radiative_loss_function_values(self):
+    def test_radiative_loss_function_values(self, rad):
         imp_data_t_ref = [
             data["T_ref"]
-            for key, data in self.source.imp_data_core.items()
+            for key, data in rad.source.imp_data_core.items()
             if key != "Ar"
         ]
         imp_data_t_ref = imp_data_t_ref[0]
         t_ref = np.array([imp_data_t_ref[0], imp_data_t_ref[2], imp_data_t_ref[4]])
         imp_data_l_ref = [
             data["L_ref"]
-            for key, data in self.source.imp_data_core.items()
+            for key, data in rad.source.imp_data_core.items()
             if key != "Ar"
         ]
         imp_data_l_ref = imp_data_l_ref[0]
@@ -389,42 +397,40 @@ class TestCoreRadiation:
         l1 = radiative_loss_function_values(tvals, t_ref, l_ref)
         np.testing.assert_allclose(l1, lvals, rtol=2e-1)
 
-    def test_pfr_filter(self):
-        x_point_z = self.source.sol_rad.points["x_point"]["z_low"]
-        pfr_x_down, pfr_z_down = pfr_filter(self.source.sol_rad.separatrix, x_point_z)
+    def test_pfr_filter(self, rad):
+        x_point_z = rad.source.sol_rad.points["x_point"]["z_low"]
+        pfr_x_down, pfr_z_down = pfr_filter(rad.source.sol_rad.separatrix, x_point_z)
         assert pfr_x_down.shape == (59,)
         assert pfr_z_down.shape == (59,)
 
         assert np.all(pfr_z_down < x_point_z - 0.01)
 
-    def test_make_wall_detectors(self):
+    def test_make_wall_detectors(self, rad):
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
         wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
+            rad.fw_shape.x, rad.fw_shape.z, max_wall_len, X_WIDTH
         )
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)
         assert len(wall_detectors) == 532
 
-    def test_FirstWallRadiationSolver(self):
+    def test_FirstWallRadiationSolver(self, rad):
         # Coversion required for CHERAB
         f_sol = linear_interpolator(
-            self.source.sol_rad.x_tot,
-            self.source.sol_rad.z_tot,
-            raw_uc(self.source.sol_rad.rad_tot, "MW", "W"),
+            rad.source.sol_rad.x_tot,
+            rad.source.sol_rad.z_tot,
+            raw_uc(rad.source.sol_rad.rad_tot, "MW", "W"),
         )
 
         # SOL radiation grid
-        x_sol = np.linspace(min(self.fw_shape.x), max(self.fw_shape.x), 4)
-        z_sol = np.linspace(min(self.fw_shape.z), max(self.fw_shape.z), 4)
+        x_sol = np.linspace(min(rad.fw_shape.x), max(rad.fw_shape.x), 4)
+        z_sol = np.linspace(min(rad.fw_shape.z), max(rad.fw_shape.z), 4)
 
         rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
-        solver = FirstWallRadiationSolver(
-            source_func=func, firstwall_shape=self.fw_shape
-        )
-        assert solver.fw_shape == self.fw_shape
+        solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=rad.fw_shape)
+        assert solver.fw_shape == rad.fw_shape
 
         wall_loads = solver.solve(50, 1, 10, plot=False)
 
