@@ -743,7 +743,7 @@ def _set_n_degrees_of_freedom(
         appropriate n_dof to return
     """
     if n_dof is None:
-        n_dof = min(max_n_dof, 2 * max_harmonic_mode)
+        n_dof = min(max_n_dof, 2 * max_harmonic_mode - 1)
     elif not (1 < n_dof <= max_n_dof):
         bluemira_warn(
             "Number of DOFs must be between 1 and the number of control coils"
@@ -752,11 +752,11 @@ def _set_n_degrees_of_freedom(
         )
         n_dof = np.clip(n_dof, 1, max_n_dof)
 
-    if n_dof > 2 * max_harmonic_mode:
+    if n_dof > 2 * max_harmonic_mode - 1:
         bluemira_warn(
-            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_mode"
+            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_mode - 1"
         )
-        n_dof = 2 * max_harmonic_mode
+        n_dof = 2 * max_harmonic_mode - 1
 
     return n_dof
 

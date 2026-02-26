@@ -544,15 +544,15 @@ def test_legendre_q_function():
         # Case where max_n_dof is hit
         (5, 5, 4, 4),
         # Case where 2 * max_harmonic_mode is hit
-        (5, 2, 5, 4),
+        (5, 2, 5, 3),
         # Case where everything OK
         (5, 5, 10, 5),
-        # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
-        (10, 4, 9, 8),
+        # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode - 1
+        (10, 4, 9, 7),
         # Case where n_dof is not specified and defaults to max
         (None, 5, 9, 9),
-        # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
-        (None, 4, 9, 8),
+        # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode - 1
+        (None, 4, 9, 7),
     ],
 )
 def test_th_n_dof_limits(
@@ -1190,7 +1190,7 @@ class TestRegressionTH:
 
     def test_toroidal_harmonic_approximation(self):
         expected_cos_modes = np.array([0, 1, 2, 3, 4])
-        expected_sin_modes = np.array([0])
+        expected_sin_modes = np.array([1])
         expected_cos_amplitudes = np.array([
             -4.2389231,
             -3.58792624,
