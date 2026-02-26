@@ -1209,7 +1209,7 @@ def sweep_shape(
     *,
     solid: bool = True,
     frenet: bool = True,
-    transition: SweepShapeTransition | int = SweepShapeTransition.DEFAULT,
+    transition: SweepShapeTransition | int = SweepShapeTransition.ROUND_CORNER,
     label: str = "",
 ) -> BluemiraSolid | BluemiraShell:
     """

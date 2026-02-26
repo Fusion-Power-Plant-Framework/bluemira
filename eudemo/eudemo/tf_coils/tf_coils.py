@@ -31,7 +31,6 @@ from bluemira.builders.tools import (
     circular_pattern_component,
     get_n_sectors,
 )
-from bluemira.codes._freecadapi import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -594,7 +593,6 @@ class TFCoilBuilder(Builder):
         )
 
         wp_sector = self._build_xyz_wp()
-        show_cad(wp_sector)
 
         ins_sector = self._build_xyz_ins(wp_sector.shape, ins_inner_face)
 
@@ -675,7 +673,7 @@ class TFCoilBuilder(Builder):
         """
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
-        x_out = self.centreline.bounding_box.x_max
+        x_out = np.max(self.centreline.discretise(byedges=True, ndiscr=2000).x)
         xs = BluemiraFace(deepcopy(self.wp_cross_section))
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
@@ -746,7 +744,7 @@ class TFCoilBuilder(Builder):
             Winding pack x-y-z
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
-        show_cad([wp_solid])
+
         winding_pack = PhysicalComponent(
             self.WP,
             wp_solid,
@@ -851,9 +849,11 @@ class TFCoilBuilder(Builder):
         )
         face = BluemiraFace([ins_outer, self.wp_cross_section])
 
+        points = self.centreline.discretise(byedges=True, ndiscr=2000)
+        x_max = np.max(points.x)
         outer_face = deepcopy(face)
         outer_face.translate((
-            self.centreline.bounding_box.x_max - outer_face.center_of_mass[0],
+            x_max - outer_face.center_of_mass[0],
             0,
             0,
         ))
@@ -871,7 +871,9 @@ class TFCoilBuilder(Builder):
         :
             xy casing cross-section
         """
-        tf_centreline_min = self.centreline.bounding_box.x_min
+        tf_centreline_min = np.min(
+            self.centreline.discretise(byedges=True, ndiscr=2000).x
+        )
 
         x_in = (
             tf_centreline_min
@@ -913,7 +915,11 @@ class TFCoilBuilder(Builder):
         dy_out[[0, 1]] = -dy_out[[0, 1]]
 
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
-        outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
+        outboard_wire.translate((
+            np.max(self.centreline.discretise(ndiscr=2000, byedges=True).x),
+            0,
+            0,
+        ))
 
         return y_in, inboard_wire, outboard_wire
 
@@ -936,6 +942,7 @@ class TFCoilBuilder(Builder):
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
+
         if len(wires) != 4:  # noqa: PLR2004
             raise BuilderError(
                 "Unexpected TF coil x-z cross-section. It is likely that a previous "
@@ -989,6 +996,7 @@ class TFCoilBuilder(Builder):
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         cut_wires = slice_shape(casing_solid, xz_plane)
         cut_wires.sort(key=lambda wire: wire.length)
+
         if len(cut_wires) != 2:  # noqa: PLR2004
             raise BuilderError(
                 f"Expecting 2 wires here but there are: {len(cut_wires)} of them"
@@ -998,14 +1006,13 @@ class TFCoilBuilder(Builder):
 
         # Get the outboard half of this wire
 
-        z_max = outer_wire.bounding_box.z_max
         # Should do this by optimisation, but parameter_at is fragile for circle arcs
         # Also cannot trust bounding boxes, ffs.
         points = outer_wire.discretise(ndiscr=1000, byedges=True)
         idx_max = np.argmax(points.z)
         idx_min = np.argmin(points.z)
-        x_max, z_max = points.x[idx_max], points.z[idx_max]
-        x_min, z_min = points.x[idx_min], points.z[idx_min]
+        x_max, z_max = points.x[idx_max], points.z[idx_max] + 0.001
+        x_min, z_min = points.x[idx_min], points.z[idx_min] - 0.001
 
         offset = 1.0
         x = [0, x_max, x_max, x_min, x_min, 0]

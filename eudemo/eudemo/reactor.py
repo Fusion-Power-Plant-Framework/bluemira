@@ -45,7 +45,6 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
-from bluemira.display.plotter import plot_2d
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
@@ -298,7 +297,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
         separatrix=separatrix,
         keep_out_zone=vvts_cross_section,
     )
-    plot_2d(centreline.create_shape())
+
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
