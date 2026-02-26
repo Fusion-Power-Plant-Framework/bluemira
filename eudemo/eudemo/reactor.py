@@ -42,6 +42,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
+from bluemira.display.plotter import plot_2d
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
@@ -287,6 +288,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
         separatrix=separatrix,
         keep_out_zone=vvts_cross_section,
     )
+    plot_2d(centreline.create_shape())
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
@@ -899,7 +901,7 @@ if __name__ == "__main__":
         particles = n_config.get("particles", n_config["DAGMC"]["particles"])
         neutrons = f"{particles:.2g}".replace(".", "_").replace("+", "")
         a_string = f"{reactor_config.global_params.A.value:.3f}".replace(".", "_")
-        folder_name = f"results_v04/A_{a_string}_neut_{neutrons}"
+        folder_name = f"results_v05/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
