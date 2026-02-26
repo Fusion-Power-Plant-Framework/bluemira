@@ -40,7 +40,15 @@ EQ_PATH = get_bluemira_path("equilibria", subfolder="data")
 
 
 class ExampleCoreRadiation:
-    def __init__(self, eq_name, fw_name):
+    def __init__(
+        self,
+        eq_name,
+        fw_name,
+        sep_corrector_omp,
+        sep_corrector_imp,
+        lfs_p_fraction,
+        tungsten_fraction,
+    ):
         filename = Path(EQ_PATH, eq_name)
         eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_positive=False)
         filename = Path(TEST_PATH, fw_name)
@@ -63,8 +71,8 @@ class ExampleCoreRadiation:
             "T_e_sep": {"value": 0.16, "unit": "keV"},
         }
         self.params = {
-            "sep_corrector_omp": {"value": 5e-3, "unit": "dimensionless"},
-            "sep_corrector_imp": {"value": 5e-3, "unit": "dimensionless"},
+            "sep_corrector_omp": {"value": sep_corrector_omp, "unit": "dimensionless"},
+            "sep_corrector_imp": {"value": sep_corrector_imp, "unit": "dimensionless"},
             "det_t": {"value": 0.0015, "unit": "keV"},
             "eps_cool": {"value": 25.0, "unit": "eV"},
             "f_ion_t": {"value": 0.01, "unit": "keV"},
@@ -79,7 +87,7 @@ class ExampleCoreRadiation:
             "lambda_n_factor": {"value": 1 / 7, "unit": "dimensionless"},
             "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
             "k_0": {"value": 2000.0, "unit": "dimensionless"},
-            "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
+            "lfs_p_fraction": {"value": lfs_p_fraction, "unit": "dimensionless"},
             "P_sep": {"value": 100, "unit": "MW"},
             "theta_inner_target": {"value": 5.0, "unit": "deg"},
             "theta_outer_target": {"value": 5.0, "unit": "deg"},
@@ -87,7 +95,7 @@ class ExampleCoreRadiation:
         }
 
         self.config = {
-            "f_imp_core": {"H": 1e-2, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
+            "f_imp_core": {"H": 1e-2, "He": 1e-2, "Xe": 1e-4, "W": tungsten_fraction},
             "f_imp_sol": {"H": 0, "He": 0, "Ar": 1e-3, "Xe": 0, "W": 0},
             "confinement_core": 0.1,
             "confinement_sol": 10,
@@ -116,12 +124,26 @@ class ExampleCoreRadiation:
 @pytest.fixture(
     scope="class",
     params=[
-        ("DN-DEMO_eqref.json", "DN_fw_shape.json"),
-        ("EU-DEMO_EOF.json", "first_wall.json"),
+        {
+            "eq_name": "EU-DEMO_EOF.json",
+            "fw_name": "first_wall.json",
+            "sep_corrector_omp": 5e-2,
+            "sep_corrector_imp": 6e-2,
+            "lfs_p_fraction": 1,
+            "tungsten_fraction": 1e-4,
+        },
+        {
+            "eq_name": "DN-DEMO_eqref.json",
+            "fw_name": "DN_fw_shape.json",
+            "sep_corrector_omp": 5e-3,
+            "sep_corrector_imp": 6e-3,
+            "lfs_p_fraction": 0.9,
+            "tungsten_fraction": 1e-5,
+        },
     ],
 )
 def rad(request):
-    return ExampleCoreRadiation(*request.param)
+    return ExampleCoreRadiation(**request.param)
 
 
 class TestCoreRadiation:
@@ -400,10 +422,10 @@ class TestCoreRadiation:
     def test_pfr_filter(self, rad):
         x_point_z = rad.source.sol_rad.points["x_point"]["z_low"]
         pfr_x_down, pfr_z_down = pfr_filter(rad.source.sol_rad.separatrix, x_point_z)
+        assert np.all(pfr_z_down < x_point_z - 0.01)
+
         assert pfr_x_down.shape == (59,)
         assert pfr_z_down.shape == (59,)
-
-        assert np.all(pfr_z_down < x_point_z - 0.01)
 
     def test_make_wall_detectors(self, rad):
         max_wall_len = 10.0e-2
