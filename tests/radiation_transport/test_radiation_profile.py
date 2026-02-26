@@ -48,6 +48,7 @@ class ExampleCoreRadiation:
         sep_corrector_imp,
         lfs_p_fraction,
         tungsten_fraction,
+        expected_values,
     ):
         filename = Path(EQ_PATH, eq_name)
         eq = Equilibrium.from_eqdsk(filename, from_cocos=3, qpsi_positive=False)
@@ -119,6 +120,7 @@ class ExampleCoreRadiation:
         self.profiles = profiles
         self.source = source
         self.fw_shape = fw_shape
+        self.expected_values = expected_values
 
 
 @pytest.fixture(
@@ -131,6 +133,15 @@ class ExampleCoreRadiation:
             "sep_corrector_imp": 6e-2,
             "lfs_p_fraction": 1,
             "tungsten_fraction": 1e-4,
+            "expected_values": {
+                "pfr_down_shape": (46,),
+                "wall_det_len": 323,
+                "rad_tot": 2695.3397,
+                "x_tot": 50965.673,
+                "z_tot": -311.79,  # TODO @DarioV86: This seems broken #3328
+                "ion_front_dist": 2.440,
+                "total_power": 1.574e7,
+            },
         },
         {
             "eq_name": "DN-DEMO_eqref.json",
@@ -139,6 +150,15 @@ class ExampleCoreRadiation:
             "sep_corrector_imp": 6e-3,
             "lfs_p_fraction": 0.9,
             "tungsten_fraction": 1e-5,
+            "expected_values": {
+                "pfr_down_shape": (59,),
+                "wall_det_len": 532,
+                "rad_tot": 1295.7477,
+                "x_tot": 55614.0533,
+                "z_tot": 239.84336,
+                "ion_front_dist": 2.619,
+                "total_power": 2.46e8,
+            },
         },
     ],
 )
@@ -250,9 +270,12 @@ class TestCoreRadiation:
     def test_calculate_core_distribution(self, rad):
         # calls calculate_core_distribution() internally
         rad.source.core_rad.calculate_core_radiation_map()
-        assert np.sum(rad.source.core_rad.rad_tot) == pytest.approx(1295.7477)
-        assert np.sum(rad.source.core_rad.x_tot) == pytest.approx(55614.0533)
-        assert np.sum(rad.source.core_rad.z_tot) == pytest.approx(239.84336)
+        rad_tot = rad.expected_values["rad_tot"]
+        x_tot = rad.expected_values["x_tot"]
+        z_tot = rad.expected_values["z_tot"]
+        assert np.sum(rad.source.core_rad.rad_tot) == pytest.approx(rad_tot)
+        assert np.sum(rad.source.core_rad.x_tot) == pytest.approx(x_tot)
+        assert np.sum(rad.source.core_rad.z_tot) == pytest.approx(z_tot)
 
     def test_core_flux_tube_pol_t(self, rad):
         flux_tube = rad.source.eq.get_flux_surface(0.99)
@@ -326,8 +349,8 @@ class TestCoreRadiation:
             rad.source.sol_rad.b_tot_out_tar,
         )
         assert t_u < 5e-1
-        assert t_tar_det <= rad.source.params.f_ion_t.value_as("eV")
         assert t_tar_no_det > rad.source.params.f_ion_t.value_as("eV")
+        assert t_tar_det <= rad.source.params.f_ion_t.value_as("eV")  # needs review
 
     def test_sol_decay(self, rad):
         t_u = rad.source.params.T_e_sep.value_as("keV")
@@ -354,7 +377,7 @@ class TestCoreRadiation:
             2e20,
         )
         assert distance is not None
-        assert distance == pytest.approx(2.619, rel=1e-3)
+        assert distance == pytest.approx(rad.expected_values["ion_front_dist"], rel=1e-3)
 
     def test_radiation_region_boundary(self, rad):
         low_z_main, low_z_pfr = rad.source.sol_rad.x_point_radiation_z_ext()
@@ -424,8 +447,8 @@ class TestCoreRadiation:
         pfr_x_down, pfr_z_down = pfr_filter(rad.source.sol_rad.separatrix, x_point_z)
         assert np.all(pfr_z_down < x_point_z - 0.01)
 
-        assert pfr_x_down.shape == (59,)
-        assert pfr_z_down.shape == (59,)
+        assert pfr_x_down.shape == rad.expected_values["pfr_down_shape"]
+        assert pfr_z_down.shape == rad.expected_values["pfr_down_shape"]
 
     def test_make_wall_detectors(self, rad):
         max_wall_len = 10.0e-2
@@ -435,7 +458,7 @@ class TestCoreRadiation:
         )
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)
-        assert len(wall_detectors) == 532
+        assert len(wall_detectors) == rad.expected_values["wall_det_len"]
 
     def test_FirstWallRadiationSolver(self, rad):
         # Coversion required for CHERAB
@@ -465,4 +488,5 @@ class TestCoreRadiation:
 
         # the solver gives slightly different powers in each run
         # so just asserting the order of total power
-        assert np.isclose(wall_loads.total_power, 2.46e8, rtol=0.05)
+        exp_total_power = rad.expected_values["total_power"]
+        assert np.isclose(wall_loads.total_power, exp_total_power, rtol=0.05)
