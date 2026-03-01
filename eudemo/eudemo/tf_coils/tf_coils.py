@@ -129,6 +129,24 @@ class TFCoil(ComponentManager):
         )
         return BluemiraFace([outer, inner])
 
+    @property
+    def wp_volume(self) -> float:
+        """
+        Returns
+        -------
+        :
+            The total volume of all TF WPs in m^3
+        """
+        return (
+            len(self._field_solver.sources)
+            * self
+            .component()
+            .get_component("xyz")
+            .get_component("Sector 1")
+            .get_component("Winding Pack 1")
+            .shape.volume
+        )
+
 
 @dataclass
 class TFCoilDesignerParams(ParameterFrame):
@@ -331,7 +349,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             shape_kwargs["tf_wp_width"] = self.params.tk_tf_wp.value
             shape_kwargs["tf_wp_depth"] = self.params.tk_tf_wp_y.value
             shape_kwargs["n_points"] = 50
-            shape_kwargs["tolerance"] = 1e-3
+            shape_kwargs["tolerance"] = 1e-2
 
         return shape_kwargs
 
