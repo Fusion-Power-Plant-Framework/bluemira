@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": false
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -117,7 +117,7 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "enabled": false,
+    "enabled": true,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 100000,
     "batches": 2,
@@ -146,7 +146,8 @@
       "Insulation": "Toroidal_Field_Coil_2015"
     },
     "param_class": "eudemo.tf_coils.tf_coil_parameterisations::TFCoilPolySpline",
-    "variables_map": {},
+    "variables_map": {
+    },
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
     "problem_settings": {
       "ripple_selector": {

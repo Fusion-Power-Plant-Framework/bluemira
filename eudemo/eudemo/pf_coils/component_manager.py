@@ -78,3 +78,13 @@ class PFCoil(ComponentManager):
             .get_component("CS coils")
             .get_component("xz", first=False)
         ]
+    
+    @property
+    def wp_volume(self) -> float:
+        """
+        Returns
+        -------
+        : 
+            The total volume of all PF coil winding packs in m^3
+        """
+        return self.coilset.volume

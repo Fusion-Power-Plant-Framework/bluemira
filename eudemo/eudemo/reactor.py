@@ -892,6 +892,8 @@ if __name__ == "__main__":
         reactor_config.global_params.P_el_net.set_value(
             sspc_result["P_el_net"], "BLUEMIRA"
         )
+        reactor_config.global_params.tf_wp_volume.set_value(reactor.tf_coils.wp_volume, "BLUEMIRA")
+        reactor_config.global_params.pf_wp_volume.set_value(reactor.pf_coils.wp_volume, "BLUEMIRA")
 
         lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 

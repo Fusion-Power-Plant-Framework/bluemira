@@ -80,7 +80,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
     __slots__ = ("_variables", "name")
 
-    def __init__(self, variables: OptVariablesFrameT):
+    def __init__(self, variables: OptVariablesFrameT, **kwargs):
         """
         Parameters
         ----------
@@ -924,7 +924,7 @@ class PrincetonDDiscrete(PrincetonD):
         n_points: int | None = None,
         *,
         tolerance: float | None = None,
-        with_tangency: bool = False,
+        with_tangency: bool = True,
     ) -> BluemiraWire:
         """
         Make a CAD representation of the Princeton D.

@@ -99,6 +99,8 @@ class EUDEMOReactorParams(ParameterFrame):
     TF_ripple_limit: Parameter[float]
     tf_wp_depth: Parameter[float]
     tf_wp_width: Parameter[float]
+    tf_wp_volume: Parameter[float]
+    pf_wp_volume: Parameter[float]
     tk_bb_ib: Parameter[float]
     tk_bb_ob: Parameter[float]
     tk_cr_vv: Parameter[float]

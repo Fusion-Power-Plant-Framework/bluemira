@@ -33,7 +33,7 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonDDiscrete
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
@@ -126,6 +126,16 @@ class TFCoil(ComponentManager):
             .shape.boundary[1]
         )
         return BluemiraFace([outer, inner])
+    
+    @property
+    def wp_volume(self) -> float:
+        """
+        Returns
+        -------
+        : 
+            The total volume of all TF WPs in m^3
+        """
+        return len(self._field_solver.sources) * self.component().get_component("xyz").get_component("Sector 1").get_component("Winding Pack 1").shape.volume
 
 
 @dataclass
@@ -322,8 +332,19 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         shape_params["x1"] = {"value": r_current_in_board, "fixed": True}
         return shape_params
 
+    def _derive_shape_kwargs(self) -> dict:
+        shape_kwargs = {}
+        if issubclass(self.parameterisation_cls, PrincetonDDiscrete):
+            shape_kwargs["n_TF"] = self.params.n_TF.value
+            shape_kwargs["tf_wp_width"] = self.params.tk_tf_wp.value
+            shape_kwargs["tf_wp_depth"] = self.params.tk_tf_wp_y.value
+            shape_kwargs["n_points"] = 50
+            shape_kwargs["tolerance"] = 1e-2
+
+        return shape_kwargs
+
     def _get_parameterisation(self) -> GeometryParameterisation:
-        return self.parameterisation_cls(self._derive_shape_params(self.variables_map))
+        return self.parameterisation_cls(self._derive_shape_params(self.variables_map), **self._derive_shape_kwargs())
 
     def run(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """
