@@ -1329,7 +1329,7 @@
     "long_name": "Breeding blanket first wall outboard thickness"
   },
   "tk_bb_bz_ob": {
-    "value": 0.6,
+    "value": 0.4,
     "unit": "m",
     "source": "Input",
     "long_name": "Breeding blanket breeding zone outboard thickness"
