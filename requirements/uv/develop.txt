@@ -380,7 +380,7 @@ ruff==0.15.2
     # via bluemira (pyproject.toml)
 scikit-learn==1.8.0
     # via bluemira (pyproject.toml)
-scipy==1.17.0
+scipy==1.17.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
