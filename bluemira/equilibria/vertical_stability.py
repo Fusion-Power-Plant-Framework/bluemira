@@ -87,7 +87,7 @@ class RZIp:
         # 1231231231231
         self._coilset = cs
         self.ind_mat = make_mutual_inductance_matrix(
-            cs, square_coil=True, with_quadratures=True
+            cs, square_coil=True, with_quadratures=False
         )
         diag = np.diag(np.diag(self.ind_mat))
         non_diag = (

@@ -775,6 +775,17 @@ class TestMutualInductances:
         coil3 = Coil(6, 6, j_max=1)
         cls.coilset1 = CoilGroup(coil1, coil2, coil3)
 
+        coil4 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC1")
+        coil5 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC2")
+        cls.coilset2 = CoilSet(coil4, coil5, control_names=[])
+        coil6 = Coil(4, 4, 0.1, 0.1, j_max=1, n_turns=2, name="TC3")
+        coil7 = Coil(5, 5, 0.1, 0.1, j_max=1, n_turns=3, name="TC4")
+        coil8 = Coil(5, 5, 0.1, 0.1, j_max=1, n_turns=4, name="TC5")
+        coil9 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC6")
+        cls.coilset3 = CoilSet(
+            coil6, coil7, coil8, coil9, control_names=["TC3", "TC4", "TC5"]
+        )
+
     def test_normal(self):
         """
         Just check the symmetry for now
@@ -791,3 +802,12 @@ class TestMutualInductances:
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)
+
+    def test_turns_with_quadratures(self):
+        """
+        Check it runs for weird array shapes and n_turns
+        """
+        m2 = make_mutual_inductance_matrix(self.coilset2, with_quadratures=True)
+        m3 = make_mutual_inductance_matrix(self.coilset3, with_quadratures=True)
+        assert np.shape(m2) == (8, 8)
+        assert np.shape(m3) == (7, 7)
