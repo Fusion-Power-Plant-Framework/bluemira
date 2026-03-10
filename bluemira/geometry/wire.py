@@ -330,3 +330,39 @@ class BluemiraWire(BluemiraGeo):
         The solids of the wire. By definition an empty tuple.
         """
         return ()
+
+
+def despliner(wire_with_spline, max_deviation):
+    """
+    Convert any bluemira wires containing splines into straight lines and arcs.
+
+    Source(s) to consider:
+        https://math.stackexchange.com/questions/1679920/curve-fitting-using-circles/1681399#1681399
+    which references this paper:
+        https://msekce.karlin.mff.cuni.cz/~sir/papers/planar-biarcs.pdf
+    and the other guy (Paul H)'s answer, which has a blogpost associated with it:
+        https://www.ryanjuckett.com/biarc-interpolation/
+
+    Parameters
+    ----------
+    wire_with_spline:
+    max_deviation:
+        a parameter to be used by the bi-arc method.
+
+    Returns
+    -------
+    wire_with_spline:
+    """
+    if isinstance(wire_with_spline, BluemiraWire):
+        return BluemiraWire([despliner(w) for w in wire_with_spline.boundary])
+    if isinstance(wire_with_spline, cadapi.Part.Wire):
+        return cadapi.Part.Wire(despliner(edge) for edge in wire_with_spline.Edges)
+    if isinstance(wire_with_spline, cadapi.Part.Edge):
+        e = wire_with_spline
+        if isinstance(e.Curve, cadapi.Part.Spline):
+            # either directly discretize
+            e.discretize()
+            # or use the biarc method:
+            method(max_deviation)  # bi-arc method # noqa: F821
+        return cadapi.Part.Edge(e)
+    return None
