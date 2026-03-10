@@ -74,10 +74,12 @@ class CoilGroupFieldsMixin:
             The x values at which to calculate the dB_d response
         z:
             The z values at which to calculate the dB_d response
-        sum_coils:
-            sum over coils
-        control:
-            operations on control coils only
+
+        # TODO @je-cook: Check if these are things you want to implement for the function
+        # sum_coils:
+        #     sum over coils
+        # control:
+        #     operations on control coils only
 
         Returns
         -------
@@ -96,10 +98,12 @@ class CoilGroupFieldsMixin:
             The x values at which to calculate the dB_d response
         z:
             The z values at which to calculate the dB_d response
-        sum_coils:
-            sum over coils
-        control:
-            operations on control coils only
+
+        # TODO @je-cook: Check if these are things you want to implement for the function
+        # sum_coils:
+        #     sum over coils
+        # control:
+        #     operations on control coils only
 
         Returns
         -------
