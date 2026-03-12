@@ -558,13 +558,18 @@ class CoilGroup(CoilGroupFieldsMixin):
     def _get_coiltype(self, *ctype: CoilType | str) -> list[Coil]:
         """Find coil by type"""  # noqa: DOC201
         coils = []
-        ctype = tuple(CoilType(ct) for ct in ctype)
+        if not isinstance(ctype, list):
+            ctype = list(ctype)
+        if isinstance(ctype[0], list):
+            ctype = [CoilType(c) for ct in ctype for c in ct]
+        else:
+            ctype = [CoilType(ct) for ct in ctype]
         for c in self._coils:
             if isinstance(c, Circuit) and len(c._get_coiltype(ctype)) > 0:
                 coils.append(c)
             elif isinstance(c, CoilGroup):
                 coils.extend(c._get_coiltype(ctype))
-            elif c.ctype == ctype:
+            elif c.ctype in ctype:
                 coils.append(c)
         return coils
 
