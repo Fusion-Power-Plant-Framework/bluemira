@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -23,12 +24,13 @@ from scipy.interpolate import (
     RectBivariateSpline,
     interp1d,
 )
+from scipy.optimize import brentq, fsolve
 from scipy.spatial import Delaunay
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
 from bluemira.base.look_and_feel import bluemira_error
 from bluemira.codes.utilities import get_code_interface
-from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
+from bluemira.equilibria.flux_surfaces import calculate_connection_length_fs
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 if TYPE_CHECKING:
@@ -65,272 +67,463 @@ class WallDetector:
     y_vector: Vector3D
 
 
+def calculate_connection_length(
+    point_x: float,
+    point_z: float,
+    eq: Equilibrium,
+    firstwall_geom: Grid,
+    upstream_x: float | None = None,
+    upstream_z: float | None = None,
+) -> float:
+    """
+    Calculate the distance along the field line
+    between two points by using calculate_connection_length_fs
+    calculate_connection_length_fs calculates the distance
+    between the target point and an upstream point. This differs from
+    what may be needed which is either the distance between the midplane
+    and a given point or the distance between two given points.
+
+    Parameters
+    ----------
+    point_x: float
+        x coordinate of the point for which the connection length is needed, [m].
+    point_z: float
+        z coordinate of the point for which the connection length is needed, [m].
+    eq: Equilibrium
+        Equilibrium in which to calculate the point temperature
+    firstwall_geom: Grid
+        first wall geometry
+    upstream_x: float
+        x coordinate of the point upstream the one for which the
+        connecion length is wanted. If None, point_x corresponds to the midplane.
+    upstream_z:
+        z coordinate of the point upstream the one for which the
+        connecion length is wanted. If None, point_x corresponds to the midplane.
+
+    Returns
+    -------
+    s_p:
+        connection lentgh [m].
+    """
+    forward = point_z < 0
+    if upstream_x is None:
+        s_p = calculate_connection_length_fs(
+            eq, point_x, point_z, first_wall=firstwall_geom, forward=forward
+        )
+    else:
+        l_p = calculate_connection_length_fs(
+            eq,
+            point_x,
+            point_z,
+            first_wall=firstwall_geom,
+            forward=forward,
+        )
+        # connection length from the midplane to the target
+        l_tot = calculate_connection_length_fs(
+            eq,
+            upstream_x,
+            upstream_z,
+            first_wall=firstwall_geom,
+            forward=forward,
+        )
+
+        # connection length from mp to p point
+        s_p = abs(l_tot - l_p)
+    return s_p
+
+
 def upstream_temperature(
     b_pol: float,
     b_tot: float,
     lambda_q_near: float,
     p_sol: float,
-    eq: Equilibrium,
-    r_sep_mp: float,
-    z_mp: float,
+    r_sep: float,
     k_0: float,
-    firstwall_geom: Grid,
+    *,
+    high_rec: bool = False,
     connection_length: float | None = None,
+    f_r: float | None = None,
 ) -> float:
     """
-    Calculate the upstream temperature.
-    Knowing the power entering the SOL, and assuming large temperature gradient
-    between upstream and target.
+    Estimate the upstream (midplane) temperature under conduction-limited assumptions
+    with a cold target (t_target << t_upstream).
 
     Parameters
     ----------
-    b_pol:
-        Poloidal magnetic field at the midplane [T]
-    b_tot:
-        Total magnetic field at the midplane [T]
-    lambda_q_near:
-        Power decay length in the near SOL [m]
-    p_sol:
-        Total power entering the SOL [W]
-    eq:
-        Equilibrium in which to calculate the upstream temperature
-    r_sep_mp:
-        Upstream location radial coordinate [m]
-    z_mp:
-        Upstream location z coordinate [m]
-    k_0:
-        Material's conductivity
-    firstwall_geom:
-        First wall geometry
-    connection_length:
-        connection length from the midplane to the target
+    b_pol : float
+        Poloidal magnetic field at the midplane, [T].
+    b_tot : float
+        Total magnetic field at the midplane, [T].
+    lambda_q_near : float
+        Power decay length in the near SOL, [m].
+    p_sol : float
+        Total power entering the SOL, [W].
+    r_sep : float
+        Radial coordinate [m] of the separatrix at the midplane.
+    k_0 : float
+        Classical electron conduction coefficient in the mixed SI/eV system,
+        typically ~2000 [W m^-1 eV^(-7/2)].
+        (Not a solid material property, but the Spitzer-Härm coefficient for the plasma.)
+    connection_length : float | None
+        If provided, used as the distance from the midplane to the target [m].
+        If None, it is computed internally from the equilibrium and geometry.
 
     Returns
     -------
-    t_upstream_kev:
-        upstream temperature. Unit [keV]
+    float
+        Upstream temperature in keV.
 
     Notes
     -----
-    .. doi:: 10.1088/0741-3335/39/6/001
-        :title: C S Pitcher and P C Stangeby, 1997
+    - This function assumes negligible target temperature (t_target << t_up).
+      That allows solving for t_up via the conduction-limited 2PM formula.
+    - Reference:
+      Pitcher & Stangeby, Plasma Phys. Control. Fusion 39 (1997) 779.
+      Stangeby, "The Plasma Boundary of Magnetic Fusion Devices" (2000).
     """
-    # SoL cross-section at the midplane
-    a_par = 4 * np.pi * r_sep_mp * lambda_q_near * (b_pol / b_tot)
+    # Effective parallel SOL cross-sectional area at the midplane
+    a_pol = 4 * np.pi * r_sep * lambda_q_near
+    a_par = a_pol * (b_pol / b_tot)
 
-    # upstream power density
-    q_u = p_sol / a_par
+    # Parallel heat flux at the midplane (W/m^2)
+    q_u_pol = p_sol / a_pol
+    q_u_par = p_sol / a_par
 
-    # connection length from the midplane to the target
-    l_tot = (
-        calculate_connection_length_flt(
-            eq,
-            r_sep_mp,
-            z_mp,
-            first_wall=firstwall_geom,
+    # To account for the flux expansion
+    exp_fact = (math.log(f_r) / (f_r - 1)) ** (2 / 7)
+
+    # Conduction-limited 2PM formula, ignoring target temperature
+    # Convert eV -> keV
+    if high_rec:
+        return (
+            raw_uc(
+                (1 / 2 * 3.5 * (q_u_par / k_0) * connection_length) ** (2 / 7),
+                "eV",
+                "keV",
+            )
+            * exp_fact,
+            q_u_par,
+            q_u_pol,
         )
-        if connection_length is None
-        else connection_length
+    return (
+        raw_uc((3.5 * (q_u_par / k_0) * connection_length) ** (2 / 7), "eV", "keV")
+        * exp_fact,
+        q_u_par,
+        q_u_pol,
     )
-
-    # upstream temperature [keV]
-    return raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
-
-
-def target_temperature(
-    p_sol: float,
-    t_u: float,
-    n_u: float,
-    gamma: float,
-    eps_cool: float,
-    f_ion_t: float,
-    b_pol_tar: float,
-    b_pol_u: float,
-    alpha_pol_deg: float,
-    r_u: float,
-    r_tar: float,
-    lambda_q_near: float,
-    b_tot_tar: float,
-) -> float:
-    """
-    Calculate the target as suggested from the 2-point model.
-    It includes hydrogen recycle loss energy.
-
-    Parameters
-    ----------
-    p_sol:
-        Total power entering the SOL [W]
-    t_u:
-        Upstream temperature. Unit [eV]
-    n_u:
-        Electron density at the upstream [1/m^3]
-    gamma:
-        Sheath heat transmission coefficient
-    eps_cool:
-        Electron energy loss [eV]
-    f_ion_t:
-        Hydrogen first ionization [eV]
-    b_pol_tar:
-        Poloidal magnetic field at the target [T]
-    b_pol_u:
-        Poloidal magnetic field at the midplane [T]
-    alpha:
-        Incident angle between separatrix and target plate as
-        poloidal projection [deg]
-    r_u:
-        Upstream location radial coordinate [m]
-    r_tar:
-        stike point radial coordinate [m]
-    lambda_q_near:
-        Power decay length in the near SOL at the midplane [m]
-    b_tot_tar:
-        Total magnetic field at the target [T]
-
-    Returns
-    -------
-    t_tar:
-        target temperature. Unit [eV]
-
-    Notes
-    -----
-    .. doi:: 10.1201/9780367801489
-        :title: P C Stangeby, 2000
-    """
-    # flux expansion at the target location
-    f_exp = (r_u * b_pol_u) / (r_tar * b_pol_tar)
-
-    # lambda target
-    lambda_q_tar = lambda_q_near * f_exp * (1 / np.sin(np.deg2rad(alpha_pol_deg)))
-    # wet area as poloidal section
-    a_wet = 4 * np.pi * r_tar * lambda_q_tar
-
-    # parallel cross section
-    a_par = a_wet * (b_pol_tar / b_tot_tar)
-
-    # parallel power flux density
-    q_u = p_sol / a_par
-
-    # ion mass in kg (it should be DT = 2.5*amu)
-    m_i_kg = raw_uc(D_MOLAR_MASS, "amu", "kg")
-
-    # converting upstream temperature
-    # upstream electron density - no fifference hfs/lfs?
-    # Numerator and denominator of the upstream forcing function
-    # forcing function
-    f_ev = (m_i_kg * 4 * (q_u**2)) / (
-        2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
-    )
-
-    # Critical target temperature
-    t_crit = eps_cool / gamma
-
-    # Finding roots of the target temperature quadratic equation
-    roots = np.roots([1, 2 * (eps_cool / gamma) - f_ev, (eps_cool**2) / (gamma**2)])
-
-    # Target temperature excluding unstable solution
-    return f_ion_t if roots.dtype == complex else roots[np.nonzero(roots > t_crit)[0][0]]
 
 
 def specific_point_temperature(
-    x_p: float,
-    z_p: float,
-    t_u: float,
-    p_sol: float,
-    lambda_q_near: float,
-    eq: Equilibrium,
-    r_sep_mp: float,
-    z_mp: float,
+    q_par_u: float,
+    t_ref: float,
     k_0: float,
-    sep_corrector: float,
-    firstwall_geom: Grid,
-    connection_length: float | None = None,
-    *,
-    lfs=True,
+    connection_length: float,
+    b_pol_tar: float,
+    b_tot_u: float,
 ) -> float:
     """
-    Calculate the temperature at a specific point above the x-point.
+    Estimate the local temperature (t_p) at a specific point (x_p, z_p),
+    above the X-point, assuming conduction-limited transport with
+    negligible volumetric losses (basic 2PM).
 
     Parameters
     ----------
-    x_p:
-        x coordinate of the point of interest [m]
-    z_p:
-        z coordinate of the point of interest [m]
-    t_u:
-        upstream temperature [eV]
-    p_sol:
-        Total power entering the SOL [W]
-    lambda_q_near:
-        Power decay length in the near SOL at the midplane [m]
-    eq:
-        Equilibrium in which to calculate the point temperature
-    r_sep_mp:
-        radial coordinate (i.e. x coordinate on the xz plane) of the x-point [m]
-    z_mp:
-        z coordinate of the x-point [m]
-    k_0:
-        Material's conductivity
-    firstwall_geom:
-        first wall geometry
-    connection_length:
-        connection length from the midplane to the target
-    lfs:
-        low (toroidal) field side (outer wall side). Default value True.
-        If False it stands for high field side (hfs).
+    flux_exp: float,
+    b_pol_p: float,
+    b_tot_p: float,
+    t_up : float
+        Upstream temperature [eV] (assumed conduction-limited reference).
+    p_sol : float
+        Total power entering the SOL [W].
+    lambda_q_near : float
+        Midplane power decay length [m].
+    r_sep: float
+        Coordinates [m] of the separatrix at the midplane (reference upstream point).
+    k_0 : float
+        Conduction coefficient [W m^-1 eV^-3.5] (e.g. ~2000).
+    connection_length : float
+        Midplane-downstream point connection length
 
     Returns
     -------
-    t_p:
-        point temperature. Unit [eV]
+    t_p : float
+        Estimated temperature [eV] at the point from conduction-limited 2PM.
+
+    Notes
+    -----
+    - We assume no volumetric losses above the X-point (basic conduction).
+       That is typical if the region is still relatively hot, so atomic losses
+       are small.
     """
-    # Flux expansion at the point
-    b_pol_sep_mp = eq.Bp(r_sep_mp, z_mp)
-    b_pol_p = eq.Bp(x_p, z_p)
-    b_tor_p = eq.Bt(x_p)
-    b_tot = np.hypot(b_pol_p, b_tor_p)
-    f_exp = (r_sep_mp * b_pol_sep_mp) / (x_p * b_pol_p)
+    # To account for the flux expansion
+    # g_r = math.log(f_r) / (f_r - 1)
+    # Local parallel heat flux
+    # q_par = q_par_u * g_r
+    q_par = q_par_u * b_pol_tar / b_tot_u
 
-    # lambda target
-    lambda_q_local = lambda_q_near * f_exp
+    # Conduction-limited formula ignoring volumetric losses:
+    bracket = (t_ref**3.5) - 3.5 * (q_par / k_0) * connection_length
 
-    # parallel cross section
-    a_par = (4 * np.pi * x_p * lambda_q_local) * (b_pol_p / b_tot)
+    if bracket <= 0.0:
+        # If bracket is negative => physically "ran out of heat" in 1D conduction
+        # We clamp t_p to 0 or a small positive floor
+        return 0.0
 
-    # parallel power flux density
-    q_par = p_sol / a_par
+    return bracket ** (2 / 7)
 
-    # Distinction between lfs and hfs
-    d = sep_corrector if lfs else -sep_corrector
 
-    forward = False if z_p == z_mp else (lfs and z_p < z_mp) or (not lfs and z_p > z_mp)
+def eps_cool(
+    t_t: float, base: float = 13.6, extra: float = 24, t_ref: float = 10.0
+) -> float:
+    """
+    Returns
+    -------
+    Cooling potential ε [eV] that still has to be paid
+    between the current target temperature T_t and the plate.
 
-    # Distance between the chosen point and the the target
-    l_p = calculate_connection_length_flt(
-        eq,
-        x_p + (d * f_exp),
-        z_p,
-        forward=forward,
-        first_wall=firstwall_geom,
-    )
-    # connection length from the midplane to the target
-    l_tot = (
-        calculate_connection_length_flt(
-            eq,
-            r_sep_mp,
-            z_mp,
-            forward=forward,
-            first_wall=firstwall_geom,
+        ε → base + extra  (≈25 eV)  as T_t → 0 eV
+        ε → base          (≈13.6 eV) as T_t ≳ 20 eV
+    """
+    return base + extra / (1.0 + (t_t / t_ref) ** 2)
+
+
+def target_temperature_extended_2pm(
+    q_par_u: float,
+    f_rad: float,
+    t_u: float,
+    n_u: float,
+    gamma: float = 2.0,
+    *,
+    temp_threshold: float = 1.0,
+    t_low_limit: float = 0.1,
+    eps: float = 1,
+    step: float = 0.005,
+    max_iter: int = 1000,
+    max_frad: float = 0.99,  # Reduce if you want to increase q_t
+    collapse_tol: float = 1e-6,
+):
+    """Return the detached target temperature (T_high) for a given parallel heat
+    flux, sweeping *f_rad* up to *max_frad*.
+
+    Behavioural updates vs. the original implementation:
+    1. If no solution with *T_high <= temp_threshold* is found within the
+       allowed (f_rad, max_iter) window, the last valid *T_high* encountered
+       during the sweep is returned instead of raising *RuntimeError*.
+    2. If the two roots provided by *solve_tar_t_with_f_u* collapse into a single
+       root the unique root is taken as *T_high*.
+    3. If exactly one root is returned (``T_high is None``) that single root is
+       treated as *T_high*.
+    4. Numerical artefacts giving unphysical *T_high < t_low_limit* are still
+       discarded.
+
+    Returns
+    -------
+    tuple(float | None, float | None, float | None)
+        (T_high, q_par_eff, f_rad) of the best candidate found.
+        If no root at all is found, ``(None, None, None)`` is returned.
+    """
+    # Ion mass [kg] from atomic mass units
+    m_d = raw_uc(D_MOLAR_MASS, "amu", "kg")
+
+    last_t_high = None  # best detached temperature seen so far
+    last_q_par_eff = None
+    last_f_rad = None
+
+    for _ in range(max_iter):
+        # Stop sweeping if the requested radiated fraction is exceeded.
+        # Falls back on the last valid T_high after the loop.
+        if f_rad > max_frad:
+            break
+
+        # Effective parallel heat flux (simple model)
+        q_par_eff = q_par_u * (1.0 - f_rad)
+
+        # Robust initial guess
+        t_guess = temp_threshold if (_ == 0 or last_t_high is None) else last_t_high
+        eps = eps_cool(
+            t_guess
+        )  # In doubt if I want to use this, if I want to fix 13.6 or if I want to fix 1
+
+        # Normalised upstream flux parameter
+        f_u = (
+            (m_d / (2 * E_CHARGE))
+            * 4.0
+            * q_par_eff**2
+            / (gamma**2 * E_CHARGE**2 * n_u**2 * t_u**2)
         )
-        if connection_length is None
-        else connection_length
-    )
 
-    # connection length from mp to p point
-    s_p = l_tot - l_p
-    if round(abs(z_p)) == 0:
-        s_p = 0
-    # Return local temperature
-    return ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
+        # Solve the two-point model for target temperatures
+        # eps=1, meaning that the drop for
+        # relevant mechanisms is left between recycling entrance and target.
+        t_low, t_high = solve_tar_t_with_f_u(
+            f_u, eps, gamma, guess_low=0.1, guess_high=t_u
+        )
+
+        # handle single or collapsing roots
+        if t_low is not None and (t_high is None or abs(t_high - t_low) < collapse_tol):
+            t_high = t_low  # unique root
+
+        # Discard obvious numerical artefacts
+        if t_high is not None and t_high < t_low_limit:
+            t_high = None
+
+        # Record the best root seen so far
+        if t_high is not None:
+            last_t_high = t_high
+            last_q_par_eff = q_par_eff
+            last_f_rad = f_rad
+            last_eps = eps
+            last_f_u = f_u
+
+            # Success: detached solution below threshold
+            if t_high <= temp_threshold:
+                return t_high, q_par_eff, f_rad, eps, f_u
+
+        # Increment radiated fraction and repeat
+        f_rad += step
+
+    # No detached solution within the requested window.
+    # Return last
+    if last_t_high is not None:
+        return last_t_high, last_q_par_eff, last_f_rad, last_eps, last_f_u
+
+    # Nothing converged at all
+    return None, None, None, None
+
+
+def target_temperature_local(
+    q_r: float,
+    n_r: float,
+    eps_hrad: float,
+    eps_pot: float,
+    gamma: float,
+    t_initial,  # use as T_r (ionisation-front / recycle-layer temp, in eV)
+    alpha_pol_deg: float = 90,
+):
+    """
+    Solve for target (plate-adjacent) temperature T_t using.
+
+    Returns
+    -------
+    T_t [eV], n_t [m^-3],
+    q_plate_parallel [W/m^2],
+    q_plate_perp [W/m^2],
+    f_m(T_t)
+
+    Raises
+    ------
+    RuntimeError
+        if No low-T root is found
+    """
+    # constants
+    e = E_CHARGE  # [C]
+    m_i = raw_uc(D_MOLAR_MASS, "amu", "kg")  # deuterium ion mass [kg]
+    t_r = float(t_initial)  # [eV]
+    eps = float(eps_pot + eps_hrad)  # [eV]
+    # front (local-upstream) ion flux Γ_r
+    c_s_r = np.sqrt(2.0 * e * t_r / m_i)  # [m/s]
+    gamma_r = n_r * c_s_r  # [m^-2 s^-1]
+    # residual using split-Γ power balance; f_m(T) provided by your closure
+
+    def residual(tt_eV: float) -> float:
+        if tt_eV <= 0.0:
+            return 1e12
+        fm = get_f_mom(tt_eV)  # momentum-retention factor
+        beta = 0.5 * fm * np.sqrt(t_r / tt_eV)  # Γ_t / Γ_r
+        return e * gamma_r * (beta * gamma * tt_eV + eps) - q_r  # [W/m^2]
+
+    # bracket on detached (low-T) side: [~0, T_r]
+    lo, hi = 1e-3, max(1e-2, min(t_r, (eps / max(gamma, 1e-9)) * 0.999))
+    r_lo, r_hi = residual(lo), residual(hi)
+    if r_lo * r_hi > 0:
+        # no sign change on low-T side -> either no detached root or bracket too tight
+        # try widening up to T_r; if still no root, raise with a helpful message
+        hi = t_r
+        r_lo, r_hi = residual(lo), residual(hi)
+        if r_lo * r_hi > 0:
+            raise RuntimeError(
+                "No low-T root in [~0, T_r]. Reduce q_r (increase upstream f_rad) "
+                "or ensure f_m(T) decreases at low T."
+            )
+    t_t = float(brentq(residual, lo, hi))
+    t_down_for_rad = 1.5 if t_t < 1 else t_t
+    # recover density, fluxes, and heat loads at the plate
+    fm_t = get_f_mom(t_t)
+    n_t = (fm_t * n_r * t_r) / (2.0 * t_t)  # from 2 n_t T_t = f_m n_r T_r
+    c_s_t = np.sqrt(2.0 * e * t_t / m_i)
+    q_plate_parallel = n_t * c_s_t * e * (gamma * t_t)  # kinetic channel to sheath
+    q_plate_perp = q_plate_parallel * np.sin(np.deg2rad(alpha_pol_deg))
+    return t_down_for_rad, t_t, n_t, q_plate_parallel, q_plate_perp, fm_t
+
+
+def solve_tar_t_with_f_u(
+    f_u, epsilon, gamma, guess_low=1, guess_high=50.0, xtol=1e-12, maxfev=100
+):
+    """
+    Solve   T = f_u * (1 + epsilon / (gamma * T))**(-2)
+    and return (T_low, T_high).
+
+    Parameters
+    ----------
+    f_u      : float   upstream forcing function
+    epsilon  : float   potential / radiation sink coefficient
+    gamma    : float   sheath heat transmission factor
+    guess_*  : float   initial guesses for the two branches
+    xtol     : float   fsolve tolerance
+    maxfev   : int     fsolve iteration cap
+
+    Returns
+    -------
+    T_low, T_high : tuple(float | None, float | None)
+        Ordered positive real solutions, or None where absent.
+    """
+    # analytic existence check
+    if gamma < 4 * epsilon / f_u:
+        return None, None
+
+    def f(t):
+        return (f_u * ((1 + epsilon / (gamma * t)) ** (-2))) - t
+
+    def _try_solve(f, x0, xtol, maxfev):
+        try:
+            sol = fsolve(f, x0, xtol=xtol, maxfev=maxfev)[0]
+            if sol > 0 and abs(f(sol)) < xtol:
+                return sol
+        except (RuntimeError, ValueError):
+            return None
+
+    roots = [
+        sol
+        for x0 in (guess_low, guess_high)
+        if (sol := _try_solve(f, x0, xtol, maxfev)) is not None
+    ]
+
+    # remove duplicates (within xtol) and sort
+    roots = np.unique(np.round(roots, int(-np.log10(xtol)))).tolist()
+    roots.sort()
+
+    if len(roots) > 1:
+        return roots[0], roots[1]
+    if len(roots) == 1:
+        return roots[0], None
+    return None, None
+
+
+def get_f_mom(tt_eV):
+    """
+    Compute the momentum loss factor f_mom as a function of target temperature Tt [eV].
+
+    Parameters
+    ----------
+    - Tt_eV: float or np.array
+        Target electron temperature in eV
+
+    Returns
+    -------
+    - f_mom: float or np.array
+        Corresponding momentum loss factor
+    """
+    return np.tanh(0.16 * tt_eV**1.42)
 
 
 def electron_density_and_temperature_sol_decay(
@@ -340,6 +533,8 @@ def electron_density_and_temperature_sol_decay(
     lambda_q_far: float,
     dx_mp: float,
     f_exp: float = 1,
+    *,
+    conduction: bool = True,
     t_factor_det: float | None = None,
     n_factor_det: float | None = None,
 ) -> tuple[np.ndarray, ...]:
@@ -392,7 +587,7 @@ def electron_density_and_temperature_sol_decay(
             Nuclear Fusion, 47(6), S203.
     """
     # temperature and density decay factors
-    if f_exp == 1:
+    if conduction:
         t_factor = 7 / 2
         n_factor = 1 / 3
     else:
@@ -411,7 +606,9 @@ def electron_density_and_temperature_sol_decay(
     lambda_n_near = n_factor * lambda_t_near
 
     te_sol = (t_sep) * np.exp(-dr / lambda_t_near)
+    te_sol = np.insert(te_sol, 0, t_sep)
     ne_sol = (n_sep) * np.exp(-dr / lambda_n_near)
+    ne_sol = np.insert(ne_sol, 0, n_sep)
 
     return te_sol, ne_sol
 
@@ -511,10 +708,10 @@ def ion_front_distance(
     avg_momentum_rate: float | None = None,
     n_r: float | None = None,
     rec_ext: float | None = None,
+    nhlh: float | None = None,
 ) -> float:
     """
     Manual definition of ion penetration depth.
-    TODO: Find sv_i and sv_m
 
     Parameters
     ----------
@@ -554,9 +751,12 @@ def ion_front_distance(
 
     # From total length to poloidal length
     pitch_angle = b_tot / b_pol
-    if rec_ext is None:
+    if rec_ext is None and nhlh is None:
         den_lambda = 3 * np.pi * m_i * avg_ion_rate * avg_momentum_rate
         z_ext = np.sqrt((8 * t_tar) / den_lambda) ** (1 / n_r)
+    elif rec_ext is None and nhlh is not None:
+        rec_ext = nhlh / n_r
+        z_ext = rec_ext * np.sin(pitch_angle)
     else:
         z_ext = rec_ext * np.sin(pitch_angle)
 
@@ -998,6 +1198,8 @@ class DetectedRadiation:
     detected_power: npt.NDArray[np.float64]
     detected_power_stdev: npt.NDArray[np.float64]
     detector_area: npt.NDArray[np.float64]
+    r_coord: npt.NDArray[np.float64]
+    z_coord: npt.NDArray[np.float64]
     detector_numbers: npt.NDArray[np.float64]
     distance: npt.NDArray[np.float64]
     total_power: float
@@ -1028,6 +1230,8 @@ def detect_radiation(
     detected_power_stdev = []
     detector_area = []
     power_density_stdev = []
+    r_coord = []
+    z_coord = []
 
     running_distance = 0
     cherab_total_power = 0
@@ -1071,9 +1275,10 @@ def detect_radiation(
 
         # Append the collected data to the storage lists
         detector_radius = np.sqrt(
-            detector.detector_center.x**2 + detector.detector_center.y**2
+            detector.detector_center.x**2 + detector.detector_center.z**2
         )
-
+        r_coord.append(detector.detector_center.x)
+        z_coord.append(detector.detector_center.z)
         detector_area.append(pixel_area)
         power_density.append(
             power_data.value.mean / pixel_area
@@ -1105,6 +1310,8 @@ def detect_radiation(
         np.asarray(detected_power),
         np.asarray(detected_power_stdev),
         np.asarray(detector_area),
+        np.asarray(r_coord),
+        np.asarray(z_coord),
         np.arange(len(wall_detectors), dtype=int),
         np.asarray(distance),
         cherab_total_power,
@@ -1335,7 +1542,7 @@ class FirstWallRadiationSolver:
         shift = translate(0, 0, np.min(self.fw_shape.z))
         height = np.max(self.fw_shape.z) - np.min(self.fw_shape.z)
         rad_3d = AxisymmetricMapper(self.rad_source)
-        ray_stepsize = 1.0  # 2.0e-4
+        ray_stepsize = 1  # 2.0e-4
         emitter = VolumeTransform(
             RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
             translate(0, 0, np.max(self.fw_shape.z)),
@@ -1358,7 +1565,7 @@ class FirstWallRadiationSolver:
                 rad_3d,
                 wall_detectors,
                 wall_loads,
-                "SOL & divertor radiation loads",
+                "Core and SOL radiation loads",
                 self.fw_shape,
             )
 

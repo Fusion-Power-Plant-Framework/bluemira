@@ -28,6 +28,7 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
     analyse_first_wall_flux_surfaces,
 )
 from bluemira.radiation_transport.radiation_tools import (
+    calculate_connection_length,
     calculate_line_radiation_loss,
     calculate_total_radiated_power,
     electron_density_and_temperature_sol_decay,
@@ -40,7 +41,8 @@ from bluemira.radiation_transport.radiation_tools import (
     radiative_loss_function_plot,
     radiative_loss_function_values,
     specific_point_temperature,
-    target_temperature,
+    target_temperature_extended_2pm,
+    target_temperature_local,
     upstream_temperature,
 )
 
@@ -73,7 +75,9 @@ class RadiationSourceParams(ParameterFrame):
     """Temperature profile index"""
     det_t: Parameter[float]
     """Detachment target temperature"""
-    eps_cool: Parameter[float]
+    eps_ion: Parameter[float]
+    """electron energy loss"""
+    eps_hrad: Parameter[float]
     """electron energy loss"""
     f_ion_t: Parameter[float]
     """Hydrogen first ionization"""
@@ -97,6 +101,8 @@ class RadiationSourceParams(ParameterFrame):
     """Lambda_n factor for non conduction-limited regime"""
     gamma_sheath: Parameter[float]
     """sheath heat transmission coefficient"""
+    eps_pot: Parameter[float]
+    """electron energy loss"""
     k_0: Parameter[float]
     """material's conductivity"""
     lfs_p_fraction: Parameter[float]
@@ -220,7 +226,7 @@ class Radiation:
 
         if core is True:
             return te
-
+        # print("t_mp", te_mp, "t_rad_in", t_rad_in, "rad_i_0", rad_i[0])
         if rad_i is not None:
             if len(rad_i) == 1:
                 te[rad_i] = t_rad_in
@@ -233,7 +239,10 @@ class Radiation:
                     t_rad_out * 0.95, t_tar, len(rec_i), decay=True
                 )
             else:
-                te[rec_i] = t_tar
+                # te[rec_i] = t_tar
+                te[rec_i] = exponential_decay(
+                    t_rad_out * 0.95, t_tar, len(rec_i), decay=True
+                )
 
         if main_chamber_rad:
             if rad_i is None or rec_i is None:
@@ -303,17 +312,24 @@ class Radiation:
         if rad_i is not None and len(rad_i) == 1:
             ne[rad_i] = n_rad_in
         elif rad_i is not None and len(rad_i) > 1:
+            # if (n_rad_out - n_rad_in) < 0:
+            # print("case 1", n_rad_out, n_rad_in)
             ne[rad_i] = gaussian_decay(n_rad_out, n_rad_in, len(rad_i), decay=False)
 
         if rec_i is not None and len(rad_i) == 1:
             ne[rec_i] = n_tar
         elif rec_i is not None and len(rec_i) > 0:
+            # if (n_rad_out - n_tar) < 0:
+            # print("case 2", n_rad_out, n_tar)
             ne[rec_i] = gaussian_decay(n_rad_out, n_tar, len(rec_i))
+
         if rec_i is not None and len(rec_i) > 0:
             if rad_i is None:
                 raise ValueError("'rad_i' not specified with 'rec_i'")
             if len(rad_i) > 1:
                 gap = ne[rad_i[-1]] - ne[rad_i[-2]]
+                # if (n_rad_out - gap - n_tar) < 0:
+                # print("case 3", n_rad_out, n_tar)
                 ne[rec_i] = gaussian_decay(n_rad_out - gap, n_tar, len(rec_i))
 
         if main_chamber_rad:
@@ -674,14 +690,14 @@ class ScrapeOffLayerRadiation(Radiation):
         self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector_omp.value
         # magnetic field components at the midplane
         self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
-        b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
-        self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
+        self.b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
+        self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, self.b_tor_sep_omp)
 
         if self.eq.is_double_null:
             self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector_imp.value
             self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
-            b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
-            self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
+            self.b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
+            self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, self.b_tor_sep_imp)
 
     def x_point_radiation_z_ext(
         self,
@@ -861,9 +877,10 @@ class ScrapeOffLayerRadiation(Radiation):
         x_p: float,
         z_p: float,
         t_p: float,
-        t_u: float,
+        n_p: float,
         *,
         lfs: bool = True,
+        conduction: bool = True,
     ) -> tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
@@ -912,12 +929,6 @@ class ScrapeOffLayerRadiation(Radiation):
         # flux expansion
         f_p = (r_sep_mp * b_pol_sep_mp) / (x_p * b_pol_p)
 
-        # Ratio between upstream and local temperature
-        f_t = t_u / t_p
-
-        # Local electron density
-        n_p = self.params.n_e_sep.value * f_t
-
         # Temperature and density profiles across the SoL
         te_prof, ne_prof = electron_density_and_temperature_sol_decay(
             t_p,
@@ -926,52 +937,12 @@ class ScrapeOffLayerRadiation(Radiation):
             fw_lambda_q_far,
             dx,
             f_exp=f_p,
+            conduction=conduction,
             t_factor_det=self.params.lambda_t_factor.value,
             n_factor_det=self.params.lambda_n_factor.value,
         )
 
         return te_prof, ne_prof
-
-    def tar_electron_densitiy_temperature_profiles(
-        self,
-        ne_div: np.ndarray,
-        te_div: np.ndarray,
-        f_m: float = 1,
-        *,
-        detachment: bool = False,
-    ) -> tuple[np.ndarray, ...]:
-        """
-        Calculation of electron density and electron temperature profiles
-        across the SoL at the target.
-        From the pressure balance, considering friction losses.
-
-        Parameters
-        ----------
-        ne_div:
-            density of the flux tubes at the entrance of the recycling region,
-            assumed to be corresponding to the divertor plane [1/m^3]
-        te_div:
-            temperature of the flux tubes at the entrance of the recycling region,
-            assumed to be corresponding to the divertor plane [eV]
-        f_m:
-            fractional loss of pressure due to friction.
-            It can vary between 0 and 1.
-
-        Returns
-        -------
-        te_t:
-            target temperature [eV]
-        ne_t:
-            target density [1/m^3]
-        """
-        if detachment:
-            te_t = np.full(len(te_div), self.params.det_t.value_as("eV"))
-            f_m = 0.1
-        else:
-            te_t = te_div
-        ne_t = (f_m * ne_div) / 2
-
-        return te_t, ne_t
 
     def calculate_sector_distributions(
         self,
@@ -984,7 +955,6 @@ class ScrapeOffLayerRadiation(Radiation):
         rec_ext: float | None = None,
         *,
         x_point_rad: bool = False,
-        detachment: bool = False,
         lfs: bool = True,
         low_div: bool = True,
         main_chamber_rad: bool = False,
@@ -1045,8 +1015,6 @@ class ScrapeOffLayerRadiation(Radiation):
         ValueError
             Required inputs not provided
         """
-        f_ion_t_eV = self.params.f_ion_t.value_as("eV")
-
         # Validity condition for not x-point radiative
         if not x_point_rad and rec_ext is None:
             raise ValueError("Required recycling region extention: rec_ext")
@@ -1077,37 +1045,62 @@ class ScrapeOffLayerRadiation(Radiation):
         # setting radiation and recycling regions
         z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div=low_div)
 
+        # in is the radiation region entrance above the x-point
+        # out is the radiation region exit below the x-point
         in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs=lfs)
+        # magnetic field components for in and out
+        b_pol_in = self.eq.Bp(in_x, in_z)
+        b_tor_in = self.eq.Bt(in_x)
+        b_tot_in = np.hypot(b_pol_in, b_tor_in)
 
+        # selecting points within radiation region ends
         reg_i = [
             self.radiation_region_points(f.coords, z_main, z_pfr, lower=low_div)
             for f in flux_tubes
         ]
 
-        # mid-plane parameters
+        # setting mid-plane and target parameters
         if lfs or not self.eq.is_double_null:
-            t_u_kev = self.t_omp
-            b_pol_tar = self.b_pol_out_tar
-            b_pol_u = self.b_pol_sep_omp
             r_sep_mp = self.r_sep_omp
-            # alpha = self.params.theta_outer_target.value
-            alpha = self.alpha_lfs
-            b_tot_tar = self.b_tot_out_tar
-            fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
+            t_u_kev = self.t_omp
+            q_par_mp = self.q_par_omp
+            b_pol_u = self.b_pol_sep_omp
+            b_tot_u = self.b_tot_sep_omp
             sep_corrector = self.params.sep_corrector_omp.value
+            f_rad = 0.1
+            gamma_recyc = 8  # For DN it was 2
+            alpha = self.alpha_lfs
         else:
-            t_u_kev = self.t_imp
-            b_pol_tar = self.b_pol_inn_tar
-            b_pol_u = self.b_pol_sep_imp
             r_sep_mp = self.r_sep_imp
-            # alpha = self.params.theta_inner_target.value
-            alpha = self.alpha_hfs
-            b_tot_tar = self.b_tot_inn_tar
-            fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
+            t_u_kev = self.t_imp
+            q_par_mp = self.q_par_imp
+            b_pol_u = self.b_pol_sep_imp
+            b_tot_u = self.b_tot_sep_imp
             sep_corrector = self.params.sep_corrector_imp.value
+            f_rad = 0.1
+            gamma_recyc = 7
+            alpha = self.alpha_hfs
+
+        # calculating connection length a the radiation region ends
+        d = sep_corrector if lfs else -sep_corrector
+        # Stangeby 2000 POLOIDAL flux expansion -> l_t = l_u * f_exp
+        f_exp_in = b_pol_u * b_tot_in / (b_pol_in * b_tot_u)
+        # TOTAL flux ration Petrie 2013 -> q_t = q_u/f_r
+
+        # Connection length from imp to inner recycling
+        # Here we use the POLOIDAL flux expansion
+        connection_length_in = calculate_connection_length(
+            in_x + (d * f_exp_in),
+            in_z,
+            self.eq,
+            firstwall_geom,
+            r_sep_mp,
+            self.points["o_point"]["z"],
+        )
 
         # Coverting needed parameter units
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
+
         p_sol = self.params.P_sep.value
 
         if self.eq.is_double_null:
@@ -1117,72 +1110,83 @@ class ScrapeOffLayerRadiation(Radiation):
                 else (1 - self.params.lfs_p_fraction.value)
             )
 
+        # Midplane radial temperature and density decay through the SOL
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             t_u_ev, omp=lfs
         )
-        # entrance of radiation region
+
+        # radiation region entrance - above the x-point
+        # Here we use the TOTAL flux expansion
         t_rad_in = specific_point_temperature(
-            in_x,
-            in_z,
-            t_u_ev,
-            p_sol,
-            fw_lambda_q_near,
-            self.eq,
-            r_sep_mp,
-            self.points["o_point"]["z"],
-            self.params.k_0.value,
-            sep_corrector,
-            firstwall_geom,
-            lfs=lfs,
+            q_par_u=q_par_mp,
+            t_ref=t_u_ev,
+            k_0=self.params.k_0.value,
+            connection_length=connection_length_in,
+            b_pol_tar=b_pol_in,
+            b_tot_u=b_tot_u,
         )
 
-        # exit of radiation region
-        t_rad_out = (
-            f_ion_t_eV
-            if (x_point_rad and pfr_ext is not None) or detachment
-            else target_temperature(
-                p_sol,
-                t_u_ev,
-                self.params.n_e_sep.value,
-                self.params.gamma_sheath.value,
-                self.params.eps_cool.value_as("eV"),
-                f_ion_t_eV,
-                b_pol_tar,
-                b_pol_u,
-                alpha,
-                r_sep_mp,
-                x_strike,
-                fw_lambda_q_near,
-                b_tot_tar,
-            )
-        )
-
-        # condition for occurred detachment
-        if t_rad_out <= self.params.f_ion_t.value_as("eV"):
-            x_point_rad = detachment = True
-
-        # profiles through the SoL
+        # Electron density
+        f_t_in = t_u_ev / t_rad_in
+        n_rad_in = self.params.n_e_sep.value * f_t_in
+        # Radial temperature and density decay through the SOL
         t_in_prof, n_in_prof = self.any_point_density_temperature_profiles(
             in_x,
             in_z,
             t_rad_in,
-            t_u_ev,
+            n_p=n_rad_in,
             lfs=lfs,
+            conduction=True,
         )
 
+        # Radiation region exit temperature - below the x-point
+        # Potentially entrance of recycling region also coincident with ionisation front
+        # As first approximation we can assume that the temperature remains constant
+        # throughout the recycling region therefore the target temperature is also
+        # the recycling region temperature
+        t_rad_out, q_par_out, _, _, _ = target_temperature_extended_2pm(
+            q_par_u=q_par_mp,
+            f_rad=f_rad,
+            t_u=t_u_ev,
+            n_u=self.params.n_e_sep.value,
+            gamma=gamma_recyc,
+        )
+        # Electron density
+        f_t_out = t_rad_in / t_rad_out
+        n_rad_out = n_rad_in * f_t_out
+        # Radial temperature and density decay through the SOL
         t_out_prof, n_out_prof = self.any_point_density_temperature_profiles(
             out_x,
             out_z,
             t_rad_out,
-            t_u_ev,
+            n_rad_out,
             lfs=lfs,
+            conduction=True,
         )
 
-        t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
-            n_out_prof,
-            t_out_prof,
-            detachment=detachment,
+        # Target temperature
+        # Here we drop the previous assumptions Tr=Tt, and considering other mechanisms
+        # otherwise ignored, we let the temperature drop further throughout the recycling
+        # so that finally can be Tt<Tr
+        t_tar_for_rad, _, n_tar, _, _, _ = target_temperature_local(
+            q_r=q_par_out,
+            n_r=n_rad_out,
+            eps_hrad=self.params.eps_hrad.value_as("eV"),
+            eps_pot=self.params.eps_pot.value_as("eV"),
+            gamma=gamma_recyc,
+            t_initial=t_rad_out,
+            alpha_pol_deg=alpha,
         )
+        # Radial temperature and density decay through the SOL
+        t_tar_prof, n_tar_prof = self.any_point_density_temperature_profiles(
+            x_strike,
+            z_strike,
+            t_tar_for_rad,
+            n_tar,
+            lfs=lfs,
+            conduction=False,
+        )
+
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
@@ -1206,7 +1210,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 strict=False,
             )
         ]
-        # density poloidal distribution
+
         n_pol = [
             self.flux_tube_pol_n(
                 f.coords,
@@ -1424,15 +1428,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     ):
         super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
 
-        self.impurities_content = [
-            frac for key, frac in impurity_content.items() if key != "H"
-        ]
-        self.imp_data_t_ref = [
-            data["T_ref"] for key, data in impurity_data.items() if key != "H"
-        ]
-        self.imp_data_l_ref = [
-            data["L_ref"] for key, data in impurity_data.items() if key != "H"
-        ]
+        self.impurities_content = [frac for key, frac in impurity_content.items()]
+        self.imp_data_t_ref = [data["T_ref"] for key, data in impurity_data.items()]
+        self.imp_data_l_ref = [data["L_ref"] for key, data in impurity_data.items()]
         # Flux tubes from the particle solver
         # partial flux tube from the mp to the target at the
         # outboard and inboard - lower divertor
@@ -1465,29 +1463,51 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         p_sol_lfs = p_sol * self.params.lfs_p_fraction.value
         p_sol_hfs = p_sol * (1 - self.params.lfs_p_fraction.value)
 
+        connection_length_omp = calculate_connection_length(
+            self.r_sep_omp, self.points["o_point"]["z"], self.eq, firstwall_geom
+        )
+
+        connection_length_imp = calculate_connection_length(
+            self.r_sep_imp, self.points["o_point"]["z"], self.eq, firstwall_geom
+        )
+        self.L_tot_omp = connection_length_omp
+        # print("this is Ltot", self.L_tot_omp)
+        self.L_tot_imp = connection_length_imp
+
+        # print("full_connection_length_imp:", connection_length_imp)
+        # I suspect this f_r factor for a long leg cannot be reduced to radius ratio
+        f_r_omp_petrie = self.x_strike_lfs / x_sep_omp
+        # f_r_omp_petrie = b_tot_u/b_tot_out
+        # To double check if I understood what f_r is
+        f_r_omp_sph = (
+            1.825 * self.x_strike_lfs * self.b_pol_out_tar * self.b_tot_sep_omp
+        ) / (x_sep_omp * self.b_pol_sep_omp * self.b_tot_out_tar)
+        # I think for the hfs the radius ratio is acceptable
+        f_r_imp_petrie = self.x_strike_hfs / x_sep_imp
+        self.f_R_omp = f_r_omp_petrie
+        self.f_R_imp = f_r_imp_petrie
         # upstream temperature and power density
-        self.t_omp = upstream_temperature(
+        self.t_omp, self.q_par_omp, self.q_pol_omp = upstream_temperature(
             b_pol=self.b_pol_sep_omp,
             b_tot=self.b_tot_sep_omp,
             lambda_q_near=self.params.fw_lambda_q_near_omp.value,
             p_sol=p_sol_lfs,
-            eq=self.eq,
-            r_sep_mp=self.r_sep_omp,
-            z_mp=self.z_mp,
+            r_sep=self.r_sep_omp,
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            connection_length=connection_length_omp,
+            f_r=f_r_omp_sph,
         )
 
-        self.t_imp = upstream_temperature(
+        self.t_imp, self.q_par_imp, self.q_pol_imp = upstream_temperature(
             b_pol=self.b_pol_sep_imp,
             b_tot=self.b_tot_sep_imp,
             lambda_q_near=self.params.fw_lambda_q_near_imp.value,
             p_sol=p_sol_hfs,
-            eq=self.eq,
-            r_sep_mp=self.r_sep_imp,
-            z_mp=self.z_mp,
+            r_sep=self.r_sep_imp,
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            high_rec=False,  # Turn this True to reduce Tu but it would increase Tr
+            connection_length=connection_length_imp,
+            f_r=f_r_imp_petrie,
         )
 
     def calculate_sol_distribution(self, firstwall_geom: Grid):
@@ -1526,7 +1546,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 pfr_ext=None,
                 rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
-                detachment=False,
                 lfs=side == "lfs",
                 low_div=low_up == "low",
                 main_chamber_rad=True,
@@ -1534,7 +1553,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             for side in ["lfs", "hfs"]
             for low_up in ["low", "up"]
         }
-
         return self.t_and_n_pol
 
     def calculate_sol_radiation_distribution(
@@ -1784,17 +1802,36 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         p_sol = self.params.P_sep.value
 
+        # FIXING SN
         # upstream temperature and power density
-        self.t_omp = upstream_temperature(
+        # Old SN
+        # self.t_omp = upstream_temperature(
+        #    b_pol=self.b_pol_sep_omp,
+        #    b_tot=self.b_tot_sep_omp,
+        #    lambda_q_near=self.params.fw_lambda_q_near_omp.value,
+        #    p_sol=p_sol,
+        #    eq=self.eq,
+        #    r_sep_mp=self.r_sep_omp,
+        #    z_mp=self.points["o_point"]["z"],
+        #    k_0=self.params.k_0.value,
+        #    firstwall_geom=firstwall_geom,
+        # )
+        # New SN
+        connection_length_omp = calculate_connection_length(
+            self.r_sep_omp, self.points["o_point"]["z"], self.eq, firstwall_geom
+        )
+        f_r_omp_sph = (
+            1.825 * self.x_strike_lfs * self.b_pol_out_tar * self.b_tot_sep_omp
+        ) / (x_sep_omp * self.b_pol_sep_omp * self.b_tot_out_tar)
+        self.t_omp, self.q_par_omp, self.q_pol_omp = upstream_temperature(
             b_pol=self.b_pol_sep_omp,
             b_tot=self.b_tot_sep_omp,
             lambda_q_near=self.params.fw_lambda_q_near_omp.value,
             p_sol=p_sol,
-            eq=self.eq,
-            r_sep_mp=self.r_sep_omp,
-            z_mp=self.points["o_point"]["z"],
+            r_sep=self.r_sep_omp,
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            connection_length=connection_length_omp,
+            f_r=f_r_omp_sph,
         )
 
     def calculate_sol_distribution(
@@ -1829,7 +1866,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 pfr_ext=None,
                 rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
-                detachment=False,
+                # detachment=False, # For New SN
                 lfs=side == "lfs",
                 low_div=True,
                 main_chamber_rad=True,
@@ -2232,6 +2269,7 @@ class RadiationSource:
         self.core_rad.calculate_core_radiation_map()
 
         t_and_n_sol_profiles = self.sol_rad.calculate_sol_distribution(firstwall_geom)
+
         rad_sector_profiles = self.sol_rad.calculate_sol_radiation_distribution(
             **t_and_n_sol_profiles
         )
