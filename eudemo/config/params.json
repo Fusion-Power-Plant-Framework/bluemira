@@ -320,13 +320,13 @@
     "long_name": "Conduction and radiation heat loads on cryogenic components"
   },
   "delta": {
-    "value": 0.5,
+    "value": 0.4,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Last closed surface plasma triangularity"
   },
   "delta_95": {
-    "value": 0.333,
+    "value": 0.29,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "95th percentile plasma triangularity"
@@ -455,7 +455,7 @@
     "long_name": "Normalised internal plasma inductance"
   },
   "n_TF": {
-    "value": 16,
+    "value": 18,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Number of TF coils"
