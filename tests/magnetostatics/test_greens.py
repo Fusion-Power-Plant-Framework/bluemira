@@ -185,7 +185,7 @@ class TestGreensEdgeCases:
         np.testing.assert_allclose(0.0, func(*zero_point), atol=1e-6)
 
     @pytest.mark.parametrize(
-        "small_point", [[1, 1, 1 + 1e-4, 1 + 1e-4], [-1, -1, -(1 + 1e-4), -(1 + 1e-4)]]
+        "small_point", [[1, 1, 1 + 1e-4, 1 + 1e-4], [1, -1, 1 + 1e-4, -(1 + 1e-4)]]
     )
     def test_greens_at_small_distance_from_point(self, small_point):
         print(greens_dbz_dx(*small_point))
