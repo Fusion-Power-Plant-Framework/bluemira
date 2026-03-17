@@ -114,7 +114,7 @@ def get_figure_scale_factor(figsize):
     return sf
 
 
-def plot_defaults(*, force=False):
+def plot_defaults(*, force=False, override_scale=None):
     """
     Set a series of plotting defaults based on machine and user.
 
@@ -128,9 +128,10 @@ def plot_defaults(*, force=False):
         force default figsize irrespective of screen size
     """
     figsize = np.array([18, 15])
-
-    sf = 1 if force else get_figure_scale_factor(figsize)
-
+    if override_scale is not None:
+        sf = override_scale
+    else:
+        sf = 1 if force else get_figure_scale_factor(figsize)
     sns.set_theme(
         context="paper",
         style="ticks",
