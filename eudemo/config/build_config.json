@@ -117,7 +117,7 @@
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "enabled": true,
+    "enabled": false,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "particles": 100000,
     "batches": 2,
@@ -145,17 +145,14 @@
       "Casing": "Toroidal_Field_Coil_2015",
       "Insulation": "Toroidal_Field_Coil_2015"
     },
-    "param_class": "TripleArc",
+    "param_class": "eudemo.tf_coils.tf_coil_parameterisations::TFCoilPolySpline",
     "variables_map": {
-      "sl": { "value": 10.0, "lower_bound": 8.0, "upper_bound": 11.44 },
-      "f1": { "value": 4.0, "lower_bound": 4.0 },
-      "f2": { "value": 4.0, "lower_bound": 4.0 }
     },
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
     "problem_settings": {
       "ripple_selector": {
         "cls": "bluemira.builders.tf_coils::EquispacedSelector",
-        "args": { "n_rip_points": 10 }
+        "args": { "n_rip_points": 50 }
       },
       "n_koz_points": 50,
       "nx": 1,

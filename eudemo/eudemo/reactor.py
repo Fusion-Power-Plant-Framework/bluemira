@@ -54,6 +54,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     distance_to,
     interpolate_bspline,
+    make_polygon,
     offset_wire,
     save_cad,
 )
@@ -742,7 +743,7 @@ if __name__ == "__main__":
         reactor.tf_coils = build_tf_coils(
             reactor_config.params_for("TF coils"),
             reactor_config.config_for("TF coils"),
-            reactor.plasma.lcfs(),
+            make_polygon(lcfs_coords),
             vv_thermal_shield.xz_boundary,
         )
 
