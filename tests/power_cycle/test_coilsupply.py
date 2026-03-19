@@ -555,7 +555,7 @@ def save_breakdown_verification(breakdown_data, t_start_breakdown, fpath=None):
 # Voltages, currents are first re-ordered and later used as arguments.
 # Returned power values are summed and compared against the original results.
 #
-# The figures show how the estaimtes of active and reactive power per coil
+# The figures show how the estimates of active and reactive power per coil
 # largely coincide with the original data, between the start of breakdown and
 # the end of ramp-down. This is represented by the calculation of a normalized
 # RMS deviation between the curves within that time period.
