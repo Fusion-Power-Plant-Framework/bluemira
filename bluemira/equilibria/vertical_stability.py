@@ -86,13 +86,17 @@ class RZIp:
         # TODO @je-cook: Possibly implement quad indexing?
         # 1231231231231
         self._coilset = cs
+        uncontrolled_ind = list(
+            set(self.coilset._get_type_index()) - set(self.coilset._control_ind)
+        )
+        reduced_coilset = cs[uncontrolled_ind]
         try:
             self.ind_mat = make_mutual_inductance_matrix(
-                cs, square_coil=True, with_quadratures=False
+                reduced_coilset, square_coil=True, with_quadratures=False
             )
         except IndexError:
             self.ind_mat = make_mutual_inductance_matrix(
-                cs, square_coil=True, with_quadratures=True
+                reduced_coilset, square_coil=True, with_quadratures=True
             )
         diag = np.diag(np.diag(self.ind_mat))
         non_diag = (
