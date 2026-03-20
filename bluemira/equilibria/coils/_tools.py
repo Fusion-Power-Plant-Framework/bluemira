@@ -66,6 +66,7 @@ def make_mutual_inductance_matrix(
         zcoord = coilset._quad_z.flatten()
         dx = coilset._quad_dx.flatten()
         dz = coilset._quad_dz.flatten()
+        # remove zeros created in _pad_discretisation
         zero_idxs = np.nonzero(dx)
         xcoord = xcoord[zero_idxs]
         zcoord = zcoord[zero_idxs]

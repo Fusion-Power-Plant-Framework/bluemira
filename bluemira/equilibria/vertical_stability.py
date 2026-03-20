@@ -86,10 +86,7 @@ class RZIp:
         # TODO @je-cook: Possibly implement quad indexing?
         # 1231231231231
         self._coilset = cs
-        uncontrolled_ind = list(
-            set(self.coilset._get_type_index()) - set(self.coilset._control_ind)
-        )
-        reduced_coilset = cs[uncontrolled_ind]
+        reduced_coilset = cs.get_uncontrolled_coils()
         try:
             self.ind_mat = make_mutual_inductance_matrix(
                 reduced_coilset, square_coil=True, with_quadratures=False
@@ -176,7 +173,7 @@ def stab_destab(
         The stability criterion
     """
     r_active = r_struct[control_ind, :]
-    mss = ind_mat[uncontrolled_ind][:, uncontrolled_ind]
+    mss = ind_mat
     r_struct = r_struct[uncontrolled_ind, :]
     br_struct_grid = br_struct_grid[uncontrolled_ind, ...]
     shape = np.shape(br_struct_grid)
