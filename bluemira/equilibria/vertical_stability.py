@@ -226,7 +226,7 @@ def _length_step(p1, p2, delta) -> float:
     return 0.5 * delta * ((np.sqrt(2) + 1) - (np.sqrt(2) - 1) * np.cos(4 * theta))
 
 
-def get_coil_points(wire: BluemiraWire, thickness: float) -> np.ndarray:
+def _get_coil_points_along_wire(wire: BluemiraWire, thickness: float) -> np.ndarray:
     """
     Discretises input wire in such a way that squares centred on
     those points will not overlap whilst minimising gaps.
@@ -265,11 +265,13 @@ def get_coil_points(wire: BluemiraWire, thickness: float) -> np.ndarray:
     return points
 
 
-def make_coils_from_wire(
+def make_coils_along_wire(
     wire: BluemiraWire,
     thickness: float,
     simple: bool = True,  # noqa: FBT001, FBT002
+    name_prefix: str = "Passive",
     ctype: CoilType = CoilType.DUM,
+    resistivity: float = 0.0,
 ) -> CoilGroup:
     """
     Function to create a coilset from a wire, where the coils making up the coilset
@@ -290,6 +292,8 @@ def make_coils_from_wire(
         Method of discretising the input wire.
     ctype:
         Coil type
+    resistivity:
+        Resistivity of the coil material [Ohm . m]
 
     Returns
     -------
@@ -299,17 +303,22 @@ def make_coils_from_wire(
     if simple:
         coil_points = wire.discretise(dl=np.sqrt(2) * thickness).T
     else:
-        coil_points = get_coil_points(wire, thickness)
+        coil_points = _get_coil_points_along_wire(wire, thickness)
+    coil_area = thickness**2
+    resistance_factor = resistivity * 2 * np.pi / coil_area
     coils = [
         Coil(
             x=point[0],
             z=point[2],
             dx=0.5 * thickness,
             dz=0.5 * thickness,
+            name=f"{name_prefix}_{i}",
             ctype=ctype,
+            current=0.0,
             n_turns=1,
             discretisation=np.nan,
+            resistance=resistance_factor * point[0],
         )
-        for point in coil_points
+        for i, point in enumerate(coil_points)
     ]
     return CoilGroup(*coils)
