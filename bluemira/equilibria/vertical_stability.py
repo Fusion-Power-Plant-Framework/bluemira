@@ -290,6 +290,8 @@ def make_coils_along_wire(
         The thickness of the coils, will also impact the number of coils.
     simple:
         Method of discretising the input wire.
+    name_prefix:
+        Coil name prefix
     ctype:
         Coil type
     resistivity:
