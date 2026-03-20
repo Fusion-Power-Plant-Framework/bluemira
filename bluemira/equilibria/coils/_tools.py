@@ -66,33 +66,15 @@ def make_mutual_inductance_matrix(
         zcoord = coilset._quad_z.flatten()
         dx = coilset._quad_dx.flatten()
         dz = coilset._quad_dz.flatten()
-        non_zero_idxs = np.nonzero(dx)
-        xcoord = xcoord[non_zero_idxs]
-        zcoord = zcoord[non_zero_idxs]
-        dx = dx[non_zero_idxs]
-        dz = dz[non_zero_idxs]
-        n_coils = xcoord.size
+        zero_idxs = np.nonzero(dx)
+        xcoord = xcoord[zero_idxs]
+        zcoord = zcoord[zero_idxs]
+        dx = dx[zero_idxs]
+        dz = dz[zero_idxs]
+        n_coils = dx.size
         ncoils = coilset.n_coils()
-        base_duplication = n_coils / ncoils
-        if n_coils != ncoils:
-            if hasattr(coilset, "_control_ind"):
-                actives = len(coilset._control_ind)
-                active_turns = coilset.n_turns[:actives]
-                passive_turns = coilset.n_turns[actives:]
-                diff = n_coils - len(active_turns)
-                duplication = diff / len(passive_turns)
-
-            if hasattr(coilset, "_control_ind") and duplication.is_integer():
-                n_turns = np.append(active_turns, np.repeat(passive_turns, duplication))
-            elif base_duplication.is_integer():
-                n_turns = np.repeat(coilset.n_turns, duplication)
-            else:
-                difference = n_coils - ncoils
-                n_turns = np.append(
-                    coilset.n_turns, np.repeat(coilset.n_turns[-1], difference)
-                )
-        else:
-            n_turns = coilset.n_turns
+        duplication = n_coils / ncoils
+        n_turns = np.repeat(coilset.n_turns, duplication)
     else:
         n_coils = coilset.n_coils()
         xcoord = coilset.x
