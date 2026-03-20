@@ -6,9 +6,7 @@
 
 import numpy as np
 
-from bluemira.geometry.tools import (
-    make_polygon,
-)
+from bluemira.geometry.tools import make_polygon
 from bluemira.magnetostatics.tools import process_xyz_array, reduce_coordinates
 
 
