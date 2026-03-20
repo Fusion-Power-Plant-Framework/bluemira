@@ -7,7 +7,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.equilibria.vertical_stability import get_coil_points, make_coils_from_wire
+from bluemira.equilibria.vertical_stability import (
+    _get_coil_points_along_wire,
+    make_coils_along_wire,
+)
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import (
     make_circle,
@@ -64,12 +67,12 @@ class TestDiscretisation:
     def test_comparison_plot(self):
         simple_kwargs = {"edgecolor": "red", "facecolor": "white"}
         detailed_kwargs = {"edgecolor": "blue", "facecolor": "white"}
-        coils_circle_simple = make_coils_from_wire(self.circle, 0.06)
-        coils_circle = make_coils_from_wire(self.circle, 0.06, simple=False)
-        coils_ellipse_simple = make_coils_from_wire(self.ellipse, 0.06)
-        coils_ellipse = make_coils_from_wire(self.ellipse, 0.06, simple=False)
-        coils_dshape_simple = make_coils_from_wire(self.dshape, 0.06)
-        coils_dshape = make_coils_from_wire(self.dshape, 0.06, simple=False)
+        coils_circle_simple = make_coils_along_wire(self.circle, 0.06)
+        coils_circle = make_coils_along_wire(self.circle, 0.06, simple=False)
+        coils_ellipse_simple = make_coils_along_wire(self.ellipse, 0.06)
+        coils_ellipse = make_coils_along_wire(self.ellipse, 0.06, simple=False)
+        coils_dshape_simple = make_coils_along_wire(self.dshape, 0.06)
+        coils_dshape = make_coils_along_wire(self.dshape, 0.06, simple=False)
         f = plt.figure()
         ax1 = f.add_subplot(1, 3, 1)
         coils_circle_simple.plot(ax=ax1, **simple_kwargs)
@@ -82,9 +85,9 @@ class TestDiscretisation:
         coils_dshape.plot(ax=ax3)
 
     def test_coil_points(self):
-        coils_circle = make_polygon(get_coil_points(self.circle, 0.06))
+        coils_circle = make_polygon(_get_coil_points_along_wire(self.circle, 0.06))
         np.testing.assert_allclose(coils_circle.length, self.circle.length, rtol=1e-2)
-        coils_ellipse = make_polygon(get_coil_points(self.ellipse, 0.06))
+        coils_ellipse = make_polygon(_get_coil_points_along_wire(self.ellipse, 0.06))
         np.testing.assert_allclose(coils_ellipse.length, self.ellipse.length, rtol=1e-2)
-        coils_dshape = make_polygon(get_coil_points(self.dshape, 0.06))
+        coils_dshape = make_polygon(_get_coil_points_along_wire(self.dshape, 0.06))
         np.testing.assert_allclose(coils_dshape.length, self.dshape.length, rtol=1e-2)
