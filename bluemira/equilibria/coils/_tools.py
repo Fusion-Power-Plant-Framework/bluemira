@@ -73,8 +73,13 @@ def make_mutual_inductance_matrix(
         dz = dz[zero_idxs]
         n_coils = dx.size
         ncoils = coilset.n_coils()
-        duplication = n_coils / ncoils
-        n_turns = np.repeat(coilset.n_turns, duplication)
+        if n_coils != ncoils:
+            difference = n_coils - ncoils
+            n_turns = np.append(
+                coilset.n_turns, np.repeat(coilset.n_turns[-1], difference)
+            )
+        else:
+            n_turns = coilset.n_turns
     else:
         n_coils = coilset.n_coils()
         xcoord = coilset.x
