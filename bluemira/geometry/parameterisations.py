@@ -30,6 +30,7 @@ from scipy.special import iv as bessel
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_2d
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -1027,7 +1028,7 @@ class PrincetonDDiscrete(PrincetonD):
             xyz.T,
             label="outer_arc",
             **(
-                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, -1]}
+                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, 1]}
                 if with_tangency
                 else {}
             ),
@@ -1036,8 +1037,53 @@ class PrincetonDDiscrete(PrincetonD):
         # causing issues with offsetting
         # The real irony is that tangencies don't solve the problem..
         # 3586
+        blend_length = 0.5
+        scale = 0.3 * blend_length
+        first_z = z[0] - blend_length
         straight_segment = wire_closure(outer_arc, label="straight_segment")
-        return BluemiraWire([outer_arc, straight_segment], label=label)
+        straight_segment = make_polygon(
+            {"x": [x1, x1], "y": [0.0, 0.0], "z": [-first_z, first_z]},
+            label="straight_segment",
+        )
+
+        p0 = outer_arc.start_point()
+        t0 = outer_arc._shape.Edges[0].tangentAt(
+            outer_arc._shape.Edges[0].FirstParameter
+        )
+        p1 = straight_segment.end_point()
+        t1 = straight_segment._shape.Edges[-1].tangentAt(
+            straight_segment._shape.Edges[-1].LastParameter
+        )
+        t0.normalize()
+        t1.normalize()
+        # t0 = np.array([np.array(v) for v in t0])
+        # t1 = np.array([np.array(v) for v in t1])
+        from bluemira.codes._freecadapi import apiVector
+
+        cp1 = apiVector(*p0) - t0 * scale
+        cp2 = apiVector(*p1) + t1 * scale
+        joint = make_bezier(
+            Coordinates([p0.xyz.T[0], cp1, cp2, p1.xyz.T[0]]), label="upper_joint"
+        )
+
+        p0 = outer_arc.end_point()
+        t0 = outer_arc._shape.Edges[-1].tangentAt(
+            outer_arc._shape.Edges[-1].LastParameter
+        )
+        p1 = straight_segment.start_point()
+        t1 = straight_segment._shape.Edges[0].tangentAt(
+            straight_segment._shape.Edges[0].FirstParameter
+        )
+        t0.normalize()
+        t1.normalize()
+        cp1 = apiVector(*p0) + t0 * scale
+        cp2 = apiVector(*p1) - t1 * scale
+        joint2 = make_bezier(
+            Coordinates([p0.xyz.T[0], cp1, cp2, p1.xyz.T[0]]), label="lower_joint"
+        )
+
+        plot_2d([outer_arc, Coordinates(xyz), joint, joint2, straight_segment])
+        return BluemiraWire([outer_arc, joint2, straight_segment, joint], label=label)
 
 
 @dataclass

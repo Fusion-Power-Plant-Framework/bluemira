@@ -28,7 +28,7 @@ from bluemira.geometry.parameterisations import (
     _calculate_discrete_constant_tension_shape,
     _princeton_d,
 )
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import SweepShapeTransition, make_polygon, sweep_shape
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
@@ -115,6 +115,36 @@ class DummyToroidalFieldSolver:
 
 
 class TestPrincetonDDiscrete:
+    @classmethod
+    def setup_class(cls):
+        x1 = 5.0
+        tf_wp_depth = 0.7
+        tf_wp_width = 0.4
+        parameterisation = PrincetonDDiscrete(
+            {
+                "x1": {"value": x1, "fixed": True},
+                "x2": {"value": 14, "fixed": False},
+                "dz": {"value": 0.1},
+            },
+            n_TF=16,
+            tf_wp_depth=tf_wp_depth,
+            tf_wp_width=tf_wp_width,
+            n_points=30,
+            tolerance=0.01,
+        )
+        cls.wp_xs = make_polygon(
+            {
+                "x": 0.5
+                * np.array([-tf_wp_width, tf_wp_width, tf_wp_width, -tf_wp_width]),
+                "y": 0.5
+                * np.array([-tf_wp_depth, -tf_wp_depth, tf_wp_depth, tf_wp_depth]),
+                "z": 0.0,
+            },
+            closed=True,
+        )
+        cls.wp_xs.translate([x1, 0, 0])
+        cls.discrete_princeton_shape = parameterisation.create_shape()
+
     @pytest.mark.parametrize("x1", [4, 5])
     @pytest.mark.parametrize("x2", [10, 12])
     @pytest.mark.parametrize("n_tf", [12, 18])
@@ -191,20 +221,8 @@ class TestPrincetonDDiscrete:
                 n_TF=16,
             )
 
-    def test_princeton_d_disctrete_shape(self):
-        parameterisation = PrincetonDDiscrete(
-            {
-                "x1": {"value": 5, "fixed": True},
-                "x2": {"value": 14, "fixed": False},
-                "dz": {"value": 0.1},
-            },
-            n_TF=16,
-            tf_wp_depth=0.7,
-            tf_wp_width=0.4,
-            n_points=30,
-            tolerance=0.01,
-        )
-        shape = parameterisation.create_shape()
+    def test_princeton_d_discrete_shape(self):
+        shape = self.discrete_princeton_shape
         assert shape.is_closed()
         com = shape.center_of_mass
         bb = shape.bounding_box
@@ -212,6 +230,19 @@ class TestPrincetonDDiscrete:
         assert np.isclose(bb.x_max, 14.0, rtol=1e-3)
         assert np.isclose(com[1], 0.0)
         assert np.isclose(com[2], 0.1)
+
+    @pytest.mark.parametrize("frenet", [True, False])
+    @pytest.mark.parametrize(
+        "transition",
+        [
+            SweepShapeTransition.DEFAULT,
+            SweepShapeTransition.RIGHT_CORNER,
+            SweepShapeTransition.ROUND_CORNER,
+        ],
+    )
+    def test_princeton_d_discrete_sweep(self, frenet, transition):
+        shape = self.discrete_princeton_shape
+        sweep_shape(self.wp_xs, shape, frenet=frenet, transition=transition)
 
 
 class TestPictureFrame:
