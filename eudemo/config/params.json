@@ -455,7 +455,7 @@
     "long_name": "Normalised internal plasma inductance"
   },
   "n_TF": {
-    "value": 15,
+    "value": 16,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Number of TF coils"
