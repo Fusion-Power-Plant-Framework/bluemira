@@ -1067,8 +1067,8 @@ class PrincetonDDiscrete(PrincetonD):
         )
 
         p0 = outer_arc.end_point()
-        t0 = outer_arc._shape.Edges[-1].tangentAt(
-            outer_arc._shape.Edges[-1].LastParameter
+        t0 = outer_arc._shape.Edges[0].tangentAt(
+            outer_arc._shape.Edges[0].LastParameter
         )
         p1 = straight_segment.start_point()
         t1 = straight_segment._shape.Edges[0].tangentAt(
