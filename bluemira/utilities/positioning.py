@@ -74,7 +74,8 @@ class XZGeometryInterpolator(abc.ABC):
         """
         ...
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def dimension(self) -> int:
         """
         The dimension of the parametric space

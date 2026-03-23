@@ -11,7 +11,6 @@ A helper script to generate ParameterFrames as a python file and json file
 import argparse
 import inspect
 import sys
-from abc import abstractmethod
 from collections.abc import Sequence
 from copy import deepcopy
 from itertools import takewhile
@@ -154,7 +153,10 @@ def get_param_classes(module) -> dict:
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
         for m in inspect.getmembers(module, inspect.isclass)
         if hasattr(m[1], "param_cls")
-        and not isinstance(m[1].param_cls, type[None] | abstractmethod)
+        and not (
+            m[1].param_cls is None
+            or getattr(m[1].param_cls, "__isabstractmethod__", False)
+        )
     }
 
 

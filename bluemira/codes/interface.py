@@ -280,7 +280,8 @@ class CodesSolver(abc.ABC):
         self._run = self.run_cls(self.params, self.name)
         self._teardown = self.teardown_cls(self.params, self.name)
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def name(self):
         """
         The name of the solver.
@@ -289,7 +290,8 @@ class CodesSolver(abc.ABC):
         error messages for the concrete solver.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def setup_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the setup stage of the solver.
@@ -299,7 +301,8 @@ class CodesSolver(abc.ABC):
         define any required non-computational set up.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def run_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the computational stage of the
@@ -310,7 +313,8 @@ class CodesSolver(abc.ABC):
         external code or process.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def teardown_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the teardown stage of the
@@ -322,7 +326,8 @@ class CodesSolver(abc.ABC):
         parameters.
         """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def run_mode_cls(self) -> type[BaseRunMode]:
         """
         Class enumerating the run modes for this solver.
