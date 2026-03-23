@@ -39,9 +39,6 @@ jobs:
           uv pip compile pyproject.toml --upgrade --resolution=highest --python-version=3.11 --extra pinned -o requirements/uv/examples.txt --extra examples
           uv pip compile pyproject.toml --upgrade --resolution=highest --python-version=3.11 --extra pinned -o requirements/uv/all.txt --extra dev --extra polyscope --extra examples
 
-          # Fix astroid
-          sed -i s/"astroid=="/"astroid>="/g ./requirements/uv/all.txt
-
           # git
           git config user.email "107038218+fppf-bot@users.noreply.github.com"
           git config user.name "fppf-bot"
