@@ -468,6 +468,99 @@ def interpolate_bspline(
     return wire
 
 
+def make_bspline_g2_blend(
+    edge1: apiEdge,
+    edge2: apiEdge,
+    scale_t: float = 0.1,
+    scale_k: float = 0.03,
+) -> apiWire:
+    """
+    Create a G2-continuous B-spline blend between two edges.
+
+    This function generates a B-spline curve that connects `edge1` and `edge2`
+    while attempting to enforce G2 (curvature) continuity. The curve is constructed
+    by blending the tangents and curvature of the edges near their connection points.
+
+    Parameters
+    ----------
+    edge1 : apiEdge
+        The first edge to connect. The blend will attach to either its start or end,
+        depending on `at_end1`.
+    edge2 : apiEdge
+        The second edge to connect. The blend will attach to either its start or end,
+        depending on `at_start2`.
+    scale_t : float, optional
+        Scale factor for the tangent vector length used in the blend (default is 0.1).
+    scale_k : float, optional
+        Scale factor for curvature influence in the blend (default is 0.03).
+
+    Returns
+    -------
+    apiWire
+        A B-spline wire representing the blend curve between `edge1` and `edge2`.
+
+    Notes
+    -----
+    This is hot garbage. Tangency is not reliable.
+    """
+    e1 = edge1.copy()
+    e2 = edge2.copy()
+
+    u0 = e1.LastParameter
+    u1 = e2.FirstParameter
+
+    p0 = e1.valueAt(u0)
+    p1 = e2.valueAt(u1)
+    chord = p1 - p0
+
+    t0 = e1.tangentAt(u0)
+    t1 = e2.tangentAt(u1)
+    t0.normalize()
+    t1.normalize()
+
+    k0 = e1.derivative2At(u0)
+    k1 = e2.derivative2At(u1)
+
+    # Attempt to deal with orientation issues
+
+    # Start tangent: always point toward p1
+    if t0.dot(chord) < 0:
+        t0 = -t0
+        k0 = -k0
+
+    # End tangent: ignore FreeCAD tangent direction
+    # Force it to point back toward p0
+    if t1.dot(-chord) < 0:
+        t1 = -t1
+        k1 = -k1
+    else:
+        # Sometimes FreeCAD tangent points away even though dot < 0 is false
+        # Always enforce pointing toward start of blend
+        t1 = -t1
+        k1 = -k1
+
+    # Stupid fucking FreeCAD... hopeless just override and hope they fix
+    t1 = -t1
+    k1 = -k1
+
+    length = chord.Length
+    h_t = length * scale_t
+    h_k = length * scale_k
+
+    # Build quintic Bezier
+    p01 = p0 + t0 * h_t
+    p02 = p01 + k0 * h_k
+    p03 = p1 - t1 * h_t
+    p04 = p03 - k1 * h_k
+
+    poles = [p0, p01, p02, p04, p03, p1]
+
+    curve = Part.BezierCurve()
+    curve.setPoles(poles)
+
+    return apiWire(curve.toShape())
+
+
 def make_circle_curve(radius: float, center: apiVector, axis: apiVector) -> Part.Circle:
     """
     Make a Part.Circle with a consistent .Rotation property, by initializing a circle of

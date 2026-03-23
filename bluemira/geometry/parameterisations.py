@@ -29,6 +29,7 @@ from scipy.special import iv as bessel
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._freecadapi import make_bspline_g2_blend
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
@@ -703,7 +704,6 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 def _process_constant_tension_solver(
     solver, r, z, n_tf, tf_wp_width, tf_wp_depth
 ) -> CurrentSource:
-    from bluemira.geometry.coordinates import Coordinates  # noqa: PLC0415
     from bluemira.magnetostatics.biot_savart import BiotSavartFilament  # noqa: PLC0415
     from bluemira.magnetostatics.circuits import (  # noqa: PLC0415
         ArbitraryPlanarRectangularXSCircuit,
@@ -1020,8 +1020,6 @@ class PrincetonDDiscrete(PrincetonD):
             solver=None,
             tolerance=self._tolerance if tolerance is None else tolerance,
         )
-
-        z += self.variables.dz.value
         xyz = np.array([x, np.zeros(len(x)), z])
 
         outer_arc = interpolate_bspline(
@@ -1033,57 +1031,31 @@ class PrincetonDDiscrete(PrincetonD):
                 else {}
             ),
         )
-        # TODO @CoronelBuendia: Enforce tangency of this bspline...
-        # causing issues with offsetting
-        # The real irony is that tangencies don't solve the problem..
-        # 3586
-        blend_length = 0.5
-        scale = 0.3 * blend_length
+        # TODO @CoronelBuendia: This is a hot pile of garbage. I have tried half
+        # a dozen different ways, but I always end up fighting the unreliable
+        # tangents. Let us hope moving to e.g. cadquery helps with this.
+        # 5000
+        blend_length = 0.4
         first_z = z[0] - blend_length
-        straight_segment = wire_closure(outer_arc, label="straight_segment")
         straight_segment = make_polygon(
             {"x": [x1, x1], "y": [0.0, 0.0], "z": [-first_z, first_z]},
             label="straight_segment",
         )
-
-        p0 = outer_arc.start_point()
-        t0 = outer_arc._shape.Edges[0].tangentAt(
-            outer_arc._shape.Edges[0].FirstParameter
+        joint = BluemiraWire(
+            make_bspline_g2_blend(
+                straight_segment._shape.OrderedEdges[0],
+                outer_arc._shape.OrderedEdges[0],
+            )
         )
-        p1 = straight_segment.end_point()
-        t1 = straight_segment._shape.Edges[-1].tangentAt(
-            straight_segment._shape.Edges[-1].LastParameter
+        joint2 = BluemiraWire(
+            make_bspline_g2_blend(
+                outer_arc._shape.OrderedEdges[-1],
+                straight_segment._shape.OrderedEdges[0],
+            )
         )
-        t0.normalize()
-        t1.normalize()
-        # t0 = np.array([np.array(v) for v in t0])
-        # t1 = np.array([np.array(v) for v in t1])
-        from bluemira.codes._freecadapi import apiVector
-
-        cp1 = apiVector(*p0) - t0 * scale
-        cp2 = apiVector(*p1) + t1 * scale
-        joint = make_bezier(
-            Coordinates([p0.xyz.T[0], cp1, cp2, p1.xyz.T[0]]), label="upper_joint"
-        )
-
-        p0 = outer_arc.end_point()
-        t0 = outer_arc._shape.Edges[0].tangentAt(
-            outer_arc._shape.Edges[0].LastParameter
-        )
-        p1 = straight_segment.start_point()
-        t1 = straight_segment._shape.Edges[0].tangentAt(
-            straight_segment._shape.Edges[0].FirstParameter
-        )
-        t0.normalize()
-        t1.normalize()
-        cp1 = apiVector(*p0) + t0 * scale
-        cp2 = apiVector(*p1) - t1 * scale
-        joint2 = make_bezier(
-            Coordinates([p0.xyz.T[0], cp1, cp2, p1.xyz.T[0]]), label="lower_joint"
-        )
-
-        plot_2d([outer_arc, Coordinates(xyz), joint, joint2, straight_segment])
-        return BluemiraWire([outer_arc, joint2, straight_segment, joint], label=label)
+        wire = BluemiraWire([straight_segment, joint, outer_arc, joint2], label=label)
+        wire.translate((0.0, 0.0, self.variables.dz.value))
+        return wire
 
 
 @dataclass
