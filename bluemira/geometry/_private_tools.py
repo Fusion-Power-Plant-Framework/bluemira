@@ -397,6 +397,10 @@ def make_mixed_face(
     label:
         The label for the resulting BluemiraFace object
 
+    Returns
+    -------
+    The BluemiraFace of the mixed polygon/spline coordinates
+
     Other Parameters
     ----------------
     median_factor:
@@ -422,10 +426,6 @@ def make_mixed_face(
         wire, else an exception will be raised. By default True.
     debug:
         Whether or not to print debugging information
-
-    Returns
-    -------
-    The BluemiraFace of the mixed polygon/spline coordinates
 
     Raises
     ------

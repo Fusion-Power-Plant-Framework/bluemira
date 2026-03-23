@@ -159,14 +159,14 @@ class PlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         :
             Poloidal magnetic flux at the points [V.s/rad]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
             return self._plasma_psi
@@ -189,14 +189,14 @@ class PlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         :
             Radial magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
             return self._plasma_Bx
@@ -219,14 +219,14 @@ class PlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         :
             Vertical magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
             return self._plasma_Bz
@@ -248,14 +248,14 @@ class PlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         :
             Poloidal magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
             return self._plasma_Bp
@@ -315,13 +315,13 @@ class NoPlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         Poloidal magnetic flux at the points [V.s/rad]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         return self._return_zeros(x, z)
 
@@ -338,13 +338,13 @@ class NoPlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         Radial magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         return self._return_zeros(x, z)
 
@@ -361,13 +361,13 @@ class NoPlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         Vertical magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         return self._return_zeros(x, z)
 
@@ -384,13 +384,13 @@ class NoPlasmaCoil:
         z:
             Vertical coordinates at which to calculate.
 
-        Notes
-        -----
-        If both x and z are None, defaults to the full map on the grid.
-
         Returns
         -------
         Poloidal magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
         """
         return self._return_zeros(x, z)
 

@@ -254,17 +254,12 @@ def _make_optimiser(
     Returns
     -------
     :
-        An initialised optimiser object.
+        Configured optimiser.
 
     Raises
     ------
     OptimisationError
         Unknown Algorithm
-
-    Returns
-    -------
-    :
-        Configured optimiser.
     """
     if (alg := Algorithm(algorithm)) in NLOPT_ALG_MAPPING:
         optimiser = NloptOptimiser
@@ -306,15 +301,16 @@ def _process_bounds(
     bounds: tuple[npt.ArrayLike, npt.ArrayLike] | None, dims: int
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Raises
-    ------
-    ValueError
-        Length of bounds is not 2
 
     Returns
     -------
     :
         bounds converting ``None`` to +/-inf and expanding scalar bounds.
+
+    Raises
+    ------
+    ValueError
+        Length of bounds is not 2
     """
     if bounds is None:
         return (np.full(dims, -np.inf), np.full(dims, np.inf))

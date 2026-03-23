@@ -90,17 +90,19 @@ class BluemiraGeo(ABC, meshing.Meshable):
         """
         Check if objects objs can be used as boundaries.
 
-        Note: empty BluemiraGeo are allowed in case of objs == None.
+        Returns
+        -------
+        :
+            The objects that can be used as boundaries.
 
         Raises
         ------
         TypeError
             Only given boundary classes can be the boundary
 
-        Returns
-        -------
-        :
-            The objects that can be used as boundaries.
+        Notes
+        -----
+        Empty BluemiraGeo are allowed in case of objs == None.
         """
         if objs is None:
             return objs
