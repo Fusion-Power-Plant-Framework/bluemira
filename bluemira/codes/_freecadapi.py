@@ -815,17 +815,17 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
     tolerance:
         Tolerance with which to perform the operation
 
-    Raises
-    ------
-    ValueError
-        If the tolerance is <= 0.0
-
     Returns
     -------
     vertices:
         Array of the vertices (N, 3, dtype=float) from the tesselation operation
     indices:
         Array of the indices (M, 3, dtype=int) from the tesselation operation
+
+    Raises
+    ------
+    ValueError
+        If the tolerance is <= 0.0
 
     Notes
     -----
@@ -1372,15 +1372,15 @@ class Document:
 
         Converts shapes to FreeCAD Part.Features to enable saving and viewing
 
-        Raises
-        ------
-        ValueError
-            Number of objects not equal to number of labels
-
         Yields
         ------
         :
             Each object in document
+
+        Raises
+        ------
+        ValueError
+            Number of objects not equal to number of labels
         """
         if self.shapes is None:
             raise ValueError("No parts found")

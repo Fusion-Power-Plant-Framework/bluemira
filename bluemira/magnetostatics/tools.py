@@ -95,15 +95,15 @@ def process_coords_array(shape: np.ndarray | Coordinates) -> np.ndarray:
     shape:
         The Coordinates or array to make into a coordinate array
 
-    Raises
-    ------
-    MagnetostaticsError
-        Unknown Type
-
     Returns
     -------
     shape:
         Array in proper dimensions
+
+    Raises
+    ------
+    MagnetostaticsError
+        Unknown Type
     """
     if isinstance(shape, np.ndarray):
         pass

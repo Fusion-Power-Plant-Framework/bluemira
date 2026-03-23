@@ -51,15 +51,15 @@ if TYPE_CHECKING:
 def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object.
 
-    Raises
-    ------
-    TypeError
-        Cannot convert to BluemiraGeo
-
     Returns
     -------
     :
         BluemiraGeo object of inputted FreeCAD shape.
+
+    Raises
+    ------
+    TypeError
+        Cannot convert to BluemiraGeo
     """
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
@@ -852,16 +852,16 @@ def _offset_wire_discretised(
     """
     Fallback function for discretised offsetting
 
+    Returns
+    -------
+    :
+        The offset wire.
+
     Raises
     ------
     GeometryError
         If the wire is not closed. This function cannot handle the offet of an open
         wire.
-
-    Returns
-    -------
-    :
-        The offset wire.
     """
     from bluemira.geometry._pyclipper_offset import offset_clipper  # noqa: PLC0415
 
@@ -920,6 +920,11 @@ def offset_wire(
         wire, or a closed offset wire that encompasses the original wire. This is
         disabled for closed wires.
 
+    Returns
+    -------
+    :
+        Offset wire
+
     Other Parameters
     ----------------
     byedges:
@@ -935,10 +940,6 @@ def offset_wire(
     If primitive offsetting failed, will fall back to a discretised offset
     implementation, where the fallback kwargs are used. Discretised offsetting is
     only supported for closed wires.
-
-    Returns
-    -------
-    Offset wire
     """
     return BluemiraWire(
         cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
@@ -964,15 +965,15 @@ def convex_hull_wires_2d(
         The plane to perform the hull in. One of: 'xz', 'xy', 'yz'.
         Default is 'xz'.
 
-    Raises
-    ------
-    ValueError
-        not enough wires
-
     Returns
     -------
     A wire forming a convex hull around the input wires in the given
     plane.
+
+    Raises
+    ------
+    ValueError
+        not enough wires
     """
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
@@ -1017,20 +1018,19 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     polygon:
         Stores the x-z coordinate pairs of the four coordinates.
 
-    Raises
-    ------
-    ValueError
-        shape must be (2, N)
-
     Returns
     -------
     :
         Volume of revolved polygon
 
+    Raises
+    ------
+    ValueError
+        shape must be (2, N)
+
     Notes
     -----
     Consider one edge of the polygon, which has two vertices, $p$ and $c$.
-    TODO: insert graphics
 
     When revolved around the z-axis, this trapezium forms a the frustum of a cone.
     The expression for the volume of this frustrum needs to be modified to avoid
@@ -1041,6 +1041,9 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     side would cancel out the excess positive volume from the other, such that
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
+    # TODO @OceanWong: insert graphics for notes in docstring
+    # 4265
+
     polygon = np.asarray(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[0] != 2:  # noqa: PLR2004
         raise ValueError("This function takes in an np.ndarray of shape (2, N).")
@@ -1284,15 +1287,15 @@ def fillet_chamfer_decorator(*, chamfer: bool):
     Decorator for fillet and chamfer operations, checking for validity of wire
     and radius.
 
-    Raises
-    ------
-    GeometryError
-        Number of edges >= 2, radius >= 0 and planar
-
     Returns
     -------
     :
         Decorator for fillet and chamfer operations.
+
+    Raises
+    ------
+    GeometryError
+        Number of edges >= 2, radius >= 0 and planar
     """
 
     def decorator(func):

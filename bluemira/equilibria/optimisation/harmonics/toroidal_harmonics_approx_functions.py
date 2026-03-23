@@ -1102,10 +1102,6 @@ def _approximation_from_psi_fitting(
     Approximate psi by fitting for psi at collocation points using
     toroidal harmonic equations
 
-    Notes
-    -----
-    The length of mode_id must be equal to n_degrees_of_freedom
-
     Returns
     -------
     error:
@@ -1117,6 +1113,10 @@ def _approximation_from_psi_fitting(
         Selected cosine toroidal harmonic amplitudes
     sin_amps:
         Selected sine toroidal harmonic amplitudes
+
+    Notes
+    -----
+    The length of mode_id must be equal to n_degrees_of_freedom
     """
     harmonics2collocation_cos, harmonics2collocation_sin = (
         toroidal_harmonics_to_positions(

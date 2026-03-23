@@ -993,14 +993,14 @@ class PrincetonDDiscrete(PrincetonD):
             The number of points to use when calculating the geometry of the Princeton
             D.
 
+        Returns
+        -------
+        CAD Wire of the geometry
+
         Raises
         ------
         GeometryParameterisationError
             If x2 <= x1
-
-        Returns
-        -------
-        CAD Wire of the geometry
         """
         x1, x2 = self.variables.x1.value, self.variables.x2.value
         if x2 <= x1:

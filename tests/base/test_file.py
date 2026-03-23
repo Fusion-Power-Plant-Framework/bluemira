@@ -60,13 +60,11 @@ def file_manager_good(tmp_path_factory):
         File manager
     """
     file_gen_path = tmp_path_factory.mktemp("file_manager_gen")
-    file_manager = FileManager(
+    yield FileManager(
         REACTOR_NAME,
         reference_data_root=FILE_REF_PATH,
         generated_data_root=file_gen_path.as_posix(),
     )
-
-    yield file_manager
 
     # Make sure we clean up the directories after testing that they have been created.
     if Path(file_gen_path):

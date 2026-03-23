@@ -220,11 +220,6 @@ def _timing(
     """
     Time a function and push to logging.
 
-    Returns
-    -------
-    :
-        Wrapped function
-
     Parameters
     ----------
     func:
@@ -235,6 +230,12 @@ def _timing(
         information to print before running function
     debug_info_str:
         send info_str to debug logger instead of info logger
+
+    Returns
+    -------
+    :
+        Wrapped function
+
     """
 
     @wraps(func)

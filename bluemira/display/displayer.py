@@ -35,17 +35,17 @@ class ViewerBackend(Enum):
     def get_module(self):
         """Load viewer module
 
+        Returns
+        -------
+        :
+            The loaded module.
+
         Raises
         ------
         ModuleNotFoundError
             Cannot find backend
         FileNotFoundError
             Cannot find backend
-
-        Returns
-        -------
-        :
-            The loaded module.
         """
         try:
             return get_module(self.value)
@@ -96,15 +96,15 @@ def _validate_display_inputs(parts, options, labels):
     """
     Validate the lists of parts and options, applying some default options.
 
-    Raises
-    ------
-    DisplayError
-        Number of options not equal to number of parts
-
     Returns
     -------
     :
         A tuple containing the list of parts, list of options and list of labels.
+
+    Raises
+    ------
+    DisplayError
+        Number of options not equal to number of parts
     """
     if parts is None:
         bluemira_debug("No new parts to display")

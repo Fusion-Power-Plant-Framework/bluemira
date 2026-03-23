@@ -241,17 +241,17 @@ class NloptOptimiser(Optimiser):
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.optimise`.
 
+        Returns
+        -------
+        :
+            The result of optimisation
+
         Raises
         ------
         KeyboardInterrupt
             Optimisation halted by user
         OptimisationError
             low level optimisation error
-
-        Returns
-        -------
-        :
-            The result of optimisation
         """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)

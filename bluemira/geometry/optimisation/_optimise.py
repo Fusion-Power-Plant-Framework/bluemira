@@ -245,15 +245,15 @@ def optimise_geometry(
 def _to_koz(koz: BluemiraWire | KeepOutZoneDict | KeepOutZone) -> KeepOutZone:
     """Convert ``koz`` to a ``KeepOutZone``.
 
-    Raises
-    ------
-    TypeError
-        Not a valid keep out zone
-
     Returns
     -------
     :
         The KeepOutZone.
+
+    Raises
+    ------
+    TypeError
+        Not a valid keep out zone
     """
     if isinstance(koz, BluemiraWire):
         return KeepOutZone(koz)

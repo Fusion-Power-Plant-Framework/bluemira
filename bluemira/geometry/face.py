@@ -93,17 +93,17 @@ class BluemiraFace(BluemiraGeo):
     def _check_boundary(self, objs):
         """Check if objects in objs are of the correct type for this class
 
+        Returns
+        -------
+        :
+            Inputted object if correct type for class or None when input is None.
+
         Raises
         ------
         TypeError
             Only wires are allowed as boundaries
         NotClosedWireError
             not all boundary wires are closed
-
-        Returns
-        -------
-        :
-            Inputted object if correct type for class or None when input is None.
         """
         if objs is None:
             return objs
@@ -125,15 +125,15 @@ class BluemiraFace(BluemiraGeo):
     def _create_face(self, *, check_reverse: bool = True):
         """Create the primitive face
 
-        Raises
-        ------
-        DisjointedFaceError
-            More than 1 face created
-
         Returns
         -------
         :
             The primitive face.
+
+        Raises
+        ------
+        DisjointedFaceError
+            More than 1 face created
         """
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))

@@ -478,11 +478,6 @@ def floatify(x: npt.ArrayLike) -> float:
     Converts the np array or float into a float by returning
     the first element or the element itself.
 
-    Notes
-    -----
-    This function aims to avoid numpy warnings for float(x) for >0 rank scalars
-    it emulates the functionality of float conversion
-
     Returns
     -------
     :
@@ -494,6 +489,11 @@ def floatify(x: npt.ArrayLike) -> float:
         If array like object has more than 1 element
     TypeError
         If object is None
+
+    Notes
+    -----
+    This function aims to avoid numpy warnings for float(x) for >0 rank scalars
+    it emulates the functionality of float conversion
     """
     if x is None:
         raise TypeError("The argument cannot be None")

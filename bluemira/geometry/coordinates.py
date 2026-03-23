@@ -1097,15 +1097,15 @@ def _parse_to_xyz_array(
     """
     Make a 3, N xyz array out of just about anything.
 
-    Raises
-    ------
-    CoordinatesError
-        Cannot instantiate coordinates
-
     Returns
     -------
     :
         A 3, N xyz array.
+
+    Raises
+    ------
+    CoordinatesError
+        Cannot instantiate coordinates
     """
     if isinstance(xyz_array, np.ndarray):
         xyz_array = _parse_array(xyz_array)
@@ -1228,15 +1228,15 @@ class Coordinates:
         filename:
             Full path file name of the data
 
-        Raises
-        ------
-        CoordinatesError
-            Cannot read json file
-
         Returns
         -------
         :
             Coordinate object.
+
+        Raises
+        ------
+        CoordinatesError
+            Cannot read json file
         """
         try:
             with open(filename) as data:
@@ -1296,16 +1296,16 @@ class Coordinates:
         about a specified axis. If None is specified, the Coordinates normal vector will
         be used.
 
-        Raises
-        ------
-        CoordinatesError
-            axis must be of size 3
-
         Returns
         -------
         :
             The check for whether the Coordinates are ordered in counter-clockwise or
             not.
+
+        Raises
+        ------
+        CoordinatesError
+            axis must be of size 3
         """
         if len(self) < DIM:
             return False

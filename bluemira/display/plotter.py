@@ -753,15 +753,15 @@ def _validate_plot_inputs(
     """
     Validate the lists of parts and options, applying some default options.
 
-    Raises
-    ------
-    DisplayError
-        Number of options not equal to number of parts
-
     Returns
     -------
     :
         validated lists of parts and options
+
+    Raises
+    ------
+    DisplayError
+        Number of options not equal to number of parts
     """
     if not isinstance(parts, list):
         parts = [parts]
@@ -1255,15 +1255,15 @@ def plot_dolfinx_2d_mesh_plt(
     show : bool
         Whether to show the plot immediately.
 
-    Raises
-    ------
-    ValueError
-        If the mesh is not a triangular mesh.
-
     Returns
     -------
     matplotlib.axes.Axes
         The axes object used for plotting.
+
+    Raises
+    ------
+    ValueError
+        If the mesh is not a triangular mesh.
     """
     # Extract node coordinates
     nodes = mesh.geometry.x[:, :2]  # Use only x and y
