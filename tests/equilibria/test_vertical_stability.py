@@ -78,11 +78,11 @@ class TestDiscretisation:
         coils_circle_simple.plot(ax=ax1, **simple_kwargs)
         coils_circle.plot(ax=ax1, **detailed_kwargs)
         ax2 = f.add_subplot(1, 3, 2)
-        coils_ellipse_simple.plot(ax=ax2)
-        coils_ellipse.plot(ax=ax2)
+        coils_ellipse_simple.plot(ax=ax2, **simple_kwargs)
+        coils_ellipse.plot(ax=ax2, **detailed_kwargs)
         ax3 = f.add_subplot(1, 3, 3)
-        coils_dshape_simple.plot(ax=ax3)
-        coils_dshape.plot(ax=ax3)
+        coils_dshape_simple.plot(ax=ax3, **simple_kwargs)
+        coils_dshape.plot(ax=ax3, **detailed_kwargs)
 
     def test_coil_points(self):
         coils_circle = make_polygon(_get_coil_points_along_wire(self.circle, 0.06))
