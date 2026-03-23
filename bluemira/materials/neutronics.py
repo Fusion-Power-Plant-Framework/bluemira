@@ -363,7 +363,12 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         ],
         fraction_type="volume",
         mix_condition=OperationalConditions(temperature=673.15),
-        converters=OpenMCNeutronicConfig(material_id=102),
+        converters=OpenMCNeutronicConfig(
+            material_id=102,
+            enrichment=li_enrich_ao * 100,
+            enrichment_target="Li6",
+            enrichment_type="atomic",
+        ),
     )
 
     return ReactorBaseMaterials(
@@ -375,7 +380,12 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             materials=[(EUROFER_MAT, 0.573), (inb_bz_mat, 0.426)],  # 1% void
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15),
-            converters=OpenMCNeutronicConfig(material_id=103),
+            converters=OpenMCNeutronicConfig(
+                material_id=103,
+                enrichment=li_enrich_ao * 100,
+                enrichment_target="Li6",
+                enrichment_type="atomic",
+            ),
         ),
         divertor_mat=duplicate_mat_as(inb_vv_mat, "divertor", 301),
         div_fw_mat=duplicate_mat_as(inb_fw_mat, "div_first_wall", 302),
@@ -431,6 +441,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(material_id=101),
         ),
+
         inb_bz_mat=mixture(
             name="inb_breeder_zone",
             materials=[
@@ -448,6 +459,7 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 enrichment_type="atomic",
             ),
         ),
+    
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[
@@ -476,6 +488,21 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             mix_condition=OperationalConditions(temperature=673.15, pressure=1e5),
             converters=OpenMCNeutronicConfig(material_id=302),
         ),
+    )
+
+def new_hcpb_mat(li_enrich_ao: float):
+    """
+    This is obtained from Eurofusion IDM EFDA_D_2NUTXK: HCPB Design Report 2018 
+    """
+    hcpb_bl2017_v3 = mixture(
+        name="HCPB-BL2017-v3",
+        materials=[
+            (EUROFER_MAT, 0.7681), (TUNGSTEN_MAT, 0.0141),
+            (make_KALOS_ACB_mat(li_enrich_ao), 0.0415),
+            (Be12Ti(), 0.1763)],
+        fraction_type="mass",
+        mix_condition=OperationalConditions(temperature=373.15, pressure=1e5),
+        converters=OpenMCNeutronicConfig(material_id=1000),
     )
 
 
