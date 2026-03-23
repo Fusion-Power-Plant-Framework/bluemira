@@ -72,10 +72,10 @@ def make_mutual_inductance_matrix(
         zcoord = zcoord[zero_idxs]
         dx = dx[zero_idxs]
         dz = dz[zero_idxs]
-        n_coils = dx.size
-        ncoils = coilset.n_coils()
-        if n_coils != ncoils:
-            difference = n_coils - ncoils
+        total_filaments = dx.size
+        n_coils = coilset.n_coils()
+        if total_filaments != n_coils:
+            difference = total_filaments - n_coils
             n_turns = np.append(
                 coilset.n_turns, np.repeat(coilset.n_turns[-1], difference)
             )
@@ -89,6 +89,17 @@ def make_mutual_inductance_matrix(
         dz = coilset.dz
         n_turns = coilset.n_turns
 
+    n_filaments = []
+    for coil in coilset.all_coils():
+        if np.isnan(coil.discretisation):
+            nx = 1
+            nz = 1
+        else:
+            nx = np.maximum(1, np.ceil(coil.dx * 2 / coil.discretisation))
+            nz = np.maximum(1, np.ceil(coil.dz * 2 / coil.discretisation))
+        n_filaments += [int(nx * nz)]
+
+    n_filaments = np.array(n_filaments)
     M = np.zeros((n_coils, n_coils))  # noqa: N806
 
     itri, jtri = np.triu_indices(n_coils, k=1)
@@ -96,6 +107,8 @@ def make_mutual_inductance_matrix(
         n_turns[itri]
         * n_turns[jtri]
         * greens_psi(xcoord[itri], zcoord[itri], xcoord[jtri], zcoord[jtri]).ravel()
+        / n_filaments[itri]
+        / n_filaments[jtri]
     )
     M[jtri, itri] = M[itri, jtri]
 
