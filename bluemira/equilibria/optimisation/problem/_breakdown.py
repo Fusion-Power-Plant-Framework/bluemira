@@ -40,7 +40,8 @@ class BreakdownZoneStrategy(abc.ABC):
         self.A = A
         self.tk_sol = tk_sol
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def breakdown_point(self) -> tuple[float, float]:
         """
         The location of the breakdown point.
@@ -54,7 +55,8 @@ class BreakdownZoneStrategy(abc.ABC):
         """
         ...
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def breakdown_radius(self) -> float:
         """
         The radius of the breakdown zone.

@@ -69,7 +69,8 @@ class Builder(abc.ABC):
             self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
         )
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def param_cls(self) -> type[ParameterFrame] | None:
         """The class to hold this Builders's parameters."""
 

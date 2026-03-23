@@ -32,7 +32,8 @@ class MappedParameterFrame(ParameterFrame):
         self._mappings = deepcopy(self.mappings)
         super().__post_init__()
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def defaults(self) -> dict:
         """
         Default values for the ParameterFrame
@@ -65,7 +66,8 @@ class MappedParameterFrame(ParameterFrame):
 
         return cls.from_dict(new_param_dict)
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def mappings(self) -> dict[str, ParameterMapping]:
         """
         The mappings associated with these frame's parameters.
