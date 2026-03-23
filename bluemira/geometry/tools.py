@@ -1042,7 +1042,7 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
     """
     # TODO @OceanWong: insert graphics for notes in docstring
-    # 5000
+    # 4265
 
     polygon = np.asarray(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[0] != 2:  # noqa: PLR2004
