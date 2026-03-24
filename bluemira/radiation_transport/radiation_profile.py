@@ -2269,10 +2269,12 @@ class RadiationSource:
             sol_rad_flux_tubes = functools.reduce(
                 operator.iadd,
                 [
-                    self.sol_rad.flux_tubes_lfs_low,
-                    self.sol_rad.flux_tubes_hfs_low,
-                    self.sol_rad.flux_tubes_lfs_up,
-                    self.sol_rad.flux_tubes_hfs_up,
+                    getattr(self.sol_rad, "flux_tubes_lfs_low", []),
+                    getattr(self.sol_rad, "flux_tubes_hfs_low", []),
+                    getattr(self.sol_rad, "flux_tubes_lfs_up", []),
+                    getattr(self.sol_rad, "flux_tubes_hfs_up", []),
+                    getattr(self.sol_rad, "flux_tubes_lfs", []),
+                    getattr(self.sol_rad, "flux_tubes_hfs", []),
                 ],
                 [],
             )

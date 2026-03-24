@@ -60,6 +60,7 @@ if SINGLE_NULL:
     eq_name = "EU-DEMO_EOF.json"
     fw_name = "first_wall.json"
     sep_corrector_omp = 5e-2
+    sep_corrector_imp = 6e-2
     lfs_p_fraction = 1
     tungsten_fraction = 1e-4
 else:
