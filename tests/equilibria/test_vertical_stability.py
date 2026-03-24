@@ -106,22 +106,17 @@ class TestDiscretisation:
 class TestFilaments:
     @classmethod
     def setup_class(cls):
-        coil1 = Coil(
-            2.0,
-            1.0,
-            0.5,
-            0.5,
-        )
-        coil2 = Coil(
-            2.0,
-            -1.0,
-            0.5,
-            0.5,
-        )
+        x1, z1 = 2.0, 1.0
+        x2, z2 = 2.0, -1.0
+        dx1, dz1 = 0.5, 0.5
+        n_turns1, n_turns2 = 4, 6
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=np.nan)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=np.nan)
         cls.coilset1 = CoilSet(coil1, coil2)
-        coil3 = Coil(2.0, 1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
-        coil4 = Coil(2.0, -1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
-        cls.coilset2 = CoilSet(coil3, coil4)
+
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=0.5)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=0.5)
+        cls.coilset2 = CoilSet(coil1, coil2)
 
     def test_filaments(self):
         ind_mat1 = make_mutual_inductance_matrix(self.coilset1, square_coil=True)
