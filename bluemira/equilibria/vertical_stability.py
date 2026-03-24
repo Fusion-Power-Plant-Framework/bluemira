@@ -14,7 +14,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.equilibria.coils._coil import Coil
+from bluemira.equilibria.coils._grouping import CoilGroup
 from bluemira.equilibria.coils._tools import make_mutual_inductance_matrix
 
 if TYPE_CHECKING:
@@ -22,6 +25,7 @@ if TYPE_CHECKING:
 
     from bluemira.equilibria.coils._grouping import CoilSet
     from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.geometry.wire import BluemiraWire
 
 
 def calculate_rzip_stability_criterion(
@@ -206,3 +210,118 @@ def stab_destab(
     criterion = (-stabilising / destabilising) if destabilising != 0 else 0
     bluemira_debug(f"{stabilising=}, {destabilising=}, {criterion=}")
     return criterion
+
+
+def _length_step(p1, p2, delta) -> float:
+    """
+    Calculates the tangent angle for two points and uses this to determine
+    the wire length to use as the difference for a square with thickness
+    delta.
+
+    Returns
+    -------
+    float:
+        Length value for a wire discretisation step.
+    """
+    theta = np.arctan2(p2[0] - p1[0], p2[2] - p1[2])
+    return 0.5 * delta * ((np.sqrt(2) + 1) - (np.sqrt(2) - 1) * np.cos(4 * theta))
+
+
+def _get_coil_points_along_wire(wire: BluemiraWire, thickness: float) -> np.ndarray:
+    """
+    Discretises input wire in such a way that squares centred on
+    those points will not overlap whilst minimising gaps.
+
+    Achieves by calculating tangent angle at given point and using
+    this to determine how far along the wire to put the next point.
+
+    Paramters
+    ---------
+    wire:
+        The wire that the coilset will be centred on.
+    thickness:
+        The thickness of the coils, will also impact the number of coils.
+
+    Returns
+    -------
+    np.ndarray:
+        An array containing the discretised points of the input wire in 3D.
+    """
+    ip = wire.start_point().T[0]
+    n_max = wire.length / thickness
+    p = ip
+    dl = thickness
+    current_length = 0
+    points = [ip]
+    for _ in range(int(n_max)):
+        p2 = wire.value_at(distance=current_length + dl).T
+        g_val = _length_step(p, p2, thickness)
+        point = wire.value_at(distance=current_length + g_val).T
+        p = point
+        if current_length + g_val < wire.length - thickness:
+            points = np.append(points, [p], axis=0)
+            current_length += g_val
+        else:
+            continue
+    return points
+
+
+def make_coils_along_wire(
+    wire: BluemiraWire,
+    thickness: float,
+    simple: bool = True,  # noqa: FBT001, FBT002
+    name_prefix: str = "Passive",
+    ctype: CoilType = CoilType.DUM,
+    resistivity: float = 0.0,
+) -> CoilGroup:
+    """
+    Function to create a coilset from a wire, where the coils making up the coilset
+    will have a dx and dz equal to half the given thickness, with coils separated by
+    the full thickness value. Additionally the coils will be make of the provided
+    material.
+
+    The created coils will follow the wire by treating it as a centreline with coils
+    centred on the line.
+
+    Parameters
+    ----------
+    wire:
+        The wire that the coilset will be centred on.
+    thickness:
+        The thickness of the coils, will also impact the number of coils.
+    simple:
+        Method of discretising the input wire.
+    name_prefix:
+        Coil name prefix
+    ctype:
+        Coil type
+    resistivity:
+        Resistivity of the coil material [Ohm . m]
+
+    Returns
+    -------
+    CoilGroup:
+        A group of coils following the input wire.
+    """
+    if simple:
+        coil_points = wire.discretise(dl=np.sqrt(2) * thickness).T
+    else:
+        coil_points = _get_coil_points_along_wire(wire, thickness)
+    coil_area = thickness**2
+    resistance_factor = resistivity * 2 * np.pi / coil_area
+    coils = [
+        Coil(
+            x=point[0],
+            z=point[2],
+            dx=0.5 * thickness,
+            dz=0.5 * thickness,
+            name=f"{name_prefix}_{i}",
+            ctype=ctype,
+            current=0.0,
+            n_turns=1,
+            discretisation=np.nan,
+            resistance=resistance_factor * point[0],
+        )
+        for i, point in enumerate(coil_points)
+    ]
+    return CoilGroup(*coils)
