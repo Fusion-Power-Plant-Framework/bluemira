@@ -851,7 +851,7 @@ class Breakdown(CoilSetMHDState):
         self.modify_dict_for_eqdsk(data)
 
         bluemira_print(
-            "Please note that for breakdown class, chosen to_cocos is assumed and "
+            "Please note that for breakdown class, chosen to_cocos is used and "
             "eqdsk.identify() check is not performed."
         )
 
