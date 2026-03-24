@@ -43,15 +43,15 @@ class BluemiraSolid(BluemiraGeo):
     def _create_solid(self, *, check_reverse: bool = True):
         """Creation of the solid
 
-        Raises
-        ------
-        DisjointedSolidError
-            Solid is disjointed (2 solids created)
-
         Returns
         -------
         :
             Created FreeCAD solid.
+
+        Raises
+        ------
+        DisjointedSolidError
+            Solid is disjointed (2 solids created)
         """
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
         solid = cadapi.apiSolid(new_shell)

@@ -993,14 +993,14 @@ class PrincetonDDiscrete(PrincetonD):
             The number of points to use when calculating the geometry of the Princeton
             D.
 
+        Returns
+        -------
+        CAD Wire of the geometry
+
         Raises
         ------
         GeometryParameterisationError
             If x2 <= x1
-
-        Returns
-        -------
-        CAD Wire of the geometry
         """
         x1, x2 = self.variables.x1.value, self.variables.x2.value
         if x2 <= x1:
@@ -1204,7 +1204,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             )
 
             wires.append(arc)
-        if sl != 0.0:
+        if sl != 0.0:  # noqa: RUF069
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
@@ -2221,7 +2221,7 @@ class PictureFrameTools:
         c_o = (x_out - r_o, 0.0, z + r_o if flip else z - r_o)
 
         # Inner Corner
-        if r_i != 0.0:
+        if r_i != 0.0:  # noqa: RUF069
             wires.append(
                 make_circle(
                     r_i,
@@ -2238,7 +2238,7 @@ class PictureFrameTools:
         wires.append(make_polygon([p2, p1] if flip else [p1, p2], label=f"{label}_limb"))
 
         # Outer corner
-        if r_o != 0.0:
+        if r_o != 0.0:  # noqa: RUF069
             wires.append(
                 make_circle(
                     r_o,

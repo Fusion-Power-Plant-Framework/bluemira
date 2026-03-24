@@ -345,16 +345,15 @@ def get_target_flux(
         This boolean determines whether to get flux surfaces across
         the target x-range (horizontal) or z-range (vertical).
 
-    Raises
-    ------
-    BluemiraError
-        If the target is set to vertical or horizontal incorrectly.
-
     Returns
     -------
     fs_list:
         List of flux surface coordinates.
 
+    Raises
+    ------
+    BluemiraError
+        If the target is set to vertical or horizontal incorrectly.
     """
     if eq._o_points is None:
         _, _ = eq.get_OX_points()
@@ -470,15 +469,15 @@ class EqAnalysis:
         """
         Plot poloidal and toroidal field for input equilibria.
 
-        Raises
-        ------
-        BluemiraError
-            if wrong number of axes is input
-
         Returns
         -------
         ax:
             Matplotlib Axes object
+
+        Raises
+        ------
+        BluemiraError
+            if wrong number of axes is input
         """
         eq = self._get_input()
         n_ax = 2
@@ -766,16 +765,15 @@ class EqAnalysis:
         ax:
             List of Matplotlib Axes objects set by user
 
-        Raises
-        ------
-        BluemiraError
-            if no reference equilibrium is provided
-
         Returns
         -------
         :
             plotting class
 
+        Raises
+        ------
+        BluemiraError
+            if no reference equilibrium is provided
         """
         eq = self._get_input()
         ref = self._get_reference()

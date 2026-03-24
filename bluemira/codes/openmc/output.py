@@ -561,7 +561,6 @@ class OpenMCDAGMCResult(OpenMCResultBase):
 
     statepoint: openmc.StatePoint
     statepoint_file: Path
-    statepoint_file: openmc.StatePoint
 
     @classmethod
     def from_run(

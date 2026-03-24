@@ -30,7 +30,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
-from bluemira.utilities.tools import json_writer
+from bluemira.utilities.tools import cross_2d, cross_2d_3d, json_writer
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -744,7 +744,7 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     v2 /= np.linalg.norm(v2)
 
     cos_angle = np.dot(v1, v2)
-    d = np.cross(v1, v2)
+    d = cross_2d_3d(v1, v2)
     sin_angle = np.linalg.norm(d)
 
     if sin_angle == 0:
@@ -1031,7 +1031,7 @@ def vector_intersect(
     da = p2 - p1
     db = p4 - p3
 
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+    if np.isclose(cross_2d(da, db), 0):  # vectors parallel
         # NOTE: careful modifying this, different behaviour required...
         point = p2
     else:
@@ -1097,15 +1097,15 @@ def _parse_to_xyz_array(
     """
     Make a 3, N xyz array out of just about anything.
 
-    Raises
-    ------
-    CoordinatesError
-        Cannot instantiate coordinates
-
     Returns
     -------
     :
         A 3, N xyz array.
+
+    Raises
+    ------
+    CoordinatesError
+        Cannot instantiate coordinates
     """
     if isinstance(xyz_array, np.ndarray):
         xyz_array = _parse_array(xyz_array)
@@ -1228,15 +1228,15 @@ class Coordinates:
         filename:
             Full path file name of the data
 
-        Raises
-        ------
-        CoordinatesError
-            Cannot read json file
-
         Returns
         -------
         :
             Coordinate object.
+
+        Raises
+        ------
+        CoordinatesError
+            Cannot read json file
         """
         try:
             with open(filename) as data:
@@ -1296,16 +1296,16 @@ class Coordinates:
         about a specified axis. If None is specified, the Coordinates normal vector will
         be used.
 
-        Raises
-        ------
-        CoordinatesError
-            axis must be of size 3
-
         Returns
         -------
         :
             The check for whether the Coordinates are ordered in counter-clockwise or
             not.
+
+        Raises
+        ------
+        CoordinatesError
+            axis must be of size 3
         """
         if len(self) < DIM:
             return False
@@ -1650,7 +1650,7 @@ class Coordinates:
         CoordinatesError
             Base and direction must be of size 3
         """
-        if degree == 0.0:
+        if degree == 0.0:  # noqa: RUF069
             return
 
         base = np.array(base, dtype=float)
@@ -1746,7 +1746,7 @@ class Coordinates:
 
         k = count(1)
         for i, (p, t) in enumerate(zip(points[1:], t_vector, strict=False)):
-            c_mag = np.linalg.norm(np.cross(t0, t))
+            c_mag = np.linalg.norm(cross_2d_3d(t0, t))
             dx = np.linalg.norm(p - p0)  # segment length
             if (c_mag > angle_crit and dx > dx_min) or dx + median_dt > dx_max:
                 j = next(k)

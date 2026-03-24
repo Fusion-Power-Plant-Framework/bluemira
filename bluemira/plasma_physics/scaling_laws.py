@@ -101,7 +101,7 @@ class PowerLawScaling:
         ValueError
             No constant error or error ranges
         """
-        if self.constant_err == 0.0 and self.errors is None:
+        if self.constant_err == 0.0 and self.errors is None:  # noqa: RUF069
             raise ValueError(
                 "No errors provided on PowerLawScaling, cannot calculate range."
             )

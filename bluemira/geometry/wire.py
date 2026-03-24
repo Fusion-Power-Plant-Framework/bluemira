@@ -125,16 +125,15 @@ class BluemiraWire(BluemiraGeo):
     def __add__(self, other: BluemiraWire) -> BluemiraWire:
         """Add two wires
 
-        Raises
-        ------
-        TypeError
-            Must be BluemiraWire
-
         Returns
         -------
         :
             Wire resulting from combining two wires.
 
+        Raises
+        ------
+        TypeError
+            Must be BluemiraWire
         """
         output = None
         if isinstance(other, BluemiraWire):

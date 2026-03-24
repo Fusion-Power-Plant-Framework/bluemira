@@ -618,17 +618,17 @@ class ChargedParticleSolver:
     def _make_params(config):
         """Convert the given params to ``ChargedParticleSolverParams``
 
+        Returns
+        -------
+        :
+            a ChargedParticleSolverParams object
+
         Raises
         ------
         TypeError
             Unsupported config type
         ValueError
             Unknown configuration parameters
-
-        Returns
-        -------
-        :
-            a ChargedParticleSolverParams object
         """
         if isinstance(config, dict):
             try:

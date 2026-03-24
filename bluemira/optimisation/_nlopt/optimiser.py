@@ -241,17 +241,17 @@ class NloptOptimiser(Optimiser):
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.optimise`.
 
+        Returns
+        -------
+        :
+            The result of optimisation
+
         Raises
         ------
         KeyboardInterrupt
             Optimisation halted by user
         OptimisationError
             low level optimisation error
-
-        Returns
-        -------
-        :
-            The result of optimisation
         """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
@@ -262,6 +262,16 @@ class NloptOptimiser(Optimiser):
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
             x_star, f_x = self._get_previous_iter_result()
+        except nlopt.nlopt.runtime_error as error:
+            if self._opt.last_optimize_result() in {
+                nlopt.FAILURE,
+                nlopt.MAXEVAL_REACHED,
+                nlopt.MAXTIME_REACHED,
+            }:  # Potentially useable solution.
+                x_star, f_x = self._get_previous_iter_result()
+            else:
+                _process_nlopt_result(self._opt, self.algorithm)
+                raise OptimisationError(str(error)) from None
         except OptVariablesError:
             # Probably still some rounding errors due to numerical gradients
             # It's likely that the last call was still a reasonably good solution.

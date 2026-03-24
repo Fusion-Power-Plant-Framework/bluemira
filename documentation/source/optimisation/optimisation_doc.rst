@@ -211,7 +211,7 @@ history of the optimisation parameters
     ...     ],
     ... )
     >>> print(result)
-    OptimiserResult(f_x=0.54..., x=array([0.333..., 0.29...]), n_evals=..., constraints_satisfied=True)
+    OptimiserResult(f_x=np.float64(0.54...), x=array([0.333..., 0.29...]), n_evals=..., constraints_satisfied=True)
 
 The Optimisation Problem Class
 ------------------------------

@@ -10,10 +10,10 @@ A helper script to generate ParameterFrames as a python file and json file
 
 import argparse
 import inspect
-import os
 import sys
-from abc import abstractproperty
+from collections.abc import Sequence
 from copy import deepcopy
+from itertools import takewhile
 from pathlib import Path
 from pkgutil import iter_modules
 from typing import get_type_hints
@@ -153,7 +153,10 @@ def get_param_classes(module) -> dict:
         f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
         for m in inspect.getmembers(module, inspect.isclass)
         if hasattr(m[1], "param_cls")
-        and not isinstance(m[1].param_cls, type(None) | abstractproperty)
+        and not (
+            m[1].param_cls is None
+            or getattr(m[1].param_cls, "__isabstractmethod__", False)
+        )
     }
 
 
@@ -178,13 +181,22 @@ def find_modules(path: str) -> set:
             elif not info.ispkg:
                 modules.add(f"{pkg}.{info.name}")
     bluemira_print("Found modules:\n" + "\n".join(sorted(m for m in modules)))
-    if not os.path.commonprefix(list(modules)):
+    if not _commonprefix(list(modules)):
         bluemira_warn(
             "Not all modules come from the same package."
             " Is your module path one level too deep?"
         )
 
     return modules
+
+
+def _commonprefix(strings: Sequence[str]) -> str:
+    return "".join(
+        ch[0]
+        for ch in takewhile(
+            lambda x: all(c == x[0] for c in x), zip(*strings, strict=True)
+        )
+    )
 
 
 def main():
