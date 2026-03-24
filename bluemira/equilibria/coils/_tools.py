@@ -27,7 +27,10 @@ if TYPE_CHECKING:
 
 
 def make_mutual_inductance_matrix(
-    coilset: CoilSet, *, square_coil: bool = False, with_quadratures: bool = False
+    coilset: CoilSet,
+    *,
+    square_coil: bool = False,
+    with_quadratures: bool = False,  # noqa: ARG001
 ) -> np.ndarray:
     """
     Calculate the mutual inductance matrix of a coilset.
@@ -61,61 +64,81 @@ def make_mutual_inductance_matrix(
         with :math:`L_i` as the self-inductance using elliptic integrals.
 
     """
-    if with_quadratures:
-        xcoord = coilset._quad_x.flatten()
-        zcoord = coilset._quad_z.flatten()
-        dx = coilset._quad_dx.flatten()
-        dz = coilset._quad_dz.flatten()
-        # remove zeros created in _pad_discretisation
-        zero_idxs = np.nonzero(dx)
-        xcoord = xcoord[zero_idxs]
-        zcoord = zcoord[zero_idxs]
-        dx = dx[zero_idxs]
-        dz = dz[zero_idxs]
-        total_filaments = dx.size
-        n_coils = coilset.n_coils()
-        if total_filaments != n_coils:
-            difference = total_filaments - n_coils
-            n_turns = np.append(
-                coilset.n_turns, np.repeat(coilset.n_turns[-1], difference)
-            )
-        else:
-            n_turns = coilset.n_turns
-    else:
-        n_coils = coilset.n_coils()
-        xcoord = coilset.x
-        zcoord = coilset.z
-        dx = coilset.dx
-        dz = coilset.dz
-        n_turns = coilset.n_turns
-
+    n_coils = coilset.n_coils()
+    dx = coilset.dx
+    dz = coilset.dz
+    n_turns = coilset.n_turns
+    # get n_filaments for each coil and the array of x,z points (for simplify attempt)
+    coils = coilset.all_coils()
     n_filaments = []
-    for coil in coilset.all_coils():
+    filament_x = []
+    filament_z = []
+    for coil in coils:
         if np.isnan(coil.discretisation):
             nx = 1
             nz = 1
+            filament_x += [[coil.x]]
+            filament_z += [[coil.z]]
         else:
             nx = np.maximum(1, np.ceil(coil.dx * 2 / coil.discretisation))
             nz = np.maximum(1, np.ceil(coil.dz * 2 / coil.discretisation))
+            filament_x += [coil._quad_x]
+            filament_z += [coil._quad_z]
         n_filaments += [int(nx * nz)]
 
     n_filaments = np.array(n_filaments)
     M = np.zeros((n_coils, n_coils))  # noqa: N806
 
+    # n_turns adjustment attempt (n turn for each filament)
+    # nturns = n_turns * n_filaments
+
     itri, jtri = np.triu_indices(n_coils, k=1)
-    M[itri, jtri] = (
-        n_turns[itri]
-        * n_turns[jtri]
-        * greens_psi(xcoord[itri], zcoord[itri], xcoord[jtri], zcoord[jtri]).ravel()
-        / n_filaments[itri]
-        / n_filaments[jtri]
-    )
+
+    # first attempt at simplifying
+    # for i in itri:
+    #     for j in jtri:
+    #         m_ij = 0.0
+    #         for xi1, zi1 in zip(filament_x[i], filament_z[i], strict=True):
+    #             for xi2, zi2 in zip(filament_x[j], filament_z[j], strict=True):
+    #                 m_ij += greens_psi(xi1, zi1, xi2, zi2)
+    #         M[i, j] = n_turns[i] * n_turns[j] * m_ij / (n_filaments[i] * n_filaments[j])  # noqa: E501, W505
+    #         # M[i, j] = nturns[i] * nturns[j] * m_ij / (n_filaments[i] * n_filaments[j])  # noqa: E501, W505
+
+    # initial version
+    for i in itri:
+        for j in jtri:
+            if np.isnan(coils[i].discretisation):
+                m_ij = 0.0
+                for xi1, zi1 in zip([coils[i].x], [coils[i].z]):  # noqa: B905
+                    for xi2, zi2 in zip([coils[j].x], [coils[j].z]):  # noqa: B905
+                        m_ij += greens_psi(xi1, zi1, xi2, zi2)
+                m_ij = (
+                    n_turns[i]
+                    * n_turns[j]
+                    * m_ij
+                    / (len([coils[i].x]) * len([coils[j].x]))
+                )
+            else:
+                m_ij = 0.0
+                for xi1, zi1 in zip(coils[i]._quad_x, coils[i]._quad_z):  # noqa: B905
+                    for xi2, zi2 in zip(coils[j]._quad_x, coils[j]._quad_z):  # noqa: B905
+                        m_ij += greens_psi(xi1, zi1, xi2, zi2)
+                m_ij = (
+                    n_turns[i]
+                    * n_turns[j]
+                    * m_ij
+                    / (len(coils[i]._quad_x) * len(coils[j]._quad_x))
+                )
+            M[i, j] = m_ij
+
     M[jtri, itri] = M[itri, jtri]
 
     M[np.diag_indices_from(M)] = np.squeeze(
-        square_coil_inductance_kirchhoff(xcoord, 2 * dx, 2 * dz)
+        square_coil_inductance_kirchhoff(coilset.x, 2 * dx, 2 * dz)
         if square_coil
-        else (n_turns**2 * circular_coil_inductance_elliptic(xcoord, np.hypot(dx, dz)))
+        else (
+            n_turns**2 * circular_coil_inductance_elliptic(coilset.x, np.hypot(dx, dz))
+        )
     )
     return M
 
