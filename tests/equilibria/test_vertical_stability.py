@@ -4,9 +4,19 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
+import bluemira.equilibria.vertical_stability as vs
+from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.coils import (
+    Coil,
+    CoilSet,
+    make_mutual_inductance_matrix,
+)
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.vertical_stability import (
     _get_coil_points_along_wire,
     make_coils_along_wire,
@@ -91,3 +101,56 @@ class TestDiscretisation:
         np.testing.assert_allclose(coils_ellipse.length, self.ellipse.length, rtol=1e-2)
         coils_dshape = make_polygon(_get_coil_points_along_wire(self.dshape, 0.06))
         np.testing.assert_allclose(coils_dshape.length, self.dshape.length, rtol=1e-2)
+
+
+class TestFilaments:
+    @classmethod
+    def setup_class(cls):
+        coil1 = Coil(
+            2.0,
+            1.0,
+            0.5,
+            0.5,
+        )
+        coil2 = Coil(
+            2.0,
+            -1.0,
+            0.5,
+            0.5,
+        )
+        cls.coilset1 = CoilSet(coil1, coil2)
+        coil3 = Coil(2.0, 1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
+        coil4 = Coil(2.0, -1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
+        cls.coilset2 = CoilSet(coil3, coil4)
+
+    def test_filaments(self):
+        ind_mat1 = make_mutual_inductance_matrix(self.coilset1, square_coil=True)
+        ind_mat2 = make_mutual_inductance_matrix(self.coilset2, square_coil=True)
+        np.testing.assert_allclose(ind_mat1, ind_mat2, rtol=1e-8)
+
+
+class TestRZIp:
+    @classmethod
+    def setup_class(cls):
+        path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+        cls.dn = Equilibrium.from_eqdsk(
+            Path(path, "DN-DEMO_eqref_withCoilNames.json"),
+            from_cocos=3,
+            qpsi_positive=False,
+        )
+        cls.dn.coilset.control = True
+        cls.ellipse = make_ellipse(
+            center=(9, 0, 0),
+            major_radius=6.0,
+            minor_radius=3.5,
+            major_axis=(0, 0, 1),
+            minor_axis=(1, 0, 0),
+        )
+
+    def test_run(self):
+        print(self.dn.coilset)
+        passive_group = make_coils_along_wire(self.ellipse, 0.5)
+        print(passive_group)
+        self.dn.coilset.add_coil(*passive_group._coils)
+        self.dn._remap_greens()
+        vs.calculate_rzip_stability_criterion(self.dn)
