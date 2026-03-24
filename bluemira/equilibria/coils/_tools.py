@@ -38,6 +38,10 @@ def make_mutual_inductance_matrix(
     ----------
     coilset:
         Coilset for which to calculate the mutual inductance matrix
+    square_coil:
+        Whether or not to use a square coil approximation for the
+        self-inductance diagonal terms. Defaults to a elliptical
+        integral of a circular cross-section coil.
 
     Returns
     -------
@@ -46,12 +50,15 @@ def make_mutual_inductance_matrix(
 
     Notes
     -----
-    Single-filament coil formulation; serves as a useful approximation.
+    Multi-filament coil formulation. The mutual inductance between two coils is
+    calculated based on the number of filaments in each coil (numerical
+    discretisation, which is then normalised). The number of turns in each coil
+    determine the actual multiplier of the mutual inductance.
 
     - **Off-diagonal terms** (:math:`i \\neq j`):
 
         .. math::
-            M_{ij} = n_i n_j G(x_i, z_i, x_j, z_j)
+            M_{ij} = n_i n_j \\sum_{k=0, m=0}^{n_k, n_m} G(x_{i,n}, z_{i,n}, x_{j,m}, z_{j,m})
 
         where :math:`G` is the Green's function for mutual inductance.
 
@@ -62,9 +69,9 @@ def make_mutual_inductance_matrix(
 
         with :math:`L_i` as the self-inductance using elliptic integrals.
 
-    """
-    n_coils = coilset.n_coils()
+    """  # noqa: W505, E501
     coils = coilset.all_coils()
+    n_coils = len(coils)
 
     M = np.zeros((n_coils, n_coils))  # noqa: N806
 

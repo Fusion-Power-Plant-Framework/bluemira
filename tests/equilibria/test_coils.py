@@ -786,6 +786,24 @@ class TestMutualInductances:
             coil6, coil7, coil8, coil9, control_names=["TC3", "TC4", "TC5"]
         )
 
+        x1, z1 = 2.0, 1.0
+        x2, z2 = 2.0, -1.0
+        dx1, dz1 = 0.5, 0.5
+        n_turns1, n_turns2 = 4, 6
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=np.nan)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=np.nan)
+        cls.coilset4 = CoilSet(coil1, coil2)
+
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=0.001)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=0.001)
+        cls.coilset5 = CoilSet(coil1, coil2)
+
+    @pytest.mark.parametrize("square_coil", [True, False])
+    def test_mutual_inductance_discretisation(self, square_coil):
+        ind_mat1 = make_mutual_inductance_matrix(self.coilset4, square_coil=square_coil)
+        ind_mat2 = make_mutual_inductance_matrix(self.coilset5, square_coil=square_coil)
+        np.testing.assert_allclose(ind_mat1, ind_mat2, rtol=2.5e-2)
+
     def test_normal(self):
         """
         Just check the symmetry for now
@@ -807,7 +825,7 @@ class TestMutualInductances:
         """
         Check it runs for weird array shapes and n_turns
         """
-        m2 = make_mutual_inductance_matrix(self.coilset2, with_quadratures=True)
-        m3 = make_mutual_inductance_matrix(self.coilset3, with_quadratures=True)
-        assert np.shape(m2) == (8, 8)
-        assert np.shape(m3) == (7, 7)
+        m2 = make_mutual_inductance_matrix(self.coilset2)
+        m3 = make_mutual_inductance_matrix(self.coilset3)
+        assert np.shape(m2) == (2, 2)
+        assert np.shape(m3) == (4, 4)
