@@ -28,14 +28,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matproplib.conditions import OperationalConditions
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import run_designer
 from bluemira.base.file import get_bluemira_path, make_bluemira_path
 from bluemira.base.logs import set_log_level
 from bluemira.base.look_and_feel import (
     bluemira_error,
     bluemira_print,
-    bluemira_print_clean,
 )
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
@@ -45,6 +44,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
+from bluemira.display import plot_2d
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
@@ -52,11 +52,15 @@ from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    boolean_cut,
     distance_to,
     interpolate_bspline,
+    make_polygon,
     offset_wire,
+    revolve_shape,
     save_cad,
 )
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import establish_material_cache
 from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
     ZeroDNeutronicsModel,
@@ -724,10 +728,102 @@ if __name__ == "__main__":
             )
             neutronics_end = time.time()
             run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+            bluemira_print(
+                "Total time spent on neutronics (including conversion) = "
+                f"{run_time_track['CSG neutronics']} s"
+            )
 
-            if reactor_config.config_for("Neutronics")["show_data"]:
-                reactor.neutronics.plot()
-                bluemira_print_clean(f"{reactor.neutronics}")
+            bluemira_print("Plotting the 2D pre-cell array and cell-arrays:")
+
+            geom = reactor.neutronics.csg_reactor.geom
+            plot_2d([
+                geom.boundary,
+                geom.vacuum_vessel_wire,
+                geom.divertor_wire,
+                make_polygon(geom.panel_break_points),
+            ])
+            reactor.neutronics.plot()
+
+            bluemira_print("Saving a simplified CAD geometry:")
+            csg_blanket = reactor.neutronics.csg_reactor.blanket.pre_cells
+            csg_divertor = reactor.neutronics.csg_reactor.divertor.pre_cells
+            disc_vv_int_wire = BluemiraWire(
+                [pc.vv_wire for pc in csg_blanket]
+                + [dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
+            )
+            disc_vv_ext_wire = BluemiraWire(
+                [pc.exterior_wire for pc in csg_blanket]
+                + [dpc.exterior_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
+            )
+
+            blanket_int_wire = BluemiraWire([pc.interior_wire for pc in csg_blanket])
+            blanket_ext_wire = BluemiraWire([pc.vv_wire for pc in csg_blanket])
+            disc_blanket = BluemiraWire([
+                blanket_int_wire,
+                make_polygon([
+                    blanket_int_wire.end_point(),
+                    blanket_ext_wire.start_point(),
+                ]),
+                blanket_ext_wire,
+                make_polygon([
+                    blanket_ext_wire.end_point(),
+                    blanket_int_wire.start_point(),
+                ]),
+            ])
+
+            divertor_int_wire = BluemiraWire([
+                dpc.interior_wire.restore_to_wire() for dpc in csg_divertor
+            ])
+            divertor_ext_wire = BluemiraWire([
+                dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]
+            ])
+            disc_divertor = BluemiraWire([
+                divertor_int_wire,
+                make_polygon([
+                    divertor_int_wire.end_point(),
+                    divertor_ext_wire.start_point(),
+                ]),
+                divertor_ext_wire,
+                make_polygon([
+                    divertor_ext_wire.end_point(),
+                    divertor_int_wire.start_point(),
+                ]),
+            ])
+
+            VISIBLE_MODE = False
+            ext_ = revolve_shape(
+                BluemiraFace(disc_vv_ext_wire), degree=180 if VISIBLE_MODE else 360
+            )
+            int_ = revolve_shape(
+                BluemiraFace(disc_vv_int_wire), degree=180 if VISIBLE_MODE else 360
+            )
+
+            simplified_tokamak = Component("Tokamak for MCIO to split")
+            cad_blanket = PhysicalComponent(
+                "blanket",
+                revolve_shape(
+                    BluemiraFace(disc_blanket), degree=180 if VISIBLE_MODE else 360
+                ),
+                parent=simplified_tokamak,
+            )
+            cad_divertor = PhysicalComponent(
+                "divertor",
+                revolve_shape(
+                    BluemiraFace(disc_divertor), degree=180 if VISIBLE_MODE else 360
+                ),
+                parent=simplified_tokamak,
+            )
+            cad_vv = PhysicalComponent(
+                "vacuum vessel", boolean_cut(ext_, int_)[0], parent=simplified_tokamak
+            )
+            save_cad(
+                [cad_blanket.shape, cad_divertor.shape, cad_vv.shape],
+                "Discretized_EUDEMO_LAR_for_MCIO_benchmark.STP",
+            )
+
+            import sys
+
+            sys.exit()
         else:
             model = ZeroDNeutronicsModel(reactor_config.global_params)
             new_params = model.run()
@@ -892,8 +988,12 @@ if __name__ == "__main__":
         reactor_config.global_params.P_el_net.set_value(
             sspc_result["P_el_net"], "BLUEMIRA"
         )
-        reactor_config.global_params.tf_wp_volume.set_value(reactor.tf_coils.wp_volume, "BLUEMIRA")
-        reactor_config.global_params.pf_wp_volume.set_value(reactor.pf_coils.wp_volume, "BLUEMIRA")
+        reactor_config.global_params.tf_wp_volume.set_value(
+            reactor.tf_coils.wp_volume, "BLUEMIRA"
+        )
+        reactor_config.global_params.pf_wp_volume.set_value(
+            reactor.pf_coils.wp_volume, "BLUEMIRA"
+        )
 
         lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
 

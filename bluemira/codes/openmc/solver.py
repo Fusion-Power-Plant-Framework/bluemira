@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, fields
@@ -19,7 +20,7 @@ import numpy as np
 import openmc
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.tools import _timing
 from bluemira.codes.interface import (
@@ -462,8 +463,14 @@ class OpenMCNeutronicsSolver(CodesSolver):
             self.pre_cell_model.material_library, op_cond
         )
 
+        start_conversion_time = time.time()
         self.cell_arrays = make_cell_arrays(
             self.pre_cell_model, BluemiraNeutronicsCSG(), self.materials, control_id=True
+        )
+        end_conversion_time = time.time()
+        bluemira_print(
+            "time to convert from pre-cell to cells = "
+            f"{end_conversion_time - start_conversion_time} s"
         )
 
         self.tally_function = filter_cells if tally_function is None else tally_function
