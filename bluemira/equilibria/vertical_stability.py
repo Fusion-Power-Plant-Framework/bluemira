@@ -87,8 +87,6 @@ class RZIp:
     @coilset.setter
     def coilset(self, cs: CoilSet):
         """Calculate coilset inductance"""
-        # TODO @je-cook: Possibly implement quad indexing?
-        # 1231231231231
         self._coilset = cs
         reduced_coilset = cs.get_uncontrolled_coils()
         self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=True)
