@@ -284,6 +284,24 @@ class TestPrincetonDDiscrete:
         assert wire.is_closed()
         assert wire.is_valid()
 
+    @pytest.mark.parametrize("frenet", [True, False])
+    @pytest.mark.parametrize(
+        "transition",
+        [
+            SweepShapeTransition.DEFAULT,
+            SweepShapeTransition.RIGHT_CORNER,
+            SweepShapeTransition.ROUND_CORNER,
+        ],
+    )
+    def test_tough_one(self, frenet, transition):
+        shape = sweep_shape(
+            self.wp_xs,
+            self.fail_shape,
+            frenet=frenet,
+            transition=transition,
+        )
+        assert shape.is_valid()
+
 
 class TestPictureFrame:
     def test_length(self):
