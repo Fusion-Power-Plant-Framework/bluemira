@@ -149,6 +149,23 @@ class TestPrincetonDDiscrete:
         )
         cls.wp_xs.translate([x1, 0, 0])
         cls.discrete_princeton_shape = parameterisation.create_shape()
+        cls.wp_xs.translate([x1, 0, 0])
+        cls.discrete_princeton_shape = parameterisation.create_shape()
+
+        s = PrincetonDDiscrete(
+            {
+                "x1": {"value": 3.57638},
+                "x2": {"value": 15.8237},
+                "dz": {"value": 0.0940193},
+            },
+            n_TF=16,
+            tf_wp_depth=1.155285492290215,
+            tf_wp_width=0.8420220709276258,
+            n_points=40,
+            tolerance=0.01,
+        )
+
+        cls.fail_shape = s.create_shape()
 
     @pytest.mark.parametrize("x1", [4, 5])
     @pytest.mark.parametrize("x2", [10, 12])
