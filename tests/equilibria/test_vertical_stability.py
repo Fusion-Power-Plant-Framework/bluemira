@@ -122,4 +122,5 @@ class TestRZIp:
         print(passive_group)
         self.dn.coilset.add_coil(*passive_group._coils)
         self.dn._remap_greens()
-        vs.calculate_rzip_stability_criterion(self.dn)
+        ms = vs.calculate_rzip_stability_criterion(self.dn)
+        assert ms > 0.25
