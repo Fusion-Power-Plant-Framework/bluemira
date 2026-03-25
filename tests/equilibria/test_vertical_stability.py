@@ -117,10 +117,8 @@ class TestRZIp:
         )
 
     def test_run(self):
-        print(self.dn.coilset)
         passive_group = make_coils_along_wire(self.ellipse, 0.5)
-        print(passive_group)
         self.dn.coilset.add_coil(*passive_group._coils)
         self.dn._remap_greens()
         ms = vs.calculate_rzip_stability_criterion(self.dn)
-        assert ms > 0.25
+        assert ms > 0.5
