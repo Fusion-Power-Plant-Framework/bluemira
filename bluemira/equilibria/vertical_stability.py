@@ -91,14 +91,7 @@ class RZIp:
         # 1231231231231
         self._coilset = cs
         reduced_coilset = cs.get_uncontrolled_coils()
-        if not np.isnan(np.sum(reduced_coilset.discretisation)):
-            self.ind_mat = make_mutual_inductance_matrix(
-                reduced_coilset, square_coil=True, with_quadratures=True
-            )
-        else:
-            self.ind_mat = make_mutual_inductance_matrix(
-                reduced_coilset, square_coil=True, with_quadratures=False
-            )
+        self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=True)
         diag = np.diag(np.diag(self.ind_mat))
         non_diag = (
             2 * np.pi * (self.ind_mat - diag)
