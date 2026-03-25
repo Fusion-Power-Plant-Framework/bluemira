@@ -496,14 +496,14 @@ def make_bspline_g1_blend(
     apiWire
         A B-spline wire representing the blend curve between `edge1` and `edge2`.
 
-    Notes
-    -----
-    This is hot garbage. Tangency is not reliable.
-
     Raises
     ------
     FreeCADError
         If the edges are coincident
+
+    Notes
+    -----
+    This is hot garbage. Tangency is not reliable.
     """
     e1 = edge1.copy()
     e2 = edge2.copy()

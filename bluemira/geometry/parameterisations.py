@@ -946,6 +946,9 @@ class PrincetonDDiscrete(PrincetonD):
     dz: float
         Vertical offset from z=0 [m]
 
+    Please note, when using this shape as a sweep path, you must use frenet=False.
+    This is because of limitations in CAD, which we are trying to resolve.
+    See #4267
     """
 
     __slots__ = ("_n_TF", "_n_points", "_tf_wp_depth", "_tf_wp_width", "_tolerance")
