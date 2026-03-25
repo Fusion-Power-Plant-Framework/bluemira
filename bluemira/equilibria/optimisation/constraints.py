@@ -629,6 +629,59 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         return 2
 
 
+class VerticalFieldConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute vertical field (Bz) constraint.
+    """
+
+    def __init__(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        target_value: float,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights=weights,
+            tolerance=tolerance,
+            f_constraint=AxBConstraint,
+            constraint_type="equality",
+        )
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            Bz response of the coilset
+        """
+        return coilset.Bz_response(self.x, self.z, control=True)
+
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            Bz value of the equilibrium
+        """
+        return eq.Bz(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {"marker": "^", "markersize": 8, "color": "b", "linestyle": "None"}
+        ax.plot(self.x, self.z, **kwargs)
+
+
 class PsiConstraint(AbsoluteMagneticConstraint):
     """
     Absolute psi value constraint.

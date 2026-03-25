@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import numpy as np
 
-from bluemira.equilibria import Equilibrium
+from bluemira.equilibria import Breakdown, Equilibrium
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.grid import Grid
@@ -13,10 +13,14 @@ from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
+    VerticalFieldConstraint,
 )
-from bluemira.equilibria.optimisation.problem import TikhonovCurrentCOP
+from bluemira.equilibria.optimisation.problem import (
+    TikhonovCurrentCOP,
+)
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
+from bluemira.optimisation import Algorithm
 from tests._helpers import add_plot_title
 
 
@@ -84,3 +88,23 @@ def test_isoflux_constrained_tikhonov_current_optimisation(request):
         ],
         decimal=3,
     )
+
+
+def test_vertical_field_constraint():
+    coilset = coilset_setup()
+    grid = Grid(4.5, 14, -9, 9, 65, 65)
+    eq = Breakdown(coilset, grid)
+
+    bz_constraint = VerticalFieldConstraint(9, 0.0, -0.75, 1.0, tolerance=1e-6)
+    targets = MagneticConstraintSet([bz_constraint])
+    opt_problem = TikhonovCurrentCOP(
+        eq,
+        targets,
+        gamma=1e-18,
+        opt_algorithm=Algorithm.SLSQP,
+        opt_conditions={"max_eval": 5},
+    )
+
+    coilset = opt_problem.optimise()
+
+    np.testing.assert_allclose(eq.Bz(9.0, 0.0), -0.75, rtol=1e-6)
