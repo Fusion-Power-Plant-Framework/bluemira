@@ -29,7 +29,9 @@ from scipy.special import iv as bessel
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._freecadapi import make_bspline_g1_blend
 from bluemira.display.plotter import plot_2d
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
@@ -702,7 +704,6 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 def _process_constant_tension_solver(
     solver, r, z, n_tf, tf_wp_width, tf_wp_depth
 ) -> CurrentSource:
-    from bluemira.geometry.coordinates import Coordinates  # noqa: PLC0415
     from bluemira.magnetostatics.biot_savart import BiotSavartFilament  # noqa: PLC0415
     from bluemira.magnetostatics.circuits import (  # noqa: PLC0415
         ArbitraryPlanarRectangularXSCircuit,
@@ -945,6 +946,9 @@ class PrincetonDDiscrete(PrincetonD):
     dz: float
         Vertical offset from z=0 [m]
 
+    Please note, when using this shape as a sweep path, you must use frenet=False.
+    This is because of limitations in CAD, which we are trying to resolve.
+    See #4267
     """
 
     __slots__ = ("_n_TF", "_n_points", "_tf_wp_depth", "_tf_wp_width", "_tolerance")
@@ -1019,25 +1023,48 @@ class PrincetonDDiscrete(PrincetonD):
             solver=None,
             tolerance=self._tolerance if tolerance is None else tolerance,
         )
-
-        z += self.variables.dz.value
         xyz = np.array([x, np.zeros(len(x)), z])
 
         outer_arc = interpolate_bspline(
             xyz.T,
             label="outer_arc",
             **(
-                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, -1]}
+                {"start_tangent": [0, 0, 1], "end_tangent": [0, 0, 1]}
                 if with_tangency
                 else {}
             ),
         )
-        # TODO @CoronelBuendia: Enforce tangency of this bspline...
-        # causing issues with offsetting
-        # The real irony is that tangencies don't solve the problem..
-        # 3586
-        straight_segment = wire_closure(outer_arc, label="straight_segment")
-        return BluemiraWire([outer_arc, straight_segment], label=label)
+        points = outer_arc.discretise(1000)
+        outer_arc = interpolate_bspline(points.xyz, label="outer_arc")
+
+        # TODO @CoronelBuendia: This is a hot pile of garbage. I have tried half
+        # a dozen different ways, but I always end up fighting the unreliable
+        # tangents. Let us hope moving to e.g. cadquery helps with this.
+        # 4267
+        blend_length = 0.4
+        first_z = z[0] - blend_length
+        straight_segment = make_polygon(
+            {"x": [x1, x1], "y": [0.0, 0.0], "z": [-first_z, first_z]},
+            label="straight_segment",
+        )
+        joint = BluemiraWire(
+            make_bspline_g1_blend(
+                straight_segment._shape.OrderedEdges[0],
+                outer_arc._shape.OrderedEdges[0],
+            ),
+            label="upper_joint",
+        )
+        joint2 = BluemiraWire(
+            make_bspline_g1_blend(
+                outer_arc._shape.OrderedEdges[-1],
+                straight_segment._shape.OrderedEdges[-1],
+            ),
+            label="lower_joint",
+        )
+
+        wire = BluemiraWire([straight_segment, joint, outer_arc, joint2], label=label)
+        wire.translate((0.0, 0.0, self.variables.dz.value))
+        return wire
 
 
 @dataclass

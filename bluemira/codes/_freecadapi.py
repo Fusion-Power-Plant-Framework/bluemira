@@ -468,6 +468,85 @@ def interpolate_bspline(
     return wire
 
 
+def make_bspline_g1_blend(
+    edge1: apiEdge,
+    edge2: apiEdge,
+    scale=0.2,
+) -> apiWire:
+    """
+    Create a G1-continuous B-spline blend between two edges.
+
+    This function generates a B-spline curve that connects `edge1` and `edge2`
+    while attempting to enforce G1 (tangent) continuity. The curve is constructed
+    by blending the tangents of the edges at their connection points.
+
+    Parameters
+    ----------
+    edge1 : apiEdge
+        The first edge to connect. The blend will attach to either its start or end,
+        depending on `at_end1`.
+    edge2 : apiEdge
+        The second edge to connect. The blend will attach to either its start or end,
+        depending on `at_start2`.
+    scale : float, optional
+        Scale factor for the tangent vector length used in the blend (default is 0.1).
+
+    Returns
+    -------
+    apiWire
+        A B-spline wire representing the blend curve between `edge1` and `edge2`.
+
+    Raises
+    ------
+    FreeCADError
+        If the edges are coincident
+
+    Notes
+    -----
+    This is hot garbage. Tangency is not reliable.
+    """
+    e1 = edge1.copy()
+    e2 = edge2.copy()
+
+    u0 = e1.LastParameter
+    u1 = e2.FirstParameter
+
+    p0 = e1.valueAt(u0)
+    p1 = e2.valueAt(u1)
+
+    t0 = e1.tangentAt(u0)
+    t1 = e2.tangentAt(u1)
+    t0.normalize()
+    t1.normalize()
+
+    chord = p1 - p0
+    if chord.Length == 0:
+        raise FreeCADError("Edges share identical endpoints")
+
+    # Attempt to deal with orientation issues
+
+    # Start tangent: always point toward p1
+    if t0.dot(chord) < 0:
+        t0 = -t0
+
+    # End tangent: ignore FreeCAD tangent direction
+    # Force it to point back toward p0
+    if t1.dot(-chord) < 0:
+        t1 = -t1
+
+    # Stupid fucking FreeCAD... hopeless just override and hope they fix
+    t1 = -t1
+
+    h = chord.Length * scale
+
+    poles = [p0, p0 + t0 * h, p1 - t1 * h, p1]
+
+    curve = Part.BezierCurve()
+    curve.setPoles(poles)
+
+    return apiWire(curve.toShape())
+
+
 def make_circle_curve(radius: float, center: apiVector, axis: apiVector) -> Part.Circle:
     """
     Make a Part.Circle with a consistent .Rotation property, by initializing a circle of
