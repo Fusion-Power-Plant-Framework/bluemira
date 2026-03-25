@@ -1229,7 +1229,7 @@ class BlanketCell(openmc.Cell):
             region=self.csg.region_from_surface_series(
                 [exterior_surface, ccw_surface, cw_surface, interior_surface],
                 self.vertex.T,  # We just assume it is convex
-                control_id=bool(cell_id),
+                control_id=False,
             ),
         )
 

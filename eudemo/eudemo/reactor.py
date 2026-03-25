@@ -704,131 +704,138 @@ if __name__ == "__main__":
         )
         upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
 
-        reactor.blanket = build_blanket(
-            reactor_config.params_for("Blanket"),
-            reactor_config.config_for("Blanket"),
-            ivc_shapes.inner_boundary,
-            ivc_shapes.blanket_face,
-            r_inner_cut,
-            cut_angle,
-        )
-
-        if reactor_config.config_for("Neutronics").get("enabled", False):
-            neutronics_start = time.time()
-            reactor.neutronics = NeutronicsManager(
-                *run_neutronics(
-                    reactor_config.params_for("Neutronics").global_params,
-                    reactor_config.config_for("Neutronics"),
-                    blanket=reactor.blanket,
-                    vacuum_vessel=reactor.vacuum_vessel,
-                    ivc_shapes=ivc_shapes,
-                    eq=reference_eq,
-                    op_cond=OperationalConditions(temperature=298, pressure=101325),
+        for fw_a_max in (15, 10, 8, 7, 5, 4, 3):
+            reactor_config.global_params.fw_a_max.value = fw_a_max
+            reactor.blanket = build_blanket(
+                reactor_config.params_for("Blanket"),
+                reactor_config.config_for("Blanket"),
+                ivc_shapes.inner_boundary,
+                ivc_shapes.blanket_face,
+                r_inner_cut,
+                cut_angle,
+            )
+            # for num_points in (20, 30, 40, 50, 60, 70, 80):
+            #     reactor.blanket._panel_points = ivc_shapes.
+            # inner_boundary.discretise(num_points)
+            if reactor_config.config_for("Neutronics").get("enabled", False):
+                neutronics_start = time.time()
+                reactor.neutronics = NeutronicsManager(
+                    *run_neutronics(
+                        reactor_config.params_for("Neutronics").global_params,
+                        reactor_config.config_for("Neutronics"),
+                        blanket=reactor.blanket,
+                        vacuum_vessel=reactor.vacuum_vessel,
+                        ivc_shapes=ivc_shapes,
+                        eq=reference_eq,
+                        op_cond=OperationalConditions(temperature=298, pressure=101325),
+                    )
                 )
-            )
-            neutronics_end = time.time()
-            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
-            bluemira_print(
-                "Total time spent on neutronics (including conversion) = "
-                f"{run_time_track['CSG neutronics']} s"
-            )
+                neutronics_end = time.time()
+                geom = reactor.neutronics.csg_reactor.geom
+                num_points = np.shape(geom.panel_break_points)[-1]
+                run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+                bluemira_print(f"{fw_a_max = } gives {num_points} points.")
+                bluemira_print(
+                    "Total time spent on neutronics (including conversion) = "
+                    f"{run_time_track['CSG neutronics']} s"
+                )
 
-            bluemira_print("Plotting the 2D pre-cell array and cell-arrays:")
+                bluemira_print("Plotting the 2D pre-cell array and cell-arrays:")
 
-            geom = reactor.neutronics.csg_reactor.geom
-            plot_2d([
-                geom.boundary,
-                geom.vacuum_vessel_wire,
-                geom.divertor_wire,
-                make_polygon(geom.panel_break_points),
-            ])
-            reactor.neutronics.plot()
+                plot_2d([
+                    geom.boundary,
+                    geom.vacuum_vessel_wire,
+                    geom.divertor_wire,
+                    make_polygon(geom.panel_break_points),
+                ])
+                reactor.neutronics.plot()
 
-            bluemira_print("Saving a simplified CAD geometry:")
-            csg_blanket = reactor.neutronics.csg_reactor.blanket.pre_cells
-            csg_divertor = reactor.neutronics.csg_reactor.divertor.pre_cells
-            disc_vv_int_wire = BluemiraWire(
-                [pc.vv_wire for pc in csg_blanket]
-                + [dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
-            )
-            disc_vv_ext_wire = BluemiraWire(
-                [pc.exterior_wire for pc in csg_blanket]
-                + [dpc.exterior_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
-            )
+                bluemira_print("Saving a simplified CAD geometry:")
+                csg_blanket = reactor.neutronics.csg_reactor.blanket.pre_cells
+                csg_divertor = reactor.neutronics.csg_reactor.divertor.pre_cells
+                disc_vv_int_wire = BluemiraWire(
+                    [pc.vv_wire for pc in csg_blanket]
+                    + [dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
+                )
+                disc_vv_ext_wire = BluemiraWire(
+                    [pc.exterior_wire for pc in csg_blanket]
+                    + [dpc.exterior_wire.restore_to_wire() for dpc in csg_divertor[::-1]]
+                )
 
-            blanket_int_wire = BluemiraWire([pc.interior_wire for pc in csg_blanket])
-            blanket_ext_wire = BluemiraWire([pc.vv_wire for pc in csg_blanket])
-            disc_blanket = BluemiraWire([
-                blanket_int_wire,
-                make_polygon([
-                    blanket_int_wire.end_point(),
-                    blanket_ext_wire.start_point(),
-                ]),
-                blanket_ext_wire,
-                make_polygon([
-                    blanket_ext_wire.end_point(),
-                    blanket_int_wire.start_point(),
-                ]),
-            ])
+                blanket_int_wire = BluemiraWire([pc.interior_wire for pc in csg_blanket])
+                blanket_ext_wire = BluemiraWire([pc.vv_wire for pc in csg_blanket])
+                disc_blanket = BluemiraWire([
+                    blanket_int_wire,
+                    make_polygon([
+                        blanket_int_wire.end_point(),
+                        blanket_ext_wire.start_point(),
+                    ]),
+                    blanket_ext_wire,
+                    make_polygon([
+                        blanket_ext_wire.end_point(),
+                        blanket_int_wire.start_point(),
+                    ]),
+                ])
 
-            divertor_int_wire = BluemiraWire([
-                dpc.interior_wire.restore_to_wire() for dpc in csg_divertor
-            ])
-            divertor_ext_wire = BluemiraWire([
-                dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]
-            ])
-            disc_divertor = BluemiraWire([
-                divertor_int_wire,
-                make_polygon([
-                    divertor_int_wire.end_point(),
-                    divertor_ext_wire.start_point(),
-                ]),
-                divertor_ext_wire,
-                make_polygon([
-                    divertor_ext_wire.end_point(),
-                    divertor_int_wire.start_point(),
-                ]),
-            ])
+                divertor_int_wire = BluemiraWire([
+                    dpc.interior_wire.restore_to_wire() for dpc in csg_divertor
+                ])
+                divertor_ext_wire = BluemiraWire([
+                    dpc.vv_wire.restore_to_wire() for dpc in csg_divertor[::-1]
+                ])
+                disc_divertor = BluemiraWire([
+                    divertor_int_wire,
+                    make_polygon([
+                        divertor_int_wire.end_point(),
+                        divertor_ext_wire.start_point(),
+                    ]),
+                    divertor_ext_wire,
+                    make_polygon([
+                        divertor_ext_wire.end_point(),
+                        divertor_int_wire.start_point(),
+                    ]),
+                ])
 
-            VISIBLE_MODE = False
-            ext_ = revolve_shape(
-                BluemiraFace(disc_vv_ext_wire), degree=180 if VISIBLE_MODE else 360
-            )
-            int_ = revolve_shape(
-                BluemiraFace(disc_vv_int_wire), degree=180 if VISIBLE_MODE else 360
-            )
+                VISIBLE_MODE = False
+                ext_ = revolve_shape(
+                    BluemiraFace(disc_vv_ext_wire), degree=180 if VISIBLE_MODE else 360
+                )
+                int_ = revolve_shape(
+                    BluemiraFace(disc_vv_int_wire), degree=180 if VISIBLE_MODE else 360
+                )
 
-            simplified_tokamak = Component("Tokamak for MCIO to split")
-            cad_blanket = PhysicalComponent(
-                "blanket",
-                revolve_shape(
-                    BluemiraFace(disc_blanket), degree=180 if VISIBLE_MODE else 360
-                ),
-                parent=simplified_tokamak,
-            )
-            cad_divertor = PhysicalComponent(
-                "divertor",
-                revolve_shape(
-                    BluemiraFace(disc_divertor), degree=180 if VISIBLE_MODE else 360
-                ),
-                parent=simplified_tokamak,
-            )
-            cad_vv = PhysicalComponent(
-                "vacuum vessel", boolean_cut(ext_, int_)[0], parent=simplified_tokamak
-            )
-            save_cad(
-                [cad_blanket.shape, cad_divertor.shape, cad_vv.shape],
-                "Discretized_EUDEMO_LAR_for_MCIO_benchmark.STP",
-            )
+                simplified_tokamak = Component("Tokamak for MCIO to split")
+                cad_blanket = PhysicalComponent(
+                    "blanket",
+                    revolve_shape(
+                        BluemiraFace(disc_blanket), degree=180 if VISIBLE_MODE else 360
+                    ),
+                    parent=simplified_tokamak,
+                )
+                cad_divertor = PhysicalComponent(
+                    "divertor",
+                    revolve_shape(
+                        BluemiraFace(disc_divertor), degree=180 if VISIBLE_MODE else 360
+                    ),
+                    parent=simplified_tokamak,
+                )
+                cad_vv = PhysicalComponent(
+                    "vacuum vessel",
+                    boolean_cut(ext_, int_)[0],
+                    parent=simplified_tokamak,
+                )
+                save_cad(
+                    [cad_blanket.shape, cad_divertor.shape, cad_vv.shape],
+                    f"EUDEMO_LAR_{num_points}_MCIO_benchmark.STP",
+                )
 
-            import sys
+        model = ZeroDNeutronicsModel(reactor_config.global_params)
+        new_params = model.run()
+        reactor_config.global_params.update_from_frame(new_params)
 
-            sys.exit()
-        else:
-            model = ZeroDNeutronicsModel(reactor_config.global_params)
-            new_params = model.run()
-            reactor_config.global_params.update_from_frame(new_params)
+        import sys
 
+        sys.exit()
         vv_thermal_shield = build_vacuum_vessel_thermal_shield(
             reactor_config.params_for("Thermal shield"),
             reactor_config.config_for("Thermal shield", "VVTS"),

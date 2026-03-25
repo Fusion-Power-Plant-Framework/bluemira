@@ -465,7 +465,10 @@ class OpenMCNeutronicsSolver(CodesSolver):
 
         start_conversion_time = time.time()
         self.cell_arrays = make_cell_arrays(
-            self.pre_cell_model, BluemiraNeutronicsCSG(), self.materials, control_id=True
+            self.pre_cell_model,
+            BluemiraNeutronicsCSG(),
+            self.materials,
+            control_id=False,
         )
         end_conversion_time = time.time()
         bluemira_print(
