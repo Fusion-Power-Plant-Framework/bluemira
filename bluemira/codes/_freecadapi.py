@@ -468,18 +468,17 @@ def interpolate_bspline(
     return wire
 
 
-def make_bspline_g2_blend(
+def make_bspline_g1_blend(
     edge1: apiEdge,
     edge2: apiEdge,
-    scale_t: float = 0.1,
-    scale_k: float = 0.03,
+    scale=0.2,
 ) -> apiWire:
     """
-    Create a G2-continuous B-spline blend between two edges.
+    Create a G1-continuous B-spline blend between two edges.
 
     This function generates a B-spline curve that connects `edge1` and `edge2`
-    while attempting to enforce G2 (curvature) continuity. The curve is constructed
-    by blending the tangents and curvature of the edges near their connection points.
+    while attempting to enforce G1 (tangent) continuity. The curve is constructed
+    by blending the tangents of the edges at their connection points.
 
     Parameters
     ----------
@@ -489,10 +488,8 @@ def make_bspline_g2_blend(
     edge2 : apiEdge
         The second edge to connect. The blend will attach to either its start or end,
         depending on `at_start2`.
-    scale_t : float, optional
+    scale : float, optional
         Scale factor for the tangent vector length used in the blend (default is 0.1).
-    scale_k : float, optional
-        Scale factor for curvature influence in the blend (default is 0.03).
 
     Returns
     -------
@@ -502,6 +499,11 @@ def make_bspline_g2_blend(
     Notes
     -----
     This is hot garbage. Tangency is not reliable.
+
+    Raises
+    ------
+    FreeCADError
+        If the edges are coincident
     """
     e1 = edge1.copy()
     e2 = edge2.copy()
@@ -511,49 +513,33 @@ def make_bspline_g2_blend(
 
     p0 = e1.valueAt(u0)
     p1 = e2.valueAt(u1)
-    chord = p1 - p0
 
     t0 = e1.tangentAt(u0)
     t1 = e2.tangentAt(u1)
     t0.normalize()
     t1.normalize()
 
-    k0 = e1.derivative2At(u0)
-    k1 = e2.derivative2At(u1)
+    chord = p1 - p0
+    if chord.Length == 0:
+        raise FreeCADError("Edges share identical endpoints")
 
     # Attempt to deal with orientation issues
 
     # Start tangent: always point toward p1
     if t0.dot(chord) < 0:
         t0 = -t0
-        k0 = -k0
 
     # End tangent: ignore FreeCAD tangent direction
     # Force it to point back toward p0
     if t1.dot(-chord) < 0:
         t1 = -t1
-        k1 = -k1
-    else:
-        # Sometimes FreeCAD tangent points away even though dot < 0 is false
-        # Always enforce pointing toward start of blend
-        t1 = -t1
-        k1 = -k1
 
     # Stupid fucking FreeCAD... hopeless just override and hope they fix
     t1 = -t1
-    k1 = -k1
 
-    length = chord.Length
-    h_t = length * scale_t
-    h_k = length * scale_k
+    h = chord.Length * scale
 
-    # Build quintic Bezier
-    p01 = p0 + t0 * h_t
-    p02 = p01 + k0 * h_k
-    p03 = p1 - t1 * h_t
-    p04 = p03 - k1 * h_k
-
-    poles = [p0, p01, p02, p04, p03, p1]
+    poles = [p0, p0 + t0 * h, p1 - t1 * h, p1]
 
     curve = Part.BezierCurve()
     curve.setPoles(poles)

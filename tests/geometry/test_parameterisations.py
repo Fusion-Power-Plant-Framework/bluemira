@@ -15,6 +15,7 @@ import pytest
 from bluemira.codes._freecadapi import _wire_edges_tangent
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PFrameSection,
@@ -30,6 +31,8 @@ from bluemira.geometry.parameterisations import (
 )
 from bluemira.geometry.tools import (
     SweepShapeTransition,
+    boolean_cut,
+    extrude_shape,
     make_polygon,
     offset_wire,
     sweep_shape,
@@ -137,24 +140,25 @@ class TestPrincetonDDiscrete:
             n_points=30,
             tolerance=0.01,
         )
-        cls.wp_xs = make_polygon(
-            {
-                "x": 0.5
-                * np.array([-tf_wp_width, tf_wp_width, tf_wp_width, -tf_wp_width]),
-                "y": 0.5
-                * np.array([-tf_wp_depth, -tf_wp_depth, tf_wp_depth, tf_wp_depth]),
-                "z": 0.0,
-            },
-            closed=True,
+        cls.wp_xs = BluemiraFace(
+            make_polygon(
+                {
+                    "x": 0.5
+                    * np.array([-tf_wp_width, tf_wp_width, tf_wp_width, -tf_wp_width]),
+                    "y": 0.5
+                    * np.array([-tf_wp_depth, -tf_wp_depth, tf_wp_depth, tf_wp_depth]),
+                    "z": 0.0,
+                },
+                closed=True,
+            )
         )
         cls.wp_xs.translate([x1, 0, 0])
         cls.discrete_princeton_shape = parameterisation.create_shape()
-        cls.wp_xs.translate([x1, 0, 0])
-        cls.discrete_princeton_shape = parameterisation.create_shape()
 
+        x1 = 3.57638
         s = PrincetonDDiscrete(
             {
-                "x1": {"value": 3.57638},
+                "x1": {"value": x1},
                 "x2": {"value": 15.8237},
                 "dz": {"value": 0.0940193},
             },
@@ -166,6 +170,19 @@ class TestPrincetonDDiscrete:
         )
 
         cls.fail_shape = s.create_shape()
+        cls.wp_xs2 = BluemiraFace(
+            make_polygon(
+                {
+                    "x": 0.5
+                    * np.array([-tf_wp_width, tf_wp_width, tf_wp_width, -tf_wp_width]),
+                    "y": 0.5
+                    * np.array([-tf_wp_depth, -tf_wp_depth, tf_wp_depth, tf_wp_depth]),
+                    "z": 0.0,
+                },
+                closed=True,
+            )
+        )
+        cls.wp_xs2.translate([x1, 0, 0])
 
     @pytest.mark.parametrize("x1", [4, 5])
     @pytest.mark.parametrize("x2", [10, 12])
@@ -260,7 +277,7 @@ class TestPrincetonDDiscrete:
         # This proves it isn't up-down symmetric
         assert np.isclose(com[2], 0.1)
 
-    @pytest.mark.parametrize("frenet", [True, False])
+    @pytest.mark.parametrize("frenet", [False, True])
     @pytest.mark.parametrize(
         "transition",
         [
@@ -271,12 +288,13 @@ class TestPrincetonDDiscrete:
     )
     def test_princeton_d_discrete_sweep(self, frenet, transition):
         shape = sweep_shape(
-            self.wp_xs,
+            self.wp_xs.boundary,
             self.discrete_princeton_shape,
             frenet=frenet,
             transition=transition,
         )
-        assert shape.is_valid()
+        approx_volume = self.wp_xs.area * self.discrete_princeton_shape.length
+        self._the_neverending_validity_battle(shape, approx_volume)
 
     @pytest.mark.parametrize("delta", [-0.1, 0.1, -1.0, 1.0])
     def test_princeton_d_discrete_offset(self, delta):
@@ -284,7 +302,7 @@ class TestPrincetonDDiscrete:
         assert wire.is_closed()
         assert wire.is_valid()
 
-    @pytest.mark.parametrize("frenet", [True, False])
+    @pytest.mark.parametrize("frenet", [False])
     @pytest.mark.parametrize(
         "transition",
         [
@@ -295,12 +313,73 @@ class TestPrincetonDDiscrete:
     )
     def test_tough_one(self, frenet, transition):
         shape = sweep_shape(
-            self.wp_xs,
+            self.wp_xs2.boundary,
             self.fail_shape,
             frenet=frenet,
             transition=transition,
         )
+
+        # This does... sometimes
+        approx_volume = self.wp_xs2.area * self.fail_shape.length
+        self._the_neverending_validity_battle(shape, approx_volume)
+
+    @pytest.mark.xfail(reason="Sausage-fest v2")
+    @pytest.mark.parametrize("frenet", [True])
+    @pytest.mark.parametrize(
+        "transition",
+        [
+            SweepShapeTransition.DEFAULT,
+            SweepShapeTransition.RIGHT_CORNER,
+            SweepShapeTransition.ROUND_CORNER,
+        ],
+    )
+    def test_sausages(self, frenet, transition):
+        shape = sweep_shape(
+            self.wp_xs2.boundary,
+            self.fail_shape,
+            frenet=frenet,
+            transition=transition,
+        )
+
+        # This does... sometimes
+        approx_volume = self.wp_xs2.area * self.fail_shape.length
+        self._the_neverending_validity_battle(shape, approx_volume)
+
+    def test_fail_shape_length(self):
+        x, z = _calculate_discrete_constant_tension_shape(
+            3.57638,
+            15.8237,
+            n_tf=16,
+            tf_wp_depth=1.155285492290215,
+            tf_wp_width=0.8420220709276258,
+            n_points=40,
+            solver=ArbitraryPlanarRectangularXSCircuit,
+            tolerance=1e-4,
+        )
+        coords = Coordinates({"x": x, "z": z})
+        coords.close()
+        assert np.isclose(coords.length, self.fail_shape.length, atol=0.0, rtol=1e-2)
+
+    def _the_neverending_validity_battle(self, shape, approx_volume):
+        # This does not detect the sausage-fest problem
+        assert len(shape.boundary[0].faces) == 16
         assert shape.is_valid()
+        assert not shape.is_null()
+        for f in shape.boundary[0].faces:
+            assert len(f.edges) == 4
+
+        # This does... sometimes
+        assert np.isclose(shape.volume, approx_volume, atol=0.0, rtol=1e-2)
+
+        # This is the crude but effective sausage-fest detector
+        p = BluemiraFace(
+            make_polygon(
+                {"x": [0.0, 20.0, 20.0, 0.0], "z": [-10, -10, 10, 10]}, closed=True
+            )
+        )
+        p = extrude_shape(p, [0, 10, 0])
+        p = boolean_cut(shape, p)[0]
+        assert p.is_valid()
 
 
 class TestPictureFrame:

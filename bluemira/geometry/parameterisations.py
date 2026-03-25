@@ -29,7 +29,7 @@ from scipy.special import iv as bessel
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadapi import make_bspline_g2_blend
+from bluemira.codes._freecadapi import make_bspline_g1_blend
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
@@ -1031,10 +1031,13 @@ class PrincetonDDiscrete(PrincetonD):
                 else {}
             ),
         )
+        points = outer_arc.discretise(1000)
+        outer_arc = interpolate_bspline(points.xyz, label="outer_arc")
+
         # TODO @CoronelBuendia: This is a hot pile of garbage. I have tried half
         # a dozen different ways, but I always end up fighting the unreliable
         # tangents. Let us hope moving to e.g. cadquery helps with this.
-        # 5000
+        # 4267
         blend_length = 0.4
         first_z = z[0] - blend_length
         straight_segment = make_polygon(
@@ -1042,17 +1045,20 @@ class PrincetonDDiscrete(PrincetonD):
             label="straight_segment",
         )
         joint = BluemiraWire(
-            make_bspline_g2_blend(
+            make_bspline_g1_blend(
                 straight_segment._shape.OrderedEdges[0],
                 outer_arc._shape.OrderedEdges[0],
-            )
+            ),
+            label="upper_joint",
         )
         joint2 = BluemiraWire(
-            make_bspline_g2_blend(
+            make_bspline_g1_blend(
                 outer_arc._shape.OrderedEdges[-1],
-                straight_segment._shape.OrderedEdges[0],
-            )
+                straight_segment._shape.OrderedEdges[-1],
+            ),
+            label="lower_joint",
         )
+
         wire = BluemiraWire([straight_segment, joint, outer_arc, joint2], label=label)
         wire.translate((0.0, 0.0, self.variables.dz.value))
         return wire
