@@ -861,7 +861,7 @@ class Breakdown(CoilSetMHDState):
     def to_eqdsk(
         self,
         filename: Path | str,
-        header: str = "bluemira_breadown",
+        header: str = "bluemira_breakdown",
         directory: str | None = None,
         filetype: str = "json",
         to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
