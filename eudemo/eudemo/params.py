@@ -50,6 +50,7 @@ class EUDEMOReactorParams(ParameterFrame):
     kappa_95: Parameter[float]
     kappa: Parameter[float]
     m_s_limit: Parameter[float]
+    m_s: Parameter[float]
     l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
