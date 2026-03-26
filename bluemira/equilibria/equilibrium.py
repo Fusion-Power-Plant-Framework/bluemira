@@ -814,7 +814,7 @@ class Breakdown(CoilSetMHDState):
         data_dict["nbdry"] = 2
         data_dict["xbdry"] = np.zeros([2])
         data_dict["zbdry"] = np.zeros([2])
-        data_dict["psibdry"] = np.array([2])
+        data_dict["psibdry"] = 0.0
         data_dict["ffprime"] = np.zeros_like(self.grid.x_1d)
         data_dict["fpol"] = np.zeros_like(self.grid.x_1d)
         data_dict["pprime"] = np.zeros_like(self.grid.x_1d)
