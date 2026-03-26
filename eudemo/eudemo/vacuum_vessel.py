@@ -49,7 +49,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         Returns
         -------
         :
-            A wire giving the vessel's boundary in the xz plane.
+            A wire giving the vessel's outer boundary in the xz plane.
 
         """
         return (
@@ -59,6 +59,22 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             .shape.boundary[0]
         )
 
+    @property
+    def xz_inner_boundary(self) -> BluemiraWire:
+        """
+        Returns
+        -------
+        :
+            A wire giving the vessel's inner boundary in the xz plane.
+
+        """
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(VacuumVesselBuilder.BODY)
+            .shape.boundary[1]
+        )
+    
     def add_ports(self, ports: Component | list[Component], n_TF: int):
         """
         Add a series of ports to the vacuum vessel component tree.

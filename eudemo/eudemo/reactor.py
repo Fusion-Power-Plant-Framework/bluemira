@@ -26,6 +26,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from eudemo.equilibria.stability import run_vertical_stability_calculation
 from matproplib.conditions import OperationalConditions
 
 from bluemira.base.components import Component
@@ -686,6 +687,14 @@ if __name__ == "__main__":
             reactor_config.params_for("Vacuum vessel"),
             reactor_config.config_for("Vacuum vessel"),
             ivc_shapes.outer_boundary,
+        )
+
+        run_vertical_stability_calculation(
+            reactor_config.params_for("Vertical stability").global_params,
+            reactor_config.config_for("Vertical stability"),
+            reference_eq,
+            reactor.vacuum_vessel.xz_boundary,
+            reactor.vacuum_vessel.xz_inner_boundary,
         )
 
         reactor.divertor = build_divertor(

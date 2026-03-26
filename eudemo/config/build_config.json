@@ -113,6 +113,9 @@
   "Vacuum vessel": {
     "material": "SS316-LN"
   },
+  "Vertical stability": {
+
+  },
   "Divertor": {
     "material": "Homogenised_Divertor_2015"
   },
