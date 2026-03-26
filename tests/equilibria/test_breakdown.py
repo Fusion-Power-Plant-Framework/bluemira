@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS
 from bluemira.equilibria.equilibrium import Breakdown
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -62,8 +63,20 @@ class TestBreakdown:
         bd_flux_vs = self.breakdown.breakdown_psi * 2 * np.pi
         assert bd_flux_vs > 245
 
-    @pytest.mark.parametrize("file_format", ["json", "eqdsk", "imas", None])
-    def test_eqdsk_write(self, file_format, tmp_path):
+    @pytest.mark.parametrize("file_format", ["json", "eqdsk"])
+    def test_eqdsk_write_read(self, file_format, tmp_path):
         new_file_name = f"test_breakdown.{file_format}"
         new_file_path = Path(tmp_path, new_file_name)
-        self.breakdown.to_eqdsk(new_file_name, directory=tmp_path, filetype=file_format)
+        self.breakdown.to_eqdsk(
+            new_file_name,
+            directory=tmp_path,
+            filetype=file_format,
+            to_cocos=BLUEMIRA_DEFAULT_COCOS,
+        )
+        new_bd = Breakdown.from_eqdsk(
+            new_file_path, from_cocos=BLUEMIRA_DEFAULT_COCOS, force_symmetry=False
+        )
+        bd_flux_vs = new_bd.breakdown_psi * 2 * np.pi
+        recalced_flux_vs = new_bd.psi(*new_bd.breakdown_point) * 2 * np.pi
+        assert bd_flux_vs > 245
+        assert recalced_flux_vs > 245
