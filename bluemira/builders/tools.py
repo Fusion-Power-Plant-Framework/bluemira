@@ -10,8 +10,8 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
-from copy import deepcopy
 import operator
+from copy import deepcopy
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
