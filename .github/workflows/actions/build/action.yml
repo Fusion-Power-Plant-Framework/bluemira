@@ -13,10 +13,10 @@ runs:
   using: "composite"
   steps:
     - name: Checkout
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
     - name: Checkout bluemira-private-data
-      uses: actions/checkout@v5
+      uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       if: ${{ !github.event.pull_request.head.repo.fork && inputs.bm-private-data-key != '' }}
       with:
         repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
@@ -32,7 +32,7 @@ runs:
 
     - name: Cache pip
       id: cache-pip
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ inputs.python-version }}-${{
@@ -40,7 +40,7 @@ runs:
 
     - name: Cache conda
       id: cache-conda
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       with:
         path: ~/conda_pkgs_dir
         key: ${{ runner.os }}-conda-${{ inputs.python-version }}-${{
@@ -71,7 +71,7 @@ runs:
       run: |
         conda env export -n bluemira > bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       if: inputs.with-artifact == 'true'
       with:
         name: bluemira_${{ inputs.python-version }}_${{ runner.os }}.yml
@@ -79,14 +79,14 @@ runs:
         overwrite: true
 
     - name: Save pip build cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       if: always() && steps.cache-pip.outputs.cache-hit != 'true' && inputs.with-artifact == 'true'
       with:
         path: ~/.cache/pip
         key: ${{ steps.cache-pip.outputs.cache-primary-key }}
 
     - name: Save conda build cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
       if: always() && steps.cache-conda.outputs.cache-hit != 'true' && inputs.with-artifact == 'true'
       with:
         path: ~/conda_pkgs_dir
