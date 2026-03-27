@@ -47,7 +47,7 @@ runs:
           hashFiles('conda/environment.yml','requirements/conda.txt','pyproject.toml') }}
 
     - name: Install Environment
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@fc2d68f6413eb2d87b895e92f8584b5b94a10167 # v3
       with:
         activate-environment: bluemira
         environment-file: conda/environment.yml
