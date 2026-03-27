@@ -85,24 +85,15 @@ def make_mutual_inductance_matrix(
 
     M[jtri, itri] = M[itri, jtri]
 
-    self_inductance = np.zeros(n_coils)
-    for n, coil in enumerate(coils):
-        for i, (xi, zi, dxi, dzi) in enumerate(
-            zip(coil._quad_x, coil._quad_z, coil._quad_dx, coil._quad_dz, strict=True)
-        ):
-            for j, (xj, zj) in enumerate(zip(coil._quad_x, coil._quad_z, strict=True)):
-                if i == j:
-                    self_inductance[n] += (
-                        square_coil_inductance_kirchhoff(xi, 2 * dxi, 2 * dzi)
-                        if square_coil
-                        else (circular_coil_inductance_elliptic(xi, np.hypot(dxi, dzi)))
-                    )
-                else:
-                    self_inductance[n] += greens_psi(xi, zi, xj, zj)
-        self_inductance[n] *= coil.n_turns**2 / (len(coil._quad_x) ** 2)
-
-    M[np.diag_indices_from(M)] = np.squeeze(self_inductance)
-
+    M[np.diag_indices_from(M)] = coilset.n_turns**2 * np.squeeze(
+        square_coil_inductance_kirchhoff(coilset.x, 2 * coilset.dx, 2 * coilset.dz)
+        if square_coil
+        else (
+            circular_coil_inductance_elliptic(
+                coilset.x, np.hypot(coilset.dx, coilset.dz)
+            )
+        )
+    )
     return M
 
 
