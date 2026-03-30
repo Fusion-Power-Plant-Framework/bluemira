@@ -33,7 +33,7 @@ dependencies:
   - pybind11==3.0.1
   - pybind11-global==3.0.1
   - pytools==2025.2.4
-  - vtk==9.3.1
+  - vtk==9.6.1
   - libopenblas
   - pythonocc-core
   - pip

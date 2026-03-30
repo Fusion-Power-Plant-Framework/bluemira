@@ -222,7 +222,7 @@ typing-inspection==0.4.2
     # via pydantic
 urllib3==2.6.3
     # via requests
-vtk==9.3.1
+vtk==9.6.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
