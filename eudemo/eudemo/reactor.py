@@ -689,13 +689,14 @@ if __name__ == "__main__":
             ivc_shapes.outer_boundary,
         )
 
-        run_vertical_stability_calculation(
-            reactor_config.params_for("Vertical stability").global_params,
-            reactor_config.config_for("Vertical stability"),
-            reference_eq,
-            reactor.vacuum_vessel.xz_boundary,
-            reactor.vacuum_vessel.xz_inner_boundary,
-        )
+        if False:
+            run_vertical_stability_calculation(
+                reactor_config.params_for("Vertical stability").global_params,
+                reactor_config.config_for("Vertical stability"),
+                reference_eq,
+                reactor.vacuum_vessel.xz_boundary,
+                reactor.vacuum_vessel.xz_inner_boundary,
+            )
 
         reactor.divertor = build_divertor(
             reactor_config.params_for("Divertor"),
