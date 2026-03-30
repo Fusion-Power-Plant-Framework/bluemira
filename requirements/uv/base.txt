@@ -193,6 +193,7 @@ scipy==1.17.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
+    #   pint
     #   scikit-learn
 scooby==0.11.0
     # via pyvista
