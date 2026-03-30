@@ -77,7 +77,7 @@ def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
         try:
             __import__(m)
             skip.append(False)
-        except ImportError:  # noqa: PERF203
+        except ImportError:
             skip.append(True)
 
     if len(module_name) == 1:
