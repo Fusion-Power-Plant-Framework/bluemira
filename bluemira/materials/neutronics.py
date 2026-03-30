@@ -10,15 +10,15 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from bluemira.base.look_and_feel import bluemira_warn
+from matproplib import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
-from matproplib.library.fluids import Water, Helium
+from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
-from matproplib import OperationalConditions
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-from matproplib.properties.dependent import Density
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 try:
     from eurofusion_materials.library.steel import EUROfer97
@@ -441,30 +441,14 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(material_id=101),
         ),
-
-        # inb_bz_mat=mixture(
-        #     name="inb_breeder_zone",
-        #     materials=[
-        #         (EUROFER_MAT, structural_fraction_vo),
-        #         (Be12Ti(), multiplier_fraction_vo),
-        #         (KALOS_ACB_MAT, breeder_fraction_vo),
-        #         (HELIUM_MAT, helium_fraction_vo),
-        #     ],
-        #     fraction_type="volume",
-        #     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
-        #     converters=OpenMCNeutronicConfig(
-        #         material_id=102,
-        #         enrichment=li_enrich_ao * 100,
-        #         enrichment_target="Li6",
-        #         enrichment_type="atomic",
-        #     ),
-        # ),
         inb_bz_mat=mixture(
-            name="inb_breeder_zone",#"HCPB-BL2017-v3",
+            name="inb_breeder_zone",
             materials=[
-                (EUROFER_MAT, 0.128), (HELIUM_MAT, 0.276),
-                (make_KALOS_ACB_mat(li_enrich_ao), 0.103),
-                (Be12Ti(), 0.493)],
+                (EUROFER_MAT, structural_fraction_vo),
+                (Be12Ti(), multiplier_fraction_vo),
+                (KALOS_ACB_MAT, breeder_fraction_vo),
+                (HELIUM_MAT, helium_fraction_vo),
+            ],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(
@@ -474,6 +458,21 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 enrichment_type="atomic",
             ),
         ),
+        # inb_bz_mat=mixture(
+        #     name="inb_breeder_zone",#"HCPB-BL2017-v3",
+        #     materials=[
+        #         (EUROFER_MAT, 0.128), (HELIUM_MAT, 0.276),
+        #         (make_KALOS_ACB_mat(li_enrich_ao), 0.103),
+        #         (Be12Ti(), 0.493)],
+        #     fraction_type="volume",
+        #     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
+        #     converters=OpenMCNeutronicConfig(
+        #         material_id=102,
+        #         enrichment=li_enrich_ao * 100,
+        #         enrichment_target="Li6",
+        #         enrichment_type="atomic",
+        #     ),
+        # ),
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[
@@ -504,16 +503,19 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         ),
     )
 
+
 def new_hcpb_mat(li_enrich_ao: float):
     """
-    This is obtained from Eurofusion IDM EFDA_D_2NUTXK: HCPB Design Report 2018 
+    This is obtained from Eurofusion IDM EFDA_D_2NUTXK: HCPB Design Report 2018
     """
     hcpb_bl2017_v3 = mixture(
         name="HCPB-BL2017-v3",
         materials=[
-            (EUROFER_MAT, 0.7681), (TUNGSTEN_MAT, 0.0141),
+            (EUROFER_MAT, 0.7681),
+            (TUNGSTEN_MAT, 0.0141),
             (make_KALOS_ACB_mat(li_enrich_ao), 0.0415),
-            (Be12Ti(), 0.1763)],
+            (Be12Ti(), 0.1763),
+        ],
         fraction_type="mass",
         mix_condition=OperationalConditions(temperature=373.15, pressure=1e5),
         converters=OpenMCNeutronicConfig(material_id=1000),
