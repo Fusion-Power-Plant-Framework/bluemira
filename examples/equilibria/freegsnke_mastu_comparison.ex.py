@@ -26,10 +26,10 @@ Benchmark with FreeGNSKE on a MAST-U equilibrium.
 
 # %% [markdown]
 #
-# # EU-DEMO 2017 reference breakdown and equilibrium benchmark
+# # FreeGSNKE MAST-U comparison
 
 # %%
-import pickle  # noqa: S403
+import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -69,10 +69,9 @@ plot_defaults()
 
 # %%
 path = get_bluemira_path("equilibria", subfolder="examples")
-name = "MAST-U_like_active_coils.pickle"
-
-with open(Path(path, name), "rb") as file:
-    coil_dict = pickle.load(file)  # noqa: S301
+name = "MAST-U_like_active_coils.json"
+with open(Path(path, name)) as file:
+    coil_dict = json.load(file)
 
 circuits = []
 count = []
@@ -132,11 +131,12 @@ full_coilset.control = [n for n in full_coilset.name if "Solenoid" not in n]
 
 # %% [markdown]
 # Load up the FreeGSNKE equilibrium for comparison purposes
-# Note sure which COCOS FreeGSNKE uses... probably 7 or 8
-
 # %%
+path = get_bluemira_path("equilibria", subfolder="examples")
 name = "MASTU-FREEGSNKE.eqdsk"
+
 freegsnke_eq = Equilibrium.from_eqdsk(Path(path, name), from_cocos=7)
+
 
 # %% [markdown]
 # Match the profiles from the FreeGSNKE equilibrium with a CustomProfile
