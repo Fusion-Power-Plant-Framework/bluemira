@@ -442,14 +442,29 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
             converters=OpenMCNeutronicConfig(material_id=101),
         ),
 
+        # inb_bz_mat=mixture(
+        #     name="inb_breeder_zone",
+        #     materials=[
+        #         (EUROFER_MAT, structural_fraction_vo),
+        #         (Be12Ti(), multiplier_fraction_vo),
+        #         (KALOS_ACB_MAT, breeder_fraction_vo),
+        #         (HELIUM_MAT, helium_fraction_vo),
+        #     ],
+        #     fraction_type="volume",
+        #     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
+        #     converters=OpenMCNeutronicConfig(
+        #         material_id=102,
+        #         enrichment=li_enrich_ao * 100,
+        #         enrichment_target="Li6",
+        #         enrichment_type="atomic",
+        #     ),
+        # ),
         inb_bz_mat=mixture(
-            name="inb_breeder_zone",
+            name="inb_breeder_zone",#"HCPB-BL2017-v3",
             materials=[
-                (EUROFER_MAT, structural_fraction_vo),
-                (Be12Ti(), multiplier_fraction_vo),
-                (KALOS_ACB_MAT, breeder_fraction_vo),
-                (HELIUM_MAT, helium_fraction_vo),
-            ],
+                (EUROFER_MAT, 0.128), (HELIUM_MAT, 0.276),
+                (make_KALOS_ACB_mat(li_enrich_ao), 0.103),
+                (Be12Ti(), 0.493)],
             fraction_type="volume",
             mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
             converters=OpenMCNeutronicConfig(
@@ -459,7 +474,6 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
                 enrichment_type="atomic",
             ),
         ),
-    
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[
