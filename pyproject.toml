@@ -35,7 +35,7 @@ dependencies = [
     # we should remove this once numba-scipy starts to be more regularly maintained
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy>=1.26.0",
-    "pint[scipy]>=0.26",
+    "pint[scipy]>=0.25.3",
     "periodictable>=1.4",
     "pyclipper>=1.3.0.post5",
     "pydantic>=2.11.0",
