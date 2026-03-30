@@ -265,7 +265,7 @@ class Teardown(CodesTeardown):
         with open(self.outfile) as output_file:
             for line in output_file:
                 if line.startswith("#"):
-                    pass
+                    continue
                 if line.startswith(" "):
                     k, v = line.split()
                     out_params[k] = float(v)
