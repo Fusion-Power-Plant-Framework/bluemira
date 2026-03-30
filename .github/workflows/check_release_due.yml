@@ -26,7 +26,7 @@ jobs:
             echo "Release is not due"
           fi
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         if: ${{ steps.check-date.outputs.release_due == 'true' }}
       - name: Create Issue
         id: create-issue
