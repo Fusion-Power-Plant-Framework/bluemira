@@ -90,7 +90,7 @@ jobs:
         env:
           # Flag to run longrun tests when merging dependency updates
           # https://github.com/actions/runner/issues/409#issuecomment-752775072
-          PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
+          # PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
           PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
         run: |
           pytest --cov=bluemira \
@@ -101,7 +101,6 @@ jobs:
                  --json-report-indent=2 \
                  --reactor \
                  ${PYTEST_PRIVATE} \
-                 ${PYTEST_LONGRUN} \
                  tests eudemo/eudemo_tests
 
       - name: Upload test report

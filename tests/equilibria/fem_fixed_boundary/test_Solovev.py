@@ -195,6 +195,7 @@ def create_mesh(solovev, LCFS, lcar):
     return (mesh, ct, ft), labels, psi_ax
 
 
+@pytest.mark.longrun
 class TestSolovevZheng:
     @pytest.fixture(scope="class", autouse=True)
     def setup_class(self, tmp_path_factory):
@@ -294,6 +295,7 @@ class TestSolovevZheng:
         assert np.max(np.abs(psi_fe_boundary - psi_exact_boundary)) < 4e-7
 
 
+@pytest.mark.longrun
 class TestSolovevZhengEquilibrium:
     """
     This test is the same as above, but using the FemGradShafranovFixedBoundary
