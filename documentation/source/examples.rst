@@ -25,6 +25,7 @@ Equilibria Examples
     examples/equilibria/Spherical_Approximation_how_it_works
     examples/equilibria/spherical_harmonic_approximation_basic_use
     examples/equilibria/coilset_opt_problem_tutorial
+    examples/equilibria/freegsnke_mastu_comparison
     examples/equilibria/anaylsis_toolbox_examples
     examples/equilibria/quick_look_at_example_coilsets
     examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up
