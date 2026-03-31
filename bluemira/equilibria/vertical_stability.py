@@ -88,20 +88,16 @@ class RZIp:
     @coilset.setter
     def coilset(self, cs: CoilSet):
         """Calculate coilset inductance"""
-        self._coilset = cs
-        reduced_coilset = deepcopy(cs.get_uncontrolled_coils())
-        if not np.all(reduced_coilset.n_turns == 1):
+        self._coilset = deepcopy(cs)
+        if not np.all(cs.n_turns == 1):
             bluemira_warn(
-                "RZIp calculation only valid for single turn coils, setting n_turns to 1 for all coils"
+                "RZIp calculation presently only valid for single turn coils, "
+                "setting n_turns to 1 for all coils"
             )
-            reduced_coilset.n_turns = 1
+            cs.n_turns = 1
 
+        reduced_coilset = cs.get_uncontrolled_coils()
         self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=True)
-        diag = np.diag(np.diag(self.ind_mat))
-        non_diag = (
-            2 * np.pi * (self.ind_mat - diag)
-        )  # extra 2pi term due to per circle rather than per radian
-        self.ind_mat = diag + non_diag
 
     def __call__(
         self,

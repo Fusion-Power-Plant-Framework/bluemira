@@ -80,7 +80,11 @@ def make_mutual_inductance_matrix(
             for xi2, zi2 in zip(coil2._quad_x, coil2._quad_z, strict=True):
                 M[i, j] += greens_psi(xi1, zi1, xi2, zi2)
         M[i, j] *= (
-            coil1.n_turns * coil2.n_turns / (len(coil1._quad_x) * len(coil2._quad_x))
+            2
+            * np.pi
+            * float(  # extra 2pi term due to per circle rather than per radian
+                coil1.n_turns * coil2.n_turns / (len(coil1._quad_x) * len(coil2._quad_x))
+            )
         )
 
     M[jtri, itri] = M[itri, jtri]
