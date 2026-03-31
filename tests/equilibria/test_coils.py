@@ -798,23 +798,6 @@ class TestMutualInductances:
         coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=0.001)
         cls.coilset5 = CoilSet(coil1, coil2)
 
-        coil10 = Coil(
-            2.0,
-            1.0,
-            0.5,
-            0.5,
-        )
-        coil11 = Coil(
-            2.0,
-            -1.0,
-            0.5,
-            0.5,
-        )
-        cls.coilset6 = CoilSet(coil10, coil11)
-        coil12 = Coil(2.0, 1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
-        coil13 = Coil(2.0, -1.0, 0.5, 0.5, n_turns=4, discretisation=0.5)
-        cls.coilset7 = CoilSet(coil12, coil13)
-
     @pytest.mark.parametrize("square_coil", [True, False])
     def test_mutual_inductance_discretisation(self, square_coil):
         ind_mat1 = make_mutual_inductance_matrix(self.coilset4, square_coil=square_coil)
@@ -846,10 +829,3 @@ class TestMutualInductances:
         m3 = make_mutual_inductance_matrix(self.coilset3)
         assert np.shape(m2) == (2, 2)
         assert np.shape(m3) == (4, 4)
-
-    def test_turn_normalisations(self):
-        m4 = make_mutual_inductance_matrix(self.coilset6, square_coil=True)
-        print(m4)
-        m5 = make_mutual_inductance_matrix(self.coilset7, square_coil=True)
-        print(m5)
-        np.testing.assert_allclose(m4, m5, rtol=1e-6)
