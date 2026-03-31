@@ -81,8 +81,8 @@ def make_mutual_inductance_matrix(
                 M[i, j] += greens_psi(xi1, zi1, xi2, zi2)
         M[i, j] *= (
             2
-            * np.pi
-            * float(  # extra 2pi term due to per circle rather than per radian
+            * np.pi  # extra 2pi term due to per circle rather than per radian
+            * float(
                 coil1.n_turns * coil2.n_turns / (len(coil1._quad_x) * len(coil2._quad_x))
             )
         )
