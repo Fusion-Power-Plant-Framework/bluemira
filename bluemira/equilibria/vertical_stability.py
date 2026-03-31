@@ -90,6 +90,7 @@ class RZIp:
         """Calculate coilset inductance"""
         self._coilset = deepcopy(cs)
         if not np.all(cs.n_turns == 1):
+            # TODO(CoronelBuendia): This is a present limitation, see #4281
             bluemira_warn(
                 "RZIp calculation presently only valid for single turn coils, "
                 "setting n_turns to 1 for all coils"

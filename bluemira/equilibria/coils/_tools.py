@@ -82,7 +82,7 @@ def make_mutual_inductance_matrix(
         M[i, j] *= (
             2
             * np.pi  # extra 2pi term due to per circle rather than per radian
-            * float(
+            * float(  # normalisation to per turns, rather than per filaments
                 coil1.n_turns * coil2.n_turns / (len(coil1._quad_x) * len(coil2._quad_x))
             )
         )
