@@ -34,7 +34,7 @@ jobs:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
       - name: Permissions Check
-        uses: ./.github/workflows/actions/permission_check
+        uses: .fppf-actions/checkout@f077fe2d653e9125686a8ba931a1fbff6f8ff7d4
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
