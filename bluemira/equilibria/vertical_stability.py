@@ -10,6 +10,7 @@ Vertical stability calculations
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -88,7 +89,13 @@ class RZIp:
     def coilset(self, cs: CoilSet):
         """Calculate coilset inductance"""
         self._coilset = cs
-        reduced_coilset = cs.get_uncontrolled_coils()
+        reduced_coilset = deepcopy(cs.get_uncontrolled_coils())
+        if not np.all(reduced_coilset.n_turns == 1):
+            bluemira_warn(
+                "RZIp calculation only valid for single turn coils, setting n_turns to 1 for all coils"
+            )
+            reduced_coilset.n_turns = 1
+
         self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=True)
         diag = np.diag(np.diag(self.ind_mat))
         non_diag = (
