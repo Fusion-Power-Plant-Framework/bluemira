@@ -8,18 +8,19 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, fields
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
-from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon
@@ -29,7 +30,13 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
     _process_first_wall,
 )
 
-__all__ = ["ChargedParticleSolver"]
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
+
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
+
+__all__ = ["ChargedParticleSolver", "ChargedParticleSolverParams"]
 
 
 class ChargedParticleSolver:
@@ -51,8 +58,8 @@ class ChargedParticleSolver:
 
     def __init__(
         self,
-        config: dict[str, float],
-        equilibrium,
+        config: ChargedParticleSolverParams | dict[str, float],
+        equilibrium: Equilibrium,
         dx_mp: float = 0.001,
         psi_n_tol: float = 1e-6,
     ):
@@ -652,6 +659,8 @@ class ChargedParticleSolver:
 
 @dataclass
 class ChargedParticleSolverParams:
+    """Parameters for use with :class:`~ChargedParticleSolver`."""
+
     P_sep_particle: float = 150
     """Separatrix power [MW]."""
 
