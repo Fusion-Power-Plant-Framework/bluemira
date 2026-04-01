@@ -82,7 +82,13 @@ PLOT_DEFAULTS = {
     "grid": {"edgewidth": 2, "linewidth": 1, "color": "k"},
     "limiter": {"marker": "o", "color": "b"},
     "coil": {
-        "facecolor": {"PF": "#0098D4", "CS": "#003688", "Plasma": "r", "NONE": "grey"},
+        "facecolor": {
+            "PF": "#0098D4",
+            "CS": "#003688",
+            "Plasma": "r",
+            "NONE": "grey",
+            "DUM": "green",
+        },
         "edgecolor": "k",
         "linewidth": 1,
         "fontsize": 6,
@@ -386,7 +392,7 @@ class CoilGroupPlotter(Plotter):
             x, z = self._cg.get_control_coils().position
             xc = (max(x) + min(x)) / 2
             zc = (max(z) + min(z)) / 2
-        except AttributeError:
+        except (AttributeError, TypeError):
             # Not a coilset
             return None
         else:
