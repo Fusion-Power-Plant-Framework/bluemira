@@ -14,7 +14,11 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.magnetostatics.greens import circular_coil_inductance_elliptic, greens_psi
+from bluemira.magnetostatics.greens import (
+    circular_coil_inductance_elliptic,
+    greens_psi,
+    square_coil_inductance_kirchhoff,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -22,7 +26,11 @@ if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
 
 
-def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
+def make_mutual_inductance_matrix(
+    coilset: CoilSet,
+    *,
+    square_coil: bool = False,
+) -> np.ndarray:
     """
     Calculate the mutual inductance matrix of a coilset.
 
@@ -30,6 +38,10 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     ----------
     coilset:
         Coilset for which to calculate the mutual inductance matrix
+    square_coil:
+        Whether or not to use a square coil approximation for the
+        self-inductance diagonal terms. Defaults to a elliptical
+        integral of a circular cross-section coil.
 
     Returns
     -------
@@ -38,12 +50,15 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 
     Notes
     -----
-    Single-filament coil formulation; serves as a useful approximation.
+    Multi-filament coil formulation. The mutual inductance between two coils is
+    calculated based on the number of filaments in each coil (numerical
+    discretisation, which is then normalised). The number of turns in each coil
+    determine the actual multiplier of the mutual inductance.
 
     - **Off-diagonal terms** (:math:`i \\neq j`):
 
         .. math::
-            M_{ij} = n_i n_j G(x_i, z_i, x_j, z_j)
+            M_{ij} = n_i n_j \\sum_{k=0, m=0}^{n_k, n_m} G(x_{i,n}, z_{i,n}, x_{j,m}, z_{j,m})
 
         where :math:`G` is the Green's function for mutual inductance.
 
@@ -54,30 +69,35 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
 
         with :math:`L_i` as the self-inductance using elliptic integrals.
 
-    """
-    n_coils = coilset.n_coils()
+    """  # noqa: W505, E501
+    coils = coilset.all_coils()
+    n_coils = len(coils)
     M = np.zeros((n_coils, n_coils))  # noqa: N806
-    xcoord = coilset.x
-    zcoord = coilset.z
-    dx = coilset.dx
-    dz = coilset.dz
-    n_turns = coilset.n_turns
-
     itri, jtri = np.triu_indices(n_coils, k=1)
-
-    M[itri, jtri] = (
-        n_turns[itri]
-        * n_turns[jtri]
-        * greens_psi(xcoord[itri], zcoord[itri], xcoord[jtri], zcoord[jtri])
-    )
-    M[jtri, itri] = M[itri, jtri]
-
-    radius = np.hypot(dx, dz)
-    for i in range(n_coils):
-        M[i, i] = n_turns[i] ** 2 * circular_coil_inductance_elliptic(
-            xcoord[i], radius[i]
+    for i, j in zip(itri, jtri, strict=True):
+        coil1, coil2 = coils[i], coils[j]
+        for xi1, zi1 in zip(coil1._quad_x, coil1._quad_z, strict=True):
+            for xi2, zi2 in zip(coil2._quad_x, coil2._quad_z, strict=True):
+                M[i, j] += greens_psi(xi1, zi1, xi2, zi2)
+        M[i, j] *= (
+            2
+            * np.pi  # extra 2pi term due to per circle rather than per radian
+            * float(  # normalisation to per turns, rather than per filaments
+                coil1.n_turns * coil2.n_turns / (len(coil1._quad_x) * len(coil2._quad_x))
+            )
         )
 
+    M[jtri, itri] = M[itri, jtri]
+
+    M[np.diag_indices_from(M)] = coilset.n_turns**2 * np.squeeze(
+        square_coil_inductance_kirchhoff(coilset.x, 2 * coilset.dx, 2 * coilset.dz)
+        if square_coil
+        else (
+            circular_coil_inductance_elliptic(
+                coilset.x, np.hypot(coilset.dx, coilset.dz)
+            )
+        )
+    )
     return M
 
 
