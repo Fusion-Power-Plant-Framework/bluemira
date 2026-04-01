@@ -257,6 +257,39 @@ class PlasmaCoil:
         return self._dBx_func(x, z)
 
     @treat_xz_array
+    def dBx(
+        self,
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Radial magnetic field at x, z
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Radial magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        if x is None and z is None:
+            return self._plasma_dBx
+
+        if not self._check_in_grid(x, z):
+            # greens_dbx_dz not implemented, for vacuum calculations this is equivalent
+            return self._convolve(greens_dbz_dx, x, z)
+        return self._dBx_func(x, z)
+
+    @treat_xz_array
     def Bz(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
@@ -288,6 +321,37 @@ class PlasmaCoil:
 
     @treat_xz_array
     def dBz(
+        self,
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Vertical magnetic field at x, z
+
+        Parameters
+        ----------
+        x:
+            Vertical coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Vertical magnetic field at the points [T]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        if x is None and z is None:
+            return self._plasma_dBz
+
+        if not self._check_in_grid(x, z):
+            return self._convolve(greens_dbz_dx, x, z)
+        return self._dBz_func(x, z)
+
+    def Bp(
         self,
         x: npt.ArrayLike | None = None,
         z: npt.ArrayLike | None = None,
