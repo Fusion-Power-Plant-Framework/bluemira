@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml --resolution=highest --python-version=3.11 --extra pinned -o requirements/uv/examples.txt --extra examples
 annotated-types==0.7.0
     # via pydantic
-anyio==4.12.1
+anyio==4.13.0
     # via
     #   httpx
     #   jupyter-server
@@ -45,11 +45,11 @@ certifi==2026.2.25
     #   requests
 cffi==2.0.0
     # via argon2-cffi-bindings
-charset-normalizer==3.4.6
+charset-normalizer==3.4.7
     # via requests
 citeproc-py==0.9.0
     # via csl-reference
-click==8.3.1
+click==8.3.2
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -99,7 +99,7 @@ fortranformat==2.0.3
     #   eqdsk
 fqdn==1.5.1
     # via jsonschema
-gmsh==4.15.1
+gmsh==4.15.2
     # via bluemira (pyproject.toml)
 h11==0.16.0
     # via httpcore
@@ -117,7 +117,7 @@ imageio==2.37.3
     # via bluemira (pyproject.toml)
 ipykernel==7.2.0
     # via jupyterlab
-ipython==9.10.0
+ipython==9.10.1
     # via
     #   ipykernel
     #   ipywidgets
@@ -137,9 +137,9 @@ jinja2==3.1.6
     #   nbconvert
 joblib==1.5.3
     # via scikit-learn
-json5==0.13.0
+json5==0.14.0
     # via jupyterlab-server
-jsonpointer==3.1.0
+jsonpointer==3.1.1
     # via jsonschema
 jsonschema==4.26.0
     # via
@@ -164,7 +164,7 @@ jupyter-core==5.9.1
     #   nbformat
 jupyter-events==0.12.0
     # via jupyter-server
-jupyter-lsp==2.3.0
+jupyter-lsp==2.3.1
     # via jupyterlab
 jupyter-server==2.17.0
     # via
@@ -297,7 +297,7 @@ packaging==26.0
     #   nbconvert
     #   pooch
     #   tables
-pandas==3.0.1
+pandas==3.0.2
     # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
@@ -309,7 +309,7 @@ periodictable==2.1.0
     #   matproplib
 pexpect==4.9.0
     # via ipython
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   imageio
     #   matplotlib
@@ -351,7 +351,7 @@ pydantic==2.12.5
     #   numpydantic
 pydantic-core==2.41.5
     # via pydantic
-pygments==2.19.2
+pygments==2.20.0
     # via
     #   ipython
     #   ipython-pygments-lexers
@@ -367,9 +367,9 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-python-json-logger==4.0.0
+python-json-logger==4.1.0
     # via jupyter-events
-pyvista==0.47.1
+pyvista==0.47.2
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -385,7 +385,7 @@ referencing==0.37.0
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-requests==2.32.5
+requests==2.33.1
     # via
     #   blosc2
     #   jupyterlab-server
@@ -487,7 +487,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2025.3
+tzdata==2026.1
     # via arrow
 uri-template==1.3.0
     # via jsonschema
