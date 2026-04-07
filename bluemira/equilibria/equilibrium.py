@@ -796,7 +796,7 @@ class Breakdown(CoilSetMHDState):
             A dictionary for the Breakdown object
         """
         xc, zc, dxc, dzc, currents = self.coilset.to_group_vecs()
-        return {
+        data_dict = {
             "nx": self.grid.nx,
             "nz": self.grid.nz,
             "xdim": self.grid.x_size,
@@ -805,7 +805,6 @@ class Breakdown(CoilSetMHDState):
             "z": self.grid.z_1d,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
-            "cplasma": 0.0,
             "psi": self.psi(),
             "Bx": self.Bx(),
             "Bz": self.Bz(),
@@ -818,36 +817,27 @@ class Breakdown(CoilSetMHDState):
             "dxc": dxc,
             "dzc": dzc,
             "Ic": currents,
+            "psimag": self.breakdown_psi,
+            "xcentre": self.breakdown_point[0],
+            "xmag": self.breakdown_point[0],
+            "zmag": self.breakdown_point[1],
+            # Data for EQDSK
+            # Plasma current of zero does not work with Sign model in eqdsk
+            # Set to be very small positive value (match BM cocos conventions)
+            "bcentre": 1e-16,
+            # Plasma current of zero does not work with Sign model in eqdsk
+            # Set to be very small positive value (match BM cocos conventions)
+            "cplasma": 1e-16,
+            "nbdry": 2,
+            "xbdry": np.zeros([2]),
+            "zbdry": np.zeros([2]),
+            "psibdry": 0.0,
+            "ffprime": np.zeros_like(self.grid.x_1d),
+            "fpol": np.zeros_like(self.grid.x_1d),
+            "pprime": np.zeros_like(self.grid.x_1d),
+            "pressure": np.zeros_like(self.grid.x_1d),
+            "qpsi": np.zeros_like(self.grid.x_1d),
         }
-
-    def modify_dict_for_eqdsk(self, data_dict):
-        """
-        Takes a dictionary for a Breakdown object, removes any
-        values not used in eqdsk and adds appropriate fill values
-        """
-        # Remove Items can not be saved in eqdsk
-        for key in ["Bx", "By", "Bz", "Bp"]:
-            data_dict.pop(key, None)
-        # Set fill values
-        data_dict["xcentre"] = self.breakdown_point[0]
-        # Plasma current of zero does not work with Sign model in eqdsk
-        # Set to be very small positive value (match BM cocos conventions)
-        data_dict["bcentre"] = 1e-16
-        data_dict["nbdry"] = 2
-        data_dict["xbdry"] = np.zeros([2])
-        data_dict["zbdry"] = np.zeros([2])
-        data_dict["psibdry"] = 0.0
-        data_dict["ffprime"] = np.zeros_like(self.grid.x_1d)
-        data_dict["fpol"] = np.zeros_like(self.grid.x_1d)
-        data_dict["pprime"] = np.zeros_like(self.grid.x_1d)
-        data_dict["pressure"] = np.zeros_like(self.grid.x_1d)
-        data_dict["qpsi"] = np.zeros_like(self.grid.x_1d)
-        # Use breakdown point values
-        data_dict["psimag"] = self.breakdown_psi
-        data_dict["xmag"], data_dict["zmag"] = self.breakdown_point
-        # Plasma current of zero does not work with Sign model in eqdsk
-        # Set to be very small positive value (match BM cocos conventions)
-        data_dict["cplasma"] = 1e-16
         # Also account for limiter
         if self.limiter is None:
             data_dict["nlim"] = 0
@@ -857,6 +847,7 @@ class Breakdown(CoilSetMHDState):
             data_dict["nlim"] = len(self.limiter)
             data_dict["xlim"] = self.limiter.x
             data_dict["zlim"] = self.limiter.z
+        return data_dict
 
     def to_eqdsk(
         self,
@@ -871,7 +862,9 @@ class Breakdown(CoilSetMHDState):
         Writes the Breakdown Object to an eqdsk file
         """
         data = self.to_dict()
-        self.modify_dict_for_eqdsk(data)
+        # Remove Items can not be saved in eqdsk
+        for key in ["Bx", "By", "Bz", "Bp"]:
+            data.pop(key, None)
 
         bluemira_print(
             "Please note that for Breakdown class, chosen to_cocos is used and "
