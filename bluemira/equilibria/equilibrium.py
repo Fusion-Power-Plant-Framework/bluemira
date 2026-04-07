@@ -20,6 +20,7 @@ import numpy as np
 import numpy.typing as npt
 import tabulate
 from eqdsk import EQDSKInterface
+from eqdsk.cocos import COCOS
 from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0, raw_uc
@@ -217,18 +218,21 @@ class MHDState:
                 grid = grid.regrid(*regrid_nx_nz)
         return e, grid, regrid_nx_nz
 
-    def to_eqdsk(
+    def _prepare_eqdsk(
         self,
         data: dict[str, Any],
         filename: Path | str,
         header: str = "bluemira_equilibria",
         directory: str | None = None,
         filetype: str = "json",
-        to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
-        **kwargs,
-    ):
+    ) -> EQDSKInterface:
         """
-        Writes the Equilibrium Object to an eqdsk file
+        Prepares the Equilibrium Object eqdsk file
+
+        Returns
+        -------
+        : EQDSKInterface
+            The initial EQDSKInterface data structure
 
         Raises
         ------
@@ -259,10 +263,7 @@ class MHDState:
             data["coil_types"] = [
                 ct if isinstance(ct, str) else ct.name for ct in data["coil_types"]
             ]
-        eqdsk = EQDSKInterface(**data)
-        eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
-        eqdsk = eqdsk.to_cocos(to_cocos)
-        eqdsk.write(filename.as_posix(), file_format=filetype, **kwargs)
+        return EQDSKInterface(**data)
 
 
 class FixedPlasmaEquilibrium(MHDState):
@@ -363,6 +364,30 @@ class FixedPlasmaEquilibrium(MHDState):
         )
         self._eqdsk = e
         return self
+
+    def to_eqdsk(
+        self,
+        data,
+        filename,
+        header="bluemira_equilibria",
+        directory=None,
+        filetype="json",
+        to_cocos=BLUEMIRA_DEFAULT_COCOS,
+        **kwargs,
+    ):
+        """
+        Writes the FixedPlasmaEquilibrium Object to an eqdsk file
+        """
+        eqdsk = super()._prepare_eqdsk(
+            data,
+            filename,
+            header,
+            directory,
+            filetype,
+        )
+        eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
+        eqdsk = eqdsk.to_cocos(to_cocos)
+        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -745,6 +770,7 @@ class Breakdown(CoilSetMHDState):
             Coilset provided by the user.
             Set current, j_max and b_max to zero in user_coils.
         """  # noqa: DOC201
+        qpsi_positive = False if qpsi_positive is None else qpsi_positive
         eqdsk, grid, _, coilset, limiter = super()._get_eqdsk(
             filename,
             from_cocos,
@@ -770,7 +796,7 @@ class Breakdown(CoilSetMHDState):
             A dictionary for the Breakdown object
         """
         xc, zc, dxc, dzc, currents = self.coilset.to_group_vecs()
-        return {
+        data_dict = {
             "nx": self.grid.nx,
             "nz": self.grid.nz,
             "xdim": self.grid.x_size,
@@ -779,7 +805,6 @@ class Breakdown(CoilSetMHDState):
             "z": self.grid.z_1d,
             "xgrid1": self.grid.x_min,
             "zmid": self.grid.z_mid,
-            "cplasma": 0.0,
             "psi": self.psi(),
             "Bx": self.Bx(),
             "Bz": self.Bz(),
@@ -792,26 +817,69 @@ class Breakdown(CoilSetMHDState):
             "dxc": dxc,
             "dzc": dzc,
             "Ic": currents,
+            "psimag": self.breakdown_psi,
+            "xcentre": self.breakdown_point[0],
+            "xmag": self.breakdown_point[0],
+            "zmag": self.breakdown_point[1],
+            # Data for EQDSK
+            # Plasma current of zero does not work with Sign model in eqdsk
+            # Set to be very small positive value (match BM cocos conventions)
+            "bcentre": 1e-16,
+            # Plasma current of zero does not work with Sign model in eqdsk
+            # Set to be very small positive value (match BM cocos conventions)
+            "cplasma": 1e-16,
+            "nbdry": 2,
+            "xbdry": np.zeros([2]),
+            "zbdry": np.zeros([2]),
+            "psibdry": 0.0,
+            "ffprime": np.zeros_like(self.grid.x_1d),
+            "fpol": np.zeros_like(self.grid.x_1d),
+            "pprime": np.zeros_like(self.grid.x_1d),
+            "pressure": np.zeros_like(self.grid.x_1d),
+            "qpsi": np.zeros_like(self.grid.x_1d),
         }
+        # Also account for limiter
+        if self.limiter is None:
+            data_dict["nlim"] = 0
+            data_dict["xlim"] = np.array([])
+            data_dict["zlim"] = np.array([])
+        else:
+            data_dict["nlim"] = len(self.limiter)
+            data_dict["xlim"] = self.limiter.x
+            data_dict["zlim"] = self.limiter.z
+        return data_dict
 
     def to_eqdsk(
         self,
         filename: Path | str,
-        header: str = "bluemira_equilibria",
+        header: str = "bluemira_breakdown",
         directory: str | None = None,
         filetype: str = "json",
         to_cocos: int = BLUEMIRA_DEFAULT_COCOS,
         **kwargs,
     ):
         """
-        Writes the Equilibrium Object to an eqdsk file
+        Writes the Breakdown Object to an eqdsk file
         """
         data = self.to_dict()
-        data["xcentre"] = 0
-        data["bcentre"] = 0
-        super().to_eqdsk(
-            data, filename, header, directory, filetype, to_cocos=to_cocos, **kwargs
+        # Remove Items can not be saved in eqdsk
+        for key in ["Bx", "By", "Bz", "Bp"]:
+            data.pop(key, None)
+
+        bluemira_print(
+            "Please note that for Breakdown class, chosen to_cocos is used and "
+            "eqdsk.identify() check is not performed."
         )
+        eqdsk = super()._prepare_eqdsk(
+            data,
+            filename,
+            header,
+            directory,
+            filetype,
+        )
+        # Can not use identify method for breakdown, so assume input
+        eqdsk._cocos = COCOS(to_cocos)
+        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
 
     def set_breakdown_point(self, x_bd: float, z_bd: float):
         """
@@ -1313,15 +1381,16 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         if "eqdsk" in filetype and qpsi_calcmode is QpsiCalcMode.NO_CALC:
             qpsi_calcmode = QpsiCalcMode.ZEROS
 
-        super().to_eqdsk(
+        eqdsk = super()._prepare_eqdsk(
             self.to_dict(qpsi_calcmode, to_cocos),
             filename,
             header,
             directory,
             filetype,
-            to_cocos=to_cocos,
-            **kwargs,
         )
+        eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
+        eqdsk = eqdsk.to_cocos(to_cocos)
+        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
 
     def __getstate__(self):
         """
