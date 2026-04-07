@@ -26,7 +26,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from eudemo.equilibria.stability import run_vertical_stability_calculation
 from matproplib.conditions import OperationalConditions
 
 from bluemira.base.components import Component
@@ -105,6 +104,7 @@ from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
+from eudemo.equilibria.stability import run_vertical_stability_calculation
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 BUILD_CONFIG_FILE_PATH = Path(CONFIG_DIR, "build_config.json").as_posix()
