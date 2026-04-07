@@ -177,6 +177,9 @@ class TestCoil:
     def test_bp(self):
         callable_tester(self.coil.Bp)
 
+    def test_db_d(self):
+        callable_tester(self.coil.dB_d)
+
     @pytest.mark.parametrize("analytic", [True, False])
     def test_psi(self, analytic):
         self.coil._psi_analytic = analytic
@@ -304,7 +307,7 @@ class TestCoilGroup:
 
         self.group = CoilGroup(
             *(
-                Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max)
+                Coil(x=_x, z=_z, name=_n, ctype=_ct, j_max=j_max, resistance=1)
                 for _x, _z, _ct, _n in zip(x, z, ctype, name, strict=False)
             )
         )
@@ -365,6 +368,9 @@ class TestCoilGroup:
 
     def test_bp(self):
         callable_tester(self.group.Bp, self.group.n_coils())
+
+    def test_db_d(self):
+        callable_tester(self.group.dB_d, self.group.n_coils())
 
 
 class TestSymmetricCircuit:
@@ -778,6 +784,35 @@ class TestMutualInductances:
         coil3 = Coil(6, 6, j_max=1)
         cls.coilset1 = CoilGroup(coil1, coil2, coil3)
 
+        coil4 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC1")
+        coil5 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC2")
+        cls.coilset2 = CoilSet(coil4, coil5, control_names=[])
+        coil6 = Coil(4, 4, 0.1, 0.1, j_max=1, n_turns=2, name="TC3")
+        coil7 = Coil(5, 5, 0.1, 0.1, j_max=1, n_turns=3, name="TC4")
+        coil8 = Coil(5, 5, 0.1, 0.1, j_max=1, n_turns=4, name="TC5")
+        coil9 = Coil(7, 7, 0.1, 0.1, j_max=1, n_turns=5, discretisation=0.1, name="TC6")
+        cls.coilset3 = CoilSet(
+            coil6, coil7, coil8, coil9, control_names=["TC3", "TC4", "TC5"]
+        )
+
+        x1, z1 = 2.0, 1.0
+        x2, z2 = 2.0, -1.0
+        dx1, dz1 = 0.5, 0.5
+        n_turns1, n_turns2 = 4, 6
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=np.nan)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=np.nan)
+        cls.coilset4 = CoilSet(coil1, coil2)
+
+        coil1 = Coil(x1, z1, dx1, dz1, n_turns=n_turns1, discretisation=0.001)
+        coil2 = Coil(x2, z2, dx1, dz1, n_turns=n_turns2, discretisation=0.001)
+        cls.coilset5 = CoilSet(coil1, coil2)
+
+    @pytest.mark.parametrize("square_coil", [True, False])
+    def test_mutual_inductance_discretisation(self, square_coil):
+        ind_mat1 = make_mutual_inductance_matrix(self.coilset4, square_coil=square_coil)
+        ind_mat2 = make_mutual_inductance_matrix(self.coilset5, square_coil=square_coil)
+        np.testing.assert_allclose(ind_mat1, ind_mat2, rtol=2.5e-2)
+
     def test_normal(self):
         """
         Just check the symmetry for now
@@ -794,3 +829,12 @@ class TestMutualInductances:
         diag = np.diag_indices(3)
         m[diag] = 0.0
         assert np.allclose(m, test_m)
+
+    def test_turns_with_quadratures(self):
+        """
+        Check it runs for weird array shapes and n_turns
+        """
+        m2 = make_mutual_inductance_matrix(self.coilset2)
+        m3 = make_mutual_inductance_matrix(self.coilset3)
+        assert np.shape(m2) == (2, 2)
+        assert np.shape(m3) == (4, 4)
