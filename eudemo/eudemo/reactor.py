@@ -559,6 +559,34 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
         )
 
 
+def add_useful_parameters(reactor, reactor_config, reference_eq):
+    reactor_config.global_params.tf_wp_volume.set_value(reactor.tf_coils.wp_volume, "BLUEMIRA")
+    reactor_config.global_params.pf_wp_volume.set_value(reactor.pf_coils.wp_volume, "BLUEMIRA")
+
+    lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
+    reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+
+    eqs = [reactor.equilibria.get_state(s).eq for s in [reactor.equilibria.SOF, reactor.equilibria.EOF, reactor.equilibria.BREAKDOWN]]
+
+    tf_ccl = reactor.tf_coils.centreline.create_shape()
+    wp_in_wire = offset_wire(tf_ccl, -0.5 * reactor_config.global_params.tf_wp_width.value, open_wire=False)
+    x_min = wp_in_wire.bounding_box.x_min
+    points = wp_in_wire.discretise(200)
+    mask = np.where(points.x < x_min + 0.5)[0]
+    x, z = points.x[mask], points.z[mask]
+    Bx_tf, By, Bz_tf = reactor.tf_coils._field_solver.field(x, np.zeros_like(x), z)
+    peak_fields = []
+    for eq in eqs:
+        Bx = eq.Bx(x, z) + Bx_tf
+        Bz = eq.Bz(x, z) + Bz_tf
+        B_tot = np.sqrt(Bx**2 + By**2 + Bz**2)
+        peak_fields.append(np.max(B_tot))
+    peak_field_hifi = np.max(peak_fields)
+    reactor_config.global_params.TF_peak_field.set_value(peak_field_hifi, "BLUEMIRA")
+    peak_ripple_hifi = np.max(reactor.tf_coils._field_solver.ripple(lcfs.coords.x, np.zeros_like(lcfs.coords.x), lcfs.coords.z))
+    reactor_config.global_params.TF_peak_ripple.set_value(peak_ripple_hifi, "BLUEMIRA")
+
+
 def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
@@ -689,15 +717,6 @@ if __name__ == "__main__":
             ivc_shapes.outer_boundary,
         )
 
-        if False:
-            run_vertical_stability_calculation(
-                reactor_config.params_for("Vertical stability").global_params,
-                reactor_config.config_for("Vertical stability"),
-                reference_eq,
-                reactor.vacuum_vessel.xz_boundary,
-                reactor.vacuum_vessel.xz_inner_boundary,
-            )
-
         reactor.divertor = build_divertor(
             reactor_config.params_for("Divertor"),
             reactor_config.config_for("Divertor"),
@@ -789,12 +808,15 @@ if __name__ == "__main__":
                 lower_port_koz_xz,
             ],
         )
-        debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-        debug.extend([reactor.tf_coils.xz_outer_boundary])
-        debug.extend(reactor.pf_coils.xz_boundary)
-        # I know there are clashes, I need to put in dynamic bounds on position opt to
-        # include coil XS.
-        # show_cad(debug)
+
+        run_vertical_stability_calculation(
+            reactor_config.params_for("Vertical stability").global_params,
+            reactor_config.config_for("Vertical stability"),
+            reactor.equilibria.get_state(reactor.equilibria.EOF).eq,
+            reactor.vacuum_vessel.xz_boundary,
+            reactor.vacuum_vessel.xz_inner_boundary,
+            [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz],
+        )
 
         cryostat_thermal_shield = build_cryots(
             reactor_config.params_for("Thermal shield"),
@@ -832,8 +854,6 @@ if __name__ == "__main__":
         )
 
         # Incorporate ports
-        # TODO: Make potentially larger depending on where the PF
-        # coils ended up. Warn if this isn't the case.
 
         ts_upper_port, vv_upper_port = build_upper_port(
             reactor_config.params_for("Upper Port"),
@@ -895,20 +915,13 @@ if __name__ == "__main__":
             reactor_config.config_for("CAD_Neutronics"),
         )
 
-        # reactor.plot("xz")
-        # reactor.show_cad(n_sectors=2)
-
         sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
         sspc_result = sspc_solver.execute()
         reactor_config.global_params.P_el_net.set_value(
             sspc_result["P_el_net"], "BLUEMIRA"
         )
-        reactor_config.global_params.tf_wp_volume.set_value(reactor.tf_coils.wp_volume, "BLUEMIRA")
-        reactor_config.global_params.pf_wp_volume.set_value(reactor.pf_coils.wp_volume, "BLUEMIRA")
 
-        lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
-
-        reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+        add_useful_parameters(reactor, reactor_config, reference_eq)
 
         end = time.time()
 
@@ -921,6 +934,27 @@ if __name__ == "__main__":
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
         save_reactor(reactor, reactor_config, folder_name=folder_name)
+
+        plt.close("all")
+f_thick = [0.5, 1.0, 2.0, 5.0]
+m_s_without_koz = [0.5884757, 0.5918285, 0.59877139, 0.62103447]
+m_s_with_koz = [491.74, -41.067, -4.303]
+f, ax = plt.subplots()
+ax.plot(f_thick, m_s_without_koz, marker="o", label="No port KOZ")
+ax.plot(f_thick, m_s_with_koz, marker="o", label="With port KOZ")
+ax.legend()
+ax.set_xlabel("VV thicknes reduction factor")
+ax.set_ylabel(r"$m_s$")
+
+f_thick = [0.5, 2.0, 5.0]
+
+m_s_with_koz = [491.74, -41.067, -4.303]
+f, ax = plt.subplots()
+ax.plot(f_thick, m_s_with_koz, marker="o", label="With port KOZ")
+ax.legend()
+ax.set_xlabel("VV thicknes reduction factor")
+ax.set_ylabel(r"$m_s$")
+plt.show()
 
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))
