@@ -5,7 +5,7 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
     "plot": false
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -114,14 +114,12 @@
   "Vacuum vessel": {
     "material": "VV_MATERIAL"
   },
-  "Vertical stability": {
-
-  },
+  "Vertical stability": {},
   "Divertor": {
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
-    "enabled": true,
+    "enabled": false,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
     "max_lost_particles": 1e2,
     "photon_transport": true,
@@ -168,7 +166,7 @@
     }
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
