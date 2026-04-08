@@ -44,11 +44,20 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Checkout bluemira-private-data
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
+          ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          path: "./bluemira-private-data"
+
       - name: Build
-        uses: ./.github/workflows/actions/build
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@main
         with:
           python-version: "3.12"
-          bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          clone-bluemira: "false"
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
@@ -72,11 +81,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Checkout bluemira-private-data
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
+          ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          path: "./bluemira-private-data"
+
       - name: Build
-        uses: ./.github/workflows/actions/build
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@main
         with:
           python-version: ${{ matrix.python-version }}
-          bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          clone-bluemira: "false"
           with-artifact: ${{ matrix.with-process == 'process_disabled' && 'true' || 'false' }}
 
       - name: Install PROCESS
