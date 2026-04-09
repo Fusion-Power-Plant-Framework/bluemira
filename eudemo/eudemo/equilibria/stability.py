@@ -32,12 +32,12 @@ def run_vertical_stability_calculation(
     outer_shell_centreline = offset_wire(vv_outer_wire, -tk_shell)
     inner_shell_centreline = offset_wire(vv_inner_wire, tk_shell)
     keep_out_zones = None  # TODO
-    if keep_out_zones is not None:
-        outer_shell_segments = boolean_cut(outer_shell_centreline, keep_out_zones)
-        inner_shell_segments = boolean_cut(inner_shell_centreline, keep_out_zones)
-    else:
+    if keep_out_zones is None:
         outer_shell_segments = [outer_shell_centreline]
         inner_shell_segments = [inner_shell_centreline]
+    else:
+        outer_shell_segments = boolean_cut(outer_shell_centreline, keep_out_zones)
+        inner_shell_segments = boolean_cut(inner_shell_centreline, keep_out_zones)
 
     all_passives = []
     d_thickness = tk_shell

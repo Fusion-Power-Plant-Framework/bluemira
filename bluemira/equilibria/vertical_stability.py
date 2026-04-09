@@ -190,15 +190,10 @@ def stab_destab(
         optimize=["einsum_path", (0, 1), (0, 1)],
     )
 
-    stabilising = np.einsum(
-        "d, db, bc, ac, a",
-        i_plasma,
-        msp_prime,
-        np.linalg.inv(mss),
-        msp_prime,
-        i_plasma,
-        optimize=["einsum_path", (0, 1), (1, 2), (0, 1), (0, 1)],
-    )
+    # Memory-efficient alternative to einsum for larger matrices (slightly slower?)
+    v = msp_prime.T @ i_plasma
+    stabilising = v @ np.linalg.solve(mss, v)
+
     # stabilising force/ destabilising force differentiated wrt to z coord
     # f = -d_fs / d_fd
     # not infinite if destabilising is 0 because therefore it is stable

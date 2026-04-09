@@ -98,6 +98,7 @@ class EUDEMOReactorParams(ParameterFrame):
     TF_res_tot: Parameter[float]
     TF_respc_ob: Parameter[float]
     TF_ripple_limit: Parameter[float]
+    TF_peak_ripple_opt: Parameter[float]
     TF_peak_ripple: Parameter[float]
     TF_peak_field: Parameter[float]
     tf_wp_depth: Parameter[float]
