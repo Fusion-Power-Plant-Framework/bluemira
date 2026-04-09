@@ -418,11 +418,12 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         bluemira_print(f"Solving design problem: {type(design_problem).__name__}")
 
         result = design_problem.optimise()
+        peak_ripple = np.max(design_problem.ripple_values)
         result.to_json(self.file_path)
         if self.build_config.get("plot", False):
             design_problem.plot()
             plt.show()
-        return result, wp_cross_section
+        return result, wp_cross_section, peak_ripple
 
     def read(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """

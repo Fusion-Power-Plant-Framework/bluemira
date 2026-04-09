@@ -292,7 +292,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
     :
         TF coil component manager
     """
-    centreline, wp_cross_section = run_designer(
+    centreline, wp_cross_section, peak_ripple = run_designer(
         TFCoilDesigner,
         params,
         build_config,
@@ -303,7 +303,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
-    return TFCoil(builder.build(), builder._make_field_solver(), centreline)
+    return TFCoil(builder.build(), builder._make_field_solver(), centreline), peak_ripple
 
 
 def build_pf_coils(
@@ -786,12 +786,13 @@ if __name__ == "__main__":
             reactor.vacuum_vessel.xz_boundary,
         )
 
-        reactor.tf_coils = build_tf_coils(
+        reactor.tf_coils, peak_opt_ripple = build_tf_coils(
             reactor_config.params_for("TF coils"),
             reactor_config.config_for("TF coils"),
             make_polygon(lcfs_coords),
             vv_thermal_shield.xz_boundary,
         )
+        reactor_config.global_params.TF_peak_ripple_opt.set_value(peak_opt_ripple, "BLUEMIRA")
 
         eq_port_designer = EquatorialPortKOZDesigner(
             reactor_config.params_for("Equatorial Port"),
