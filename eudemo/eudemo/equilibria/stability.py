@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
+from copy import deepcopy
+
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -29,7 +31,7 @@ def run_vertical_stability_calculation(
     tk_shell = params.tk_vv_single_wall.value
     outer_shell_centreline = offset_wire(vv_outer_wire, -tk_shell)
     inner_shell_centreline = offset_wire(vv_inner_wire, tk_shell)
-    # keep_out_zones = None  # TODO
+    keep_out_zones = None  # TODO
     if keep_out_zones is not None:
         outer_shell_segments = boolean_cut(outer_shell_centreline, keep_out_zones)
         inner_shell_segments = boolean_cut(inner_shell_centreline, keep_out_zones)
@@ -38,13 +40,14 @@ def run_vertical_stability_calculation(
         inner_shell_segments = [inner_shell_centreline]
 
     all_passives = []
-    d_thickness = 2 * tk_shell  # TODO
+    d_thickness = tk_shell
     for segment in outer_shell_segments:
         all_passives.extend(
             make_coils_along_wire(
                 segment, d_thickness, name_prefix="VV_outer_passive"
             )._coils
         )
+
     for segment in inner_shell_segments:
         all_passives.extend(
             make_coils_along_wire(
@@ -52,24 +55,7 @@ def run_vertical_stability_calculation(
             )._coils
         )
 
-    # new_coils = []
-    # for coil in coilset.get_control_coils()._coils:
-    #     n_quad = len(coil._quad_x)
-    #     for i, (xi, zi) in enumerate(zip(coil._quad_x, coil._quad_z)):
-    #         new_coils.append(
-    #             Coil(
-    #                 xi,
-    #                 zi,
-    #                 dx = coil._quad_dx[i],
-    #                 dz = coil._quad_dz[i],
-    #                 current=coil.current / n_quad,
-    #                 ctype=coil.ctype,
-    #                 name=f"{coil.name}_{i}",
-    #                 discretisation=np.nan,
-    #             )
-    #         )
-    # new_coilset = CoilSet(*new_coils)
-    # new_coilset.control = [coil.name for coil in new_coils]
+    eq = deepcopy(eq)
     eq.coilset.add_coil(*all_passives)
     eq._remap_greens()
     f_s = calculate_rzip_stability_criterion(eq)

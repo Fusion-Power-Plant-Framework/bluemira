@@ -98,7 +98,7 @@ class RZIp:
             cs.n_turns = 1
 
         reduced_coilset = cs.get_uncontrolled_coils()
-        self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=True)
+        self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=False)
 
     def __call__(
         self,

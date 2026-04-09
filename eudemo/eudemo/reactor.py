@@ -77,6 +77,7 @@ from eudemo.equilibria import (
     FixedEquilibriumDesigner,
     ReferenceFreeBoundaryEquilibriumDesigner,
 )
+from eudemo.equilibria.stability import run_vertical_stability_calculation
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.duct_connection import (
@@ -104,7 +105,6 @@ from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
-from eudemo.equilibria.stability import run_vertical_stability_calculation
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 BUILD_CONFIG_FILE_PATH = Path(CONFIG_DIR, "build_config.json").as_posix()
@@ -560,16 +560,29 @@ def export_dagmc_model(reactor: EUDEMO, build_config):
 
 
 def add_useful_parameters(reactor, reactor_config, reference_eq):
-    reactor_config.global_params.tf_wp_volume.set_value(reactor.tf_coils.wp_volume, "BLUEMIRA")
-    reactor_config.global_params.pf_wp_volume.set_value(reactor.pf_coils.wp_volume, "BLUEMIRA")
+    reactor_config.global_params.tf_wp_volume.set_value(
+        reactor.tf_coils.wp_volume, "BLUEMIRA"
+    )
+    reactor_config.global_params.pf_wp_volume.set_value(
+        reactor.pf_coils.wp_volume, "BLUEMIRA"
+    )
 
     lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
     reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
 
-    eqs = [reactor.equilibria.get_state(s).eq for s in [reactor.equilibria.SOF, reactor.equilibria.EOF, reactor.equilibria.BREAKDOWN]]
+    eqs = [
+        reactor.equilibria.get_state(s).eq
+        for s in [
+            reactor.equilibria.SOF,
+            reactor.equilibria.EOF,
+            reactor.equilibria.BREAKDOWN,
+        ]
+    ]
 
     tf_ccl = reactor.tf_coils.centreline.create_shape()
-    wp_in_wire = offset_wire(tf_ccl, -0.5 * reactor_config.global_params.tf_wp_width.value, open_wire=False)
+    wp_in_wire = offset_wire(
+        tf_ccl, -0.5 * reactor_config.global_params.tf_wp_width.value, open_wire=False
+    )
     x_min = wp_in_wire.bounding_box.x_min
     points = wp_in_wire.discretise(200)
     mask = np.where(points.x < x_min + 0.5)[0]
@@ -583,7 +596,11 @@ def add_useful_parameters(reactor, reactor_config, reference_eq):
         peak_fields.append(np.max(B_tot))
     peak_field_hifi = np.max(peak_fields)
     reactor_config.global_params.TF_peak_field.set_value(peak_field_hifi, "BLUEMIRA")
-    peak_ripple_hifi = np.max(reactor.tf_coils._field_solver.ripple(lcfs.coords.x, np.zeros_like(lcfs.coords.x), lcfs.coords.z))
+    peak_ripple_hifi = np.max(
+        reactor.tf_coils._field_solver.ripple(
+            lcfs.coords.x, np.zeros_like(lcfs.coords.x), lcfs.coords.z
+        )
+    )
     reactor_config.global_params.TF_peak_ripple.set_value(peak_ripple_hifi, "BLUEMIRA")
 
 
@@ -812,7 +829,7 @@ if __name__ == "__main__":
         run_vertical_stability_calculation(
             reactor_config.params_for("Vertical stability").global_params,
             reactor_config.config_for("Vertical stability"),
-            reactor.equilibria.get_state(reactor.equilibria.EOF).eq,
+            reactor.equilibria.get_state(reactor.equilibria.SOF).eq,
             reactor.vacuum_vessel.xz_boundary,
             reactor.vacuum_vessel.xz_inner_boundary,
             [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz],
@@ -934,27 +951,7 @@ if __name__ == "__main__":
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
         save_reactor(reactor, reactor_config, folder_name=folder_name)
-
         plt.close("all")
-f_thick = [0.5, 1.0, 2.0, 5.0]
-m_s_without_koz = [0.5884757, 0.5918285, 0.59877139, 0.62103447]
-m_s_with_koz = [491.74, -41.067, -4.303]
-f, ax = plt.subplots()
-ax.plot(f_thick, m_s_without_koz, marker="o", label="No port KOZ")
-ax.plot(f_thick, m_s_with_koz, marker="o", label="With port KOZ")
-ax.legend()
-ax.set_xlabel("VV thicknes reduction factor")
-ax.set_ylabel(r"$m_s$")
-
-f_thick = [0.5, 2.0, 5.0]
-
-m_s_with_koz = [491.74, -41.067, -4.303]
-f, ax = plt.subplots()
-ax.plot(f_thick, m_s_with_koz, marker="o", label="With port KOZ")
-ax.legend()
-ax.set_xlabel("VV thicknes reduction factor")
-ax.set_ylabel(r"$m_s$")
-plt.show()
 
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))

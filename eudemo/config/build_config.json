@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
