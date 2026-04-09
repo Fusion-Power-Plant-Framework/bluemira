@@ -161,6 +161,12 @@
     "source": "Input",
     "long_name": "TF coil ripple limit"
   },
+  "TF_peak_ripple_opt": {
+    "value": 0.0,
+    "unit": "percent",
+    "source": "Output",
+    "long_name": "TF coil peak ripple in optimisation problem"
+  },
   "TF_peak_ripple": {
     "value": 0.0,
     "unit": "percent",
