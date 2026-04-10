@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 import numpy as np
 import pytest
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError

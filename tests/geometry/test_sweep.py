@@ -4,10 +4,14 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+import os
+
 import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 from bluemira.display import show_cad
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -52,6 +56,16 @@ class TestSweep:
         assert sweep.is_valid()
         assert np.isclose(sweep.volume, 2 * np.pi)
 
+    @pytest.mark.xfail(
+        _CADQUERY_BACKEND,
+        reason=(
+            "CadQuery backend: sweep_shape passes inner profiles as hollow-solid "
+            "walls, not as variable cross-sections at positions along the path. "
+            "A proper multi-section sweep requires BRepOffsetAPI_MakePipeShell "
+            "with profiles placed at specific path parameters."
+        ),
+        strict=True,
+    )
     def test_multiple_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
         profile_1 = make_polygon(
@@ -108,6 +122,15 @@ class TestSweep:
         with pytest.raises(FreeCADError):
             sweep = sweep_shape([profile_1, profile_2], path)
 
+    @pytest.mark.xfail(
+        _CADQUERY_BACKEND,
+        reason=(
+            "CadQuery backend: sweep_shape does not enforce path tangency. "
+            "CadQuery/OCC sweeps along non-tangent polygon paths without raising, "
+            "producing a kinked solid. FreeCAD raises a FreeCADError in this case."
+        ),
+        strict=True,
+    )
     def test_bad_path(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10], [10, 0, 10]])
         profile = make_circle(

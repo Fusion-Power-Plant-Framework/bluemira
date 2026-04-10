@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -59,7 +59,7 @@ class BluemiraFace(BluemiraGeo):
     def _plotting_wires(self):
         # the for must be done using face.shape.Wires because FreeCAD
         # re-orient the Wires in the correct way for display.
-        for w in self.shape.Wires:
+        for w in cadapi.wires(self.shape):
             yield BluemiraWire(w)
 
     def copy(self):
@@ -140,9 +140,9 @@ class BluemiraFace(BluemiraGeo):
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
-            face = face.cut(fholes)
-            if len(face.Faces) == 1:
-                face = face.Faces[0]
+            _faces = cadapi.boolean_cut(face, fholes)
+            if len(_faces) == 1:
+                face = _faces[0]
             else:
                 raise DisjointedFaceError("Any or more than one face has been created.")
 
@@ -166,8 +166,8 @@ class BluemiraFace(BluemiraGeo):
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
             bmwires = []
-            for w in obj.Wires:
-                w_orientation = w.Orientation
+            for w in cadapi.wires(obj):
+                w_orientation = cadapi.orientation(w)
                 bm_wire = BluemiraWire(w)
                 bm_wire._orientation = w_orientation
                 if cadapi.is_closed(w):
@@ -177,7 +177,7 @@ class BluemiraFace(BluemiraGeo):
             bmface = cls(None, label=label)
             bmface._set_shape(obj)
             bmface._boundary = bmwires
-            bmface._orientation = obj.Orientation
+            bmface._orientation = cadapi.orientation(obj)
 
             return bmface
 
@@ -204,7 +204,7 @@ class BluemiraFace(BluemiraGeo):
         and N the number of discretisation points.
         """
         points = []
-        for w in self.shape.Wires:
+        for w in cadapi.wires(self.shape):
             if byedges:
                 points.append(cadapi.discretise_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:

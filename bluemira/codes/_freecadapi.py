@@ -918,6 +918,17 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
     return vector_to_numpy(vectors), np.array(indices)
 
 
+def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
+    """Return the unit tangent of *edge* at normalised parameter *param* in [0, 1].
+
+    *param* is in [0, 1] where 0 = start and 1 = end.  Internally mapped to the
+    FreeCAD/OCC raw parameter range.
+    """
+    raw = edge.FirstParameter + param * (edge.LastParameter - edge.FirstParameter)
+    v = edge.tangentAt(raw)
+    return vector_to_numpy(v)
+
+
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""  # noqa: DOC201
     point = obj.OrderedEdges[0].firstVertex().Point
@@ -975,6 +986,27 @@ def shells(obj: apiShape) -> list[apiShell]:
 def solids(obj: apiShape) -> list[apiSolid]:
     """Solids of the object"""  # noqa: DOC201
     return _get_api_attr(obj, "Solids")
+
+
+def reverse_shape(shape: apiShape) -> apiShape:
+    """Return a copy of the shape with reversed orientation."""
+    copy = shape.copy()
+    copy.reverse()
+    return copy
+
+
+def wire_from_edges(edge_list: list) -> apiWire:
+    """Create a wire from a list of edges."""
+    import Part  # noqa: PLC0415
+
+    return Part.Wire(edge_list)
+
+
+def wire_from_wires(wire_list: list) -> apiWire:
+    """Create a single wire from a list of wires."""
+    import Part  # noqa: PLC0415
+
+    return Part.Wire(wire_list)
 
 
 def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:

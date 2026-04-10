@@ -14,7 +14,7 @@ import pytest
 from FreeCAD import Base, closeDocument, newDocument
 from scipy.special import ellipe
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD

@@ -15,7 +15,7 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError

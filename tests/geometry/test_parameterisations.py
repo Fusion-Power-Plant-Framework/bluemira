@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+import os
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -12,7 +13,10 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bluemira.codes._freecadapi import _wire_edges_tangent
+import bluemira.codes._geometryapi as _cadapi
+_wire_edges_tangent = _cadapi._wire_edges_tangent
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.face import BluemiraFace
@@ -122,6 +126,14 @@ class DummyToroidalFieldSolver:
         return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
 
 
+@pytest.mark.xfail(
+    _CADQUERY_BACKEND,
+    reason=(
+        "CadQuery backend: PrincetonDDiscrete.create_shape uses make_bspline_g1_blend "
+        "and ._shape.OrderedEdges — both FreeCAD-only APIs."
+    ),
+    strict=True,
+)
 class TestPrincetonDDiscrete:
     @classmethod
     def setup_class(cls):

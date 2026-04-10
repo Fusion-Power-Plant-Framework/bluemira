@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
     Coordinates,

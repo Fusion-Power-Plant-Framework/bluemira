@@ -15,7 +15,7 @@ import enum
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
@@ -69,9 +69,9 @@ class BluemiraGeo(ABC, meshing.Meshable):
         self.__orientation = _Orientation(value)
 
     def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
+        if self._orientation != _Orientation(cadapi.orientation(obj)):
+            obj = cadapi.reverse_shape(obj)
+            self._orientation = _Orientation(cadapi.orientation(obj))
         return obj
 
     @staticmethod

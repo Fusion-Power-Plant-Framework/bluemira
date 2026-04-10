@@ -21,6 +21,8 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.tools import Options
 from bluemira.utilities.tools import get_module
 
+import os
+
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
 
@@ -30,6 +32,7 @@ class ViewerBackend(Enum):
 
     FREECAD = "bluemira.codes._freecadapi"
     POLYSCOPE = "bluemira.codes._polyscope"
+    CADQUERY = "bluemira.codes._cadqueryapi"
 
     @lru_cache(2)
     def get_module(self):
@@ -296,6 +299,9 @@ class ComponentDisplayer(BaseDisplayer):
         """
         import bluemira.base.components as bm_comp  # noqa: PLC0415
 
+        if not 'backend' in kwargs:
+            backend = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
+            kwargs['backend'] = backend
         show_cad(
             *bm_comp.get_properties_from_components(
                 comps, ("shape", "display_cad_options", "name")
