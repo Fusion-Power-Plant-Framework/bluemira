@@ -31,7 +31,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.utilities.tools import ColourDescriptor
-from OCP.BRep import BRep_Tool
+from OCP.BRep import BRep_Builder, BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import BRepAlgoAPI_BuilderAlgo, BRepAlgoAPI_Section
 from OCP.BRepBuilderAPI import (
@@ -43,12 +43,10 @@ from OCP.BRepBuilderAPI import (
 )
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
-from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
+from OCP.BRepGProp import BRepGProp
+from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
-from OCP.TopExp import TopExp_Explorer
-from OCP.TopAbs import TopAbs_IN, TopAbs_REVERSED, TopAbs_VERTEX
-from OCP.TopoDS import TopoDS
 from OCP.GC import GC_MakeArcOfCircle
 from OCP.Geom import Geom_BezierCurve, Geom_BSplineCurve, Geom_BSplineSurface
 from OCP.GeomAbs import (
@@ -59,6 +57,7 @@ from OCP.GeomAbs import (
     GeomAbs_Line,
 )
 from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve
+from OCP.GProp import GProp_GProps
 from OCP.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Pln, gp_Pnt, gp_Trsf, gp_Vec
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.TColStd import (
@@ -66,8 +65,10 @@ from OCP.TColStd import (
     TColStd_Array1OfReal,
     TColStd_Array2OfReal,
 )
-
+from OCP.TopAbs import TopAbs_IN, TopAbs_REVERSED, TopAbs_VERTEX
+from OCP.TopExp import TopExp_Explorer
 from OCP.TopTools import TopTools_ListOfShape
+from OCP.TopoDS import TopoDS, TopoDS_Compound
 
 if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
@@ -461,6 +462,23 @@ def length(obj: apiShape) -> float:
     return sum(e.Length() for e in obj.Edges())
 
 
+def _occ_face_area(topoDS_face) -> float:
+    """Compute the surface area of a TopoDS_Face via OCC mass properties."""
+    props = GProp_GProps()
+    BRepGProp.SurfaceProperties_s(topoDS_face, props)
+    return props.Mass()
+
+
+def _cq_area_prop(self) -> float:
+    """Area property for cq.Face (FreeCAD exposes this as a property, CadQuery as a method)."""
+    inner = self.innerWires()
+    if inner:
+        outer_area = _occ_face_area(cq.Face.makeFromWires(self.outerWire()).wrapped)
+        hole_area = sum(_occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
+        return outer_area - hole_area
+    return _occ_face_area(self.wrapped)
+
+
 def area(obj: apiShape) -> float:
     """Surface area of the shape.
 
@@ -471,8 +489,8 @@ def area(obj: apiShape) -> float:
     if isinstance(obj, cq.Face):
         inner = obj.innerWires()
         if inner:
-            outer_area = cq.Face.makeFromWires(obj.outerWire()).Area
-            hole_area = sum(cq.Face.makeFromWires(w).Area for w in inner)
+            outer_area = _occ_face_area(cq.Face.makeFromWires(obj.outerWire()).wrapped)
+            hole_area = sum(_occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
             return outer_area - hole_area
         return obj.Area  # property (monkey-patched) → float
     return obj.Area()  # method on Wire/Solid/Shell/Edge → float
@@ -777,8 +795,6 @@ def show_cad(
 # ---------------------------------------------------------------------------
 # CadQuery has no BSplineSurface public type; cq.Shape is the closest proxy.
 apiSurface = cq.Shape
-# apiPlane is set to _CQPlane further below, after _CQPlane is defined.
-apiPlane = None
 
 
 class _Vector:
@@ -806,6 +822,17 @@ class _Rotation:
         self.Angle = angle
 
 
+class _HomogeneousMatrix:
+    """Wraps a 4×4 numpy array; exposes `.A` as a flat list (FreeCAD Matrix.A API)."""
+
+    def __init__(self, m: np.ndarray):
+        self._m = m
+
+    @property
+    def A(self) -> list[float]:
+        return list(self._m.flatten())
+
+
 class _CQPlacement:
     """
     Minimal stand-in for FreeCAD's Base.Placement.
@@ -824,20 +851,13 @@ class _CQPlacement:
         self.Rotation = _Rotation(tuple(_ax), angle_rad)
 
     @property
-    def Matrix(self):
-        """Return a matrix-like object whose .A gives the flat 4×4 homogeneous matrix."""
+    def Matrix(self) -> _HomogeneousMatrix:
+        """4×4 homogeneous transformation matrix (FreeCAD Placement.Matrix API)."""
         R = self._rot_matrix()
-        t = np.array([self.Base.x, self.Base.y, self.Base.z])
         m = np.eye(4)
         m[:3, :3] = R
-        m[:3, 3] = t
-
-        class _DynMatrix:
-            @property
-            def A(inner_self):  # noqa: N805
-                return list(m.flatten())
-
-        return _DynMatrix()
+        m[:3, 3] = [self.Base.x, self.Base.y, self.Base.z]
+        return _HomogeneousMatrix(m)
 
     def _rot_matrix(self) -> np.ndarray:
         """3x3 rotation matrix via Rodrigues' formula (angle in radians)."""
@@ -1013,8 +1033,8 @@ def face_from_plane(plane: _CQPlane, width: float, height: float) -> cq.Face:
     return cq.Face.makeFromWires(wire)
 
 
-def _rotation_to_align(src: np.ndarray, dst: np.ndarray):
-    """Return (axis, angle_deg) rotation that aligns unit vector *src* with *dst*."""
+def _rotation_to_align(src: np.ndarray, dst: np.ndarray) -> tuple[np.ndarray, float]:
+    """Return (axis, angle_rad) rotation that aligns unit vector *src* with *dst*."""
     src = src / (np.linalg.norm(src) + 1e-16)
     dst = dst / (np.linalg.norm(dst) + 1e-16)
     cross = np.cross(src, dst)
@@ -1027,36 +1047,30 @@ def _rotation_to_align(src: np.ndarray, dst: np.ndarray):
         perp = np.array([1.0, 0.0, 0.0]) if abs(src[0]) < 0.9 else np.array([0.0, 1.0, 0.0])  # noqa: PLR2004
         axis = np.cross(src, perp)
         axis /= np.linalg.norm(axis)
-        return axis, 180.0
+        return axis, math.pi
     axis = cross / cross_norm
-    angle_deg = math.degrees(math.acos(dot))
-    return axis, angle_deg
+    return axis, math.acos(dot)
 
 
 def placement_from_plane(plane: _CQPlane) -> _CQPlacement:
     """Convert a plane to a placement whose local z-axis aligns with the plane normal."""
     base = (plane.Position.x, plane.Position.y, plane.Position.z)
     n = np.array([plane.Axis.x, plane.Axis.y, plane.Axis.z], dtype=float)
-    z_hat = np.array([0.0, 0.0, 1.0])
-    axis, angle_deg = _rotation_to_align(z_hat, n)
-    return _CQPlacement(base=base, axis=tuple(axis), angle_rad=math.radians(angle_deg))
+    axis, angle_rad = _rotation_to_align(np.array([0.0, 0.0, 1.0]), n)
+    return _CQPlacement(base=base, axis=tuple(axis), angle_rad=angle_rad)
 
-# Re-export FreeCADError so tools.py can do `cadapi.FreeCADError`
-# (it's just a BluemiraError subclass, backend-agnostic)
 
-# catch_caderr decorator stub — used as @cadapi.catch_caderr(SomeError) in tools.py
+# ---------------------------------------------------------------------------
+# Error handling
+# ---------------------------------------------------------------------------
+
+
 def catch_caderr(new_error_type):
     """Passthrough decorator stub (no FreeCAD error translation needed)."""
     def decorator(func):
         return func
     return decorator
 
-
-# ---------------------------------------------------------------------------
-# Module-level __getattr__: raises NotImplementedError for anything not yet
-# implemented, with a clear message naming the missing function.
-# This lets the import succeed while making gaps visible at runtime.
-# ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
 # Shape predicates
@@ -2104,16 +2118,12 @@ class CADFileType(enum.Enum):
 
 def make_compound(shapes: list[apiShape]) -> apiCompound:
     """Make a compound of multiple shapes."""
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Compound  # noqa: PLC0415
-
     comp = TopoDS_Compound()
     b = BRep_Builder()
     b.MakeCompound(comp)
     for s in shapes:
         b.Add(comp, s.wrapped)
     return cq.Shape.cast(comp)
-
 
 
 @contextlib.contextmanager
@@ -2234,8 +2244,6 @@ def import_cad(
                 if len(assembled) == 1:
                     result_shape = assembled[0]
                 elif assembled:
-                    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-                    from OCP.TopoDS import TopoDS_Compound  # noqa: PLC0415
                     comp = TopoDS_Compound()
                     b = BRep_Builder()
                     b.MakeCompound(comp)
@@ -2273,34 +2281,9 @@ def _cq_orientation(self) -> str:
 
 def _cq_reverse(self) -> None:
     """Reverse the shape orientation in-place (mirrors FreeCAD's reverse() method)."""
-    from OCP.BRep import BRep_Builder  # noqa: PLC0415
-    from OCP.TopoDS import TopoDS_Face, TopoDS_Wire, TopoDS_Edge  # noqa: PLC0415
     reversed_shape = self.wrapped.Reversed()
     # Cast back to the concrete OCCT type so type-specific OCC functions still work.
     self.wrapped = cq.Shape.cast(reversed_shape).wrapped
-
-
-def _cq_area_prop(self) -> float:
-    """Area as a property (FreeCAD exposes this as a property, CadQuery as a method)."""
-    # Use our area() function which correctly handles faces with inner wires,
-    # but call the OCC Area directly to avoid recursion.
-    if isinstance(self, cq.Face):
-        inner = self.innerWires()
-        if inner:
-            from OCP.GProp import GProp_GProps  # noqa: PLC0415
-            from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-            def _occ_area(topoDS_face):
-                props = GProp_GProps()
-                BRepGProp.SurfaceProperties_s(topoDS_face, props)
-                return props.Mass()
-            outer_area = _occ_area(cq.Face.makeFromWires(self.outerWire()).wrapped)
-            hole_area = sum(_occ_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
-            return outer_area - hole_area
-    from OCP.GProp import GProp_GProps  # noqa: PLC0415
-    from OCP.BRepGProp import BRepGProp  # noqa: PLC0415
-    props = GProp_GProps()
-    BRepGProp.SurfaceProperties_s(self.wrapped, props)
-    return props.Mass()
 
 
 for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
