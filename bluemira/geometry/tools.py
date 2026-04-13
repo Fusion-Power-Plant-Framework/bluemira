@@ -15,6 +15,7 @@ import enum
 import functools
 import inspect
 import json
+import operator
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
@@ -1418,6 +1419,77 @@ def split_wire(
     if wire_2:
         wire_2 = BluemiraWire(wire_2)
     return wire_1, wire_2
+
+
+def cut_wire_at_z_value(
+    wire: BluemiraWire,
+    point_z: float,
+    location: CutLocation,
+    point_name: str = "chosen point_z",
+) -> BluemiraWire:
+    """
+    Remove the parts of the wire below or above a given z-value.
+
+    Parameters
+    ----------
+    wire:
+        Wire shape that needs cutting.
+    point_z:
+        Z-value at point to make the cut.
+    location:
+        Choose to remove the lower or upper part of the wire after cutting.
+    point_name:
+        String printed in warning message, relevant when applied to an input
+        of interest e.g. x-point location for an Equilibrium.
+
+    Returns
+    -------
+    cut_wire:
+        The remaining section of wire after cutting.
+
+    Raises
+    ------
+    ValueError
+        No parts of shape found
+    """
+    # Create a box that surrounds the wire above/below the given z-
+    # coordinate, then perform a boolean cut to remove that portion
+    # of the wires shape.
+    bounding_box = wire.bounding_box
+    box_z = bounding_box.z_min if location is CutLocation.LOWER else bounding_box.z_max
+    cut_box_points = np.array([
+        [bounding_box.x_min, 0, box_z],
+        [bounding_box.x_min, 0, point_z],
+        [bounding_box.x_max, 0, point_z],
+        [bounding_box.x_max, 0, box_z],
+        [bounding_box.x_min, 0, box_z],
+    ])
+    cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion", closed=True)
+    pieces = boolean_cut(wire, [cut_zone])
+
+    cut_wire = (
+        pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+        if location is CutLocation.LOWER
+        else pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
+    )
+
+    func = operator.lt if location is CutLocation.LOWER else operator.gt
+    loc = "above" if location is CutLocation.LOWER else "below"
+    if func(cut_wire.center_of_mass[2], point_z):
+        raise ValueError(
+            "Could not cut wire shape. "
+            "No parts of the wire found " + loc + " " + point_name
+        )
+    return cut_wire
+
+
+class CutLocation(Enum):
+    """Used in cut_shape_at_z_value to choose which part of the shape to remove"""
+
+    UPPER = auto()
+    """Remove upper part of shape after cut"""
+    LOWER = auto()
+    """remove lower part of shape after cut"""
 
 
 def slice_shape(
