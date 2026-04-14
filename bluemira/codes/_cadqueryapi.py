@@ -1390,7 +1390,7 @@ def wire_closure(wire: apiWire) -> apiWire | None:
     """Return a line-segment wire closing an open wire, or None if already closed."""
     if wire.IsClosed():
         return None
-    edge_list = wire.Edges()
+    edge_list = ordered_edges(wire)
     p_end = edge_list[-1].endPoint()
     p_start = edge_list[0].startPoint()
     return cq.Wire.assembleEdges([cq.Edge.makeLine(p_end, p_start)])
@@ -1400,7 +1400,7 @@ def close_wire(wire: apiWire) -> apiWire:
     """Return the wire closed with a straight line if not already closed."""
     if wire.IsClosed():
         return wire
-    edge_list = wire.Edges()
+    edge_list = ordered_edges(wire)
     p_end = edge_list[-1].endPoint()
     p_start = edge_list[0].startPoint()
     closing = cq.Edge.makeLine(p_end, p_start)

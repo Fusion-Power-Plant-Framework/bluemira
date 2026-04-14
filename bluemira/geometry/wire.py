@@ -104,23 +104,11 @@ class BluemiraWire(BluemiraGeo):
         return wire
 
     def _get_wires(self) -> list[cadapi.apiWire]:
-        """
-        Returns
-        -------
-        :
-            List of wires of which the shape consists of.
-        """
         result = []
         for o in self.boundary:
             if isinstance(o, cadapi.apiWire):
                 for w in cadapi.wires(o):
-                    if cadapi.is_valid(w):
-                        wire = w
-                    else:
-                        try:
-                            wire = cadapi.wire_from_edges(cadapi.ordered_edges(w))
-                        except Exception:
-                            wire = w
+                    wire = w
                     if self._orientation != _Orientation(cadapi.orientation(wire)):
                         wire = cadapi.reverse_shape(wire)
                     result += [wire]

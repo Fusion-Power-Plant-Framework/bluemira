@@ -997,16 +997,18 @@ def reverse_shape(shape: apiShape) -> apiShape:
 
 def wire_from_edges(edge_list: list) -> apiWire:
     """Create a wire from a list of edges."""
-    import Part  # noqa: PLC0415
-
     return Part.Wire(edge_list)
 
 
 def wire_from_wires(wire_list: list) -> apiWire:
     """Create a single wire from a list of wires."""
-    import Part  # noqa: PLC0415
-
-    return Part.Wire(wire_list)
+    if len(wire_list) == 1:
+        return wire_list[0]
+    # Part.Wire needs edges, not wire objects, when combining multiple wires.
+    all_edges = []
+    for w in wire_list:
+        all_edges.extend(ordered_edges(w))
+    return Part.Wire(all_edges)
 
 
 def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:

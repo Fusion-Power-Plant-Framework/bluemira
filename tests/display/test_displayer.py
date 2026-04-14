@@ -219,12 +219,15 @@ class TestGeometryDisplayer:
         ],
     )
     def test_no_displayer(self, mock, caplog):
+        def _fallback_messages():
+            return [m for m in caplog.messages if "Unable to import" in m]
+
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad(self._make_shape(), backend="polyscope")
-        assert len(caplog.messages) == 1
+        assert len(_fallback_messages()) == 1
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad(self._make_shape(), backend="polyscope")
-        assert len(caplog.messages) == 1
+        assert len(_fallback_messages()) == 1
 
     def test_unknown_displayer(self, caplog):
         caplog.set_level(logging.WARNING)

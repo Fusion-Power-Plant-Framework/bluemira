@@ -679,6 +679,16 @@ class TestMakeCircle:
 
 class TestSavingCAD:
     STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"
+    # Header/metadata lines that legitimately differ between the FreeCAD and CadQuery
+    # geometry backends (author, producing system, unit annotation, product name).
+    STP_BACKEND_METADATA_RE = (
+        r"FILE_DESCRIPTION\(|"
+        r"FILE_NAME\(|"
+        r"^\s*\('?(Bluemira|Open CASCADE|Author)|"
+        r"PRODUCT\('(Part__FeaturePython|Open CASCADE STEP translator)|"
+        r"SI_UNIT\(|"
+        r",'Unknown'\);"
+    )
 
     def setup_method(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
@@ -713,8 +723,10 @@ class TestSavingCAD:
                 try:
                     datetime.fromisoformat(line.split(",")[1].strip("'"))
                 except (ValueError, IndexError):
-                    # Attempt to ignore version number
-                    if not re.search(self.STP_VERSION_RE, line):
+                    # Attempt to ignore version number and backend-specific metadata
+                    if not re.search(self.STP_VERSION_RE, line) and not re.search(
+                        self.STP_BACKEND_METADATA_RE, line
+                    ):
                         lines += [line]
         if legacy:
             # legacy STP writer outputs weird things the content of which is correct

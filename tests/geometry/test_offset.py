@@ -5,13 +5,10 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 import pytest
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
@@ -147,24 +144,7 @@ class TestFallBackOffset:
 
     @pytest.mark.parametrize("fallback_method", ["square"])
     @pytest.mark.parametrize("join", ["arc", "intersect"])
-    @pytest.mark.parametrize(
-        "delta",
-        [
-            pytest.param(
-                0.75,
-                marks=pytest.mark.xfail(
-                    _CADQUERY_BACKEND,
-                    reason=(
-                        "CadQuery backend: offset2D fails on this 152-edge complex wire "
-                        "and the pyclipper fallback produces multiple 'islands', so the "
-                        "largest island's distance (~0.688) is outside 1% of 0.75."
-                    ),
-                    strict=True,
-                ),
-            ),
-            -0.75,
-        ],
-    )
+    @pytest.mark.parametrize("delta", [0.75, -0.75])
     def test_primitive_offsetting_catch(self, delta, join, fallback_method):
         """
         This is a test for offset operations on wires that have failed primitive
