@@ -185,6 +185,12 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         }
         self.separatrix_legs = get_separatrix_legs(self.equilibrium)
 
+    def run(self):
+        """
+        Run the design problem.
+        """
+        super().run()
+
     def _make_target(self, leg: LegPosition, label: str):
         """
         Divertor designer method for making the target.
