@@ -57,6 +57,18 @@ class OffsetClipperMethodType(Enum):
             ) from None
 
 
+_CLIPPER_SCALE = 1_000_000
+"""
+Scale factor for pyclipper integer coordinates.
+
+pyclipper's default (2^31 ~ 2.1e9) is chosen for maximum precision in boolean
+operations, but for offset operations it causes the ``JT_ROUND`` arc-segment count
+to explode (N appx. 250 000 per corner vs. appx. 5 000 here).  1e6 still gives
+sub-micrometre precision while keeping arc counts tractable (~5 000 per corner with
+default ``ArcTolerance=0.25`` clipper units = 250 nm physical).
+"""
+
+
 def coordinates_to_pyclippath(coordinates: Coordinates) -> np.ndarray:
     """
     Transforms a bluemira Coordinates object into a Path for use in pyclipper
@@ -70,7 +82,7 @@ def coordinates_to_pyclippath(coordinates: Coordinates) -> np.ndarray:
     -------
     The vertex polygon path formatting required by pyclipper
     """
-    return scale_to_clipper(coordinates.xz.T)
+    return scale_to_clipper(coordinates.xz.T, _CLIPPER_SCALE)
 
 
 def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
@@ -86,7 +98,7 @@ def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
     -------
     The Coordinates from the path object
     """
-    p2 = scale_from_clipper(np.array(path).T)
+    p2 = scale_from_clipper(np.array(path).T, _CLIPPER_SCALE)
     return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
@@ -309,7 +321,6 @@ def offset_clipper(
     if inp_method is OffsetClipperMethodType.SQUARE:
         tool = SquareOffset(t_coordinates)
     elif inp_method is OffsetClipperMethodType.ROUND:
-        bluemira_warn("I don't know why, but this is very slow...")
         tool = RoundOffset(t_coordinates)
     elif inp_method is OffsetClipperMethodType.MITER:
         tool = MiterOffset(t_coordinates, miter_limit=miter_limit)
