@@ -114,10 +114,13 @@ class BluemiraWire(BluemiraGeo):
         for o in self.boundary:
             if isinstance(o, cadapi.apiWire):
                 for w in cadapi.wires(o):
-                    try:
-                        wire = cadapi.wire_from_edges(cadapi.ordered_edges(w))
-                    except Exception:  # noqa: BLE001
+                    if cadapi.is_valid(w):
                         wire = w
+                    else:
+                        try:
+                            wire = cadapi.wire_from_edges(cadapi.ordered_edges(w))
+                        except Exception:
+                            wire = w
                     if self._orientation != _Orientation(cadapi.orientation(wire)):
                         wire = cadapi.reverse_shape(wire)
                     result += [wire]
