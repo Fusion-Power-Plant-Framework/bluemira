@@ -1484,7 +1484,7 @@ def cut_wire_at_z_value(
 
 
 class CutLocation(Enum):
-    """Used in cut_shape_at_z_value to choose which part of the shape to remove"""
+    """Used in cut_wire_at_z_value to choose which part of the shape to remove"""
 
     UPPER = auto()
     """Remove upper part of shape after cut"""

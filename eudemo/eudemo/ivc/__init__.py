@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from bluemira.base.designer import run_designer
-from bluemira.builders.tools import clip_wall_silhouette_at_xpoint, cut_shape_at_z_value
+from bluemira.builders.tools import clip_wall_silhouette_at_xpoint, cut_wire_at_z_value
 from bluemira.geometry.tools import boolean_cut
 from eudemo.ivc.divertor_silhouette import DivertorSilhouetteDesigner
 from eudemo.ivc.ivc_boundary import IVCBoundaryDesigner
@@ -81,7 +81,7 @@ def design_ivc(
     # blanket face using some thickness (remote maintenance clearance).
     # We want the boundary wire and face to start and end at the same
     # place, so we cut the wire again here.
-    wall_boundary = cut_shape_at_z_value(
+    wall_boundary = cut_wire_at_z_value(
         wall_boundary,
         plasma_face.bounding_box.z_min,
         point_name="lower limit of plasma bounding box",
