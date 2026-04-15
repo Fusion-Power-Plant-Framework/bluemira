@@ -23,14 +23,11 @@ import enum
 import math
 from collections.abc import Iterable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
-
-from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.error import FreeCADError, InvalidCADInputsError
-from bluemira.utilities.tools import ColourDescriptor
 from OCP.BRep import BRep_Builder, BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import BRepAlgoAPI_BuilderAlgo, BRepAlgoAPI_Section
@@ -41,6 +38,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_Sewing,
     BRepBuilderAPI_Transform,
 )
+from OCP.BRepClass import BRepClass_FaceClassifier
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
@@ -48,27 +46,55 @@ from OCP.BRepGProp import BRepGProp
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.GC import GC_MakeArcOfCircle
-from OCP.Geom import Geom_BezierCurve, Geom_BSplineCurve, Geom_BSplineSurface
+from OCP.GProp import GProp_GProps
+from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
+from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve, GeomAPI_ProjectPointOnSurf
 from OCP.GeomAbs import (
-    GeomAbs_BezierCurve,
     GeomAbs_BSplineCurve,
+    GeomAbs_BezierCurve,
     GeomAbs_Circle,
     GeomAbs_Ellipse,
     GeomAbs_Line,
 )
-from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve
-from OCP.GProp import GProp_GProps
-from OCP.gp import gp_Ax1, gp_Ax2, gp_Circ, gp_Dir, gp_Pln, gp_Pnt, gp_Trsf, gp_Vec
-from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCP.IFSelect import IFSelect_RetDone
+from OCP.Interface import Interface_Static
+from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
 from OCP.TColStd import (
     TColStd_Array1OfInteger,
     TColStd_Array1OfReal,
     TColStd_Array2OfReal,
 )
-from OCP.TopAbs import TopAbs_IN, TopAbs_REVERSED, TopAbs_VERTEX
+from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCP.TopAbs import (
+    TopAbs_FACE,
+    TopAbs_IN,
+    TopAbs_REVERSED,
+    TopAbs_SHELL,
+    TopAbs_SOLID,
+    TopAbs_VERTEX,
+    TopAbs_WIRE,
+)
 from OCP.TopExp import TopExp_Explorer
-from OCP.TopTools import TopTools_ListOfShape
+from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
 from OCP.TopoDS import TopoDS, TopoDS_Compound
+from OCP.gp import (
+    gp_Ax1,
+    gp_Ax2,
+    gp_Circ,
+    gp_Dir,
+    gp_Pln,
+    gp_Pnt,
+    gp_Pnt2d,
+    gp_Trsf,
+    gp_Vec,
+)
+
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.geometry.error import GeometryError
+from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
@@ -279,27 +305,66 @@ def sweep_shape(
         )
         solid = False
 
-    # CadQuery sweep: outer wire + optional inner wires + path
-    outer = profiles[0]
-    inner = profiles[1:] if len(profiles) > 1 else []
-
+    # bluemira's sweep semantics match FreeCAD's ``Part.Wire.makePipeShell``:
+    # all profiles are section profiles along the path (multi-section sweep),
+    # not an outer+inner wires pair. For a single profile this degenerates to
+    # a plain pipe sweep.
     try:
-        # transition: 0=transformed, 1=right, 2=round  (CadQuery string literals)
-        transition_mode = ["transformed", "right", "round"][transition]
-        result = cq.Solid.sweep(
-            outer,
-            inner,
-            path,
-            makeSolid=solid,
-            isFrenet=frenet,
-            transitionMode=transition_mode,
-        )
+        if len(profiles) == 1:
+            transition_mode = ["transformed", "right", "round"][transition]
+            result = cq.Solid.sweep(
+                profiles[0],
+                [],
+                path,
+                makeSolid=solid,
+                isFrenet=frenet,
+                transitionMode=transition_mode,
+            )
+        else:
+            result = cq.Solid.sweep_multi(
+                profiles, path, makeSolid=solid, isFrenet=frenet
+            )
     except Exception as exc:
         raise FreeCADError(f"CadQuery sweep failed: {exc}") from exc
+
+    # Multi-section sweeps on composite profiles produce shells whose adjacent
+    # faces do not share topological edges — ``isValid()`` still returns True,
+    # but downstream boolean/section operations silently drop individual faces
+    # because there is no shared boundary for them to propagate across. Sewing
+    # stitches the shell back together via vertex/edge merging within
+    # tolerance, restoring a single coherent boundary.
+    if solid and len(profiles) > 1:
+        result = _sewn_solid(result)
+    if solid and not result.isValid():
+        fix_shape(result)
 
     if solid:
         return result
     return result.Shells()[0]
+
+
+def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
+    """Rebuild *solid* by sewing its faces into a shell and constructing a solid.
+
+    ``BRepBuilderAPI_Sewing`` reconnects faces that share geometric boundaries
+    within *tolerance* but not TopoDS vertices/edges — a common side-effect of
+    multi-section sweeps on composite profiles. Returns the original solid if
+    sewing fails to produce a single valid shell.
+    """
+    sewer = BRepBuilderAPI_Sewing(tolerance)
+    for f in solid.Faces():
+        sewer.Add(f.wrapped)
+    sewer.Perform()
+    sewn = sewer.SewedShape()
+    # Sewing may yield a Shell, a Compound of Shells, or the original shapes;
+    # we only rebuild when we end up with exactly one Shell.
+    shells = cq.Shape.cast(sewn).Shells() if not sewn.IsNull() else []
+    if len(shells) != 1:
+        return solid
+    maker = BRepBuilderAPI_MakeSolid(shells[0].wrapped)
+    if not maker.IsDone():
+        return solid
+    return cq.Solid(maker.Solid())
 
 
 def offset_wire(
@@ -455,10 +520,16 @@ def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
 
 
 def length(obj: apiShape) -> float:
-    """Total length of the shape (sum of all edge lengths)."""
-    if isinstance(obj, (cq.Edge, cq.Wire)):
+    """Total length of the shape (sum of all edge lengths).
+
+    Sum per-edge ``Length()`` rather than the composite ``cq.Wire.Length()``:
+    on CadQuery 2.7 / OCP 7.8 the composite-curve adaptor used by
+    ``cq.Wire.Length()`` segfaults on certain wires assembled from
+    ``BRepAlgoAPI_Section`` output (short, near-degenerate edges). Per-edge
+    ``BRepAdaptor_Curve``-based length is equivalent and stable.
+    """
+    if isinstance(obj, cq.Edge):
         return obj.Length()
-    # For faces, shells, solids: sum up all edge lengths (matches FreeCAD Part.Shape.Length)
     return sum(e.Length() for e in obj.Edges())
 
 
@@ -532,13 +603,21 @@ def is_valid(obj) -> bool:
 
 def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8):
     """
-    Attempt to fix a shape in-place.
+    Attempt to fix *shape* in-place via OCC's ``ShapeFix_Shape``.
 
-    CadQuery does not expose a direct fix() method. This is a no-op stub;
-    shapes are expected to be valid after creation.
+    Composite wires/faces assembled from multiple sub-shapes (e.g. via
+    ``cq.Wire.combine``) sometimes fail ``BRepCheck`` even when each component is
+    individually valid, because adjacent edges do not share vertices. ShapeFix
+    reconstructs the sharing and tightens tolerances.
 
-    TODO: wire in OCC BRepLib.buildCurves3d if needed.
+    The CadQuery wrapper's ``.wrapped`` attribute is reassigned so callers that
+    already hold a reference to *shape* see the fixed geometry.
     """
+    fixer = ShapeFix_Shape(shape.wrapped)
+    fixer.SetPrecision(precision)
+    fixer.SetMinTolerance(min_length)
+    fixer.Perform()
+    shape.wrapped = fixer.Shape()
 
 
 # ---------------------------------------------------------------------------
@@ -772,11 +851,10 @@ def show_cad(
     Delegates to _polyscope.show_cad after swapping in our own
     collect_verts_faces / collect_wires implementations.
     """
-    from bluemira.codes import _polyscope as ps_backend
-
     # Temporarily patch the collect helpers polyscope uses so that it calls
     # our CadQuery-aware versions instead of the FreeCAD ones.
     import bluemira.codes._freecadapi as _orig_cadapi
+    from bluemira.codes import _polyscope as ps_backend
 
     _orig_collect_verts = _orig_cadapi.collect_verts_faces
     _orig_collect_wires = _orig_cadapi.collect_wires
@@ -1627,6 +1705,28 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
             except Exception:  # noqa: BLE001
                 pass
 
+    # Boolean fuse on coplanar/touching faces routinely yields a compound that
+    # fails BRepCheck (overlapping face boundaries, vertex sharing not yet
+    # established). ShapeFix repairs it, mirroring what BluemiraFace does on
+    # face creation.
+    if not result.isValid():
+        fix_shape(result)
+
+    # OCC wraps fuse results in a compound even when the inputs are homogeneous
+    # and the output is a single shape of that same kind. FreeCAD's fuse
+    # unwraps in this case; mirror that here so callers that feed in Faces get
+    # a Face back (not a Compound containing one Face), otherwise downstream
+    # ``.boundary[0]`` access misinterprets the wrapping.
+    if isinstance(result, cq.Compound):
+        if all(isinstance(s, cq.Face) for s in shapes):
+            faces = _collect_subshapes(result, cq.Face)
+            if len(faces) == 1:
+                return faces[0]
+        if all(isinstance(s, cq.Solid) for s in shapes):
+            solids = _collect_subshapes(result, cq.Solid)
+            if len(solids) == 1:
+                return solids[0]
+
     return result
 
 
@@ -1638,13 +1738,62 @@ def boolean_cut(
         tools = [tools]
 
     result = shape.cut(*tools)
+    # OCC's BRepAlgoAPI_Cut can return nested compounds, and cq.Shape.Solids()
+    # / .Faces() / .Wires() only inspect the immediate children. Walk the
+    # whole tree instead so we recover sub-shapes buried one level deeper.
     if isinstance(shape, apiSolid):
-        return result.Solids()
+        return _collect_subshapes(result, cq.Solid)
     if isinstance(shape, apiFace):
-        return result.Faces()
+        return _collect_subshapes(result, cq.Face)
     if isinstance(shape, apiWire):
-        return result.Wires()
+        return _collect_subshapes(result, cq.Wire)
     return [result]
+
+
+_TOPABS_FOR_KIND: dict = {
+    cq.Solid: TopAbs_SOLID,
+    cq.Face: TopAbs_FACE,
+    cq.Wire: TopAbs_WIRE,
+}
+
+
+def _collect_subshapes(shape: apiShape, kind: type) -> list:
+    """Recursively collect all sub-shapes of *shape* that are instances of *kind*.
+
+    CadQuery's ``.Solids()``/``.Faces()``/``.Wires()`` only walk the immediate
+    children of a compound; OCC boolean operations occasionally yield compounds
+    nested more than one level deep, which then appear empty. ``TopExp_Explorer``
+    traverses the full topology tree and recovers all leaves of the requested
+    kind.
+
+    Special case for ``cq.Solid``: OCC boolean cuts can return a Shell inside a
+    Compound (no ``TopoDS_Solid`` wrapper) when the result is a closed volume
+    boundary but not yet a solid. Promote such shells via ``BRepBuilderAPI_MakeSolid``
+    so callers that asked for solids get the volume they expect.
+    """
+    explorer = TopExp_Explorer(shape.wrapped, _TOPABS_FOR_KIND[kind])
+    collected: list = []
+    while explorer.More():
+        collected.append(kind(explorer.Current()))
+        explorer.Next()
+
+    if collected or kind is not cq.Solid:
+        return collected
+
+    shell_exp = TopExp_Explorer(shape.wrapped, TopAbs_SHELL)
+    while shell_exp.More():
+        shell = cq.Shell(shell_exp.Current())
+        maker = BRepBuilderAPI_MakeSolid(shell.wrapped)
+        if maker.IsDone():
+            promoted = cq.Solid(maker.Solid())
+            # The freshly-built solid can still fail BRepCheck (orientation of
+            # the shell not yet aligned as a solid boundary); ShapeFix_Shape
+            # reliably repairs it.
+            if not promoted.isValid():
+                fix_shape(promoted)
+            collected.append(promoted)
+        shell_exp.Next()
+    return collected
 
 
 def boolean_fragments(
@@ -1707,11 +1856,40 @@ def loft(
     return result
 
 
+def _repair_closed_wire(wire: apiWire) -> apiWire:
+    """Ensure *wire*'s TopoDS "Closed" flag matches its geometry.
+
+    OCC's ``TopoDS_Wire`` carries an explicit Closed flag that is not always
+    set by algorithms that produce wires (notably ``Face.outerWire()`` on the
+    result of a boolean section). A geometrically closed wire whose flag is
+    unset reports ``IsClosed() == False`` and breaks downstream checks
+    (e.g. sweep's "cannot mix open and closed profiles"). ``ShapeFix_Wire``
+    reconnects shared vertices and sets the Closed flag if appropriate.
+
+    Skip the repair when the wire already reports closed — running ShapeFix
+    on an already-good wire can produce a null-handle output on some OCC
+    builds, leading to segfaults downstream.
+    """
+    if wire.IsClosed():
+        return wire
+    fixer = ShapeFix_Wire()
+    fixer.Load(wire.wrapped)
+    fixer.FixReorder()
+    fixer.FixConnected()
+    fixer.FixClosed()
+    fixed = fixer.Wire()
+    if fixed.IsNull():
+        return wire
+    return cq.Wire(fixed)
+
+
 def slice_shape(shape: apiShape, plane_origin, plane_axis):
     """Slice a shape with a plane.
 
     For wires returns a numpy array of intersection points (N, 3).
-    For faces/solids/shells returns a list of intersection wires.
+    For solids/shells returns a list of closed intersection wires (outer wires
+    of the cross-section faces).
+    For faces returns the section curves as wires.
     """
     pln = gp_Pln(
         gp_Pnt(*[float(x) for x in plane_origin]),
@@ -1719,74 +1897,119 @@ def slice_shape(shape: apiShape, plane_origin, plane_axis):
     )
     plane_face = BRepBuilderAPI_MakeFace(pln, -1e6, 1e6, -1e6, 1e6).Face()
 
-    section = BRepAlgoAPI_Section(shape.wrapped, plane_face)
-    section.ComputePCurveOn1(True)
-    section.Approximation(True)
-    section.Build()
-
-    if not section.IsDone() or section.Shape().IsNull():
-        if isinstance(shape, apiWire):
-            return np.empty((0, 3))
-        return []
-
-    result = cq.Shape.cast(section.Shape())
-
+    # --- Wire input: intersection points -------------------------------------
     if isinstance(shape, apiWire):
-        verts = result.Vertices()
+        section = BRepAlgoAPI_Section(shape.wrapped, plane_face)
+        section.ComputePCurveOn1(True)
+        section.Approximation(True)
+        section.Build()
+        if not section.IsDone() or section.Shape().IsNull():
+            return np.empty((0, 3))
+        verts = cq.Shape.cast(section.Shape()).Vertices()
         if not verts:
             return np.empty((0, 3))
         return np.array([_vector_to_numpy(v.Center()) for v in verts])
 
+    # --- Solid input: cross-section faces -> closed outer wires --------------
+    # Use boolean intersection with the plane face: OCC returns proper
+    # cross-section faces whose outer wires are closed by construction,
+    # matching FreeCAD's Part.Solid.slice behaviour.
+    # (Compound inputs are intentionally not routed through this path —
+    # BRepAlgoAPI_Common on a Compound+Face can leak the plane face itself
+    # into the result; the Section-edge fallback below handles Compounds
+    # robustly.)
+    if isinstance(shape, cq.Solid):
+        cq_plane = cq.Face(plane_face)
+        try:
+            intersection = shape.intersect(cq_plane)
+        except Exception:  # noqa: BLE001
+            intersection = None
+        if intersection is not None and not intersection.wrapped.IsNull():
+            section_wires: list = []
+            for f in intersection.Faces():
+                section_wires.append(_repair_closed_wire(f.outerWire()))
+                # Inner wires represent holes in the cross-section face and
+                # are legitimate section contours in their own right
+                # (e.g. the inner rim of a donut cross-section).
+                section_wires.extend(
+                    _repair_closed_wire(w) for w in f.innerWires()
+                )
+            if section_wires:
+                return section_wires
+
+    # --- Face input (or Solid fallback): assemble section edges into wires ---
+    section = BRepAlgoAPI_Section(shape.wrapped, plane_face)
+    section.ComputePCurveOn1(True)
+    section.Approximation(True)
+    section.Build()
+    if not section.IsDone() or section.Shape().IsNull():
+        return []
+
+    result = cq.Shape.cast(section.Shape())
     wires = result.Wires()
     if wires:
         return wires
 
-    # BRepAlgoAPI_Section returns edges in a compound; assemble them into wires.
     edges = result.Edges()
     if not edges:
         return []
 
-    # Use ShapeAnalysis_FreeBounds to properly group edges into wires
-    try:
-        from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds  # noqa: PLC0415
-        from OCP.TopTools import TopTools_HSequenceOfShape  # noqa: PLC0415
+    edge_seq = TopTools_HSequenceOfShape()
+    for e in edges:
+        edge_seq.Append(e.wrapped)
+    result_wires_seq = TopTools_HSequenceOfShape()
+    ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(
+        edge_seq, 1e-4, False, result_wires_seq
+    )
+    assembled = [
+        cq.Shape.cast(result_wires_seq.Value(i))
+        for i in range(1, result_wires_seq.Size() + 1)
+    ]
+    # For a Solid or Compound-of-Solids input, the cross-section must be a
+    # closed curve by construction. If a wire comes back open, the upstream
+    # solid had a torn shell; close the loop with a synthetic straight edge
+    # so downstream face creation / multi-section sweeps can still proceed.
+    # Shells, by contrast, legitimately produce open section wires — the
+    # intersection of a plane with a shell wall is a line, not a loop — so
+    # those must be passed through unchanged.
+    if isinstance(shape, cq.Solid) or (
+        isinstance(shape, cq.Compound) and shape.Solids()
+    ):
+        assembled = [_force_close_wire(w) for w in assembled]
+    return assembled
 
-        edge_seq = TopTools_HSequenceOfShape()
-        for e in edges:
-            edge_seq.Append(e.wrapped)
-        result_wires_seq = TopTools_HSequenceOfShape()
-        ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(edge_seq, 1e-4, False, result_wires_seq)
-        assembled = [cq.Shape.cast(result_wires_seq.Value(i)) for i in range(1, result_wires_seq.Size() + 1)]
-        if assembled:
-            return assembled
-    except Exception:  # noqa: BLE001
-        pass
 
+def _force_close_wire(wire: apiWire) -> apiWire:
+    """Close *wire* geometrically by appending a line edge from end to start."""
+    if wire.IsClosed():
+        return wire
     try:
-        return [cq.Wire.assembleEdges(edges)]
+        start = wire.startPoint()
+        end = wire.endPoint()
     except Exception:  # noqa: BLE001
-        # Edges are disconnected — wrap each individually
-        result_wires = []
-        for e in edges:
-            try:
-                result_wires.append(cq.Wire.assembleEdges([e]))
-            except Exception:  # noqa: BLE001
-                pass
-        return result_wires
+        return wire
+    gap = (end - start).Length
+    if gap < 1e-9:  # already coincident — just repair the Closed flag
+        return _repair_closed_wire(wire)
+    bridge = cq.Edge.makeLine(end, start)
+    edges = wire.Edges() + [bridge]
+    fixer = ShapeFix_Wire()
+    fixer.Load(cq.Wire.assembleEdges(edges).wrapped)
+    fixer.SetPrecision(max(1e-6, gap * 0.5))
+    fixer.SetMaxTolerance(max(1e-3, gap * 2.0))
+    fixer.FixReorder()
+    fixer.FixConnected()
+    fixer.FixClosed()
+    return cq.Wire(fixer.Wire())
 
 
 def point_inside_shape(point, shape: apiShape) -> bool:
     """Return True if *point* is inside *shape*."""
-    from OCP.BRepClass import BRepClass_FaceClassifier  # noqa: PLC0415
-    from OCP.BRep import BRep_Tool as _BRep_Tool  # noqa: PLC0415
-    from OCP.GeomAPI import GeomAPI_ProjectPointOnSurf  # noqa: PLC0415
-    from OCP.gp import gp_Pnt2d  # noqa: PLC0415
-
     pnt = gp_Pnt(*[float(x) for x in point])
 
     if isinstance(shape, apiFace):
         # Project point onto the face's surface, then classify in UV space
-        surf = _BRep_Tool.Surface_s(shape.wrapped)
+        surf = BRep_Tool.Surface_s(shape.wrapped)
         projector = GeomAPI_ProjectPointOnSurf(pnt, surf)
         projector.Perform(pnt)
         if projector.NbPoints() == 0:
@@ -1914,8 +2137,6 @@ def deserialise_shape(buffer: dict) -> apiWire:
 
 def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> apiWire:
     """Fillet or chamfer a planar wire using OCC's BRepFilletAPI_MakeFillet2d."""
-    from bluemira.geometry.error import GeometryError  # noqa: PLC0415
-
     is_closed = wire.IsClosed()
     work_wire = wire
     close_edge = None
@@ -2036,8 +2257,6 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
         of non-intersecting solids from a compound and may expose the partition
         face list directly.
     """
-    from bluemira.geometry.error import GeometryError  # noqa: PLC0415
-
     if not isinstance(shapes, list):
         raise TypeError(f"{shapes} is not a list.")
     if len(shapes) < 2:  # noqa: PLR2004
@@ -2134,8 +2353,6 @@ def _step_unit_mm():
     ``STEPControl_Writer`` picks up this setting at construction time, so the
     override must wrap the entire writer creation + transfer + write sequence.
     """
-    from OCP.Interface import Interface_Static  # noqa: PLC0415
-
     original = Interface_Static.CVal_s("write.step.unit")
     Interface_Static.SetCVal_s("write.step.unit", "MM")
     try:
@@ -2146,9 +2363,6 @@ def _step_unit_mm():
 
 def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
     """Save shapes as a STEP file (legacy single-file method)."""
-    from OCP.IFSelect import IFSelect_RetDone  # noqa: PLC0415
-    from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs  # noqa: PLC0415
-
     if not filename.lower().endswith((".stp", ".step")):
         filename = filename + ".stp"
 
@@ -2173,16 +2387,12 @@ def save_cad(
     **kwargs,
 ):
     """Save CAD shapes to a file."""
-    from OCP.IFSelect import IFSelect_RetDone  # noqa: PLC0415
-    from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs  # noqa: PLC0415
-    from pathlib import Path as _Path  # noqa: PLC0415
-
     if not isinstance(shapes, list):
         shapes = list(shapes)
 
     cad_format = CADFileType(cad_format) if not isinstance(cad_format, CADFileType) else cad_format
     ext = cad_format.ext
-    p = _Path(filename)
+    p = Path(filename)
     current_ext = p.suffix.lower().lstrip(".")
     valid_exts = {ext.lower()}
     if ext.lower() == "stp":
@@ -2209,11 +2419,7 @@ def import_cad(
     **kwargs,
 ) -> list[tuple[apiShape, str]]:
     """Import CAD from file. Returns list of (shape, label) tuples."""
-    from pathlib import Path as _Path  # noqa: PLC0415
-    from OCP.STEPControl import STEPControl_Reader  # noqa: PLC0415
-    from OCP.IFSelect import IFSelect_RetDone  # noqa: PLC0415
-
-    file = _Path(file)
+    file = Path(file)
     reader = STEPControl_Reader()
     status = reader.ReadFile(str(file))
     if status != IFSelect_RetDone:
@@ -2231,8 +2437,6 @@ def import_cad(
         solids = result_shape.Solids()
         if edges and not wires and not shells and not solids:
             try:
-                from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds  # noqa: PLC0415
-                from OCP.TopTools import TopTools_HSequenceOfShape  # noqa: PLC0415
                 edge_seq = TopTools_HSequenceOfShape()
                 for e in edges:
                     edge_seq.Append(e.wrapped)

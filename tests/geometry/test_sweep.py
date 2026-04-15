@@ -56,16 +56,6 @@ class TestSweep:
         assert sweep.is_valid()
         assert np.isclose(sweep.volume, 2 * np.pi)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: sweep_shape passes inner profiles as hollow-solid "
-            "walls, not as variable cross-sections at positions along the path. "
-            "A proper multi-section sweep requires BRepOffsetAPI_MakePipeShell "
-            "with profiles placed at specific path parameters."
-        ),
-        strict=True,
-    )
     def test_multiple_profiles(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10]])
         profile_1 = make_polygon(

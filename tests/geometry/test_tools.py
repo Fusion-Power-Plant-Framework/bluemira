@@ -401,7 +401,7 @@ class TestSolidFacePlaneIntersect:
     def test_polygon_cut(self):
         face = BluemiraFace(generic_wire)
         _slice_face = slice_shape(face, BluemiraPlane())
-        assert generic_wire.length == _slice_face[0].length
+        assert np.isclose(generic_wire.length, _slice_face[0].length)
 
         solid = extrude_shape(face, (1, 2, 3))
         _slice_solid = slice_shape(solid, BluemiraPlane(axis=[3, 2, 1]))
