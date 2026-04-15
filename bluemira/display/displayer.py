@@ -10,6 +10,7 @@ api for plotting using CAD backend
 
 from __future__ import annotations
 
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import lru_cache
@@ -20,8 +21,6 @@ from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.tools import Options
 from bluemira.utilities.tools import get_module
-
-import os
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -299,9 +298,9 @@ class ComponentDisplayer(BaseDisplayer):
         """
         import bluemira.base.components as bm_comp  # noqa: PLC0415
 
-        if not 'backend' in kwargs:
+        if "backend" not in kwargs:
             backend = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
-            kwargs['backend'] = backend
+            kwargs["backend"] = backend
         show_cad(
             *bm_comp.get_properties_from_components(
                 comps, ("shape", "display_cad_options", "name")

@@ -9,8 +9,6 @@ import os
 import numpy as np
 import pytest
 
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
-
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter
 from bluemira.builders.coil_supports import (
@@ -37,6 +35,8 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestITERGravitySupportBuilder:

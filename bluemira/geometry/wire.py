@@ -293,7 +293,8 @@ class BluemiraWire(BluemiraGeo):
         The ordered edges of the wire.
         """
         return tuple(
-            BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.ordered_edges(self.shape)
+            BluemiraWire(cadapi.wire_from_edges([o]))
+            for o in cadapi.ordered_edges(self.shape)
         )
 
     @property

@@ -21,8 +21,9 @@ from __future__ import annotations
 import contextlib
 import enum
 import math
-from collections.abc import Iterable
+from collections import UserList
 from dataclasses import dataclass
+from itertools import starmap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -97,6 +98,8 @@ from bluemira.geometry.error import GeometryError
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from bluemira.display.palettes import ColorPalette
 
 # ---------------------------------------------------------------------------
@@ -112,9 +115,28 @@ apiSolid = cq.Solid
 apiShape = cq.Shape
 apiCompound = cq.Compound
 
+# ---------------------------------------------------------------------------
+# Numerical tolerances used throughout the OCC / CadQuery interop layer.
+# ---------------------------------------------------------------------------
+#: Tolerance for collapsing tiny floating-point residuals to zero (matrix
+#: cleanup, axis component snapping).
+_GEOM_NEAR_ZERO_TOL = 1e-12
+#: Generic angular / cross-product tolerance for "is this rotation effectively
+#: zero" or "are two vectors parallel" checks.
+_ANGLE_PARALLEL_TOL = 1e-10
+#: Generic point-coincidence / parameter-equality tolerance.
+_POINT_COINCIDENCE_TOL = 1e-9
+#: Default tolerance for OCC algorithms that take a precision argument
+#: (``BRepClass3d``, classifiers, edge length filters, sewing).
+_OCC_DEFAULT_TOL = 1e-6
+#: Threshold for selecting an alternative reference axis when the natural
+#: choice is too close to the input direction.
+_AXIS_DOMINANCE_TOL = 0.9
+
 
 class _apiFaceMeta(type):
     """Metaclass so ``isinstance(x, apiFace)`` works for plain cq.Face objects."""
+
     def __instancecheck__(cls, instance):
         return isinstance(instance, cq.Face)
 
@@ -125,6 +147,7 @@ class apiFace(metaclass=_apiFaceMeta):
     Calling ``apiFace(wire)`` with a ``cq.Wire`` uses ``makeFromWires``
     instead of the raw OCC constructor that FreeCAD's ``Part.Face(wire)`` used.
     """
+
     def __new__(cls, obj=None):
         if isinstance(obj, cq.Wire):
             return cq.Face.makeFromWires(obj)
@@ -136,6 +159,7 @@ class apiFace(metaclass=_apiFaceMeta):
         if obj is None:
             return cq.Face.__new__(cq.Face)
         return cq.Face(obj)
+
 
 EPS = 1e-8
 
@@ -150,7 +174,7 @@ def _to_cq_vectors(points: list | np.ndarray) -> list[cq.Vector]:
 
 def _vector_to_numpy(v: cq.Vector) -> np.ndarray:
     arr = np.array([v.x, v.y, v.z])
-    arr[np.abs(arr) < 1e-12] = 0.0
+    arr[np.abs(arr) < _GEOM_NEAR_ZERO_TOL] = 0.0
     return arr
 
 
@@ -262,18 +286,19 @@ def revolve_shape(
             )
             outer_wire = shape.outerWire()
             inner_wires = shape.innerWires()
-            return cq.Solid.revolve(outer_wire, inner_wires, degree, axis_start, axis_end)
-        else:
-            # Wire / Edge: use OCC directly to get a Shell without end-caps.
-            n = np.asarray(direction, dtype=float)
-            n = n / np.linalg.norm(n)
-            axis = gp_Ax1(
-                gp_Pnt(*[float(x) for x in base]),
-                gp_Dir(*n.tolist()),
+            return cq.Solid.revolve(
+                outer_wire, inner_wires, degree, axis_start, axis_end
             )
-            maker = BRepPrimAPI_MakeRevol(shape.wrapped, axis, math.radians(degree))
-            maker.Build()
-            return cq.Shape.cast(maker.Shape())
+        # Wire / Edge: use OCC directly to get a Shell without end-caps.
+        n = np.asarray(direction, dtype=float)
+        n /= np.linalg.norm(n)
+        axis = gp_Ax1(
+            gp_Pnt(*[float(x) for x in base]),
+            gp_Dir(*n.tolist()),
+        )
+        maker = BRepPrimAPI_MakeRevol(shape.wrapped, axis, math.radians(degree))
+        maker.Build()
+        return cq.Shape.cast(maker.Shape())
     except FreeCADError:
         raise
     except Exception as exc:
@@ -402,7 +427,9 @@ def offset_wire(
     kind = _join_map[join.lower()]
 
     if join.lower() == "tangent":
-        bluemira_warn(f"Join type: {join} may be unstable. Consider 'arc' or 'intersect'.")
+        bluemira_warn(
+            f"Join type: {join} may be unstable. Consider 'arc' or 'intersect'."
+        )
 
     if wire.IsClosed() and open_wire:
         open_wire = False
@@ -410,7 +437,9 @@ def offset_wire(
     try:
         result_wires = wire.offset2D(thickness, kind=kind)
     except Exception as exc:
-        raise FreeCADError(f"CadQuery was unable to make an offset of wire: {exc}") from exc
+        raise FreeCADError(
+            f"CadQuery was unable to make an offset of wire: {exc}"
+        ) from exc
 
     if not result_wires:
         raise FreeCADError("offset_wire: no result produced")
@@ -480,7 +509,7 @@ def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
         return True
 
     total = wire.Length()
-    if total == 0.0:
+    if total < _GEOM_NEAR_ZERO_TOL:
         return True
 
     # Build cumulative arc lengths at each edge boundary using ordered edges.
@@ -533,15 +562,19 @@ def length(obj: apiShape) -> float:
     return sum(e.Length() for e in obj.Edges())
 
 
-def _occ_face_area(topoDS_face) -> float:
+def _occ_face_area(topods_face) -> float:
     """Compute the surface area of a TopoDS_Face via OCC mass properties."""
     props = GProp_GProps()
-    BRepGProp.SurfaceProperties_s(topoDS_face, props)
+    BRepGProp.SurfaceProperties_s(topods_face, props)
     return props.Mass()
 
 
 def _cq_area_prop(self) -> float:
-    """Area property for cq.Face (FreeCAD exposes this as a property, CadQuery as a method)."""
+    """Area property for cq.Face.
+
+    FreeCAD exposes this as a property, CadQuery as a method — this shim
+    bridges the two.
+    """
     inner = self.innerWires()
     if inner:
         outer_area = _occ_face_area(cq.Face.makeFromWires(self.outerWire()).wrapped)
@@ -561,7 +594,9 @@ def area(obj: apiShape) -> float:
         inner = obj.innerWires()
         if inner:
             outer_area = _occ_face_area(cq.Face.makeFromWires(obj.outerWire()).wrapped)
-            hole_area = sum(_occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
+            hole_area = sum(
+                _occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner
+            )
             return outer_area - hole_area
         return obj.Area  # property (monkey-patched) → float
     return obj.Area()  # method on Wire/Solid/Shell/Edge → float
@@ -628,7 +663,6 @@ def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8
 
 def orientation(obj: apiShape) -> str:
     """Return 'Forward' or 'Reversed' for the shape's OCC orientation."""
-
     return "Reversed" if obj.wrapped.Orientation() == TopAbs_REVERSED else "Forward"
 
 
@@ -644,7 +678,6 @@ def wires(obj: apiShape) -> list[apiWire]:
 
 def ordered_edges(obj: apiShape) -> list[apiEdge]:
     """Edges of the shape in wire-connectivity order (mirrors FreeCAD OrderedEdges)."""
-
     try:
         explorer = BRepTools_WireExplorer(obj.wrapped)
         result = []
@@ -653,8 +686,8 @@ def ordered_edges(obj: apiShape) -> list[apiEdge]:
             explorer.Next()
         if result:
             return result
-    except Exception:  # noqa: BLE001
-        pass
+    except Exception:  # noqa: BLE001, S110
+        pass  # fall back to storage-order edges below
     return obj.Edges()
 
 
@@ -722,7 +755,6 @@ def dist_to_shape(
     vectors:
         List of (point_on_shape1, point_on_shape2) numpy arrays.
     """
-
     dss = BRepExtrema_DistShapeShape(shape1.wrapped, shape2.wrapped)
     dss.Perform()
     dist = dss.Value()
@@ -785,7 +817,9 @@ def collect_verts_faces(
     return np.vstack(all_verts), np.vstack(all_faces)
 
 
-def collect_wires(solid: apiShape, deflection: float = 0.01, **_kwds) -> tuple[np.ndarray, np.ndarray]:
+def collect_wires(
+    solid: apiShape, deflection: float = 0.01, **_kwds
+) -> tuple[np.ndarray, np.ndarray]:
     """Extract discretised wire vertices and edge indices for polyscope display.
 
     Parameters
@@ -852,9 +886,11 @@ def show_cad(
     collect_verts_faces / collect_wires implementations.
     """
     # Temporarily patch the collect helpers polyscope uses so that it calls
-    # our CadQuery-aware versions instead of the FreeCAD ones.
-    import bluemira.codes._freecadapi as _orig_cadapi
-    from bluemira.codes import _polyscope as ps_backend
+    # our CadQuery-aware versions instead of the FreeCAD ones. Imports are
+    # local to avoid pulling in FreeCAD at module-load time when the user
+    # has selected the cadquery backend.
+    import bluemira.codes._freecadapi as _orig_cadapi  # noqa: PLC0415
+    from bluemira.codes import _polyscope as ps_backend  # noqa: PLC0415
 
     _orig_collect_verts = _orig_cadapi.collect_verts_faces
     _orig_collect_wires = _orig_cadapi.collect_wires
@@ -877,9 +913,10 @@ apiSurface = cq.Shape
 
 class _Vector:
     """Minimal FreeCAD Base.Vector stand-in."""
+
     def __init__(self, x=0.0, y=0.0, z=0.0):
         # Allow construction from a single iterable (e.g. numpy array, list, tuple)
-        if hasattr(x, '__iter__'):
+        if hasattr(x, "__iter__"):
             x, y, z = x
         self.x, self.y, self.z = float(x), float(y), float(z)
 
@@ -889,7 +926,7 @@ class _Vector:
     def __repr__(self):
         return f"_Vector({self.x}, {self.y}, {self.z})"
 
-    def __array__(self, dtype=None):
+    def __array__(self, dtype=None):  # noqa: PLW3201 - numpy interop hook
         arr = np.array([self.x, self.y, self.z])
         return arr if dtype is None else arr.astype(dtype)
 
@@ -901,7 +938,7 @@ class _Rotation:
 
 
 class _HomogeneousMatrix:
-    """Wraps a 4×4 numpy array; exposes `.A` as a flat list (FreeCAD Matrix.A API)."""
+    """Wraps a 4x4 numpy array; exposes `.A` as a flat list (FreeCAD Matrix.A API)."""
 
     def __init__(self, m: np.ndarray):
         self._m = m
@@ -919,18 +956,19 @@ class _CQPlacement:
     ``Placement.Rotation.Angle`` which returns radians).  The public
     API ``make_placement`` accepts degrees and converts on entry.
     """
+
     def __init__(self, base=(0, 0, 0), axis=(0, 0, 1), angle_rad=0.0):
         self.Base = _Vector(*base)
         # Normalize axis (mirrors FreeCAD which always stores a unit vector).
         _ax = np.asarray(axis, dtype=float)
         _norm = np.linalg.norm(_ax)
         if _norm > 0:
-            _ax = _ax / _norm
+            _ax /= _norm
         self.Rotation = _Rotation(tuple(_ax), angle_rad)
 
     @property
     def Matrix(self) -> _HomogeneousMatrix:
-        """4×4 homogeneous transformation matrix (FreeCAD Placement.Matrix API)."""
+        """4x4 homogeneous transformation matrix (FreeCAD Placement.Matrix API)."""
         R = self._rot_matrix()
         m = np.eye(4)
         m[:3, :3] = R
@@ -939,11 +977,14 @@ class _CQPlacement:
 
     def _rot_matrix(self) -> np.ndarray:
         """3x3 rotation matrix via Rodrigues' formula (angle in radians)."""
-        k = np.array([self.Rotation.Axis.x, self.Rotation.Axis.y, self.Rotation.Axis.z], dtype=float)
+        k = np.array(
+            [self.Rotation.Axis.x, self.Rotation.Axis.y, self.Rotation.Axis.z],
+            dtype=float,
+        )
         norm = np.linalg.norm(k)
-        if norm < 1e-12:
+        if norm < _GEOM_NEAR_ZERO_TOL:
             return np.eye(3)
-        k = k / norm
+        k /= norm
         theta = self.Rotation.Angle  # already in radians
         c, s = math.cos(theta), math.sin(theta)
         K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
@@ -951,9 +992,12 @@ class _CQPlacement:
 
     def multVec(self, vec) -> np.ndarray:
         """Apply rotation + translation to a vector (returns numpy array)."""
-        v = np.asarray(list(vec) if hasattr(vec, '__iter__') else [vec], dtype=float)
-        result = self._rot_matrix() @ v + np.array([self.Base.x, self.Base.y, self.Base.z])
-        return result
+        v = np.asarray(list(vec) if hasattr(vec, "__iter__") else [vec], dtype=float)
+        return self._rot_matrix() @ v + np.array([
+            self.Base.x,
+            self.Base.y,
+            self.Base.z,
+        ])
 
     def inverse(self):
         R = self._rot_matrix()
@@ -975,6 +1019,7 @@ class _CQPlane:
 
     Only `.Position` and `.Axis` are needed by BluemiraPlane.
     """
+
     def __init__(self, base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0)):
         self.Position = _Vector(*base)
         self.Axis = _Vector(*axis)
@@ -1004,7 +1049,7 @@ def make_placement(
 
 
 def make_placement_from_matrix(matrix) -> _CQPlacement:
-    """Extract a _CQPlacement from a 4×4 homogeneous transformation matrix.
+    """Extract a _CQPlacement from a 4x4 homogeneous transformation matrix.
 
     The rotation sub-matrix is normalised before axis-angle decomposition,
     so scaled matrices are handled correctly (as the test requires).
@@ -1024,7 +1069,7 @@ def make_placement_from_matrix(matrix) -> _CQPlacement:
     trace = np.clip(np.trace(R_norm), -1.0, 3.0)
     theta = math.acos((trace - 1.0) / 2.0)  # radians
 
-    if abs(theta) < 1e-10:
+    if abs(theta) < _ANGLE_PARALLEL_TOL:
         axis = np.array([0.0, 0.0, 1.0])
     else:
         axis = np.array([
@@ -1034,7 +1079,7 @@ def make_placement_from_matrix(matrix) -> _CQPlacement:
         ]) / (2.0 * math.sin(theta))
         n = np.linalg.norm(axis)
         if n > 0:
-            axis = axis / n
+            axis /= n
 
     return _CQPlacement(base=tuple(t), axis=tuple(axis), angle_rad=theta)
 
@@ -1051,7 +1096,7 @@ def make_plane(
     n = np.asarray(axis, dtype=float)
     norm = np.linalg.norm(n)
     if norm > 0:
-        n = n / norm
+        n /= norm
     return _CQPlane(base=tuple(base), axis=tuple(n))
 
 
@@ -1066,7 +1111,7 @@ def make_plane_from_3_points(
     p3 = np.asarray(point3, dtype=float)
     normal = np.cross(p2 - p1, p3 - p1)
     norm = np.linalg.norm(normal)
-    if norm < 1e-12:
+    if norm < _GEOM_NEAR_ZERO_TOL:
         raise ValueError("Three points are collinear — cannot define a plane.")
     normal /= norm
     return _CQPlane(base=tuple(p1), axis=tuple(normal))
@@ -1090,7 +1135,11 @@ def face_from_plane(plane: _CQPlane, width: float, height: float) -> cq.Face:
     n /= np.linalg.norm(n)
 
     # Build an orthonormal basis (u, v) in the plane
-    ref = np.array([0.0, 0.0, 1.0]) if abs(n[2]) < 0.9 else np.array([1.0, 0.0, 0.0])  # noqa: PLR2004
+    ref = (
+        np.array([0.0, 0.0, 1.0])
+        if abs(n[2]) < _AXIS_DOMINANCE_TOL
+        else np.array([1.0, 0.0, 0.0])
+    )
     u = np.cross(ref, n)
     u /= np.linalg.norm(u)
     v = np.cross(n, u)
@@ -1102,27 +1151,28 @@ def face_from_plane(plane: _CQPlane, width: float, height: float) -> cq.Face:
         base + hw * u + hh * v,
         base - hw * u + hh * v,
     ]
-    verts = [cq.Vector(*c) for c in corners]
-    edges = [
-        cq.Edge.makeLine(verts[i], verts[(i + 1) % 4])
-        for i in range(4)
-    ]
+    verts = list(starmap(cq.Vector, corners))
+    edges = [cq.Edge.makeLine(verts[i], verts[(i + 1) % 4]) for i in range(4)]
     wire = cq.Wire.assembleEdges(edges)
     return cq.Face.makeFromWires(wire)
 
 
 def _rotation_to_align(src: np.ndarray, dst: np.ndarray) -> tuple[np.ndarray, float]:
     """Return (axis, angle_rad) rotation that aligns unit vector *src* with *dst*."""
-    src = src / (np.linalg.norm(src) + 1e-16)
-    dst = dst / (np.linalg.norm(dst) + 1e-16)
+    src /= np.linalg.norm(src) + 1e-16
+    dst /= np.linalg.norm(dst) + 1e-16
     cross = np.cross(src, dst)
     cross_norm = np.linalg.norm(cross)
     dot = float(np.clip(np.dot(src, dst), -1.0, 1.0))
-    if cross_norm < 1e-12:
+    if cross_norm < _GEOM_NEAR_ZERO_TOL:
         if dot > 0:
             return np.array([0.0, 0.0, 1.0]), 0.0
         # 180° rotation — pick arbitrary perpendicular axis
-        perp = np.array([1.0, 0.0, 0.0]) if abs(src[0]) < 0.9 else np.array([0.0, 1.0, 0.0])  # noqa: PLR2004
+        perp = (
+            np.array([1.0, 0.0, 0.0])
+            if abs(src[0]) < _AXIS_DOMINANCE_TOL
+            else np.array([0.0, 1.0, 0.0])
+        )
         axis = np.cross(src, perp)
         axis /= np.linalg.norm(axis)
         return axis, math.pi
@@ -1145,8 +1195,10 @@ def placement_from_plane(plane: _CQPlane) -> _CQPlacement:
 
 def catch_caderr(new_error_type):
     """Passthrough decorator stub (no FreeCAD error translation needed)."""
+
     def decorator(func):
         return func
+
     return decorator
 
 
@@ -1176,7 +1228,9 @@ def bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, floa
     return bb.xmin, bb.ymin, bb.zmin, bb.xmax, bb.ymax, bb.zmax
 
 
-def optimal_bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, float]:
+def optimal_bounding_box(
+    obj: apiShape,
+) -> tuple[float, float, float, float, float, float]:
     """Alias for bounding_box (CadQuery does not expose a tighter variant)."""
     return bounding_box(obj)
 
@@ -1222,7 +1276,6 @@ def vertexes(obj: apiShape) -> np.ndarray:
 
 def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:
     """Normal vector of a face at parametric coordinates (u, v)."""
-
     surf = BRepAdaptor_Surface(face.wrapped)
     pnt = gp_Pnt()
     du = gp_Vec()
@@ -1240,7 +1293,6 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
 
 def make_bezier(points: list | np.ndarray) -> apiWire:
     """Create a Bezier curve wire from a list of poles."""
-
     pts = np.asarray(points)
     poles = TColgp_Array1OfPnt(1, len(pts))
     for i, p in enumerate(pts):
@@ -1261,7 +1313,6 @@ def make_bspline(
     check_rational: bool,
 ) -> apiWire:
     """Create a B-Spline wire from poles, multiplicities, and knots."""
-
     poles = np.asarray(poles)
     tcol_poles = TColgp_Array1OfPnt(1, len(poles))
     for i, p in enumerate(poles):
@@ -1286,9 +1337,7 @@ def make_bspline(
             tcol_poles, tcol_weights, tcol_knots, tcol_mults, degree, periodic
         )
     else:
-        curve = Geom_BSplineCurve(
-            tcol_poles, tcol_knots, tcol_mults, degree, periodic
-        )
+        curve = Geom_BSplineCurve(tcol_poles, tcol_knots, tcol_mults, degree, periodic)
 
     edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
     return cq.Wire.assembleEdges([edge])
@@ -1308,14 +1357,15 @@ def make_bsplinesurface(
     check_rational: bool = False,
 ):
     """Create a B-Spline surface from poles, multiplicities, and knots."""
-
     poles = np.asarray(poles)
     nrows, ncols = poles.shape[:2]
     tcol_poles = TColgp_Array2OfPnt(1, nrows, 1, ncols)
     for i in range(nrows):
         for j in range(ncols):
             p = poles[i, j]
-            tcol_poles.SetValue(i + 1, j + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2])))
+            tcol_poles.SetValue(
+                i + 1, j + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2]))
+            )
 
     def _real_array(arr):
         arr = np.asarray(arr, dtype=float)
@@ -1338,17 +1388,24 @@ def make_bsplinesurface(
             for j in range(ncols):
                 tcol_weights.SetValue(i + 1, j + 1, float(weights[i, j]))
         surface = Geom_BSplineSurface(
-            tcol_poles, tcol_weights,
-            _real_array(knot_vector_u), _real_array(knot_vector_v),
-            _int_array(mults_u), _int_array(mults_v),
-            degree_u, degree_v,
+            tcol_poles,
+            tcol_weights,
+            _real_array(knot_vector_u),
+            _real_array(knot_vector_v),
+            _int_array(mults_u),
+            _int_array(mults_v),
+            degree_u,
+            degree_v,
         )
     else:
         surface = Geom_BSplineSurface(
             tcol_poles,
-            _real_array(knot_vector_u), _real_array(knot_vector_v),
-            _int_array(mults_u), _int_array(mults_v),
-            degree_u, degree_v,
+            _real_array(knot_vector_u),
+            _real_array(knot_vector_v),
+            _int_array(mults_u),
+            _int_array(mults_v),
+            degree_u,
+            degree_v,
         )
     return surface
 
@@ -1361,14 +1418,13 @@ def _freecad_ax2(center, axis):
     plane perpendicular to *axis* (falls back to (0,1,0) when axis ∥ x).
     OCC's gp_Ax2(P, N) auto-picks a different X-axis, causing angle offsets.
     """
-
     n = np.asarray(axis, dtype=float)
-    n = n / np.linalg.norm(n)
+    n /= np.linalg.norm(n)
     ref = np.array([1.0, 0.0, 0.0])
-    if abs(np.dot(n, ref)) > 1.0 - 1e-9:
+    if abs(np.dot(n, ref)) > 1.0 - _POINT_COINCIDENCE_TOL:
         ref = np.array([0.0, 1.0, 0.0])
     x = ref - np.dot(ref, n) * n
-    x = x / np.linalg.norm(x)
+    x /= np.linalg.norm(x)
     return gp_Ax2(
         gp_Pnt(*[float(v) for v in center]),
         gp_Dir(*n.tolist()),
@@ -1384,7 +1440,6 @@ def make_circle(
     axis=(0.0, 0.0, 1.0),
 ) -> apiWire:
     """Create a circle or arc of circle with FreeCAD-compatible angle convention."""
-
     circ = gp_Circ(_freecad_ax2(center, axis), radius)
     if start_angle == end_angle:
         edge = cq.Edge(BRepBuilderAPI_MakeEdge(circ).Edge())
@@ -1396,7 +1451,7 @@ def make_circle(
     return cq.Wire.assembleEdges([edge])
 
 
-def make_circle_arc_3P(  # noqa: N802
+def make_circle_arc_3P(
     p1,
     p2,
     p3,
@@ -1425,14 +1480,21 @@ def make_ellipse(
     normal = major_axis_v.cross(minor_axis_v)
     center_v = cq.Vector(*center)
 
-    start_angle = start_angle % 360.0
-    end_angle = end_angle % 360.0
+    start_angle %= 360.0
+    end_angle %= 360.0
     if start_angle == end_angle:
-        edge = cq.Edge.makeEllipse(major_radius, minor_radius, center_v, normal, major_axis_v)
+        edge = cq.Edge.makeEllipse(
+            major_radius, minor_radius, center_v, normal, major_axis_v
+        )
     else:
         edge = cq.Edge.makeEllipse(
-            major_radius, minor_radius, center_v, normal, major_axis_v,
-            start_angle, end_angle,
+            major_radius,
+            minor_radius,
+            center_v,
+            normal,
+            major_axis_v,
+            start_angle,
+            end_angle,
         )
     return cq.Wire.assembleEdges([edge])
 
@@ -1444,7 +1506,6 @@ def make_ellipse(
 
 def make_shell(faces: list[apiFace]) -> apiShell:
     """Create a shell from a list of faces."""
-
     sewer = BRepBuilderAPI_Sewing()
     for f in faces:
         sewer.Add(f.wrapped)
@@ -1454,7 +1515,6 @@ def make_shell(faces: list[apiFace]) -> apiShell:
 
 def make_solid(shell: apiShell) -> apiSolid:
     """Create a solid from a shell."""
-
     builder = BRepBuilderAPI_MakeSolid(shell.wrapped)
     return cq.Solid(builder.Solid())
 
@@ -1482,12 +1542,11 @@ def close_wire(wire: apiWire) -> apiWire:
     p_end = edge_list[-1].endPoint()
     p_start = edge_list[0].startPoint()
     closing = cq.Edge.makeLine(p_end, p_start)
-    return cq.Wire.assembleEdges(edge_list + [closing])
+    return cq.Wire.assembleEdges([*edge_list, closing])
 
 
 def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndarray:
     """Sample a wire into an array of (N, 3) points."""
-
     total = w.Length()
     if dl is None:
         if ndiscr < 2:  # noqa: PLR2004
@@ -1519,7 +1578,7 @@ def discretise_by_edges(
     last_pts = None
     for e in w.Edges():
         e_wire = cq.Wire.assembleEdges([e])
-        if e_wire.Length() < 1e-6:
+        if e_wire.Length() < _OCC_DEFAULT_TOL:
             continue
         pts = list(discretise(e_wire, dl=dl))
         output += pts[:-1]
@@ -1543,9 +1602,7 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     return _vector_to_numpy(wire.positionAt(distance / total))
 
 
-def wire_parameter_at(
-    wire: apiWire, vertex, tolerance: float = 1e-8
-) -> float:
+def wire_parameter_at(wire: apiWire, vertex, tolerance: float = 1e-8) -> float:
     """Return the normalised arc-length parameter [0,1] for a point on the wire."""
     wire_1, _ = split_wire(wire, vertex, tolerance)
     if wire_1 is None:
@@ -1557,7 +1614,6 @@ def split_wire(
     wire: apiWire, vertex, tolerance: float
 ) -> tuple[apiWire | None, apiWire | None]:
     """Split a wire at the point nearest to *vertex*."""
-
     vertex = np.asarray(vertex, dtype=float)
     vertex_shape = cq.Vertex.makeVertex(*vertex)
 
@@ -1587,14 +1643,15 @@ def split_wire(
             curve = adaptor.Curve().Curve()
             pnt = gp_Pnt(float(vertex[0]), float(vertex[1]), float(vertex[2]))
             proj = GeomAPI_ProjectPointOnCurve(pnt, curve, t0, t1)
-            if proj.NbPoints() > 0:
-                t_split = proj.LowerDistanceParameter()
-            else:
-                t_split = t0
-            if t_split - t0 > 1e-10:
-                edges_1.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()))
-            if t1 - t_split > 1e-10:
-                edges_2.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()))
+            t_split = proj.LowerDistanceParameter() if proj.NbPoints() > 0 else t0
+            if t_split - t0 > _ANGLE_PARALLEL_TOL:
+                edges_1.append(
+                    cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge())
+                )
+            if t1 - t_split > _ANGLE_PARALLEL_TOL:
+                edges_2.append(
+                    cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge())
+                )
             found = True
         else:
             edges_1.append(e)
@@ -1645,7 +1702,7 @@ def rotate_shape(
 ) -> apiShape:
     """Rotate *shape* in-place and return it."""
     n = np.asarray(direction, dtype=float)
-    n = n / np.linalg.norm(n)
+    n /= np.linalg.norm(n)
     ax = gp_Ax1(gp_Pnt(*[float(x) for x in base]), gp_Dir(*n.tolist()))
     trsf = gp_Trsf()
     trsf.SetRotation(ax, math.radians(degree))
@@ -1658,7 +1715,6 @@ def mirror_shape(
     direction,
 ) -> apiShape:
     """Return a mirrored copy of the shape about the plane defined by base+direction."""
-
     pnt = gp_Pnt(*[float(x) for x in base])
     drc = gp_Dir(*[float(x) for x in direction])
     trsf = gp_Trsf()
@@ -1669,7 +1725,6 @@ def mirror_shape(
 
 def extrude_shape(shape: apiShape, vec) -> apiShape:
     """Extrude a shape along a vector."""
-
     v = gp_Vec(*[float(x) for x in vec])
     builder = BRepPrimAPI_MakePrism(shape.wrapped, v)
     return cq.Shape.cast(builder.Shape())
@@ -1688,10 +1743,8 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
         raise ValueError("At least 2 shapes required.")
     result = shapes[0].fuse(*shapes[1:])
     if remove_splitter:
-        try:
+        with contextlib.suppress(Exception):
             result = result.clean()
-        except Exception:  # noqa: BLE001
-            pass
 
     # For wire inputs: OCC fuse returns a compound; try to assemble a single wire.
     if all(isinstance(s, cq.Wire) for s in shapes):
@@ -1699,11 +1752,9 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
         if len(result_wires) == 1:
             return result_wires[0]
         if result_wires:
-            try:
+            with contextlib.suppress(Exception):
                 combined = cq.Wire.combine(result_wires)
                 return combined[0] if isinstance(combined, list) else combined
-            except Exception:  # noqa: BLE001
-                pass
 
     # Boolean fuse on coplanar/touching faces routinely yields a compound that
     # fails BRepCheck (overlapping face boundaries, vertex sharing not yet
@@ -1730,9 +1781,7 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     return result
 
 
-def boolean_cut(
-    shape: apiShape, tools: list, *, split: bool = True
-) -> list[apiShape]:
+def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
     """Boolean subtraction — return list of result shapes."""
     if not isinstance(tools, list):
         tools = [tools]
@@ -1796,9 +1845,7 @@ def _collect_subshapes(shape: apiShape, kind: type) -> list:
     return collected
 
 
-def boolean_fragments(
-    shapes: list, tolerance: float = 0.0
-) -> tuple[apiCompound, list]:
+def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound, list]:
     """Split shapes into their Boolean fragments (general fuse).
 
     Returns
@@ -1931,9 +1978,7 @@ def slice_shape(shape: apiShape, plane_origin, plane_axis):
                 # Inner wires represent holes in the cross-section face and
                 # are legitimate section contours in their own right
                 # (e.g. the inner rim of a donut cross-section).
-                section_wires.extend(
-                    _repair_closed_wire(w) for w in f.innerWires()
-                )
+                section_wires.extend(_repair_closed_wire(w) for w in f.innerWires())
             if section_wires:
                 return section_wires
 
@@ -1989,13 +2034,14 @@ def _force_close_wire(wire: apiWire) -> apiWire:
     except Exception:  # noqa: BLE001
         return wire
     gap = (end - start).Length
-    if gap < 1e-9:  # already coincident — just repair the Closed flag
+    if gap < _POINT_COINCIDENCE_TOL:
+        # already coincident — just repair the Closed flag
         return _repair_closed_wire(wire)
     bridge = cq.Edge.makeLine(end, start)
-    edges = wire.Edges() + [bridge]
+    edges = [*wire.Edges(), bridge]
     fixer = ShapeFix_Wire()
     fixer.Load(cq.Wire.assembleEdges(edges).wrapped)
-    fixer.SetPrecision(max(1e-6, gap * 0.5))
+    fixer.SetPrecision(max(_OCC_DEFAULT_TOL, gap * 0.5))
     fixer.SetMaxTolerance(max(1e-3, gap * 2.0))
     fixer.FixReorder()
     fixer.FixConnected()
@@ -2016,11 +2062,11 @@ def point_inside_shape(point, shape: apiShape) -> bool:
             return False
         u, v = projector.LowerDistanceParameters()
         classifier = BRepClass_FaceClassifier()
-        classifier.Perform(shape.wrapped, gp_Pnt2d(u, v), 1e-6)
+        classifier.Perform(shape.wrapped, gp_Pnt2d(u, v), _OCC_DEFAULT_TOL)
         return classifier.State() == TopAbs_IN
 
     classifier = BRepClass3d_SolidClassifier(shape.wrapped)
-    classifier.Perform(pnt, 1e-6)
+    classifier.Perform(pnt, _OCC_DEFAULT_TOL)
     return classifier.State() == TopAbs_IN
 
 
@@ -2029,7 +2075,6 @@ def serialise_shape(shape: apiWire) -> dict:
     edges = ordered_edges(shape)
     serialised = []
     for e in edges:
-
         adaptor = BRepAdaptor_Curve(e.wrapped)
         ctype = adaptor.GetType()
         if ctype == GeomAbs_Line:
@@ -2046,24 +2091,41 @@ def serialise_shape(shape: apiWire) -> dict:
             t1 = adaptor.LastParameter()
             start_angle = math.degrees(t0)
             end_angle = math.degrees(t1)
-            serialised.append({"ArcOfCircle": {
-                "Radius": radius, "Center": center,
-                "StartAngle": start_angle, "EndAngle": end_angle, "Axis": axis,
-            }})
+            serialised.append({
+                "ArcOfCircle": {
+                    "Radius": radius,
+                    "Center": center,
+                    "StartAngle": start_angle,
+                    "EndAngle": end_angle,
+                    "Axis": axis,
+                }
+            })
         elif ctype == GeomAbs_BSplineCurve:
             bsp = adaptor.BSpline()
-            poles = [[bsp.Pole(i).X(), bsp.Pole(i).Y(), bsp.Pole(i).Z()] for i in range(1, bsp.NbPoles() + 1)]
+            poles = [
+                [bsp.Pole(i).X(), bsp.Pole(i).Y(), bsp.Pole(i).Z()]
+                for i in range(1, bsp.NbPoles() + 1)
+            ]
             knots = [bsp.Knot(i) for i in range(1, bsp.NbKnots() + 1)]
             mults = [bsp.Multiplicity(i) for i in range(1, bsp.NbKnots() + 1)]
             weights = [bsp.Weight(i) for i in range(1, bsp.NbPoles() + 1)]
-            serialised.append({"BSplineCurve": {
-                "Poles": poles, "Knots": knots, "Mults": mults,
-                "Degree": bsp.Degree(), "Weights": weights,
-                "isPeriodic": bsp.IsPeriodic(), "checkRational": bsp.IsRational(),
-            }})
+            serialised.append({
+                "BSplineCurve": {
+                    "Poles": poles,
+                    "Knots": knots,
+                    "Mults": mults,
+                    "Degree": bsp.Degree(),
+                    "Weights": weights,
+                    "isPeriodic": bsp.IsPeriodic(),
+                    "checkRational": bsp.IsRational(),
+                }
+            })
         elif ctype == GeomAbs_BezierCurve:
             bez = adaptor.Bezier()
-            poles = [[bez.Pole(i).X(), bez.Pole(i).Y(), bez.Pole(i).Z()] for i in range(1, bez.NbPoles() + 1)]
+            poles = [
+                [bez.Pole(i).X(), bez.Pole(i).Y(), bez.Pole(i).Z()]
+                for i in range(1, bez.NbPoles() + 1)
+            ]
             serialised.append({"BezierCurve": {"Poles": poles}})
         elif ctype == GeomAbs_Ellipse:
             ell = adaptor.Ellipse()
@@ -2079,19 +2141,25 @@ def serialise_shape(shape: apiWire) -> dict:
             # OCC stores ellipses with the full Axis, we derive focus from semi-axes
             a, b = ell.MajorRadius(), ell.MinorRadius()
             c = math.sqrt(abs(a**2 - b**2))
-            f1 = [center[0] + c * major_ax[0], center[1] + c * major_ax[1], center[2] + c * major_ax[2]]
-            serialised.append({"ArcOfEllipse": {
-                "Center": center,
-                "MajorRadius": a,
-                "MinorRadius": b,
-                "MajorAxis": major_ax,
-                "MinorAxis": minor_ax,
-                "StartAngle": math.degrees(t0),
-                "EndAngle": math.degrees(t1),
-                "Focus1": f1,
-                "StartPoint": [sp.x, sp.y, sp.z],
-                "EndPoint": [ep.x, ep.y, ep.z],
-            }})
+            f1 = [
+                center[0] + c * major_ax[0],
+                center[1] + c * major_ax[1],
+                center[2] + c * major_ax[2],
+            ]
+            serialised.append({
+                "ArcOfEllipse": {
+                    "Center": center,
+                    "MajorRadius": a,
+                    "MinorRadius": b,
+                    "MajorAxis": major_ax,
+                    "MinorAxis": minor_ax,
+                    "StartAngle": math.degrees(t0),
+                    "EndAngle": math.degrees(t1),
+                    "Focus1": f1,
+                    "StartPoint": [sp.x, sp.y, sp.z],
+                    "EndPoint": [ep.x, ep.y, ep.z],
+                }
+            })
         else:
             raise NotImplementedError(f"serialise_shape: unsupported curve type {ctype}")
     return {"Wire": serialised}
@@ -2147,7 +2215,7 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
         start_pt = _vector_to_numpy(wire_edges[0].startPoint())
         end_pt = _vector_to_numpy(wire_edges[-1].endPoint())
         close_edge = cq.Edge.makeLine(cq.Vector(*end_pt), cq.Vector(*start_pt))
-        work_wire = cq.Wire.assembleEdges(wire_edges + [close_edge])
+        work_wire = cq.Wire.assembleEdges([*wire_edges, close_edge])
 
     face = cq.Face.makeFromWires(work_wire)
     builder = BRepFilletAPI_MakeFillet2d(face.wrapped)
@@ -2171,11 +2239,11 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
             # Skip tangent (collinear) edge pairs — AddChamfer segfaults on them
             t1 = _vector_to_numpy(cq.Edge(e1_occ).tangentAt(1.0))
             t2 = _vector_to_numpy(cq.Edge(e2_occ).tangentAt(0.0))
-            if np.linalg.norm(np.cross(t1, t2)) < 1e-6:
+            if np.linalg.norm(np.cross(t1, t2)) < _OCC_DEFAULT_TOL:
                 continue
             builder.AddChamfer(e1_occ, e2_occ, radius, radius)
     else:
-        # Build the set of endpoint-vertex keys to skip for open wires (endpoints can't be filleted)
+        # Skip endpoint vertices for open wires (they can't be filleted).
         skip_keys: set[tuple] = set()
         if not is_closed:
             sp = _vector_to_numpy(wire_edges[0].startPoint())
@@ -2262,15 +2330,14 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
-    # TODO: replace plain fuse with a proper connect that removes internal walls
-    # (see docstring above for the required OCC implementation).
+    # TODO @bluemira: replace plain fuse with a proper connect that removes
+    # internal walls (see docstring above for the required OCC implementation).
+    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues
     result = shapes[0].fuse(*shapes[1:])
     if result is None or not is_valid(result):
         raise GeometryError("join_connect: boolean union failed")
-    try:
+    with contextlib.suppress(Exception):
         result = result.clean()
-    except Exception:  # noqa: BLE001
-        pass
     return result
 
 
@@ -2364,7 +2431,7 @@ def _step_unit_mm():
 def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
     """Save shapes as a STEP file (legacy single-file method)."""
     if not filename.lower().endswith((".stp", ".step")):
-        filename = filename + ".stp"
+        filename += ".stp"
 
     if not isinstance(shapes, list):
         shapes = [shapes]
@@ -2390,7 +2457,11 @@ def save_cad(
     if not isinstance(shapes, list):
         shapes = list(shapes)
 
-    cad_format = CADFileType(cad_format) if not isinstance(cad_format, CADFileType) else cad_format
+    cad_format = (
+        CADFileType(cad_format)
+        if not isinstance(cad_format, CADFileType)
+        else cad_format
+    )
     ext = cad_format.ext
     p = Path(filename)
     current_ext = p.suffix.lower().lstrip(".")
@@ -2400,7 +2471,7 @@ def save_cad(
     if current_ext not in valid_exts:
         filename = str(p) + f".{ext}"
 
-    if cad_format in (CADFileType.STEP,):
+    if cad_format == CADFileType.STEP:
         with _step_unit_mm():
             writer = STEPControl_Writer()
             for s in shapes:
@@ -2444,7 +2515,10 @@ def import_cad(
                 ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(
                     edge_seq, 1e-6, False, result_wires
                 )
-                assembled = [cq.Shape.cast(result_wires.Value(i)) for i in range(1, result_wires.Size() + 1)]
+                assembled = [
+                    cq.Shape.cast(result_wires.Value(i))
+                    for i in range(1, result_wires.Size() + 1)
+                ]
                 if len(assembled) == 1:
                     result_shape = assembled[0]
                 elif assembled:
@@ -2454,8 +2528,8 @@ def import_cad(
                     for w in assembled:
                         b.Add(comp, w.wrapped)
                     result_shape = cq.Shape.cast(comp)
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception:  # noqa: BLE001, S110
+                pass  # fall through with the original compound
 
     # CadQuery/OCC uses raw values without mm/m conversion — no scaling needed here.
     # (FreeCAD backend needs scaling because FreeCAD works in mm internally.)
@@ -2478,6 +2552,7 @@ def __getattr__(name: str):
 # .Faces, .Edges, .Shells, .Solids on raw CadQuery shapes to work correctly.
 # ---------------------------------------------------------------------------
 
+
 def _cq_orientation(self) -> str:
     """Return 'Forward' or 'Reversed' mirroring FreeCAD's Orientation property."""
     return "Reversed" if self.wrapped.Orientation() == TopAbs_REVERSED else "Forward"
@@ -2491,7 +2566,9 @@ def _cq_reverse(self) -> None:
 
 
 for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
-    if not hasattr(_cls, "Orientation") or not isinstance(_cls.__dict__.get("Orientation"), property):
+    if not hasattr(_cls, "Orientation") or not isinstance(
+        _cls.__dict__.get("Orientation"), property
+    ):
         _cls.Orientation = property(_cq_orientation)
     if not hasattr(_cls, "reverse"):
         _cls.reverse = _cq_reverse
@@ -2501,16 +2578,23 @@ if not isinstance(cq.Face.__dict__.get("Area"), property):
     cq.Face.Area = property(_cq_area_prop)
 
 
-class _CallableList(list):
-    """A list that is also callable (returns itself), so obj.Wires and obj.Wires() both work."""
+class _CallableList(UserList):
+    """A list that is also callable (returns itself).
+
+    Lets ``obj.Wires`` and ``obj.Wires()`` both yield the same value, which the
+    FreeCAD-flavoured callsites in bluemira rely on.
+    """
+
     def __call__(self):
         return list(self)
 
 
 def _make_shape_collection_prop(method_name: str, orig_method):
     """Return a property that wraps the original method in a _CallableList."""
+
     def _prop(self):
         return _CallableList(orig_method(self))
+
     _prop.__name__ = method_name
     return property(_prop)
 

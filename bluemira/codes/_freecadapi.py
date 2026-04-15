@@ -53,18 +53,18 @@ if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
 
 
-apiVertex = Part.Vertex  # noqa: N816
-apiVector = Base.Vector  # noqa: N816
-apiEdge = Part.Edge  # noqa: N816
-apiWire = Part.Wire  # noqa: N816
-apiFace = Part.Face  # noqa: N816
-apiShell = Part.Shell  # noqa: N816
-apiSolid = Part.Solid  # noqa: N816
-apiShape = Part.Shape  # noqa: N816
-apiSurface = Part.BSplineSurface  # noqa:  N816
-apiPlacement = Base.Placement  # noqa:  N816
-apiPlane = Part.Plane  # noqa: N816
-apiCompound = Part.Compound  # noqa: N816
+apiVertex = Part.Vertex
+apiVector = Base.Vector
+apiEdge = Part.Edge
+apiWire = Part.Wire
+apiFace = Part.Face
+apiShell = Part.Shell
+apiSolid = Part.Solid
+apiShape = Part.Shape
+apiSurface = Part.BSplineSurface
+apiPlacement = Base.Placement
+apiPlane = Part.Plane
+apiCompound = Part.Compound
 
 WORKING_PRECISION = 1e-5
 MIN_PRECISION = 1e-5
@@ -923,6 +923,11 @@ def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
 
     *param* is in [0, 1] where 0 = start and 1 = end.  Internally mapped to the
     FreeCAD/OCC raw parameter range.
+
+    Returns
+    -------
+    :
+        The tangent vector at *param* as a numpy array.
     """
     raw = edge.FirstParameter + param * (edge.LastParameter - edge.FirstParameter)
     v = edge.tangentAt(raw)
@@ -989,19 +994,37 @@ def solids(obj: apiShape) -> list[apiSolid]:
 
 
 def reverse_shape(shape: apiShape) -> apiShape:
-    """Return a copy of the shape with reversed orientation."""
+    """Return a copy of the shape with reversed orientation.
+
+    Returns
+    -------
+    :
+        The reversed-orientation copy of *shape*.
+    """
     copy = shape.copy()
     copy.reverse()
     return copy
 
 
 def wire_from_edges(edge_list: list) -> apiWire:
-    """Create a wire from a list of edges."""
+    """Create a wire from a list of edges.
+
+    Returns
+    -------
+    :
+        The assembled wire.
+    """
     return Part.Wire(edge_list)
 
 
 def wire_from_wires(wire_list: list) -> apiWire:
-    """Create a single wire from a list of wires."""
+    """Create a single wire from a list of wires.
+
+    Returns
+    -------
+    :
+        The assembled wire (or *wire_list*[0] if it contained a single wire).
+    """
     if len(wire_list) == 1:
         return wire_list[0]
     # Part.Wire needs edges, not wire objects, when combining multiple wires.

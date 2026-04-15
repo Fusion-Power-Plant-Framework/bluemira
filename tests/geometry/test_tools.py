@@ -18,10 +18,6 @@ import pytest
 from numpy.linalg import norm
 
 import bluemira.codes._geometryapi as cadapi
-
-# True when the test session uses the CadQuery geometry backend.
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
-
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import get_log_level, set_log_level
@@ -67,6 +63,9 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
+
+# True when the test session uses the CadQuery geometry backend.
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 generic_wire = make_polygon([
     [0.0, -1.0, 0.0],

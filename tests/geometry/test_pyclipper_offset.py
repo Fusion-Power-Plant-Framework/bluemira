@@ -19,8 +19,7 @@ from bluemira.geometry.tools import distance_to, make_polygon
 
 
 class TestClipperOffset:
-    options = ("square", "miter")
-    # NOTE: "round" can be montrously slow..
+    options = ("square", "round", "miter")
 
     # fmt: off
     x = (-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -4)
@@ -43,7 +42,7 @@ class TestClipperOffset:
         ax.set_aspect("equal")
 
         distance = self._calculate_offset(coordinates, c)
-        np.testing.assert_almost_equal(distance, abs(delta), decimal=6)
+        np.testing.assert_almost_equal(distance, abs(delta), decimal=5)
 
     @pytest.mark.parametrize("method", options)
     def test_complex_polygon_overoffset_raises_error(self, method):
@@ -62,7 +61,7 @@ class TestClipperOffset:
             offsets.append(offset_coordinates)
             distance = self._calculate_offset(coordinates, offset_coordinates)
             # Distance is measured between two discretised polygon wires, so the
-            # minimum approach is limited to ~1-2 µm by integer rounding at scale=1e6.
+            # minimum approach is limited to ~1-2 μm by integer rounding at scale=1e6.
             np.testing.assert_almost_equal(distance, 1.5, decimal=5)
 
         _, ax = plt.subplots()

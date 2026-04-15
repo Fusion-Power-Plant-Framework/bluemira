@@ -36,10 +36,10 @@ _BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").lower()
 
 if _BACKEND == "cadquery":
     import bluemira.codes._cadqueryapi as _impl
-    from bluemira.codes._cadqueryapi import *  # noqa: F401, F403
+    from bluemira.codes._cadqueryapi import *  # noqa: F403
 elif _BACKEND == "freecad":
     import bluemira.codes._freecadapi as _impl  # type: ignore[no-redef]
-    from bluemira.codes._freecadapi import *  # noqa: F401, F403
+    from bluemira.codes._freecadapi import *  # noqa: F403
 else:
     msg = (
         f"Unknown BLUEMIRA_GEOMETRY_BACKEND value: {_BACKEND!r}. "
@@ -50,5 +50,5 @@ else:
 
 # Delegate private-name attribute access (e.g. cadapi._wire_is_planar) to the
 # backend module.  Python calls __getattr__ only when normal lookup fails.
-def __getattr__(name: str):  # noqa: ANN001, ANN202
+def __getattr__(name: str):
     return getattr(_impl, name)

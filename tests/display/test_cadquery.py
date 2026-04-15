@@ -27,7 +27,6 @@ pytestmark = pytest.mark.skipif(_skip_cadquery(), reason="cadquery not installed
 
 import bluemira.codes._cadqueryapi as cqapi  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -53,6 +52,7 @@ CIRCLE_PTS = np.column_stack([
 # make_polygon
 # ---------------------------------------------------------------------------
 
+
 class TestMakePolygon:
     def test_returns_wire(self):
         wire = cqapi.make_polygon(SQUARE)
@@ -76,6 +76,7 @@ class TestMakePolygon:
 # interpolate_bspline
 # ---------------------------------------------------------------------------
 
+
 class TestInterpolateBspline:
     def test_returns_wire(self):
         wire = cqapi.interpolate_bspline(CIRCLE_PTS, closed=True)
@@ -98,6 +99,7 @@ class TestInterpolateBspline:
 
     def test_too_few_points_raises(self):
         from bluemira.codes.error import InvalidCADInputsError
+
         with pytest.raises(InvalidCADInputsError):
             cqapi.interpolate_bspline([[0, 0, 0]])
 
@@ -110,6 +112,7 @@ class TestInterpolateBspline:
 # ---------------------------------------------------------------------------
 # make_face
 # ---------------------------------------------------------------------------
+
 
 class TestMakeFace:
     def test_returns_face(self):
@@ -131,6 +134,7 @@ class TestMakeFace:
 # ---------------------------------------------------------------------------
 # revolve_shape
 # ---------------------------------------------------------------------------
+
 
 class TestRevolveShape:
     def _make_face(self):
@@ -171,6 +175,7 @@ class TestRevolveShape:
 # offset_wire
 # ---------------------------------------------------------------------------
 
+
 class TestOffsetWire:
     def test_returns_wire(self):
         wire = cqapi.make_polygon(SQUARE)
@@ -194,6 +199,7 @@ class TestOffsetWire:
 
     def test_straight_wire_raises(self):
         from bluemira.codes.error import InvalidCADInputsError
+
         line = cqapi.make_polygon([[0, 0, 0], [1, 0, 0]])
         with pytest.raises(InvalidCADInputsError):
             cqapi.offset_wire(line, 0.1)
@@ -208,6 +214,7 @@ class TestOffsetWire:
 # ---------------------------------------------------------------------------
 # dist_to_shape
 # ---------------------------------------------------------------------------
+
 
 class TestDistToShape:
     def test_dist_between_parallel_wires(self):
@@ -227,6 +234,7 @@ class TestDistToShape:
 # ---------------------------------------------------------------------------
 # Shape property queries
 # ---------------------------------------------------------------------------
+
 
 class TestShapeProperties:
     def test_length_of_wire(self):
@@ -262,6 +270,7 @@ class TestShapeProperties:
 # ---------------------------------------------------------------------------
 # Tessellation
 # ---------------------------------------------------------------------------
+
 
 class TestTessellate:
     def _make_solid(self):
@@ -299,6 +308,7 @@ class TestTessellate:
 # ---------------------------------------------------------------------------
 # Wire validation helpers
 # ---------------------------------------------------------------------------
+
 
 class TestWireValidation:
     def test_straight_wire_is_straight(self):

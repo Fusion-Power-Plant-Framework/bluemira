@@ -10,8 +10,6 @@ import numpy as np
 import pytest
 
 from bluemira.codes.error import FreeCADError
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 from bluemira.display import show_cad
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -24,6 +22,8 @@ from bluemira.geometry.tools import (
     revolve_shape,
     sweep_shape,
 )
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestSweep:

@@ -57,15 +57,15 @@ class OffsetClipperMethodType(Enum):
             ) from None
 
 
-_CLIPPER_SCALE = int(1e6)
+_CLIPPER_SCALE = 1_000_000
 """
 Scale factor for pyclipper integer coordinates.
 
-pyclipper's default (2^31 ≈ 2.1e9) is chosen for maximum precision in boolean
+pyclipper's default (2^31 ~ 2.1e9) is chosen for maximum precision in boolean
 operations, but for offset operations it causes the ``JT_ROUND`` arc-segment count
-to explode (N ≈ 250 000 per corner vs. ≈ 5 000 here).  1e6 still gives sub-micrometre
-precision while keeping arc counts tractable (~5 000 per corner with default
-``ArcTolerance=0.25`` clipper units = 250 nm physical).
+to explode (N appx. 250 000 per corner vs. appx. 5 000 here).  1e6 still gives
+sub-micrometre precision while keeping arc counts tractable (~5 000 per corner with
+default ``ArcTolerance=0.25`` clipper units = 250 nm physical).
 """
 
 
@@ -243,7 +243,6 @@ class RoundOffset(OffsetOperationManager):
     name = "Round Offset"
     method = JT_ROUND
     open_method = ET_OPENROUND
-
 
 
 class SquareOffset(OffsetOperationManager):

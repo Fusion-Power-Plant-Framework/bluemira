@@ -14,6 +14,7 @@ import numpy as np
 import pytest
 
 import bluemira.codes._geometryapi as _cadapi
+
 _wire_edges_tangent = _cadapi._wire_edges_tangent
 
 _CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"

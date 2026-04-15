@@ -319,7 +319,11 @@ ignore-names = [
     "*_F",
     "*eV*",
     "I_not_dI",
-    "*Li*"
+    "*Li*",
+    # api* types in _cadqueryapi.py mirror FreeCAD's Part.* naming so
+    # isinstance()/type-alias callsites stay backend-agnostic
+    "api*",
+    "_apiFaceMeta",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -327,6 +331,22 @@ ignore-names = [
 "bluemira/__init__.py" = ["TID252"]
 "bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/model_mapping.py" = ["PLR6301", "DOC201"]
+# _cadqueryapi.py is an experimental backend mirroring _freecadapi's
+# surface; several patterns are either inherited from FreeCAD's API
+# (CapWords-violating names, 1-line docstrings without Returns/Raises)
+# or live in adapter shims where args are intentionally unused to match
+# the other backend's signature.
+"bluemira/codes/_cadqueryapi.py" = [
+    "DOC201",
+    "DOC501",
+    "ARG001",
+    "ARG002",
+    "N802",
+    "N806",
+    # OCC C++ APIs (BRepBuilderAPI_*, BRepAlgoAPI_*, ShapeAnalysis_*) take
+    # positional booleans by signature; we can't refactor them to keyword args.
+    "FBT003",
+]
 "bluemira/geometry/parameterisations.py" = ["E731"]
 "bluemira/codes/plasmod/api/{_inputs,_outputs}.py" = ["N815"]
 "data/*" = ["INP001"]
