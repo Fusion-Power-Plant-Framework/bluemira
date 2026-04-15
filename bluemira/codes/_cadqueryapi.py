@@ -62,6 +62,7 @@ from OCP.Interface import Interface_Static
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from OCP.TColStd import (
     TColStd_Array1OfInteger,
     TColStd_Array1OfReal,
@@ -725,14 +726,26 @@ def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
 
 
 def arrange_edges(old_wire: apiWire, new_wire: apiWire) -> apiWire:
-    """
-    Reorder edges of *new_wire* to match the orientation of *old_wire*.
+    """Flip edges of *new_wire* whose orientation disagrees with *old_wire*.
 
-    CadQuery's Wire.assembleEdges() already sorts edges by connectivity, so
-    this is mostly a pass-through. Orientation flipping is a TODO.
+    Mirrors FreeCAD's helper of the same name: sort both wires' edges into
+    connectivity order, then walk paired edges and reverse any new-wire edge
+    whose TopoDS orientation flag differs from the old-wire edge at the same
+    position. Used to stabilise offset results whose edges come back with
+    inconsistent orientation.
     """
+    old_edges = ordered_edges(old_wire)
+    new_edges = ordered_edges(new_wire)
+    adjusted: list[apiEdge] = []
+    for i, new_edge in enumerate(new_edges):
+        if i < len(old_edges) and (
+            new_edge.wrapped.Orientation() != old_edges[i].wrapped.Orientation()
+        ):
+            adjusted.append(reverse_shape(new_edge))
+        else:
+            adjusted.append(new_edge)
     try:
-        return cq.Wire.assembleEdges(new_wire.Edges())
+        return cq.Wire.assembleEdges(adjusted)
     except Exception:  # noqa: BLE001
         return new_wire
 
@@ -1742,6 +1755,25 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes required.")
     result = shapes[0].fuse(*shapes[1:])
+
+    if all(isinstance(s, cq.Face) for s in shapes) and isinstance(result, cq.Compound):
+        # OCC's fuse on faces that merely touch at an edge produces a Compound
+        # of disconnected faces — UnifySameDomain can't merge them because they
+        # don't share any TopoDS edge. Sew the inputs first to establish edge
+        # sharing, then unify to collapse coplanar neighbours into one face.
+        sewing = BRepBuilderAPI_Sewing(1e-6)
+        for s in shapes:
+            sewing.Add(s.wrapped)
+        sewing.Perform()
+        sewn = cq.Shape.cast(sewing.SewedShape())
+        unified = _unify_same_domain(sewn)
+        if isinstance(unified, cq.Face):
+            result = unified
+        else:
+            unified_faces = _collect_subshapes(unified, cq.Face)
+            if len(unified_faces) == 1:
+                result = unified_faces[0]
+
     if remove_splitter:
         with contextlib.suppress(Exception):
             result = result.clean()
@@ -1768,6 +1800,9 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     # unwraps in this case; mirror that here so callers that feed in Faces get
     # a Face back (not a Compound containing one Face), otherwise downstream
     # ``.boundary[0]`` access misinterprets the wrapping.
+    if isinstance(result, cq.Face):
+        return result
+
     if isinstance(result, cq.Compound):
         if all(isinstance(s, cq.Face) for s in shapes):
             faces = _collect_subshapes(result, cq.Face)
@@ -1779,6 +1814,65 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
                 return solids[0]
 
     return result
+
+
+def _unify_same_domain(shape: apiShape) -> apiShape:
+    """Merge coplanar connected faces and collinear edges via OCC UnifySameDomain."""
+    try:
+        unifier = ShapeUpgrade_UnifySameDomain(shape.wrapped, True, True, True)
+        unifier.Build()
+        out = cq.Shape.cast(unifier.Shape())
+    except Exception as exc:  # noqa: BLE001
+        bluemira_warn(f"UnifySameDomain failed: {exc}")
+        return shape
+    # If unify still leaves a compound of coplanar faces, sew them and rebuild
+    # the face from the outer free boundary wires.
+    if isinstance(out, cq.Compound):
+        faces = _collect_subshapes(out, cq.Face)
+        if len(faces) > 1 and _faces_are_coplanar(faces):
+            merged = _face_from_faces(faces)
+            if merged is not None:
+                return merged
+    return out
+
+
+def _faces_are_coplanar(faces: list[apiFace], tol: float = 1e-6) -> bool:
+    """True if all faces lie in the same plane."""
+    try:
+        normals = [f.normalAt() for f in faces]
+        centers = [f.Center() for f in faces]
+        n0 = normals[0]
+        c0 = centers[0]
+        for n, c in zip(normals[1:], centers[1:], strict=False):
+            if abs(abs(n0.dot(n)) - 1.0) > tol:
+                return False
+            if abs(n0.dot(c - c0)) > tol:
+                return False
+    except Exception:  # noqa: BLE001
+        return False
+    return True
+
+
+def _face_from_faces(faces: list[apiFace]) -> apiFace | None:
+    """Build a single face from coplanar faces by extracting their outer boundary."""
+    try:
+        sewing = BRepBuilderAPI_Sewing(1e-6)
+        for f in faces:
+            sewing.Add(f.wrapped)
+        sewing.Perform()
+        sewn = sewing.SewedShape()
+        # Collect free boundary wires (the outer perimeter after merging).
+        analyser = ShapeAnalysis_FreeBounds(sewn)
+        closed_seq = analyser.GetClosedWires()
+        if closed_seq.Length() < 1:
+            return None
+        # Pick the longest closed wire as outer, rest are holes.
+        wires = [cq.Wire(closed_seq.Value(i)) for i in range(1, closed_seq.Length() + 1)]
+        wires.sort(key=lambda w: sum(e.Length() for e in w.Edges()), reverse=True)
+        outer, holes = wires[0], wires[1:]
+        return cq.Face.makeFromWires(outer, holes)
+    except Exception:  # noqa: BLE001
+        return None
 
 
 def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
