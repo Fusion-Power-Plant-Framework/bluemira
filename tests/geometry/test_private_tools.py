@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
-
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
@@ -32,6 +30,7 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, extrude_shape, revolve_shape
 
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
 

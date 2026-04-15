@@ -14,6 +14,8 @@ without involving FreeCAD, the geometry wrapper classes, or any GUI.
 import numpy as np
 import pytest
 
+from bluemira.codes.error import InvalidCADInputsError
+
 
 def _skip_cadquery():
     try:
@@ -64,7 +66,7 @@ class TestMakePolygon:
 
     def test_length_correct(self):
         wire = cqapi.make_polygon(SQUARE)
-        assert pytest.approx(cqapi.length(wire), rel=1e-4) == 4.0
+        assert pytest.approx(cqapi.length(wire), rel=1e-4) == 4
 
     def test_open_polygon(self):
         pts = [[0, 0, 0], [1, 0, 0], [1, 1, 0]]
@@ -98,13 +100,11 @@ class TestInterpolateBspline:
         assert pytest.approx(cqapi.length(wire), rel=1e-2) == expected
 
     def test_too_few_points_raises(self):
-        from bluemira.codes.error import InvalidCADInputsError
-
         with pytest.raises(InvalidCADInputsError):
             cqapi.interpolate_bspline([[0, 0, 0]])
 
-    def test_equal_endpoints_forces_closed(self, recwarn):
-        pts = list(CIRCLE_PTS) + [CIRCLE_PTS[0].tolist()]
+    def test_equal_endpoints_forces_closed(self):
+        pts = [*list(CIRCLE_PTS), CIRCLE_PTS[0].tolist()]
         wire = cqapi.interpolate_bspline(pts, closed=False)
         assert cqapi.is_closed(wire)
 
@@ -128,7 +128,7 @@ class TestMakeFace:
     def test_face_area(self):
         wire = cqapi.make_polygon(SQUARE)
         face = cqapi.make_face(wire)
-        assert pytest.approx(cqapi.area(face), rel=1e-4) == 1.0
+        assert pytest.approx(cqapi.area(face), rel=1e-4) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -198,7 +198,6 @@ class TestOffsetWire:
         assert isinstance(result, cqapi.apiWire)
 
     def test_straight_wire_raises(self):
-        from bluemira.codes.error import InvalidCADInputsError
 
         line = cqapi.make_polygon([[0, 0, 0], [1, 0, 0]])
         with pytest.raises(InvalidCADInputsError):
@@ -221,14 +220,14 @@ class TestDistToShape:
         wire1 = cqapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 0, 0]])
         wire2 = cqapi.make_polygon([[0, 1, 0], [1, 1, 0], [1, 1, 0]])
         dist, vectors = cqapi.dist_to_shape(wire1, wire2)
-        assert pytest.approx(dist, abs=1e-4) == 1.0
+        assert pytest.approx(dist, abs=1e-4) == 1
         assert len(vectors) > 0
         assert len(vectors[0]) == 2  # (point_on_1, point_on_2)
 
     def test_coincident_shapes_zero_dist(self):
         wire = cqapi.make_polygon(SQUARE)
         dist, _ = cqapi.dist_to_shape(wire, wire)
-        assert pytest.approx(dist, abs=1e-6) == 0.0
+        assert pytest.approx(dist, abs=1e-6) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -239,12 +238,12 @@ class TestDistToShape:
 class TestShapeProperties:
     def test_length_of_wire(self):
         wire = cqapi.make_polygon(SQUARE)
-        assert pytest.approx(cqapi.length(wire), rel=1e-4) == 4.0
+        assert pytest.approx(cqapi.length(wire), rel=1e-4) == 4
 
     def test_area_of_face(self):
         wire = cqapi.make_polygon(SQUARE)
         face = cqapi.make_face(wire)
-        assert pytest.approx(cqapi.area(face), rel=1e-4) == 1.0
+        assert pytest.approx(cqapi.area(face), rel=1e-4) == 1
 
     def test_volume_of_solid(self):
         pts = [[3, 0, 0], [4, 0, 0], [4, 0, 1], [3, 0, 1], [3, 0, 0]]
@@ -283,18 +282,21 @@ class TestTessellate:
         verts, tris = cqapi.tessellate(solid, tolerance=0.1)
         assert isinstance(verts, np.ndarray)
         assert isinstance(tris, np.ndarray)
-        assert verts.ndim == 2 and verts.shape[1] == 3
-        assert tris.ndim == 2 and tris.shape[1] == 3
+        assert verts.ndim == 2
+        assert verts.shape[1] == 3
+        assert tris.ndim == 2
+        assert tris.shape[1] == 3
 
     def test_tessellate_invalid_tolerance(self):
         solid = self._make_solid()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"Tolerance must be greater than 0\.0"):
             cqapi.tessellate(solid, tolerance=0.0)
 
     def test_collect_verts_faces(self):
         solid = self._make_solid()
         verts, faces = cqapi.collect_verts_faces(solid, tesselation=0.1)
-        assert verts is not None and faces is not None
+        assert verts is not None
+        assert faces is not None
         assert verts.shape[1] == 3
         assert faces.shape[1] == 3
 

@@ -14,10 +14,6 @@ import numpy as np
 import pytest
 
 import bluemira.codes._geometryapi as _cadapi
-
-_wire_edges_tangent = _cadapi._wire_edges_tangent
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.face import BluemiraFace
@@ -46,6 +42,10 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+
+_wire_edges_tangent = _cadapi._wire_edges_tangent
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 @pytest.mark.parametrize(

@@ -9,8 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
-
 from bluemira.display.plotter import PlotOptions, plot_2d
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.geometry.constants import MINIMUM_LENGTH
@@ -18,6 +16,8 @@ from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestInscribedRectangle:

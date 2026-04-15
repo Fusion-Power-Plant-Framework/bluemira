@@ -12,8 +12,6 @@ import pytest
 from scipy.special import ellipe
 
 import bluemira.codes._geometryapi as cadapi
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -29,6 +27,8 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 def param_face(*coords):

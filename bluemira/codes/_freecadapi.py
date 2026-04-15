@@ -746,7 +746,7 @@ def offset_wire(
     FreeCADError
         offset failed
     """
-    if thickness == 0.0:  # noqa: RUF069
+    if not thickness:
         return wire.copy()
 
     if _wire_is_straight(wire):

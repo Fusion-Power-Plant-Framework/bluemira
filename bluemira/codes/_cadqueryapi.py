@@ -413,7 +413,7 @@ def offset_wire(
     open_wire:
         For open wires, keep offset open (True) or close it (False).
     """
-    if thickness == 0.0:  # noqa: RUF069
+    if not thickness:
         return wire
 
     if _wire_is_straight(wire):
