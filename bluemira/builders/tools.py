@@ -25,13 +25,16 @@ from bluemira.base.error import BuilderError, ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.display.palettes import ColorPalette
+from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
+    CutLocation,
     boolean_cut,
     boolean_fuse,
     circular_pattern,
+    cut_wire_at_z_value,
     extrude_shape,
     make_circle,
     make_compound,
@@ -47,6 +50,7 @@ if TYPE_CHECKING:
     from matproplib.material import Material
 
     from bluemira.base.components import ComponentT
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.geometry.base import BluemiraGeoT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
@@ -593,3 +597,30 @@ def build_sectioned_xyz(
         if enable_sectioning
         else bodies
     )
+
+
+def clip_wall_silhouette_at_xpoint(eq: Equilibrium, wall: BluemiraWire):
+    """
+    Remove the parts of the wire below or above the x-point.
+
+    Returns
+    -------
+    wall_piece:
+        The section of the wall above the x point
+    """
+    _, x_points = find_OX_points(eq.x, eq.z, eq.psi())
+    if x_points[0].z < x_points[1].z:
+        lower_x_point_z, upper_x_point_z = x_points[0].z, x_points[1].z
+    else:
+        lower_x_point_z, upper_x_point_z = x_points[1].z, x_points[0].z
+
+    cut_wall_boundary = cut_wire_at_z_value(
+        wall, lower_x_point_z, CutLocation.LOWER, "x-point"
+    )
+
+    if eq.is_double_null:
+        cut_wall_boundary = cut_wire_at_z_value(
+            wall, upper_x_point_z, CutLocation.UPPER, "x-point"
+        )
+
+    return cut_wall_boundary
