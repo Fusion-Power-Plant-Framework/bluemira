@@ -185,9 +185,27 @@ def _vector_to_numpy(v: cq.Vector) -> np.ndarray:
 
 
 def make_polygon(points: list | np.ndarray) -> apiWire:
-    """Make a closed or open polygon wire from a sequence of points."""
+    """Make a polygon wire from points, dropping consecutive duplicates.
+
+    OCC's ``BRepBuilderAPI_MakePolygon`` rejects vertices closer than
+    ``Precision::Confusion`` (~1e-7); FreeCAD's ``Part.makePolygon``
+    silently collapses them. Match FreeCAD's contract by removing the
+    duplicates (a 4-point polygon with one repeated vertex collapses to a
+    triangle, not a self-intersecting shape). If the whole input collapses
+    to a single point, emit a degenerate 2-vertex wire instead of erroring.
+    """
     vecs = _to_cq_vectors(points)
-    return cq.Wire.makePolygon(vecs)
+    deduped: list[cq.Vector] = []
+    for v in vecs:
+        if deduped and deduped[-1].sub(v).Length < _OCC_DEFAULT_TOL:
+            continue
+        deduped.append(v)
+    if len(deduped) < 2 and len(vecs) >= 2:  # noqa: PLR2004
+        deduped = [
+            vecs[0],
+            cq.Vector(vecs[0].x + _OCC_DEFAULT_TOL, vecs[0].y, vecs[0].z),
+        ]
+    return cq.Wire.makePolygon(deduped)
 
 
 def interpolate_bspline(
@@ -1003,14 +1021,15 @@ class _CQPlacement:
         K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
         return c * np.eye(3) + s * K + (1 - c) * np.outer(k, k)
 
-    def multVec(self, vec) -> np.ndarray:
-        """Apply rotation + translation to a vector (returns numpy array)."""
+    def multVec(self, vec) -> _Vector:
+        """Apply rotation + translation; returns a Base.Vector-compatible vector."""
         v = np.asarray(list(vec) if hasattr(vec, "__iter__") else [vec], dtype=float)
-        return self._rot_matrix() @ v + np.array([
+        out = self._rot_matrix() @ v + np.array([
             self.Base.x,
             self.Base.y,
             self.Base.z,
         ])
+        return _Vector(*out)
 
     def inverse(self):
         R = self._rot_matrix()
@@ -1130,11 +1149,36 @@ def make_plane_from_3_points(
     return _CQPlane(base=tuple(p1), axis=tuple(normal))
 
 
+def _checked_to_numpy(obj, types, get_xyz, name):
+    """Shape-(3,) or (N, 3) array of coordinates; TypeError on wrong types.
+
+    Mirrors FreeCAD's ``@check_data_type`` contract used by
+    :func:`vector_to_numpy` / :func:`vertex_to_numpy`. *get_xyz* maps one
+    element to an object exposing ``.x .y .z``.
+    """
+    if isinstance(obj, types):
+        c = get_xyz(obj)
+        return np.array([c.x, c.y, c.z])
+    if isinstance(obj, (list, tuple)) and obj and all(isinstance(x, types) for x in obj):
+        return np.array([[(c := get_xyz(x)).x, c.y, c.z] for x in obj])
+    raise TypeError(f"{name} expects {types} or list thereof, got {type(obj)}")
+
+
 def vector_to_numpy(v) -> np.ndarray:
-    """Convert a _Vector (or cq.Vector) to numpy array."""
-    if hasattr(v, "x"):
-        return np.array([v.x, v.y, v.z])
-    return np.asarray(v)
+    """Convert a cq.Vector / _Vector (or list thereof) to numpy array."""
+    return _checked_to_numpy(v, (cq.Vector, _Vector), lambda x: x, "vector_to_numpy")
+
+
+def make_vertex(x: float, y: float, z: float) -> apiVertex:
+    """Construct a vertex from coordinates."""
+    return cq.Vertex.makeVertex(float(x), float(y), float(z))
+
+
+def vertex_to_numpy(vertexes) -> np.ndarray:
+    """Convert a cq.Vertex (or list thereof) to numpy array."""
+    return _checked_to_numpy(
+        vertexes, (cq.Vertex,), lambda v: v.Center(), "vertex_to_numpy"
+    )
 
 
 def face_from_plane(plane: _CQPlane, width: float, height: float) -> cq.Face:
@@ -1207,12 +1251,21 @@ def placement_from_plane(plane: _CQPlane) -> _CQPlacement:
 
 
 def catch_caderr(new_error_type):
-    """Passthrough decorator stub (no FreeCAD error translation needed)."""
+    """Translate FreeCADError raised inside the decorated function into
+    *new_error_type*. Mirrors the FreeCAD backend so callers get a uniform
+    error-translation contract regardless of backend.
+    """
 
-    def decorator(func):
-        return func
+    def argswrap(func):
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except FreeCADError as fe:
+                raise new_error_type(fe.args[0]) from fe
 
-    return decorator
+        return wrapper
+
+    return argswrap
 
 
 # ---------------------------------------------------------------------------
@@ -1259,12 +1312,12 @@ def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
 
 
 def start_point(obj: apiShape) -> np.ndarray:
-    """Start point of a wire (first vertex of first ordered edge)."""
+    """Start point of the first ordered edge (not orientation-aware)."""
     return _vector_to_numpy(ordered_edges(obj)[0].startPoint())
 
 
 def end_point(obj: apiShape) -> np.ndarray:
-    """End point of a wire (last vertex of last ordered edge)."""
+    """End point of the last ordered edge (not orientation-aware)."""
     return _vector_to_numpy(ordered_edges(obj)[-1].endPoint())
 
 
@@ -1423,20 +1476,24 @@ def make_bsplinesurface(
     return surface
 
 
-def _freecad_ax2(center, axis):
-    """
-    Build a gp_Ax2 that matches FreeCAD's angle convention.
+def _freecad_ax2(center, axis, x_direction=None):
+    """Build a gp_Ax2 matching FreeCAD's angle convention.
 
-    FreeCAD's Part.Circle computes its X-axis by projecting (1,0,0) onto the
-    plane perpendicular to *axis* (falls back to (0,1,0) when axis ∥ x).
+    FreeCAD's Part.Circle computes its X-axis by projecting (1,0,0) onto
+    the plane perpendicular to *axis* (falls back to (0,1,0) when axis ∥ x).
     OCC's gp_Ax2(P, N) auto-picks a different X-axis, causing angle offsets.
+    Pass *x_direction* to override the derivation (needed for serialisation
+    round-trip where the original X-axis is known).
     """
     n = np.asarray(axis, dtype=float)
     n /= np.linalg.norm(n)
-    ref = np.array([1.0, 0.0, 0.0])
-    if abs(np.dot(n, ref)) > 1.0 - _POINT_COINCIDENCE_TOL:
-        ref = np.array([0.0, 1.0, 0.0])
-    x = ref - np.dot(ref, n) * n
+    if x_direction is None:
+        ref = np.array([1.0, 0.0, 0.0])
+        if abs(np.dot(n, ref)) > 1.0 - _POINT_COINCIDENCE_TOL:
+            ref = np.array([0.0, 1.0, 0.0])
+        x = ref - np.dot(ref, n) * n
+    else:
+        x = np.asarray(x_direction, dtype=float)
     x /= np.linalg.norm(x)
     return gp_Ax2(
         gp_Pnt(*[float(v) for v in center]),
@@ -1451,9 +1508,14 @@ def make_circle(
     start_angle: float = 0.0,
     end_angle: float = 360.0,
     axis=(0.0, 0.0, 1.0),
+    x_direction=None,
 ) -> apiWire:
-    """Create a circle or arc of circle with FreeCAD-compatible angle convention."""
-    circ = gp_Circ(_freecad_ax2(center, axis), radius)
+    """Create a circle or arc of circle with FreeCAD-compatible angle convention.
+
+    *x_direction* pins the local X-axis for serialisation round-trip (angle
+    parameters are measured against it); defaults to FreeCAD's derivation.
+    """
+    circ = gp_Circ(_freecad_ax2(center, axis, x_direction), radius)
     if start_angle == end_angle:
         edge = cq.Edge(BRepBuilderAPI_MakeEdge(circ).Edge())
     else:
@@ -1587,13 +1649,21 @@ def discretise_by_edges(
     elif dl <= 0.0:
         raise ValueError("dl must be > 0.")
 
+    # Sample directly along the parent wire's arc-length parameterisation,
+    # per edge, so we inherit the wire's traversal order and orientation.
+    # cq.Wire.assembleEdges([e]) strips the edge's orientation flag — hence
+    # no per-edge sub-wires.
+    edge_lengths = [e.Length() for e in ordered_edges(w)]
+    cum = np.cumsum([0.0, *edge_lengths]) / total
     output = []
     last_pts = None
-    for e in w.Edges():
-        e_wire = cq.Wire.assembleEdges([e])
-        if e_wire.Length() < _OCC_DEFAULT_TOL:
+    for i, e_len in enumerate(edge_lengths):
+        if e_len < _OCC_DEFAULT_TOL:
             continue
-        pts = list(discretise(e_wire, dl=dl))
+        n = max(math.ceil(e_len / dl + 1), 2)
+        pts = [
+            _vector_to_numpy(w.positionAt(t)) for t in np.linspace(cum[i], cum[i + 1], n)
+        ]
         output += pts[:-1]
         last_pts = pts
 
@@ -1821,58 +1891,10 @@ def _unify_same_domain(shape: apiShape) -> apiShape:
     try:
         unifier = ShapeUpgrade_UnifySameDomain(shape.wrapped, True, True, True)
         unifier.Build()
-        out = cq.Shape.cast(unifier.Shape())
+        return cq.Shape.cast(unifier.Shape())
     except Exception as exc:  # noqa: BLE001
         bluemira_warn(f"UnifySameDomain failed: {exc}")
         return shape
-    # If unify still leaves a compound of coplanar faces, sew them and rebuild
-    # the face from the outer free boundary wires.
-    if isinstance(out, cq.Compound):
-        faces = _collect_subshapes(out, cq.Face)
-        if len(faces) > 1 and _faces_are_coplanar(faces):
-            merged = _face_from_faces(faces)
-            if merged is not None:
-                return merged
-    return out
-
-
-def _faces_are_coplanar(faces: list[apiFace], tol: float = 1e-6) -> bool:
-    """True if all faces lie in the same plane."""
-    try:
-        normals = [f.normalAt() for f in faces]
-        centers = [f.Center() for f in faces]
-        n0 = normals[0]
-        c0 = centers[0]
-        for n, c in zip(normals[1:], centers[1:], strict=False):
-            if abs(abs(n0.dot(n)) - 1.0) > tol:
-                return False
-            if abs(n0.dot(c - c0)) > tol:
-                return False
-    except Exception:  # noqa: BLE001
-        return False
-    return True
-
-
-def _face_from_faces(faces: list[apiFace]) -> apiFace | None:
-    """Build a single face from coplanar faces by extracting their outer boundary."""
-    try:
-        sewing = BRepBuilderAPI_Sewing(1e-6)
-        for f in faces:
-            sewing.Add(f.wrapped)
-        sewing.Perform()
-        sewn = sewing.SewedShape()
-        # Collect free boundary wires (the outer perimeter after merging).
-        analyser = ShapeAnalysis_FreeBounds(sewn)
-        closed_seq = analyser.GetClosedWires()
-        if closed_seq.Length() < 1:
-            return None
-        # Pick the longest closed wire as outer, rest are holes.
-        wires = [cq.Wire(closed_seq.Value(i)) for i in range(1, closed_seq.Length() + 1)]
-        wires.sort(key=lambda w: sum(e.Length() for e in w.Edges()), reverse=True)
-        outer, holes = wires[0], wires[1:]
-        return cq.Face.makeFromWires(outer, holes)
-    except Exception:  # noqa: BLE001
-        return None
 
 
 def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
@@ -2181,6 +2203,9 @@ def serialise_shape(shape: apiWire) -> dict:
             radius = circ.Radius()
             ax = circ.Axis().Direction()
             axis = [ax.X(), ax.Y(), ax.Z()]
+            # XAxis is required to round-trip arc orientation (see _freecad_ax2).
+            xax = circ.XAxis().Direction()
+            x_axis = [xax.X(), xax.Y(), xax.Z()]
             t0 = adaptor.FirstParameter()
             t1 = adaptor.LastParameter()
             start_angle = math.degrees(t0)
@@ -2192,6 +2217,7 @@ def serialise_shape(shape: apiWire) -> dict:
                     "StartAngle": start_angle,
                     "EndAngle": end_angle,
                     "Axis": axis,
+                    "XAxis": x_axis,
                 }
             })
         elif ctype == GeomAbs_BSplineCurve:
@@ -2281,7 +2307,12 @@ def deserialise_shape(buffer: dict) -> apiWire:
             )
         if type_ == "ArcOfCircle":
             return make_circle(
-                v["Radius"], v["Center"], v["StartAngle"], v["EndAngle"], v["Axis"]
+                v["Radius"],
+                v["Center"],
+                v["StartAngle"],
+                v["EndAngle"],
+                v["Axis"],
+                x_direction=v.get("XAxis"),
             )
         if type_ == "ArcOfEllipse":
             return make_ellipse(

@@ -12,42 +12,26 @@ import Part
 import numpy as np
 import pytest
 from FreeCAD import Base, closeDocument, newDocument
-from scipy.special import ellipe
 
-import bluemira.codes._geometryapi as cadapi
+import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from tests._helpers import skipif_import_error
+from tests.codes._shared.backend_api_tests import BackendApiTestsBase
 
 
-class TestFreecadapi:
+class TestFreecadapi(BackendApiTestsBase):
+    cadapi = cadapi
+
     @classmethod
     def setup_class(cls):
-        cls.square_points = [
-            (0.0, 0.0, 0.0),
-            (1.0, 0.0, 0.0),
-            (1.0, 1.0, 0.0),
-            (0.0, 1.0, 0.0),
-        ]
-        cls.closed_square_points = [
-            (0.0, 0.0, 0.0),
-            (1.0, 0.0, 0.0),
-            (1.0, 1.0, 0.0),
-            (0.0, 1.0, 0.0),
-            (0.0, 0.0, 0.0),
-        ]
+        cls.square_points = list(BackendApiTestsBase.square_points)
+        cls.closed_square_points = list(BackendApiTestsBase.closed_square_points)
 
     @staticmethod
     def offsetter(wire):
         return cadapi.offset_wire(wire, 0.05, join="intersect", open_wire=False)
-
-    def test_multi_offset_wire(self):
-        circ = cadapi.make_circle(10)
-        wire1 = self.offsetter(circ)
-        wire2 = self.offsetter(wire1)
-
-        assert circ.Length < wire1.Length < wire2.Length
 
     def test_multi_offset_wire_without_arranged_edges(self):
         """
@@ -76,58 +60,15 @@ class TestFreecadapi:
         assert circ.Length == wire2.Length
         assert wire1.Length > wire2.Length
 
-    def test_fail_vector_to_numpy(self):
-        with pytest.raises(TypeError):
-            arr = cadapi.vector_to_numpy(self.square_points)
-
     def test_fail_points_to_numpy(self):
         with pytest.raises(TypeError):
             arr = cadapi.point_to_numpy(self.square_points)
-
-    def test_single_vector_to_numpy(self):
-        inp = np.array((1.0, 0.5, 2.0))
-        vector = Base.Vector(inp)
-        arr = cadapi.vector_to_numpy(vector)
-        comparison = arr == inp
-        assert comparison.all()
-
-    def test_vector_to_numpy(self):
-        vectors = [Base.Vector(v) for v in self.square_points]
-        arr = cadapi.vector_to_numpy(vectors)
-        comparison = arr == np.array(self.square_points)
-        assert comparison.all()
 
     def test_point_to_numpy(self):
         vectors = [Part.Point(Base.Vector(v)) for v in self.square_points]
         arr = cadapi.point_to_numpy(vectors)
         comparison = arr == np.array(self.square_points)
         assert comparison.all()
-
-    def test_vertex_to_numpy(self):
-        vertexes = [Part.Vertex(Base.Vector(v)) for v in self.square_points]
-        arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == np.array(self.square_points)
-        assert comparison.all()
-
-    def test_make_polygon(self):
-        # open wire
-        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
-        vertexes = open_wire.Vertexes
-        assert len(vertexes) == 4
-        assert len(open_wire.Edges) == 3
-        arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == np.array(self.square_points)
-        assert comparison.all()
-        assert not open_wire.isClosed()
-        # closed wire
-        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        vertexes = closed_wire.Vertexes
-        assert len(vertexes) == 4
-        assert len(closed_wire.Edges) == 4
-        arr = cadapi.vertex_to_numpy(vertexes)
-        comparison = arr == np.array(self.square_points)
-        assert comparison.all()
-        assert closed_wire.isClosed()
 
     def test_make_bezier(self):
         bezier: Part.Wire = cadapi.make_bezier(self.square_points)
@@ -150,59 +91,13 @@ class TestFreecadapi:
             np.array(test_points) - np.array(pntslist), 0, atol=D_TOLERANCE
         )
 
-    def test_length(self):
-        open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
-        assert (
-            cadapi.length(open_wire)
-            == open_wire.Length
-            == pytest.approx(3.0, rel=0, abs=EPS)
-        )
-        closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        assert (
-            cadapi.length(closed_wire)
-            == closed_wire.Length
-            == pytest.approx(4.0, rel=0, abs=EPS)
-        )
-
-    def test_area(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        assert cadapi.area(wire) == wire.Area == pytest.approx(0.0, rel=0, abs=EPS)
-        face: Part.Face = Part.Face(wire)
-        assert cadapi.area(face) == face.Area == pytest.approx(1.0, rel=0, abs=EPS)
-
-    def test_center_of_mass(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        face: Part.Face = Part.Face(wire)
-        com = cadapi.center_of_mass(wire)
-        comparison = com == np.array((0.5, 0.5, 0.0))
-        assert isinstance(com, np.ndarray)
-        assert comparison.all()
-
-    def test_split_circular_wire(self):
-        full_circle = cadapi.make_circle(radius=1.0, center=(1, 0, 0), axis=(0, 1, 0))
+    def test_split_circular_wire_split_edge(self):
+        """FreeCAD-only: ``_split_edge`` is an internal helper not present in
+        other backends.
+        """
         arc_of_circ = cadapi.make_circle_arc_3P(
             [0, 0, 0], [1, 1, 0], [2, 0, 0], axis=(0, 1, 0)
         )
-        semi_circle_lower, semi_circle_upper = cadapi.split_wire(
-            full_circle, [0, 0, 0], EPS * 10
-        )
-        assert np.allclose(
-            cadapi.start_point(semi_circle_upper) - cadapi.start_point(arc_of_circ),
-            0,
-            atol=D_TOLERANCE,
-        )
-        assert cadapi.split_wire(arc_of_circ, [2, 0, 0], EPS * 10)[1] is None
-        assert (
-            list(cadapi.split_wire(full_circle, [2, 0, 0], EPS * 10)).count(None) == 1
-        ), (
-            "Splitting vertex on the start- AND end-point, "
-            "so one of the wires must have zero length."
-        )
-
-        with pytest.raises(FreeCADError):
-            cadapi.split_wire(full_circle, (3, 0, 0), EPS * 10)
-        with pytest.raises(FreeCADError):
-            cadapi.split_wire(arc_of_circ, (3, 0, 0), EPS * 10)
         with pytest.raises(FreeCADError):
             cadapi._split_edge(
                 arc_of_circ.OrderedEdges[0], 0.0
@@ -218,90 +113,6 @@ class TestFreecadapi:
 
         with pytest.raises(FreeCADError):
             cadapi._split_edge(arc_of_ellipse.OrderedEdges[0], 0.0)
-
-    def test_split_nonperiodic_wire(self):
-        closed_wire = cadapi.make_polygon(self.closed_square_points)
-        bezier = cadapi.make_bezier(self.square_points)
-        bspline = cadapi.interpolate_bspline(self.square_points)
-        cadapi.split_wire(closed_wire, self.closed_square_points[1], EPS * 10)
-        cadapi.split_wire(bezier, self.square_points[0], EPS * 10)
-        cadapi.split_wire(bspline, self.square_points[1], EPS * 10)
-
-    def test_scale_shape(self):
-        factor = 2.0
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        scaled_wire = cadapi.scale_shape(wire.copy(), factor)
-        face: Part.Face = Part.Face(scaled_wire)
-        assert cadapi.area(face) == pytest.approx(1.0 * factor**2, rel=0, abs=EPS)
-        assert (
-            cadapi.length(face)
-            == cadapi.length(scaled_wire)
-            == pytest.approx(4.0 * factor, rel=0, abs=EPS)
-        )
-        face_from_wire = Part.Face(wire)
-        scaled_face = cadapi.scale_shape(face_from_wire.copy(), factor)
-        assert cadapi.length(scaled_face) == cadapi.length(face)
-        assert cadapi.area(scaled_face) == cadapi.area(face)
-
-    def test_discretise(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        ndiscr = 10
-        points = cadapi.discretise(wire, ndiscr)
-        assert len(points) == ndiscr
-        length_w = wire.Length
-        dl = length_w / float(ndiscr - 1)
-        points = cadapi.discretise(wire, dl=dl)
-        assert len(points) == ndiscr
-
-    def test_discretise_by_edges(self):
-        wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        ndiscr = 10
-        points = cadapi.discretise_by_edges(wire, ndiscr)
-
-        dl = 0.4
-        points1 = cadapi.discretise_by_edges(wire, dl=dl)
-
-        dl = 0.4
-        points2 = cadapi.discretise_by_edges(wire, ndiscr=100, dl=dl)
-        assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
-
-    def test_discretise_vs_discretise_by_edges(self):
-        wire1 = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-        wire2 = cadapi.make_polygon([[0, 0, 0], [0, 1, 0], [1, 1, 0]])
-        wire2.reverse()
-        wire = Part.Wire([wire1, wire2])
-
-        # ndiscr is chosen in such a way that both discretise and discretise_by_edges
-        # give the same points (so that a direct comparison is possible).
-        points1 = cadapi.discretise(wire, ndiscr=5)
-        points2 = cadapi.discretise_by_edges(wire, ndiscr=4)
-
-        # assert that points1 and points2 are the same
-        assert np.allclose(points1 - points2, 0, atol=D_TOLERANCE)
-
-    def test_start_point_given_polygon(self):
-        wire = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-
-        start_point = cadapi.start_point(wire)
-
-        assert isinstance(start_point, np.ndarray)
-        np.testing.assert_equal(start_point, np.array([0, 0, 0]))
-
-    def test_end_point_given_polygon(self):
-        wire = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-
-        end_point = cadapi.end_point(wire)
-
-        assert isinstance(end_point, np.ndarray)
-        np.testing.assert_equal(end_point, np.array([1, 1, 0]))
-
-    def test_catcherror(self):
-        @cadapi.catch_caderr(ValueError)
-        def func():
-            raise FreeCADError("Error")
-
-        with pytest.raises(ValueError):  # noqa: PT011
-            func()
 
     def test_save_cad(self, tmp_path):
         shape = cadapi.extrude_shape(cadapi.make_circle(), (0, 0, 1))
@@ -332,40 +143,6 @@ class TestFreecadapi:
         assert (
             "AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }" in stp_content
         )  # scheme change
-
-    def test_circle_ellipse_arc(self):
-        # from make_circle
-        arc = cadapi.make_circle(start_angle=0, end_angle=180)
-        assert cadapi.length(arc) == np.pi  # check length of created arc
-        assert np.allclose(
-            cadapi.start_point(arc), [1.0, 0.0, 0.0]
-        )  # check start point of arc
-        assert np.allclose(
-            cadapi.end_point(arc), [-1.0, 0.0, 0.0]
-        )  # check end point of arc
-        arc2 = cadapi.make_circle(
-            start_angle=360, end_angle=180
-        )  # same as arc but using start>end
-        assert np.allclose(cadapi.discretise(arc, 10), cadapi.discretise(arc2, 10))
-
-        # from make_circle_arc_3P
-        arc3 = cadapi.make_circle_arc_3P(
-            [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0]
-        )
-        assert np.allclose(
-            cadapi.discretise(arc, 10), cadapi.discretise(arc3, 10)
-        )  # check arc3 matches arc
-        with pytest.raises(FreeCADError):
-            cadapi.make_circle_arc_3P([1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0])
-
-        # from make_ellipse
-        arc4 = cadapi.make_ellipse(start_angle=0, end_angle=90)
-        ellipse_major_radius = 2
-        ellipse_eccentricity = 0.75
-        arc_length = ellipse_major_radius * ellipe(
-            ellipse_eccentricity
-        )  # length of arc using complete elliptic integral
-        assert np.isclose(arc_length, cadapi.length(arc4), 6)
 
     @pytest.mark.parametrize(
         ("two_pi_offset", "positive_y_axis", "reverse"),
@@ -481,42 +258,6 @@ class TestFreecadapi:
         )
 
     @pytest.mark.parametrize(("reverse"), [True, False])
-    def test_serialise_circle(self, *, reverse: bool):
-        """Checks for invertibility of the serialise function for make_circle_arc_3P."""
-        x1, z1 = cadapi.apiVector([1, 0, 0]), cadapi.apiVector([0, 0, 1])
-        mid_pt = cadapi.apiVector([np.sqrt(2), 0, np.sqrt(2)])
-        arc_of_circle = cadapi.make_circle_arc_3P(x1, mid_pt, z1)
-        if reverse:
-            arc_of_circle.reverse()
-        reconstructed = cadapi.deserialise_shape(cadapi.serialise_shape(arc_of_circle))
-        if reverse:
-            np.testing.assert_allclose(
-                arc_of_circle.Edges[0].firstVertex().Point,
-                reconstructed.Edges[0].lastVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-            np.testing.assert_allclose(
-                arc_of_circle.Edges[0].lastVertex().Point,
-                reconstructed.Edges[0].firstVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-        else:
-            np.testing.assert_allclose(
-                arc_of_circle.Edges[0].firstVertex().Point,
-                reconstructed.Edges[0].firstVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-            np.testing.assert_allclose(
-                arc_of_circle.Edges[0].lastVertex().Point,
-                reconstructed.Edges[0].lastVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-
-    @pytest.mark.parametrize(("reverse"), [True, False])
     def test_serialise_part_ellipse(self, *, reverse: bool):
         """Checks for invertibility of the serialise function for Part.Ellipse."""
         ellipse = Part.Ellipse()
@@ -549,41 +290,6 @@ class TestFreecadapi:
             )
             np.testing.assert_allclose(
                 arc_of_ellipse.Edges[0].lastVertex().Point,
-                reconstructed.Edges[0].lastVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-
-    @pytest.mark.parametrize(("reverse"), [True, False])
-    def test_serialise_ellipse(self, *, reverse: bool):
-        """Checks for invertibility of the serialise function for make_ellipse."""
-        ellipse_arc = cadapi.make_ellipse(start_angle=0, end_angle=190)
-        if reverse:
-            ellipse_arc.reverse()
-
-        reconstructed = cadapi.deserialise_shape(cadapi.serialise_shape(ellipse_arc))
-        if reverse:
-            np.testing.assert_allclose(
-                ellipse_arc.Edges[0].firstVertex().Point,
-                reconstructed.Edges[0].lastVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-            np.testing.assert_allclose(
-                ellipse_arc.Edges[0].lastVertex().Point,
-                reconstructed.Edges[0].firstVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-        else:
-            np.testing.assert_allclose(
-                ellipse_arc.Edges[0].firstVertex().Point,
-                reconstructed.Edges[0].firstVertex().Point,
-                rtol=0,
-                atol=EPS_FREECAD,
-            )
-            np.testing.assert_allclose(
-                ellipse_arc.Edges[0].lastVertex().Point,
                 reconstructed.Edges[0].lastVertex().Point,
                 rtol=0,
                 atol=EPS_FREECAD,

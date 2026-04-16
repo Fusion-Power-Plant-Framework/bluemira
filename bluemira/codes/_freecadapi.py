@@ -204,6 +204,11 @@ def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
     return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
 
 
+def make_vertex(x: float, y: float, z: float) -> apiVertex:
+    """Construct a vertex from coordinates."""  # noqa: DOC201
+    return Part.Vertex(Base.Vector(float(x), float(y), float(z)))
+
+
 # ======================================================================================
 # Geometry creation
 # ======================================================================================
