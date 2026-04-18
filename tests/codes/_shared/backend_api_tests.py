@@ -214,6 +214,82 @@ class BackendApiTestsBase:
         arr = self.cadapi.vertex_to_numpy(vertexes)
         assert np.array_equal(arr, np.array(self.square_points))
 
+    def test_change_placement_translation_and_rotation(self):
+        """Applying a single placement to a fresh shape must move the
+        centre-of-mass by that placement's rigid transform (``p' = R·p + t``).
+        """
+        # translation-only
+        wire = self.cadapi.make_polygon(self.closed_square_points)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire), [0.5, 0.5, 0.0], atol=EPS_FREECAD
+        )
+        translate = self.cadapi.make_placement(
+            base=(10.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), angle=0.0
+        )
+        self.cadapi.change_placement(wire, translate)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire), [10.5, 0.5, 0.0], atol=EPS_FREECAD
+        )
+
+        # rotation-only, applied to a fresh shape
+        wire2 = self.cadapi.make_polygon(self.closed_square_points)
+        rotate_z90 = self.cadapi.make_placement(
+            base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), angle=90.0
+        )
+        self.cadapi.change_placement(wire2, rotate_z90)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire2), [-0.5, 0.5, 0.0], atol=EPS_FREECAD
+        )
+
+    @pytest.mark.parametrize(
+        ("r_diag", "expected_com"),
+        [
+            # R = diag(-1,-1, 1): z-axis 180°
+            ((-1.0, -1.0, 1.0), (-0.5, -0.5, 0.0)),
+            # R = diag( 1,-1,-1): x-axis 180°
+            ((1.0, -1.0, -1.0), (0.5, -0.5, 0.0)),
+            # R = diag(-1, 1,-1): y-axis 180°
+            ((-1.0, 1.0, -1.0), (-0.5, 0.5, 0.0)),
+        ],
+    )
+    def test_make_placement_from_matrix_180deg(self, r_diag, expected_com):
+        """``make_placement_from_matrix`` must handle the θ = π Rodrigues
+        singularity without producing a NaN axis, and the resulting
+        placement must transform geometry as expected.
+        """
+        matrix = np.eye(4)
+        matrix[0, 0], matrix[1, 1], matrix[2, 2] = r_diag
+        placement = self.cadapi.make_placement_from_matrix(matrix)
+        wire = self.cadapi.make_polygon(self.closed_square_points)
+        self.cadapi.change_placement(wire, placement)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire), expected_com, atol=EPS_FREECAD
+        )
+
+    def test_wire_parameter_at_endpoints_large_tolerance(self):
+        """``wire_parameter_at`` must return 0.0 at the start, 1.0 at the
+        end, and a sensible value in between — even when the caller passes
+        a very large tolerance (``VERY_BIG`` ~ 1e10 is common in
+        ``PathInterpolator.to_L``). The tolerance only gates wire-membership,
+        it must NOT relax the per-edge selection logic.
+        """
+        # 2-edge polyline: (0,0,0) — (2,0,1) — (4,0,0). Arc-midpoint at (2,0,1).
+        wire = self.cadapi.make_polygon([
+            [0.0, 0.0, 0.0],
+            [2.0, 0.0, 1.0],
+            [4.0, 0.0, 0.0],
+        ])
+        very_big = 1e10
+        assert self.cadapi.wire_parameter_at(wire, [0.0, 0.0, 0.0], very_big) == (
+            pytest.approx(0.0, abs=EPS_FREECAD)
+        )
+        assert self.cadapi.wire_parameter_at(wire, [2.0, 0.0, 1.0], very_big) == (
+            pytest.approx(0.5, abs=EPS_FREECAD)
+        )
+        assert self.cadapi.wire_parameter_at(wire, [4.0, 0.0, 0.0], very_big) == (
+            pytest.approx(1.0, abs=EPS_FREECAD)
+        )
+
     def test_discretise_vs_discretise_by_edges(self):
         wire1 = self.cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
         wire2 = self.cadapi.make_polygon([[0, 0, 0], [0, 1, 0], [1, 1, 0]])
