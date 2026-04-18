@@ -79,6 +79,7 @@ from OCP.TopAbs import (
     TopAbs_WIRE,
 )
 from OCP.TopExp import TopExp_Explorer
+from OCP.TopLoc import TopLoc_Location
 from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
 from OCP.TopoDS import TopoDS, TopoDS_Compound
 from OCP.gp import (
@@ -237,7 +238,8 @@ def interpolate_bspline(
     if np.allclose(
         [pnts[0].x, pnts[0].y, pnts[0].z],
         [pnts[-1].x, pnts[-1].y, pnts[-1].z],
-        atol=EPS,
+        rtol=EPS,
+        atol=0,
     ):
         if len(pnts) > 2:  # noqa: PLR2004
             if not closed:
@@ -961,6 +963,14 @@ class _Vector:
         arr = np.array([self.x, self.y, self.z])
         return arr if dtype is None else arr.astype(dtype)
 
+    def __eq__(self, other):
+        if not isinstance(other, _Vector):
+            return NotImplemented
+        return (self.x, self.y, self.z) == (other.x, other.y, other.z)
+
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
+
 
 class _Rotation:
     def __init__(self, axis=(0, 0, 1), angle=0.0):
@@ -1101,17 +1111,33 @@ def make_placement_from_matrix(matrix) -> _CQPlacement:
     trace = np.clip(np.trace(R_norm), -1.0, 3.0)
     theta = math.acos((trace - 1.0) / 2.0)  # radians
 
+    sin_theta = math.sin(theta)
     if abs(theta) < _ANGLE_PARALLEL_TOL:
+        # θ ≈ 0 → rotation is identity; axis direction is arbitrary.
         axis = np.array([0.0, 0.0, 1.0])
+    elif abs(sin_theta) < _ANGLE_PARALLEL_TOL:
+        # θ ≈ π → Rodrigues inverse is singular (sin→0).
+        # R + I = 2·n·nᵀ at θ=π; pick the column with largest norm and
+        # normalise it to recover the axis robustly (ambiguous sign for a
+        # 180° rotation is physically irrelevant).
+        m_sym = R_norm + np.eye(3)
+        col_norms = np.linalg.norm(m_sym, axis=0)
+        k = int(np.argmax(col_norms))
+        if col_norms[k] > _ANGLE_PARALLEL_TOL:
+            axis = m_sym[:, k] / col_norms[k]
+        else:
+            axis = np.array([0.0, 0.0, 1.0])
     else:
         axis = np.array([
             R_norm[2, 1] - R_norm[1, 2],
             R_norm[0, 2] - R_norm[2, 0],
             R_norm[1, 0] - R_norm[0, 1],
-        ]) / (2.0 * math.sin(theta))
+        ]) / (2.0 * sin_theta)
         n = np.linalg.norm(axis)
         if n > 0:
             axis /= n
+        else:
+            axis = np.array([0.0, 0.0, 1.0])
 
     return _CQPlacement(base=tuple(t), axis=tuple(axis), angle_rad=theta)
 
@@ -1707,37 +1733,54 @@ def split_wire(
         )
 
     all_edges = ordered_edges(wire)
+
+    # Find the *closest* edge to the vertex (mirrors FreeCAD's
+    # _get_closest_edge_idx).  Picking the first edge within ``tolerance`` is
+    # wrong when the caller passes a large tolerance (e.g. VERY_BIG) — with a
+    # lax gate, a vertex at the wire's end would still "hit" edge 0, whose
+    # curve projection then falls outside the edge's parameter range and the
+    # split collapses to param = 0.
+    split_idx = 0
+    best_dist = float("inf")
+    for i, e in enumerate(all_edges):
+        e_wire = cq.Wire.assembleEdges([e])
+        d, _ = dist_to_shape(e_wire, vertex_shape)
+        if d < best_dist:
+            best_dist = d
+            split_idx = i
+
     edges_1: list[cq.Edge] = []
     edges_2: list[cq.Edge] = []
-    found = False
 
-    for e in all_edges:
-        if found:
+    for i, e in enumerate(all_edges):
+        if i < split_idx:
+            edges_1.append(e)
+            continue
+        if i > split_idx:
             edges_2.append(e)
             continue
-        e_wire = cq.Wire.assembleEdges([e])
-        e_dist, _ = dist_to_shape(e_wire, vertex_shape)
-        if e_dist <= tolerance:
-            # Project the closest point exactly onto the edge curve
 
-            adaptor = BRepAdaptor_Curve(e.wrapped)
-            t0 = adaptor.FirstParameter()
-            t1 = adaptor.LastParameter()
-            curve = adaptor.Curve().Curve()
-            pnt = gp_Pnt(float(vertex[0]), float(vertex[1]), float(vertex[2]))
-            proj = GeomAPI_ProjectPointOnCurve(pnt, curve, t0, t1)
-            t_split = proj.LowerDistanceParameter() if proj.NbPoints() > 0 else t0
-            if t_split - t0 > _ANGLE_PARALLEL_TOL:
-                edges_1.append(
-                    cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge())
-                )
-            if t1 - t_split > _ANGLE_PARALLEL_TOL:
-                edges_2.append(
-                    cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge())
-                )
-            found = True
+        # Split-edge: project the vertex onto the edge's curve to find t_split.
+        adaptor = BRepAdaptor_Curve(e.wrapped)
+        t0 = adaptor.FirstParameter()
+        t1 = adaptor.LastParameter()
+        curve = adaptor.Curve().Curve()
+        pnt = gp_Pnt(float(vertex[0]), float(vertex[1]), float(vertex[2]))
+        proj = GeomAPI_ProjectPointOnCurve(pnt, curve, t0, t1)
+        if proj.NbPoints() > 0:
+            t_split = proj.LowerDistanceParameter()
         else:
-            edges_1.append(e)
+            # Projection fell outside [t0, t1]: snap to the nearer endpoint.
+            p0 = adaptor.Value(t0)
+            p1 = adaptor.Value(t1)
+            d0 = p0.SquareDistance(pnt)
+            d1 = p1.SquareDistance(pnt)
+            t_split = t0 if d0 <= d1 else t1
+        t_split = max(t0, min(t1, t_split))
+        if t_split - t0 > _ANGLE_PARALLEL_TOL:
+            edges_1.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()))
+        if t1 - t_split > _ANGLE_PARALLEL_TOL:
+            edges_2.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()))
 
     wire_1 = cq.Wire.assembleEdges(edges_1) if edges_1 else None
     wire_2 = cq.Wire.assembleEdges(edges_2) if edges_2 else None
@@ -2538,19 +2581,33 @@ def make_compound(shapes: list[apiShape]) -> apiCompound:
 
 
 @contextlib.contextmanager
-def _step_unit_mm():
-    """Force ``write.step.unit = MM`` and restore on exit.
+def _step_write_settings():
+    """Force the OCCT STEP writer into the same schema + unit as FreeCAD.
 
-    FreeCAD's initialisation sets the OCC global ``write.step.unit = 'M'``.
-    ``STEPControl_Writer`` picks up this setting at construction time, so the
-    override must wrap the entire writer creation + transfer + write sequence.
+    FreeCAD's initialisation sets the OCC globals ``write.step.unit = 'M'``
+    (we want ``MM``) and the schema to ``AP242DIS`` (AP242 managed
+    model-based 3D engineering). The defaults under OCP are different
+    (unit ``M``, schema ``AP214IS`` → ``AUTOMOTIVE_DESIGN``), which
+    produces byte-divergent STEP output compared with FreeCAD and breaks
+    golden-file tests.
+
+    Both settings are writer-scoped globals that are only registered once a
+    ``STEPControl_Writer`` has been instantiated (OCCT lazy-inits the
+    parameter table), so the override must wrap the entire writer creation
+    + transfer + write sequence. We instantiate a throw-away writer up front
+    to force param registration before reading the originals.
     """
-    original = Interface_Static.CVal_s("write.step.unit")
-    Interface_Static.SetCVal_s("write.step.unit", "MM")
+    STEPControl_Writer()
+    keys = ("write.step.unit", "write.step.schema")
+    targets = {"write.step.unit": "MM", "write.step.schema": "AP242DIS"}
+    originals = {k: Interface_Static.CVal_s(k) for k in keys}
+    for k, v in targets.items():
+        Interface_Static.SetCVal_s(k, v)
     try:
         yield
     finally:
-        Interface_Static.SetCVal_s("write.step.unit", original)
+        for k, v in originals.items():
+            Interface_Static.SetCVal_s(k, v)
 
 
 def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
@@ -2561,7 +2618,7 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
     if not isinstance(shapes, list):
         shapes = [shapes]
 
-    with _step_unit_mm():
+    with _step_write_settings():
         writer = STEPControl_Writer()
         for s in shapes:
             writer.Transfer(s.wrapped, STEPControl_AsIs)
@@ -2597,7 +2654,7 @@ def save_cad(
         filename = str(p) + f".{ext}"
 
     if cad_format == CADFileType.STEP:
-        with _step_unit_mm():
+        with _step_write_settings():
             writer = STEPControl_Writer()
             for s in shapes:
                 writer.Transfer(s.wrapped, STEPControl_AsIs)
@@ -2659,6 +2716,33 @@ def import_cad(
     # CadQuery/OCC uses raw values without mm/m conversion — no scaling needed here.
     # (FreeCAD backend needs scaling because FreeCAD works in mm internally.)
     return [(result_shape, file.stem)]
+
+
+def _placement_to_trsf(placement: _CQPlacement) -> gp_Trsf:
+    """Build a gp_Trsf (rotation + translation) from a _CQPlacement."""
+    trsf = gp_Trsf()
+    axis = placement.Rotation.Axis
+    angle = placement.Rotation.Angle
+    if abs(angle) > _ANGLE_PARALLEL_TOL:
+        ax1 = gp_Ax1(gp_Pnt(0.0, 0.0, 0.0), gp_Dir(axis.x, axis.y, axis.z))
+        trsf.SetRotation(ax1, angle)
+    base = placement.Base
+    trsf.SetTranslationPart(gp_Vec(base.x, base.y, base.z))
+    return trsf
+
+
+def change_placement(geo: apiShape, placement: _CQPlacement) -> None:
+    """Compose *placement* onto *geo*'s current location in place.
+
+    FreeCAD's homonym does a somewhat idiosyncratic composition on
+    ``geo.Placement``; here we instead apply the placement's rigid transform as
+    a relative location update on the underlying ``TopoDS_Shape`` — the natural
+    OCCT composition ``new = current * placement``. This matches the semantic
+    intent ("move this shape by that placement") used by every caller we've
+    seen, without trying to reproduce the FreeCAD base-vs-rotation asymmetry.
+    """
+    trsf = _placement_to_trsf(placement)
+    geo.wrapped.Move(TopLoc_Location(trsf))
 
 
 def __getattr__(name: str):

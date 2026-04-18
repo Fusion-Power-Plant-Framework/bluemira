@@ -9,16 +9,82 @@ Working class for imprinting solids.
 
 from __future__ import annotations
 
+from io import BytesIO
+
 from bluemira.codes.python_occ._guard import occ_guard
 from bluemira.geometry.solid import BluemiraSolid
 
 try:
-    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid  # noqa: TC002
+    from OCC.Core.BRepTools import breptools
+    from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid, topods
     from OCC.Extend.TopologyUtils import TopologyExplorer
-
-    import Part  # isort: skip
 except ImportError:
     pass
+
+try:
+    import Part  # FreeCAD only
+except ImportError:
+    Part = None
+
+try:
+    import cadquery as _cq  # CadQuery only
+except ImportError:
+    _cq = None
+
+
+def _bm_shape_to_occ_solid(bm_shape) -> TopoDS_Solid:
+    """Convert a backend-native solid shape to an OCC.Core ``TopoDS_Solid``.
+
+    Dispatches on the *active* geometry backend, not on mere import availability
+    (both FreeCAD and CadQuery may be installed side-by-side).
+
+    Returns
+    -------
+    TopoDS_Solid
+        The pythonocc-core solid equivalent to *bm_shape*.
+
+    Raises
+    ------
+    TypeError
+        If *bm_shape* is neither a ``Part.Shape`` nor a ``cq.Shape``.
+    """
+    if Part is not None and isinstance(bm_shape, Part.Shape):
+        return Part.__toPythonOCC__(bm_shape)
+    if _cq is not None and isinstance(bm_shape, _cq.Shape):
+        buf = BytesIO()
+        bm_shape.exportBrep(buf)
+        shape = breptools.ReadFromString(buf.getvalue().decode("ascii"))
+        return topods.Solid(shape)
+    raise TypeError(f"Cannot convert {type(bm_shape)!r} to OCC.Core TopoDS_Solid")
+
+
+def _occ_solid_to_bm_solid_shape(occ_solid: TopoDS_Solid):
+    """Convert an OCC.Core ``TopoDS_Solid`` back to a backend-native solid shape.
+
+    Dispatches on the active backend via ``cadapi.apiSolid`` so that a side-by-side
+    FreeCAD install doesn't get preferred when CadQuery is selected.
+
+    Returns
+    -------
+    apiSolid
+        A ``cq.Solid`` under the CadQuery backend, or a ``Part.Solid`` under FreeCAD.
+
+    Raises
+    ------
+    RuntimeError
+        If no supported CAD backend is available to rehydrate *occ_solid*.
+    """
+    from bluemira.codes import _geometryapi as cadapi  # noqa: PLC0415
+
+    if _cq is not None and cadapi.apiSolid is _cq.Solid:
+        data = breptools.WriteToString(occ_solid)
+        buf = BytesIO(data.encode("ascii"))
+        cq_shape = _cq.Shape.importBrep(buf)
+        return _cq.Solid(cq_shape.wrapped)
+    if Part is not None and cadapi.apiSolid is Part.Solid:
+        api_solid = Part.__fromPythonOCC__(occ_solid)
+        return Part.Solid(api_solid)
+    raise RuntimeError("No CAD backend available to rehydrate OCC.Core shape.")
 
 
 class ImprintableSolid:
@@ -59,7 +125,7 @@ class ImprintableSolid:
         """
         if not isinstance(bm_solid, BluemiraSolid):
             raise TypeError(f"bm_solid must be a BluemiraSolid, got: {type(bm_solid)}")
-        return cls(label, bm_solid, Part.__toPythonOCC__(bm_solid.shape))
+        return cls(label, bm_solid, _bm_shape_to_occ_solid(bm_solid.shape))
 
     @property
     def label(self) -> str:
@@ -110,6 +176,7 @@ class ImprintableSolid:
             The imprinted BluemiraSolid.
         """
         if self._has_imprinted:
-            api_solid = Part.__fromPythonOCC__(self._imprinted_occ_solid)
-            return BluemiraSolid._create(Part.Solid(api_solid), self._label)
+            return BluemiraSolid._create(
+                _occ_solid_to_bm_solid_shape(self._imprinted_occ_solid), self._label
+            )
         return self._bm_solid

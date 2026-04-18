@@ -60,7 +60,7 @@ class BluemiraCompound(BluemiraGeo):
         """
         if self._compound_obj:
             return self._compound_obj
-        return cadapi.apiCompound([s.shape for s in self.boundary])
+        return cadapi.make_compound([s.shape for s in self.boundary])
 
     @classmethod
     def _create(cls, obj: cadapi.apiCompound, label="") -> BluemiraCompound:
