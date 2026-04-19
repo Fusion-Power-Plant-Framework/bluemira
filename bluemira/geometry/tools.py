@@ -280,7 +280,7 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
-    return cadapi.apiVertex(*point)
+    return cadapi.make_vertex(*point)
 
 
 class GeometryCreationIn(Protocol):

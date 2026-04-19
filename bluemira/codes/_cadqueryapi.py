@@ -143,21 +143,61 @@ class _apiFaceMeta(type):
         return isinstance(instance, cq.Face)
 
 
+def _face_from_wires_tolerant(outer: cq.Wire, inner: list) -> cq.Face:
+    """Build a planar face, tolerating numerical non-planarity in the wires.
+
+    ``cq.Face.makeFromWires`` runs ``BRepLib_FindSurface(OnlyPlane=True)`` with
+    default confusion tolerance (~1e-7) and raises ``ValueError: wires not
+    planar`` on wires that are planar by construction but carry floating-point
+    noise above that threshold. Falls back to an explicit SVD-fitted plane +
+    ``BRepBuilderAPI_MakeFace``, which accepts slight out-of-plane deviation.
+    """
+    try:
+        return cq.Face.makeFromWires(outer, inner)
+    except ValueError as exc:
+        if "not planar" not in str(exc):
+            raise
+
+    pts: list[list[float]] = []
+    for w in [outer, *inner]:
+        for v in w.Vertices():
+            c = v.Center()
+            pts.append([c.x, c.y, c.z])
+    arr = np.asarray(pts, dtype=float)
+    centroid = arr.mean(axis=0)
+    _, _, vh = np.linalg.svd(arr - centroid, full_matrices=False)
+    normal = vh[2]
+    pln = gp_Pln(gp_Pnt(*centroid), gp_Dir(*normal))
+
+    builder = BRepBuilderAPI_MakeFace(pln, outer.wrapped, True)
+    for w in inner:
+        builder.Add(w.wrapped)
+    builder.Build()
+    if not builder.IsDone():
+        raise GeometryError(
+            f"Tolerant planar face build failed: {builder.Error()}"
+        ) from None
+    face = cq.Face(builder.Face())
+    fix_shape(face)
+    return face
+
+
 class apiFace(metaclass=_apiFaceMeta):
     """Drop-in for ``cq.Face``.
 
     Calling ``apiFace(wire)`` with a ``cq.Wire`` uses ``makeFromWires``
     instead of the raw OCC constructor that FreeCAD's ``Part.Face(wire)`` used.
+    On numerically non-planar wires it falls back to an SVD-fitted plane +
+    ``BRepBuilderAPI_MakeFace`` path so slight construction noise doesn't
+    reject faces that are planar by design.
     """
 
     def __new__(cls, obj=None):
         if isinstance(obj, cq.Wire):
-            return cq.Face.makeFromWires(obj)
+            return _face_from_wires_tolerant(obj, [])
         if isinstance(obj, (list, tuple)):
             wires = list(obj)
-            outer = wires[0]
-            inner = wires[1:]
-            return cq.Face.makeFromWires(outer, inner)
+            return _face_from_wires_tolerant(wires[0], wires[1:])
         if obj is None:
             return cq.Face.__new__(cq.Face)
         return cq.Face(obj)
@@ -1921,10 +1961,18 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
             faces = _collect_subshapes(result, cq.Face)
             if len(faces) == 1:
                 return faces[0]
+            if len(faces) > 1:
+                raise GeometryError(
+                    f"Boolean fuse operation on {shapes} gives more than one face."
+                )
         if all(isinstance(s, cq.Solid) for s in shapes):
             solids = _collect_subshapes(result, cq.Solid)
             if len(solids) == 1:
                 return solids[0]
+            if len(solids) > 1:
+                raise GeometryError(
+                    f"Boolean fuse operation on {shapes} gives more than one solid."
+                )
 
     return result
 

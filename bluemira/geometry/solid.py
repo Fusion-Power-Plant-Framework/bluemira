@@ -54,10 +54,10 @@ class BluemiraSolid(BluemiraGeo):
             Solid is disjointed (2 solids created)
         """
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
-        solid = cadapi.apiSolid(new_shell)
+        solid = cadapi.make_solid(new_shell)
 
         if len(self.boundary) > 1:
-            shell_holes = [cadapi.apiSolid(s.shape) for s in self.boundary[1:]]
+            shell_holes = [cadapi.make_solid(s.shape) for s in self.boundary[1:]]
             _solids = cadapi.boolean_cut(solid, shell_holes)
             if len(_solids) == 1:
                 solid = _solids[0]
@@ -65,7 +65,7 @@ class BluemiraSolid(BluemiraGeo):
                 raise DisjointedSolidError("Disjointed solids are not accepted.")
 
         if check_reverse:
-            return self._check_reverse(cadapi.apiSolid(solid))
+            return self._check_reverse(solid)
         return solid
 
     def _create_shape(self):
