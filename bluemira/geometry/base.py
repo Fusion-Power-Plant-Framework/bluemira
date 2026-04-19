@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 
 class _Orientation(enum.Enum):
+    """Topological orientation flag for wires, edges, and faces."""
+
     FORWARD = "Forward"
     REVERSED = "Reversed"
 

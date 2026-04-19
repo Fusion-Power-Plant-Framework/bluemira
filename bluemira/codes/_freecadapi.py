@@ -1028,7 +1028,7 @@ def wire_from_wires(wire_list: list) -> apiWire:
     Returns
     -------
     :
-        The assembled wire (or *wire_list*[0] if it contained a single wire).
+        The assembled wire (or ``wire_list[0]`` if it contained a single wire).
     """
     if len(wire_list) == 1:
         return wire_list[0]

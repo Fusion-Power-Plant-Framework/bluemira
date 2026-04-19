@@ -2472,17 +2472,18 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     The result is a single manifold solid whose volume equals the union minus
     the overlapping cross-sectional plugs.
 
-    .. todo::
+    .. warning::
         The current implementation is a plain boolean fuse and therefore
-        produces a **wrong volume** when the input shapes overlap: the internal
-        partition walls are *not* removed.
+        produces a **wrong volume** when the input shapes overlap: the
+        internal partition walls are not removed.
 
         Correct OCC implementation outline:
+
         1. ``BRepAlgoAPI_Fuse`` (or ``BRepAlgoAPI_BuilderAlgo`` GFA) of all
            input shapes.
-        2. Iterate over all faces of the fused result.  A face is an *internal
-           partition* if it is shared by two distinct solids in the fused
-           compound (i.e. it is a non-manifold / seam face that separates two
+        2. Iterate over all faces of the fused result. A face is an internal
+           partition if it is shared by two distinct solids in the fused
+           compound (i.e. a non-manifold / seam face that separates two
            previously independent volumes).
         3. Remove those internal faces using ``BRep_Builder.Remove`` and
            rebuild the shell/solid topology (``BRepBuilderAPI_MakeSolid``).
@@ -2490,8 +2491,8 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
            faces for a cleaner result.
 
         Alternatively, look at ``BOPAlgo_MakerVolume`` which can build a set
-        of non-intersecting solids from a compound and may expose the partition
-        face list directly.
+        of non-intersecting solids from a compound and may expose the
+        partition face list directly.
     """
     if not isinstance(shapes, list):
         raise TypeError(f"{shapes} is not a list.")
