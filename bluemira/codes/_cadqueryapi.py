@@ -1958,6 +1958,15 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
     return [result]
 
 
+def face_cut_holes(face: apiFace, holes: list) -> list:
+    """Cut hole faces out of an outer face.
+
+    Parity with ``_freecadapi.face_cut_holes``: no coplanar guard — callers
+    guarantee the input wires are coplanar by construction.
+    """
+    return boolean_cut(face, holes, split=False)
+
+
 _TOPABS_FOR_KIND: dict = {
     cq.Solid: TopAbs_SOLID,
     cq.Face: TopAbs_FACE,

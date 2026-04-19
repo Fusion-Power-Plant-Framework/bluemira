@@ -2482,6 +2482,22 @@ def boolean_cut(
     return output
 
 
+def face_cut_holes(face: apiFace, holes: list[apiFace]) -> list[apiFace]:
+    """Cut hole faces out of an outer face without the coplanar guard.
+
+    Used by ``BluemiraFace._create_face`` for outer-boundary + inner-holes
+    assembly where the wires are constructed to be coplanar by design but
+    may carry numerical noise that would trip ``_check_shapes_coplanar``.
+
+    Returns
+    -------
+    :
+        The resulting faces after cutting the holes from the outer face.
+    """
+    cut_shape = face.cut(holes)
+    return cut_shape.Faces
+
+
 def boolean_fragments(
     shapes: list[apiSolid], tolerance: float = 0.0
 ) -> tuple[apiCompound, list[apiSolid]]:

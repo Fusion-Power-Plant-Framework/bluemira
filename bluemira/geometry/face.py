@@ -140,7 +140,7 @@ class BluemiraFace(BluemiraGeo):
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
-            _faces = cadapi.boolean_cut(face, fholes)
+            _faces = cadapi.face_cut_holes(face, fholes)
             if len(_faces) == 1:
                 face = _faces[0]
             else:
