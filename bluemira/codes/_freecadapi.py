@@ -978,6 +978,11 @@ def ordered_edges(obj: apiShape) -> np.ndarray:
     return _get_api_attr(obj, "OrderedEdges")
 
 
+def eccentricity(edge: apiEdge) -> float:
+    """Eccentricity of an ellipse/circle edge's underlying curve (0 for a circle)."""  # noqa: DOC201
+    return edge.Curve.Eccentricity
+
+
 def wires(obj: apiShape) -> list[apiWire]:
     """Wires of the object"""  # noqa: DOC201
     return _get_api_attr(obj, "Wires")

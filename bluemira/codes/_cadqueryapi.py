@@ -798,6 +798,24 @@ def edges(obj: apiShape) -> list[apiEdge]:
     return obj.Edges()
 
 
+def eccentricity(edge: apiEdge) -> float:
+    """Return the eccentricity of an ellipse/circle edge's underlying curve.
+
+    Returns 0.0 for a circle, e = sqrt(1 - (b/a)²) for an ellipse. Raises
+    for any other curve type — the concept doesn't apply to line, bspline,
+    bezier, etc.
+    """
+    adaptor = BRepAdaptor_Curve(edge.wrapped)
+    curve_type = adaptor.GetType()
+    if curve_type == GeomAbs_Ellipse:
+        return adaptor.Ellipse().Eccentricity()
+    if curve_type == GeomAbs_Circle:
+        return 0.0
+    raise GeometryError(
+        f"eccentricity: edge curve is not an ellipse or circle ({curve_type})."
+    )
+
+
 def faces(obj: apiShape) -> list[apiFace]:
     """Faces of the shape."""
     return obj.Faces()
