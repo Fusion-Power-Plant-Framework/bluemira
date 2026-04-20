@@ -4,21 +4,28 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+import os
 from pathlib import Path
 from unittest.mock import patch
 
-import freecad  # noqa: F401
-import Part
-import numpy as np
 import pytest
-from FreeCAD import Base, closeDocument, newDocument
 
-import bluemira.codes._freecadapi as cadapi
-from bluemira.base.constants import EPS
-from bluemira.codes.error import FreeCADError
-from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
-from tests._helpers import skipif_import_error
-from tests.codes._shared.backend_api_tests import BackendApiTestsBase
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") != "freecad",
+    reason="FreeCAD-API tests; active backend is not freecad",
+)
+
+import freecad  # noqa: E402, F401
+import Part  # noqa: E402
+import numpy as np  # noqa: E402
+from FreeCAD import Base, closeDocument, newDocument  # noqa: E402
+
+import bluemira.codes._freecadapi as cadapi  # noqa: E402
+from bluemira.base.constants import EPS  # noqa: E402
+from bluemira.codes.error import FreeCADError  # noqa: E402
+from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD  # noqa: E402
+from tests._helpers import skipif_import_error  # noqa: E402
+from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
 
 
 class TestFreecadapi(BackendApiTestsBase):
