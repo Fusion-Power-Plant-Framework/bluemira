@@ -2758,6 +2758,16 @@ def save_cad(
         raise FreeCADError(f"CAD format not supported by CadQuery backend: {cad_format}")
 
 
+_IMPORT_UNIT_SCALE_TO_METRES = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "km": 1e3}
+
+
+def _scale_shape(shape: apiShape, factor: float) -> apiShape:
+    trsf = gp_Trsf()
+    trsf.SetScale(gp_Pnt(0.0, 0.0, 0.0), factor)
+    moved = BRepBuilderAPI_Transform(shape.wrapped, trsf, True).Shape()
+    return cq.Shape.cast(moved)
+
+
 def import_cad(
     file,
     filetype=None,
@@ -2774,6 +2784,19 @@ def import_cad(
     reader.TransferRoots()
     shape = reader.OneShape()
     result_shape = cq.Shape.cast(shape)
+
+    # OCCT's STEP reader always normalises geometry to its internal unit
+    # (millimetres). ``xstep.cascade.unit`` ostensibly overrides this, but
+    # the setting latches on first-WorkSession creation in the process and
+    # silently ignores subsequent ``Interface_Static.SetCVal_s`` calls, so
+    # we cannot reliably swap the reader's target unit at runtime. We
+    # therefore read with the default (mm) and scale explicitly here to
+    # the caller's ``unit_scale`` target (default "m").
+    _INTERNAL_METRES = 1e-3
+    target_factor = _IMPORT_UNIT_SCALE_TO_METRES.get(unit_scale.lower(), 1.0)
+    scale = _INTERNAL_METRES / target_factor
+    if not math.isclose(scale, 1.0, rel_tol=1e-12):
+        result_shape = _scale_shape(result_shape, scale)
 
     # STEP reader often returns a Compound of raw edges — try to upgrade to wires.
     if isinstance(result_shape, cq.Compound):
