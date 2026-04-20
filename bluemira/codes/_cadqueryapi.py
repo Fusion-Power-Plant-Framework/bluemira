@@ -2247,22 +2247,78 @@ def _split_wire_by_closed_tools(wire: apiWire, tools: list[apiWire]) -> list[api
     )
 
 
+def _split_wire_at_tool_crossings(wire: apiWire, tools: list[apiWire]) -> list[apiWire]:
+    """Partition *wire* into connected pieces separated by tool crossings.
+
+    Open-tool variant of ``_split_wire_by_closed_tools``. Uses OCC's
+    ``cq.Shape.cut`` (which on wire-vs-wire removes overlapping segments
+    *and* inserts split vertices at point-crossings, producing a trimmed
+    wire with refined topology) and then breaks the resulting edge chain
+    into separate wires at vertices that weren't on the original wire —
+    those are the tool-crossing points we want to split at. Pieces are
+    returned sorted by length descending to match FreeCAD
+    ``boolean_cut``'s ``Wires`` property ordering.
+    """
+    cut_result = wire.cut(*tools)
+    all_edges = ordered_edges(cut_result) if cut_result.Edges() else []
+    if not all_edges:
+        return []
+
+    orig_positions = [(v.X, v.Y, v.Z) for v in wire.Vertices()]
+
+    def _is_original(point_tuple):
+        px, py, pz = point_tuple
+        return any(
+            abs(px - qx) < _POINT_COINCIDENCE_TOL
+            and abs(py - qy) < _POINT_COINCIDENCE_TOL
+            and abs(pz - qz) < _POINT_COINCIDENCE_TOL
+            for qx, qy, qz in orig_positions
+        )
+
+    # Walk the cut result's edges in connectivity order and start a new
+    # wire whenever an edge ends at a non-original vertex (a tool crossing).
+    # The final edge always ends at an original terminus, so we don't break
+    # there.
+    groups: list[list] = []
+    current: list = []
+    for i, edge in enumerate(all_edges):
+        current.append(edge)
+        end_pt = edge.endPoint()
+        end_tuple = (end_pt.x, end_pt.y, end_pt.z)
+        is_last = i == len(all_edges) - 1
+        if not is_last and not _is_original(end_tuple):
+            groups.append(current)
+            current = []
+    if current:
+        groups.append(current)
+
+    wires: list = []
+    for g in groups:
+        wires.extend(_assemble_wires_from_edges(g))
+    wires.sort(key=lambda w: w.Length(), reverse=True)
+    return wires
+
+
 def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
     """Boolean subtraction — return list of result shapes."""
     if not isinstance(tools, list):
         tools = [tools]
 
-    # For a 1-D wire argument vs. closed-wire tools, OCC's raw ``cut`` has no
+    # For a 1-D wire argument vs. wire tools, OCC's raw ``cut`` has no
     # dimensional overlap to work with and returns the wire unchanged. FreeCAD
     # follows its ``cut`` with ``BOPTools.SplitAPI.slice(mode="Split")`` which
     # adds topology at tool-crossings and partitions the wire into pieces.
-    # Mirror that via Splitter + classification when the configuration matches.
+    # Mirror that via Splitter: classify inside/outside when every tool is a
+    # closed region, otherwise just break the wire at each tool-crossing
+    # vertex (open-tool case — no region to be inside/outside of).
     if (
         split
         and isinstance(shape, apiWire)
-        and all(isinstance(t, apiWire) and t.IsClosed() for t in tools)
+        and all(isinstance(t, apiWire) for t in tools)
     ):
-        return _split_wire_by_closed_tools(shape, tools)
+        if all(t.IsClosed() for t in tools):
+            return _split_wire_by_closed_tools(shape, tools)
+        return _split_wire_at_tool_crossings(shape, tools)
 
     result = shape.cut(*tools)
     # OCC's BRepAlgoAPI_Cut can return nested compounds, and cq.Shape.Solids()

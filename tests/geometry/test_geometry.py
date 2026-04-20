@@ -270,15 +270,6 @@ class TestGeometry:
             ],
             [(2, False), (1, False)],
             id="intersection",
-            marks=pytest.mark.xfail(
-                _CADQUERY_BACKEND,
-                reason=(
-                    "CadQuery backend: OCC boolean_cut on wires does not split at "
-                    "geometric intersections — returns the original wire intact. "
-                    "Wire-wire splitting requires explicit intersection point detection."
-                ),
-                strict=True,
-            ),
         ),
     )
 
