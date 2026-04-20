@@ -59,6 +59,7 @@ from OCP.GeomAbs import (
 )
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.Interface import Interface_Static
+from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
@@ -69,6 +70,9 @@ from OCP.TColStd import (
     TColStd_Array2OfReal,
 )
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
+from OCP.TCollection import TCollection_ExtendedString
+from OCP.TDataStd import TDataStd_Name
+from OCP.TDocStd import TDocStd_Document
 from OCP.TopAbs import (
     TopAbs_FACE,
     TopAbs_IN,
@@ -82,6 +86,8 @@ from OCP.TopExp import TopExp_Explorer
 from OCP.TopLoc import TopLoc_Location
 from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
 from OCP.TopoDS import TopoDS, TopoDS_Compound
+from OCP.XCAFApp import XCAFApp_Application
+from OCP.XCAFDoc import XCAFDoc_DocumentTool
 from OCP.gp import (
     gp_Ax1,
     gp_Ax2,
@@ -2686,6 +2692,25 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
         raise FreeCADError(f"Failed to write STEP file: {filename}")
 
 
+def _write_labeled_step(shapes, labels, filename):
+    """Write a STEP file as an XCAF assembly with one named PRODUCT per shape.
+
+    Mirrors FreeCAD's ``save_cad(..., labels=...)`` behaviour: downstream
+    tools (``fast_ctd``, DAGMC converters) look up solids by name, so each
+    input shape must appear as a distinct named entity in the STEP file.
+    """
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
+    app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    for s, name in zip(shapes, labels, strict=True):
+        lbl = shape_tool.AddShape(s.wrapped, False)
+        TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
+    writer = STEPCAFControl_Writer()
+    writer.Transfer(doc, STEPControl_AsIs)
+    return writer.Write(str(filename))
+
+
 def save_cad(
     shapes: Iterable[apiShape],
     filename: str,
@@ -2696,6 +2721,7 @@ def save_cad(
     """Save CAD shapes to a file."""
     if not isinstance(shapes, list):
         shapes = list(shapes)
+    labels_list = list(labels) if labels is not None else None
 
     cad_format = (
         CADFileType(cad_format)
@@ -2713,10 +2739,13 @@ def save_cad(
 
     if cad_format == CADFileType.STEP:
         with _step_write_settings():
-            writer = STEPControl_Writer()
-            for s in shapes:
-                writer.Transfer(s.wrapped, STEPControl_AsIs)
-            status = writer.Write(str(filename))
+            if labels_list:
+                status = _write_labeled_step(shapes, labels_list, filename)
+            else:
+                writer = STEPControl_Writer()
+                for s in shapes:
+                    writer.Transfer(s.wrapped, STEPControl_AsIs)
+                status = writer.Write(str(filename))
         if status != IFSelect_RetDone:
             raise FreeCADError(f"Failed to write STEP file: {filename}")
     else:
