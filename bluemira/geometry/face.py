@@ -235,7 +235,9 @@ class BluemiraFace(BluemiraGeo):
         """
         The edges of the face.
         """
-        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
+        return tuple(
+            BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.edges(self.shape)
+        )
 
     @property
     def wires(self) -> tuple[BluemiraWire]:

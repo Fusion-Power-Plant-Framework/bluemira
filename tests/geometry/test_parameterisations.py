@@ -127,14 +127,6 @@ class DummyToroidalFieldSolver:
         return np.array([np.zeros_like(x), 1.0 / x, np.zeros_like(z)])
 
 
-@pytest.mark.xfail(
-    _CADQUERY_BACKEND,
-    reason=(
-        "CadQuery backend: PrincetonDDiscrete.create_shape uses make_bspline_g1_blend "
-        "and ._shape.OrderedEdges — both FreeCAD-only APIs."
-    ),
-    strict=True,
-)
 class TestPrincetonDDiscrete:
     @classmethod
     def setup_class(cls):

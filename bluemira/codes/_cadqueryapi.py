@@ -1475,6 +1475,76 @@ def make_bezier(points: list | np.ndarray) -> apiWire:
     return cq.Wire.assembleEdges([edge])
 
 
+def make_bspline_g1_blend(
+    edge1: apiEdge,
+    edge2: apiEdge,
+    scale: float = 0.2,
+) -> apiWire:
+    """Create a G1-continuous cubic Bézier blend wire between two edges.
+
+    Port of ``_freecadapi.make_bspline_g1_blend``. Connects the end of
+    ``edge1`` to the start of ``edge2`` with a cubic Bézier whose inner
+    control points are placed along the edges' tangents at the join.
+
+    Mirrors the FreeCAD version's orientation-disambiguation and its
+    explicit end-tangent sign flip ("stupid fucking FreeCAD ... hopeless
+    just override and hope they fix") so results are bit-comparable.
+
+    Raises
+    ------
+    FreeCADError
+        When the two edges' join points coincide (zero-length chord).
+    """
+    a1 = BRepAdaptor_Curve(edge1.wrapped)
+    a2 = BRepAdaptor_Curve(edge2.wrapped)
+
+    p0 = gp_Pnt()
+    t0 = gp_Vec()
+    a1.D1(a1.LastParameter(), p0, t0)
+    p1 = gp_Pnt()
+    t1 = gp_Vec()
+    a2.D1(a2.FirstParameter(), p1, t1)
+
+    chord = gp_Vec(p0, p1)
+    chord_len = chord.Magnitude()
+    if chord_len == 0:
+        raise FreeCADError("Edges share identical endpoints")
+
+    t0.Normalize()
+    t1.Normalize()
+
+    # Flip start tangent to always point toward p1.
+    if t0.Dot(chord) < 0:
+        t0.Reverse()
+    # Flip end tangent to first point back toward p0 (FreeCAD-equivalent
+    # orientation-disambiguation)...
+    chord_rev = gp_Vec(chord.X(), chord.Y(), chord.Z())
+    chord_rev.Reverse()
+    if t1.Dot(chord_rev) < 0:
+        t1.Reverse()
+    # ...then override with a blanket sign flip, matching the FreeCAD
+    # impl's explicit workaround for unreliable tangent signs.
+    t1.Reverse()
+
+    h = chord_len * scale
+    poles = TColgp_Array1OfPnt(1, 4)
+    poles.SetValue(1, p0)
+    poles.SetValue(
+        2, gp_Pnt(p0.X() + t0.X() * h, p0.Y() + t0.Y() * h, p0.Z() + t0.Z() * h)
+    )
+    poles.SetValue(
+        3, gp_Pnt(p1.X() - t1.X() * h, p1.Y() - t1.Y() * h, p1.Z() - t1.Z() * h)
+    )
+    poles.SetValue(4, p1)
+
+    curve = Geom_BezierCurve(poles)
+    edge = BRepBuilderAPI_MakeEdge(curve).Edge()
+    maker = BRepBuilderAPI_MakeWire()
+    maker.Add(edge)
+    maker.Build()
+    return cq.Wire(maker.Wire())
+
+
 def make_bspline(
     poles: np.ndarray,
     mults: np.ndarray,
@@ -2766,12 +2836,6 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     with contextlib.suppress(Exception):
         result = result.clean()
     return result
-
-
-def make_bspline_g1_blend(*args, **kwargs):
-    raise NotImplementedError(
-        "_cadqueryapi: 'make_bspline_g1_blend' is not yet implemented."
-    )
 
 
 # ---------------------------------------------------------------------------

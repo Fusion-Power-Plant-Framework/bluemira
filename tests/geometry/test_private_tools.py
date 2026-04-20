@@ -144,12 +144,6 @@ class TestMixedFaces:
         if error:
             raise AssertionError(list(zip(keys, expected, actual, strict=False)))
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason="CadQuery backend: make_mixed_face spline interpolation may differ from "
-        "FreeCAD, producing different regression values for volume/CoM/area.",
-        strict=False,
-    )
     @pytest.mark.parametrize(
         ("filename", "degree", "true_props"),
         [
@@ -182,12 +176,6 @@ class TestMixedFaces:
         part = revolve_shape(face, degree=degree, label=filename)
         self.assert_properties(true_props, part)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason="CadQuery backend: make_mixed_face spline interpolation may differ from "
-        "FreeCAD, producing different regression values for volume/CoM/area.",
-        strict=False,
-    )
     @pytest.mark.parametrize(
         ("filename", "vec", "true_props"),
         [
@@ -222,11 +210,6 @@ class TestMixedFaces:
 
         self.assert_properties(true_props, part)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason="CadQuery backend: make_mixed_face area may differ from FreeCAD regression value.",
-        strict=False,
-    )
     def test_face_seg_fault(self):
         """
         Tests a particularly tricky face that can result in a seg fault...

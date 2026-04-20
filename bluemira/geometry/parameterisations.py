@@ -29,7 +29,8 @@ from scipy.special import iv as bessel
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadapi import make_bspline_g1_blend
+from bluemira.codes import _geometryapi as cadapi
+from bluemira.codes._geometryapi import make_bspline_g1_blend
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
@@ -1047,18 +1048,14 @@ class PrincetonDDiscrete(PrincetonD):
             {"x": [x1, x1], "y": [0.0, 0.0], "z": [-first_z, first_z]},
             label="straight_segment",
         )
+        straight_edges = cadapi.ordered_edges(straight_segment._shape)
+        outer_edges = cadapi.ordered_edges(outer_arc._shape)
         joint = BluemiraWire(
-            make_bspline_g1_blend(
-                straight_segment._shape.OrderedEdges[0],
-                outer_arc._shape.OrderedEdges[0],
-            ),
+            make_bspline_g1_blend(straight_edges[0], outer_edges[0]),
             label="upper_joint",
         )
         joint2 = BluemiraWire(
-            make_bspline_g1_blend(
-                outer_arc._shape.OrderedEdges[-1],
-                straight_segment._shape.OrderedEdges[-1],
-            ),
+            make_bspline_g1_blend(outer_edges[-1], straight_edges[-1]),
             label="lower_joint",
         )
 
