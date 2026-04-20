@@ -23,7 +23,7 @@ import enum
 import math
 from collections import UserList
 from dataclasses import dataclass
-from itertools import starmap
+from itertools import pairwise, starmap
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -407,6 +407,40 @@ def revolve_shape(
         raise FreeCADError(f"CadQuery revolve failed: {exc}") from exc
 
 
+def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
+    """Raise ``FreeCADError`` if the path has a non-tangent-continuous join.
+
+    Mirrors FreeCAD's ``Part.Wire.makePipeShell`` precondition: at every
+    interior vertex of the sweep path, the end-tangent of the incoming
+    edge and the start-tangent of the outgoing edge must agree (within a
+    dot-product tolerance). OCCT's ``BRepOffsetAPI_MakePipeShell`` does
+    not enforce this itself and will happily sweep along a kinked polyline,
+    producing a self-intersecting / kinked solid. FreeCAD raises on this
+    case, so we do too.
+    """
+    edges = ordered_edges(path)
+    if len(edges) < 2:  # noqa: PLR2004
+        return
+    for e_prev, e_next in pairwise(edges):
+        a_prev = BRepAdaptor_Curve(e_prev.wrapped)
+        a_next = BRepAdaptor_Curve(e_next.wrapped)
+        p_end = gp_Pnt()
+        t_end = gp_Vec()
+        a_prev.D1(a_prev.LastParameter(), p_end, t_end)
+        p_start = gp_Pnt()
+        t_start = gp_Vec()
+        a_next.D1(a_next.FirstParameter(), p_start, t_start)
+        mag = t_end.Magnitude() * t_start.Magnitude()
+        if mag == 0:
+            continue
+        cos_angle = t_end.Dot(t_start) / mag
+        if cos_angle < 1.0 - tol:
+            raise FreeCADError(
+                "sweep_shape: path is not tangent-continuous at an interior "
+                f"vertex (cos(angle)={cos_angle:.6f})."
+            )
+
+
 def sweep_shape(
     profiles: Iterable[apiWire],
     path: apiWire,
@@ -431,6 +465,8 @@ def sweep_shape(
             "You cannot sweep open profiles and expect a Solid result. Disabling this."
         )
         solid = False
+
+    _check_path_tangent_continuity(path)
 
     # bluemira's sweep semantics match FreeCAD's ``Part.Wire.makePipeShell``:
     # all profiles are section profiles along the path (multi-section sweep),
@@ -1923,6 +1959,15 @@ def discretise_by_edges(
             # edges that GCPnts can't sample.
             a0, a1 = cum_abscissa[i] / total, cum_abscissa[i + 1] / total
             pts = [_vector_to_numpy(w.positionAt(t)) for t in np.linspace(a0, a1, n)]
+        # Dedup numerically-coincident consecutive samples. GCPnts_UniformAbscissa
+        # occasionally emits its final samples at the same parameter near the
+        # endpoint (small-Δs numerical latch), producing duplicates that break
+        # downstream vector_lengthnorm / scipy spline setup.
+        deduped = [pts[0]]
+        for p in pts[1:]:
+            if np.linalg.norm(p - deduped[-1]) > _POINT_COINCIDENCE_TOL:
+                deduped.append(p)
+        pts = deduped
         output += pts[:-1]
         last_pts = pts
 

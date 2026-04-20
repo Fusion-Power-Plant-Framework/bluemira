@@ -112,15 +112,6 @@ class TestSweep:
         with pytest.raises(FreeCADError):
             sweep = sweep_shape([profile_1, profile_2], path)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: sweep_shape does not enforce path tangency. "
-            "CadQuery/OCC sweeps along non-tangent polygon paths without raising, "
-            "producing a kinked solid. FreeCAD raises a FreeCADError in this case."
-        ),
-        strict=True,
-    )
     def test_bad_path(self):
         path = make_polygon([[0, 0, 0], [0, 0, 10], [10, 0, 10]])
         profile = make_circle(
