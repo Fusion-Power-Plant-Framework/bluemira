@@ -16,6 +16,8 @@ from bluemira.geometry.solid import BluemiraSolid
 
 try:
     from OCC.Core.BRepTools import breptools
+    from OCC.Core.TopAbs import TopAbs_SOLID
+    from OCC.Core.TopExp import TopExp_Explorer
     from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid, topods
     from OCC.Extend.TopologyUtils import TopologyExplorer
 except ImportError:
@@ -47,6 +49,9 @@ def _bm_shape_to_occ_solid(bm_shape) -> TopoDS_Solid:
     ------
     TypeError
         If *bm_shape* is neither a ``Part.Shape`` nor a ``cq.Shape``.
+    RuntimeError
+        If the CadQuery BRep round-trip yields a shape with no
+        ``TopAbs_SOLID`` inside.
     """
     if Part is not None and isinstance(bm_shape, Part.Shape):
         return Part.__toPythonOCC__(bm_shape)
@@ -54,7 +59,18 @@ def _bm_shape_to_occ_solid(bm_shape) -> TopoDS_Solid:
         buf = BytesIO()
         bm_shape.exportBrep(buf)
         shape = breptools.ReadFromString(buf.getvalue().decode("ascii"))
-        return topods.Solid(shape)
+        # ReadFromString may return a TopoDS_Compound wrapping the solid even
+        # when the input was a cq.Solid; unchecked topods.Solid(...) then yields
+        # an invalid pointer and segfaults in downstream OCC ops (e.g.
+        # BOPAlgo_MakeConnected). Extract the first solid explicitly.
+        if shape.ShapeType() == TopAbs_SOLID:
+            return topods.Solid(shape)
+        explorer = TopExp_Explorer(shape, TopAbs_SOLID)
+        if explorer.More():
+            return topods.Solid(explorer.Current())
+        raise RuntimeError(
+            f"BRep round-trip yielded no TopoDS_Solid (ShapeType={shape.ShapeType()})"
+        )
     raise TypeError(f"Cannot convert {type(bm_shape)!r} to OCC.Core TopoDS_Solid")
 
 
