@@ -154,14 +154,39 @@ class _apiFaceMeta(type):
 
 
 def _face_from_wires_tolerant(outer: cq.Wire, inner: list) -> cq.Face:
-    """Build a planar face, tolerating numerical non-planarity in the wires.
+    """Build a face from *outer* (+ optional *inner* hole wires).
 
-    ``cq.Face.makeFromWires`` runs ``BRepLib_FindSurface(OnlyPlane=True)`` with
-    default confusion tolerance (~1e-7) and raises ``ValueError: wires not
-    planar`` on wires that are planar by construction but carry floating-point
-    noise above that threshold. Falls back to an explicit SVD-fitted plane +
-    ``BRepBuilderAPI_MakeFace``, which accepts slight out-of-plane deviation.
+    Tries three constructors in sequence, from strictest to most forgiving:
+
+    1. ``BRepBuilderAPI_MakeFace(outer, OnlyPlane=False)`` — OCCT's native
+       ``BRepLib_FindSurface`` over all surface types (plane, cylinder,
+       cone, sphere, torus, bspline). Succeeds when the wire's edges carry
+       pcurves on a common non-planar surface, e.g. side faces of a swept
+       solid. Equivalent to FreeCAD's ``Part.Face(wire)``.
+    2. ``cq.Face.makeFromWires`` — planar-only with ``OnlyPlane=True`` and
+       strict confusion tolerance; fast path for clean planar wires.
+    3. SVD-fitted plane + ``BRepBuilderAPI_MakeFace(pln, wire)`` — tolerant
+       planar fallback for wires that are planar by construction but
+       carry out-of-plane floating-point noise above OCCT's default
+       confusion threshold (~1e-7).
+
+    The non-planar path (1) has to come first, because ``cq.Face.makeFromWires``
+    succeeds on curved-but-near-planar wires by projecting them onto a flat
+    plane — silently destroying the surface curvature and giving wrong
+    ``.Area`` / ``.Volume`` for any reconstructed solid. The TF coil
+    insulation-shell rebuild hit this: 2 of 8 faces (the large swept sides)
+    would fall into the SVD-fit fallback and produce a 68 m² deficit in the
+    reconstructed shell area.
     """
+    if not inner:
+        try:
+            builder = BRepBuilderAPI_MakeFace(outer.wrapped, False)
+            builder.Build()
+            if builder.IsDone():
+                return cq.Face(builder.Face())
+        except Exception:  # noqa: BLE001, S110
+            pass  # fall through to planar paths below
+
     try:
         return cq.Face.makeFromWires(outer, inner)
     except ValueError as exc:

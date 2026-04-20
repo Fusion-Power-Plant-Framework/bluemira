@@ -8,7 +8,6 @@ Test first wall silhouette designer.
 """
 
 import copy
-import os
 from pathlib import Path
 from typing import ClassVar
 
@@ -21,8 +20,6 @@ from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle, make_polygon
 from eudemo.tf_coils import TFCoilBuilder, TFCoilDesigner
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 DATA = str(Path(__file__).parent / "test_data")
@@ -198,18 +195,6 @@ class TestTFCoilBuilder:
         "tk_tf_side": {"value": 0.1, "unit": "m"},
     }
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: a step upstream in TFCoilBuilder.build() produces "
-            "an insulation solid whose XZ slice yields 0 wires instead of the "
-            "expected 4 (outer+inner rings on both x-sides). The slice_shape "
-            "path itself works on equivalent stand-alone hollow swept D-shapes, "
-            "so the divergence is in the builder chain — likely sweep_shape or "
-            "boolean_cut producing a Compound with unusual topology."
-        ),
-        strict=True,
-    )
     @pytest.mark.parametrize(
         ("centreline", "wp_xs"), zip(*centreline_setup(), strict=False)
     )
