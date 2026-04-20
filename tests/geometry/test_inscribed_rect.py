@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
@@ -16,8 +14,6 @@ from bluemira.geometry.coordinates import Coordinates, get_area, in_polygon
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.inscribed_rect import _rect, inscribed_rect_in_poly
 from bluemira.geometry.tools import boolean_cut, make_circle, make_polygon
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestInscribedRectangle:
@@ -51,11 +47,6 @@ class TestInscribedRectangle:
 
     @pytest.mark.parametrize(("shape", "convex"), zip(shapes, convex, strict=False))
     def test_inscribed_rectangle(self, shape, convex):
-        if _CADQUERY_BACKEND and not convex:
-            pytest.xfail(
-                "CadQuery backend: boolean_cut on non-convex discretised shape "
-                "produces false-positive overlaps; Coordinates.plot() also missing."
-            )
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape
