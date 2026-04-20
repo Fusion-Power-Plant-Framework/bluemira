@@ -31,7 +31,11 @@ import cadquery as cq
 import numpy as np
 from OCP.BRep import BRep_Builder, BRep_Tool
 from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
-from OCP.BRepAlgoAPI import BRepAlgoAPI_BuilderAlgo, BRepAlgoAPI_Section
+from OCP.BRepAlgoAPI import (
+    BRepAlgoAPI_BuilderAlgo,
+    BRepAlgoAPI_Section,
+    BRepAlgoAPI_Splitter,
+)
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
@@ -61,7 +65,7 @@ from OCP.IFSelect import IFSelect_RetDone
 from OCP.Interface import Interface_Static
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
-from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
+from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Surface
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from OCP.TColStd import (
@@ -1994,10 +1998,106 @@ def _unify_same_domain(shape: apiShape) -> apiShape:
         return shape
 
 
+def _assemble_wires_from_edges(edges: list) -> list:
+    """Reassemble a list of edges into as few connected wires as possible."""
+    if not edges:
+        return []
+    seq = TopTools_HSequenceOfShape()
+    for e in edges:
+        seq.Append(e.wrapped)
+    out = TopTools_HSequenceOfShape()
+    ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(seq, _OCC_DEFAULT_TOL, False, out)
+    return [cq.Shape.cast(out.Value(i)) for i in range(1, out.Size() + 1)]
+
+
+def _split_wire_by_closed_tools(wire: apiWire, tools: list[apiWire]) -> list[apiWire]:
+    """Partition *wire* into pieces inside/outside each closed tool.
+
+    OCC's ``cut(wire, wire)`` is a no-op when the two wires have no
+    dimensional overlap. FreeCAD's ``boolean_cut`` compensates with a
+    second ``BOPTools.SplitAPI.slice`` pass that adds topology wherever
+    the tools' boundaries cross the argument. This helper reproduces
+    that behaviour: run ``BRepAlgoAPI_Splitter`` to insert split vertices
+    at tool-crossings, then classify each resulting edge as inside or
+    outside the closed-tool region(s) and reassemble wires per class.
+
+    Only the "outside" pieces are returned (mirroring the subtractive
+    semantics of ``boolean_cut``), plus any pieces lying on the boundary.
+    FreeCAD's impl returns *both* inside and outside pieces concatenated;
+    we do the same so downstream callers like
+    ``ITERGravitySupportBuilder._get_intersection_wire`` — which picks
+    the shortest via ``min(key=length)`` — keep working unchanged.
+    """
+    # Run BOPAlgo_Splitter: inserts split vertices at every place a tool's
+    # boundary crosses `wire`. Output edge count = input edges + 2 per tool
+    # crossing; the curves are unchanged, only the topology is refined.
+    splitter = BRepAlgoAPI_Splitter()
+    args = TopTools_ListOfShape()
+    args.Append(wire.wrapped)
+    tools_list = TopTools_ListOfShape()
+    for t in tools:
+        tools_list.Append(t.wrapped)
+    splitter.SetArguments(args)
+    splitter.SetTools(tools_list)
+    splitter.Build()
+    result = cq.Shape.cast(splitter.Shape())
+
+    # Build a planar Face per closed tool wire — the classifier works on a
+    # Face's 2D parametric domain, not on a wire, so we need the region's
+    # surface to test "inside vs outside".
+    tool_faces = [cq.Face.makeFromWires(t).wrapped for t in tools]
+    # ShapeAnalysis_Surface projects a 3D point onto the face's underlying
+    # surface and returns the (u, v) parameters — needed to feed the
+    # classifier, which takes parameter-space coordinates, not 3D.
+    surf_analysers = [ShapeAnalysis_Surface(BRep_Tool.Surface_s(f)) for f in tool_faces]
+    classifier = BRepClass_FaceClassifier()
+
+    inside_edges: list = []
+    outside_edges: list = []
+    for edge in result.Edges():
+        # Sample the edge at its mid-parameter: a single point is enough
+        # because Splitter guarantees no edge straddles a tool boundary,
+        # so every point on one edge has the same inside/outside state.
+        adaptor = BRepAdaptor_Curve(edge.wrapped)
+        umid = 0.5 * (adaptor.FirstParameter() + adaptor.LastParameter())
+        mid3d = adaptor.Value(umid)
+        is_inside_any = False
+        for tool_face, analyser in zip(tool_faces, surf_analysers, strict=True):
+            # Project 3D mid-point onto the tool face's surface → (u, v),
+            # then classify that (u, v) against the face's trimming wires.
+            uv = analyser.ValueOfUV(mid3d, _OCC_DEFAULT_TOL)
+            classifier.Perform(tool_face, uv, _OCC_DEFAULT_TOL)
+            # TopAbs_IN means the edge lies inside this tool's region; a
+            # single inside-hit is enough (multi-tool union semantics).
+            if classifier.State() == TopAbs_IN:
+                is_inside_any = True
+                break
+        (inside_edges if is_inside_any else outside_edges).append(edge)
+
+    # Reassemble edges of each class back into connected wires. Outside
+    # first, then inside, matches FreeCAD's ordering — callers picking by
+    # length index (e.g. `[-1]` or `min(key=length)`) stay consistent.
+    return _assemble_wires_from_edges(outside_edges) + _assemble_wires_from_edges(
+        inside_edges
+    )
+
+
 def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
     """Boolean subtraction — return list of result shapes."""
     if not isinstance(tools, list):
         tools = [tools]
+
+    # For a 1-D wire argument vs. closed-wire tools, OCC's raw ``cut`` has no
+    # dimensional overlap to work with and returns the wire unchanged. FreeCAD
+    # follows its ``cut`` with ``BOPTools.SplitAPI.slice(mode="Split")`` which
+    # adds topology at tool-crossings and partitions the wire into pieces.
+    # Mirror that via Splitter + classification when the configuration matches.
+    if (
+        split
+        and isinstance(shape, apiWire)
+        and all(isinstance(t, apiWire) and t.IsClosed() for t in tools)
+    ):
+        return _split_wire_by_closed_tools(shape, tools)
 
     result = shape.cut(*tools)
     # OCC's BRepAlgoAPI_Cut can return nested compounds, and cq.Shape.Solids()

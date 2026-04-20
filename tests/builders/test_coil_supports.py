@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-import os
 
 import numpy as np
 import pytest
@@ -35,8 +34,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestITERGravitySupportBuilder:
@@ -87,20 +84,6 @@ class TestITERGravitySupportBuilder:
         with pytest.raises(BuilderError):
             builder.build()
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: upstream geometry construction in "
-            "ITERGravitySupportBuilder produces three disjoint solids where "
-            "FreeCAD produces three overlapping ones that fuse into a single "
-            "solid. boolean_fuse's multi-output guard (parity with FreeCAD) "
-            "now correctly raises GeometryError on the cadquery side. Same "
-            "root-cause category as the TF coil slice_shape divergence — "
-            "a sweep / boolean_cut step earlier in the builder chain lands "
-            "on different topology across backends."
-        ),
-        strict=True,
-    )
     @pytest.mark.parametrize("tf", tf_kozs)
     @pytest.mark.parametrize("x_gs", [3.75, 7, 10])
     def test_good_support_radius(self, tf, x_gs):
@@ -241,16 +224,6 @@ class TestOISBuilder:
         self._check_no_intersection_when_patterned(ois, builder, n_TF)
 
     @pytest.mark.parametrize("n_TF", [14, 15, 16, 17, 18, 19])
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: the slice_shape bisector trick in build_xyz"
-            " produces an ois_profile_mid whose topology is not cyclically"
-            " aligned with ois_profile_1, which OCC's MakePipeShell rejects"
-            " as 'uncompatible wires'. Upstream issue in cq.Wire.combine /"
-            " outerWire() edge ordering; FreeCAD backend is unaffected."
-        ),
-    )
     def test_curved_profile(self, n_TF):
         result = boolean_cut(
             self.pd,
