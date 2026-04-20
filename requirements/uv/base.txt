@@ -38,9 +38,9 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.1
+cyclopts==4.10.2
     # via pyvista
-docstring-parser==0.17.0
+docstring-parser==0.18.0
     # via cyclopts
 docutils==0.22.4
     # via rich-rst
@@ -68,7 +68,7 @@ kiwisolver==1.5.0
     # via matplotlib
 llvmlite==0.47.0
     # via numba
-lxml==6.0.2
+lxml==6.1.0
     # via citeproc-py
 markdown-it-py==4.0.0
     # via rich
@@ -123,9 +123,9 @@ numpy==2.2.6
     #   scipy
     #   seaborn
     #   tables
-numpydantic==1.8.0
+numpydantic==1.8.1
     # via matproplib
-packaging==26.0
+packaging==26.1
     # via
     #   matplotlib
     #   pooch
@@ -145,7 +145,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   pint
     #   pooch
@@ -155,13 +155,13 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.12.5
+pydantic==2.13.2
     # via
     #   bluemira (pyproject.toml)
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.41.5
+pydantic-core==2.46.2
     # via pydantic
 pygments==2.20.0
     # via rich
@@ -173,13 +173,13 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.47.2
+pyvista==0.47.3
     # via bluemira (pyproject.toml)
 requests==2.33.1
     # via
     #   blosc2
     #   pooch
-rich==14.3.3
+rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
     #   cyclopts

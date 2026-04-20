@@ -56,7 +56,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.1
+cyclopts==4.10.2
     # via pyvista
 debugpy==1.8.20
     # via ipykernel
@@ -64,7 +64,7 @@ decorator==5.2.1
     # via ipython
 distlib==0.4.0
     # via virtualenv
-docstring-parser==0.17.0
+docstring-parser==0.18.0
     # via cyclopts
 docutils==0.21.2
     # via
@@ -78,7 +78,7 @@ executing==2.2.1
     # via stack-data
 fastjsonschema==2.21.2
     # via nbformat
-filelock==3.25.2
+filelock==3.29.0
     # via
     #   python-discovery
     #   virtualenv
@@ -94,9 +94,9 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.2
     # via bluemira (pyproject.toml)
-greenlet==3.3.2
+greenlet==3.4.0
     # via sqlalchemy
-identify==2.6.18
+identify==2.6.19
     # via pre-commit
 idna==3.11
     # via requests
@@ -148,11 +148,11 @@ jupytext==1.19.1
     # via bluemira (pyproject.toml)
 kiwisolver==1.5.0
     # via matplotlib
-librt==0.8.1
+librt==0.9.0
     # via mypy
 llvmlite==0.47.0
     # via numba
-lxml==6.0.2
+lxml==6.1.0
     # via citeproc-py
 markdown-it-py==4.0.0
     # via
@@ -185,7 +185,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.2
     # via blosc2
-mypy==1.20.0
+mypy==1.20.1
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
@@ -243,9 +243,9 @@ numpy==2.2.6
     #   scipy
     #   seaborn
     #   tables
-numpydantic==1.8.0
+numpydantic==1.8.1
     # via matproplib
-packaging==26.0
+packaging==26.1
     # via
     #   ipykernel
     #   jupytext
@@ -275,7 +275,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.9.4
+platformdirs==4.9.6
     # via
     #   jupyter-core
     #   pint
@@ -302,13 +302,13 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.12.5
+pydantic==2.13.2
     # via
     #   bluemira (pyproject.toml)
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.41.5
+pydantic-core==2.46.2
     # via pydantic
 pygments==2.20.0
     # via
@@ -321,7 +321,7 @@ pyparsing==3.3.2
     # via
     #   matplotlib
     #   periodictable
-pytest==9.0.2
+pytest==9.0.3
     # via
     #   bluemira (pyproject.toml)
     #   pytest-cov
@@ -344,9 +344,9 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-python-discovery==1.2.1
+python-discovery==1.2.2
     # via virtualenv
-pyvista==0.47.2
+pyvista==0.47.3
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -369,7 +369,7 @@ requests==2.33.1
     #   blosc2
     #   pooch
     #   sphinx
-rich==14.3.3
+rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
     #   cyclopts
@@ -477,7 +477,7 @@ typing-inspection==0.4.2
     # via pydantic
 urllib3==2.6.3
     # via requests
-virtualenv==21.2.0
+virtualenv==21.2.4
     # via pre-commit
 vtk==9.3.1
     # via
@@ -485,5 +485,5 @@ vtk==9.3.1
     #   pyvista
 wcwidth==0.6.0
     # via prompt-toolkit
-zipp==3.23.0
+zipp==3.23.1
     # via importlib-metadata
