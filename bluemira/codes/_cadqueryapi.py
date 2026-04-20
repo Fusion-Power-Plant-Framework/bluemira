@@ -30,7 +30,11 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 import numpy as np
 from OCP.BRep import BRep_Builder, BRep_Tool
-from OCP.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCP.BRepAdaptor import (
+    BRepAdaptor_CompCurve,
+    BRepAdaptor_Curve,
+    BRepAdaptor_Surface,
+)
 from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BuilderAlgo,
     BRepAlgoAPI_Section,
@@ -40,6 +44,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
     BRepBuilderAPI_MakeSolid,
+    BRepBuilderAPI_MakeWire,
     BRepBuilderAPI_Sewing,
     BRepBuilderAPI_Transform,
 )
@@ -51,6 +56,7 @@ from OCP.BRepGProp import BRepGProp
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.GC import GC_MakeArcOfCircle
+from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
 from OCP.GProp import GProp_GProps
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
 from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve, GeomAPI_ProjectPointOnSurf
@@ -1711,30 +1717,64 @@ def wire_closure(wire: apiWire) -> apiWire | None:
 
 
 def close_wire(wire: apiWire) -> apiWire:
-    """Return the wire closed with a straight line if not already closed."""
+    """Return the wire closed with a straight line if not already closed.
+
+    Uses ``BRepBuilderAPI_MakeWire`` to preserve insertion order of the
+    edges. ``cq.Wire.assembleEdges`` internally runs
+    ``ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s``, which rearranges
+    edges by connectivity regardless of input order — e.g. closing a
+    ``bottom → right → top`` open wire with a ``left`` edge would yield
+    the cycle ``bottom, left, right, top`` instead of
+    ``bottom, right, top, left``. Downstream code (``extrude_shape`` side
+    faces, orientation contract tests) depends on the insertion order.
+    """
     if wire.IsClosed():
         return wire
     edge_list = ordered_edges(wire)
     p_end = edge_list[-1].endPoint()
     p_start = edge_list[0].startPoint()
     closing = cq.Edge.makeLine(p_end, p_start)
-    return cq.Wire.assembleEdges([*edge_list, closing])
+    maker = BRepBuilderAPI_MakeWire()
+    for e in [*edge_list, closing]:
+        maker.Add(e.wrapped)
+    maker.Build()
+    if not maker.IsDone():
+        return cq.Wire.assembleEdges([*edge_list, closing])
+    return cq.Wire(maker.Wire())
 
 
 def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndarray:
-    """Sample a wire into an array of (N, 3) points."""
-    total = w.Length()
+    """Sample a wire into an array of (N, 3) points.
+
+    Uses ``BRepAdaptor_CompCurve`` + ``GCPnts_UniformAbscissa`` once on the
+    whole wire. ``cq.Wire.positionAt`` in contrast constructs a fresh
+    adaptor and recomputes the total arc length on every call — O(N²) per
+    discretisation, which made multi-thousand-point samples (used by
+    ``force_wire_to_spline`` on long revolved wires) dominate reactor-build
+    runtime (~70 x slower than FreeCAD for a simple VVTS build).
+    """
     if dl is None:
         if ndiscr < 2:  # noqa: PLR2004
             raise ValueError("ndiscr must be >= 2.")
-        params = np.linspace(0.0, 1.0, ndiscr)
     else:
         if dl <= 0.0:
             raise ValueError("dl must be > 0.")
+        total = w.Length()
         ndiscr = max(math.ceil(total / dl + 1), 2)
-        params = np.linspace(0.0, 1.0, ndiscr)
 
-    pts = np.array([_vector_to_numpy(w.positionAt(t)) for t in params])
+    adaptor = BRepAdaptor_CompCurve(w.wrapped)
+    sampler = GCPnts_UniformAbscissa(adaptor, ndiscr)
+    if not sampler.IsDone() or sampler.NbPoints() < 2:  # noqa: PLR2004
+        # Fall back to the slow parameter-space loop if GCPnts fails
+        # (e.g. degenerate wire with zero length).
+        params = np.linspace(0.0, 1.0, ndiscr)
+        pts = np.array([_vector_to_numpy(w.positionAt(t)) for t in params])
+    else:
+        n = sampler.NbPoints()
+        pts = np.empty((n, 3))
+        for i in range(n):
+            p = adaptor.Value(sampler.Parameter(i + 1))
+            pts[i] = (p.X(), p.Y(), p.Z())
     if w.IsClosed():
         pts[-1] = pts[0]
     return pts
@@ -1743,7 +1783,15 @@ def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
 def discretise_by_edges(
     w: apiWire, ndiscr: int = 10, dl: float | None = None
 ) -> np.ndarray:
-    """Sample each edge individually and concatenate."""
+    """Sample each edge individually and concatenate.
+
+    Uses a single ``BRepAdaptor_CompCurve(w.wrapped)`` and converts each
+    target arc-length to a parameter via ``GCPnts_AbscissaPoint``. The
+    previous ``cq.Wire.positionAt`` loop rebuilt the adaptor and recomputed
+    the wire's total length on every call (O(N²) per discretisation);
+    optimiser inner loops calling this at 200+ points per iteration
+    dominated the RippleConstrainedLengthGOP runtime.
+    """
     total = w.Length()
     if dl is None:
         dl = total / float(ndiscr)
@@ -1754,17 +1802,39 @@ def discretise_by_edges(
     # per edge, so we inherit the wire's traversal order and orientation.
     # cq.Wire.assembleEdges([e]) strips the edge's orientation flag — hence
     # no per-edge sub-wires.
+    adaptor = BRepAdaptor_CompCurve(w.wrapped)
+    first_param = adaptor.FirstParameter()
+
+    # Convert per-edge arc-length boundaries to adaptor parameters once
+    # (one Newton solve per boundary), then let GCPnts_UniformAbscissa
+    # sample each edge's parameter range in a single call — avoids the
+    # one-Newton-per-sampled-point cost of GCPnts_AbscissaPoint.
     edge_lengths = [e.Length() for e in ordered_edges(w)]
-    cum = np.cumsum([0.0, *edge_lengths]) / total
+    cum_abscissa = np.cumsum([0.0, *edge_lengths])
+    edge_params = [first_param]
+    for abscissa in cum_abscissa[1:]:
+        finder = GCPnts_AbscissaPoint(adaptor, abscissa, first_param)
+        edge_params.append(
+            finder.Parameter() if finder.IsDone() else adaptor.LastParameter()
+        )
+
     output = []
     last_pts = None
     for i, e_len in enumerate(edge_lengths):
         if e_len < _OCC_DEFAULT_TOL:
             continue
         n = max(math.ceil(e_len / dl + 1), 2)
-        pts = [
-            _vector_to_numpy(w.positionAt(t)) for t in np.linspace(cum[i], cum[i + 1], n)
-        ]
+        sampler = GCPnts_UniformAbscissa(adaptor, n, edge_params[i], edge_params[i + 1])
+        if sampler.IsDone() and sampler.NbPoints() >= 2:  # noqa: PLR2004
+            pts = []
+            for k in range(1, sampler.NbPoints() + 1):
+                p = adaptor.Value(sampler.Parameter(k))
+                pts.append(np.array([p.X(), p.Y(), p.Z()]))
+        else:
+            # Fallback to the slow per-point positionAt loop for pathological
+            # edges that GCPnts can't sample.
+            a0, a1 = cum_abscissa[i] / total, cum_abscissa[i + 1] / total
+            pts = [_vector_to_numpy(w.positionAt(t)) for t in np.linspace(a0, a1, n)]
         output += pts[:-1]
         last_pts = pts
 
