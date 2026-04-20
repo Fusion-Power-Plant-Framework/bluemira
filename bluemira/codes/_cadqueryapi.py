@@ -2648,12 +2648,18 @@ def make_compound(shapes: list[apiShape]) -> apiCompound:
 def _step_write_settings():
     """Force the OCCT STEP writer into the same schema + unit as FreeCAD.
 
-    FreeCAD's initialisation sets the OCC globals ``write.step.unit = 'M'``
-    (we want ``MM``) and the schema to ``AP242DIS`` (AP242 managed
-    model-based 3D engineering). The defaults under OCP are different
-    (unit ``M``, schema ``AP214IS`` → ``AUTOMOTIVE_DESIGN``), which
-    produces byte-divergent STEP output compared with FreeCAD and breaks
-    golden-file tests.
+    FreeCAD writes STEP with ``write.step.unit = 'M'`` (metres) and
+    schema ``AP242DIS`` (AP242 managed model-based 3D engineering). OCP
+    defaults to ``AP214IS`` (``AUTOMOTIVE_DESIGN``) with the same metre
+    unit, so only the schema needs overriding for byte-compatible output.
+
+    Critical for fast_ctd: bluemira's native length unit is metres, so the
+    STEP declaration must say ``SI_UNIT($,.METRE.)``. A mismatched
+    ``.MILLI.`` prefix makes downstream consumers (fast_ctd's
+    ``step_to_brep``) interpret a 1 m cube as a 1 mm cube, so its
+    ``minimum_volume=1.0`` mm³ default silently filters every solid out
+    of the BRep and ``merge_brep_geometries`` then dies with
+    "no vertices in source shape".
 
     Both settings are writer-scoped globals that are only registered once a
     ``STEPControl_Writer`` has been instantiated (OCCT lazy-inits the
@@ -2663,7 +2669,7 @@ def _step_write_settings():
     """
     STEPControl_Writer()
     keys = ("write.step.unit", "write.step.schema")
-    targets = {"write.step.unit": "MM", "write.step.schema": "AP242DIS"}
+    targets = {"write.step.unit": "M", "write.step.schema": "AP242DIS"}
     originals = {k: Interface_Static.CVal_s(k) for k in keys}
     for k, v in targets.items():
         Interface_Static.SetCVal_s(k, v)
