@@ -6,7 +6,6 @@
 
 import difflib
 import json
-import os
 import re
 from copy import deepcopy
 from datetime import datetime
@@ -63,9 +62,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
-
-# True when the test session uses the CadQuery geometry backend.
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 generic_wire = make_polygon([
     [0.0, -1.0, 0.0],
@@ -972,17 +968,6 @@ class TestConnect:
         with pytest.raises(ValueError):  # noqa: PT011
             connect_shapes([s, p2])
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: join_connect uses a plain boolean fuse and does not "
-            "remove the internal partition walls where one hollow solid penetrates "
-            "another. The merged solid has the correct topology (1 solid) but an "
-            "incorrect volume. See _cadqueryapi.join_connect TODO for the required "
-            "OCC implementation."
-        ),
-        strict=True,
-    )
     @pytest.mark.parametrize(
         ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (0.1, 1.0)]
     )
@@ -1022,15 +1007,6 @@ class TestConnect:
         assert len(result.solids) == 1
         assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: same root cause as test_overlapping_solids — "
-            "join_connect does not remove internal partition walls, so the volume "
-            "of the fused triplet is incorrect. See _cadqueryapi.join_connect TODO."
-        ),
-        strict=True,
-    )
     @pytest.mark.parametrize(
         ("width", "length"), [(1.0, 3.0), (1.0, 5.0), (2.0, 20.0), (1.5, 10.0)]
     )
@@ -1072,16 +1048,6 @@ class TestConnect:
         assert len(result.solids) == 1
         assert np.isclose(result.solids[0].volume, true_volume, rtol=0.0, atol=1e-8)
 
-    @pytest.mark.xfail(
-        _CADQUERY_BACKEND,
-        reason=(
-            "CadQuery backend: join_connect does not remove the cylindrical plug "
-            "where one pipe penetrates the wall of another, so the fused volume "
-            "differs from the reference _crude_connect volume. "
-            "See _cadqueryapi.join_connect TODO."
-        ),
-        strict=True,
-    )
     @pytest.mark.parametrize(
         ("r1", "t1", "r2", "t2", "l1", "l2"),
         [(1, 0.1, 0.8, 0.1, 3, 3), (2, 0.2, 1, 0.1, 5, 5)],

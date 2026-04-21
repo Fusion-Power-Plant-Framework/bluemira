@@ -4,8 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-import os
-
 import numpy as np
 import pytest
 
@@ -22,8 +20,6 @@ from bluemira.geometry.tools import (
     revolve_shape,
     sweep_shape,
 )
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 class TestSweep:

@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import math
-import os
 
 import numpy as np
 import pytest
@@ -27,8 +26,6 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 def param_face(*coords):

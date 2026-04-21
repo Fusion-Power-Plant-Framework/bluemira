@@ -5,15 +5,12 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-CadQuery backend for bluemira — experimental prototype.
+CadQuery backend for bluemira.
 
 Implements the same public interface as _freecadapi.py using CadQuery's
-free-function / direct Shape API (no Workplane state).
-
-Not yet covered:
-  - Affine placements (stub objects exist for import compatibility)
-  - FreeCADGui-based show_cad (delegated to polyscope instead)
-  - join_connect with correct internal-wall removal (see its docstring TODO)
+free-function / direct Shape API (no Workplane state). ``show_cad``
+delegates to polyscope; placements go through the :class:`_CQPlacement`
+adapter (a drop-in for FreeCAD's ``Base.Placement``).
 """
 
 from __future__ import annotations
@@ -2910,50 +2907,146 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
     return cq.Wire.assembleEdges(keep)
 
 
+def _piece_mass(piece: apiShape) -> float:
+    """Mass of *piece* — volume for solids, area for shells/faces, length for
+    wires/edges. Matches FreeCAD's ``shapeOfMaxSize`` size metric.
+    """
+    props = GProp_GProps()
+    if isinstance(piece, (cq.Solid, cq.Compound)):
+        BRepGProp.VolumeProperties_s(piece.wrapped, props)
+    elif isinstance(piece, (cq.Face, cq.Shell)):
+        BRepGProp.SurfaceProperties_s(piece.wrapped, props)
+    else:
+        BRepGProp.LinearProperties_s(piece.wrapped, props)
+    return abs(props.Mass())
+
+
+def _pick_dominant_dangler(pieces: list[apiShape], source_idx: int) -> apiShape:
+    """Largest piece by mass; raises on a near-tie.
+
+    Mirrors FreeCAD's ``shapeOfMaxSize`` — the connect algorithm assumes a
+    single dominant main body per input. Two equal-size danglers typically
+    signal symmetric through-drilling (an input pierced clean through by
+    another), where silently keeping one would drop the other.
+    """
+    rel_tol = 1e-8
+    masses = [_piece_mass(p) for p in pieces]
+    max_mass = max(masses)
+    ties = sum(
+        1 for m in masses if (1 - rel_tol) * max_mass <= m <= (1 + rel_tol) * max_mass
+    )
+    if ties > 1:
+        raise GeometryError(
+            f"join_connect: input {source_idx} has {ties} equally-sized "
+            "dangling pieces after general fuse — cannot pick a unique "
+            "main body. This typically means an input is symmetrically "
+            "through-drilled by another; the algorithm's assumption of a "
+            "single dominant body per input is violated."
+        )
+    return pieces[masses.index(max_mass)]
+
+
+def _piece_source_map(
+    fragment_map: list[list[apiShape]],
+) -> list[tuple[apiShape, set[int]]]:
+    """Unique piece → set of source indices, via topological ``IsSame``."""
+    unique: list[tuple[apiShape, set[int]]] = []
+    for i, frags in enumerate(fragment_map):
+        for frag in frags:
+            match = next(
+                (
+                    idx
+                    for idx, (p, _) in enumerate(unique)
+                    if p.wrapped.IsSame(frag.wrapped)
+                ),
+                None,
+            )
+            if match is None:
+                unique.append((frag, {i}))
+            else:
+                unique[match][1].add(i)
+    return unique
+
+
+def _grow_keepers_by_overlap(
+    keepers: list[apiShape],
+    unique_pieces: list[tuple[apiShape, set[int]]],
+) -> None:
+    """Add shared-overlap pieces that touch already-kept pieces, layer by layer
+    (pieces with N sources grow from pieces with N-1 sources). Mutates
+    *keepers* in place.
+    """
+    max_overlap = max((len(src) for _, src in unique_pieces), default=0)
+    touch_test = keepers.copy()
+    for ii in range(2, max_overlap + 1):
+        ii_pieces = [p for p, src in unique_pieces if len(src) == ii]
+        additions = [
+            p for p in ii_pieces if any(_shapes_touch(p, k) for k in touch_test)
+        ]
+        if not additions:
+            break
+        for p in additions:
+            if not any(p.wrapped.IsSame(k.wrapped) for k in keepers):
+                keepers.append(p)
+        touch_test = additions
+
+
+def _shapes_touch(a: apiShape, b: apiShape, tol: float = 1e-6) -> bool:
+    """Two shapes touch iff their minimum distance is below *tol*."""
+    dist = BRepExtrema_DistShapeShape(a.wrapped, b.wrapped)
+    dist.Perform()
+    return bool(dist.IsDone()) and dist.Value() < tol
+
+
 def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     """Connect the interiors of walled objects (pipes/shells).
 
-    This mirrors FreeCAD's ``Part.JoinAPI.connect``: it performs a boolean
-    union of all input shapes **and** removes the internal partition faces
-    that remain where one hollow solid penetrates another (the "plug" region).
-    The result is a single manifold solid whose volume equals the union minus
-    the overlapping cross-sectional plugs.
+    Mirrors FreeCAD's ``BOPTools.JoinAPI.connect`` (same algorithm, translated
+    to OCP primitives). The motivation: a plain boolean fuse on two overlapping
+    hollow tubes leaves the "plug" — the wall material of one tube that blocks
+    the other tube's interior. ``connect`` removes those plugs.
 
-    .. warning::
-        The current implementation is a plain boolean fuse and therefore
-        produces a **wrong volume** when the input shapes overlap: the
-        internal partition walls are not removed.
+    Algorithm (matches FreeCAD's Python source in ``BOPTools/JoinAPI.py``):
 
-        Correct OCC implementation outline:
-
-        1. ``BRepAlgoAPI_Fuse`` (or ``BRepAlgoAPI_BuilderAlgo`` GFA) of all
-           input shapes.
-        2. Iterate over all faces of the fused result. A face is an internal
-           partition if it is shared by two distinct solids in the fused
-           compound (i.e. a non-manifold / seam face that separates two
-           previously independent volumes).
-        3. Remove those internal faces using ``BRep_Builder.Remove`` and
-           rebuild the shell/solid topology (``BRepBuilderAPI_MakeSolid``).
-        4. Optionally: ``ShapeUpgrade_UnifySameDomain`` to merge now-coplanar
-           faces for a cleaner result.
-
-        Alternatively, look at ``BOPAlgo_MakerVolume`` which can build a set
-        of non-intersecting solids from a compound and may expose the
-        partition face list directly.
+    1. General fuse of all inputs via :func:`boolean_fragments`. The result is a
+       set of non-intersecting sub-pieces, each tagged with the inputs it came
+       from.
+    2. For each input, among its "dangling" pieces (pieces belonging only to
+       that input), keep the largest. The plug is a smaller dangler of the
+       penetrated tube and gets discarded here.
+    3. Grow the keeper set by shared-overlap count: pieces belonging to exactly
+       N sources are added iff they touch a piece already kept. Ensures the
+       fused walls stay a connected solid at the joint.
+    4. Union the keepers back into a single shape.
     """
     if not isinstance(shapes, list):
         raise TypeError(f"{shapes} is not a list.")
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
-    # TODO @bluemira: replace plain fuse with a proper connect that removes
-    # internal walls (see docstring above for the required OCC implementation).
-    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues
-    result = shapes[0].fuse(*shapes[1:])
+    _, fragment_map = boolean_fragments(shapes, dist_tolerance)
+    unique_pieces = _piece_source_map(fragment_map)
+
+    keepers: list[apiShape] = []
+    for i in range(len(shapes)):
+        danglers = [p for p, src in unique_pieces if src == {i}]
+        if danglers:
+            keepers.append(_pick_dominant_dangler(danglers, i))
+
+    _grow_keepers_by_overlap(keepers, unique_pieces)
+
+    if not keepers:
+        raise GeometryError("join_connect: no kept pieces after general fuse")
+    if len(keepers) == 1:
+        result = keepers[0]
+    else:
+        # Skip ``.clean()``/UnifySameDomain here: it reprojects coplanar faces
+        # onto a fitted canonical surface, which shifts the volume by ~0.1 %
+        # on curved pipe geometry and diverges from FreeCAD's JoinAPI output.
+        result = boolean_fuse(list(keepers), remove_splitter=False)
+
     if result is None or not is_valid(result):
         raise GeometryError("join_connect: boolean union failed")
-    with contextlib.suppress(Exception):
-        result = result.clean()
     return result
 
 

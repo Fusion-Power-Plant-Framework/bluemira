@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-import os
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -44,8 +43,6 @@ from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 _wire_edges_tangent = _cadapi._wire_edges_tangent
-
-_CADQUERY_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery"
 
 
 @pytest.mark.parametrize(
