@@ -637,6 +637,10 @@ class TestParameterFrameUnits:
         assert frame.wtf3.unit == "m⁵/deg/dpa/fpy/s"
 
     def test_combined_units(self):
+        """Tests that the reconstruction of the units combines to sane values
+
+        For example W/m² can resolve to kg/s3 which is much less commonly used
+        """
         frame = CombinedFrame.from_dict(self.COMBINED_FRAME_DATA)
         assert frame.test1.value == 5
         assert frame.test1.unit == "W/m²"

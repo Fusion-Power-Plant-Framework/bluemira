@@ -20,7 +20,29 @@ if TYPE_CHECKING:
     from bluemira.base.parameter_frame._parameter import ParamDictT
 
 
-def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
+def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> ParamDictT:
+    """Validates the user input units and enforces our version of SI units
+
+    Returns
+    -------
+    :
+        Parameter dictionary
+
+    Raises
+    ------
+    ValueError
+        If a value raises value error on a Quantity
+        If a value doesnt have a unit
+    TypeError
+        When trying to convert offset or logarithmic units or strings/bools/None
+
+
+    Notes
+    -----
+    Firstly this ensures that scaling factors are folded into the value.
+    Deals with empty values (None) and strings for parameters
+    Finally where not one of the above converts to our opinionated SI units
+    """
     try:
         quantity = ureg.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
