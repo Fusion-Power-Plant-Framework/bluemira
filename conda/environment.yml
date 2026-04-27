@@ -30,7 +30,7 @@ dependencies:
   - mpi4py
   - graphviz
   - h5py==3.13.0
-  - pytools==2025.2.4
+  - pytools==2025.2.5
   - vtk==9.3.1
   - libopenblas
   - pythonocc-core
