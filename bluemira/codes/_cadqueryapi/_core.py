@@ -16,16 +16,13 @@ adapter (a drop-in for FreeCAD's ``Base.Placement``).
 from __future__ import annotations
 
 import contextlib
-import enum
 import math
-from dataclasses import dataclass
 from itertools import pairwise
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
-from OCP.BRep import BRep_Builder, BRep_Tool
+from OCP.BRep import BRep_Tool
 from OCP.BRepAdaptor import (
     BRepAdaptor_CompCurve,
     BRepAdaptor_Curve,
@@ -51,10 +48,8 @@ from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
-from OCP.GC import GC_MakeArcOfCircle
 from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
 from OCP.GProp import GProp_GProps
-from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
 from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve, GeomAPI_ProjectPointOnSurf
 from OCP.GeomAbs import (
     GeomAbs_BSplineCurve,
@@ -63,22 +58,9 @@ from OCP.GeomAbs import (
     GeomAbs_Ellipse,
     GeomAbs_Line,
 )
-from OCP.IFSelect import IFSelect_RetDone
-from OCP.Interface import Interface_Static
-from OCP.STEPCAFControl import STEPCAFControl_Writer
-from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Surface
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
 from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
-from OCP.TColStd import (
-    TColStd_Array1OfInteger,
-    TColStd_Array1OfReal,
-    TColStd_Array2OfReal,
-)
-from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
-from OCP.TCollection import TCollection_ExtendedString
-from OCP.TDataStd import TDataStd_Name
-from OCP.TDocStd import TDocStd_Document
 from OCP.TopAbs import (
     TopAbs_FACE,
     TopAbs_IN,
@@ -89,15 +71,11 @@ from OCP.TopAbs import (
     TopAbs_WIRE,
 )
 from OCP.TopExp import TopExp_Explorer
-from OCP.TopLoc import TopLoc_Location
 from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
-from OCP.TopoDS import TopoDS, TopoDS_Compound
-from OCP.XCAFApp import XCAFApp_Application
-from OCP.XCAFDoc import XCAFDoc_DocumentTool
+from OCP.TopoDS import TopoDS
 from OCP.gp import (
     gp_Ax1,
     gp_Ax2,
-    gp_Circ,
     gp_Dir,
     gp_Pln,
     gp_Pnt,
@@ -121,13 +99,9 @@ from bluemira.codes._cadqueryapi._aliases import (
 )
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
-from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-
-    from bluemira.codes._cadqueryapi._placement import _CQPlacement
-    from bluemira.display.palettes import ColorPalette
 
 
 class _apiFaceMeta(type):
@@ -915,142 +889,6 @@ def dist_to_shape(
     return dist, vectors
 
 
-# ---------------------------------------------------------------------------
-# Tessellation / visualisation helpers
-# ---------------------------------------------------------------------------
-
-
-def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Tessellate *obj* to a triangle mesh.
-
-    Returns
-    -------
-    vertices:
-        Float array of shape (N, 3).
-    indices:
-        Int array of shape (M, 3).
-    """
-    if tolerance <= 0.0:
-        raise ValueError("Tolerance must be greater than 0.0")
-    verts, tris = obj.tessellate(tolerance)
-    return (
-        np.array([[v.x, v.y, v.z] for v in verts], dtype=float),
-        np.array(tris, dtype=int),
-    )
-
-
-def collect_verts_faces(
-    solid: apiShape, tesselation: float = 0.1
-) -> tuple[np.ndarray | None, np.ndarray | None]:
-    """Extract tessellated vertices and face indices for polyscope display."""
-    all_verts = []
-    all_faces = []
-    voffset = 0
-
-    faces = solid.Faces()
-    for face in faces:
-        verts, tris = face.tessellate(tesselation)
-        if verts:
-            v_arr = np.array([[v.x, v.y, v.z] for v in verts], dtype=float)
-            f_arr = np.array(tris, dtype=int) + voffset
-            all_verts.append(v_arr)
-            all_faces.append(f_arr)
-            voffset += len(verts)
-
-    if not all_verts:
-        return None, None
-    return np.vstack(all_verts), np.vstack(all_faces)
-
-
-def collect_wires(
-    solid: apiShape, deflection: float = 0.01, **_kwds
-) -> tuple[np.ndarray, np.ndarray]:
-    """Extract discretised wire vertices and edge indices for polyscope display.
-
-    Parameters
-    ----------
-    deflection:
-        Maximum chord-height deviation; controls point density per wire.
-        (Polyscope passes this as ``Deflection=`` — absorbed by ``**_kwds``.)
-    """
-    all_verts = []
-    all_edges = []
-    voffset = 0
-
-    for wire in solid.Wires():
-        # Sample N points proportional to length; at least 10.
-        n = max(10, int(wire.Length() / deflection))
-        pts = [_vector_to_numpy(wire.positionAt(t)) for t in np.linspace(0.0, 1.0, n)]
-        pts_arr = np.array(pts, dtype=float)
-        seg_idx = np.arange(voffset, voffset + n - 1)
-        all_verts.append(pts_arr)
-        all_edges.append(np.column_stack([seg_idx, seg_idx + 1]))
-        voffset += n
-
-    return np.vstack(all_verts), np.vstack(all_edges)
-
-
-# ---------------------------------------------------------------------------
-# Display
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class DefaultDisplayOptions:
-    """CadQuery backend display options (delegated to polyscope)."""
-
-    colour: ColourDescriptor = ColourDescriptor()
-    transparency: float = 0.0
-    material: str = "wax"
-    tesselation: float = 0.05
-    wires_on: bool = False
-    wire_radius: float = 0.001
-    smooth: bool = True
-
-    @property
-    def color(self) -> str:
-        """See colour."""
-        return self.colour
-
-    @color.setter
-    def color(self, value: str | tuple[float, float, float] | ColorPalette):
-        """See colour."""
-        self.colour = value
-
-
-def show_cad(
-    parts: apiShape | list[apiShape],
-    part_options: list[dict],
-    labels: list[str],
-    **kwargs,
-):
-    """
-    Display CadQuery shapes via polyscope.
-
-    Delegates to _polyscope.show_cad after swapping in our own
-    collect_verts_faces / collect_wires implementations.
-    """
-    # Temporarily patch the collect helpers polyscope uses so that it calls
-    # our CadQuery-aware versions instead of the FreeCAD ones. Imports are
-    # local to avoid pulling in FreeCAD at module-load time when the user
-    # has selected the cadquery backend.
-    import bluemira.codes._freecadapi as _orig_cadapi  # noqa: PLC0415
-    from bluemira.codes import _polyscope as ps_backend  # noqa: PLC0415
-
-    _orig_collect_verts = _orig_cadapi.collect_verts_faces
-    _orig_collect_wires = _orig_cadapi.collect_wires
-
-    try:
-        _orig_cadapi.collect_verts_faces = collect_verts_faces
-        _orig_cadapi.collect_wires = collect_wires
-        ps_backend.show_cad(parts, part_options, labels, **kwargs)
-    finally:
-        _orig_cadapi.collect_verts_faces = _orig_collect_verts
-        _orig_cadapi.collect_wires = _orig_collect_wires
-
-
-# ---------------------------------------------------------------------------
 # Error handling
 # ---------------------------------------------------------------------------
 
@@ -1157,299 +995,6 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
     return np.array([normal.X(), normal.Y(), normal.Z()])
 
 
-# ---------------------------------------------------------------------------
-# Curve constructors
-# ---------------------------------------------------------------------------
-
-
-def make_bezier(points: list | np.ndarray) -> apiWire:
-    """Create a Bezier curve wire from a list of poles."""
-    pts = np.asarray(points)
-    poles = TColgp_Array1OfPnt(1, len(pts))
-    for i, p in enumerate(pts):
-        poles.SetValue(i + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2])))
-    curve = Geom_BezierCurve(poles)
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
-    return cq.Wire.assembleEdges([edge])
-
-
-def make_bspline_g1_blend(
-    edge1: apiEdge,
-    edge2: apiEdge,
-    scale: float = 0.2,
-) -> apiWire:
-    """Create a G1-continuous cubic Bézier blend wire between two edges.
-
-    Port of ``_freecadapi.make_bspline_g1_blend``. Connects the end of
-    ``edge1`` to the start of ``edge2`` with a cubic Bézier whose inner
-    control points are placed along the edges' tangents at the join.
-
-    Mirrors the FreeCAD version's orientation-disambiguation and its
-    explicit end-tangent sign flip ("stupid fucking FreeCAD ... hopeless
-    just override and hope they fix") so results are bit-comparable.
-
-    Raises
-    ------
-    FreeCADError
-        When the two edges' join points coincide (zero-length chord).
-    """
-    a1 = BRepAdaptor_Curve(edge1.wrapped)
-    a2 = BRepAdaptor_Curve(edge2.wrapped)
-
-    p0 = gp_Pnt()
-    t0 = gp_Vec()
-    a1.D1(a1.LastParameter(), p0, t0)
-    p1 = gp_Pnt()
-    t1 = gp_Vec()
-    a2.D1(a2.FirstParameter(), p1, t1)
-
-    chord = gp_Vec(p0, p1)
-    chord_len = chord.Magnitude()
-    if chord_len == 0:
-        raise FreeCADError("Edges share identical endpoints")
-
-    t0.Normalize()
-    t1.Normalize()
-
-    # Flip start tangent to always point toward p1.
-    if t0.Dot(chord) < 0:
-        t0.Reverse()
-    # Flip end tangent to first point back toward p0 (FreeCAD-equivalent
-    # orientation-disambiguation)...
-    chord_rev = gp_Vec(chord.X(), chord.Y(), chord.Z())
-    chord_rev.Reverse()
-    if t1.Dot(chord_rev) < 0:
-        t1.Reverse()
-    # ...then override with a blanket sign flip, matching the FreeCAD
-    # impl's explicit workaround for unreliable tangent signs.
-    t1.Reverse()
-
-    h = chord_len * scale
-    poles = TColgp_Array1OfPnt(1, 4)
-    poles.SetValue(1, p0)
-    poles.SetValue(
-        2, gp_Pnt(p0.X() + t0.X() * h, p0.Y() + t0.Y() * h, p0.Z() + t0.Z() * h)
-    )
-    poles.SetValue(
-        3, gp_Pnt(p1.X() - t1.X() * h, p1.Y() - t1.Y() * h, p1.Z() - t1.Z() * h)
-    )
-    poles.SetValue(4, p1)
-
-    curve = Geom_BezierCurve(poles)
-    edge = BRepBuilderAPI_MakeEdge(curve).Edge()
-    maker = BRepBuilderAPI_MakeWire()
-    maker.Add(edge)
-    maker.Build()
-    return cq.Wire(maker.Wire())
-
-
-def make_bspline(
-    poles: np.ndarray,
-    mults: np.ndarray,
-    knots: np.ndarray,
-    *,
-    periodic: bool,
-    degree: int,
-    weights: np.ndarray,
-    check_rational: bool,
-) -> apiWire:
-    """Create a B-Spline wire from poles, multiplicities, and knots."""
-    poles = np.asarray(poles)
-    tcol_poles = TColgp_Array1OfPnt(1, len(poles))
-    for i, p in enumerate(poles):
-        tcol_poles.SetValue(i + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2])))
-
-    mults = np.asarray(mults, dtype=int)
-    tcol_mults = TColStd_Array1OfInteger(1, len(mults))
-    for i, m in enumerate(mults):
-        tcol_mults.SetValue(i + 1, int(m))
-
-    knots = np.asarray(knots, dtype=float)
-    tcol_knots = TColStd_Array1OfReal(1, len(knots))
-    for i, k in enumerate(knots):
-        tcol_knots.SetValue(i + 1, float(k))
-
-    if weights is not None:
-        weights = np.asarray(weights, dtype=float)
-        tcol_weights = TColStd_Array1OfReal(1, len(weights))
-        for i, w in enumerate(weights):
-            tcol_weights.SetValue(i + 1, float(w))
-        curve = Geom_BSplineCurve(
-            tcol_poles, tcol_weights, tcol_knots, tcol_mults, degree, periodic
-        )
-    else:
-        curve = Geom_BSplineCurve(tcol_poles, tcol_knots, tcol_mults, degree, periodic)
-
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
-    return cq.Wire.assembleEdges([edge])
-
-
-def make_bsplinesurface(
-    poles: np.ndarray,
-    mults_u: np.ndarray,
-    mults_v: np.ndarray,
-    knot_vector_u: np.ndarray,
-    knot_vector_v: np.ndarray,
-    degree_u: int,
-    degree_v: int,
-    weights: np.ndarray,
-    *,
-    periodic: bool = False,
-    check_rational: bool = False,
-):
-    """Create a B-Spline surface from poles, multiplicities, and knots."""
-    poles = np.asarray(poles)
-    nrows, ncols = poles.shape[:2]
-    tcol_poles = TColgp_Array2OfPnt(1, nrows, 1, ncols)
-    for i in range(nrows):
-        for j in range(ncols):
-            p = poles[i, j]
-            tcol_poles.SetValue(
-                i + 1, j + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2]))
-            )
-
-    def _real_array(arr):
-        arr = np.asarray(arr, dtype=float)
-        a = TColStd_Array1OfReal(1, len(arr))
-        for i, v in enumerate(arr):
-            a.SetValue(i + 1, float(v))
-        return a
-
-    def _int_array(arr):
-        arr = np.asarray(arr, dtype=int)
-        a = TColStd_Array1OfInteger(1, len(arr))
-        for i, v in enumerate(arr):
-            a.SetValue(i + 1, int(v))
-        return a
-
-    if weights is not None:
-        weights = np.asarray(weights, dtype=float)
-        tcol_weights = TColStd_Array2OfReal(1, nrows, 1, ncols)
-        for i in range(nrows):
-            for j in range(ncols):
-                tcol_weights.SetValue(i + 1, j + 1, float(weights[i, j]))
-        surface = Geom_BSplineSurface(
-            tcol_poles,
-            tcol_weights,
-            _real_array(knot_vector_u),
-            _real_array(knot_vector_v),
-            _int_array(mults_u),
-            _int_array(mults_v),
-            degree_u,
-            degree_v,
-        )
-    else:
-        surface = Geom_BSplineSurface(
-            tcol_poles,
-            _real_array(knot_vector_u),
-            _real_array(knot_vector_v),
-            _int_array(mults_u),
-            _int_array(mults_v),
-            degree_u,
-            degree_v,
-        )
-    return surface
-
-
-def _freecad_ax2(center, axis, x_direction=None):
-    """Build a gp_Ax2 matching FreeCAD's angle convention.
-
-    FreeCAD's Part.Circle computes its X-axis by projecting (1,0,0) onto
-    the plane perpendicular to *axis* (falls back to (0,1,0) when axis ∥ x).
-    OCC's gp_Ax2(P, N) auto-picks a different X-axis, causing angle offsets.
-    Pass *x_direction* to override the derivation (needed for serialisation
-    round-trip where the original X-axis is known).
-    """
-    n = np.asarray(axis, dtype=float)
-    n /= np.linalg.norm(n)
-    if x_direction is None:
-        ref = np.array([1.0, 0.0, 0.0])
-        if abs(np.dot(n, ref)) > 1.0 - _POINT_COINCIDENCE_TOL:
-            ref = np.array([0.0, 1.0, 0.0])
-        x = ref - np.dot(ref, n) * n
-    else:
-        x = np.asarray(x_direction, dtype=float)
-    x /= np.linalg.norm(x)
-    return gp_Ax2(
-        gp_Pnt(*[float(v) for v in center]),
-        gp_Dir(*n.tolist()),
-        gp_Dir(*x.tolist()),
-    )
-
-
-def make_circle(
-    radius: float = 1.0,
-    center=(0.0, 0.0, 0.0),
-    start_angle: float = 0.0,
-    end_angle: float = 360.0,
-    axis=(0.0, 0.0, 1.0),
-    x_direction=None,
-) -> apiWire:
-    """Create a circle or arc of circle with FreeCAD-compatible angle convention.
-
-    *x_direction* pins the local X-axis for serialisation round-trip (angle
-    parameters are measured against it); defaults to FreeCAD's derivation.
-    """
-    circ = gp_Circ(_freecad_ax2(center, axis, x_direction), radius)
-    if start_angle == end_angle:
-        edge = cq.Edge(BRepBuilderAPI_MakeEdge(circ).Edge())
-    else:
-        arc = GC_MakeArcOfCircle(
-            circ, math.radians(start_angle), math.radians(end_angle), True
-        )
-        edge = cq.Edge(BRepBuilderAPI_MakeEdge(arc.Value()).Edge())
-    return cq.Wire.assembleEdges([edge])
-
-
-def make_circle_arc_3P(
-    p1,
-    p2,
-    p3,
-    axis=None,
-) -> apiWire:
-    """Create an arc of circle through three points."""
-    try:
-        edge = cq.Edge.makeThreePointArc(cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3))
-    except Exception as e:
-        raise FreeCADError(str(e)) from e
-    return cq.Wire.assembleEdges([edge])
-
-
-def make_ellipse(
-    center: list = (0.0, 0.0, 0.0),
-    major_radius: float = 2.0,
-    minor_radius: float = 1.0,
-    major_axis: list = (1.0, 0.0, 0.0),
-    minor_axis: list = (0.0, 1.0, 0.0),
-    start_angle: float = 0.0,
-    end_angle: float = 360.0,
-) -> apiWire:
-    """Create an ellipse or arc of ellipse."""
-    major_axis_v = cq.Vector(*major_axis).normalized()
-    minor_axis_v = cq.Vector(*minor_axis).normalized()
-    normal = major_axis_v.cross(minor_axis_v)
-    center_v = cq.Vector(*center)
-
-    start_angle %= 360.0
-    end_angle %= 360.0
-    if start_angle == end_angle:
-        edge = cq.Edge.makeEllipse(
-            major_radius, minor_radius, center_v, normal, major_axis_v
-        )
-    else:
-        edge = cq.Edge.makeEllipse(
-            major_radius,
-            minor_radius,
-            center_v,
-            normal,
-            major_axis_v,
-            start_angle,
-            end_angle,
-        )
-    return cq.Wire.assembleEdges([edge])
-
-
-# ---------------------------------------------------------------------------
 # Compound / shell / solid builders
 # ---------------------------------------------------------------------------
 
@@ -2421,6 +1966,16 @@ def serialise_shape(shape: apiWire) -> dict:
 
 def deserialise_shape(buffer: dict) -> apiWire:
     """Deserialise a dict (from serialise_shape / FreeCAD format) to a CadQuery wire."""
+    # Local import: ``_curves`` is loaded after ``_core`` by ``__init__``, but
+    # this function is only called at runtime, so a deferred import is enough
+    # to keep ``_curves`` self-contained (no module-level dep on ``_core``).
+    from bluemira.codes._cadqueryapi._curves import (  # noqa: PLC0415
+        make_bezier,
+        make_bspline,
+        make_circle,
+        make_ellipse,
+    )
+
     for type_, v in buffer.items():
         if type_ == "Wire":
             edges = [deserialise_shape(item) for item in v]
@@ -2697,291 +2252,7 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     return result
 
 
-# ---------------------------------------------------------------------------
-# CAD file I/O
-# ---------------------------------------------------------------------------
-
-
-class CADFileType(enum.Enum):
-    """Minimal CAD file type enum (mirrors _freecadapi.CADFileType)."""
-
-    STEP = "stp"
-    STEP_ZIP = "stpz"
-    IGES = "iges"
-    BREP = "brep"
-    FREECAD = "FCStd"
-
-    @property
-    def ext(self) -> str:
-        """File extension (without leading dot)."""
-        _exts = {
-            "stp": "stp",
-            "stpz": "stpz",
-            "iges": "iges",
-            "brep": "brep",
-            "FCStd": "FCStd",
-        }
-        return _exts.get(self.value, self.value)
-
-    @classmethod
-    def _missing_(cls, value: str) -> CADFileType:
-        # Allow "step" → STEP, "stp" → STEP, etc.
-        _aliases = {
-            "step": cls.STEP,
-            "stp": cls.STEP,
-            "iges": cls.IGES,
-            "igs": cls.IGES,
-            "brep": cls.BREP,
-        }
-        return _aliases.get(str(value).lower())
-
-    @classmethod
-    def unitless_formats(cls) -> tuple[CADFileType, ...]:
-        return (cls.BREP, cls.FREECAD)
-
-    @classmethod
-    def mesh_import_formats(cls) -> tuple[CADFileType, ...]:
-        return ()
-
-    @classmethod
-    def not_importable_formats(cls) -> tuple[CADFileType, ...]:
-        return (cls.STEP_ZIP, cls.FREECAD)
-
-    @classmethod
-    def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
-        return ()
-
-
-def make_compound(shapes: list[apiShape]) -> apiCompound:
-    """Make a compound of multiple shapes."""
-    comp = TopoDS_Compound()
-    b = BRep_Builder()
-    b.MakeCompound(comp)
-    for s in shapes:
-        b.Add(comp, s.wrapped)
-    return cq.Shape.cast(comp)
-
-
-@contextlib.contextmanager
-def _step_write_settings():
-    """Force the OCCT STEP writer into the same schema + unit as FreeCAD.
-
-    FreeCAD writes STEP with ``write.step.unit = 'M'`` (metres) and
-    schema ``AP242DIS`` (AP242 managed model-based 3D engineering). OCP
-    defaults to ``AP214IS`` (``AUTOMOTIVE_DESIGN``) with the same metre
-    unit, so only the schema needs overriding for byte-compatible output.
-
-    Critical for fast_ctd: bluemira's native length unit is metres, so the
-    STEP declaration must say ``SI_UNIT($,.METRE.)``. A mismatched
-    ``.MILLI.`` prefix makes downstream consumers (fast_ctd's
-    ``step_to_brep``) interpret a 1 m cube as a 1 mm cube, so its
-    ``minimum_volume=1.0`` mm³ default silently filters every solid out
-    of the BRep and ``merge_brep_geometries`` then dies with
-    "no vertices in source shape".
-
-    Both settings are writer-scoped globals that are only registered once a
-    ``STEPControl_Writer`` has been instantiated (OCCT lazy-inits the
-    parameter table), so the override must wrap the entire writer creation
-    + transfer + write sequence. We instantiate a throw-away writer up front
-    to force param registration before reading the originals.
-    """
-    STEPControl_Writer()
-    keys = ("write.step.unit", "write.step.schema")
-    targets = {"write.step.unit": "M", "write.step.schema": "AP242DIS"}
-    originals = {k: Interface_Static.CVal_s(k) for k in keys}
-    for k, v in targets.items():
-        Interface_Static.SetCVal_s(k, v)
-    try:
-        yield
-    finally:
-        for k, v in originals.items():
-            Interface_Static.SetCVal_s(k, v)
-
-
-def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
-    """Save shapes as a STEP file (legacy single-file method)."""
-    if not filename.lower().endswith((".stp", ".step")):
-        filename += ".stp"
-
-    if not isinstance(shapes, list):
-        shapes = [shapes]
-
-    with _step_write_settings():
-        writer = STEPControl_Writer()
-        for s in shapes:
-            writer.Transfer(s.wrapped, STEPControl_AsIs)
-        status = writer.Write(filename)
-
-    if status != IFSelect_RetDone:
-        raise FreeCADError(f"Failed to write STEP file: {filename}")
-
-
-def _write_labeled_step(shapes, labels, filename):
-    """Write a STEP file as an XCAF assembly with one named PRODUCT per shape.
-
-    Mirrors FreeCAD's ``save_cad(..., labels=...)`` behaviour: downstream
-    tools (``fast_ctd``, DAGMC converters) look up solids by name, so each
-    input shape must appear as a distinct named entity in the STEP file.
-    """
-    app = XCAFApp_Application.GetApplication_s()
-    doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
-    app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
-    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    for s, name in zip(shapes, labels, strict=True):
-        lbl = shape_tool.AddShape(s.wrapped, False)
-        TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
-    writer = STEPCAFControl_Writer()
-    writer.Transfer(doc, STEPControl_AsIs)
-    return writer.Write(str(filename))
-
-
-def save_cad(
-    shapes: Iterable[apiShape],
-    filename: str,
-    cad_format: str | CADFileType = "stp",
-    labels: Iterable[str] | None = None,
-    **kwargs,
-):
-    """Save CAD shapes to a file."""
-    if not isinstance(shapes, list):
-        shapes = list(shapes)
-    labels_list = list(labels) if labels is not None else None
-
-    cad_format = (
-        CADFileType(cad_format)
-        if not isinstance(cad_format, CADFileType)
-        else cad_format
-    )
-    ext = cad_format.ext
-    p = Path(filename)
-    current_ext = p.suffix.lower().lstrip(".")
-    valid_exts = {ext.lower()}
-    if ext.lower() == "stp":
-        valid_exts.add("step")
-    if current_ext not in valid_exts:
-        filename = str(p) + f".{ext}"
-
-    if cad_format == CADFileType.STEP:
-        with _step_write_settings():
-            if labels_list:
-                status = _write_labeled_step(shapes, labels_list, filename)
-            else:
-                writer = STEPControl_Writer()
-                for s in shapes:
-                    writer.Transfer(s.wrapped, STEPControl_AsIs)
-                status = writer.Write(str(filename))
-        if status != IFSelect_RetDone:
-            raise FreeCADError(f"Failed to write STEP file: {filename}")
-    else:
-        raise FreeCADError(f"CAD format not supported by CadQuery backend: {cad_format}")
-
-
-_IMPORT_UNIT_SCALE_TO_METRES = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "km": 1e3}
-
-
-def _scale_shape(shape: apiShape, factor: float) -> apiShape:
-    trsf = gp_Trsf()
-    trsf.SetScale(gp_Pnt(0.0, 0.0, 0.0), factor)
-    moved = BRepBuilderAPI_Transform(shape.wrapped, trsf, True).Shape()
-    return cq.Shape.cast(moved)
-
-
-def import_cad(
-    file,
-    filetype=None,
-    unit_scale: str = "m",
-    **kwargs,
-) -> list[tuple[apiShape, str]]:
-    """Import CAD from file. Returns list of (shape, label) tuples."""
-    file = Path(file)
-    reader = STEPControl_Reader()
-    status = reader.ReadFile(str(file))
-    if status != IFSelect_RetDone:
-        raise FreeCADError(f"Failed to read STEP file: {file}")
-
-    reader.TransferRoots()
-    shape = reader.OneShape()
-    result_shape = cq.Shape.cast(shape)
-
-    # OCCT's STEP reader always normalises geometry to its internal unit
-    # (millimetres). ``xstep.cascade.unit`` ostensibly overrides this, but
-    # the setting latches on first-WorkSession creation in the process and
-    # silently ignores subsequent ``Interface_Static.SetCVal_s`` calls, so
-    # we cannot reliably swap the reader's target unit at runtime. We
-    # therefore read with the default (mm) and scale explicitly here to
-    # the caller's ``unit_scale`` target (default "m").
-    _INTERNAL_METRES = 1e-3
-    target_factor = _IMPORT_UNIT_SCALE_TO_METRES.get(unit_scale.lower(), 1.0)
-    scale = _INTERNAL_METRES / target_factor
-    if not math.isclose(scale, 1.0, rel_tol=1e-12):
-        result_shape = _scale_shape(result_shape, scale)
-
-    # STEP reader often returns a Compound of raw edges — try to upgrade to wires.
-    if isinstance(result_shape, cq.Compound):
-        edges = result_shape.Edges()
-        wires = result_shape.Wires()
-        shells = result_shape.Shells()
-        solids = result_shape.Solids()
-        if edges and not wires and not shells and not solids:
-            try:
-                edge_seq = TopTools_HSequenceOfShape()
-                for e in edges:
-                    edge_seq.Append(e.wrapped)
-                result_wires = TopTools_HSequenceOfShape()
-                ShapeAnalysis_FreeBounds.ConnectEdgesToWires_s(
-                    edge_seq, 1e-6, False, result_wires
-                )
-                assembled = [
-                    cq.Shape.cast(result_wires.Value(i))
-                    for i in range(1, result_wires.Size() + 1)
-                ]
-                if len(assembled) == 1:
-                    result_shape = assembled[0]
-                elif assembled:
-                    comp = TopoDS_Compound()
-                    b = BRep_Builder()
-                    b.MakeCompound(comp)
-                    for w in assembled:
-                        b.Add(comp, w.wrapped)
-                    result_shape = cq.Shape.cast(comp)
-            except Exception:  # noqa: BLE001, S110
-                pass  # fall through with the original compound
-
-    # CadQuery/OCC uses raw values without mm/m conversion — no scaling needed here.
-    # (FreeCAD backend needs scaling because FreeCAD works in mm internally.)
-    return [(result_shape, file.stem)]
-
-
-def _placement_to_trsf(placement: _CQPlacement) -> gp_Trsf:
-    """Build a gp_Trsf (rotation + translation) from a _CQPlacement."""
-    trsf = gp_Trsf()
-    axis = placement.Rotation.Axis
-    angle = placement.Rotation.Angle
-    if abs(angle) > _ANGLE_PARALLEL_TOL:
-        ax1 = gp_Ax1(gp_Pnt(0.0, 0.0, 0.0), gp_Dir(axis.x, axis.y, axis.z))
-        trsf.SetRotation(ax1, angle)
-    base = placement.Base
-    trsf.SetTranslationPart(gp_Vec(base.x, base.y, base.z))
-    return trsf
-
-
-def change_placement(geo: apiShape, placement: _CQPlacement) -> None:
-    """Compose *placement* onto *geo*'s current location in place.
-
-    FreeCAD's homonym does a somewhat idiosyncratic composition on
-    ``geo.Placement``; here we instead apply the placement's rigid transform as
-    a relative location update on the underlying ``TopoDS_Shape`` — the natural
-    OCCT composition ``new = current * placement``. This matches the semantic
-    intent ("move this shape by that placement") used by every caller we've
-    seen, without trying to reproduce the FreeCAD base-vs-rotation asymmetry.
-    """
-    trsf = _placement_to_trsf(placement)
-    geo.wrapped.Move(TopLoc_Location(trsf))
-
-
 __all__ = [
-    "CADFileType",
-    "DefaultDisplayOptions",
     "apiFace",
     "area",
     "arrange_edges",
@@ -2991,10 +2262,7 @@ __all__ = [
     "bounding_box",
     "catch_caderr",
     "center_of_mass",
-    "change_placement",
     "close_wire",
-    "collect_verts_faces",
-    "collect_wires",
     "deserialise_shape",
     "discretise",
     "discretise_by_edges",
@@ -3008,7 +2276,6 @@ __all__ = [
     "faces",
     "fillet_wire_2D",
     "fix_shape",
-    "import_cad",
     "interpolate_bspline",
     "is_closed",
     "is_null",
@@ -3017,14 +2284,6 @@ __all__ = [
     "join_connect",
     "length",
     "loft",
-    "make_bezier",
-    "make_bspline",
-    "make_bspline_g1_blend",
-    "make_bsplinesurface",
-    "make_circle",
-    "make_circle_arc_3P",
-    "make_compound",
-    "make_ellipse",
     "make_face",
     "make_polygon",
     "make_shell",
@@ -3040,18 +2299,14 @@ __all__ = [
     "reverse_shape",
     "revolve_shape",
     "rotate_shape",
-    "save_as_STP",
-    "save_cad",
     "scale_shape",
     "serialise_shape",
     "shells",
-    "show_cad",
     "slice_shape",
     "solids",
     "split_wire",
     "start_point",
     "sweep_shape",
-    "tessellate",
     "translate_shape",
     "vertexes",
     "volume",

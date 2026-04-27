@@ -17,7 +17,10 @@ implementation lives in:
 
 * ``_aliases``    — type aliases (``apiVertex``, ``apiEdge``, …) and tolerances
 * ``_placement``  — Vector / Placement / Plane adapters and constructors
-* ``_core``       — geometry creation, transforms, booleans, I/O, …
+* ``_curves``     — Bezier / B-spline / circle / ellipse constructors
+* ``_display``    — tessellation + ``show_cad`` (delegates to polyscope)
+* ``_io``         — CAD file I/O (STEP read/write) and ``change_placement``
+* ``_core``       — remaining geometry: transforms, booleans, wires, …
 * ``_patches``    — side-effect monkey-patching of CadQuery shape classes
 """
 
@@ -30,6 +33,12 @@ from bluemira.codes._cadqueryapi._aliases import *
 from bluemira.codes._cadqueryapi._aliases import __all__ as _aliases_all
 from bluemira.codes._cadqueryapi._core import *
 from bluemira.codes._cadqueryapi._core import __all__ as _core_all
+from bluemira.codes._cadqueryapi._curves import *
+from bluemira.codes._cadqueryapi._curves import __all__ as _curves_all
+from bluemira.codes._cadqueryapi._display import *
+from bluemira.codes._cadqueryapi._display import __all__ as _display_all
+from bluemira.codes._cadqueryapi._io import *
+from bluemira.codes._cadqueryapi._io import __all__ as _io_all
 from bluemira.codes._cadqueryapi._placement import *
 from bluemira.codes._cadqueryapi._placement import __all__ as _placement_all
 
@@ -46,6 +55,9 @@ from bluemira.geometry.error import GeometryError as GeometryError
 __all__ = [  # noqa: PLE0604
     *_aliases_all,
     *_placement_all,
+    *_curves_all,
+    *_display_all,
+    *_io_all,
     *_core_all,
     "FreeCADError",
     "GeometryError",
@@ -62,9 +74,15 @@ def __getattr__(name: str):
     # via ``getattr``. The dispatcher in ``_geometryapi`` and a handful of
     # tests rely on this. Fall through to the submodules before declaring the
     # name unimplemented.
-    from bluemira.codes._cadqueryapi import _core, _placement  # noqa: PLC0415
+    from bluemira.codes._cadqueryapi import (  # noqa: PLC0415
+        _core,
+        _curves,
+        _display,
+        _io,
+        _placement,
+    )
 
-    for _mod in (_core, _placement):
+    for _mod in (_core, _placement, _curves, _display, _io):
         if hasattr(_mod, name):
             return getattr(_mod, name)
     raise NotImplementedError(
