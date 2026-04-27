@@ -170,22 +170,32 @@ def show_cad(
 
     parts, options, labels = _validate_display_inputs(parts, options, labels)
 
+    # Split kwargs by whether they correspond to a DisplayCADOptions field.
+    # ``Options.__slots__ = ("_options",)`` rejects unknown attributes via
+    # AttributeError, so any backend-specific kwarg (FreeCAD's camera_rotation,
+    # polyscope's up_direction/fps/…, our cadquery backend's hide_gui_panels)
+    # would crash if forwarded to DisplayCADOptions. Route them to the backend
+    # only, and let the cosmetic ones still bind to the per-part options.
+    opts_field_names = set(DisplayCADOptions(backend=backend).as_dict().keys())
+    opts_kwargs = {k: v for k, v in kwargs.items() if k in opts_field_names}
+    viewer_kwargs = {k: v for k, v in kwargs.items() if k not in opts_field_names}
+
     new_options = []
     for o in options:
         if isinstance(o, DisplayCADOptions):
             temp = DisplayCADOptions(**o.as_dict(), backend=backend)
-            temp.modify(**kwargs)
+            temp.modify(**opts_kwargs)
             new_options.append(temp)
         else:
             new_options.append(
-                DisplayCADOptions(**{**kwargs, **(o or {})}, backend=backend)
+                DisplayCADOptions(**{**opts_kwargs, **(o or {})}, backend=backend)
             )
 
     backend.get_module().show_cad(
         [part.shape for part in parts],
         [o.as_dict() for o in new_options],
         labels,
-        **kwargs,
+        **viewer_kwargs,
     )
 
 
