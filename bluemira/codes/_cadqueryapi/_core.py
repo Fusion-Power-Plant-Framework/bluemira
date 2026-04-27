@@ -40,12 +40,14 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeWire,
     BRepBuilderAPI_Sewing,
     BRepBuilderAPI_Transform,
+    BRepBuilderAPI_TransitionMode,
 )
 from OCP.BRepClass import BRepClass_FaceClassifier
 from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
+from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
@@ -458,9 +460,38 @@ def sweep_shape(
                 transitionMode=transition_mode,
             )
         else:
-            result = cq.Solid.sweep_multi(
-                profiles, path, makeSolid=solid, isFrenet=frenet
-            )
+            # cq.Solid.sweep_multi doesn't expose ``transitionMode``, so drive
+            # BRepOffsetAPI_MakePipeShell directly — that way ``transition``
+            # is honoured in the multi-profile path too, matching FreeCAD's
+            # ``path.makePipeShell(profiles, solid, frenet, transition)`` which
+            # accepts it unconditionally.
+            builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
+            builder.SetMode(frenet)
+            # Only override the transition mode when the user asked for a
+            # non-default value. Calling ``SetTransitionMode`` at all on a
+            # path without non-tangent transitions confuses OCCT's builder
+            # (Build returns IsDone=False even for the default ``Transformed``
+            # value), so we leave it alone in the common case.
+            if transition != 0:
+                builder.SetTransitionMode(
+                    (
+                        BRepBuilderAPI_TransitionMode.BRepBuilderAPI_Transformed,
+                        BRepBuilderAPI_TransitionMode.BRepBuilderAPI_RightCorner,
+                        BRepBuilderAPI_TransitionMode.BRepBuilderAPI_RoundCorner,
+                    )[transition]
+                )
+            for p in profiles:
+                builder.Add(p.wrapped)
+            builder.Build()
+            if not builder.IsDone():
+                raise FreeCADError(  # noqa: TRY301
+                    "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
+                )
+            if solid:
+                builder.MakeSolid()
+            result = cq.Shape.cast(builder.Shape())
+    except FreeCADError:
+        raise
     except Exception as exc:
         raise FreeCADError(f"CadQuery sweep failed: {exc}") from exc
 
