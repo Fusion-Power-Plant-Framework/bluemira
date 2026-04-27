@@ -589,6 +589,19 @@ def offset_wire(
     if not result_wires:
         raise FreeCADError("offset_wire: no result produced")
 
+    if len(result_wires) > 1:
+        # Inward offsets of self-intersecting / figure-8 / C-shaped wires can
+        # produce several disjoint pieces. We currently keep only the longest
+        # (most likely the intended dominant boundary) and warn the caller —
+        # full multi-wire handling would require widening the return type to
+        # apiCompound, which downstream callers don't yet expect.
+        result_wires = sorted(result_wires, key=lambda w: w.Length(), reverse=True)
+        bluemira_warn(
+            f"offset_wire produced {len(result_wires)} disjoint wires; "
+            "returning the longest and discarding the rest. Consider splitting "
+            "the input wire upstream if this is unexpected."
+        )
+
     result = result_wires[0]
 
     if not open_wire and not result.IsClosed():
