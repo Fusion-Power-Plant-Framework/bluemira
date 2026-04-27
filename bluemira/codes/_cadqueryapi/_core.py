@@ -18,9 +18,8 @@ from __future__ import annotations
 import contextlib
 import enum
 import math
-from collections import UserList
 from dataclasses import dataclass
-from itertools import pairwise, starmap
+from itertools import pairwise
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -108,6 +107,18 @@ from OCP.gp import (
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._cadqueryapi._aliases import (
+    _ANGLE_PARALLEL_TOL,
+    _GEOM_NEAR_ZERO_TOL,
+    _OCC_DEFAULT_TOL,
+    _POINT_COINCIDENCE_TOL,
+    apiCompound,
+    apiEdge,
+    apiShape,
+    apiShell,
+    apiSolid,
+    apiWire,
+)
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 from bluemira.utilities.tools import ColourDescriptor
@@ -115,38 +126,8 @@ from bluemira.utilities.tools import ColourDescriptor
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from bluemira.codes._cadqueryapi._placement import _CQPlacement
     from bluemira.display.palettes import ColorPalette
-
-# ---------------------------------------------------------------------------
-# Type aliases — mirror the names used throughout bluemira so that
-# isinstance() checks and type annotations keep working.
-# ---------------------------------------------------------------------------
-apiVertex = cq.Vertex
-apiVector = cq.Vector
-apiEdge = cq.Edge
-apiWire = cq.Wire
-apiShell = cq.Shell
-apiSolid = cq.Solid
-apiShape = cq.Shape
-apiCompound = cq.Compound
-
-# ---------------------------------------------------------------------------
-# Numerical tolerances used throughout the OCC / CadQuery interop layer.
-# ---------------------------------------------------------------------------
-#: Tolerance for collapsing tiny floating-point residuals to zero (matrix
-#: cleanup, axis component snapping).
-_GEOM_NEAR_ZERO_TOL = 1e-12
-#: Generic angular / cross-product tolerance for "is this rotation effectively
-#: zero" or "are two vectors parallel" checks.
-_ANGLE_PARALLEL_TOL = 1e-10
-#: Generic point-coincidence / parameter-equality tolerance.
-_POINT_COINCIDENCE_TOL = 1e-9
-#: Default tolerance for OCC algorithms that take a precision argument
-#: (``BRepClass3d``, classifiers, edge length filters, sewing).
-_OCC_DEFAULT_TOL = 1e-6
-#: Threshold for selecting an alternative reference axis when the natural
-#: choice is too close to the input direction.
-_AXIS_DOMINANCE_TOL = 0.9
 
 
 class _apiFaceMeta(type):
@@ -1067,340 +1048,6 @@ def show_cad(
     finally:
         _orig_cadapi.collect_verts_faces = _orig_collect_verts
         _orig_cadapi.collect_wires = _orig_collect_wires
-
-
-# ---------------------------------------------------------------------------
-# Extra type aliases expected by bluemira.geometry
-# ---------------------------------------------------------------------------
-# CadQuery has no BSplineSurface public type; cq.Shape is the closest proxy.
-apiSurface = cq.Shape
-
-
-class _Vector:
-    """Minimal FreeCAD Base.Vector stand-in."""
-
-    def __init__(self, x=0.0, y=0.0, z=0.0):
-        # Allow construction from a single iterable (e.g. numpy array, list, tuple)
-        if hasattr(x, "__iter__"):
-            x, y, z = x
-        self.x, self.y, self.z = float(x), float(y), float(z)
-
-    def __iter__(self):
-        return iter((self.x, self.y, self.z))
-
-    def __repr__(self):
-        return f"_Vector({self.x}, {self.y}, {self.z})"
-
-    def __array__(self, dtype=None):  # noqa: PLW3201 - numpy interop hook
-        arr = np.array([self.x, self.y, self.z])
-        return arr if dtype is None else arr.astype(dtype)
-
-    def __eq__(self, other):
-        if not isinstance(other, _Vector):
-            return NotImplemented
-        return (self.x, self.y, self.z) == (other.x, other.y, other.z)
-
-    def __hash__(self):
-        return hash((self.x, self.y, self.z))
-
-
-class _Rotation:
-    def __init__(self, axis=(0, 0, 1), angle=0.0):
-        self.Axis = _Vector(*axis)
-        self.Angle = angle
-
-
-class _HomogeneousMatrix:
-    """Wraps a 4x4 numpy array; exposes `.A` as a flat list (FreeCAD Matrix.A API)."""
-
-    def __init__(self, m: np.ndarray):
-        self._m = m
-
-    @property
-    def A(self) -> list[float]:
-        return list(self._m.flatten())
-
-
-class _CQPlacement:
-    """
-    Minimal stand-in for FreeCAD's Base.Placement.
-
-    Angle is stored internally in **radians** (matching FreeCAD's
-    ``Placement.Rotation.Angle`` which returns radians).  The public
-    API ``make_placement`` accepts degrees and converts on entry.
-    """
-
-    def __init__(self, base=(0, 0, 0), axis=(0, 0, 1), angle_rad=0.0):
-        self.Base = _Vector(*base)
-        # Normalize axis (mirrors FreeCAD which always stores a unit vector).
-        _ax = np.asarray(axis, dtype=float)
-        _norm = np.linalg.norm(_ax)
-        if _norm > 0:
-            _ax /= _norm
-        self.Rotation = _Rotation(tuple(_ax), angle_rad)
-
-    @property
-    def Matrix(self) -> _HomogeneousMatrix:
-        """4x4 homogeneous transformation matrix (FreeCAD Placement.Matrix API)."""
-        R = self._rot_matrix()
-        m = np.eye(4)
-        m[:3, :3] = R
-        m[:3, 3] = [self.Base.x, self.Base.y, self.Base.z]
-        return _HomogeneousMatrix(m)
-
-    def _rot_matrix(self) -> np.ndarray:
-        """3x3 rotation matrix via Rodrigues' formula (angle in radians)."""
-        k = np.array(
-            [self.Rotation.Axis.x, self.Rotation.Axis.y, self.Rotation.Axis.z],
-            dtype=float,
-        )
-        norm = np.linalg.norm(k)
-        if norm < _GEOM_NEAR_ZERO_TOL:
-            return np.eye(3)
-        k /= norm
-        theta = self.Rotation.Angle  # already in radians
-        c, s = math.cos(theta), math.sin(theta)
-        K = np.array([[0, -k[2], k[1]], [k[2], 0, -k[0]], [-k[1], k[0], 0]])
-        return c * np.eye(3) + s * K + (1 - c) * np.outer(k, k)
-
-    def multVec(self, vec) -> _Vector:
-        """Apply rotation + translation; returns a Base.Vector-compatible vector."""
-        v = np.asarray(list(vec) if hasattr(vec, "__iter__") else [vec], dtype=float)
-        out = self._rot_matrix() @ v + np.array([
-            self.Base.x,
-            self.Base.y,
-            self.Base.z,
-        ])
-        return _Vector(*out)
-
-    def inverse(self):
-        R = self._rot_matrix()
-        b = np.array([self.Base.x, self.Base.y, self.Base.z])
-        inv_b = -R.T @ b
-        inv = _CQPlacement(base=tuple(inv_b), angle_rad=-self.Rotation.Angle)
-        inv.Rotation.Axis = self.Rotation.Axis
-        return inv
-
-    def __repr__(self):
-        return f"_CQPlacement(base={self.Base}, angle_rad={self.Rotation.Angle})"
-
-
-apiPlacement = _CQPlacement
-
-
-class _CQPlane:
-    """Minimal stand-in for FreeCAD's Part.Plane.
-
-    Only `.Position` and `.Axis` are needed by BluemiraPlane.
-    """
-
-    def __init__(self, base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0)):
-        self.Position = _Vector(*base)
-        self.Axis = _Vector(*axis)
-
-    def __repr__(self):
-        return f"_CQPlane(Position={self.Position}, Axis={self.Axis})"
-
-
-apiPlane = _CQPlane
-
-
-# Stand-in for cadapi.Base used in placement.py: cadapi.Base.Vector(value)
-class _BaseModule:
-    Vector = _Vector
-
-
-Base = _BaseModule()
-
-
-def make_placement(
-    base=(0.0, 0.0, 0.0),
-    axis=(0.0, 0.0, 1.0),
-    angle: float = 0.0,
-) -> _CQPlacement:
-    """Create a placement.  *angle* is in degrees (FreeCAD convention)."""
-    return _CQPlacement(base=list(base), axis=list(axis), angle_rad=math.radians(angle))
-
-
-def make_placement_from_matrix(matrix) -> _CQPlacement:
-    """Extract a _CQPlacement from a 4x4 homogeneous transformation matrix.
-
-    The rotation sub-matrix is normalised before axis-angle decomposition,
-    so scaled matrices are handled correctly (as the test requires).
-    """
-    m = np.array(matrix, dtype=float)
-    R = m[:3, :3].copy()
-    t = m[:3, 3]
-
-    # Orthonormalise R via SVD so scaled R still decomposes correctly.
-    U, _s, Vt = np.linalg.svd(R)
-    R_norm = U @ Vt  # nearest proper rotation (det=+1 guaranteed below)
-    if np.linalg.det(R_norm) < 0:
-        U[:, -1] *= -1
-        R_norm = U @ Vt
-
-    # Axis-angle from rotation matrix.
-    trace = np.clip(np.trace(R_norm), -1.0, 3.0)
-    theta = math.acos((trace - 1.0) / 2.0)  # radians
-
-    sin_theta = math.sin(theta)
-    if abs(theta) < _ANGLE_PARALLEL_TOL:
-        # θ ≈ 0 → rotation is identity; axis direction is arbitrary.
-        axis = np.array([0.0, 0.0, 1.0])
-    elif abs(sin_theta) < _ANGLE_PARALLEL_TOL:
-        # θ ≈ π → Rodrigues inverse is singular (sin→0).
-        # R + I = 2·n·nᵀ at θ=π; pick the column with largest norm and
-        # normalise it to recover the axis robustly (ambiguous sign for a
-        # 180° rotation is physically irrelevant).
-        m_sym = R_norm + np.eye(3)
-        col_norms = np.linalg.norm(m_sym, axis=0)
-        k = int(np.argmax(col_norms))
-        if col_norms[k] > _ANGLE_PARALLEL_TOL:
-            axis = m_sym[:, k] / col_norms[k]
-        else:
-            axis = np.array([0.0, 0.0, 1.0])
-    else:
-        axis = np.array([
-            R_norm[2, 1] - R_norm[1, 2],
-            R_norm[0, 2] - R_norm[2, 0],
-            R_norm[1, 0] - R_norm[0, 1],
-        ]) / (2.0 * sin_theta)
-        n = np.linalg.norm(axis)
-        if n > 0:
-            axis /= n
-        else:
-            axis = np.array([0.0, 0.0, 1.0])
-
-    return _CQPlacement(base=tuple(t), axis=tuple(axis), angle_rad=theta)
-
-
-def move_placement(placement: _CQPlacement, vector) -> None:
-    """Stub — no-op for import compatibility."""
-
-
-def make_plane(
-    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
-) -> _CQPlane:
-    """Create a plane from a base point and normal axis (axis is normalized)."""
-    n = np.asarray(axis, dtype=float)
-    norm = np.linalg.norm(n)
-    if norm > 0:
-        n /= norm
-    return _CQPlane(base=tuple(base), axis=tuple(n))
-
-
-def make_plane_from_3_points(
-    point1: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    point2: tuple[float, float, float] = (1.0, 0.0, 0.0),
-    point3: tuple[float, float, float] = (0.0, 1.0, 0.0),
-) -> _CQPlane:
-    """Create a plane defined by three non-collinear points."""
-    p1 = np.asarray(point1, dtype=float)
-    p2 = np.asarray(point2, dtype=float)
-    p3 = np.asarray(point3, dtype=float)
-    normal = np.cross(p2 - p1, p3 - p1)
-    norm = np.linalg.norm(normal)
-    if norm < _GEOM_NEAR_ZERO_TOL:
-        raise ValueError("Three points are collinear — cannot define a plane.")
-    normal /= norm
-    return _CQPlane(base=tuple(p1), axis=tuple(normal))
-
-
-def _checked_to_numpy(obj, types, get_xyz, name):
-    """Shape-(3,) or (N, 3) array of coordinates; TypeError on wrong types.
-
-    Mirrors FreeCAD's ``@check_data_type`` contract used by
-    :func:`vector_to_numpy` / :func:`vertex_to_numpy`. *get_xyz* maps one
-    element to an object exposing ``.x .y .z``.
-    """
-    if isinstance(obj, types):
-        c = get_xyz(obj)
-        return np.array([c.x, c.y, c.z])
-    if isinstance(obj, (list, tuple)) and obj and all(isinstance(x, types) for x in obj):
-        return np.array([[(c := get_xyz(x)).x, c.y, c.z] for x in obj])
-    raise TypeError(f"{name} expects {types} or list thereof, got {type(obj)}")
-
-
-def vector_to_numpy(v) -> np.ndarray:
-    """Convert a cq.Vector / _Vector (or list thereof) to numpy array."""
-    return _checked_to_numpy(v, (cq.Vector, _Vector), lambda x: x, "vector_to_numpy")
-
-
-def make_vertex(x: float, y: float, z: float) -> apiVertex:
-    """Construct a vertex from coordinates."""
-    return cq.Vertex.makeVertex(float(x), float(y), float(z))
-
-
-def vertex_to_numpy(vertexes) -> np.ndarray:
-    """Convert a cq.Vertex (or list thereof) to numpy array."""
-    return _checked_to_numpy(
-        vertexes, (cq.Vertex,), lambda v: v.Center(), "vertex_to_numpy"
-    )
-
-
-def face_from_plane(plane: _CQPlane, width: float, height: float) -> cq.Face:
-    """Create a rectangular face of size ``width x height`` centred at the plane base.
-
-    Two orthogonal basis vectors in the plane are computed from the plane normal,
-    then the four corners are wired into a face.
-    """
-    base = np.array([plane.Position.x, plane.Position.y, plane.Position.z])
-    n = np.array([plane.Axis.x, plane.Axis.y, plane.Axis.z], dtype=float)
-    n /= np.linalg.norm(n)
-
-    # Build an orthonormal basis (u, v) in the plane
-    ref = (
-        np.array([0.0, 0.0, 1.0])
-        if abs(n[2]) < _AXIS_DOMINANCE_TOL
-        else np.array([1.0, 0.0, 0.0])
-    )
-    u = np.cross(ref, n)
-    u /= np.linalg.norm(u)
-    v = np.cross(n, u)
-
-    hw, hh = width / 2.0, height / 2.0
-    corners = [
-        base - hw * u - hh * v,
-        base + hw * u - hh * v,
-        base + hw * u + hh * v,
-        base - hw * u + hh * v,
-    ]
-    verts = list(starmap(cq.Vector, corners))
-    edges = [cq.Edge.makeLine(verts[i], verts[(i + 1) % 4]) for i in range(4)]
-    wire = cq.Wire.assembleEdges(edges)
-    return cq.Face.makeFromWires(wire)
-
-
-def _rotation_to_align(src: np.ndarray, dst: np.ndarray) -> tuple[np.ndarray, float]:
-    """Return (axis, angle_rad) rotation that aligns unit vector *src* with *dst*."""
-    src /= np.linalg.norm(src) + 1e-16
-    dst /= np.linalg.norm(dst) + 1e-16
-    cross = np.cross(src, dst)
-    cross_norm = np.linalg.norm(cross)
-    dot = float(np.clip(np.dot(src, dst), -1.0, 1.0))
-    if cross_norm < _GEOM_NEAR_ZERO_TOL:
-        if dot > 0:
-            return np.array([0.0, 0.0, 1.0]), 0.0
-        # 180° rotation — pick arbitrary perpendicular axis
-        perp = (
-            np.array([1.0, 0.0, 0.0])
-            if abs(src[0]) < _AXIS_DOMINANCE_TOL
-            else np.array([0.0, 1.0, 0.0])
-        )
-        axis = np.cross(src, perp)
-        axis /= np.linalg.norm(axis)
-        return axis, math.pi
-    axis = cross / cross_norm
-    return axis, math.acos(dot)
-
-
-def placement_from_plane(plane: _CQPlane) -> _CQPlacement:
-    """Convert a plane to a placement whose local z-axis aligns with the plane normal."""
-    base = (plane.Position.x, plane.Position.y, plane.Position.z)
-    n = np.array([plane.Axis.x, plane.Axis.y, plane.Axis.z], dtype=float)
-    axis, angle_rad = _rotation_to_align(np.array([0.0, 0.0, 1.0]), n)
-    return _CQPlacement(base=base, axis=tuple(axis), angle_rad=angle_rad)
 
 
 # ---------------------------------------------------------------------------
@@ -3332,74 +2979,86 @@ def change_placement(geo: apiShape, placement: _CQPlacement) -> None:
     geo.wrapped.Move(TopLoc_Location(trsf))
 
 
-def __getattr__(name: str):
-    # Let Python handle dunder attributes normally (e.g. __path__, __spec__)
-    if name.startswith("__") and name.endswith("__"):
-        raise AttributeError(name)
-    raise NotImplementedError(
-        f"_cadqueryapi: '{name}' is not yet implemented in the CadQuery backend. "
-        f"Add it to bluemira/codes/_cadqueryapi.py to continue."
-    )
-
-
-# ---------------------------------------------------------------------------
-# Monkey-patch CadQuery shape classes with FreeCAD-compatible attributes.
-# This allows code that accesses .Orientation, .reverse(), .Wires (property),
-# .Faces, .Edges, .Shells, .Solids on raw CadQuery shapes to work correctly.
-# ---------------------------------------------------------------------------
-
-
-def _cq_orientation(self) -> str:
-    """Return 'Forward' or 'Reversed' mirroring FreeCAD's Orientation property."""
-    return "Reversed" if self.wrapped.Orientation() == TopAbs_REVERSED else "Forward"
-
-
-def _cq_reverse(self) -> None:
-    """Reverse the shape orientation in-place (mirrors FreeCAD's reverse() method)."""
-    reversed_shape = self.wrapped.Reversed()
-    # Cast back to the concrete OCCT type so type-specific OCC functions still work.
-    self.wrapped = cq.Shape.cast(reversed_shape).wrapped
-
-
-for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
-    if not hasattr(_cls, "Orientation") or not isinstance(
-        _cls.__dict__.get("Orientation"), property
-    ):
-        _cls.Orientation = property(_cq_orientation)
-    if not hasattr(_cls, "reverse"):
-        _cls.reverse = _cq_reverse
-
-# Area as a property on Face (FreeCAD: face.Area property; CadQuery: face.Area() method)
-if not isinstance(cq.Face.__dict__.get("Area"), property):
-    cq.Face.Area = property(_cq_area_prop)
-
-
-class _CallableList(UserList):
-    """A list that is also callable (returns itself).
-
-    Lets ``obj.Wires`` and ``obj.Wires()`` both yield the same value, which the
-    FreeCAD-flavoured callsites in bluemira rely on.
-    """
-
-    def __call__(self):
-        return list(self)
-
-
-def _make_shape_collection_prop(method_name: str, orig_method):
-    """Return a property that wraps the original method in a _CallableList."""
-
-    def _prop(self):
-        return _CallableList(orig_method(self))
-
-    _prop.__name__ = method_name
-    return property(_prop)
-
-
-# Patch collection accessors on Solid and Shell so that both `shape.Wires` and
-# `shape.Wires()` work. Only patch classes that are returned by cadapi geometry
-# functions (not Compound, which CadQuery uses internally with `.Wires()` calls).
-for _cls in (cq.Solid, cq.Shell):
-    for _name in ("Wires", "Faces", "Edges", "Shells", "Solids", "Vertices"):
-        _orig = getattr(_cls, _name, None)
-        if _orig is not None and callable(_orig) and not isinstance(_orig, property):
-            setattr(_cls, _name, _make_shape_collection_prop(_name, _orig))
+__all__ = [
+    "CADFileType",
+    "DefaultDisplayOptions",
+    "apiFace",
+    "area",
+    "arrange_edges",
+    "boolean_cut",
+    "boolean_fragments",
+    "boolean_fuse",
+    "bounding_box",
+    "catch_caderr",
+    "center_of_mass",
+    "change_placement",
+    "close_wire",
+    "collect_verts_faces",
+    "collect_wires",
+    "deserialise_shape",
+    "discretise",
+    "discretise_by_edges",
+    "dist_to_shape",
+    "eccentricity",
+    "edge_tangent_at",
+    "edges",
+    "end_point",
+    "extrude_shape",
+    "face_cut_holes",
+    "faces",
+    "fillet_wire_2D",
+    "fix_shape",
+    "import_cad",
+    "interpolate_bspline",
+    "is_closed",
+    "is_null",
+    "is_same",
+    "is_valid",
+    "join_connect",
+    "length",
+    "loft",
+    "make_bezier",
+    "make_bspline",
+    "make_bspline_g1_blend",
+    "make_bsplinesurface",
+    "make_circle",
+    "make_circle_arc_3P",
+    "make_compound",
+    "make_ellipse",
+    "make_face",
+    "make_polygon",
+    "make_shell",
+    "make_solid",
+    "mirror_shape",
+    "normal_at",
+    "offset_wire",
+    "optimal_bounding_box",
+    "ordered_edges",
+    "ordered_vertexes",
+    "orientation",
+    "point_inside_shape",
+    "reverse_shape",
+    "revolve_shape",
+    "rotate_shape",
+    "save_as_STP",
+    "save_cad",
+    "scale_shape",
+    "serialise_shape",
+    "shells",
+    "show_cad",
+    "slice_shape",
+    "solids",
+    "split_wire",
+    "start_point",
+    "sweep_shape",
+    "tessellate",
+    "translate_shape",
+    "vertexes",
+    "volume",
+    "wire_closure",
+    "wire_from_edges",
+    "wire_from_wires",
+    "wire_parameter_at",
+    "wire_value_at",
+    "wires",
+]
