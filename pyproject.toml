@@ -78,7 +78,7 @@ dev = [
 examples = ["notebook", "jupytext", "rich[jupyter]"]
 pinned = [
     "nlopt==2.10.0",
-    "numba==0.65.0",
+    "numba==0.65.1",
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy==2.2.6",
     "matplotlib==3.10.8",
