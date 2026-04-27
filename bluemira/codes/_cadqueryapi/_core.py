@@ -420,7 +420,11 @@ def sweep_shape(
     transition: int = 0,
 ) -> apiShell | apiSolid:
     """Sweep one or more *profiles* along *path*."""
-    if not isinstance(profiles, list):
+    if isinstance(profiles, apiWire):
+        # Single wire → wrap as one-element list. Avoids the trap that
+        # ``list(cq.Wire)`` iterates the wire's edges (not what we want).
+        profiles = [profiles]
+    elif not isinstance(profiles, list):
         profiles = list(profiles)
 
     closures = [p.IsClosed() for p in profiles]
