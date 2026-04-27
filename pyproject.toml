@@ -81,7 +81,7 @@ pinned = [
     "numba==0.65.1",
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy==2.2.6",
-    "matplotlib==3.10.8",
+    "matplotlib==3.10.9",
     "scipy==1.17.1",
     "vtk==9.3.1",  # needed for uv resolution
 ]
