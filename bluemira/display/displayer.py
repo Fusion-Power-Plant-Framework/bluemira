@@ -139,7 +139,7 @@ def show_cad(
     | list[dict[str, float | str | None]]
     | None = None,
     labels: str | list[str] | None = None,
-    backend: str | ViewerBackend = ViewerBackend.FREECAD,
+    backend: str | ViewerBackend | None = None,
     **kwargs,
 ):
     """
@@ -154,10 +154,13 @@ def show_cad(
     labels
         Labels to use for each part object
     backend
-        Viewer backend
+        Viewer backend. If ``None``, falls back to the
+        ``BLUEMIRA_GEOMETRY_BACKEND`` environment variable, then to FreeCAD.
     kwargs
         Passed on to modifications to the plotting style options and backend
     """
+    if backend is None:
+        backend = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
     if isinstance(backend, str):
         try:
             backend = ViewerBackend[backend.upper()]
@@ -298,9 +301,6 @@ class ComponentDisplayer(BaseDisplayer):
         """
         import bluemira.base.components as bm_comp  # noqa: PLC0415
 
-        if "backend" not in kwargs:
-            backend = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
-            kwargs["backend"] = backend
         show_cad(
             *bm_comp.get_properties_from_components(
                 comps, ("shape", "display_cad_options", "name")
