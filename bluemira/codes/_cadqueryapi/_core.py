@@ -557,7 +557,9 @@ def offset_wire(
         For open wires, keep offset open (True) or close it (False).
     """
     if not thickness:
-        return wire
+        # Return a copy so the caller cannot mutate the input wire by
+        # acting on the "output" — matches FreeCAD's `wire.copy()`.
+        return wire.copy()
 
     if _wire_is_straight(wire):
         raise InvalidCADInputsError("Cannot offset a straight line.")
