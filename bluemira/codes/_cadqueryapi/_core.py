@@ -144,6 +144,20 @@ def _face_from_wires_tolerant(outer: cq.Wire, inner: list) -> cq.Face:
                 return cq.Face(builder.Face())
         except Exception:  # noqa: BLE001, S110
             pass  # fall through to planar paths below
+    else:  # we have inner wire(s), check if they are valid
+        o_bounds = np.array(bounding_box(outer))
+
+        for hole_wire in inner:
+            h_bounds = np.array(bounding_box(hole_wire))
+
+            is_outside_mins = np.any(h_bounds[:3] < o_bounds[:3] - _OCC_DEFAULT_TOL)
+            is_outside_maxs = np.any(h_bounds[3:] > o_bounds[3:] + _OCC_DEFAULT_TOL)
+
+            if is_outside_mins or is_outside_maxs:
+                raise GeometryError(
+                    "Topological error: inner wire is located partially or "
+                    "completely outside the bounds of the outer wire."
+                )
 
     try:
         return cq.Face.makeFromWires(outer, inner)
