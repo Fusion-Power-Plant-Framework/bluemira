@@ -27,15 +27,15 @@ babel==2.18.0
     #   sphinx
 blosc2==4.1.2
     # via tables
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.0
+citeproc-py==0.9.2
     # via csl-reference
-click==8.3.2
+click==8.3.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -56,7 +56,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.2
+cyclopts==4.11.0
     # via pyvista
 debugpy==1.8.20
     # via ipykernel
@@ -98,7 +98,7 @@ greenlet==3.4.0
     # via sqlalchemy
 identify==2.6.19
     # via pre-commit
-idna==3.11
+idna==3.13
     # via requests
 imageio==2.37.3
     # via bluemira (pyproject.toml)
@@ -112,7 +112,7 @@ iniconfig==2.3.0
     # via pytest
 ipykernel==7.2.0
     # via myst-nb
-ipython==9.10.1
+ipython==9.13.0
     # via
     #   ipykernel
     #   myst-nb
@@ -185,7 +185,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.1.2
     # via blosc2
-mypy==1.20.1
+mypy==1.20.2
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
     # via mypy
@@ -245,7 +245,7 @@ numpy==2.2.6
     #   tables
 numpydantic==1.8.1
     # via matproplib
-packaging==26.1
+packaging==26.2
     # via
     #   ipykernel
     #   jupytext
@@ -258,7 +258,7 @@ pandas==3.0.2
     # via seaborn
 parso==0.8.6
     # via jedi
-pathspec==1.0.4
+pathspec==1.1.1
     # via mypy
 periodictable==2.1.0
     # via
@@ -288,12 +288,14 @@ pluggy==1.6.0
     #   pytest-cov
 pooch==1.9.0
     # via pyvista
-pre-commit==4.5.1
+pre-commit==4.6.0
     # via bluemira (pyproject.toml)
 prompt-toolkit==3.0.52
     # via ipython
 psutil==7.2.2
-    # via ipykernel
+    # via
+    #   ipykernel
+    #   ipython
 ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
@@ -302,13 +304,13 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.13.2
+pydantic==2.13.3
     # via
     #   bluemira (pyproject.toml)
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.2
+pydantic-core==2.46.3
     # via pydantic
 pygments==2.20.0
     # via
@@ -390,7 +392,7 @@ scipy==1.17.1
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.11.0
+scooby==0.11.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)

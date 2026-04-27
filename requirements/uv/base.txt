@@ -16,13 +16,13 @@ babel==2.18.0
     #   matproplib
 blosc2==4.1.2
     # via tables
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.0
+citeproc-py==0.9.2
     # via csl-reference
-click==8.3.2
+click==8.3.3
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -38,7 +38,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.2
+cyclopts==4.11.0
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -58,7 +58,7 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.2
     # via bluemira (pyproject.toml)
-idna==3.11
+idna==3.13
     # via requests
 imageio==2.37.3
     # via bluemira (pyproject.toml)
@@ -125,7 +125,7 @@ numpy==2.2.6
     #   tables
 numpydantic==1.8.1
     # via matproplib
-packaging==26.1
+packaging==26.2
     # via
     #   matplotlib
     #   pooch
@@ -155,13 +155,13 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.13.2
+pydantic==2.13.3
     # via
     #   bluemira (pyproject.toml)
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.2
+pydantic-core==2.46.3
     # via pydantic
 pygments==2.20.0
     # via rich
@@ -194,7 +194,7 @@ scipy==1.17.1
     #   bluemira (pyproject.toml)
     #   numba-scipy
     #   scikit-learn
-scooby==0.11.0
+scooby==0.11.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
