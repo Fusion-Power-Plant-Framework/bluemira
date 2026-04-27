@@ -375,6 +375,40 @@ def revolve_shape(
         raise FreeCADError(f"CadQuery revolve failed: {exc}") from exc
 
 
+def _edge_pair_cos_angle(e_prev: apiEdge, e_next: apiEdge) -> float | None:
+    """Cosine of the angle between consecutive edges' tangents at their join.
+
+    Uses ``BRepAdaptor_Curve.D1`` per edge — the wire-level ``tangentAt``
+    smooths across edge boundaries and would not see hard kinks. Returns
+    ``None`` if either tangent has zero magnitude (degenerate edge).
+    """
+    a_prev = BRepAdaptor_Curve(e_prev.wrapped)
+    a_next = BRepAdaptor_Curve(e_next.wrapped)
+    p_end = gp_Pnt()
+    t_end = gp_Vec()
+    a_prev.D1(a_prev.LastParameter(), p_end, t_end)
+    p_start = gp_Pnt()
+    t_start = gp_Vec()
+    a_next.D1(a_next.FirstParameter(), p_start, t_start)
+    mag = t_end.Magnitude() * t_start.Magnitude()
+    if mag == 0:
+        return None
+    return t_end.Dot(t_start) / mag
+
+
+def _edge_junction_pairs(wire: apiWire) -> list[tuple[apiEdge, apiEdge]]:
+    """Build the list of (prev_edge, next_edge) pairs to inspect at junctions.
+
+    Includes the closing seam (last → first) when the wire is closed,
+    mirroring _freecadapi._wire_edges_tangent.
+    """
+    edges = ordered_edges(wire)
+    pairs = list(pairwise(edges))
+    if is_closed(wire) and len(edges) >= 2:  # noqa: PLR2004
+        pairs.append((edges[-1], edges[0]))
+    return pairs
+
+
 def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     """Raise ``FreeCADError`` if the path has a non-tangent-continuous join.
 
@@ -386,26 +420,10 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     producing a self-intersecting / kinked solid. FreeCAD raises on this
     case, so we do too.
     """
-    edges = ordered_edges(path)
-    pairs = list(pairwise(edges))
-    if is_closed(path):
-        # Closed path: also check the seam (last edge -> first edge), otherwise
-        # a kink at the closure goes undetected and OCCT silently sweeps a
-        # self-intersecting solid. Mirrors _freecadapi._wire_edges_tangent.
-        pairs.append((edges[-1], edges[0]))
-    for e_prev, e_next in pairs:
-        a_prev = BRepAdaptor_Curve(e_prev.wrapped)
-        a_next = BRepAdaptor_Curve(e_next.wrapped)
-        p_end = gp_Pnt()
-        t_end = gp_Vec()
-        a_prev.D1(a_prev.LastParameter(), p_end, t_end)
-        p_start = gp_Pnt()
-        t_start = gp_Vec()
-        a_next.D1(a_next.FirstParameter(), p_start, t_start)
-        mag = t_end.Magnitude() * t_start.Magnitude()
-        if mag == 0:
+    for e_prev, e_next in _edge_junction_pairs(path):
+        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
+        if cos_angle is None:
             continue
-        cos_angle = t_end.Dot(t_start) / mag
         if cos_angle < 1.0 - tol:
             raise FreeCADError(
                 "sweep_shape: path is not tangent-continuous at an interior "
@@ -640,47 +658,19 @@ def _wire_is_planar(wire: apiWire) -> bool:
 
 
 def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
-    """True if all consecutive edges in the wire are tangent.
+    """True if all consecutive edges in the wire are tangent at their joins.
 
-    Uses wire-level tangents at small offsets from each edge junction to avoid
-    issues with OCC edge orientation vs wire orientation.
+    For closed wires also checks the seam (last edge → first edge), matching
+    ``_freecadapi._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
+    via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
+    edge boundaries and would silently miss hard kinks (90° polygon corners).
     """
-    edges = wire.Edges()
-    if len(edges) <= 1:
-        return True
-
-    total = wire.Length()
-    if total < _GEOM_NEAR_ZERO_TOL:
-        return True
-
-    # Build cumulative arc lengths at each edge boundary using ordered edges.
-    oe = ordered_edges(wire)
-    if not oe:
-        oe = edges
-
-    cum = [0.0]
-    for e in oe:
-        cum.append(cum[-1] + e.Length())
-
-    eps = min(1e-6 * total, 1e-9)
-
-    for i in range(1, len(oe)):
-        d = cum[i]  # junction at this arc length
-        # Tangent just before and just after the junction
-        d_before = max(0.0, d - eps)
-        d_after = min(total, d + eps)
-        t_before = wire.tangentAt(d_before, mode="length")
-        t_after = wire.tangentAt(d_after, mode="length")
-        v1 = np.array([t_before.x, t_before.y, t_before.z])
-        v2 = np.array([t_after.x, t_after.y, t_after.z])
-        n1, n2 = np.linalg.norm(v1), np.linalg.norm(v2)
-        if n1 < EPS or n2 < EPS:
+    for e_prev, e_next in _edge_junction_pairs(wire):
+        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
+        if cos_angle is None:
             continue
-        cos_a = np.dot(v1, v2) / (n1 * n2)
-        angle = math.acos(max(-1.0, min(1.0, cos_a)))
-        if not np.isclose(angle, 0.0, rtol=0.0, atol=atol):
+        if cos_angle < 1.0 - atol:
             return False
-
     return True
 
 
