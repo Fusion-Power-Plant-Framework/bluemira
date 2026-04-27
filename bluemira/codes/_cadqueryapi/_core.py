@@ -385,9 +385,13 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     case, so we do too.
     """
     edges = ordered_edges(path)
-    if len(edges) < 2:  # noqa: PLR2004
-        return
-    for e_prev, e_next in pairwise(edges):
+    pairs = list(pairwise(edges))
+    if is_closed(path):
+        # Closed path: also check the seam (last edge -> first edge), otherwise
+        # a kink at the closure goes undetected and OCCT silently sweeps a
+        # self-intersecting solid. Mirrors _freecadapi._wire_edges_tangent.
+        pairs.append((edges[-1], edges[0]))
+    for e_prev, e_next in pairs:
         a_prev = BRepAdaptor_Curve(e_prev.wrapped)
         a_next = BRepAdaptor_Curve(e_next.wrapped)
         p_end = gp_Pnt()
