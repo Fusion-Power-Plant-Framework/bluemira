@@ -639,23 +639,6 @@ def _wire_is_planar(wire: apiWire) -> bool:
         return False
 
 
-def _edges_tangent(edge1: apiEdge, edge2: apiEdge, tol: float = 0.3) -> bool:
-    """True if two consecutive edges are not sharply discontinuous at their junction.
-
-    The default tolerance ``tol=0.3`` (cos_angle > 0.7, i.e. angle < ~45°) is
-    intentionally generous: it rejects obvious kinks (like 90° polygon corners,
-    cos=0) while accepting smooth parametric paths whose junction tangents may
-    differ slightly due to numerical evaluation or moderate curvature changes.
-    """
-    try:
-        t1 = _vector_to_numpy(edge1.tangentAt(edge1.paramAt(1.0)))
-        t2 = _vector_to_numpy(edge2.tangentAt(edge2.paramAt(0.0)))
-        cos_angle = np.dot(t1, t2) / (np.linalg.norm(t1) * np.linalg.norm(t2) + EPS)
-        return bool(cos_angle > 1.0 - tol)
-    except Exception:  # noqa: BLE001
-        return True  # conservative: don't block sweep on uncertainty
-
-
 def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
     """True if all consecutive edges in the wire are tangent.
 
