@@ -211,7 +211,7 @@ nlopt==2.10.0
     # via bluemira (pyproject.toml)
 nodeenv==1.10.0
     # via pre-commit
-numba==0.65.0
+numba==0.65.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
