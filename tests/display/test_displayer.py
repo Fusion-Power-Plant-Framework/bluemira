@@ -9,6 +9,7 @@ Tests for the displayer module.
 """
 
 import logging
+import os
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
@@ -24,6 +25,9 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 
 _FREECAD_REF = "bluemira.codes._freecadapi"
+_ACTIVE_BACKEND_REF = (
+    f"bluemira.codes._{os.environ.get('BLUEMIRA_GEOMETRY_BACKEND', 'freecad')}api"
+)
 
 
 def _skip_polyscope():
@@ -193,7 +197,7 @@ class TestGeometryDisplayer:
         ],
     )
     def test_labels_passed_in_correctly(self, labels, result):
-        with patch(f"{_FREECAD_REF}.show_cad") as show_cad_mock:
+        with patch(f"{_ACTIVE_BACKEND_REF}.show_cad") as show_cad_mock:
             displayer.show_cad([self._make_shape(), self._make_shape()], labels=labels)
 
         assert show_cad_mock.call_args_list[0][0][2] == result
