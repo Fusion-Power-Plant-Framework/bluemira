@@ -272,7 +272,7 @@ def _checked_to_numpy(obj, types, get_xyz, name):
     if isinstance(obj, types):
         c = get_xyz(obj)
         return np.array([c.x, c.y, c.z])
-    if isinstance(obj, (list, tuple)) and obj and all(isinstance(x, types) for x in obj):
+    if isinstance(obj, (list, tuple)) and all(isinstance(x, types) for x in obj):
         return np.array([[(c := get_xyz(x)).x, c.y, c.z] for x in obj])
     raise TypeError(f"{name} expects {types} or list thereof, got {type(obj)}")
 
