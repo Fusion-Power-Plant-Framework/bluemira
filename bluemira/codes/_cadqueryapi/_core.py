@@ -828,16 +828,8 @@ def wires(obj: apiShape) -> list[apiWire]:
 
 def ordered_edges(obj: apiShape) -> list[apiEdge]:
     """Edges of the shape in wire-connectivity order (mirrors FreeCAD OrderedEdges)."""
-    try:
-        explorer = BRepTools_WireExplorer(obj.wrapped)
-        result = []
-        while explorer.More():
-            result.append(cq.Edge(explorer.Current()))
-            explorer.Next()
-        if result:
-            return result
-    except Exception:  # noqa: BLE001, S110
-        pass  # fall back to storage-order edges below
+    if isinstance(obj, cq.Wire):
+        return list(obj)  # cq.Wire.__iter__ yields edges in connectivity order
     return obj.Edges()
 
 
