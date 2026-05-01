@@ -708,8 +708,12 @@ def _cq_area_prop(self) -> float:
     """
     inner = self.innerWires()
     if inner:
-        outer_area = _occ_face_area(cq.Face.makeFromWires(self.outerWire()).wrapped)
-        hole_area = sum(_occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
+        outer_area = _occ_face_area(
+            _face_from_wires_tolerant(self.outerWire(), []).wrapped
+        )
+        hole_area = sum(
+            _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
+        )
         return outer_area - hole_area
     return _occ_face_area(self.wrapped)
 
@@ -724,9 +728,11 @@ def area(obj: apiShape) -> float:
     if isinstance(obj, cq.Face):
         inner = obj.innerWires()
         if inner:
-            outer_area = _occ_face_area(cq.Face.makeFromWires(obj.outerWire()).wrapped)
+            outer_area = _occ_face_area(
+                _face_from_wires_tolerant(obj.outerWire(), []).wrapped
+            )
             hole_area = sum(
-                _occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner
+                _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
             )
             return outer_area - hole_area
         return obj.Area  # property (monkey-patched) → float
