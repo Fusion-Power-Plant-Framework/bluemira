@@ -1996,6 +1996,10 @@ def serialise_shape(shape: apiWire) -> dict:
             knots = [bsp.Knot(i) for i in range(1, bsp.NbKnots() + 1)]
             mults = [bsp.Multiplicity(i) for i in range(1, bsp.NbKnots() + 1)]
             weights = [bsp.Weight(i) for i in range(1, bsp.NbPoles() + 1)]
+            # The edge's first/last parameter range can be a strict subset of
+            # the underlying spline curve's domain (e.g. when the edge was
+            # produced by trimming). Persist them so deserialisation rebuilds
+            # the trimmed edge, not the whole spline.
             serialised.append({
                 "BSplineCurve": {
                     "Poles": poles,
@@ -2005,6 +2009,8 @@ def serialise_shape(shape: apiWire) -> dict:
                     "Weights": weights,
                     "isPeriodic": bsp.IsPeriodic(),
                     "checkRational": bsp.IsRational(),
+                    "FirstParameter": adaptor.FirstParameter(),
+                    "LastParameter": adaptor.LastParameter(),
                 }
             })
         elif ctype == GeomAbs_BezierCurve:
@@ -2013,7 +2019,13 @@ def serialise_shape(shape: apiWire) -> dict:
                 [bez.Pole(i).X(), bez.Pole(i).Y(), bez.Pole(i).Z()]
                 for i in range(1, bez.NbPoles() + 1)
             ]
-            serialised.append({"BezierCurve": {"Poles": poles}})
+            serialised.append({
+                "BezierCurve": {
+                    "Poles": poles,
+                    "FirstParameter": adaptor.FirstParameter(),
+                    "LastParameter": adaptor.LastParameter(),
+                }
+            })
         elif ctype == GeomAbs_Ellipse:
             ell = adaptor.Ellipse()
             center = [ell.Location().X(), ell.Location().Y(), ell.Location().Z()]
@@ -2071,7 +2083,11 @@ def deserialise_shape(buffer: dict) -> apiWire:
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
         if type_ == "BezierCurve":
-            return make_bezier(v["Poles"])
+            return make_bezier(
+                v["Poles"],
+                first_parameter=v.get("FirstParameter"),
+                last_parameter=v.get("LastParameter"),
+            )
         if type_ == "BSplineCurve":
             return make_bspline(
                 v["Poles"],
@@ -2081,6 +2097,8 @@ def deserialise_shape(buffer: dict) -> apiWire:
                 degree=v["Degree"],
                 weights=v["Weights"],
                 check_rational=v["checkRational"],
+                first_parameter=v.get("FirstParameter"),
+                last_parameter=v.get("LastParameter"),
             )
         if type_ == "ArcOfCircle":
             return make_circle(

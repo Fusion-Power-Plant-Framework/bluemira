@@ -35,14 +35,27 @@ from bluemira.codes._cadqueryapi._aliases import (
 from bluemira.codes.error import FreeCADError
 
 
-def make_bezier(points: list | np.ndarray) -> apiWire:
-    """Create a Bezier curve wire from a list of poles."""
+def make_bezier(
+    points: list | np.ndarray,
+    first_parameter: float | None = None,
+    last_parameter: float | None = None,
+) -> apiWire:
+    """Create a Bezier curve wire from a list of poles.
+
+    *first_parameter* / *last_parameter* trim the resulting edge to a
+    sub-range of the curve (used by deserialisation to round-trip trimmed
+    edges).
+    """
     pts = np.asarray(points)
     poles = TColgp_Array1OfPnt(1, len(pts))
     for i, p in enumerate(pts):
         poles.SetValue(i + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2])))
     curve = Geom_BezierCurve(poles)
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
+    if first_parameter is not None and last_parameter is not None:
+        builder = BRepBuilderAPI_MakeEdge(curve, first_parameter, last_parameter)
+    else:
+        builder = BRepBuilderAPI_MakeEdge(curve)
+    edge = cq.Edge(builder.Edge())
     return cq.Wire.assembleEdges([edge])
 
 
@@ -125,8 +138,15 @@ def make_bspline(
     degree: int,
     weights: np.ndarray,
     check_rational: bool,
+    first_parameter: float | None = None,
+    last_parameter: float | None = None,
 ) -> apiWire:
-    """Create a B-Spline wire from poles, multiplicities, and knots."""
+    """Create a B-Spline wire from poles, multiplicities, and knots.
+
+    *first_parameter* / *last_parameter* trim the resulting edge to a
+    sub-range of the curve (used by deserialisation to round-trip trimmed
+    edges).
+    """
     poles = np.asarray(poles)
     tcol_poles = TColgp_Array1OfPnt(1, len(poles))
     for i, p in enumerate(poles):
@@ -153,7 +173,11 @@ def make_bspline(
     else:
         curve = Geom_BSplineCurve(tcol_poles, tcol_knots, tcol_mults, degree, periodic)
 
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
+    if first_parameter is not None and last_parameter is not None:
+        builder = BRepBuilderAPI_MakeEdge(curve, first_parameter, last_parameter)
+    else:
+        builder = BRepBuilderAPI_MakeEdge(curve)
+    edge = cq.Edge(builder.Edge())
     return cq.Wire.assembleEdges([edge])
 
 
