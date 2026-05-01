@@ -1645,6 +1645,8 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
     # whole tree instead so we recover sub-shapes buried one level deeper.
     if isinstance(shape, apiSolid):
         return _collect_subshapes(result, cq.Solid)
+    if isinstance(shape, cq.Shell):
+        return _collect_subshapes(result, cq.Shell)
     if isinstance(shape, apiFace):
         return _collect_subshapes(result, cq.Face)
     if isinstance(shape, apiWire):
@@ -1663,6 +1665,7 @@ def face_cut_holes(face: apiFace, holes: list) -> list:
 
 _TOPABS_FOR_KIND: dict = {
     cq.Solid: TopAbs_SOLID,
+    cq.Shell: TopAbs_SHELL,
     cq.Face: TopAbs_FACE,
     cq.Wire: TopAbs_WIRE,
 }
