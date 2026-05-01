@@ -1374,7 +1374,9 @@ def mirror_shape(
 ) -> apiShape:
     """Return a mirrored copy of the shape about the plane defined by base+direction."""
     pnt = gp_Pnt(*[float(x) for x in base])
-    drc = gp_Dir(*[float(x) for x in direction])
+    n = np.asarray(direction, dtype=float)
+    n /= np.linalg.norm(n)
+    drc = gp_Dir(*n.tolist())
     trsf = gp_Trsf()
     trsf.SetMirror(gp_Ax2(pnt, drc))
     builder = BRepBuilderAPI_Transform(shape.wrapped, trsf, True)
