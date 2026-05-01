@@ -346,6 +346,8 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.2.2
     # via virtualenv
+python-dotenv==1.2.2
+    # via bluemira (pyproject.toml)
 pyvista==0.47.3
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3

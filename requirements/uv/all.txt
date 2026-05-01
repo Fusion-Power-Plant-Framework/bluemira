@@ -466,6 +466,8 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.2.2
     # via virtualenv
+python-dotenv==1.2.2
+    # via bluemira (pyproject.toml)
 python-json-logger==4.1.0
     # via jupyter-events
 pyvista==0.47.3
