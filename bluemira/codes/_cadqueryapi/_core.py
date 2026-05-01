@@ -802,7 +802,7 @@ def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8
     fixer.SetPrecision(precision)
     fixer.SetMinTolerance(min_length)
     fixer.Perform()
-    shape.wrapped = fixer.Shape()
+    shape.wrapped = cq.Shape.cast(fixer.Shape()).wrapped
 
 
 # ---------------------------------------------------------------------------
