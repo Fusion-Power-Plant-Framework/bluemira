@@ -47,7 +47,7 @@ from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
-from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell
+from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
@@ -1761,11 +1761,24 @@ def loft(
     ruled: bool = False,
     closed: bool = False,
 ) -> apiShape:
-    """Loft through a sequence of profiles."""
-    result = cq.Solid.makeLoft(list(profiles), ruled=ruled)
-    if not solid:
-        return cq.Shell(result.Shells()[0].wrapped)
-    return result
+    """Loft through a sequence of profiles.
+
+    *closed* cycles the loft back to the first profile (matches FreeCAD's
+    ``Part.makeLoft``). Goes via ``BRepOffsetAPI_ThruSections`` directly because
+    ``cq.Solid.makeLoft`` exposes neither the IsSolid flag nor a closed option.
+    """
+    profile_list = list(profiles)
+    if len(profile_list) < 2:  # noqa: PLR2004
+        raise ValueError("loft: at least two profiles are required")
+    builder = BRepOffsetAPI_ThruSections(solid, ruled)
+    for w in profile_list:
+        builder.AddWire(w.wrapped)
+    if closed:
+        builder.AddWire(profile_list[0].wrapped)
+    builder.Build()
+    if solid:
+        return cq.Solid(builder.Shape())
+    return cq.Shell(builder.Shape())
 
 
 def _repair_closed_wire(wire: apiWire) -> apiWire:
