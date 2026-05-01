@@ -1230,9 +1230,15 @@ def discretise_by_edges(
 def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     """Return the point a given arc-length distance along the wire."""
     total = wire.Length()
-    if distance <= 0.0:
+    if math.isclose(distance, 0.0):
         return start_point(wire)
-    if distance >= total:
+    if math.isclose(distance, total):
+        return end_point(wire)
+    if distance < 0.0:
+        bluemira_warn("Distance must be greater than 0; returning start point.")
+        return start_point(wire)
+    if distance > total:
+        bluemira_warn("Distance greater than the length of wire; returning end point.")
         return end_point(wire)
     return _vector_to_numpy(wire.positionAt(distance / total))
 
