@@ -176,6 +176,8 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
+python-dotenv==1.2.2
+    # via bluemira (pyproject.toml)
 pyvista==0.48.4
     # via bluemira (pyproject.toml)
 requests==2.34.2
