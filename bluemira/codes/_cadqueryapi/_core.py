@@ -942,12 +942,9 @@ def dist_to_shape(
     dist = dss.Value()
     vectors = []
     for i in range(1, dss.NbSolution() + 1):
-        p1 = dss.PointOnShape1(i)
-        p2 = dss.PointOnShape2(i)
-        vectors.append((
-            np.array([p1.X(), p1.Y(), p1.Z()]),
-            np.array([p2.X(), p2.Y(), p2.Z()]),
-        ))
+        p1 = cq.Vector(dss.PointOnShape1(i))
+        p2 = cq.Vector(dss.PointOnShape2(i))
+        vectors.append((_vector_to_numpy(p1), _vector_to_numpy(p2)))
     return dist, vectors
 
 
