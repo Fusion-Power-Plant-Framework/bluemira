@@ -16,7 +16,11 @@ import math
 import cadquery as cq
 import numpy as np
 from OCP.BRepAdaptor import BRepAdaptor_Curve
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
+from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeFace,
+    BRepBuilderAPI_MakeWire,
+)
 from OCP.GC import GC_MakeArcOfCircle
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
 from OCP.TColStd import (
@@ -28,6 +32,7 @@ from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.gp import gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
 
 from bluemira.codes._cadqueryapi._aliases import (
+    _OCC_DEFAULT_TOL,
     _POINT_COINCIDENCE_TOL,
     apiEdge,
     apiWire,
@@ -245,7 +250,12 @@ def make_bsplinesurface(
             degree_u,
             degree_v,
         )
-    return surface
+    # Wrap the parametric surface into a Face so callers receive an apiShape
+    # (matches FreeCAD's bsplinesurface.toShape()). _OCC_DEFAULT_TOL is the
+    # standard surface-builder confusion tolerance.
+    builder = BRepBuilderAPI_MakeFace(surface, _OCC_DEFAULT_TOL)
+    builder.Build()
+    return cq.Face(builder.Face())
 
 
 def _freecad_ax2(center, axis, x_direction=None):
