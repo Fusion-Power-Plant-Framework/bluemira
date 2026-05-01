@@ -21,6 +21,7 @@ from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeFace,
     BRepBuilderAPI_MakeWire,
 )
+from OCP.ElCLib import ElCLib
 from OCP.GC import GC_MakeArcOfCircle
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
 from OCP.TColStd import (
@@ -314,11 +315,31 @@ def make_circle_arc_3P(
     p3,
     axis=None,
 ) -> apiWire:
-    """Create an arc of circle through three points."""
+    """Create an arc of circle through three points.
+
+    When *axis* is given, it overrides the natural plane normal derived from
+    the three points to fix the angle-parameterisation convention (mirrors
+    FreeCAD: build a circle on (radius, center, axis), then map the original
+    start/end points to parameters on that circle and rebuild the arc).
+    """
     try:
-        edge = cq.Edge.makeThreePointArc(cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3))
+        nat_edge = cq.Edge.makeThreePointArc(
+            cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3)
+        )
     except Exception as e:
         raise FreeCADError(str(e)) from e
+    if axis is None:
+        return cq.Wire.assembleEdges([nat_edge])
+
+    nat_circ = BRepAdaptor_Curve(nat_edge.wrapped).Circle()
+    centre = nat_circ.Location()
+    new_circ = gp_Circ(
+        _freecad_ax2((centre.X(), centre.Y(), centre.Z()), axis), nat_circ.Radius()
+    )
+    p_start = ElCLib.Parameter_s(new_circ, gp_Pnt(*[float(v) for v in p1]))
+    p_end = ElCLib.Parameter_s(new_circ, gp_Pnt(*[float(v) for v in p3]))
+    arc = GC_MakeArcOfCircle(new_circ, p_start, p_end, True)
+    edge = cq.Edge(BRepBuilderAPI_MakeEdge(arc.Value()).Edge())
     return cq.Wire.assembleEdges([edge])
 
 
