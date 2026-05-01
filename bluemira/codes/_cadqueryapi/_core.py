@@ -1932,11 +1932,16 @@ def point_inside_shape(point, shape: apiShape) -> bool:
     pnt = gp_Pnt(*[float(x) for x in point])
 
     if isinstance(shape, apiFace):
-        # Project point onto the face's surface, then classify in UV space
+        # Project point onto the face's surface, then classify in UV space.
+        # Reject points whose projection distance exceeds the tolerance — a
+        # point above/below a planar face would otherwise classify as inside
+        # purely from its in-plane projection.
         surf = BRep_Tool.Surface_s(shape.wrapped)
         projector = GeomAPI_ProjectPointOnSurf(pnt, surf)
         projector.Perform(pnt)
         if projector.NbPoints() == 0:
+            return False
+        if projector.LowerDistance() > _OCC_DEFAULT_TOL:
             return False
         u, v = projector.LowerDistanceParameters()
         classifier = BRepClass_FaceClassifier()
