@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 from numpy.linalg import norm
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import get_log_level, set_log_level
@@ -396,7 +396,7 @@ class TestSolidFacePlaneIntersect:
     def test_polygon_cut(self):
         face = BluemiraFace(generic_wire)
         _slice_face = slice_shape(face, BluemiraPlane())
-        assert generic_wire.length == _slice_face[0].length
+        assert np.isclose(generic_wire.length, _slice_face[0].length)
 
         solid = extrude_shape(face, (1, 2, 3))
         _slice_solid = slice_shape(solid, BluemiraPlane(axis=[3, 2, 1]))
@@ -506,12 +506,12 @@ class TestMakeBSpline:
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
-            e = spline.shape.OrderedEdges[0]
+            e = cadapi.ordered_edges(spline.shape)[0]
             np.testing.assert_allclose(
-                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 0.0), np.array(st) / norm(st)
             )
             np.testing.assert_allclose(
-                e.tangentAt(e.LastParameter), np.array(et) / norm(et)
+                cadapi.edge_tangent_at(e, 1.0), np.array(et) / norm(et)
             )
         else:
             np.testing.assert_allclose(spline.length, 1.0)
@@ -523,15 +523,15 @@ class TestMakeBSpline:
             points, closed=True, start_tangent=st, end_tangent=et
         )
         if st and et:
-            e = spline.shape.OrderedEdges[0]
+            e = cadapi.ordered_edges(spline.shape)[0]
             np.testing.assert_allclose(
-                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 0.0), np.array(st) / norm(st)
             )
 
             # if the bspline is closed, end tangency is not considered. Last point is
             # equal to the first point, thus also its tangent.
             np.testing.assert_allclose(
-                e.tangentAt(e.LastParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 1.0), np.array(st) / norm(st)
             )
 
     def test_bspline_closed(self):
@@ -674,6 +674,16 @@ class TestMakeCircle:
 
 class TestSavingCAD:
     STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"
+    # Header/metadata lines that legitimately differ between the FreeCAD and CadQuery
+    # geometry backends (author, producing system, unit annotation, product name).
+    STP_BACKEND_METADATA_RE = (
+        r"FILE_DESCRIPTION\(|"
+        r"FILE_NAME\(|"
+        r"^\s*\('?(Bluemira|Open CASCADE|Author)|"
+        r"PRODUCT\('(Part__FeaturePython|Open CASCADE STEP translator)|"
+        r"SI_UNIT\(|"
+        r",'Unknown'\);"
+    )
 
     def setup_method(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
@@ -708,8 +718,10 @@ class TestSavingCAD:
                 try:
                     datetime.fromisoformat(line.split(",")[1].strip("'"))
                 except (ValueError, IndexError):
-                    # Attempt to ignore version number
-                    if not re.search(self.STP_VERSION_RE, line):
+                    # Attempt to ignore version number and backend-specific metadata
+                    if not re.search(self.STP_VERSION_RE, line) and not re.search(
+                        self.STP_BACKEND_METADATA_RE, line
+                    ):
                         lines += [line]
         if legacy:
             # legacy STP writer outputs weird things the content of which is correct

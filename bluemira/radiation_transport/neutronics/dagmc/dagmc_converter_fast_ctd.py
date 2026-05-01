@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_error, bluemira_print
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.codes import fast_ctd
 from bluemira.codes.python_occ import imprint_solids
 from bluemira.geometry.base import BluemiraGeo, BluemiraGeoT

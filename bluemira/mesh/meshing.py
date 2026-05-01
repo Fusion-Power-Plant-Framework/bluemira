@@ -173,6 +173,8 @@ class Meshable:
 
 
 class _GmshEnum(Enum):
+    """Internal tag used to dispatch gmsh meshing on compound-like shapes."""
+
     SHELL = "BluemiraShell"
     COMPOUND = "BluemiraCompound"
 
