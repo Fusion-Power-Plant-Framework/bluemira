@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bluemira.codes._freecadapi import _wire_edges_tangent
+import bluemira.codes._geometryapi as _cadapi
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.face import BluemiraFace
@@ -41,6 +41,8 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+
+_wire_edges_tangent = _cadapi._wire_edges_tangent
 
 
 @pytest.mark.parametrize(

@@ -119,11 +119,20 @@ def pytest_configure(config):
     if not config.option.plotting_on:
         # We're not displaying plots so use a display-less backend
         mpl.use("Agg")
-        # Disable CAD viewer by mocking out FreeCAD API's displayer.
-        # Note that if we use a new CAD backend, this must be changed.
+        # Disable CAD viewer by mocking out every show_cad entry point.
+        # The ``_geometryapi`` dispatcher star-imports from the active backend
+        # (`_freecadapi` or `_cadqueryapi`), which binds ``show_cad`` on
+        # ``_geometryapi`` at import time — patching the underlying backend
+        # alone does NOT propagate, so we mock all three module-level names.
         with suppress(ImportError):
             mock.patch("bluemira.codes._polyscope.ps").start()
-        mock.patch("bluemira.codes._freecadapi.show_cad").start()
+        for _name in (
+            "bluemira.codes._freecadapi.show_cad",
+            "bluemira.codes._cadqueryapi.show_cad",
+            "bluemira.codes._geometryapi.show_cad",
+        ):
+            with suppress(ImportError, AttributeError):
+                mock.patch(_name).start()
 
     options = {
         "longrun": config.option.longrun,

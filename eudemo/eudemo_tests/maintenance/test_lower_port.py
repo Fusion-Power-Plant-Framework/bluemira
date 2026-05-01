@@ -183,10 +183,7 @@ class TestLowerPort:
                 )
             )
 
-            with pytest.raises(
-                GeometryError,
-                match=r".*\[(<Solid[\n ]*object at [0-9a-z]{14}>[, ]*){3}\]",
-            ):
+            with pytest.raises(GeometryError, match=r"more\s+than\s+one\s+solid"):
                 boolean_fuse([tf, tf2, duct_xyz_cad])
 
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
