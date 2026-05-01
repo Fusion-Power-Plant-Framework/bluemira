@@ -2199,15 +2199,19 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
         return result_wire
 
     # Open wire: remove the dummy closing edge from the result.
-    # The dummy edge goes from end_pt to start_pt and was not at any filleted corner,
-    # so it should appear unchanged in the result.
+    # The dummy edge goes from end_pt to start_pt and was not at any filleted
+    # corner (the open-wire endpoints are in skip_keys), so its endpoints
+    # should match the original wire endpoints to within the OCC confusion
+    # tolerance — a small absolute number is enough; using ``radius`` here
+    # would falsely flag short real edges adjacent to the endpoints.
     result_edges = ordered_edges(result_wire)
     keep = []
     for e in result_edges:
         sp = _vector_to_numpy(e.startPoint())
         ep = _vector_to_numpy(e.endPoint())
-        tol = radius + 1e-3
-        if np.allclose(sp, end_pt, atol=tol) and np.allclose(ep, start_pt, atol=tol):
+        if np.allclose(sp, end_pt, atol=_OCC_DEFAULT_TOL) and np.allclose(
+            ep, start_pt, atol=_OCC_DEFAULT_TOL
+        ):
             continue  # this is the dummy closing edge
         keep.append(e)
     if not keep:
