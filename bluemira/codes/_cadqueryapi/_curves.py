@@ -344,11 +344,11 @@ def make_circle_arc_3P(
 
 
 def make_ellipse(
-    center: list = (0.0, 0.0, 0.0),
+    center: tuple = (0.0, 0.0, 0.0),
     major_radius: float = 2.0,
     minor_radius: float = 1.0,
-    major_axis: list = (1.0, 0.0, 0.0),
-    minor_axis: list = (0.0, 1.0, 0.0),
+    major_axis: tuple = (1.0, 0.0, 0.0),
+    minor_axis: tuple = (0.0, 1.0, 0.0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
 ) -> apiWire:
