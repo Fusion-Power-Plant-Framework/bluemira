@@ -9,13 +9,14 @@ Tests for the displayer module.
 """
 
 import logging
+import os
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
@@ -24,6 +25,9 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 
 _FREECAD_REF = "bluemira.codes._freecadapi"
+_ACTIVE_BACKEND_REF = (
+    f"bluemira.codes._{os.environ.get('BLUEMIRA_GEOMETRY_BACKEND', 'freecad')}api"
+)
 
 
 def _skip_polyscope():
@@ -193,7 +197,7 @@ class TestGeometryDisplayer:
         ],
     )
     def test_labels_passed_in_correctly(self, labels, result):
-        with patch(f"{_FREECAD_REF}.show_cad") as show_cad_mock:
+        with patch(f"{_ACTIVE_BACKEND_REF}.show_cad") as show_cad_mock:
             displayer.show_cad([self._make_shape(), self._make_shape()], labels=labels)
 
         assert show_cad_mock.call_args_list[0][0][2] == result
@@ -219,12 +223,15 @@ class TestGeometryDisplayer:
         ],
     )
     def test_no_displayer(self, mock, caplog):
+        def _fallback_messages():
+            return [m for m in caplog.messages if "Unable to import" in m]
+
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad(self._make_shape(), backend="polyscope")
-        assert len(caplog.messages) == 1
+        assert len(_fallback_messages()) == 1
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad(self._make_shape(), backend="polyscope")
-        assert len(caplog.messages) == 1
+        assert len(_fallback_messages()) == 1
 
     def test_unknown_displayer(self, caplog):
         caplog.set_level(logging.WARNING)

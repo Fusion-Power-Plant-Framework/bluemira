@@ -11,7 +11,7 @@ Wrapper for FreeCAD Part.Face objects
 from __future__ import annotations
 
 # import from freecad
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 
 # import from bluemira
 from bluemira.geometry.base import BluemiraGeo
@@ -54,18 +54,18 @@ class BluemiraSolid(BluemiraGeo):
             Solid is disjointed (2 solids created)
         """
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
-        solid = cadapi.apiSolid(new_shell)
+        solid = cadapi.make_solid(new_shell)
 
         if len(self.boundary) > 1:
-            shell_holes = [cadapi.apiSolid(s.shape) for s in self.boundary[1:]]
-            solid = solid.cut(shell_holes)
-            if len(solid.Solids) == 1:
-                solid = solid.Solids[0]
+            shell_holes = [cadapi.make_solid(s.shape) for s in self.boundary[1:]]
+            _solids = cadapi.boolean_cut(solid, shell_holes)
+            if len(_solids) == 1:
+                solid = _solids[0]
             else:
                 raise DisjointedSolidError("Disjointed solids are not accepted.")
 
         if check_reverse:
-            return self._check_reverse(cadapi.apiSolid(solid))
+            return self._check_reverse(solid)
         return solid
 
     def _create_shape(self):
@@ -80,21 +80,21 @@ class BluemiraSolid(BluemiraGeo):
     @classmethod
     def _create(cls, obj: cadapi.apiSolid, label: str = "") -> BluemiraSolid:
         if isinstance(obj, cadapi.apiSolid):
-            if len(obj.Solids) > 1:
+            if len(cadapi.solids(obj)) > 1:
                 raise DisjointedSolidError("Disjointed solids are not accepted.")
 
-            if not obj.isValid():
+            if not cadapi.is_valid(obj):
                 # cadapi.save_as_STP(obj, "object_not_valid")
                 raise GeometryError(f"Solid {obj} is not valid.")
 
-            bm_shells = [BluemiraShell._create(shell) for shell in obj.Shells]
+            bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
 
             # create an empty BluemiraSolid
             bmsolid = cls(None, label=label)
             # assign shape, boundary, and orientation
             bmsolid._set_shape(obj)
             bmsolid._boundary = bm_shells
-            bmsolid._orientation = obj.Orientation
+            bmsolid._orientation = cadapi.orientation(obj)
             return bmsolid
 
         raise TypeError(

@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
     from matproplib.material import Material
 
-    import bluemira.codes._freecadapi as cadapi
+    import bluemira.codes._geometryapi as cadapi
     from bluemira.base.reactor import ComponentManager
 
 

@@ -144,7 +144,7 @@ class TestFallBackOffset:
 
     @pytest.mark.parametrize("fallback_method", ["square"])
     @pytest.mark.parametrize("join", ["arc", "intersect"])
-    @pytest.mark.parametrize("delta", [(0.75), (-0.75)])
+    @pytest.mark.parametrize("delta", [0.75, -0.75])
     def test_primitive_offsetting_catch(self, delta, join, fallback_method):
         """
         This is a test for offset operations on wires that have failed primitive

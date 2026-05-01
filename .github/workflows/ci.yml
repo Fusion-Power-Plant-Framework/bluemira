@@ -65,6 +65,16 @@ jobs:
         os: ["ubuntu-latest"]
         python-version: ["3.11", "3.12"]
         with-process: ["v3.3.0", "process_disabled"]
+        backend: ["freecad"]
+        include:
+          - os: "ubuntu-latest"
+            python-version: "3.11"
+            with-process: "process_disabled"
+            backend: "cadquery"
+          - os: "ubuntu-latest"
+            python-version: "3.12"
+            with-process: "process_disabled"
+            backend: "cadquery"
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -92,6 +102,7 @@ jobs:
           # https://github.com/actions/runner/issues/409#issuecomment-752775072
           # PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
           PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
+          BLUEMIRA_GEOMETRY_BACKEND: ${{ matrix.backend }}
         run: |
           pytest --cov=bluemira \
                  --cov-report html:htmlcov_bluemira \
@@ -109,7 +120,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: test-report-json_${{ matrix.python-version }}_${{ matrix.os }}
+          name: ${{ matrix.backend == 'freecad' && format('test-report-json_{0}_{1}', matrix.python-version, matrix.os) || format('test-report-json_{0}_{1}_{2}', matrix.python-version, matrix.os, matrix.backend) }}
           path: test-report.json
           overwrite: true
 

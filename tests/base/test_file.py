@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import os
+import shutil
 import tempfile
 from pathlib import Path
 from tempfile import gettempdir
@@ -67,8 +68,11 @@ def file_manager_good(tmp_path_factory):
     )
 
     # Make sure we clean up the directories after testing that they have been created.
-    if Path(file_gen_path):
-        remove_dir_and_subs(file_gen_path.as_posix())
+    # tmp_path_factory gives an absolute path; remove_dir_and_subs routes through
+    # get_bluemira_path which only handles relative paths. Use shutil.rmtree and
+    # guard against pytest's own retention-policy cleanup having already run.
+    if file_gen_path.exists():
+        shutil.rmtree(file_gen_path, ignore_errors=True)
 
 
 @pytest.fixture(scope="session", autouse=True)
