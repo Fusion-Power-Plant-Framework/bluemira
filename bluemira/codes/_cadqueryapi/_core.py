@@ -877,10 +877,20 @@ def wire_from_edges(edge_list: list[apiEdge]) -> apiWire:
 
 
 def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
-    """Create a single wire from a list of connected wires."""
+    """Create a single wire from a list of connected wires.
+
+    If the inputs do not all connect into one wire, the longest piece is
+    returned with a warning so the caller knows geometry was discarded.
+    """
     if len(wire_list) == 1:
         return wire_list[0]
     result = cq.Wire.combine(wire_list)
+    if isinstance(result, list) and len(result) > 1:
+        bluemira_warn(
+            f"wire_from_wires: input wires did not all join — "
+            f"got {len(result)} disjoint pieces, returning the longest."
+        )
+        return max(result, key=lambda w: w.Length())
     return result[0] if isinstance(result, list) else result
 
 
