@@ -761,11 +761,24 @@ def is_closed(obj: apiShape) -> bool:
 
     For compounds (e.g. the result of boolean wire fuse), a compound is
     considered closed if it contains exactly one wire and that wire is closed.
+
+    Solids are always closed by definition. Shells are closed iff every edge is
+    shared by exactly two faces (BRep_Tool::IsClosed). Faces have no inherent
+    "closed" notion — their boundary loop is closed by construction — so we
+    return True for them, matching the most common caller intent.
     """
     if isinstance(obj, cq.Compound):
         wires = obj.Wires()
         return len(wires) == 1 and wires[0].IsClosed()
-    return obj.IsClosed()
+    if isinstance(obj, (cq.Wire, cq.Edge)):
+        return obj.IsClosed()
+    if isinstance(obj, cq.Solid):
+        return True
+    if isinstance(obj, cq.Shell):
+        return BRep_Tool.IsClosed_s(obj.wrapped)
+    if isinstance(obj, cq.Face):
+        return True
+    raise TypeError(f"is_closed not defined for {type(obj).__name__}")
 
 
 def is_valid(obj) -> bool:
