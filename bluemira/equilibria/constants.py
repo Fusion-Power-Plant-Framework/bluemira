@@ -26,7 +26,7 @@ X_TOLERANCE = 1e-5
 B_TOLERANCE = 1e-3
 
 # Absolute minimum radius for grid
-X_AXIS_MIN = 0.1
+X_AXIS_MIN = 1e-6
 
 # Relative grid search length sizer: factor of grid size
 #      Used for distance from importance points
