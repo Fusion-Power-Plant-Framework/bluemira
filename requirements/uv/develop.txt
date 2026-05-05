@@ -33,7 +33,7 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.2
+citeproc-py==0.9.3
     # via csl-reference
 click==8.3.3
     # via
@@ -56,7 +56,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.11.0
+cyclopts==4.11.2
     # via pyvista
 debugpy==1.8.20
     # via ipykernel
@@ -94,7 +94,7 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.2
     # via bluemira (pyproject.toml)
-greenlet==3.4.0
+greenlet==3.5.0
     # via sqlalchemy
 identify==2.6.19
     # via pre-commit
@@ -118,7 +118,7 @@ ipython==9.13.0
     #   myst-nb
 ipython-pygments-lexers==1.1.1
     # via ipython
-jedi==0.19.2
+jedi==0.20.0
     # via ipython
 jinja2==3.1.6
     # via
@@ -256,7 +256,7 @@ packaging==26.2
     #   tables
 pandas==3.0.2
     # via seaborn
-parso==0.8.6
+parso==0.8.7
     # via jedi
 pathspec==1.1.1
     # via mypy
@@ -348,7 +348,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.2.2
     # via virtualenv
-pyvista==0.47.3
+pyvista==0.48.0
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -479,13 +479,13 @@ typing-inspection==0.4.2
     # via pydantic
 urllib3==2.6.3
     # via requests
-virtualenv==21.2.4
+virtualenv==21.3.1
     # via pre-commit
 vtk==9.3.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
-wcwidth==0.6.0
+wcwidth==0.7.0
     # via prompt-toolkit
 zipp==3.23.1
     # via importlib-metadata

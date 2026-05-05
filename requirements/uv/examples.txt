@@ -47,7 +47,7 @@ cffi==2.0.0
     # via argon2-cffi-bindings
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.2
+citeproc-py==0.9.3
     # via csl-reference
 click==8.3.3
     # via
@@ -69,7 +69,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.11.0
+cyclopts==4.11.2
     # via pyvista
 debugpy==1.8.20
     # via ipykernel
@@ -127,7 +127,7 @@ ipywidgets==8.1.8
     # via rich
 isoduration==20.11.0
     # via jsonschema
-jedi==0.19.2
+jedi==0.20.0
     # via ipython
 jinja2==3.1.6
     # via
@@ -166,7 +166,7 @@ jupyter-events==0.12.1
     # via jupyter-server
 jupyter-lsp==2.3.1
     # via jupyterlab
-jupyter-server==2.17.0
+jupyter-server==2.18.0
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -175,7 +175,7 @@ jupyter-server==2.17.0
     #   notebook-shim
 jupyter-server-terminals==0.5.4
     # via jupyter-server
-jupyterlab==4.5.6
+jupyterlab==4.5.7
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -223,7 +223,7 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-mistune==3.2.0
+mistune==3.2.1
     # via nbconvert
 msgpack==1.1.2
     # via blosc2
@@ -243,7 +243,7 @@ nest-asyncio==1.6.0
     # via ipykernel
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
-notebook==7.5.5
+notebook==7.5.6
     # via bluemira (pyproject.toml)
 notebook-shim==0.2.4
     # via
@@ -301,7 +301,7 @@ pandas==3.0.2
     # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
-parso==0.8.6
+parso==0.8.7
     # via jedi
 periodictable==2.1.0
     # via
@@ -371,7 +371,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==4.1.0
     # via jupyter-events
-pyvista==0.47.3
+pyvista==0.48.0
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -499,7 +499,7 @@ vtk==9.3.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
-wcwidth==0.6.0
+wcwidth==0.7.0
     # via prompt-toolkit
 webcolors==25.10.0
     # via jsonschema
