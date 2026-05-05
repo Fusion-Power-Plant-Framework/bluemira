@@ -47,7 +47,7 @@ from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
-from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell
+from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
 from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
@@ -708,8 +708,12 @@ def _cq_area_prop(self) -> float:
     """
     inner = self.innerWires()
     if inner:
-        outer_area = _occ_face_area(cq.Face.makeFromWires(self.outerWire()).wrapped)
-        hole_area = sum(_occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner)
+        outer_area = _occ_face_area(
+            _face_from_wires_tolerant(self.outerWire(), []).wrapped
+        )
+        hole_area = sum(
+            _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
+        )
         return outer_area - hole_area
     return _occ_face_area(self.wrapped)
 
@@ -724,9 +728,11 @@ def area(obj: apiShape) -> float:
     if isinstance(obj, cq.Face):
         inner = obj.innerWires()
         if inner:
-            outer_area = _occ_face_area(cq.Face.makeFromWires(obj.outerWire()).wrapped)
+            outer_area = _occ_face_area(
+                _face_from_wires_tolerant(obj.outerWire(), []).wrapped
+            )
             hole_area = sum(
-                _occ_face_area(cq.Face.makeFromWires(w).wrapped) for w in inner
+                _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
             )
             return outer_area - hole_area
         return obj.Area  # property (monkey-patched) → float
@@ -755,11 +761,24 @@ def is_closed(obj: apiShape) -> bool:
 
     For compounds (e.g. the result of boolean wire fuse), a compound is
     considered closed if it contains exactly one wire and that wire is closed.
+
+    Solids are always closed by definition. Shells are closed iff every edge is
+    shared by exactly two faces (BRep_Tool::IsClosed). Faces have no inherent
+    "closed" notion — their boundary loop is closed by construction — so we
+    return True for them, matching the most common caller intent.
     """
     if isinstance(obj, cq.Compound):
         wires = obj.Wires()
         return len(wires) == 1 and wires[0].IsClosed()
-    return obj.IsClosed()
+    if isinstance(obj, (cq.Wire, cq.Edge)):
+        return obj.IsClosed()
+    if isinstance(obj, cq.Solid):
+        return True
+    if isinstance(obj, cq.Shell):
+        return BRep_Tool.IsClosed_s(obj.wrapped)
+    if isinstance(obj, cq.Face):
+        return True
+    raise TypeError(f"is_closed not defined for {type(obj).__name__}")
 
 
 def is_valid(obj) -> bool:
@@ -783,7 +802,7 @@ def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8
     fixer.SetPrecision(precision)
     fixer.SetMinTolerance(min_length)
     fixer.Perform()
-    shape.wrapped = fixer.Shape()
+    shape.wrapped = cq.Shape.cast(fixer.Shape()).wrapped
 
 
 # ---------------------------------------------------------------------------
@@ -809,16 +828,8 @@ def wires(obj: apiShape) -> list[apiWire]:
 
 def ordered_edges(obj: apiShape) -> list[apiEdge]:
     """Edges of the shape in wire-connectivity order (mirrors FreeCAD OrderedEdges)."""
-    try:
-        explorer = BRepTools_WireExplorer(obj.wrapped)
-        result = []
-        while explorer.More():
-            result.append(cq.Edge(explorer.Current()))
-            explorer.Next()
-        if result:
-            return result
-    except Exception:  # noqa: BLE001, S110
-        pass  # fall back to storage-order edges below
+    if isinstance(obj, cq.Wire):
+        return list(obj)  # cq.Wire.__iter__ yields edges in connectivity order
     return obj.Edges()
 
 
@@ -866,10 +877,20 @@ def wire_from_edges(edge_list: list[apiEdge]) -> apiWire:
 
 
 def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
-    """Create a single wire from a list of connected wires."""
+    """Create a single wire from a list of connected wires.
+
+    If the inputs do not all connect into one wire, the longest piece is
+    returned with a warning so the caller knows geometry was discarded.
+    """
     if len(wire_list) == 1:
         return wire_list[0]
     result = cq.Wire.combine(wire_list)
+    if isinstance(result, list) and len(result) > 1:
+        bluemira_warn(
+            f"wire_from_wires: input wires did not all join — "
+            f"got {len(result)} disjoint pieces, returning the longest."
+        )
+        return max(result, key=lambda w: w.Length())
     return result[0] if isinstance(result, list) else result
 
 
@@ -921,12 +942,9 @@ def dist_to_shape(
     dist = dss.Value()
     vectors = []
     for i in range(1, dss.NbSolution() + 1):
-        p1 = dss.PointOnShape1(i)
-        p2 = dss.PointOnShape2(i)
-        vectors.append((
-            np.array([p1.X(), p1.Y(), p1.Z()]),
-            np.array([p2.X(), p2.Y(), p2.Z()]),
-        ))
+        p1 = cq.Vector(dss.PointOnShape1(i))
+        p2 = cq.Vector(dss.PointOnShape2(i))
+        vectors.append((_vector_to_numpy(p1), _vector_to_numpy(p2)))
     return dist, vectors
 
 
@@ -1212,9 +1230,15 @@ def discretise_by_edges(
 def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     """Return the point a given arc-length distance along the wire."""
     total = wire.Length()
-    if distance <= 0.0:
+    if math.isclose(distance, 0.0):
         return start_point(wire)
-    if distance >= total:
+    if math.isclose(distance, total):
+        return end_point(wire)
+    if distance < 0.0:
+        bluemira_warn("Distance must be greater than 0; returning start point.")
+        return start_point(wire)
+    if distance > total:
+        bluemira_warn("Distance greater than the length of wire; returning end point.")
         return end_point(wire)
     return _vector_to_numpy(wire.positionAt(distance / total))
 
@@ -1350,7 +1374,9 @@ def mirror_shape(
 ) -> apiShape:
     """Return a mirrored copy of the shape about the plane defined by base+direction."""
     pnt = gp_Pnt(*[float(x) for x in base])
-    drc = gp_Dir(*[float(x) for x in direction])
+    n = np.asarray(direction, dtype=float)
+    n /= np.linalg.norm(n)
+    drc = gp_Dir(*n.tolist())
     trsf = gp_Trsf()
     trsf.SetMirror(gp_Ax2(pnt, drc))
     builder = BRepBuilderAPI_Transform(shape.wrapped, trsf, True)
@@ -1619,6 +1645,8 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
     # whole tree instead so we recover sub-shapes buried one level deeper.
     if isinstance(shape, apiSolid):
         return _collect_subshapes(result, cq.Solid)
+    if isinstance(shape, cq.Shell):
+        return _collect_subshapes(result, cq.Shell)
     if isinstance(shape, apiFace):
         return _collect_subshapes(result, cq.Face)
     if isinstance(shape, apiWire):
@@ -1637,6 +1665,7 @@ def face_cut_holes(face: apiFace, holes: list) -> list:
 
 _TOPABS_FOR_KIND: dict = {
     cq.Solid: TopAbs_SOLID,
+    cq.Shell: TopAbs_SHELL,
     cq.Face: TopAbs_FACE,
     cq.Wire: TopAbs_WIRE,
 }
@@ -1732,11 +1761,24 @@ def loft(
     ruled: bool = False,
     closed: bool = False,
 ) -> apiShape:
-    """Loft through a sequence of profiles."""
-    result = cq.Solid.makeLoft(list(profiles), ruled=ruled)
-    if not solid:
-        return cq.Shell(result.Shells()[0].wrapped)
-    return result
+    """Loft through a sequence of profiles.
+
+    *closed* cycles the loft back to the first profile (matches FreeCAD's
+    ``Part.makeLoft``). Goes via ``BRepOffsetAPI_ThruSections`` directly because
+    ``cq.Solid.makeLoft`` exposes neither the IsSolid flag nor a closed option.
+    """
+    profile_list = list(profiles)
+    if len(profile_list) < 2:  # noqa: PLR2004
+        raise ValueError("loft: at least two profiles are required")
+    builder = BRepOffsetAPI_ThruSections(solid, ruled)
+    for w in profile_list:
+        builder.AddWire(w.wrapped)
+    if closed:
+        builder.AddWire(profile_list[0].wrapped)
+    builder.Build()
+    if solid:
+        return cq.Solid(builder.Shape())
+    return cq.Shell(builder.Shape())
 
 
 def _repair_closed_wire(wire: apiWire) -> apiWire:
@@ -1890,11 +1932,16 @@ def point_inside_shape(point, shape: apiShape) -> bool:
     pnt = gp_Pnt(*[float(x) for x in point])
 
     if isinstance(shape, apiFace):
-        # Project point onto the face's surface, then classify in UV space
+        # Project point onto the face's surface, then classify in UV space.
+        # Reject points whose projection distance exceeds the tolerance — a
+        # point above/below a planar face would otherwise classify as inside
+        # purely from its in-plane projection.
         surf = BRep_Tool.Surface_s(shape.wrapped)
         projector = GeomAPI_ProjectPointOnSurf(pnt, surf)
         projector.Perform(pnt)
         if projector.NbPoints() == 0:
+            return False
+        if projector.LowerDistance() > _OCC_DEFAULT_TOL:
             return False
         u, v = projector.LowerDistanceParameters()
         classifier = BRepClass_FaceClassifier()
@@ -1949,6 +1996,10 @@ def serialise_shape(shape: apiWire) -> dict:
             knots = [bsp.Knot(i) for i in range(1, bsp.NbKnots() + 1)]
             mults = [bsp.Multiplicity(i) for i in range(1, bsp.NbKnots() + 1)]
             weights = [bsp.Weight(i) for i in range(1, bsp.NbPoles() + 1)]
+            # The edge's first/last parameter range can be a strict subset of
+            # the underlying spline curve's domain (e.g. when the edge was
+            # produced by trimming). Persist them so deserialisation rebuilds
+            # the trimmed edge, not the whole spline.
             serialised.append({
                 "BSplineCurve": {
                     "Poles": poles,
@@ -1958,6 +2009,8 @@ def serialise_shape(shape: apiWire) -> dict:
                     "Weights": weights,
                     "isPeriodic": bsp.IsPeriodic(),
                     "checkRational": bsp.IsRational(),
+                    "FirstParameter": adaptor.FirstParameter(),
+                    "LastParameter": adaptor.LastParameter(),
                 }
             })
         elif ctype == GeomAbs_BezierCurve:
@@ -1966,7 +2019,13 @@ def serialise_shape(shape: apiWire) -> dict:
                 [bez.Pole(i).X(), bez.Pole(i).Y(), bez.Pole(i).Z()]
                 for i in range(1, bez.NbPoles() + 1)
             ]
-            serialised.append({"BezierCurve": {"Poles": poles}})
+            serialised.append({
+                "BezierCurve": {
+                    "Poles": poles,
+                    "FirstParameter": adaptor.FirstParameter(),
+                    "LastParameter": adaptor.LastParameter(),
+                }
+            })
         elif ctype == GeomAbs_Ellipse:
             ell = adaptor.Ellipse()
             center = [ell.Location().X(), ell.Location().Y(), ell.Location().Z()]
@@ -2024,7 +2083,11 @@ def deserialise_shape(buffer: dict) -> apiWire:
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
         if type_ == "BezierCurve":
-            return make_bezier(v["Poles"])
+            return make_bezier(
+                v["Poles"],
+                first_parameter=v.get("FirstParameter"),
+                last_parameter=v.get("LastParameter"),
+            )
         if type_ == "BSplineCurve":
             return make_bspline(
                 v["Poles"],
@@ -2034,6 +2097,8 @@ def deserialise_shape(buffer: dict) -> apiWire:
                 degree=v["Degree"],
                 weights=v["Weights"],
                 check_rational=v["checkRational"],
+                first_parameter=v.get("FirstParameter"),
+                last_parameter=v.get("LastParameter"),
             )
         if type_ == "ArcOfCircle":
             return make_circle(
@@ -2134,15 +2199,19 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
         return result_wire
 
     # Open wire: remove the dummy closing edge from the result.
-    # The dummy edge goes from end_pt to start_pt and was not at any filleted corner,
-    # so it should appear unchanged in the result.
+    # The dummy edge goes from end_pt to start_pt and was not at any filleted
+    # corner (the open-wire endpoints are in skip_keys), so its endpoints
+    # should match the original wire endpoints to within the OCC confusion
+    # tolerance — a small absolute number is enough; using ``radius`` here
+    # would falsely flag short real edges adjacent to the endpoints.
     result_edges = ordered_edges(result_wire)
     keep = []
     for e in result_edges:
         sp = _vector_to_numpy(e.startPoint())
         ep = _vector_to_numpy(e.endPoint())
-        tol = radius + 1e-3
-        if np.allclose(sp, end_pt, atol=tol) and np.allclose(ep, start_pt, atol=tol):
+        if np.allclose(sp, end_pt, atol=_OCC_DEFAULT_TOL) and np.allclose(
+            ep, start_pt, atol=_OCC_DEFAULT_TOL
+        ):
             continue  # this is the dummy closing edge
         keep.append(e)
     if not keep:
