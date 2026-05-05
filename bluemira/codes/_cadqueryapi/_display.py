@@ -184,51 +184,36 @@ def show_cad(
         Coin3D viewer. Mouse navigation (pan/zoom/rotate) is unaffected either
         way.
     """
-    # Temporarily patch the collect helpers polyscope uses so that it calls
-    # our CadQuery-aware versions instead of the FreeCAD ones. Imports are
-    # local to avoid pulling in FreeCAD at module-load time when the user
-    # has selected the cadquery backend.
     import polyscope as ps  # noqa: PLC0415
 
-    import bluemira.codes._freecadapi as _orig_cadapi  # noqa: PLC0415
     from bluemira.codes import _polyscope as ps_backend  # noqa: PLC0415
-
-    _orig_collect_verts = _orig_cadapi.collect_verts_faces
-    _orig_collect_wires = _orig_cadapi.collect_wires
 
     parts_list = parts if isinstance(parts, list) else [parts]
 
-    try:
-        _orig_cadapi.collect_verts_faces = collect_verts_faces
-        _orig_cadapi.collect_wires = collect_wires
+    transparency = "none"
+    for opt in part_options or []:
+        if opt is not None and not np.isclose(opt["transparency"], 0):
+            transparency = "pretty"
+            break
 
-        transparency = "none"
-        for opt in part_options or []:
-            if opt is not None and not np.isclose(opt["transparency"], 0):
-                transparency = "pretty"
-                break
+    ps_backend.polyscope_setup(
+        up_direction=kwargs.get("up_direction", "z_up"),
+        fps=kwargs.get("fps", 60),
+        aa=kwargs.get("aa", 1),
+        transparency=transparency,
+        render_passes=kwargs.get("render_passes", 3),
+        gplane=kwargs.get("gplane", "none"),
+    )
+    ps_backend.add_features(labels, parts_list, part_options)
 
-        ps_backend.polyscope_setup(
-            up_direction=kwargs.get("up_direction", "z_up"),
-            fps=kwargs.get("fps", 60),
-            aa=kwargs.get("aa", 1),
-            transparency=transparency,
-            render_passes=kwargs.get("render_passes", 3),
-            gplane=kwargs.get("gplane", "none"),
-        )
-        ps_backend.add_features(labels, parts_list, part_options)
+    cam, target = _compute_default_camera(parts_list)
+    ps.look_at(cam, target)
 
-        cam, target = _compute_default_camera(parts_list)
-        ps.look_at(cam, target)
+    # Polyscope's panel toggle is a process-wide global; set it explicitly
+    # both ways so a previous call with the opposite setting doesn't leak.
+    ps.set_build_default_gui_panels(show_gui_panels)
 
-        # Polyscope's panel toggle is a process-wide global; set it explicitly
-        # both ways so a previous call with the opposite setting doesn't leak.
-        ps.set_build_default_gui_panels(show_gui_panels)
-
-        ps.show()
-    finally:
-        _orig_cadapi.collect_verts_faces = _orig_collect_verts
-        _orig_cadapi.collect_wires = _orig_collect_wires
+    ps.show()
 
 
 __all__ = [
