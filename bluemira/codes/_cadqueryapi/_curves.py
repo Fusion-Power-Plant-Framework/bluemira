@@ -16,7 +16,12 @@ import math
 import cadquery as cq
 import numpy as np
 from OCP.BRepAdaptor import BRepAdaptor_Curve
-from OCP.BRepBuilderAPI import BRepBuilderAPI_MakeEdge, BRepBuilderAPI_MakeWire
+from OCP.BRepBuilderAPI import (
+    BRepBuilderAPI_MakeEdge,
+    BRepBuilderAPI_MakeFace,
+    BRepBuilderAPI_MakeWire,
+)
+from OCP.ElCLib import ElCLib
 from OCP.GC import GC_MakeArcOfCircle
 from OCP.Geom import Geom_BSplineCurve, Geom_BSplineSurface, Geom_BezierCurve
 from OCP.TColStd import (
@@ -28,6 +33,7 @@ from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.gp import gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
 
 from bluemira.codes._cadqueryapi._aliases import (
+    _OCC_DEFAULT_TOL,
     _POINT_COINCIDENCE_TOL,
     apiEdge,
     apiWire,
@@ -35,14 +41,27 @@ from bluemira.codes._cadqueryapi._aliases import (
 from bluemira.codes.error import FreeCADError
 
 
-def make_bezier(points: list | np.ndarray) -> apiWire:
-    """Create a Bezier curve wire from a list of poles."""
+def make_bezier(
+    points: list | np.ndarray,
+    first_parameter: float | None = None,
+    last_parameter: float | None = None,
+) -> apiWire:
+    """Create a Bezier curve wire from a list of poles.
+
+    *first_parameter* / *last_parameter* trim the resulting edge to a
+    sub-range of the curve (used by deserialisation to round-trip trimmed
+    edges).
+    """
     pts = np.asarray(points)
     poles = TColgp_Array1OfPnt(1, len(pts))
     for i, p in enumerate(pts):
         poles.SetValue(i + 1, gp_Pnt(float(p[0]), float(p[1]), float(p[2])))
     curve = Geom_BezierCurve(poles)
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
+    if first_parameter is not None and last_parameter is not None:
+        builder = BRepBuilderAPI_MakeEdge(curve, first_parameter, last_parameter)
+    else:
+        builder = BRepBuilderAPI_MakeEdge(curve)
+    edge = cq.Edge(builder.Edge())
     return cq.Wire.assembleEdges([edge])
 
 
@@ -125,8 +144,15 @@ def make_bspline(
     degree: int,
     weights: np.ndarray,
     check_rational: bool,
+    first_parameter: float | None = None,
+    last_parameter: float | None = None,
 ) -> apiWire:
-    """Create a B-Spline wire from poles, multiplicities, and knots."""
+    """Create a B-Spline wire from poles, multiplicities, and knots.
+
+    *first_parameter* / *last_parameter* trim the resulting edge to a
+    sub-range of the curve (used by deserialisation to round-trip trimmed
+    edges).
+    """
     poles = np.asarray(poles)
     tcol_poles = TColgp_Array1OfPnt(1, len(poles))
     for i, p in enumerate(poles):
@@ -153,7 +179,11 @@ def make_bspline(
     else:
         curve = Geom_BSplineCurve(tcol_poles, tcol_knots, tcol_mults, degree, periodic)
 
-    edge = cq.Edge(BRepBuilderAPI_MakeEdge(curve).Edge())
+    if first_parameter is not None and last_parameter is not None:
+        builder = BRepBuilderAPI_MakeEdge(curve, first_parameter, last_parameter)
+    else:
+        builder = BRepBuilderAPI_MakeEdge(curve)
+    edge = cq.Edge(builder.Edge())
     return cq.Wire.assembleEdges([edge])
 
 
@@ -221,7 +251,12 @@ def make_bsplinesurface(
             degree_u,
             degree_v,
         )
-    return surface
+    # Wrap the parametric surface into a Face so callers receive an apiShape
+    # (matches FreeCAD's bsplinesurface.toShape()). _OCC_DEFAULT_TOL is the
+    # standard surface-builder confusion tolerance.
+    builder = BRepBuilderAPI_MakeFace(surface, _OCC_DEFAULT_TOL)
+    builder.Build()
+    return cq.Face(builder.Face())
 
 
 def _freecad_ax2(center, axis, x_direction=None):
@@ -280,20 +315,40 @@ def make_circle_arc_3P(
     p3,
     axis=None,
 ) -> apiWire:
-    """Create an arc of circle through three points."""
+    """Create an arc of circle through three points.
+
+    When *axis* is given, it overrides the natural plane normal derived from
+    the three points to fix the angle-parameterisation convention (mirrors
+    FreeCAD: build a circle on (radius, center, axis), then map the original
+    start/end points to parameters on that circle and rebuild the arc).
+    """
     try:
-        edge = cq.Edge.makeThreePointArc(cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3))
+        nat_edge = cq.Edge.makeThreePointArc(
+            cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3)
+        )
     except Exception as e:
         raise FreeCADError(str(e)) from e
+    if axis is None:
+        return cq.Wire.assembleEdges([nat_edge])
+
+    nat_circ = BRepAdaptor_Curve(nat_edge.wrapped).Circle()
+    centre = nat_circ.Location()
+    new_circ = gp_Circ(
+        _freecad_ax2((centre.X(), centre.Y(), centre.Z()), axis), nat_circ.Radius()
+    )
+    p_start = ElCLib.Parameter_s(new_circ, gp_Pnt(*[float(v) for v in p1]))
+    p_end = ElCLib.Parameter_s(new_circ, gp_Pnt(*[float(v) for v in p3]))
+    arc = GC_MakeArcOfCircle(new_circ, p_start, p_end, True)
+    edge = cq.Edge(BRepBuilderAPI_MakeEdge(arc.Value()).Edge())
     return cq.Wire.assembleEdges([edge])
 
 
 def make_ellipse(
-    center: list = (0.0, 0.0, 0.0),
+    center: tuple = (0.0, 0.0, 0.0),
     major_radius: float = 2.0,
     minor_radius: float = 1.0,
-    major_axis: list = (1.0, 0.0, 0.0),
-    minor_axis: list = (0.0, 1.0, 0.0),
+    major_axis: tuple = (1.0, 0.0, 0.0),
+    minor_axis: tuple = (0.0, 1.0, 0.0),
     start_angle: float = 0.0,
     end_angle: float = 360.0,
 ) -> apiWire:
