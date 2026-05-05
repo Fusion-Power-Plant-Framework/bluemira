@@ -20,7 +20,7 @@ certifi==2026.4.22
     # via requests
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.2
+citeproc-py==0.9.3
     # via csl-reference
 click==8.3.3
     # via
@@ -38,7 +38,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.11.0
+cyclopts==4.11.2
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -173,7 +173,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.47.3
+pyvista==0.48.0
     # via bluemira (pyproject.toml)
 requests==2.33.1
     # via
