@@ -19,7 +19,7 @@ class TestGrid:
         assert np.isclose(g.x_size, 20.0 - X_AXIS_MIN)
         # this is weird, something floating point-y
         # 20/99 should be correct here
-        assert np.isclose(g.step, (19.9 * 20 / 99**2))
+        assert np.isclose(g.step, ((20.0 - X_AXIS_MIN) * 20 / 99**2))
         g = Grid(10, 5, -10, 10, 100, 100)
         assert g.x_min == 5
         assert g.x_max == 10
