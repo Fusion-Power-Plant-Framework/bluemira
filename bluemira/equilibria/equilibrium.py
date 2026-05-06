@@ -623,7 +623,6 @@ class CoilSetMHDState(MHDState):
             self._psi_cache_valid = True
         return self._psi_green_cache
 
-    # --- Bx ---
     @property
     def _bx_green(self):
         if not self._bx_cache_valid:
@@ -631,7 +630,6 @@ class CoilSetMHDState(MHDState):
             self._bx_cache_valid = True
         return self._bx_green_cache
 
-    # --- Bz ---
     @property
     def _bz_green(self):
         if not self._bz_cache_valid:
