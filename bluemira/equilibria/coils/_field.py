@@ -139,6 +139,7 @@ class CoilGroupFieldsMixin:
         :
             dPsi/dx response
         """
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
         return self._response_greens(greens_dpsi_dx, x, z)
 
     def dpsi_dz(self, x: float | np.ndarray, z: float | np.ndarray):
@@ -167,6 +168,7 @@ class CoilGroupFieldsMixin:
         :
             dPsi/dz response
         """
+        x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
         return self._response_greens(greens_dpsi_dz, x, z)
 
     def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
