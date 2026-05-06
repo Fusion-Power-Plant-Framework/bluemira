@@ -7,18 +7,26 @@
 
 from bluemira.equilibria.optimisation.constraints import (
     AutoConstraints,
+    DPsiDxConstraint,
+    DPsiDzConstraint,
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
     PsiBoundaryConstraint,
     PsiConstraint,
+    RadialFieldConstraint,
+    VerticalFieldConstraint,
 )
 
 __all__ = [
     "AutoConstraints",
+    "DPsiDxConstraint",
+    "DPsiDzConstraint",
     "FieldNullConstraint",
     "IsofluxConstraint",
     "MagneticConstraintSet",
     "PsiBoundaryConstraint",
     "PsiConstraint",
+    "RadialFieldConstraint",
+    "VerticalFieldConstraint",
 ]
