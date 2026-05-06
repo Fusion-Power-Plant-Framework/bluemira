@@ -672,6 +672,35 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().dpsi_dx(x, z), sum_coils=sum_coils, control=control)
 
+    def dpsi_dz(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        *,
+        sum_coils: bool = True,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        dPsi/dz of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dz response
+        z:
+            The z values at which to calculate the dpsi/dz response
+        sum_coils:
+            sum over coils
+        control:
+            operations on control coils only
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux density gradient in z
+        """
+        return self._sum(super().dpsi_dz(x, z), sum_coils=sum_coils, control=control)
+
     def Bx(
         self,
         x: np.ndarray,
