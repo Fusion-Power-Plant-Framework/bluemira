@@ -130,7 +130,7 @@ class RZIp:
             r_struct=np.tile(eq.x.reshape(-1), (len(self.coilset._get_type_index()), 1)),
             i_plasma=eq._jtor * eq.grid.step,
             br_struct_grid=np.rollaxis(eq._bx_green, 2, 0),
-            dbrdz_struct_grid=np.rollaxis(eq._db_green, 2, 0),
+            dbrdz_struct_grid=np.rollaxis(eq.coilset.dB_d_response(eq.x, eq.z), 2, 0),
         )
 
 
