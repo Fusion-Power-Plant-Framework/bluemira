@@ -20,6 +20,8 @@ from bluemira.magnetostatics.greens import (
     greens_Bx,
     greens_Bz,
     greens_dbz_dx,
+    greens_dpsi_dx,
+    greens_dpsi_dz,
     greens_psi,
 )
 from bluemira.magnetostatics.semianalytic_2d import (
@@ -122,6 +124,62 @@ class CoilGroupFieldsMixin:
         return self._mix_control_method(
             x, z, greens_psi, semianalytic_psi, disable_analytic=not self._psi_analytic
         )
+
+    def dpsi_dx(self, x: float | np.ndarray, z: float | np.ndarray):
+        """
+        Calculate dpsi/dx at (x, z)
+        """  # noqa: DOC201
+        return self.dpsi_dx_response(x, z) * self.current
+
+    def dpsi_dx_response(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+    ) -> float | np.ndarray:
+        """
+        Unit dpsi/dx of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dx response
+        z:
+            The z values at which to calculate the dpsi/dx response
+
+        Returns
+        -------
+        :
+            dPsi/dx response
+        """
+        return self._response_greens(greens_dpsi_dx, x, z)
+
+    def dpsi_dz(self, x: float | np.ndarray, z: float | np.ndarray):
+        """
+        Calculate dpsi/dz at (x, z)
+        """  # noqa: DOC201
+        return self.dpsi_dz_response(x, z) * self.current
+
+    def dpsi_dz_response(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+    ) -> float | np.ndarray:
+        """
+        Unit dpsi/dz of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dz response
+        z:
+            The z values at which to calculate the dpsi/dz response
+
+        Returns
+        -------
+        :
+            dPsi/dz response
+        """
+        return self._response_greens(greens_dpsi_dz, x, z)
 
     def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
         """
@@ -583,6 +641,35 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(super().psi(x, z), sum_coils=sum_coils, control=control)
 
+    def dpsi_dx(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        *,
+        sum_coils: bool = True,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        dPsi/dx of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dx response
+        z:
+            The z values at which to calculate the dpsi/dx response
+        sum_coils:
+            sum over coils
+        control:
+            operations on control coils only
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux density gradient in x
+        """
+        return self._sum(super().dpsi_dx(x, z), sum_coils=sum_coils, control=control)
+
     def Bx(
         self,
         x: np.ndarray,
@@ -698,6 +785,68 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         return self._sum(
             super().psi_response(x, z), sum_coils=sum_coils, control=control
+        )
+
+    def dpsi_dx_response(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        *,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        Unit dpsi/dx of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dx response
+        z:
+            The z values at which to calculate the dpsi/dx response
+        sum_coils:
+            sum over coils
+        control:
+            operations on control coils only
+
+        Returns
+        -------
+        :
+            dPsi/dx response
+        """
+        return self._sum(
+            super().dpsi_dx_response(x, z), sum_coils=sum_coils, control=control
+        )
+
+    def dpsi_dz_response(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        *,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> np.ndarray:
+        """
+        Unit dpsi/dz of Coilset
+
+        Parameters
+        ----------
+        x:
+            The x values at which to calculate the dpsi/dz response
+        z:
+            The z values at which to calculate the dpsi/dz response
+        sum_coils:
+            sum over coils
+        control:
+            operations on control coils only
+
+        Returns
+        -------
+        :
+            dPsi/dz response
+        """
+        return self._sum(
+            super().dpsi_dz_response(x, z), sum_coils=sum_coils, control=control
         )
 
     def Bx_response(
