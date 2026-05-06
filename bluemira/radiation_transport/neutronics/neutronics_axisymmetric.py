@@ -228,7 +228,7 @@ class NeutronicsReactor(ABC):
         vacuum_vessel: ComponentManager,
         materials_library: NeutronicsMaterials,
         *,
-        snap_to_horizontal_angle: float = 45,
+        snap_to_horizontal_angle: float = 10,
         blanket_discretisation: int = 10,
         divertor_discretisation: int = 5,
     ):

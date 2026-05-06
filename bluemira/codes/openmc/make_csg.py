@@ -200,7 +200,7 @@ def plot_surface_at_1000cm(ax, surface: openmc.Surface, color_num: int):
 
 
 def get_depth_values(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
+    blanket_dimensions: TokamakDimensions, *, inboard: bool
 ) -> npt.NDArray[np.float64]:
     """
     Choose the depth values that this pre-cell is suppose to use, according to where it
@@ -208,11 +208,12 @@ def get_depth_values(
 
     Parameters
     ----------
-    pre_cell:
-        :class:`~PreCell` to be classified as either inboard or outboard
     blanket_dimensions:
         :class:`bluemira.radiation_transport.neutronics.params.TokamakDimensions`
         recording the dimensions of the blanket in SI units (unit: [m]).
+    inboard:
+        Whether the pre-cell is in the inboard or not (if not, it must be
+        outboard).
 
     Returns
     -------
@@ -222,21 +223,9 @@ def get_depth_values(
         first wall we need to drill, from the plasma facing surface) to hit that
         interface layer.
     """
-    if check_inboard_outboard(pre_cell, blanket_dimensions):
+    if inboard:
         return blanket_dimensions.inboard.get_interface_depths()
     return blanket_dimensions.outboard.get_interface_depths()
-
-
-def check_inboard_outboard(
-    pre_cell: PreCell, blanket_dimensions: TokamakDimensions
-) -> bool:
-    """If this pre-cell is an inboard, return True.
-    Otherwise, this pre-cell belongs to outboard, return False
-    """
-    # reference radius
-    return (
-        pre_cell.vertex[0].mean() < blanket_dimensions.inboard_outboard_transition_radius
-    )
 
 
 def torus_from_3points(
@@ -1738,6 +1727,9 @@ class BlanketCellArray:
             surface_id=1 if control_id else None,
             name="Blanket cell wall 0",
         )
+        inboard_outboard_transition_pt = np.argmax(
+            pre_cell_array.interior_vertices()[:, 2]
+        )
         cell_array = []
         for i, (pre_cell, cw_wall) in enumerate(
             zip(pre_cell_array.pre_cells, cell_walls[1:], strict=True)
@@ -1749,14 +1741,15 @@ class BlanketCellArray:
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
 
+            inboard = i <= inboard_outboard_transition_pt
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
                 ccw_surf,
                 cw_surf,
-                get_depth_values(pre_cell, blanket_dimensions),
+                get_depth_values(blanket_dimensions, inboard=inboard),
                 csg=csg,
                 fill_lib=materials,
-                inboard=check_inboard_outboard(pre_cell, blanket_dimensions),
+                inboard=inboard,
                 blanket_stack_num=i if control_id else None,
             )
             cell_array.append(stack)

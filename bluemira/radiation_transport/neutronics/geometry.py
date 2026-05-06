@@ -128,16 +128,13 @@ class TokamakDimensions:
     """
 
     inboard: BlanketThickness
-    inboard_outboard_transition_radius: float
     outboard: BlanketThickness
     divertor: DivertorThickness
     cs_coil: ToroidalFieldCoilDimension
     rad_shield: RadiationShieldThickness
 
     @classmethod
-    def from_parameterframe(
-        cls, params: NeutronicsReactorParameterFrame, r_inner_cut: float
-    ):
+    def from_parameterframe(cls, params: NeutronicsReactorParameterFrame):
         """
         Setup tokamak dimensions
 
@@ -145,9 +142,6 @@ class TokamakDimensions:
         ----------
         params:
             parameter frame containing all the relevant thickness parameters
-        r_inner_cut:
-            Major radius value beyond which it's considered the "outboard", and within
-            which it's considered the inboard part of the tokamak.
 
         Returns
         -------
@@ -162,7 +156,6 @@ class TokamakDimensions:
                 params.inboard_breeding_tk.value,
                 params.blk_ib_manifold.value,
             ),
-            r_inner_cut,
             BlanketThickness(
                 params.fw_blanket_surface_tk.value,
                 params.outboard_fw_tk.value,

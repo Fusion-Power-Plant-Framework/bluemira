@@ -46,7 +46,7 @@ class EUDEMONeutronicsCSGReactor(NeutronicsReactor):
         vacuum_vessel: VacuumVessel,
     ) -> tuple[TokamakDimensions, BluemiraWire, npt.NDArray, BluemiraWire, BluemiraWire]:
         return (
-            TokamakDimensions.from_parameterframe(self.params, blanket.r_inner_cut),
+            TokamakDimensions.from_parameterframe(self.params),
             ivc_shapes.div_internal_boundary,
             blanket.panel_points.T,
             ivc_shapes.outer_boundary,
