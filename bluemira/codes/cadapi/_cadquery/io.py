@@ -24,12 +24,17 @@ from typing import TYPE_CHECKING
 import cadquery as cq
 from OCP.BRep import BRep_Builder
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.Interface import Interface_Static
+from OCP.Message import Message_ProgressRange
+from OCP.RWGltf import RWGltf_CafWriter
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
-from OCP.TCollection import TCollection_ExtendedString
+from OCP.StlAPI import StlAPI_Writer
+from OCP.TColStd import TColStd_IndexedDataMapOfStringString
+from OCP.TCollection import TCollection_AsciiString, TCollection_ExtendedString
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.TopLoc import TopLoc_Location
@@ -60,18 +65,13 @@ class CADFileType(enum.Enum):
     IGES = "iges"
     BREP = "brep"
     FREECAD = "FCStd"
+    STL = "stl"
+    GLTRANSMISSION = "gltf"  # also handles .glb (binary variant)
 
     @property
     def ext(self) -> str:
         """File extension (without leading dot)."""
-        _exts = {
-            "stp": "stp",
-            "stpz": "stpz",
-            "iges": "iges",
-            "brep": "brep",
-            "FCStd": "FCStd",
-        }
-        return _exts.get(self.value, self.value)
+        return self.value
 
     @classmethod
     def _missing_(cls, value: str) -> CADFileType:
@@ -82,12 +82,15 @@ class CADFileType(enum.Enum):
             "iges": cls.IGES,
             "igs": cls.IGES,
             "brep": cls.BREP,
+            "stl": cls.STL,
+            "gltf": cls.GLTRANSMISSION,
+            "glb": cls.GLTRANSMISSION,
         }
         return _aliases.get(str(value).lower())
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:
-        return (cls.BREP, cls.FREECAD)
+        return (cls.BREP, cls.FREECAD, cls.STL, cls.GLTRANSMISSION)
 
     @classmethod
     def mesh_import_formats(cls) -> tuple[CADFileType, ...]:
@@ -95,7 +98,7 @@ class CADFileType(enum.Enum):
 
     @classmethod
     def not_importable_formats(cls) -> tuple[CADFileType, ...]:
-        return (cls.STEP_ZIP, cls.FREECAD)
+        return (cls.STEP_ZIP, cls.FREECAD, cls.STL, cls.GLTRANSMISSION)
 
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
@@ -185,6 +188,75 @@ def _write_labeled_step(shapes, labels, filename):
     return writer.Write(str(filename))
 
 
+# Mesh deflection defaults — bluemira is metre-native, so 1 mm linear / ~28°
+# angular gives smooth curves on reactor-scale geometry without exploding the
+# triangle count. Tunable via _write_stl / _write_gltf kwargs.
+_DEFAULT_LIN_DEFLECTION = 1e-3
+_DEFAULT_ANG_DEFLECTION = 0.5
+
+
+def _ensure_meshed(
+    shape: apiShape,
+    lin_deflection: float = _DEFAULT_LIN_DEFLECTION,
+    ang_deflection: float = _DEFAULT_ANG_DEFLECTION,
+) -> None:
+    """Run BRepMesh_IncrementalMesh in place (idempotent if already meshed)."""
+    BRepMesh_IncrementalMesh(shape.wrapped, lin_deflection, False, ang_deflection, True)
+
+
+def _write_stl(
+    shapes: list[apiShape],
+    filename: str,
+    *,
+    binary: bool = True,
+    lin_deflection: float = _DEFAULT_LIN_DEFLECTION,
+    ang_deflection: float = _DEFAULT_ANG_DEFLECTION,
+) -> None:
+    """Write shapes as a single STL file. Labels are not preserved.
+
+    Defaults to binary STL (smaller and faster for downstream consumers).
+    """
+    target = shapes[0] if len(shapes) == 1 else make_compound(shapes)
+    _ensure_meshed(target, lin_deflection, ang_deflection)
+    writer = StlAPI_Writer()
+    writer.ASCIIMode = not binary
+    if not writer.Write(target.wrapped, str(filename)):
+        raise FreeCADError(f"Failed to write STL file: {filename}")
+
+
+def _write_gltf(
+    shapes: list[apiShape],
+    labels: list[str] | None,
+    filename: str,
+    *,
+    is_binary: bool,
+    lin_deflection: float = _DEFAULT_LIN_DEFLECTION,
+    ang_deflection: float = _DEFAULT_ANG_DEFLECTION,
+) -> None:
+    """Write shapes as a glTF (text) or GLB (binary) file via XCAF.
+
+    Triangulation must be precomputed on each shape before ``Perform`` —
+    ``RWGltf_CafWriter`` does not auto-tessellate.
+    """
+    app = XCAFApp_Application.GetApplication_s()
+    doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
+    app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
+    shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    used_labels = (
+        labels if labels is not None else [f"shape_{i}" for i in range(len(shapes))]
+    )
+    for s, name in zip(shapes, used_labels, strict=True):
+        _ensure_meshed(s, lin_deflection, ang_deflection)
+        lbl = shape_tool.AddShape(s.wrapped, False)
+        TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
+
+    writer = RWGltf_CafWriter(TCollection_AsciiString(str(filename)), is_binary)
+    file_info = TColStd_IndexedDataMapOfStringString()
+    progress = Message_ProgressRange()
+    if not writer.Perform(doc, file_info, progress):
+        raise FreeCADError(f"Failed to write glTF file: {filename}")
+
+
 def save_cad(
     shapes: Iterable[apiShape],
     filename: str,
@@ -197,19 +269,26 @@ def save_cad(
         shapes = list(shapes)
     labels_list = list(labels) if labels is not None else None
 
+    # Capture the user-requested extension before resolving to the enum, so
+    # GLB-vs-GLTF (both → CADFileType.GLTRANSMISSION) survives the round-trip.
+    requested_ext = cad_format.lower() if isinstance(cad_format, str) else cad_format.ext
     cad_format = (
         CADFileType(cad_format)
         if not isinstance(cad_format, CADFileType)
         else cad_format
     )
-    ext = cad_format.ext
     p = Path(filename)
     current_ext = p.suffix.lower().lstrip(".")
-    valid_exts = {ext.lower()}
-    if ext.lower() == "stp":
+    valid_exts = {cad_format.ext.lower()}
+    if cad_format == CADFileType.STEP:
         valid_exts.add("step")
+    if cad_format == CADFileType.GLTRANSMISSION:
+        valid_exts.update({"gltf", "glb"})
     if current_ext not in valid_exts:
-        filename = str(p) + f".{ext}"
+        # Prefer the user-requested extension if it is one of the valid ones
+        # (covers `cad_format="glb"` → append ".glb", not the enum default ".gltf").
+        append_ext = requested_ext if requested_ext in valid_exts else cad_format.ext
+        filename = str(p) + f".{append_ext}"
 
     if cad_format == CADFileType.STEP:
         with _step_write_settings():
@@ -222,6 +301,11 @@ def save_cad(
                 status = writer.Write(str(filename))
         if status != IFSelect_RetDone:
             raise FreeCADError(f"Failed to write STEP file: {filename}")
+    elif cad_format == CADFileType.STL:
+        _write_stl(shapes, filename)
+    elif cad_format == CADFileType.GLTRANSMISSION:
+        is_binary = str(filename).lower().endswith(".glb")
+        _write_gltf(shapes, labels_list, filename, is_binary=is_binary)
     else:
         raise FreeCADError(f"CAD format not supported by CadQuery backend: {cad_format}")
 
