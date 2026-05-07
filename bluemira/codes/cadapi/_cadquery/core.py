@@ -431,6 +431,16 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
             )
 
 
+def _get_planar_normal(wire: apiWire) -> tuple[float, float, float] | None:
+    """Returns the normal vector if the wire is planar, otherwise None."""
+    try:
+        face = cq.Face.makeFromWires(wire)  # this succeeds if planar
+        normal = face.normalAt(None)
+        return (normal.x, normal.y, normal.z)
+    except Exception:
+        return None  # wire is non-planar
+
+
 def sweep_shape(
     profiles: Iterable[apiWire],
     path: apiWire,
@@ -462,34 +472,39 @@ def sweep_shape(
 
     _check_path_tangent_continuity(path)
 
-    # bluemira's sweep semantics match FreeCAD's ``Part.Wire.makePipeShell``:
-    # all profiles are section profiles along the path (multi-section sweep),
-    # not an outer+inner wires pair. For a single profile this degenerates to
-    # a plain pipe sweep.
-    try:
-        if len(profiles) == 1:
-            transition_mode = ["transformed", "right", "round"][transition]
-            result = cq.Solid.sweep(
-                profiles[0],
-                [],
-                path,
-                makeSolid=solid,
-                isFrenet=frenet,
-                transitionMode=transition_mode,
-            )
+    planar_normal = _get_planar_normal(path)
+
+    # OCC's Frenet frame calculation relies on local path curvature. For planar paths
+    # with straight segments, this causes the frame to snap when transitioning into
+    # curved arcs, leading to self-intersecting wires that break boolean operations.
+
+    # To bypass this, calculate the normal vector of the plane the path is on. Then,
+    # explicitly pass this normal to the builder to lock the profile for the sweep.
+    # The attempts loop below will fallback to this approach if frenet=True but
+    # the geometry becomes invalid.
+
+    attempts = []
+    if frenet:
+        attempts.append(("Frenet", True, None))
+        if planar_normal:
+            attempts.append(("Planar Binormal Fallback", False, planar_normal))
+    else:
+        if planar_normal:
+            attempts.append(("Planar Binormal", False, planar_normal))
         else:
-            # cq.Solid.sweep_multi doesn't expose ``transitionMode``, so drive
-            # BRepOffsetAPI_MakePipeShell directly — that way ``transition``
-            # is honoured in the multi-profile path too, matching FreeCAD's
-            # ``path.makePipeShell(profiles, solid, frenet, transition)`` which
-            # accepts it unconditionally.
+            attempts.append(("Standard Fixed", False, None))
+
+    result = None
+    last_exc = None
+    for attempt_name, use_frenet, use_binormal in attempts:
+        try:
             builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-            builder.SetMode(frenet)
-            # Only override the transition mode when the user asked for a
-            # non-default value. Calling ``SetTransitionMode`` at all on a
-            # path without non-tangent transitions confuses OCCT's builder
-            # (Build returns IsDone=False even for the default ``Transformed``
-            # value), so we leave it alone in the common case.
+
+            if use_binormal:
+                builder.SetMode(gp_Dir(*use_binormal))
+            else:
+                builder.SetMode(use_frenet)
+
             if transition != 0:
                 builder.SetTransitionMode(
                     (
@@ -498,31 +513,53 @@ def sweep_shape(
                         BRepBuilderAPI_TransitionMode.BRepBuilderAPI_RoundCorner,
                     )[transition]
                 )
+
             for p in profiles:
                 builder.Add(p.wrapped)
+
             builder.Build()
+
             if not builder.IsDone():
                 raise FreeCADError(  # noqa: TRY301
-                    "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
-                )
+                        "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
+                    )
+            
             if solid:
                 builder.MakeSolid()
-            result = cq.Shape.cast(builder.Shape())
-    except FreeCADError:
-        raise
-    except Exception as exc:
-        raise FreeCADError(f"CadQuery sweep failed: {exc}") from exc
 
-    # Multi-section sweeps on composite profiles produce shells whose adjacent
-    # faces do not share topological edges — ``isValid()`` still returns True,
-    # but downstream boolean/section operations silently drop individual faces
-    # because there is no shared boundary for them to propagate across. Sewing
-    # stitches the shell back together via vertex/edge merging within
-    # tolerance, restoring a single coherent boundary.
-    if solid and len(profiles) > 1:
-        result = _sewn_solid(result)
-    if solid and not result.isValid():
-        fix_shape(result)
+            temp_result = cq.Shape.cast(builder.Shape())
+
+            # Multi-section sweeps on composite profiles produce shells whose adjacent
+            # faces do not share topological edges — ``isValid()`` still returns True,
+            # but downstream boolean/section operations silently drop individual faces
+            # because there is no shared boundary for them to propagate across. Sewing
+            # stitches the shell back together via vertex/edge merging within
+            # tolerance, restoring a single coherent boundary.
+            if solid and len(profiles) > 1:
+                temp_result = _sewn_solid(temp_result)
+            if solid and not temp_result.isValid():
+                try:
+                    fix_shape(temp_result)
+                except Exception as fix_exc:
+                    raise FreeCADError(
+                        f"{attempt_name} sweep generated an invalid solid that could not be healed."
+                    ) from fix_exc
+                
+            result = temp_result
+            break
+        except Exception as exc:
+            last_exc = exc
+            if attempt_name == "Frenet" and len(attempts) > 1:
+                bluemira_warn(f"Frenet sweep failed. Attempting Planar Binormal fallback...")
+                continue # try the next strategy
+            # If it's the last attempt in the list, we let the loop finish and raise below
+
+    if result is None:
+        raise FreeCADError(
+            "Sweep failed. If the solid was invalid and could not be healed, "
+            "this usually happens when the profile is too large for the path's "
+            "minimum bend radius, causing the sweep to self-intersect."
+        ) from last_exc
 
     if solid:
         return result
