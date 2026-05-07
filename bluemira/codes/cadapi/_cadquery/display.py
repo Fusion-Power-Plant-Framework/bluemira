@@ -23,7 +23,7 @@ import numpy as np
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
-    from bluemira.codes._cadqueryapi._aliases import apiShape
+    from bluemira.codes.cadapi._cadquery.aliases import apiShape
     from bluemira.display.palettes import ColorPalette
 
 
@@ -83,7 +83,7 @@ def collect_wires(
     """
     # Local import to avoid a top-level _core ↔ _display cycle. ``_core`` may
     # also re-export from this module via __init__.
-    from bluemira.codes._cadqueryapi._core import _vector_to_numpy  # noqa: PLC0415
+    from bluemira.codes.cadapi._cadquery.core import _vector_to_numpy  # noqa: PLC0415
 
     all_verts = []
     all_edges = []
@@ -133,7 +133,7 @@ def _compute_default_camera(parts: list[apiShape]) -> tuple[tuple, tuple]:
     FreeCAD-style xz side-view for genuinely 3D scenes. Returns
     ``(camera_position, look_at_target)`` as 3-tuples.
     """
-    from bluemira.codes._cadqueryapi._core import bounding_box  # noqa: PLC0415
+    from bluemira.codes.cadapi._cadquery.core import bounding_box  # noqa: PLC0415
 
     bbs = [bounding_box(p) for p in parts]
     xmin = min(b[0] for b in bbs)
@@ -153,7 +153,7 @@ def _compute_default_camera(parts: list[apiShape]) -> tuple[tuple, tuple]:
         cam = (center[0] + d, center[1], center[2])
     elif ez < flat:  # flat in z → look at xy plane from +z (top-down)
         cam = (center[0], center[1], center[2] + d)
-    else:  # 3D → xz side-view, mirrors _freecadapi.show_cad's (90,0,0) default
+    else:  # 3D → xz side-view, mirrors _freecad.api.show_cad's (90,0,0) default
         cam = (center[0], center[1] - d, center[2])
     return cam, center
 

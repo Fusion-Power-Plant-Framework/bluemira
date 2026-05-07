@@ -39,7 +39,7 @@ from OCP.XCAFApp import XCAFApp_Application
 from OCP.XCAFDoc import XCAFDoc_DocumentTool
 from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec
 
-from bluemira.codes._cadqueryapi._aliases import (
+from bluemira.codes.cadapi._cadquery.aliases import (
     _ANGLE_PARALLEL_TOL,
     apiCompound,
     apiShape,
@@ -49,11 +49,11 @@ from bluemira.codes.error import FreeCADError
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.codes._cadqueryapi._placement import _CQPlacement
+    from bluemira.codes.cadapi._cadquery.placement import _CQPlacement
 
 
 class CADFileType(enum.Enum):
-    """Minimal CAD file type enum (mirrors _freecadapi.CADFileType)."""
+    """Minimal CAD file type enum (mirrors _freecad.api.CADFileType)."""
 
     STEP = "stp"
     STEP_ZIP = "stpz"

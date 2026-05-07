@@ -36,7 +36,6 @@ dependencies = [
     "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy>=1.26.0",
     "pint>=0.24",
-    "python-dotenv>=1.0",
     "periodictable>=1.4",
     "pyclipper>=1.3.0.post5",
     "pydantic>=2.11.0",
@@ -320,7 +319,7 @@ ignore-names = [
     "*eV*",
     "I_not_dI",
     "*Li*",
-    # api* types in _cadqueryapi.py mirror FreeCAD's Part.* naming so
+    # api* types in cadapi/_cadquery mirror FreeCAD's Part.* naming so
     # isinstance()/type-alias callsites stay backend-agnostic
     "api*",
     "_apiFaceMeta",
@@ -331,12 +330,12 @@ ignore-names = [
 "bluemira/__init__.py" = ["TID252"]
 "bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/model_mapping.py" = ["PLR6301", "DOC201"]
-# _cadqueryapi/* is an experimental backend mirroring _freecadapi's
+# cadapi/_cadquery/* is an experimental backend mirroring _freecad/api's
 # surface; several patterns are either inherited from FreeCAD's API
 # (CapWords-violating names, 1-line docstrings without Returns/Raises)
 # or live in adapter shims where args are intentionally unused to match
 # the other backend's signature.
-"bluemira/codes/_cadqueryapi/*.py" = [
+"bluemira/codes/cadapi/_cadquery/*.py" = [
     "DOC201",
     "DOC501",
     "ARG001",

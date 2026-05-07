@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Shared test base for the geometry backends (``_freecadapi``, ``_cadqueryapi``).
+Shared test base for the geometry backends (``_freecad.api``, ``_cadquery``).
 
-The concrete test classes in ``test_freecadapi.py`` / ``test_cadqueryapi.py``
+The concrete test classes in ``test_freecad.api.py`` / ``test_cadquery``
 inherit from :class:`BackendApiTestsBase` and set ``cadapi`` to the backend
 module under test. Any test method moved into this base runs against both
 backends via its two subclasses, keeping the API contract in sync.
@@ -37,7 +37,7 @@ class BackendApiTestsBase:
     """Shared contract tests for a geometry backend module.
 
     Subclasses set ``cadapi`` to the backend module under test (e.g.
-    ``bluemira.codes._freecadapi``). Tests reference ``self.cadapi`` /
+    ``bluemira.codes.cadapi._freecad.api``). Tests reference ``self.cadapi`` /
     ``cls.cadapi`` rather than importing a module directly, so the same
     method exercises whichever backend the subclass wired in.
     """

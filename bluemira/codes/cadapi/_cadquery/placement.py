@@ -21,7 +21,7 @@ from itertools import starmap
 import cadquery as cq
 import numpy as np
 
-from bluemira.codes._cadqueryapi._aliases import (
+from bluemira.codes.cadapi._cadquery.aliases import (
     _ANGLE_PARALLEL_TOL,
     _AXIS_DOMINANCE_TOL,
     _GEOM_NEAR_ZERO_TOL,

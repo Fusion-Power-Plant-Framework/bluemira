@@ -13,7 +13,7 @@ pytestmark = pytest.mark.skipif(
     reason="CadQuery-API tests; active backend is not cadquery",
 )
 
-cadapi = pytest.importorskip("bluemira.codes._cadqueryapi")
+cadapi = pytest.importorskip("bluemira.codes.cadapi._cadquery")
 
 from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
 
