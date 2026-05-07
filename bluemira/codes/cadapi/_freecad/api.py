@@ -1236,7 +1236,7 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     :
         Wire point value at distance
     """
-    if distance == 0.0:  # noqa: RUF069
+    if math.isclose(distance, 0.0):
         return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)

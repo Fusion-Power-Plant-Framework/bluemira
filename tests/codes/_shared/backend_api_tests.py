@@ -241,6 +241,34 @@ class BackendApiTestsBase:
             self.cadapi.center_of_mass(wire2), [-0.5, 0.5, 0.0], atol=EPS_FREECAD
         )
 
+    def test_move_placement_translates_base_only(self):
+        """``move_placement`` adds ``vector`` to the placement's base and leaves
+        the rotation untouched (FreeCAD ``Placement.move`` semantics).
+        """
+        p = self.cadapi.make_placement(
+            base=(1.0, 2.0, 3.0), axis=(0.0, 0.0, 1.0), angle=45.0
+        )
+        original_angle = p.Rotation.Angle
+        self.cadapi.move_placement(p, [10.0, -5.0, 1.5])
+        assert np.allclose(
+            [p.Base.x, p.Base.y, p.Base.z], [11.0, -3.0, 4.5], atol=EPS_FREECAD
+        )
+        assert np.isclose(p.Rotation.Angle, original_angle, atol=EPS_FREECAD)
+
+    def test_move_placement_via_bluemira_placement(self):
+        """``BluemiraPlacement.move`` (which routes through ``move_placement``)
+        must shift a downstream-applied shape by the same vector.
+        """
+        from bluemira.geometry.placement import BluemiraPlacement  # noqa: PLC0415
+
+        bp = BluemiraPlacement(base=(0.0, 0.0, 0.0), angle=0.0)
+        bp.move([2.0, 3.0, 0.0])
+        wire = self.cadapi.make_polygon(self.closed_square_points)
+        self.cadapi.change_placement(wire, bp._shape)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire), [2.5, 3.5, 0.0], atol=EPS_FREECAD
+        )
+
     @pytest.mark.parametrize(
         ("r_diag", "expected_com"),
         [

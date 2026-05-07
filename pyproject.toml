@@ -86,20 +86,22 @@ pinned = [
     "vtk==9.3.1",  # needed for uv resolution
 ]
 
-conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
+# Several extras below contain packages that have no usable PyPI distribution
+# (openmc, openmc_data, tokamak-neutron-source, cherab, cgal-bindings). They
+# are installed via conda-forge only — see ``conda/environment.yml``. The
+# extra names stay defined for documentation purposes; the actual deps live
+# in the conda env. pip-style ``uv lock`` would otherwise fail because uv
+# treats ``project.optional-dependencies`` as required during the universal
+# resolve and per-dep environment markers are not enough to suppress that.
 
 process = ["process @ git+https://github.com/ukaea/process@v3.3.0"]
-openmc = [
-    "openmc>=0.14.0",
-    "openmc_data==2.3.5",
-    "tokamak-neutron-source >=0.1.4",
-]
 polyscope = ["polyscope"]
-radiation = ["cherab>=1.5"]
+openmc = []  # conda-forge: openmc, openmc_data, tokamak-neutron-source
+radiation = []  # conda-forge: cherab
 dagmc = [
-    "cgal>=6.0.1",
+    # conda-forge: cgal (and bluemira[openmc] would be included if it had any
+    # locked deps — see openmc extra above)
     "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
-    "bluemira[openmc]"
 ]
 
 [build-system]
