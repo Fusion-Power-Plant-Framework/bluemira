@@ -15,7 +15,7 @@ jobs:
     env:
       RESULT: ${{ github.event.workflow_run.conclusion }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PYTHON_VERSION: "3.11"
+      PYTHON_VERSION: "3.13"
     steps:
       - name: "Get information about the current run"
         uses: potiuk/get-workflow-origin@e2dae063368361e4cd1f510e8785cd73bca9352e # v1_5

@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: "Cache pre-commit"
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
@@ -47,7 +47,7 @@ jobs:
       - name: Build
         uses: ./.github/workflows/actions/build
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
 
       - name: Test Documentation code snippets
@@ -63,8 +63,12 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest"]
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12", "3.13"]
         with-process: ["v3.3.0", "process_disabled"]
+        include:
+          - os: "ubuntu-latest"
+            python-version: "3.11"
+            with-process: "process_disabled"
 
       fail-fast: false
     runs-on: ${{ matrix.os }}
