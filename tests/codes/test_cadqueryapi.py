@@ -17,8 +17,26 @@ pytestmark = pytest.mark.skipif(
 )
 
 cadapi = pytest.importorskip("bluemira.codes.cadapi._cadquery")
+cq = pytest.importorskip("cadquery")
 
+from bluemira.codes.error import FreeCADError  # noqa: E402
+from bluemira.geometry.error import GeometryError  # noqa: E402
 from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
+
+
+def _closed_square(side: float = 1.0, origin=(0.0, 0.0, 0.0)):
+    """A closed-polygon wire (last point == first). cadapi.make_polygon
+    has no ``closed=`` kwarg — closure is encoded by repeating the
+    first point at the end.
+    """
+    ox, oy, oz = origin
+    return cadapi.make_polygon([
+        [ox, oy, oz],
+        [ox + side, oy, oz],
+        [ox + side, oy + side, oz],
+        [ox, oy + side, oz],
+        [ox, oy, oz],
+    ])
 
 
 class TestCadqueryapi(BackendApiTestsBase):
@@ -215,3 +233,101 @@ class TestWireFromWiresDisjoint:
         result = cadapi.wire_from_wires([short, long])
         assert "did not all join" in caplog.text
         assert result.Length() == pytest.approx(long.Length())
+
+
+class TestInternalHelpers:
+    """Direct unit tests for ``_cadquery/core.py`` internal helpers.
+
+    These functions don't have FreeCAD-side equivalents (FreeCAD's C++ does
+    the same work behind ``Part.X`` constructors), so coverage from the
+    backend-shared test suite plus the high-level ``geometry/tools.py`` API
+    misses their edge/error branches.
+    """
+
+    # ---- _face_from_wires_tolerant ----------------------------------------
+
+    def test_face_from_wires_inner_outside_bounds_raises(self):
+        outer = _closed_square(1.0)
+        # Inner extends well beyond outer's bounding box → topological error.
+        bad_inner = _closed_square(10.0, origin=(-5, -5, 0))
+        with pytest.raises(GeometryError, match="outside the bounds"):
+            cadapi.apiFace([outer, bad_inner])
+
+    def test_apiface_with_none_returns_empty_face(self):
+        face = cadapi.apiFace(None)
+        # The ``None`` branch returns ``cq.Face.__new__(cq.Face)`` — uninitialised
+        # but still a cq.Face by metaclass-checked isinstance.
+        assert isinstance(face, cadapi.apiFace)
+
+    # ---- _pick_dominant_dangler -------------------------------------------
+
+    def test_pick_dominant_dangler_picks_larger_no_tie(self):
+        big = cadapi.extrude_shape(cadapi.apiFace(_closed_square(10.0)), (0, 0, 1))
+        small = cadapi.extrude_shape(cadapi.apiFace(_closed_square(1.0)), (0, 0, 1))
+        winner = cadapi._pick_dominant_dangler([small, big], source_idx=0)
+        assert cadapi.volume(winner) == pytest.approx(cadapi.volume(big))
+
+    def test_pick_dominant_dangler_ties_raise(self):
+        # Build two distinct solids with identical volume — same-size unit
+        # cubes at different origins. Can't reuse one solid here:
+        # ``translate_shape`` mutates in place, so passing it twice would feed
+        # the same Python object to the helper.
+        a = cadapi.extrude_shape(
+            cadapi.apiFace(_closed_square(1.0, origin=(0, 0, 0))), (0, 0, 1)
+        )
+        b = cadapi.extrude_shape(
+            cadapi.apiFace(_closed_square(1.0, origin=(5, 0, 0))), (0, 0, 1)
+        )
+        with pytest.raises(GeometryError, match="equally-sized"):
+            cadapi._pick_dominant_dangler([a, b], source_idx=0)
+
+    # ---- _check_path_tangent_continuity -----------------------------------
+
+    def test_check_path_tangent_continuity_kink_raises(self):
+        # 90° kink at (1, 0, 0): incoming edge points +x, outgoing +y →
+        # cos(angle) = 0, far below the 1 - 1e-6 tangent-continuity threshold.
+        kinked = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+        with pytest.raises(FreeCADError, match="tangent-continuous"):
+            cadapi._check_path_tangent_continuity(kinked)
+
+    def test_check_path_tangent_continuity_straight_passes(self):
+        # Single-segment polygon has no interior junctions → no checks → OK.
+        straight = cadapi.make_polygon([[0, 0, 0], [1, 0, 0]])
+        cadapi._check_path_tangent_continuity(straight)  # must not raise
+
+    # ---- _force_close_wire ------------------------------------------------
+
+    def test_force_close_wire_already_closed_is_noop(self):
+        closed = _closed_square(1.0)
+        assert closed.IsClosed()
+        # Short-circuit branch: returns the same instance unchanged.
+        assert cadapi._force_close_wire(closed) is closed
+
+    def test_force_close_wire_bridges_open_wire(self):
+        # Open polygon (last point != first) — the bridge edge gets appended.
+        open_wire = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+        assert not open_wire.IsClosed()
+        bridged = cadapi._force_close_wire(open_wire)
+        assert bridged.IsClosed()
+
+    # ---- _collect_subshapes -----------------------------------------------
+
+    def test_collect_subshapes_recurses_into_compound(self):
+        # Build two distinct unit cubes — ``translate_shape`` is in-place
+        # in the cadquery backend, so building from separate faces is the
+        # only way to get two genuinely different Python objects.
+        s1 = cadapi.extrude_shape(
+            cadapi.apiFace(_closed_square(1.0, origin=(0, 0, 0))), (0, 0, 1)
+        )
+        s2 = cadapi.extrude_shape(
+            cadapi.apiFace(_closed_square(1.0, origin=(5, 0, 0))), (0, 0, 1)
+        )
+        compound = cadapi.make_compound([s1, s2])
+        # cq.Solid (not cadapi.apiSolid as that IS cq.Solid via alias) —
+        # _collect_subshapes uses the cq classes directly as dict keys.
+        solids = cadapi._collect_subshapes(compound, cq.Solid)
+        assert len(solids) == 2
+        # Each unit cube has 6 faces, so two cubes → 12 faces via the
+        # recursive explorer.
+        faces = cadapi._collect_subshapes(compound, cq.Face)
+        assert len(faces) == 12

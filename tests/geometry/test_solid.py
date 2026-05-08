@@ -31,7 +31,7 @@ class TestBluemiraSolidCreate:
         monkeypatch.setattr(
             "bluemira.geometry.solid.cadapi.is_valid", lambda _obj: False
         )
-        with pytest.raises(GeometryError, match="not valid"):
+        with pytest.raises(GeometryError, match=r"not\svalid"):
             BluemiraSolid._create(unit_box.shape)
 
     def test_rejects_multi_solid_input(self, unit_box, monkeypatch):
