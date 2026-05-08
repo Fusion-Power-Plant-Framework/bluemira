@@ -169,7 +169,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 class ToroidalHarmonicConstraint(UpdateableConstraint):
     """
     Toroidal harmonic constraints for the desired core plasma
-    of a conventional aspect ratio stokamak equilibria.
+    of a conventional aspect ratio tokamak equilibria.
 
     Parameters
     ----------
@@ -242,7 +242,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         return self.th_params.th_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=True):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
 
@@ -261,10 +261,8 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
-        if not fixed_coils:
-            raise ValueError("ToroidalHarmonicConstraint requires fixed coils")
-
-        if self._args["a_mat"] is None:
+        # Re-build control response matrix
+        if not fixed_coils or self._args["a_mat"] is None:
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
