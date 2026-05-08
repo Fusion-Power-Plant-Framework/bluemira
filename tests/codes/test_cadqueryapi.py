@@ -174,3 +174,44 @@ class TestSaveCadMeshFormats:
         path = tmp_path / "from_path.stl"
         cadapi.save_cad([box], path, cad_format="stl")
         assert Path(path).exists()
+
+
+class TestSerialiseTrimmedEdges:
+    """Trimmed BSpline / Bezier round-trip via ``serialise_shape``.
+
+    FreeCAD's ``make_bezier`` / ``make_bspline`` don't accept a parameter
+    range — only the CadQuery backend can both build a trimmed edge and
+    persist its FirstParameter/LastParameter. This guards that round-trip.
+    """
+
+    def test_trimmed_bezier_roundtrips(self):
+        poles = [(0, 0, 0), (1, 2, 0), (2, -1, 0), (3, 0, 0)]
+        original = cadapi.make_bezier(poles, first_parameter=0.2, last_parameter=0.7)
+        serialised = cadapi.serialise_shape(original)
+        assert "Wire" in serialised
+        assert "BezierCurve" in serialised["Wire"][0]
+        bez = serialised["Wire"][0]["BezierCurve"]
+        assert bez["FirstParameter"] == pytest.approx(0.2)
+        assert bez["LastParameter"] == pytest.approx(0.7)
+
+        restored = cadapi.deserialise_shape(serialised)
+        # Endpoints survive the round-trip — that's what trimmed-edge support
+        # is for. (Length == length is a sanity check; trimmed bezier has
+        # different length than the full curve.)
+        assert restored.Length() == pytest.approx(original.Length(), rel=1e-9)
+
+
+class TestWireFromWiresDisjoint:
+    """``wire_from_wires`` warn-then-longest path on disjoint inputs.
+
+    FreeCAD's ``wire_from_wires`` extends edges into a single ``Part.Wire``
+    unconditionally; only the CadQuery backend has a connectivity check
+    that warns and returns the longest disconnected piece.
+    """
+
+    def test_disjoint_inputs_warn_and_return_longest(self, caplog):
+        short = cadapi.make_polygon([[0, 0, 0], [1, 0, 0]])
+        long = cadapi.make_polygon([[10, 0, 0], [10, 0, 5]])
+        result = cadapi.wire_from_wires([short, long])
+        assert "did not all join" in caplog.text
+        assert result.Length() == pytest.approx(long.Length())
