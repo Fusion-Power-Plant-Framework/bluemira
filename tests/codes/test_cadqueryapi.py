@@ -5,10 +5,12 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
+import math
 import os
 import struct
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 pytestmark = pytest.mark.skipif(
@@ -331,3 +333,148 @@ class TestInternalHelpers:
         # recursive explorer.
         faces = cadapi._collect_subshapes(compound, cq.Face)
         assert len(faces) == 12
+
+
+class TestCurves:
+    """Direct unit tests for ``_cadquery/curves.py`` constructors.
+
+    Targets the largest coverage gap on the cadquery backend (curves.py
+    14 % per Codecov): branches that the high-level API doesn't reach
+    on its happy paths — full circle / full ellipse, ``make_circle_arc_3P``
+    with ``axis``, the ``weights=None`` arms of ``make_bspline`` /
+    ``make_bsplinesurface``, and the coincident-endpoint guard in
+    ``make_bspline_g1_blend``.
+    """
+
+    # ---- make_circle / _freecad_ax2 ---------------------------------------
+
+    def test_make_circle_full_circle_branch(self):
+        # start_angle == end_angle short-circuits to a closed-circle edge
+        # via BRepBuilderAPI_MakeEdge(circ), bypassing GC_MakeArcOfCircle.
+        wire = cadapi.make_circle(radius=1.0, start_angle=0.0, end_angle=0.0)
+        assert wire.IsClosed()
+        assert wire.Length() == pytest.approx(2 * math.pi, rel=1e-6)
+
+    def test_make_circle_with_x_direction(self):
+        # x_direction kwarg pins the local X-axis (used by serialisation
+        # round-trip); exercises the non-default branch in _freecad_ax2.
+        wire = cadapi.make_circle(
+            radius=1.0,
+            start_angle=0.0,
+            end_angle=180.0,
+            axis=(0, 0, 1),
+            x_direction=(0, 1, 0),
+        )
+        # Half-circumference still equals π regardless of the X-axis pick.
+        assert wire.Length() == pytest.approx(math.pi, rel=1e-6)
+
+    def test_make_circle_axis_parallel_to_x_falls_back(self):
+        # _freecad_ax2 picks (0,1,0) as the reference when axis ∥ (1,0,0)
+        # to avoid a degenerate cross-product.
+        wire = cadapi.make_circle(
+            radius=1.0, start_angle=0.0, end_angle=180.0, axis=(1, 0, 0)
+        )
+        assert wire.Length() == pytest.approx(math.pi, rel=1e-6)
+
+    # ---- make_circle_arc_3P -----------------------------------------------
+
+    def test_make_circle_arc_3P_with_axis(self):
+        # Three points on the unit circle in z=0; axis=(0,0,1) takes the
+        # axis-override path (lines 334-343) instead of the natural path.
+        wire = cadapi.make_circle_arc_3P(
+            [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [-1.0, 0.0, 0.0], axis=(0, 0, 1)
+        )
+        # Half-circle on the unit circle — length should be π.
+        assert wire.Length() == pytest.approx(math.pi, rel=1e-4)
+
+    # ---- make_ellipse -----------------------------------------------------
+
+    def test_make_ellipse_full_branch(self):
+        # start_angle == end_angle (after %= 360) → full closed ellipse,
+        # exercises the ``cq.Edge.makeEllipse(..., 5 args)`` short form.
+        wire = cadapi.make_ellipse(
+            major_radius=2.0, minor_radius=1.0, start_angle=0.0, end_angle=360.0
+        )
+        assert wire.IsClosed()
+
+    # ---- make_bspline (direct, no/with weights) ---------------------------
+
+    def test_make_bspline_no_weights(self):
+        # Linear B-spline through 2 poles — degree 1, knots [0, 1] with
+        # multiplicities [2, 2] (sum mults = npoles + degree + 1).
+        poles = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        wire = cadapi.make_bspline(
+            poles,
+            mults=[2, 2],
+            knots=[0.0, 1.0],
+            periodic=False,
+            degree=1,
+            weights=None,
+            check_rational=False,
+        )
+        assert wire.Length() == pytest.approx(1.0, rel=1e-6)
+
+    def test_make_bspline_with_weights(self):
+        poles = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        wire = cadapi.make_bspline(
+            poles,
+            mults=[2, 2],
+            knots=[0.0, 1.0],
+            periodic=False,
+            degree=1,
+            weights=[1.0, 1.0],
+            check_rational=False,
+        )
+        assert wire.Length() == pytest.approx(1.0, rel=1e-6)
+
+    # ---- make_bsplinesurface ----------------------------------------------
+
+    def test_make_bsplinesurface_no_weights(self):
+        # Bilinear patch over a 2x2 grid; degree 1 in both directions.
+        poles = np.array([
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            [[0.0, 1.0, 0.0], [1.0, 1.0, 1.0]],
+        ])
+        face = cadapi.make_bsplinesurface(
+            poles,
+            mults_u=[2, 2],
+            mults_v=[2, 2],
+            knot_vector_u=[0.0, 1.0],
+            knot_vector_v=[0.0, 1.0],
+            degree_u=1,
+            degree_v=1,
+            weights=None,
+        )
+        assert isinstance(face, cq.Face)
+        # Surface area > 0 — a real face was built, not a null one.
+        assert cadapi.area(face) > 0.0
+
+    def test_make_bsplinesurface_with_weights(self):
+        poles = np.array([
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
+            [[0.0, 1.0, 0.0], [1.0, 1.0, 0.0]],
+        ])
+        face = cadapi.make_bsplinesurface(
+            poles,
+            mults_u=[2, 2],
+            mults_v=[2, 2],
+            knot_vector_u=[0.0, 1.0],
+            knot_vector_v=[0.0, 1.0],
+            degree_u=1,
+            degree_v=1,
+            weights=np.ones((2, 2)),
+        )
+        assert isinstance(face, cq.Face)
+        # Unit-square patch, all weights = 1 → area should be 1.
+        assert cadapi.area(face) == pytest.approx(1.0, rel=1e-6)
+
+    # ---- make_bspline_g1_blend --------------------------------------------
+
+    def test_make_bspline_g1_blend_coincident_endpoints_raise(self):
+        # Both edges meet at (1, 0, 0) — chord length is zero, the blend
+        # has no direction, so the helper raises FreeCADError.
+        edge1 = cq.Edge.makeLine(cq.Vector(0, 0, 0), cq.Vector(1, 0, 0))
+        edge2 = cq.Edge.makeLine(cq.Vector(1, 0, 0), cq.Vector(0, 1, 0))
+        # edge1's last point and edge2's first point are both (1, 0, 0).
+        with pytest.raises(FreeCADError, match="identical endpoints"):
+            cadapi.make_bspline_g1_blend(edge1, edge2)
