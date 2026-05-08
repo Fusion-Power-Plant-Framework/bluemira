@@ -1236,6 +1236,11 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     :
         Wire point value at distance
     """
+    # Coerce numpy 0-d / single-element arrays to a Python scalar — callers
+    # like scipy.optimize.OptimizeResult.x produce shape-(1,) arrays, and
+    # NumPy 1.25 deprecates implicit scalar conversion of ndim>0 inputs to
+    # math.isclose (DeprecationWarning).
+    distance = float(np.asarray(distance).item())
     if math.isclose(distance, 0.0):
         return start_point(wire)
     if distance == wire.Length:
