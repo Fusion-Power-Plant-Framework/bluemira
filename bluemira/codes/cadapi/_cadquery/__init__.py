@@ -86,7 +86,10 @@ def __getattr__(name: str):
     for _mod in (core, placement, curves, display, io):
         if hasattr(_mod, name):
             return getattr(_mod, name)
-    raise NotImplementedError(
+    # Must be AttributeError, not NotImplementedError: ``hasattr()`` and
+    # ``getattr(obj, name, default)`` only catch AttributeError, so any other
+    # exception type leaks through and breaks defensive callers.
+    raise AttributeError(
         f"cadapi._cadquery: '{name}' is not yet implemented in the CadQuery "
         f"backend. Add it to the appropriate submodule under "
         f"bluemira/codes/cadapi/_cadquery/."
