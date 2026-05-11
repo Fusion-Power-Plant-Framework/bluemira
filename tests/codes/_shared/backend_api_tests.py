@@ -28,10 +28,16 @@ from scipy.special import ellipe
 from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonDDiscrete
-from bluemira.geometry.tools import boolean_cut, extrude_shape, make_polygon, sweep_shape, offset_wire
+from bluemira.geometry.tools import (
+    boolean_cut,
+    extrude_shape,
+    make_polygon,
+    offset_wire,
+    sweep_shape,
+)
+from bluemira.geometry.wire import BluemiraWire  # noqa: TC001
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -66,13 +72,13 @@ class BackendApiTestsBase:
         return self.cadapi.offset_wire(wire, 0.05, join="intersect", open_wire=False)
 
     def _chain_cad_operations(
-            self,
-            x1: float,
-            x2: float,
-            n_TF: int,
-            tf_wp_depth: float,
-            tf_wp_width: float,
-            d_offset: float,
+        self,
+        x1: float,
+        x2: float,
+        n_TF: int,
+        tf_wp_depth: float,
+        tf_wp_width: float,
+        d_offset: float,
     ) -> tuple[BluemiraWire, BluemiraWire, BluemiraWire, BluemiraWire]:
         """
         Generates a Princeton D coil path, an offset path, and their corresponding
@@ -109,15 +115,37 @@ class BackendApiTestsBase:
         x_min = wire_offset.discretise(10, byedges=True).x.min()
         xs = make_polygon(
             {
-                "x": [-0.5*tf_wp_width, 0.5*tf_wp_width, 0.5*tf_wp_width, -0.5*tf_wp_width],
-                "y": [-0.5*tf_wp_depth, -0.5*tf_wp_depth, 0.5*tf_wp_depth, 0.5*tf_wp_depth],
-            }, closed=True,
+                "x": [
+                    -0.5 * tf_wp_width,
+                    0.5 * tf_wp_width,
+                    0.5 * tf_wp_width,
+                    -0.5 * tf_wp_width,
+                ],
+                "y": [
+                    -0.5 * tf_wp_depth,
+                    -0.5 * tf_wp_depth,
+                    0.5 * tf_wp_depth,
+                    0.5 * tf_wp_depth,
+                ],
+            },
+            closed=True,
         )
         xs2 = make_polygon(
             {
-                "x": [-0.48*tf_wp_width, 0.48*tf_wp_width, 0.48*tf_wp_width, -0.48*tf_wp_width],
-                "y": [-0.48*tf_wp_depth, -0.48*tf_wp_depth, 0.48*tf_wp_depth, 0.48*tf_wp_depth],
-            }, closed=True,
+                "x": [
+                    -0.48 * tf_wp_width,
+                    0.48 * tf_wp_width,
+                    0.48 * tf_wp_width,
+                    -0.48 * tf_wp_width,
+                ],
+                "y": [
+                    -0.48 * tf_wp_depth,
+                    -0.48 * tf_wp_depth,
+                    0.48 * tf_wp_depth,
+                    0.48 * tf_wp_depth,
+                ],
+            },
+            closed=True,
         )
         xs.translate((wire.discretise(10, byedges=True).x.min(), 0, 0))
         xs2.translate((x_min, 0, 0))
@@ -461,14 +489,14 @@ class BackendApiTestsBase:
         sweep = sweep_shape(xs2, wire_offset, frenet=frenet)
         assert sweep.is_valid()
         if frenet:
-            assert ("Attempting Planar Binormal fallback." in caplog.messages[0])
+            assert "Attempting Planar Binormal fallback." in caplog.messages[0]
 
     def test_invalid_offset(self):
         """Inward offset too great - causing self-intersecting wires."""
+        _, wire_offset, _, xs2 = self._chain_cad_operations(
+            x1=3, x2=10, n_TF=10, tf_wp_depth=0.5, tf_wp_width=0.5, d_offset=1.0
+        )
         with pytest.raises(FreeCADError):
-            _, wire_offset, _, xs2 = self._chain_cad_operations(
-                x1=3, x2=10, n_TF=10, tf_wp_depth=0.5, tf_wp_width=0.5, d_offset=1.0
-            )
             _ = sweep_shape(xs2, wire_offset, frenet=False)
 
     @pytest.mark.parametrize("frenet", [True, False])
@@ -492,8 +520,7 @@ class BackendApiTestsBase:
         xs2.scale(0.95)
         sweep_inner = sweep_shape(xs2, wire, frenet=False)
 
-        result_hollow = boolean_cut(sweep_outer, sweep_inner)[0]
-        return result_hollow
+        return boolean_cut(sweep_outer, sweep_inner)[0]
 
     def test_boolean_cut_hollow_coil(self, boolean_cut_princeton):
         assert boolean_cut_princeton.is_valid()
@@ -503,7 +530,8 @@ class BackendApiTestsBase:
         cut_tool = extrude_shape(
             BluemiraFace(
                 make_polygon({"x": [0, 20, 20, 0], "z": [-20, -20, 20, 20]}, closed=True)
-            ), (0, -10, 0)
+            ),
+            (0, -10, 0),
         )
         sliced_coil = boolean_cut(boolean_cut_princeton, cut_tool)[0]
         assert sliced_coil.is_valid()

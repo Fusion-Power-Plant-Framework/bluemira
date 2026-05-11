@@ -409,6 +409,23 @@ def _edge_junction_pairs(wire: apiWire) -> list[tuple[apiEdge, apiEdge]]:
     return pairs
 
 
+def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
+    """True if all consecutive edges in the wire are tangent at their joins.
+
+    For closed wires also checks the seam (last edge → first edge), matching
+    ``_freecadapi._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
+    via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
+    edge boundaries and would silently miss hard kinks (90° polygon corners).
+    """
+    for e_prev, e_next in _edge_junction_pairs(wire):
+        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
+        if cos_angle is None:
+            continue
+        if cos_angle < 1.0 - atol:
+            return False
+    return True
+
+
 def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     """Raise ``FreeCADError`` if the path has a non-tangent-continuous join.
 
@@ -420,15 +437,10 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     producing a self-intersecting / kinked solid. FreeCAD raises on this
     case, so we do too.
     """
-    for e_prev, e_next in _edge_junction_pairs(path):
-        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
-        if cos_angle is None:
-            continue
-        if cos_angle < 1.0 - tol:
-            raise FreeCADError(
-                "sweep_shape: path is not tangent-continuous at an interior "
-                f"vertex (cos(angle)={cos_angle:.6f})."
-            )
+    if not _wire_edges_tangent(path, atol=tol):
+        raise FreeCADError(
+            "sweep_shape: path is not tangent-continuous at an interior vertex."
+        )
 
 
 def _get_planar_normal(wire: apiWire) -> tuple[float, float, float] | None:
@@ -436,12 +448,13 @@ def _get_planar_normal(wire: apiWire) -> tuple[float, float, float] | None:
     try:
         face = cq.Face.makeFromWires(wire)  # this succeeds if planar
         normal = face.normalAt(None)
-        return (normal.x, normal.y, normal.z)
-    except Exception:
+    except ValueError:
         return None  # wire is non-planar
+    else:
+        return (normal.x, normal.y, normal.z)
 
 
-def sweep_shape(
+def sweep_shape(  # noqa: C901
     profiles: Iterable[apiWire],
     path: apiWire,
     *,
@@ -488,11 +501,10 @@ def sweep_shape(
         attempts.append(("Frenet", True, None))
         if planar_normal:
             attempts.append(("Planar Binormal Fallback", False, planar_normal))
+    elif planar_normal:
+        attempts.append(("Planar Binormal", False, planar_normal))
     else:
-        if planar_normal:
-            attempts.append(("Planar Binormal", False, planar_normal))
-        else:
-            attempts.append(("Standard Fixed", False, None))
+        attempts.append(("Standard Fixed", False, None))
 
     result = None
     last_exc = None
@@ -521,9 +533,9 @@ def sweep_shape(
 
             if not builder.IsDone():
                 raise FreeCADError(  # noqa: TRY301
-                        "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
-                    )
-            
+                    "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
+                )
+
             if solid:
                 builder.MakeSolid()
 
@@ -542,17 +554,20 @@ def sweep_shape(
                     fix_shape(temp_result)
                 except Exception as fix_exc:
                     raise FreeCADError(
-                        f"{attempt_name} sweep generated an invalid solid that could not be healed."
+                        f"{attempt_name} sweep generated an invalid solid "
+                        "that could not be healed."
                     ) from fix_exc
-                
+
             result = temp_result
             break
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             last_exc = exc
             if attempt_name == "Frenet" and len(attempts) > 1:
-                bluemira_warn(f"Frenet sweep failed. Attempting Planar Binormal fallback...")
-                continue # try the next strategy
-            # If it's the last attempt in the list, we let the loop finish and raise below
+                bluemira_warn(
+                    "Frenet sweep failed. Attempting Planar Binormal fallback..."
+                )
+                continue  # try the next strategy
+            # If it's the last attempt in the list, let the loop finish and raise below
 
     if result is None:
         raise FreeCADError(
@@ -587,7 +602,10 @@ def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
     maker = BRepBuilderAPI_MakeSolid(shells[0].wrapped)
     if not maker.IsDone():
         return solid
-    return cq.Solid(maker.Solid())
+    new_solid = cq.Solid(maker.Solid())
+    if not new_solid.isValid():
+        return solid
+    return new_solid
 
 
 def offset_wire(
@@ -692,23 +710,6 @@ def _wire_is_planar(wire: apiWire) -> bool:
         return face.geomType() == "PLANE"
     except Exception:  # noqa: BLE001
         return False
-
-
-def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
-    """True if all consecutive edges in the wire are tangent at their joins.
-
-    For closed wires also checks the seam (last edge → first edge), matching
-    ``_freecadapi._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
-    via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
-    edge boundaries and would silently miss hard kinks (90° polygon corners).
-    """
-    for e_prev, e_next in _edge_junction_pairs(wire):
-        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
-        if cos_angle is None:
-            continue
-        if cos_angle < 1.0 - atol:
-            return False
-    return True
 
 
 # ---------------------------------------------------------------------------
