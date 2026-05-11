@@ -310,9 +310,12 @@ class TestFreecadapi(BackendApiTestsBase):
     def test_invalid_offset(self):
         super().test_invalid_offset()
 
-    @pytest.mark.xfail(reason="FreeCAD will \"pass\" this test but it produces garbage geometry.")
+    @pytest.mark.xfail(
+        reason='FreeCAD will "pass" this test but it produces garbage geometry.'
+    )
     def test_boolean_cut_hollow_coil(self, boolean_cut_princeton):
         super().test_boolean_cut_hollow_coil(boolean_cut_princeton)
+
 
 # Commented out CADFileTypes dont work with basic shapes tested or needed more
 # FreeCAD imported, should be reviewed in future
