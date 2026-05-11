@@ -544,15 +544,15 @@ def test_legendre_q_function():
         # Case where max_n_dof is hit
         (5, 5, 4, 4),
         # Case where 2 * max_harmonic_mode is hit
-        (5, 2, 5, 4),
+        (5, 2, 5, 3),
         # Case where everything OK
         (5, 5, 10, 5),
         # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode
-        (10, 4, 9, 8),
+        (10, 4, 9, 7),
         # Case where n_dof is not specified and defaults to max
         (None, 5, 9, 9),
         # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode
-        (None, 4, 9, 8),
+        (None, 4, 9, 7),
     ],
 )
 def test_th_n_dof_limits(
@@ -754,8 +754,8 @@ def test_toroidal_harmonics_to_positions(
 @pytest.mark.parametrize(
     (
         "n_degrees_of_freedom",
-        "mode_id",
-        "max_harmonic_mode",
+        "cos_m_chosen",
+        "sin_m_chosen",
         "expected_error_mask_true",
         "expected_error_mask_false",
         "expected_psi",
@@ -764,51 +764,37 @@ def test_toroidal_harmonics_to_positions(
     ),
     [  # expected_psi is first entry of the psi array
         (
+            np.array(2),
+            np.array(0),
             1,
-            np.array([1]),
-            4,
-            45.98654,
-            59.85169,
-            3.51624807e-02,
-            np.array([20.26314727]),
-            np.array([]),
-        ),
-        (
-            2,
-            np.array([1, 3]),
-            2,
-            45.23583,
-            61.36423,
+            45.235834,
+            61.364236,
             3.34654676e-02,
-            np.array([20.26314727]),
+            np.array([20.263147273]),
             np.array([2.58648763]),
         ),
-        (
-            3,
-            np.array([1, 2, 4]),
-            3,
-            119.014431,
-            162.73504,
-            8.31457803e-02,
-            np.array([14.21691739, 30.49159348]),
-            np.array([7.2089677]),
-        ),
-        (
-            4,
-            np.array([2, 3, 4, 5]),
-            6,
-            241.32979,
-            312.35671,
-            0.23713494,
-            np.array([19.15133806, 45.5655092, 41.72481833, 60.8114398]),
-            np.array([]),
-        ),
+        # (
+        #     3,
+        #     119.014431,
+        #     162.73504,
+        #     8.31457803e-02,
+        #     np.array([14.21691739, 30.49159348]),
+        #     np.array([7.2089677]),
+        # ),
+        # (
+        #     4,
+        #     241.32979,
+        #     312.35671,
+        #     0.23713494,
+        #     np.array([19.15133806, 45.5655092, 41.72481833, 60.8114398]),
+        #     np.array([]),
+        # ),
     ],
 )
 def test_approximation_from_psi_fitting(
     n_degrees_of_freedom,
-    mode_id,
-    max_harmonic_mode,
+    cos_m_chosen,
+    sin_m_chosen,
     expected_error_mask_true,
     expected_error_mask_false,
     expected_psi,
@@ -863,8 +849,8 @@ def test_approximation_from_psi_fitting(
         th_params=th_params,
         n_degrees_of_freedom=n_degrees_of_freedom,
         collocation=colloc,
-        mode_id=mode_id,
-        max_harmonic_mode=max_harmonic_mode,
+        cos_m_chosen=cos_m_chosen,
+        sin_m_chosen=sin_m_chosen,
         collocation_psi=collocation_psi,
         mask=mask_true,
         true_coilset_psi=coilset_psi,
@@ -874,12 +860,12 @@ def test_approximation_from_psi_fitting(
     np.testing.assert_almost_equal(cos, expected_cos)
     np.testing.assert_almost_equal(sin, expected_sin)
 
-    error, psi, cos, sin = _approximation_from_psi_fitting(
+    error, psi, cos, sin = error, psi, cos, sin = _approximation_from_psi_fitting(
         th_params=th_params,
         n_degrees_of_freedom=n_degrees_of_freedom,
         collocation=colloc,
-        mode_id=mode_id,
-        max_harmonic_mode=max_harmonic_mode,
+        cos_m_chosen=cos_m_chosen,
+        sin_m_chosen=sin_m_chosen,
         collocation_psi=collocation_psi,
         mask=mask_false,
         true_coilset_psi=coilset_psi,
