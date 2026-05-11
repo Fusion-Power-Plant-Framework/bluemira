@@ -14,7 +14,7 @@ babel==2.18.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-blosc2==4.1.2
+blosc2==4.2.0
     # via tables
 certifi==2026.4.22
     # via requests
@@ -58,7 +58,7 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.2
     # via bluemira (pyproject.toml)
-idna==3.13
+idna==3.14
     # via requests
 imageio==2.37.3
     # via bluemira (pyproject.toml)
@@ -70,7 +70,7 @@ llvmlite==0.47.0
     # via numba
 lxml==6.1.0
     # via citeproc-py
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
     # via rich
 matplotlib==3.10.9
     # via
@@ -155,13 +155,14 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.13.3
+pydantic==2.13.4
     # via
     #   bluemira (pyproject.toml)
+    #   blosc2
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.3
+pydantic-core==2.46.4
     # via pydantic
 pygments==2.20.0
     # via rich
@@ -173,7 +174,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.48.0
+pyvista==0.48.2
     # via bluemira (pyproject.toml)
 requests==2.33.1
     # via
@@ -205,7 +206,9 @@ tables==3.11.1
 tabulate==0.10.0
     # via bluemira (pyproject.toml)
 threadpoolctl==3.6.0
-    # via scikit-learn
+    # via
+    #   blosc2
+    #   scikit-learn
 typeguard==4.5.1
     # via bluemira (pyproject.toml)
 typing-extensions==4.15.0
@@ -220,7 +223,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 vtk==9.3.1
     # via
