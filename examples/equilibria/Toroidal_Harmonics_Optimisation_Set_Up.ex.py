@@ -37,31 +37,17 @@ Usage of the 'brute_force_toroidal_harmonic_approximation' function.
 # ## Imports
 
 # %%
-from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import MagneticConstraintSet
-from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
-    fs_fit_metric,
-)
-from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
-    ToroidalHarmonicConstraint,
-)
 from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functions import (  # noqa: E501
     plot_toroidal_harmonic_approximation,
     toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
-from bluemira.equilibria.optimisation.problem._tikhonov import (  # noqa: PLC2701
-    TikhonovCurrentCOP,
-)
-from bluemira.equilibria.plotting import PLOT_DEFAULTS
-from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Data from EQDSK file
@@ -93,7 +79,7 @@ psi_norm = 0.95
 R_0, Z_0 = eq.effective_centre()
 th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
-# use toroidal harmonic approximation
+# toroidal harmonic approximation
 result = toroidal_harmonic_approximation(
     eq=eq,
     th_params=th_params,
@@ -117,109 +103,3 @@ f, ax = plot_toroidal_harmonic_approximation(
 )
 ax.set_title("Comparison of bluemira coilset psi to TH approx.")
 plt.show()
-# %% [markdown]
-# ## Use in Optimisation Problem
-# We can use the amplitudes for each of our approximation poloidal modes
-# as targets in an optimisation.
-# In this example, we are merely attempting to preserve an equilibrium
-# solution using only TH. Other constraints and/or targets could be
-# used in conjunction with the TH.
-# %%
-# Create a constraint
-th_constraint = ToroidalHarmonicConstraint(
-    th_result=result, constraint_type="inequality"
-)
-# Ensure control coils are set to those that can be used in the toroidal
-# harmonic approximation
-eq.coilset.control = list(th_params.th_coil_names)
-
-# Show the constraint region
-f, ax = plt.subplots()
-th_constraint.plot(ax=ax)
-eq.coilset.plot(ax=ax)
-eq.plot(ax=ax)
-
-# %%
-# Run the optimisation
-th_current_opt_eq = deepcopy(eq)
-
-current_opt_problem = TikhonovCurrentCOP(
-    th_current_opt_eq,
-    targets=MagneticConstraintSet([th_constraint]),
-    gamma=1e-12,
-    opt_algorithm="SLSQP",
-    opt_conditions={"max_eval": 1000, "ftol_rel": 1e-4},
-    opt_parameters={"initial_step": 0.1},
-    max_currents=3e10,
-)
-
-program = PicardIterator(
-    th_current_opt_eq,
-    current_opt_problem,
-    fixed_coils=True,
-    convergence=DudsonConvergence(1e-3),
-    relaxation=0.0,
-    maxiter=50,
-)
-program()
-
-
-# %%
-# Plot
-f, (ax_1, ax_2) = plt.subplots(1, 2)
-
-eq.plot(ax=ax_1)
-ax_1.set_title("Starting Equilibrium")
-
-th_current_opt_eq.plot(ax=ax_2)
-ax_2.set_title("Optimised Equilibrium")
-plt.show()
-
-# %%
-# Print coilset currents
-print(f"Original currents = {eq.coilset.current}")
-print(f"Optimised currents = {th_current_opt_eq.coilset.current}")
-
-# %% [markdown]
-# Plot comparison to see how much the psi has changed.
-# %%
-original_FS = (  # noqa: N816
-    eq.get_LCFS() if np.isclose(psi_norm, 1.0) else eq.get_flux_surface(psi_norm)
-)
-approx_FS = th_current_opt_eq.get_flux_surface(psi_norm)  # noqa: N816
-
-total_psi_diff = np.abs(eq.psi() - th_current_opt_eq.psi()) / np.max(
-    np.abs(th_current_opt_eq.psi())
-)
-
-f, ax = plt.subplots()
-nlevels = PLOT_DEFAULTS["psi"]["nlevels"]
-cmap = PLOT_DEFAULTS["psi"]["cmap"]
-ax.plot(
-    approx_FS.x,
-    approx_FS.z,
-    color="red",
-    label="Approximate FS after \noptimising using TH",
-)
-ax.plot(
-    original_FS.x,
-    original_FS.z,
-    color="blue",
-    label="Original equilibrium FS \nfrom Bluemira",
-)
-im = ax.contourf(eq.grid.x, eq.grid.z, total_psi_diff, levels=nlevels, cmap=cmap)
-f.colorbar(mappable=im)
-ax.set_title(
-    "Absolute relative difference between total psi and TH approximation psi", y=1.05
-)
-ax.legend(bbox_to_anchor=(1.1, 1.05))
-eq.coilset.plot(ax=ax)
-plt.show()
-# %% [markdown]
-# Fit metric
-#      The fit metric we use for the LCFS comparison is as follows:
-#         fit metric value = total area within one but not both LCFSs /
-#                                      (input LCFS area + approximation LCFS area)
-# %%
-fit_metric = fs_fit_metric(original_FS, approx_FS)
-print(f"fit metric = {fit_metric}")
