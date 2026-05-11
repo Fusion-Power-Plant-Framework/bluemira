@@ -517,9 +517,9 @@ class CoilSetMHDState(MHDState):
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ):
         super().__init__(grid, o_point_fallback=o_point_fallback)
-        self._psi_green = None
-        self._bx_green = None
-        self._bz_green = None
+        self._psi_cache_valid = False
+        self._bx_cache_valid = False
+        self._bz_cache_valid = False
         self._coilset = coilset
 
     @property
@@ -610,24 +610,32 @@ class CoilSetMHDState(MHDState):
 
     def _remap_greens(self):
         """
-        Stores Green's functions arrays in a dictionary of coils. Used upon
-        initialisation and must be called after meshing of coils.
-
-        Notes
-        -----
-        Modifies:
-
-            ._pgreen:
-                Greens function coil mapping for psi
-            ._bxgreen:
-                Greens function coil mapping for Bx
-            .bzgreen:
-                Greens function coil mapping for Bz
+        Invalidates Green's function caches. These are subsequently computed upon demand.
         """
-        self._psi_green = self.coilset.psi_response(self.x, self.z)
-        self._bx_green = self.coilset.Bx_response(self.x, self.z)
-        self._bz_green = self.coilset.Bz_response(self.x, self.z)
-        self._db_green = self.coilset.dB_d_response(self.x, self.z)
+        self._psi_cache_valid = False
+        self._bx_cache_valid = False
+        self._bz_cache_valid = False
+
+    @property
+    def _psi_green(self):
+        if not self._psi_cache_valid:
+            self._psi_green_cache = self.coilset.psi_response(self.x, self.z)
+            self._psi_cache_valid = True
+        return self._psi_green_cache
+
+    @property
+    def _bx_green(self):
+        if not self._bx_cache_valid:
+            self._bx_green_cache = self.coilset.Bx_response(self.x, self.z)
+            self._bx_cache_valid = True
+        return self._bx_green_cache
+
+    @property
+    def _bz_green(self):
+        if not self._bz_cache_valid:
+            self._bz_green_cache = self.coilset.Bz_response(self.x, self.z)
+            self._bz_cache_valid = True
+        return self._bz_green_cache
 
     def get_coil_forces(self) -> npt.NDArray[np.float64]:
         """
