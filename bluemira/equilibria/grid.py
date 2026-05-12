@@ -95,6 +95,10 @@ class Grid:
             z_min, z_max = z_max, z_min
 
         if x_min <= 0:  # Cannot calculate flux on machine axis - (divide by 0)
+            bluemira_warn(
+                f"Cannot instantiate a grid with x_min={x_min:.2e} <= 0, "
+                f"setting x_min to {X_AXIS_MIN:.2e}."
+            )
             x_min = X_AXIS_MIN
 
         if nx < MIN_N_DISCR:
