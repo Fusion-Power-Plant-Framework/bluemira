@@ -327,7 +327,8 @@ def greens_psi(
     \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
     """
     _, k2 = calc_a_k2(xc, zc, x, z)
-    e, k = calc_e_k(k2)
+    e = ellipe_nb(k2)
+    k = ellipk_nb(k2)
     return MU_0_2PI * np.sqrt(x * xc) * ((2 - k2) * k - 2 * e) / np.sqrt(k2)
 
 
@@ -418,7 +419,8 @@ def greens_dbz_dx(
         the gradient to the magnetic field
     """
     _, k2 = calc_a_k2(xc, zc, x, z)
-    e, k = calc_e_k(k2)
+    e = ellipe_nb(k2)
+    k = ellipk_nb(k2)
     kdk, edk = _elliptic_derivatives(e, k, k2)
     g1, g2, g3, _ = _g(xc, zc, x, z)
     g1r, g2r, g3r = _g_r(x, xc)
@@ -542,25 +544,6 @@ def calc_a_k2(
 
 
 @nb.njit(cache=True)
-def calc_e_k(k2: float | np.ndarray):
-    """
-    Calculate the elliptic integral of both the first and second kind.
-
-    Parameters
-    ----------
-    k2:
-        parameter of the elliptic integral
-
-    Returns
-    -------
-    :
-        elliptic integral of the second kind, elliptic integral of the first kind
-
-    """
-    return ellipe_nb(k2), ellipk_nb(k2)
-
-
-@nb.njit(cache=True)
 def calc_i1_i2(
     a: float | np.ndarray,
     k2: float | np.ndarray,
@@ -590,7 +573,8 @@ def calc_i1_i2(
 
     """
     if (e is None) or (k is None):
-        e, k = calc_e_k(k2)
+        e = ellipe_nb(k2)
+        k = ellipk_nb(k2)
     i1 = k / a
     i2 = e / (a**3 * (1 - k2))
     return i1, i2
@@ -727,7 +711,8 @@ def greens_all(
         if x <= 0
     """
     a, k2 = calc_a_k2(xc, zc, x, z)
-    e, k = calc_e_k(k2)
+    e = ellipe_nb(k2)
+    k = ellipk_nb(k2)
     i1, i2 = calc_i1_i2(a, k2, e, k)
     i1 *= 4
     i2 *= 4
