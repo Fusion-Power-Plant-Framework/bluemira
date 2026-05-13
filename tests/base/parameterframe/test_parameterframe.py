@@ -404,7 +404,7 @@ class TestParameterFrame:
             for ind in data_values[dvi]:
                 try:
                     assert tr[headers.index(ind)] == frame_data[data_keys[no]][ind]
-                except ValueError as ve:  # noqa: PERF203
+                except ValueError as ve:
                     if ind in head_keys:
                         raise
                 except AssertionError as ae:
@@ -524,6 +524,15 @@ class UnitFrame5(ParameterFrame):
     wtf1: Parameter[float]
     wtf2: Parameter[float]
     wtf3: Parameter[float]
+    wtf4: Parameter[float]
+
+
+@dataclass
+class CombinedFrame(ParameterFrame):
+    test1: Parameter[float]
+    test2: Parameter[float]
+    test3: Parameter[float]
+    test4: Parameter[float]
 
 
 class TestParameterFrameUnits:
@@ -561,6 +570,14 @@ class TestParameterFrameUnits:
         "wtf1": {"value": 5, "unit": "m^2/grade.W/(Pa.fpy)"},
         "wtf2": {"value": 5, "unit": "dpa.m^2/rad.W/(Pa.fpy)"},
         "wtf3": {"value": 5, "unit": "dpa^-1.m^2/turn.W/(Pa.fpy)"},
+        "wtf4": {"value": 1, "unit": "mW/MW"},
+    }
+
+    COMBINED_FRAME_DATA: ClassVar = {
+        "test1": {"value": 5, "unit": "W/m^2"},
+        "test2": {"value": 5, "unit": "W/in^2"},
+        "test3": {"value": 5, "unit": "degree/radian"},
+        "test4": {"value": 5, "unit": "A/W/m^2"},
     }
 
     def test_simple_units_to_defaults(self):
@@ -620,6 +637,23 @@ class TestParameterFrameUnits:
         assert frame.wtf2.unit == "dpa·m⁵/deg/fpy/s"
         assert frame.wtf3.value == pytest.approx(0.01388888)
         assert frame.wtf3.unit == "m⁵/deg/dpa/fpy/s"
+        assert frame.wtf4.value == pytest.approx(1e-9)
+        assert frame.wtf4.unit == ""
+
+    def test_combined_units(self):
+        """Tests that the reconstruction of the units combines to sane values
+
+        For example W/m² can resolve to kg/s3 which is much less commonly used
+        """
+        frame = CombinedFrame.from_dict(self.COMBINED_FRAME_DATA)
+        assert frame.test1.value == 5
+        assert frame.test1.unit == "W/m²"
+        assert frame.test2.value == pytest.approx(7750.0155)
+        assert frame.test2.unit == "W/m²"
+        assert frame.test3.value == pytest.approx(0.0872665)
+        assert frame.test3.unit == ""
+        assert frame.test4.value == 5
+        assert frame.test4.unit == "1/m²/V"  # is this a conversion we want?
 
     def test_bad_unit(self):
         frame_data = deepcopy(self.SIMPLE_FRAME_DATA)

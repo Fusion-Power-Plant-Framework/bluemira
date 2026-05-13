@@ -14,10 +14,9 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, Any, TypeVar, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict
 
 from matproplib.library.fluids import Void
-from typing_extensions import NotRequired
 
 from bluemira.base.components import (
     Component,

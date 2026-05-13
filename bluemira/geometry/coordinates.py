@@ -2028,7 +2028,7 @@ def get_intersect(
     for i in range(n):
         try:
             xz[:, i] = np.linalg.solve(a_m[:, :, i], b_m[:, i])
-        except np.linalg.LinAlgError:  # noqa: PERF203
+        except np.linalg.LinAlgError:
             # Parallel segments. Will raise numpy RuntimeWarnings
             xz[0, i] = np.nan
     in_range = (xz[0, :] >= 0) & (xz[1, :] >= 0) & (xz[0, :] <= 1) & (xz[1, :] <= 1)

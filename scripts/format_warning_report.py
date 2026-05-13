@@ -90,7 +90,7 @@ def format_warnings_list(warnings: Iterable[Warning]) -> list[str]:
     for warning in warnings:
         try:
             whens[warning.when].append(warning)
-        except KeyError:  # noqa: PERF203
+        except KeyError:
             whens[warning.when] = [warning]
     lines = []
     for when, warns in whens.items():
