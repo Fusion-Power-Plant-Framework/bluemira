@@ -4,9 +4,12 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+
 import numba as nb
 import numpy as np
 import pytest
+from scipy.special import ellipe as scipy_ellipe
+from scipy.special import ellipk as scipy_ellipk
 
 from bluemira.base.constants import EPS, MU_0_2PI, MU_0_4PI
 from bluemira.magnetostatics.greens import (
@@ -127,6 +130,52 @@ def test_greens_vs_greens_all():
     np.testing.assert_allclose(Bx, Bx2)
     np.testing.assert_allclose(Bz, Bz2)
     np.testing.assert_allclose(psi, psi2)
+
+
+ellip_params = pytest.mark.parametrize(
+    "m",
+    [
+        # nans
+        np.nan,
+        # in valid range [0, 1]
+        0.314,
+        np.linspace(0.05, 0.95, 21),
+        np.full((4, 3, 2), 0.42),
+        # bottom of valid range
+        0.0,
+        np.zeros((3,)),
+        np.zeros((1, 2)),
+        # top of valid range
+        1.0,
+        np.ones((3,)),
+        np.ones((1, 2)),
+        # positive and out of valid range
+        1.5,
+        np.full((3,), 1.5),
+        np.full((2, 3), 2.0),
+        # small negative
+        -0.314,
+        np.full((4, 3, 2), -0.42),
+        # large negative
+        -100.0,
+        np.full((3,), -100.0),
+        # approaching range bounds
+        np.array([1e-9, 1e-22]),
+        np.array([1.0 - 1e-9, 1 - 1e-16]),
+        # non-C-contiguous
+        np.asfortranarray(np.full((4, 3), 0.5)),
+    ],
+)
+
+
+@ellip_params
+def test_ellipe_nb_matches_scipy_implementation(m):
+    np.testing.assert_allclose(ellipe_nb(m), scipy_ellipe(m))
+
+
+@ellip_params
+def test_ellipk_nb_matches_scipy_implementation(m):
+    np.testing.assert_allclose(ellipk_nb(m), scipy_ellipk(m))
 
 
 class TestGreenFieldsRegression:
