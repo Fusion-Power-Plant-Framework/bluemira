@@ -524,6 +524,7 @@ class UnitFrame5(ParameterFrame):
     wtf1: Parameter[float]
     wtf2: Parameter[float]
     wtf3: Parameter[float]
+    wtf4: Parameter[float]
 
 
 @dataclass
