@@ -142,6 +142,7 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
             # is not commutative or is angle (as they're dimensionless in pint)
             fix_list.append(no)
         else:
+            # commumtative parts
             ind_list.append(no)
         unit_list.append(ureg.Quantity(f"{q.magnitude}({q.units})^{multiplier}"))
 
@@ -153,7 +154,12 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
 def _convert_non_commutative(
     unit_list: list[Quantity], filter_index: list[int]
 ) -> Quantity:
-    """Converts angle units and combines non commutative units"""  # noqa: DOC201
+    """Converts angle units and combines non commutative units
+
+    Notes
+    -----
+    Commutative here means units that we dont want to combine eg time and full power year
+    """  # noqa: DOC201
 
     # There is only one unit in _units of 'i' therefore extract the key/value
     def get_key(i: Quantity) -> str:
@@ -170,6 +176,7 @@ def _convert_non_commutative(
 
             filtered_list[no] = i.to(ureg.Unit(f"{ANGLE}**{get_exp(i)}"))
 
+    # multiplies all quantities together
     return math.prod(filtered_list)
 
 
@@ -182,15 +189,19 @@ def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> 
     Uses pints milp optimisation which can over combine eg W/m^2 -> kg/s^3.
     The optimisation minimises combinations eg the "knapsack problem".
     This function prioritise shorter original over new which could be improved in future
+
+    Commutative here means units that we dont want to combine eg time and full power year
     """  # noqa: DOC201
     filtered_list = [unit_list[i] for i in filter_index]
 
     quantity = math.prod(filtered_list)
     if not isinstance(quantity, ureg.Quantity):
+        # is quantity now a number
         return quantity
 
     # Prefer the users SI converted unit
     # if the number of constituent units is <= the number in the new unit
+    # this one line does a lot for us in the reconstruction
     pq = quantity.to_preferred()
     if len(quantity._units.keys()) <= len(pq._units.keys()):
         return quantity
