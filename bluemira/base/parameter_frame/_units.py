@@ -46,9 +46,13 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
     try:
         quantity = ureg.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
+        # eg with param_data["unit"] = 1e19m^2
+        # this is checked before the value so we need to do the same value check as below
+        # for unset values
         try:
             quantity = ureg.Quantity(f"{param_data['value']}*{param_data['unit']}")
         except pint.errors.PintError as pe:
+            # eg 'None*1e19m^2' -> UndefinedUnitError not a type error
             if param_data["value"] is None:
                 quantity = ureg.Quantity(
                     1 if param_data["unit"] in {None, ""} else param_data["unit"]
@@ -61,6 +65,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
     except TypeError:
+        # eg param_data["value"] in {None, bool, ...}
         if param_data["value"] is None:
             # dummy for None values
             quantity = ureg.Quantity(
@@ -78,14 +83,27 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
 def _ensure_SI_unit_system(
     quantity: Quantity, param_data: ParamDictT, value_type: Iterable[type]
 ) -> ParamDictT:
+    """
+    Enforces our SI unit system and updates the value accordingly
 
+    Returns
+    -------
+    :
+        Parameter dictionary
+
+    Notes
+    -----
+    Also deals with the case where a unit is collapsed to dimensionless with
+    some scaling factor, then the value should be updated
+    """
     if quantity.units != ureg.dimensionless:
         unit_q = _remake_units(quantity)
     else:
         unit_q = quantity
 
     if unit_q.units != quantity.units and param_data["value"] is not None:
-        # Convert to new units
+        # converts the old value to the new units and sets it to the correct
+        # type and on the param_data dictionary
         val = raw_uc(quantity.magnitude, quantity.units, unit_q.units)
         if isinstance(param_data["value"], int) and int in value_type:
             val = int(val)

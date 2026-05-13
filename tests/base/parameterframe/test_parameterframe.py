@@ -569,6 +569,7 @@ class TestParameterFrameUnits:
         "wtf1": {"value": 5, "unit": "m^2/grade.W/(Pa.fpy)"},
         "wtf2": {"value": 5, "unit": "dpa.m^2/rad.W/(Pa.fpy)"},
         "wtf3": {"value": 5, "unit": "dpa^-1.m^2/turn.W/(Pa.fpy)"},
+        "wtf4": {"value": 1, "unit": "mW/MW"},
     }
 
     COMBINED_FRAME_DATA: ClassVar = {
@@ -635,6 +636,8 @@ class TestParameterFrameUnits:
         assert frame.wtf2.unit == "dpa·m⁵/deg/fpy/s"
         assert frame.wtf3.value == pytest.approx(0.01388888)
         assert frame.wtf3.unit == "m⁵/deg/dpa/fpy/s"
+        assert frame.wtf4.value == pytest.approx(1e-9)
+        assert frame.wtf4.unit == ""
 
     def test_combined_units(self):
         """Tests that the reconstruction of the units combines to sane values
