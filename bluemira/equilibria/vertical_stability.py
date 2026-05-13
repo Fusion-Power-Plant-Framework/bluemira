@@ -320,3 +320,16 @@ def make_coils_along_wire(
         for i, point in enumerate(coil_points)
     ]
     return CoilGroup(*coils)
+
+
+def decay_index(major_radius: float, eq: Equilibrium):
+    """
+    Simple function to calculate the plasma decay index at the plasma centre
+
+    Returns
+    -------
+        decay index
+    """
+    bz = eq.coilset.Bz_response(major_radius, 0.0)
+    dbzdx = eq.coilset.dB_d_response(major_radius, 0.0)
+    return -major_radius / bz * dbzdx
