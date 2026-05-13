@@ -10,11 +10,14 @@ Green's functions mappings for psi, Bx, and Bz
 
 import numba as nb
 import numpy as np
-from scipy.special import ellipe, ellipk
 
 from bluemira.base.constants import MU_0, MU_0_2PI, MU_0_4PI
+from bluemira.magnetostatics._ellipe import ellipe_nb
+from bluemira.magnetostatics._ellipk import ellipk_nb
 
 __all__ = [
+    "ellipe_nb",
+    "ellipk_nb",
     "greens_Bx",
     "greens_Bz",
     "greens_all",
@@ -58,57 +61,7 @@ def clip_nb(
     return val
 
 
-@nb.vectorize(nopython=True)
-def ellipe_nb(k: float | np.ndarray) -> float | np.ndarray:
-    """
-    Vectorised scipy ellipe
-
-    Parameters
-    ----------
-    k:
-        parameter of the elliptic integral
-
-    Returns
-    -------
-    :
-        elliptic integral of the second kind
-
-    Notes
-    -----
-    K, E in scipy are set as K(k^2), E(k^2)
-    """
-    return ellipe(k)
-
-
-ellipe_nb.__doc__ += ellipe.__doc__
-
-
-@nb.vectorize(nopython=True)
-def ellipk_nb(k: float | np.ndarray) -> float | np.ndarray:
-    """
-    Vectorised scipy ellipk
-
-    Parameters
-    ----------
-    k:
-        parameter of the elliptic integral
-
-    Returns
-    -------
-    :
-        elliptic integral of the first kind
-
-    Notes
-    -----
-    K, E in scipy are set as K(k^2), E(k^2)
-    """
-    return ellipk(k)
-
-
-ellipk_nb.__doc__ += ellipk.__doc__
-
-
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _elliptic_derivatives(e, k, k2):
     r"""Get :math:`\frac{dK}{dk}` and :math:`\frac{dE}{dk}` [dimensionless]
 
@@ -133,7 +86,7 @@ def _elliptic_derivatives(e, k, k2):
     return dKdk, dEdk
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _dkdr(g3, xc, x):
     r"""Get dkdr
 
@@ -163,7 +116,7 @@ def _dkdr(g3, xc, x):
     return term_1 + term_2
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _g(xc, zc, x, z):
     r"""Get the tuple of (:math:`g_1, g_2, g_3, g_4`)
 
@@ -197,7 +150,7 @@ def _g(xc, zc, x, z):
     return g1, g2, g3, g4
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _g_r(xc, x):
     r"""Get the tuple of (:math:`g_{1r}, g_{2r}, g_{3r}`)
 
@@ -228,7 +181,7 @@ def _g_r(xc, x):
     return g1r, g2r, g3r
 
 
-@nb.jit(nopython=True)
+@nb.njit(cache=True)
 def circular_coil_inductance_elliptic(
     radius: float | np.ndarray, rc: float | np.ndarray
 ) -> float | np.ndarray:
@@ -325,7 +278,7 @@ def square_coil_inductance_kirchhoff(
     return MU_0 * radius * (np.log(8 * radius / (width + height)) - 0.5)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_psi(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -378,7 +331,7 @@ def greens_psi(
     return MU_0_2PI * np.sqrt(x * xc) * ((2 - k2) * k - 2 * e) / np.sqrt(k2)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_dpsi_dx(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -433,7 +386,7 @@ def greens_dpsi_dx(
     return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_dbz_dx(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -498,7 +451,7 @@ def greens_dbz_dx(
     return p1 + p2
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_dpsi_dz(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -553,7 +506,7 @@ def greens_dpsi_dz(
     return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def calc_a_k2(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -588,7 +541,7 @@ def calc_a_k2(
     return a, k2
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def calc_e_k(k2: float | np.ndarray):
     """
     Calculate the elliptic integral of both the first and second kind.
@@ -607,7 +560,7 @@ def calc_e_k(k2: float | np.ndarray):
     return ellipe_nb(k2), ellipk_nb(k2)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def calc_i1_i2(
     a: float | np.ndarray,
     k2: float | np.ndarray,
@@ -643,7 +596,7 @@ def calc_i1_i2(
     return i1, i2
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_Bx(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -690,7 +643,7 @@ def greens_Bx(
     return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_Bz(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -737,7 +690,7 @@ def greens_Bz(
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def greens_all(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
