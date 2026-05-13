@@ -15,18 +15,24 @@ from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 from bluemira.equilibria.coils import CoilGroup, CoilSet
+from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.find import find_OX_points, interpolate_psi
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
+    DPsiDxConstraint,
+    DPsiDzConstraint,
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
+    RadialFieldConstraint,
+    VerticalFieldConstraint,
 )
 from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
+from bluemira.equilibria.optimisation.problem._minimal_current import MinimalCurrentCOP
 from bluemira.equilibria.physics import calc_li3
 from bluemira.equilibria.profiles import (
     BetaIpProfile,
@@ -402,6 +408,96 @@ class TestEquilibrium:
     @pytest.mark.parametrize("plasma", [False, True])
     def test_plotting_plasma(self, plasma):
         self.dn.plot(plasma=plasma)
+
+
+def make_eq_constraints():
+    R_0 = 6.0
+    A = 3.0
+    a = R_0 / A
+    kappa = 1.50
+    delta_upper = 0.0
+    delta_lower = 0.333
+    xin = R_0 - a
+    zin = 0.0
+    xout = R_0 + a
+    zout = 0.0
+    xmid = R_0 - 0.5 * a
+    xmid2 = R_0 + 0.5 * a
+    zmid = a * kappa * 0.85
+    xlo = R_0 - delta_lower * a
+    zlo = -kappa * a
+    xhi = R_0 - delta_upper * a
+    zhi = kappa * a
+    targets_1 = MagneticConstraintSet([
+        IsofluxConstraint(
+            [xin, xmid, xhi, xmid2, xout, xlo],
+            [zin, zmid, zhi, zmid, zout, zlo],
+            xin,
+            zin,
+        ),
+        FieldNullConstraint(xlo, zlo),
+    ])
+    targets_2 = MagneticConstraintSet([
+        IsofluxConstraint(
+            [xin, xmid, xhi, xmid2, xout, xlo],
+            [zin, zmid, zhi, zmid, zout, zlo],
+            xin,
+            zin,
+        ),
+        DPsiDxConstraint(xhi, zhi, 0.0),
+        DPsiDzConstraint([xin, xout], [zin, zout], 0.0),
+        VerticalFieldConstraint(xlo, zlo, 0.0),
+        RadialFieldConstraint(xlo, zlo, 0.0),
+    ])
+    return [targets_1, targets_2]
+
+
+class TestEquilibriumConstraints:
+    @classmethod
+    def setup_class(cls):
+        coils = [
+            Coil(2.0, 4.0, 0.5, 1.0, ctype="CS"),
+            Coil(2.0, 2.0, 0.5, 1.0, ctype="CS"),
+            Coil(2.0, 0.0, 0.5, 1.0, ctype="CS"),
+            Coil(2.0, -2.0, 0.5, 1.0, ctype="CS"),
+            Coil(2.0, -4.0, 0.5, 1.0, ctype="CS"),
+            Coil(4.0, 6.0, 0.5, 0.5, ctype="PF"),
+            Coil(6.0, 5.0, 0.5, 0.5, ctype="PF"),
+            Coil(9.0, 4.0, 0.5, 0.5, ctype="PF"),
+            Coil(10.0, -2.0, 0.5, 0.5, ctype="PF"),
+            Coil(6.0, -5.0, 0.5, 0.5, ctype="PF"),
+            Coil(4.0, -6.0, 0.5, 0.5, ctype="PF"),
+        ]
+
+        coilset = CoilSet(*coils)
+        R_0 = 6.0
+        profiles = BetaIpProfile(1.0, 10e6, R_0, 6.0)
+        grid = Grid(1.0, 10.0, -10.0, 10.0, 50, 50)
+        cls.eq = Equilibrium(coilset, grid, profiles)
+
+    @pytest.mark.parametrize("targets", make_eq_constraints())
+    def test_solve_unconstrained(self, targets):
+        eq = deepcopy(self.eq)
+        problem = UnconstrainedTikhonovCurrentGradientCOP(eq, targets, gamma=1e-8)
+        solver = PicardIterator(
+            eq, problem, check_constraints=True, fixed_coils=True, maxiter=30
+        )
+        result = solver()
+        assert result.constraints_satisfied
+        assert solver.i <= 30
+
+    @pytest.mark.parametrize("targets", make_eq_constraints())
+    def test_solve_constrained(self, targets):
+        eq = deepcopy(self.eq)
+        problem = MinimalCurrentCOP(
+            eq, constraints=targets.constraints, opt_conditions={"max_eval": 200}
+        )
+        solver = PicardIterator(
+            eq, problem, check_constraints=True, fixed_coils=True, maxiter=30
+        )
+        result = solver()
+        assert result.constraints_satisfied
+        assert solver.i <= 30
 
 
 @pytest.fixture

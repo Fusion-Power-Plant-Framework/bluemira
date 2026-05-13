@@ -22,6 +22,8 @@ from bluemira.magnetostatics.greens import (
     greens_Bx,
     greens_Bz,
     greens_dbz_dx,
+    greens_dpsi_dx,
+    greens_dpsi_dz,
     greens_psi,
 )
 from bluemira.utilities.tools import floatify
@@ -117,6 +119,12 @@ class PlasmaCoil:
         self._plasma_dBz = self._dBz_func(self._grid.x, self._grid.z)
         self._plasma_Bp = np.hypot(self._plasma_Bx, self._plasma_Bz)
 
+    def _dpsi_dx_func(self, x, z):
+        return self._psi_func(x, z, dx=1, grid=False)
+
+    def _dpsi_dz_func(self, x, z):
+        return self._psi_func(x, z, dy=1, grid=False)
+
     def _Bx_func(self, x, z):
         return -self._psi_func(x, z, dy=1, grid=False) / x
 
@@ -192,6 +200,66 @@ class PlasmaCoil:
         if not self._check_in_grid(x, z):
             return self._convolve(greens_psi, x, z)
         return self._psi_func(x, z)
+
+    @treat_xz_array
+    def dpsi_dx(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Poloidal magnetic flux gradient in x at x, z
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux gradient at the points [V.s/rad/m]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        if x is None and z is None:
+            return self._dpsi_dx_func(self.grid.x, self.grid.z)
+
+        if not self._check_in_grid(x, z):
+            return self._convolve(greens_dpsi_dx, x, z)
+        return self._dpsi_dx_func(x, z)
+
+    @treat_xz_array
+    def dpsi_dz(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Poloidal magnetic flux gradient in z at x, z
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux gradient at the points [V.s/rad/m]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        if x is None and z is None:
+            return self._dpsi_dz_func(self.grid.x, self.grid.z)
+
+        if not self._check_in_grid(x, z):
+            return self._convolve(greens_dpsi_dz, x, z)
+        return self._dpsi_dz_func(x, z)
 
     @treat_xz_array
     def Bx(

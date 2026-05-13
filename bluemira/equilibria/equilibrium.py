@@ -1854,6 +1854,56 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         psi = self.psi()
         return calc_psi_norm(psi, *self.get_OX_psis(psi))
 
+    def dpsi_dx(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Total dpsi/dx at point (x, z) from coils and plasma
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return dpsi/dx. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return dpsi/dx. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            dpsi/dx at x, z
+        """
+        if x is None and z is None:
+            return self.plasma.dpsi_dx() + self.coilset.dpsi_dx(self.grid.x, self.grid.z)
+
+        return self.plasma.dpsi_dx(x, z) + self.coilset.dpsi_dx(x, z)
+
+    def dpsi_dz(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Total dpsi/dz at point (x, z) from coils and plasma
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return dpsi/dz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return dpsi/dz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        :
+            dpsi/dx at x, z
+        """
+        if x is None and z is None:
+            return self.plasma.dpsi_dz() + self.coilset.dpsi_dz(self.grid.x, self.grid.z)
+
+        return self.plasma.dpsi_dz(x, z) + self.coilset.dpsi_dz(x, z)
+
     def pressure_map(self, psi_n: float | None = None) -> npt.NDArray[np.float64]:
         """
         Parameters

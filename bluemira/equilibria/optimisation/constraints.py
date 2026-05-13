@@ -682,6 +682,59 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
         ax.plot(self.x, self.z, **kwargs)
 
 
+class RadialFieldConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute radial field (Bx) constraint.
+    """
+
+    def __init__(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        target_value: float,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray = 1e-6,
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights=weights,
+            tolerance=tolerance,
+            f_constraint=AxBConstraint,
+            constraint_type="equality",
+        )
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            Bx response of the coilset
+        """
+        return coilset.Bx_response(self.x, self.z, control=True)
+
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            Bx value of the equilibrium
+        """
+        return eq.Bx(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        kwargs = {"marker": ">", "markersize": 8, "color": "b", "linestyle": "None"}
+        ax.plot(self.x, self.z, **kwargs)
+
+
 class PsiConstraint(AbsoluteMagneticConstraint):
     """
     Absolute psi value constraint.
@@ -735,6 +788,126 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             self.x,
             self.z,
             marker="s",
+            markersize=8,
+            color="b",
+            linestyle="None",
+            zorder=Zorder.CONSTRAINT.value,
+        )
+
+
+class DPsiDxConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute dpsi/dx value constraint.
+    """
+
+    def __init__(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        target_value: float,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray | None = None,
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights=weights,
+            tolerance=tolerance,
+            f_constraint=AxBConstraint,
+            constraint_type="equality",
+        )
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset dpsi/dz response
+        """
+        return coilset.dpsi_dx_response(self.x, self.z, control=True)
+
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium dpsi/dx
+        """
+        return eq.dpsi_dx(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        ax.plot(
+            self.x,
+            self.z,
+            marker="^",
+            markersize=8,
+            color="b",
+            linestyle="None",
+            zorder=Zorder.CONSTRAINT.value,
+        )
+
+
+class DPsiDzConstraint(AbsoluteMagneticConstraint):
+    """
+    Absolute dpsi/dz value constraint.
+    """
+
+    def __init__(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        target_value: float,
+        weights: float | np.ndarray = 1.0,
+        tolerance: float | np.ndarray | None = None,
+    ):
+        super().__init__(
+            x,
+            z,
+            target_value,
+            weights=weights,
+            tolerance=tolerance,
+            f_constraint=AxBConstraint,
+            constraint_type="equality",
+        )
+
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+
+        Returns
+        -------
+        :
+            The coilset dpsi/dz response
+        """
+        return coilset.dpsi_dz_response(self.x, self.z, control=True)
+
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+
+        Returns
+        -------
+        :
+            The equilibrium dpsi/dz
+        """
+        return eq.dpsi_dz(self.x, self.z)
+
+    def plot(self, ax):
+        """
+        Plot the constraint onto an Axes.
+        """
+        ax.plot(
+            self.x,
+            self.z,
+            marker=">",
             markersize=8,
             color="b",
             linestyle="None",
