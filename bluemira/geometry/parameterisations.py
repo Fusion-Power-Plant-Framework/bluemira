@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
+from typing import TYPE_CHECKING, Generic, TextIO, TypeVar, TypedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +41,12 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+from bluemira.utilities.opt_variables import (
+    OptVarVarDictValueT,
+    OptVariable,
+    OptVariablesFrame,
+    ov,
+)
 from bluemira.utilities.plot_tools import str_to_latex
 
 if TYPE_CHECKING:
@@ -592,6 +597,14 @@ class PrincetonDOptVariables(OptVariablesFrame):
     )
 
 
+class PrincetonDOptVarDictT(TypedDict, total=False):
+    """Typed Dict for PrincetonDOptVariables"""
+
+    x1: OptVarVarDictValueT
+    x2: OptVarVarDictValueT
+    dz: OptVarVarDictValueT
+
+
 class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     """
     Princeton D geometry parameterisation, with n_TF = ∞.
@@ -622,7 +635,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: VarDictT | None = None):
+    def __init__(self, var_dict: PrincetonDOptVarDictT | None = None):
         variables = PrincetonDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -956,7 +969,7 @@ class PrincetonDDiscrete(PrincetonD):
 
     def __init__(
         self,
-        var_dict: VarDictT | None = None,
+        var_dict: PrincetonDOptVarDictT | None = None,
         n_TF: int | None = None,
         tf_wp_width: float | None = None,
         tf_wp_depth: float | None = None,
@@ -1111,6 +1124,18 @@ class TripleArcOptVaribles(OptVariablesFrame):
     )
 
 
+class TripleArcOptVarDictT(TypedDict, total=False):
+    """Typed Dict for TripleArcOptVaribles"""
+
+    x1: OptVarVarDictValueT
+    dz: OptVarVarDictValueT
+    sl: OptVarVarDictValueT
+    f1: OptVarVarDictValueT
+    f2: OptVarVarDictValueT
+    a1: OptVarVarDictValueT
+    a2: OptVarVarDictValueT
+
+
 class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     """
     Triple-arc up-down symmetric geometry parameterisation.
@@ -1153,7 +1178,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: VarDictT | None = None):
+    def __init__(self, var_dict: TripleArcOptVarDictT | None = None):
         variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1330,6 +1355,23 @@ class SextupleArcOptVariables(OptVariablesFrame):
     a5: OptVariable = ov(
         "a5", 30, lower_bound=10, upper_bound=80, description="5th arc angle [degrees]"
     )
+
+
+class SextupleArcOptVarDictT(TypedDict, total=False):
+    """Typed Dict for SextupleArcOptVariables"""
+
+    x1: OptVarVarDictValueT
+    z1: OptVarVarDictValueT
+    r1: OptVarVarDictValueT
+    r2: OptVarVarDictValueT
+    r3: OptVarVarDictValueT
+    r4: OptVarVarDictValueT
+    r5: OptVarVarDictValueT
+    a1: OptVarVarDictValueT
+    a2: OptVarVarDictValueT
+    a3: OptVarVarDictValueT
+    a4: OptVarVarDictValueT
+    a5: OptVarVarDictValueT
 
 
 def _project_centroid(
@@ -1521,7 +1563,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: VarDictT | None = None):
+    def __init__(self, var_dict: SextupleArcOptVarDictT | None = None):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1739,6 +1781,30 @@ class PolySplineOptVariables(OptVariablesFrame):
     )
 
 
+class PolySplineOptVarDictT(TypedDict, total=False):
+    """Typed Dict for PolySplineOptVariables"""
+
+    x1: OptVarVarDictValueT
+    x2: OptVarVarDictValueT
+    z2: OptVarVarDictValueT
+    height: OptVarVarDictValueT
+    top: OptVarVarDictValueT
+    upper: OptVarVarDictValueT
+    dz: OptVarVarDictValueT
+    flat: OptVarVarDictValueT
+    tilt: OptVarVarDictValueT
+    bottom: OptVarVarDictValueT
+    lower: OptVarVarDictValueT
+    l0s: OptVarVarDictValueT
+    l1s: OptVarVarDictValueT
+    l2s: OptVarVarDictValueT
+    l3s: OptVarVarDictValueT
+    l0e: OptVarVarDictValueT
+    l1e: OptVarVarDictValueT
+    l2e: OptVarVarDictValueT
+    l3e: OptVarVarDictValueT
+
+
 class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
@@ -1791,7 +1857,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: VarDictT | None = None):
+    def __init__(self, var_dict: PolySplineOptVarDictT | None = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
 
@@ -2492,6 +2558,22 @@ class PictureFrameOptVariables(OptVariablesFrame):
             self.z3.fixed = True
 
 
+class PictureFrameOptVarDictT(TypedDict, total=False):
+    """Typed Dict for PictureFrameOptVariables"""
+
+    x1: OptVarVarDictValueT
+    x2: OptVarVarDictValueT
+    z1: OptVarVarDictValueT
+    z2: OptVarVarDictValueT
+    ri: OptVarVarDictValueT
+    ro: OptVarVarDictValueT
+    x3: OptVarVarDictValueT
+    z1_peak: OptVarVarDictValueT
+    z2_peak: OptVarVarDictValueT
+    x4: OptVarVarDictValueT
+    z3: OptVarVarDictValueT
+
+
 class PictureFrame(
     GeometryParameterisation[PictureFrameOptVariables], PictureFrameTools
 ):
@@ -2557,7 +2639,7 @@ class PictureFrame(
 
     def __init__(
         self,
-        var_dict: VarDictT | None = None,
+        var_dict: PictureFrameOptVarDictT | None = None,
         *,
         upper: str | PFrameSection = PFrameSection.FLAT,
         lower: str | PFrameSection = PFrameSection.FLAT,
