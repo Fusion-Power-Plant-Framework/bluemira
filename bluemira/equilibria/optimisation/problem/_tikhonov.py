@@ -13,7 +13,10 @@ from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
 )
-from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
+from bluemira.equilibria.optimisation.objectives import (
+    RegularisedLsqObjective,
+    tikhonov_ridge_solution,
+)
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimiserResult,
     EqCoilsetOptimisationProblem,
@@ -200,7 +203,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(EqCoilsetOptimisationProblem):
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
         # Optimise currents using analytic expression for optimum.
-        current_adjustment = tikhonov(
+        current_adjustment = tikhonov_ridge_solution(
             a_mat,
             b_vec,
             self.gamma,

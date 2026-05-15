@@ -17,14 +17,15 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    Collocation,
     PointType,
+    SphericalHarmonicApproximation,
+    SphericalHarmonicsParams,
     coil_harmonic_amplitude_matrix,
     coils_outside_fs_sphere,
     collocation_points,
     fs_fit_metric,
-    get_psi_harmonic_amplitudes,
     harmonic_amplitude_marix,
-    spherical_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
@@ -80,12 +81,11 @@ def test_fs_fit_metric():
 def test_harmonic_amplitude_marix():
     r = np.array([1, 1, 1])
     theta = np.array([0, np.pi, 2 * np.pi])
-    n = 3
-    d = 2
+    n, d = 3, 2
     r_t = 1.0
+    cp = Collocation(r, theta, r * np.sin(theta), r * np.cos(theta))
 
-    test_output = harmonic_amplitude_marix(r, theta, r_t)
-
+    test_output = harmonic_amplitude_marix(cp, r_t)
     assert test_output.shape == (n, d)
     assert ((test_output - np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])) == 0).all()
 
@@ -118,16 +118,14 @@ def test_coil_harmonic_amplitude_matrix():
     )
 
     sh_coil_names = ["PF_2", "PF_3"]
-
     coilset = CoilSet(coil, circuit)
-
-    d = 2
+    d = np.array([0, 1])
     r_t = 1
 
     test_out_matrx = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
 
     assert test_out_matrx.shape[1] == len(sh_coil_names)
-    assert test_out_matrx.shape[0] == d
+    assert test_out_matrx.shape[0] == len(d)
 
 
 def test_collocation_points():
@@ -201,7 +199,7 @@ def test_SphericalHarmonicConstraintFunction():
 
     sh_coil_names = ["PF_1", "PF_2", "PF_3", "PF_4", "PF_5"]
 
-    d = 3
+    d = np.array([0, 1, 2])
     r_t = 1
     cur_expand_mat = coilset._opt_currents_expand_mat
     a_mat = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
@@ -224,7 +222,17 @@ class TestRegressionSH:
             from_cocos=3,
             qpsi_positive=False,
         )
-        cls.sh_coil_names, cls.bdry_r = coils_outside_fs_sphere(cls.eq)
+        cls.params = SphericalHarmonicsParams(
+            n_points=50,
+            point_type=PointType.GRID_POINTS,
+            grid_num=None,
+            psi_norm=None,
+            seed=None,
+            gamma_max=1e-5,
+            amplitude_variation_thresh=1e-2,
+            plot_find_significant_degrees=False,
+        )
+        cls.sh_coil_names, cls.bdry_r, _ = coils_outside_fs_sphere(cls.eq)
         cls.test_colocation = collocation_points(
             plasma_boundary=cls.eq.get_LCFS(),
             point_type=PointType.GRID_POINTS,
@@ -236,6 +244,14 @@ class TestRegressionSH:
                 [cls.test_v_psi, cls.eq.coilset[n].psi(cls.eq.grid.x, cls.eq.grid.z)],
                 axis=0,
             )
+        cls.test_amps = np.array([
+            -0.00028813,
+            0.11556285,
+            -0.00314979,
+            -0.0366702,
+            -0.00763522,
+        ])
+        cls.test_deg = np.array([0, 1, 2, 3, 5])
 
     def test_coils_outside_sphere_vacuum_psi(self):
         assert len(self.sh_coil_names) == 16
@@ -255,128 +271,37 @@ class TestRegressionSH:
 
         assert test_total == pytest.approx(grid_zeros, abs=0.005)
 
-    def test_get_psi_harmonic_amplitudes(self):
-        test_sh_amps = get_psi_harmonic_amplitudes(
-            self.test_v_psi, self.eq.grid, self.test_colocation, 1.3661
-        )
-
-        sh_amps = np.array([
-            2.7949789e-05,
-            1.1597561e-01,
-            -6.9713936e-04,
-            -3.7900780e-02,
-            1.0315314e-03,
-            -1.2796998e-02,
-            -1.1939407e-03,
-            -2.0413978e-04,
-            -1.3979516e-03,
-            4.3234701e-03,
-            -8.3544534e-04,
-            6.4929064e-03,
-        ])
-
-        assert test_sh_amps == pytest.approx(sh_amps, abs=0.005)
-
     def test_spherical_harmonic_approximation(self):
-        (
-            _,
-            test_harmonic_amps,
-            test_degree,
-            test_fit_metric,
-            _,
-            test_r_t,
-            test_sh_coilset_current,
-        ) = spherical_harmonic_approximation(
-            self.eq,
-            n_points=10,
-            point_type=PointType.GRID_POINTS,
-            acceptable_fit_metric=0.02,
-        )
-
-        ref_harmonics = get_psi_harmonic_amplitudes(
-            self.test_v_psi, self.eq.grid, self.test_colocation, test_r_t
-        )
-
-        ref_harmonics = ref_harmonics[:test_degree]
-
-        sh_coilset_current = np.array([
-            7629.11,
-            -9301.684,
-            31443.84,
-            131204.70,
-            49954.62,
-            32081.58,
-            -174210.2,
-            -127567.9,
-            64428.81,
-            12076.32,
-            -10068.75,
-            32112.56,
-            133528.9,
-            57743.38,
-            14104.47,
-            -162735.4,
-            -131556.2,
-            68837.19,
-        ])
-
-        assert test_sh_coilset_current == pytest.approx(sh_coilset_current, rel=1e-3)
-        assert test_r_t == pytest.approx(1.3661, abs=0.0001)
-        # Even numbered harmonics zero'd out
-        assert test_harmonic_amps[1::2] == pytest.approx(ref_harmonics[1::2], rel=1e-3)
-        assert test_degree == 8
-        assert test_fit_metric == pytest.approx(0.01048, rel=1e-3)
+        sh_approx = SphericalHarmonicApproximation(eq=self.eq, params=self.params)
+        assert sh_approx.result.r_t == pytest.approx(1.3661, abs=0.0001)
+        assert sh_approx.result.coil_names == self.sh_coil_names
+        assert sh_approx.result.amplitudes == pytest.approx(self.test_amps, rel=1e-3)
+        assert sh_approx.result.amplitudes == pytest.approx(self.test_amps, rel=1e-3)
+        assert all(sh_approx.result.degrees == self.test_deg)
+        assert sh_approx.result.fit_metric_value == pytest.approx(0.0569, rel=1e-3)
 
     def test_SphericalHarmonicConstraint(self):
-        r_t = 1.37
-        ref_harmonics = get_psi_harmonic_amplitudes(
-            self.test_v_psi, self.eq.grid, self.test_colocation, r_t
-        )
-
+        sh_approx = SphericalHarmonicApproximation(eq=self.eq, params=self.params)
         test_constraint_class = SphericalHarmonicConstraint(
-            ref_harmonics=ref_harmonics, r_t=r_t, sh_coil_names=self.sh_coil_names
+            sh_approximation_result=sh_approx.result,
         )
         assert test_constraint_class.constraint_type == "equality"
-        assert test_constraint_class.max_degree == len(ref_harmonics)
-
-        for test_tol, ref_tol in zip(
-            test_constraint_class.tolerance,
-            np.array([
-                1e-06,
-                0.0001,
-                1e-06,
-                1e-05,
-                1e-06,
-                1e-05,
-                1e-06,
-                1e-06,
-                1e-06,
-                1e-06,
-                1e-06,
-                1e-06,
-            ]),
-            strict=False,
-        ):
-            assert test_tol == ref_tol
+        assert len(test_constraint_class.degrees) == len(self.test_deg)
+        assert np.abs(self.test_amps / test_constraint_class.tolerance) == pytest.approx(
+            1e3, rel=1e-3
+        )
 
         tolerance = 0.0
         test_constraint_class = SphericalHarmonicConstraint(
-            ref_harmonics=ref_harmonics,
-            r_t=r_t,
-            sh_coil_names=self.sh_coil_names,
+            sh_approximation_result=sh_approx.result,
             tolerance=tolerance,
         )
-
-        assert len(test_constraint_class.tolerance) == len(ref_harmonics)
-        for test_name, ref_name in zip(
-            test_constraint_class.control_coil_names, self.sh_coil_names, strict=False
-        ):
-            assert test_name == ref_name
+        assert len(test_constraint_class.tolerance) == len(self.test_deg)
+        assert test_constraint_class.control_coil_names == self.sh_coil_names
 
         test_eval = test_constraint_class.evaluate(self.eq)
-
         assert all(test_eval == 0)
-        assert len(test_eval) == 12
+        assert len(test_eval) == 5
 
 
 def test_hypergeometric_function():
