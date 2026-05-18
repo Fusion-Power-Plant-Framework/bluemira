@@ -61,6 +61,22 @@ Optimisation Examples
     examples/optimisation/rosenbrock_problem
     examples/optimisation/eggholder_problem
 
+Magnets Examples
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/magnets/central_solenoid_example
+
+Magnets Examples
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/magnets/central_solenoid_example
+
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
