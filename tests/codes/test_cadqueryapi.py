@@ -15,12 +15,14 @@ pytestmark = pytest.mark.skipif(
 
 cadapi = pytest.importorskip("bluemira.codes._cadqueryapi")
 
+from dataclasses import dataclass  # noqa: E402
 from unittest.mock import MagicMock, patch  # noqa: E402
 
 import cadquery as cq  # noqa: E402
 import numpy as np  # noqa: E402
 from OCP.BRep import BRep_Builder  # noqa: E402
 from OCP.TopoDS import TopoDS_Wire  # noqa: E402
+from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt, gp_Trsf  # noqa: E402
 
 from bluemira.codes.error import FreeCADError  # noqa: E402
 from bluemira.geometry.error import GeometryError  # noqa: E402
@@ -29,6 +31,26 @@ from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E
 
 E1, E2, E3, E4 = "e1", "e2", "e3", "e4"
 CORE = "bluemira.codes._cadqueryapi._core"
+
+
+def _pnt_dir_to_array(obj: gp_Pnt | gp_Dir) -> np.ndarray:
+    return np.array([obj.X(), obj.Y(), obj.Z()])
+
+
+def apply_transformation(
+    trsf: gp_Trsf, x: float, y: float, z: float
+) -> tuple[float, float, float]:
+    """Applies a gp_Trsf to a 3D point and returns the new coordinates."""
+    pnt = gp_Pnt(x, y, z)
+    pnt.Transform(trsf)
+    return pnt.X(), pnt.Y(), pnt.Z()
+
+
+@dataclass
+class DummyPart:
+    """A lightweight mock object to carry a predetermined bounding box."""
+
+    bb: tuple[float, float, float, float, float, float]
 
 
 class TestCadqueryapi(BackendApiTestsBase):
@@ -625,7 +647,11 @@ class TestCadqueryapi(BackendApiTestsBase):
 
     @patch(f"{CORE}.fix_shape")
     @patch.object(cq.Solid, "isValid", return_value=False)
-    def test_collect_subshapes_shell_promotion_invalid_repair(self, mock_fix_shape):
+    def test_collect_subshapes_shell_promotion_invalid_repair(
+        self,
+        mock_valid,  # noqa: ARG002
+        mock_fix_shape,
+    ):
         """fix_shape called to repair invalid promoted solid."""
         box = self._make_box()
         shell = box.Shells()[0]
@@ -816,6 +842,304 @@ class TestCadqueryapi(BackendApiTestsBase):
         box1 = self._make_box()
         box2 = cadapi.translate_shape(self._make_box(), (2, 0, 0))
         assert not cadapi._shapes_touch(box1, box2)
+
+    def test_freecad_ax2_standard_projection(self):
+        """Global x (1, 0, 0) is projected to (1, 0, 0)."""
+        center = [1.0, 2.0, 3.0]
+        axis = [0.0, 0.0, 1.0]
+
+        ax2 = cadapi._freecad_ax2(center, axis)
+
+        assert isinstance(ax2, gp_Ax2)
+        np.testing.assert_allclose(_pnt_dir_to_array(ax2.Location()), center, atol=1e-12)
+        np.testing.assert_allclose(_pnt_dir_to_array(ax2.Direction()), axis, atol=1e-12)
+        np.testing.assert_allclose(
+            _pnt_dir_to_array(ax2.XDirection()), [1.0, 0.0, 0.0], atol=1e-12
+        )
+
+    @pytest.mark.parametrize(
+        "axis",
+        [
+            ([1.0, 0.0, 0.0]),
+            ([-1.0, 0.0, 0.0]),
+            ([2.0, 0.0, 0.0]),
+        ],
+    )
+    def test_freecad_ax2_fallback_projection(self, axis):
+        """Axis parallel to global x, fallback to project global y."""
+        ax2 = cadapi._freecad_ax2([0.0, 0.0, 0.0], axis)
+
+        # expected normal is normalised input axis
+        expected_n = np.array(axis, dtype=float)
+        expected_n /= np.linalg.norm(expected_n)
+
+        np.testing.assert_allclose(
+            _pnt_dir_to_array(ax2.Direction()), expected_n, atol=1e-12
+        )
+        np.testing.assert_allclose(
+            _pnt_dir_to_array(ax2.XDirection()), [0.0, 1.0, 0.0], atol=1e-12
+        )
+
+    def test_freecad_ax2_explicit_override(self):
+        """Providing x_direction bypasses projection logic."""
+        x_direction = [1.0, 1.0, 0.0]
+
+        ax2 = cadapi._freecad_ax2(
+            [0.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0],
+            x_direction=x_direction,
+        )
+
+        expected_x = np.array(x_direction)
+        expected_x /= np.linalg.norm(expected_x)
+
+        np.testing.assert_allclose(
+            _pnt_dir_to_array(ax2.XDirection()), expected_x, atol=1e-12
+        )
+
+    def test_freecad_ax2_arbitrary_axis(self):
+        """Projection correctly applise to diagonal normal."""
+        ax2 = cadapi._freecad_ax2([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+
+        # n = (1, 1, 1) / sqrt(3)
+        # ref = (1, 0, 0)
+        # x = ref - dot(ref, n) * n
+        # x = (1, 0, 0) - (1/3, 1/3, 1/3) = (2/3, -1/3, -1/3)
+        # normalised x = (2, -1, -1) / sqrt(6)
+        expected_x = np.array([2.0, -1.0, -1.0]) / np.sqrt(6.0)
+
+        np.testing.assert_allclose(
+            _pnt_dir_to_array(ax2.XDirection()), expected_x, atol=1e-12
+        )
+        assert (
+            abs(
+                np.dot(  # veryify orthogonal
+                    _pnt_dir_to_array(ax2.Direction()),
+                    _pnt_dir_to_array(ax2.XDirection()),
+                )
+            )
+            < 1e-12
+        )
+
+    @pytest.mark.parametrize(
+        ("bbox", "expected_cam", "expected_target"),
+        [
+            # flat in xz plane: looks from -y
+            (
+                (0.0, 0.0, 0.0, 10.0, 0.0, 10.0),
+                (5.0, -15.0, 5.0),
+                (5.0, 0.0, 5.0),
+            ),
+            # flat in yz plane: looks from +x
+            (
+                (0.0, 0.0, 0.0, 0.0, 10.0, 10.0),
+                (15.0, 5.0, 5.0),
+                (0.0, 5.0, 5.0),
+            ),
+            # flat in xy plane: looks from +z
+            (
+                (0.0, 0.0, 0.0, 10.0, 10.0, 0.0),
+                (5.0, 5.0, 15.0),
+                (5.0, 5.0, 0.0),
+            ),
+            # 3D object: falls back to xz side view (-y)
+            (
+                (0.0, 0.0, 0.0, 10.0, 10.0, 10.0),
+                (5.0, -10.0, 5.0),
+                (5.0, 5.0, 5.0),
+            ),
+            # single point: acts like flat in y
+            (
+                (2.0, 2.0, 2.0, 2.0, 2.0, 2.0),
+                (2.0, 0.5, 2.0),
+                (2.0, 2.0, 2.0),
+            ),
+            # near flat geometry: triggers flat in y.
+            (
+                (0.0, 0.0, 0.0, 100.0, 0.5, 100.0),
+                (50.0, 0.25 - 150.0, 50.0),
+                (50.0, 0.25, 50.0),
+            ),
+        ],
+    )
+    @patch(f"{CORE}.bounding_box")
+    def test_compute_default_camera_orientations(
+        self, mock_bb, bbox, expected_cam, expected_target
+    ):
+        """Different camera placements and orientation thresholds."""
+        mock_bb.side_effect = lambda p: p.bb
+
+        cam, target = cadapi._compute_default_camera([DummyPart(bbox)])
+
+        assert cam == pytest.approx(expected_cam)
+        assert target == pytest.approx(expected_target)
+
+    @patch(f"{CORE}.bounding_box")
+    def test_compute_default_camera_multipart_bounding_box(self, mock_bb):
+        """Multiple parts merge into a single global bounding box."""
+        mock_bb.side_effect = lambda p: p.bb
+
+        # part 1 (0, 0, 0) to (2, 2, 2)
+        part1 = DummyPart((0.0, 0.0, 0.0, 2.0, 2.0, 2.0))
+        # part 2 (8, 8, 8) to (10, 10, 10)
+        part2 = DummyPart((8.0, 8.0, 8.0, 10.0, 10.0, 10.0))
+
+        # global bounding box (0, 0, 0) to (10, 10, 10).
+        cam, target = cadapi._compute_default_camera([part1, part2])
+
+        # global center (5, 5, 5)
+        assert target == pytest.approx((5.0, 5.0, 5.0))
+
+        # expected camera is 3D XZ fallback
+        assert cam == pytest.approx((5.0, -10.0, 5.0))
+
+    def test_placement_to_trsf_pure_translation(self):
+        """Placement with 0 angle only applies translation."""
+        placement = cadapi._CQPlacement(base=(10.0, -5.0, 3.0))
+
+        trsf = cadapi._placement_to_trsf(placement)
+
+        assert apply_transformation(trsf, 0.0, 0.0, 0.0) == pytest.approx((
+            10.0,
+            -5.0,
+            3.0,
+        ))
+        assert apply_transformation(trsf, 1.0, 1.0, 1.0) == pytest.approx((
+            11.0,
+            -4.0,
+            4.0,
+        ))
+
+    def test_placement_to_trsf_pure_rotation(self):
+        """Placement with 0 translation only applies rotation."""
+        placement = cadapi._CQPlacement(base=(0.0, 0.0, 0.0), angle_rad=np.pi / 2)
+
+        trsf = cadapi._placement_to_trsf(placement)
+
+        assert apply_transformation(trsf, 0.0, 0.0, 0.0) == pytest.approx((
+            0.0,
+            0.0,
+            0.0,
+        ))
+        assert apply_transformation(trsf, 1.0, 0.0, 0.0) == pytest.approx((
+            0.0,
+            1.0,
+            0.0,
+        ))
+
+    def test_placement_to_trsf_combined(self):
+        """Rotation and translation."""
+        placement = cadapi._CQPlacement(
+            base=(5.0, 10.0, 15.0), axis=(0, 1, 0), angle_rad=np.pi / 2
+        )
+
+        trsf = cadapi._placement_to_trsf(placement)
+
+        # (1, 0, 0) rotated 90 deg anti-clockwise about y = (0, 0, -1)
+        # (0, 0, -1) translated by (5, 10, 15) = (5, 10, 14)
+        assert apply_transformation(trsf, 1.0, 0.0, 0.0) == pytest.approx((
+            5.0,
+            10.0,
+            14.0,
+        ))
+
+    def test_placement_to_trsf_angle_tolerance(self):
+        """Skip rotation when angle is below tolerance."""
+        angle = cadapi._ANGLE_PARALLEL_TOL * 0.5
+        placement = cadapi._CQPlacement(base=(0.0, 0.0, 0.0), angle_rad=angle)
+
+        trsf = cadapi._placement_to_trsf(placement)
+
+        assert apply_transformation(trsf, 1.0, 0.0, 0.0) == (1.0, 0.0, 0.0)  # exactly
+
+    @pytest.mark.parametrize(
+        ("src", "dst", "expected_axis", "expected_angle"),
+        [
+            # 90 deg rotation: revolves around +z
+            (
+                [1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                np.pi / 2,
+            ),
+            # 90 deg rotation: revolves around -z
+            (
+                [0.0, 1.0, 0.0],
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, -1.0],
+                np.pi / 2,
+            ),
+            # 45 deg rotation in xy plane
+            (
+                [1.0, 0.0, 0.0],
+                [1.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0],
+                np.pi / 4,
+            ),
+            # 90 deg rotation: revolves around -y
+            (
+                [1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0],
+                [0.0, -1.0, 0.0],
+                np.pi / 2,
+            ),
+        ],
+    )
+    def test_rotation_to_align_standard(self, src, dst, expected_axis, expected_angle):
+        """Standard rotations."""
+        axis, angle = cadapi._rotation_to_align(
+            np.array(src, dtype=float),
+            np.array(dst, dtype=float),
+        )
+
+        assert angle == pytest.approx(expected_angle, abs=1e-9)
+        np.testing.assert_allclose(axis, expected_axis, atol=1e-9)
+
+    def test_rotation_to_align_parallel(self):
+        """Parallel vectors return default axis and angle."""
+        axis, angle = cadapi._rotation_to_align(
+            np.array([1.0, 2.0, 3.0]),
+            np.array([1.0, 2.0, 3.0]),
+        )
+
+        assert angle == pytest.approx(0.0)
+        np.testing.assert_allclose(axis, [0.0, 0.0, 1.0], atol=1e-9)
+
+    def test_rotation_to_align_anti_parallel_x_dominant(self):
+        """180 deg flip - source vec in dominant in x."""
+        axis, angle = cadapi._rotation_to_align(
+            np.array([1.0, 0.0, 0.0]),
+            np.array([-1.0, 0.0, 0.0]),
+        )
+
+        assert angle == pytest.approx(np.pi)
+
+        # cross([1, 0, 0], [0, 1, 0]) = [0, 0, 1]
+        expected_axis = [0.0, 0.0, 1.0]
+        np.testing.assert_allclose(axis, expected_axis, atol=1e-9)
+
+    def test_rotation_to_align_anti_parallel_y_dominant(self):
+        """180 deg flip - source vec not dominant in x."""
+        axis, angle = cadapi._rotation_to_align(
+            np.array([0.0, 1.0, 0.0]),
+            np.array([0.0, -1.0, 0.0]),
+        )
+
+        assert angle == pytest.approx(np.pi)
+
+        # cross([0, 1, 0], [1, 0, 0]) = [0, 0, -1]
+        expected_axis = [0.0, 0.0, -1.0]
+        np.testing.assert_allclose(axis, expected_axis, atol=1e-9)
+
+    def test_rotation_to_align_unnormalized_inputs(self):
+        """Non-unit vectors yield same alignment."""
+        axis, angle = cadapi._rotation_to_align(
+            np.array([2.0, 0.0, 0.0]),
+            np.array([0.0, 5.0, 0.0]),
+        )
+
+        assert angle == pytest.approx(np.pi / 2, abs=1e-9)
+        np.testing.assert_allclose(axis, [0.0, 0.0, 1.0], atol=1e-9)
 
 
 @patch("bluemira.codes.error.FreeCADError", FreeCADError)
