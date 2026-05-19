@@ -90,16 +90,16 @@ conda_pinned = ["fenics-dolfinx==0.9.0", "freecad==1.0.0"]
 
 process = ["process @ git+https://github.com/ukaea/process@v3.3.0"]
 openmc = [
-    "openmc>=0.14.0",
+    "openmc>=0.14.0",  # conda-forge only (not on PyPI) — install the conda env first
     "openmc_data==2.3.5",
     "tokamak-neutron-source >=0.1.4",
 ]
 polyscope = ["polyscope"]
-radiation = ["cherab>=1.5"]
+radiation = ["cherab>=1.5"]  # conda-forge only (not on PyPI) — install the conda env first
 dagmc = [
     "cgal>=6.0.1",
     "fast_ctd @ git+https://github.com/Fusion-Power-Plant-Framework/fast_ctd@0.1.1",
-    "bluemira[openmc]"
+    "bluemira[openmc]",
 ]
 
 [build-system]
@@ -318,7 +318,11 @@ ignore-names = [
     "*_F",
     "*eV*",
     "I_not_dI",
-    "*Li*"
+    "*Li*",
+    # api* types in cadapi/_cadquery mirror FreeCAD's Part.* naming so
+    # isinstance()/type-alias callsites stay backend-agnostic
+    "api*",
+    "_apiFaceMeta",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -326,6 +330,22 @@ ignore-names = [
 "bluemira/__init__.py" = ["TID252"]
 "bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/model_mapping.py" = ["PLR6301", "DOC201"]
+# cadapi/_cadquery/* is an experimental backend mirroring _freecad/api's
+# surface; several patterns are either inherited from FreeCAD's API
+# (CapWords-violating names, 1-line docstrings without Returns/Raises)
+# or live in adapter shims where args are intentionally unused to match
+# the other backend's signature.
+"bluemira/codes/cadapi/_cadquery/*.py" = [
+    "DOC201",
+    "DOC501",
+    "ARG001",
+    "ARG002",
+    "N802",
+    "N806",
+    # OCC C++ APIs (BRepBuilderAPI_*, BRepAlgoAPI_*, ShapeAnalysis_*) take
+    # positional booleans by signature; we can't refactor them to keyword args.
+    "FBT003",
+]
 "bluemira/geometry/parameterisations.py" = ["E731"]
 "bluemira/codes/plasmod/api/{_inputs,_outputs}.py" = ["N815"]
 "data/*" = ["INP001"]

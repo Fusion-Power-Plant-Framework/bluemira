@@ -15,7 +15,10 @@ from scipy.optimize import Bounds, NonlinearConstraint, minimize
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._scipy.parameters import _make_alg_params
+from bluemira.optimisation._scipy.parameters import (
+    _filter_to_scipy_options,
+    _make_alg_params,
+)
 from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
 from bluemira.optimisation._tools import (
     _check_bounds,
@@ -299,6 +302,14 @@ class ScipyOptimiser(Optimiser):
                 f"""{self.algorithm.name} does not use it. It will be ignored."""
             )
 
+        # ``opt_parameters`` keeps everything the user passed (including
+        # unknown keys, with a bluemira_warn in _make_alg_params for visibility).
+        # SciPy's minimize would emit a duplicate ``OptimizeWarning: Unknown
+        # solver options`` for those, so filter to the param-class' known keys
+        # right at the call site.
+        scipy_options = _filter_to_scipy_options(
+            self.opt_parameters, self._config.param_cls
+        )
         try:
             result = minimize(
                 fun=self.f_objective,
@@ -310,7 +321,7 @@ class ScipyOptimiser(Optimiser):
                 constraints=self._eq_constraints + self._ineq_constraints,
                 bounds=Bounds(lb=self.lower_bounds, ub=self.upper_bounds),
                 tol=None,  # ignore - provide specific tolerance in opt_conditions
-                options=self.opt_parameters,
+                options=scipy_options,
             )
         except OptVariablesError as err:
             bluemira_warn("Badly behaved numerical gradients are causing trouble...")

@@ -120,6 +120,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# uv lockfile (not committed; conda env is the source of truth for installs)
+uv.lock
+
 # IDE project settings
 .spyderproject
 .spyproject
@@ -153,6 +156,7 @@ dmypy.json
 *.geo_unrolled
 *.ini
 *.h5
+*.xao
 *.xdmf
 Mesh_linkfile.json
 

@@ -35,14 +35,14 @@ from matplotlib import colors
 try:
     from pivy import coin, quarter
 except ImportError:
-    from bluemira.codes._freecadconfig import _patch_pivy
+    from bluemira.codes.cadapi._freecad.config import _patch_pivy
 
     coin, quarter = _patch_pivy()
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadconfig import _freecad_save_config
+from bluemira.codes.cadapi._freecad.config import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
@@ -53,18 +53,18 @@ if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
 
 
-apiVertex = Part.Vertex  # noqa: N816
-apiVector = Base.Vector  # noqa: N816
-apiEdge = Part.Edge  # noqa: N816
-apiWire = Part.Wire  # noqa: N816
-apiFace = Part.Face  # noqa: N816
-apiShell = Part.Shell  # noqa: N816
-apiSolid = Part.Solid  # noqa: N816
-apiShape = Part.Shape  # noqa: N816
-apiSurface = Part.BSplineSurface  # noqa:  N816
-apiPlacement = Base.Placement  # noqa:  N816
-apiPlane = Part.Plane  # noqa: N816
-apiCompound = Part.Compound  # noqa: N816
+apiVertex = Part.Vertex
+apiVector = Base.Vector
+apiEdge = Part.Edge
+apiWire = Part.Wire
+apiFace = Part.Face
+apiShell = Part.Shell
+apiSolid = Part.Solid
+apiShape = Part.Shape
+apiSurface = Part.BSplineSurface
+apiPlacement = Base.Placement
+apiPlane = Part.Plane
+apiCompound = Part.Compound
 
 WORKING_PRECISION = 1e-5
 MIN_PRECISION = 1e-5
@@ -202,6 +202,11 @@ def point_to_numpy(points: list[Part.Point]) -> np.ndarray:
 def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""  # noqa: DOC201
     return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
+
+
+def make_vertex(x: float, y: float, z: float) -> apiVertex:
+    """Construct a vertex from coordinates."""  # noqa: DOC201
+    return Part.Vertex(Base.Vector(float(x), float(y), float(z)))
 
 
 # ======================================================================================
@@ -746,7 +751,7 @@ def offset_wire(
     FreeCADError
         offset failed
     """
-    if thickness == 0.0:  # noqa: RUF069
+    if not thickness:
         return wire.copy()
 
     if _wire_is_straight(wire):
@@ -918,6 +923,22 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
     return vector_to_numpy(vectors), np.array(indices)
 
 
+def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
+    """Return the unit tangent of *edge* at normalised parameter *param* in [0, 1].
+
+    *param* is in [0, 1] where 0 = start and 1 = end.  Internally mapped to the
+    FreeCAD/OCC raw parameter range.
+
+    Returns
+    -------
+    :
+        The tangent vector at *param* as a numpy array.
+    """
+    raw = edge.FirstParameter + param * (edge.LastParameter - edge.FirstParameter)
+    v = edge.tangentAt(raw)
+    return vector_to_numpy(v)
+
+
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""  # noqa: DOC201
     point = obj.OrderedEdges[0].firstVertex().Point
@@ -957,6 +978,11 @@ def ordered_edges(obj: apiShape) -> np.ndarray:
     return _get_api_attr(obj, "OrderedEdges")
 
 
+def eccentricity(edge: apiEdge) -> float:
+    """Eccentricity of an ellipse/circle edge's underlying curve (0 for a circle)."""  # noqa: DOC201
+    return edge.Curve.Eccentricity
+
+
 def wires(obj: apiShape) -> list[apiWire]:
     """Wires of the object"""  # noqa: DOC201
     return _get_api_attr(obj, "Wires")
@@ -975,6 +1001,47 @@ def shells(obj: apiShape) -> list[apiShell]:
 def solids(obj: apiShape) -> list[apiSolid]:
     """Solids of the object"""  # noqa: DOC201
     return _get_api_attr(obj, "Solids")
+
+
+def reverse_shape(shape: apiShape) -> apiShape:
+    """Return a copy of the shape with reversed orientation.
+
+    Returns
+    -------
+    :
+        The reversed-orientation copy of *shape*.
+    """
+    copy = shape.copy()
+    copy.reverse()
+    return copy
+
+
+def wire_from_edges(edge_list: list) -> apiWire:
+    """Create a wire from a list of edges.
+
+    Returns
+    -------
+    :
+        The assembled wire.
+    """
+    return Part.Wire(edge_list)
+
+
+def wire_from_wires(wire_list: list) -> apiWire:
+    """Create a single wire from a list of wires.
+
+    Returns
+    -------
+    :
+        The assembled wire (or ``wire_list[0]`` if it contained a single wire).
+    """
+    if len(wire_list) == 1:
+        return wire_list[0]
+    # Part.Wire needs edges, not wire objects, when combining multiple wires.
+    all_edges = []
+    for w in wire_list:
+        all_edges.extend(ordered_edges(w))
+    return Part.Wire(all_edges)
 
 
 def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:
@@ -1169,7 +1236,12 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     :
         Wire point value at distance
     """
-    if distance == 0.0:  # noqa: RUF069
+    # Coerce numpy 0-d / single-element arrays to a Python scalar — callers
+    # like scipy.optimize.OptimizeResult.x produce shape-(1,) arrays, and
+    # NumPy 1.25 deprecates implicit scalar conversion of ndim>0 inputs to
+    # math.isclose (DeprecationWarning).
+    distance = float(np.asarray(distance).item())
+    if math.isclose(distance, 0.0):
         return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)
@@ -2418,6 +2490,22 @@ def boolean_cut(
     else:
         raise NotImplementedError(f"Cut function not implemented for {_type} objects.")
     return output
+
+
+def face_cut_holes(face: apiFace, holes: list[apiFace]) -> list[apiFace]:
+    """Cut hole faces out of an outer face without the coplanar guard.
+
+    Used by ``BluemiraFace._create_face`` for outer-boundary + inner-holes
+    assembly where the wires are constructed to be coplanar by design but
+    may carry numerical noise that would trip ``_check_shapes_coplanar``.
+
+    Returns
+    -------
+    :
+        The resulting faces after cutting the holes from the outer face.
+    """
+    cut_shape = face.cut(holes)
+    return cut_shape.Faces
 
 
 def boolean_fragments(

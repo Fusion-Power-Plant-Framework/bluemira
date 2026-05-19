@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 from numpy.linalg import norm
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import get_log_level, set_log_level
@@ -29,6 +29,7 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     boolean_cut,
@@ -396,7 +397,7 @@ class TestSolidFacePlaneIntersect:
     def test_polygon_cut(self):
         face = BluemiraFace(generic_wire)
         _slice_face = slice_shape(face, BluemiraPlane())
-        assert generic_wire.length == _slice_face[0].length
+        assert np.isclose(generic_wire.length, _slice_face[0].length)
 
         solid = extrude_shape(face, (1, 2, 3))
         _slice_solid = slice_shape(solid, BluemiraPlane(axis=[3, 2, 1]))
@@ -437,6 +438,17 @@ class TestPointInside:
 
         for point in out_points:
             assert not point_inside_shape(point, polygon)
+
+    def test_face_rejects_out_of_plane_point(self):
+        # The face lives in the y=0 plane. A point whose UV-projection lands
+        # inside the face but whose true 3D location is far off-plane must be
+        # classified as outside, not inside.
+        face = BluemiraFace(
+            make_polygon({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]}, closed=True)
+        )
+        assert point_inside_shape([0, 0, 0], face)
+        assert not point_inside_shape([0, 1.0, 0], face)
+        assert not point_inside_shape([0, -1.0, 0], face)
 
 
 class TestConvexHullWires2d:
@@ -506,12 +518,12 @@ class TestMakeBSpline:
         # np.testing.assert_allclose(spline.length, expected_length)
         if st and et:
             assert spline.length > 1.0
-            e = spline.shape.OrderedEdges[0]
+            e = cadapi.ordered_edges(spline.shape)[0]
             np.testing.assert_allclose(
-                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 0.0), np.array(st) / norm(st)
             )
             np.testing.assert_allclose(
-                e.tangentAt(e.LastParameter), np.array(et) / norm(et)
+                cadapi.edge_tangent_at(e, 1.0), np.array(et) / norm(et)
             )
         else:
             np.testing.assert_allclose(spline.length, 1.0)
@@ -523,15 +535,15 @@ class TestMakeBSpline:
             points, closed=True, start_tangent=st, end_tangent=et
         )
         if st and et:
-            e = spline.shape.OrderedEdges[0]
+            e = cadapi.ordered_edges(spline.shape)[0]
             np.testing.assert_allclose(
-                e.tangentAt(e.FirstParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 0.0), np.array(st) / norm(st)
             )
 
             # if the bspline is closed, end tangency is not considered. Last point is
             # equal to the first point, thus also its tangent.
             np.testing.assert_allclose(
-                e.tangentAt(e.LastParameter), np.array(st) / norm(st)
+                cadapi.edge_tangent_at(e, 1.0), np.array(st) / norm(st)
             )
 
     def test_bspline_closed(self):
@@ -674,6 +686,16 @@ class TestMakeCircle:
 
 class TestSavingCAD:
     STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"
+    # Header/metadata lines that legitimately differ between the FreeCAD and CadQuery
+    # geometry backends (author, producing system, unit annotation, product name).
+    STP_BACKEND_METADATA_RE = (
+        r"FILE_DESCRIPTION\(|"
+        r"FILE_NAME\(|"
+        r"^\s*\('?(Bluemira|Open CASCADE|Author)|"
+        r"PRODUCT\('(Part__FeaturePython|Open CASCADE STEP translator)|"
+        r"SI_UNIT\(|"
+        r",'Unknown'\);"
+    )
 
     def setup_method(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
@@ -708,8 +730,10 @@ class TestSavingCAD:
                 try:
                     datetime.fromisoformat(line.split(",")[1].strip("'"))
                 except (ValueError, IndexError):
-                    # Attempt to ignore version number
-                    if not re.search(self.STP_VERSION_RE, line):
+                    # Attempt to ignore version number and backend-specific metadata
+                    if not re.search(self.STP_VERSION_RE, line) and not re.search(
+                        self.STP_BACKEND_METADATA_RE, line
+                    ):
                         lines += [line]
         if legacy:
             # legacy STP writer outputs weird things the content of which is correct
@@ -778,6 +802,16 @@ class TestMirrorShape:
     def test_bad_direction(self, shape):
         with pytest.raises(GeometryError):
             mirror_shape(shape, base=(0, 0, 0), direction=(EPS, EPS, EPS))
+
+    @pytest.mark.parametrize("scale", [1.0, 2.0, 7.5, 0.3])
+    def test_non_unit_direction_normalised(self, scale):
+        # Mirror of the same shape across the same plane must give an identical
+        # result regardless of the magnitude of the direction vector — the
+        # implementation must normalise internally.
+        ref = mirror_shape(self.solid, base=(0, 0, 0), direction=(1, 0, 0))
+        out = mirror_shape(self.solid, base=(0, 0, 0), direction=(scale, 0, 0))
+        assert np.isclose(out.volume, ref.volume)
+        np.testing.assert_allclose(out.center_of_mass, ref.center_of_mass, atol=EPS)
 
 
 class TestFilletChamfer2D:
@@ -1059,3 +1093,36 @@ class TestConnect:
         result = connect_shapes([pipe1, pipe2])
         assert len(result.solids) == 1
         assert np.isclose(crude.volume, result.solids[0].volume)
+
+
+class TestBooleanCutShell:
+    """Boolean-cut on a BluemiraShell — exercises the Shell-dispatch arm in
+    the cadquery backend's ``boolean_cut`` (``isinstance(shape, cq.Shell)``).
+    """
+
+    def test_shell_cut_with_solid_returns_shells(self):
+        outer_face = BluemiraFace(
+            make_polygon([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0]], closed=True)
+        )
+        outer_solid = extrude_shape(outer_face, [0, 0, 2])
+        shell = outer_solid.boundary[0]
+        assert isinstance(shell, BluemiraShell)
+
+        inner_face = BluemiraFace(
+            make_polygon(
+                [
+                    [0.5, 0.5, -1],
+                    [1.5, 0.5, -1],
+                    [1.5, 1.5, -1],
+                    [0.5, 1.5, -1],
+                ],
+                closed=True,
+            )
+        )
+        cutter = extrude_shape(inner_face, [0, 0, 4])
+
+        result = boolean_cut(shell, cutter)
+        assert isinstance(result, list)
+        assert len(result) >= 1
+        for piece in result:
+            assert isinstance(piece, BluemiraShell)
