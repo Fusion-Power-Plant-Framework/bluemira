@@ -177,3 +177,23 @@ def _make_alg_params(
         bluemira_print(f"Available parameters are: {list(known_keys)}.")
 
     return clean_params
+
+
+def _filter_to_scipy_options(
+    params: Mapping[str, int | float],
+    param_cls: type,
+) -> Mapping[str, int | float]:
+    """Strip *params* down to the keys ``param_cls`` declares.
+
+    Used right before ``scipy.optimize.minimize`` so SciPy doesn't emit a
+    duplicate ``OptimizeWarning: Unknown solver options`` on top of the
+    bluemira_warn that ``_make_alg_params`` already raised. ``params``
+    itself is preserved on the optimiser for user-facing transparency.
+
+    Returns
+    -------
+    :
+        ``params`` filtered down to keys present on ``param_cls``.
+    """
+    known_keys = set(asdict(param_cls()).keys())
+    return {k: v for k, v in params.items() if k in known_keys}

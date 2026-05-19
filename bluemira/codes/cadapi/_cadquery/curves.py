@@ -32,7 +32,7 @@ from OCP.TColStd import (
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.gp import gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
 
-from bluemira.codes._cadqueryapi._aliases import (
+from bluemira.codes.cadapi._cadquery.aliases import (
     _OCC_DEFAULT_TOL,
     _POINT_COINCIDENCE_TOL,
     apiEdge,
@@ -72,7 +72,7 @@ def make_bspline_g1_blend(
 ) -> apiWire:
     """Create a G1-continuous cubic Bézier blend wire between two edges.
 
-    Port of ``_freecadapi.make_bspline_g1_blend``. Connects the end of
+    Port of ``_freecad.api.make_bspline_g1_blend``. Connects the end of
     ``edge1`` to the start of ``edge2`` with a cubic Bézier whose inner
     control points are placed along the edges' tangents at the join.
 

@@ -5,9 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Shared test base for the geometry backends (``_freecadapi``, ``_cadqueryapi``).
+Shared test base for the geometry backends (``_freecad.api``, ``_cadquery``).
 
-The concrete test classes in ``test_freecadapi.py`` / ``test_cadqueryapi.py``
+The concrete test classes in ``test_freecad.api.py`` / ``test_cadquery``
 inherit from :class:`BackendApiTestsBase` and set ``cadapi`` to the backend
 module under test. Any test method moved into this base runs against both
 backends via its two subclasses, keeping the API contract in sync.
@@ -37,7 +37,7 @@ class BackendApiTestsBase:
     """Shared contract tests for a geometry backend module.
 
     Subclasses set ``cadapi`` to the backend module under test (e.g.
-    ``bluemira.codes._freecadapi``). Tests reference ``self.cadapi`` /
+    ``bluemira.codes.cadapi._freecad.api``). Tests reference ``self.cadapi`` /
     ``cls.cadapi`` rather than importing a module directly, so the same
     method exercises whichever backend the subclass wired in.
     """
@@ -239,6 +239,34 @@ class BackendApiTestsBase:
         self.cadapi.change_placement(wire2, rotate_z90)
         assert np.allclose(
             self.cadapi.center_of_mass(wire2), [-0.5, 0.5, 0.0], atol=EPS_FREECAD
+        )
+
+    def test_move_placement_translates_base_only(self):
+        """``move_placement`` adds ``vector`` to the placement's base and leaves
+        the rotation untouched (FreeCAD ``Placement.move`` semantics).
+        """
+        p = self.cadapi.make_placement(
+            base=(1.0, 2.0, 3.0), axis=(0.0, 0.0, 1.0), angle=45.0
+        )
+        original_angle = p.Rotation.Angle
+        self.cadapi.move_placement(p, [10.0, -5.0, 1.5])
+        assert np.allclose(
+            [p.Base.x, p.Base.y, p.Base.z], [11.0, -3.0, 4.5], atol=EPS_FREECAD
+        )
+        assert np.isclose(p.Rotation.Angle, original_angle, atol=EPS_FREECAD)
+
+    def test_move_placement_via_bluemira_placement(self):
+        """``BluemiraPlacement.move`` (which routes through ``move_placement``)
+        must shift a downstream-applied shape by the same vector.
+        """
+        from bluemira.geometry.placement import BluemiraPlacement  # noqa: PLC0415
+
+        bp = BluemiraPlacement(base=(0.0, 0.0, 0.0), angle=0.0)
+        bp.move([2.0, 3.0, 0.0])
+        wire = self.cadapi.make_polygon(self.closed_square_points)
+        self.cadapi.change_placement(wire, bp._shape)
+        assert np.allclose(
+            self.cadapi.center_of_mass(wire), [2.5, 3.5, 0.0], atol=EPS_FREECAD
         )
 
     @pytest.mark.parametrize(
