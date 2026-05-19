@@ -7,7 +7,7 @@
 """
 CadQuery backend for bluemira.
 
-Implements the same public interface as _freecadapi.py using CadQuery's
+Implements the same public interface as _freecad.api.py using CadQuery's
 free-function / direct Shape API (no Workplane state). ``show_cad``
 delegates to polyscope; placements go through the :class:`_CQPlacement`
 adapter (a drop-in for FreeCAD's ``Base.Placement``).
@@ -87,7 +87,7 @@ from OCP.gp import (
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._cadqueryapi._aliases import (
+from bluemira.codes.cadapi._cadquery.aliases import (
     _ANGLE_PARALLEL_TOL,
     _GEOM_NEAR_ZERO_TOL,
     _OCC_DEFAULT_TOL,
@@ -400,7 +400,7 @@ def _edge_junction_pairs(wire: apiWire) -> list[tuple[apiEdge, apiEdge]]:
     """Build the list of (prev_edge, next_edge) pairs to inspect at junctions.
 
     Includes the closing seam (last → first) when the wire is closed,
-    mirroring _freecadapi._wire_edges_tangent.
+    mirroring _freecad.api._wire_edges_tangent.
     """
     edges = ordered_edges(wire)
     pairs = list(pairwise(edges))
@@ -661,7 +661,7 @@ def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
     """True if all consecutive edges in the wire are tangent at their joins.
 
     For closed wires also checks the seam (last edge → first edge), matching
-    ``_freecadapi._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
+    ``_freecad.api._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
     via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
     edge boundaries and would silently miss hard kinks (90° polygon corners).
     """
@@ -1229,6 +1229,11 @@ def discretise_by_edges(
 
 def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     """Return the point a given arc-length distance along the wire."""
+    # Coerce numpy 0-d / single-element arrays to a Python scalar — callers
+    # like scipy.optimize.OptimizeResult.x produce shape-(1,) arrays, and
+    # NumPy 1.25 deprecates implicit scalar conversion of ndim>0 inputs to
+    # math.isclose (DeprecationWarning).
+    distance = float(np.asarray(distance).item())
     total = wire.Length()
     if math.isclose(distance, 0.0):
         return start_point(wire)
@@ -1657,7 +1662,7 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
 def face_cut_holes(face: apiFace, holes: list) -> list:
     """Cut hole faces out of an outer face.
 
-    Parity with ``_freecadapi.face_cut_holes``: no coplanar guard — callers
+    Parity with ``_freecad.api.face_cut_holes``: no coplanar guard — callers
     guarantee the input wires are coplanar by construction.
     """
     return boolean_cut(face, holes, split=False)
@@ -2069,7 +2074,7 @@ def deserialise_shape(buffer: dict) -> apiWire:
     # Local import: ``_curves`` is loaded after ``_core`` by ``__init__``, but
     # this function is only called at runtime, so a deferred import is enough
     # to keep ``_curves`` self-contained (no module-level dep on ``_core``).
-    from bluemira.codes._cadqueryapi._curves import (  # noqa: PLC0415
+    from bluemira.codes.cadapi._cadquery.curves import (  # noqa: PLC0415
         make_bezier,
         make_bspline,
         make_circle,

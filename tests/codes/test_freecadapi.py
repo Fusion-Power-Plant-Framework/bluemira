@@ -20,7 +20,7 @@ import Part  # noqa: E402
 import numpy as np  # noqa: E402
 from FreeCAD import Base, closeDocument, newDocument  # noqa: E402
 
-import bluemira.codes._freecadapi as cadapi  # noqa: E402
+import bluemira.codes.cadapi._freecad.api as cadapi  # noqa: E402
 from bluemira.base.constants import EPS  # noqa: E402
 from bluemira.codes.error import FreeCADError  # noqa: E402
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD  # noqa: E402
@@ -56,7 +56,7 @@ class TestFreecadapi(BackendApiTestsBase):
 
         circ = cadapi.make_circle(10)
         with patch(
-            "bluemira.codes._freecadapi.arrange_edges",
+            "bluemira.codes.cadapi._freecad.api.arrange_edges",
             new=lambda a, b: b,  # noqa: ARG005
         ):
             wire1 = self.offsetter(circ)

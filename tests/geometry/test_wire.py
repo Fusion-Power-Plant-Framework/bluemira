@@ -236,6 +236,21 @@ class TestWireValueAt(ValueParameterBase):
         with pytest.raises(GeometryError):
             line.value_at()
 
+    def test_negative_distance_warns_and_returns_start(self, caplog):
+        # Direct distance bypasses the alpha-clamping in BluemiraWire, so the
+        # cadapi-level guard against distance < 0 is reachable. dict form
+        # avoids the (3, N)/(N, 3) ambiguity for 3-point inputs.
+        line = make_polygon({"x": [0, 1, 1], "y": [0, 0, 1], "z": [0, 0, 0]})
+        point = line.value_at(distance=-0.5)
+        assert "Distance must be greater than 0" in caplog.text
+        np.testing.assert_allclose(point, [0, 0, 0])
+
+    def test_overshoot_distance_warns_and_returns_end(self, caplog):
+        line = make_polygon([[0, 0, 0], [1, 0, 0]])
+        point = line.value_at(distance=5.0)
+        assert "greater than the length" in caplog.text
+        np.testing.assert_allclose(point, [1, 0, 0])
+
 
 class TestWireParameterAt(ValueParameterBase):
     @pytest.mark.parametrize(

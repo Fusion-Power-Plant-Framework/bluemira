@@ -35,14 +35,14 @@ from matplotlib import colors
 try:
     from pivy import coin, quarter
 except ImportError:
-    from bluemira.codes._freecadconfig import _patch_pivy
+    from bluemira.codes.cadapi._freecad.config import _patch_pivy
 
     coin, quarter = _patch_pivy()
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadconfig import _freecad_save_config
+from bluemira.codes.cadapi._freecad.config import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
@@ -1236,7 +1236,12 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     :
         Wire point value at distance
     """
-    if distance == 0.0:  # noqa: RUF069
+    # Coerce numpy 0-d / single-element arrays to a Python scalar — callers
+    # like scipy.optimize.OptimizeResult.x produce shape-(1,) arrays, and
+    # NumPy 1.25 deprecates implicit scalar conversion of ndim>0 inputs to
+    # math.isclose (DeprecationWarning).
+    distance = float(np.asarray(distance).item())
+    if math.isclose(distance, 0.0):
         return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)

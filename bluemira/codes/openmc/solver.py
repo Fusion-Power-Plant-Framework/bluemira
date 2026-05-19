@@ -10,7 +10,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, fields
-from enum import auto
 from operator import attrgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, TypeAlias
@@ -62,7 +61,10 @@ class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""
 
     RUN = openmc.settings.RunMode.FIXED_SOURCE.value
-    RUN_AND_PLOT = auto()
+    # Explicit string instead of auto(): Python 3.13 changes auto()'s
+    # generate_next_value to require sortable values that support +1, which
+    # the OpenMC RunMode strings (e.g. "fixed source") don't satisfy.
+    RUN_AND_PLOT = "run and plot"
     PLOT = openmc.settings.RunMode.PLOT.value
     VOLUME = openmc.settings.RunMode.VOLUME.value
 

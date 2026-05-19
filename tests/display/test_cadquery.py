@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Isolated tests for the CadQuery API backend (_cadqueryapi.py).
+Isolated tests for the CadQuery API backend (_cadquery).
 
 These tests exercise the ~15 functions needed by the fusion_1 reactor model
 without involving FreeCAD, the geometry wrapper classes, or any GUI.
@@ -27,7 +27,7 @@ def _skip_cadquery():
 
 pytestmark = pytest.mark.skipif(_skip_cadquery(), reason="cadquery not installed")
 
-import bluemira.codes._cadqueryapi as cqapi  # noqa: E402
+import bluemira.codes.cadapi._cadquery as cqapi  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Fixtures
