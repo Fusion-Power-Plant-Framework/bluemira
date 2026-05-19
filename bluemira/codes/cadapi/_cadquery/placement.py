@@ -21,7 +21,7 @@ from itertools import starmap
 import cadquery as cq
 import numpy as np
 
-from bluemira.codes._cadqueryapi._aliases import (
+from bluemira.codes.cadapi._cadquery.aliases import (
     _ANGLE_PARALLEL_TOL,
     _AXIS_DOMINANCE_TOL,
     _GEOM_NEAR_ZERO_TOL,
@@ -230,7 +230,15 @@ def make_placement_from_matrix(matrix) -> _CQPlacement:
 
 
 def move_placement(placement: _CQPlacement, vector) -> None:
-    """Stub — no-op for import compatibility."""
+    """Translate ``placement``'s base by ``vector`` in place.
+
+    Mirrors FreeCAD's ``placement.move(Base.Vector(vector))`` semantics:
+    rotation is unchanged, translation is added componentwise.
+    """
+    v = np.asarray(vector, dtype=float)
+    placement.Base.x += float(v[0])
+    placement.Base.y += float(v[1])
+    placement.Base.z += float(v[2])
 
 
 def make_plane(

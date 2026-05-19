@@ -121,9 +121,18 @@ def run_examples(
     """
     if not plotting_on:
         mpl.use("Agg")
-        # Disable CAD viewer by mocking out FreeCAD API's displayer.
+        # Disable CAD viewer by mocking out the API's displayer.
         # Note that if we use a new CAD backend, this must be changed.
-        mock.patch("bluemira.codes._freecadapi.show_cad").start()
+        with suppress(ImportError):
+            mock.patch("bluemira.codes._polyscope.ps").start()
+        for _name in (
+            "bluemira.codes.cadapi._freecad.api.show_cad",
+            "bluemira.codes.cadapi._cadquery.show_cad",
+            "bluemira.codes._geometryapi.show_cad",
+        ):
+            with suppress(ImportError, AttributeError):
+                mock.patch(_name).start()
+        mock.patch.object(pv.Plotter, "show", return_value=None).start()
 
     failed = []
     for example in example_files:
