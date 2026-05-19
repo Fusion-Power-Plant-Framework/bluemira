@@ -24,10 +24,14 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 
-_FREECAD_REF = "bluemira.codes._freecadapi"
-_ACTIVE_BACKEND_REF = (
-    f"bluemira.codes._{os.environ.get('BLUEMIRA_GEOMETRY_BACKEND', 'freecad')}api"
-)
+_FREECAD_REF = "bluemira.codes.cadapi._freecad.api"
+_BACKEND_REFS = {
+    "freecad": "bluemira.codes.cadapi._freecad.api",
+    "cadquery": "bluemira.codes.cadapi._cadquery",
+}
+_ACTIVE_BACKEND_REF = _BACKEND_REFS[
+    os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
+]
 
 
 def _skip_polyscope():

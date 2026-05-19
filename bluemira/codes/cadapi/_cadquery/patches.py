@@ -9,7 +9,7 @@ Side-effect-only module that augments CadQuery shape classes with
 FreeCAD-compatible attributes (``.Orientation`` property, ``.reverse()``
 method, ``.Wires``/``.Faces``/etc. as both property and callable).
 
-Imported once from ``_cadqueryapi/__init__.py`` — must run after ``_core``
+Imported once from ``_cadquery/__init__.py`` — must run after ``core``
 because we reuse ``_cq_area_prop`` from there for the ``cq.Face.Area``
 property.
 """
@@ -21,7 +21,7 @@ from collections import UserList
 import cadquery as cq
 from OCP.TopAbs import TopAbs_REVERSED
 
-from bluemira.codes._cadqueryapi._core import _cq_area_prop
+from bluemira.codes.cadapi._cadquery.core import _cq_area_prop
 
 
 def _cq_orientation(self) -> str:

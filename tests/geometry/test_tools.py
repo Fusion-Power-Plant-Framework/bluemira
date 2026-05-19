@@ -29,6 +29,7 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.tools import (
     _signed_distance_2D,
     boolean_cut,
@@ -438,6 +439,17 @@ class TestPointInside:
         for point in out_points:
             assert not point_inside_shape(point, polygon)
 
+    def test_face_rejects_out_of_plane_point(self):
+        # The face lives in the y=0 plane. A point whose UV-projection lands
+        # inside the face but whose true 3D location is far off-plane must be
+        # classified as outside, not inside.
+        face = BluemiraFace(
+            make_polygon({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]}, closed=True)
+        )
+        assert point_inside_shape([0, 0, 0], face)
+        assert not point_inside_shape([0, 1.0, 0], face)
+        assert not point_inside_shape([0, -1.0, 0], face)
+
 
 class TestConvexHullWires2d:
     def test_ValueError_given_wires_empty(self):
@@ -791,6 +803,16 @@ class TestMirrorShape:
         with pytest.raises(GeometryError):
             mirror_shape(shape, base=(0, 0, 0), direction=(EPS, EPS, EPS))
 
+    @pytest.mark.parametrize("scale", [1.0, 2.0, 7.5, 0.3])
+    def test_non_unit_direction_normalised(self, scale):
+        # Mirror of the same shape across the same plane must give an identical
+        # result regardless of the magnitude of the direction vector — the
+        # implementation must normalise internally.
+        ref = mirror_shape(self.solid, base=(0, 0, 0), direction=(1, 0, 0))
+        out = mirror_shape(self.solid, base=(0, 0, 0), direction=(scale, 0, 0))
+        assert np.isclose(out.volume, ref.volume)
+        np.testing.assert_allclose(out.center_of_mass, ref.center_of_mass, atol=EPS)
+
 
 class TestFilletChamfer2D:
     closed_rectangle = make_polygon({"x": [0, 2, 2, 0], "z": [0, 0, 2, 2]}, closed=True)
@@ -1071,3 +1093,36 @@ class TestConnect:
         result = connect_shapes([pipe1, pipe2])
         assert len(result.solids) == 1
         assert np.isclose(crude.volume, result.solids[0].volume)
+
+
+class TestBooleanCutShell:
+    """Boolean-cut on a BluemiraShell — exercises the Shell-dispatch arm in
+    the cadquery backend's ``boolean_cut`` (``isinstance(shape, cq.Shell)``).
+    """
+
+    def test_shell_cut_with_solid_returns_shells(self):
+        outer_face = BluemiraFace(
+            make_polygon([[0, 0, 0], [2, 0, 0], [2, 2, 0], [0, 2, 0]], closed=True)
+        )
+        outer_solid = extrude_shape(outer_face, [0, 0, 2])
+        shell = outer_solid.boundary[0]
+        assert isinstance(shell, BluemiraShell)
+
+        inner_face = BluemiraFace(
+            make_polygon(
+                [
+                    [0.5, 0.5, -1],
+                    [1.5, 0.5, -1],
+                    [1.5, 1.5, -1],
+                    [0.5, 1.5, -1],
+                ],
+                closed=True,
+            )
+        )
+        cutter = extrude_shape(inner_face, [0, 0, 4])
+
+        result = boolean_cut(shell, cutter)
+        assert isinstance(result, list)
+        assert len(result) >= 1
+        for piece in result:
+            assert isinstance(piece, BluemiraShell)
