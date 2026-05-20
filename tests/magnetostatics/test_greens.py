@@ -137,9 +137,9 @@ ellip_params = pytest.mark.parametrize(
     [
         # nans
         np.nan,
-        # in valid range [0, 1]
+        # in valid range [0, 1)
         0.314,
-        np.linspace(0.05, 0.95, 21),
+        np.linspace(0.0, np.nextafter(1.0, 0.0, dtype=np.float64), 201),
         np.full((4, 3, 2), 0.42),
         # bottom of valid range
         0.0,
@@ -153,15 +153,17 @@ ellip_params = pytest.mark.parametrize(
         1.5,
         np.full((3,), 1.5),
         np.full((2, 3), 2.0),
-        # small negative
-        -0.314,
+        # in valid negative range
+        np.linspace(-0.0, np.nextafter(-1, 0, dtype=np.float64), 201),
         np.full((4, 3, 2), -0.42),
         # large negative
         -100.0,
-        np.full((3,), -100.0),
+        np.full((3,), -10.0),
         # approaching range bounds
         np.array([1e-9, 1e-22]),
         np.array([1.0 - 1e-9, 1 - 1e-16]),
+        np.array([-1e-9, -1e-22]),
+        np.array([-1.0 + 1e-9, -1 + 1e-16]),
         # non-C-contiguous
         np.asfortranarray(np.full((4, 3), 0.5)),
     ],
@@ -176,6 +178,28 @@ def test_ellipe_nb_matches_scipy_implementation(m):
 @ellip_params
 def test_ellipk_nb_matches_scipy_implementation(m):
     np.testing.assert_allclose(ellipk_nb(m), scipy_ellipk(m))
+
+
+class TestEllipticalFunctionsRegression:
+    rng = np.random.default_rng(846023420)
+    fixtures = []  # noqa: RUF012
+    for _ in range(5):  # Tested with 80000, no failures
+        fixtures.append(  # noqa: PERF401
+            [2.0 * rng.random(rng.integers(1, 10)) - 1.0]
+        )
+
+    @pytest.mark.parametrize("m", fixtures)
+    def test_ellipe_nb(self, m):
+        self.runner(ellipe_nb, scipy_ellipe, m)
+
+    @pytest.mark.parametrize("m", fixtures)
+    def test_ellipk_nb(self, m):
+        self.runner(ellipk_nb, scipy_ellipk, m)
+
+    def runner(self, new_ellip_func, old_ellip_func, m):
+        new = new_ellip_func(m)
+        old = old_ellip_func(m)
+        np.testing.assert_allclose(1e7 * new, 1e7 * old, atol=EPS)
 
 
 class TestGreenFieldsRegression:
