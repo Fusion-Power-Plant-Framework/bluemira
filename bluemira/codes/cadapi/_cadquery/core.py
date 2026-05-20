@@ -30,6 +30,7 @@ from OCP.BRepAdaptor import (
 )
 from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BuilderAlgo,
+    BRepAlgoAPI_Check,
     BRepAlgoAPI_Section,
     BRepAlgoAPI_Splitter,
 )
@@ -47,6 +48,7 @@ from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
@@ -549,7 +551,11 @@ def sweep_shape(  # noqa: C901
             # tolerance, restoring a single coherent boundary.
             if solid and len(profiles) > 1:
                 temp_result = _sewn_solid(temp_result)
-            if solid and not temp_result.isValid():
+            # We could check ``is_valid_deep`` here, but it is extremely computationally
+            # expensive and invalid geometry will end up calling it twice.
+            # Instead, it is best to just call ``fix_shape`` regardless, it is much
+            # less expensive and means is_valid_deep only gets called once.
+            if solid:
                 try:
                     fix_shape(temp_result)
                 except Exception as fix_exc:
@@ -557,6 +563,10 @@ def sweep_shape(  # noqa: C901
                         f"{attempt_name} sweep generated an invalid solid "
                         "that could not be healed."
                     ) from fix_exc
+                if not is_valid_deep(temp_result):
+                    raise FreeCADError(  # noqa: TRY301
+                        f"{attempt_name} sweep failed deep validation after healing."
+                    )
 
             result = temp_result
             break
@@ -604,6 +614,7 @@ def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
         return solid
     new_solid = cq.Solid(maker.Solid())
     if not new_solid.isValid():
+        bluemira_warn("Failed to build valid new solid. Returning original solid.")
         return solid
     return new_solid
 
@@ -822,6 +833,43 @@ def is_closed(obj: apiShape) -> bool:
 def is_valid(obj) -> bool:
     """True if the shape is valid."""
     return obj.isValid()
+
+
+def is_valid_deep(shape: apiShape) -> bool:
+    """Rigorously check shape validity."""
+    bluemira_warn(
+        "This validation can take a long time to run. Only use where necessary."
+    )
+    # topological structure
+    if not shape.isValid():
+        return False
+
+    # inside out check
+    if isinstance(shape, cq.Solid) and shape.Volume() < _OCC_DEFAULT_TOL:
+        return False
+
+    # spatial self-intersections
+    bop_checker = BRepAlgoAPI_Check(shape.wrapped)  # this can take a very long time
+    if not bop_checker.IsValid():
+        return False
+
+    face_explorer = TopExp_Explorer(shape.wrapped, TopAbs_FACE)
+    if face_explorer.More():  # only run surface mesher if the shape contains faces
+        try:
+            # theLinDeflection=0.1 - coarse mesh to test it can build without crashing
+            # isRelative=False - all shapes checked with same tolerances
+            # theAngDeflection=0.5 - coarse curve checking for stability
+            # isInParallel=True
+            # parameters are purposefully coarse to reduce computational load
+            # but this is a good test for mathematical validity
+            mesh = BRepMesh_IncrementalMesh(shape.wrapped, 0.1, False, 0.5, True)
+            mesh.Perform()
+            if not mesh.IsDone():
+                return False
+        except Exception:  # noqa: BLE001
+            return False
+
+    return True
 
 
 def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8):
@@ -2434,6 +2482,7 @@ __all__ = [
     "is_null",
     "is_same",
     "is_valid",
+    "is_valid_deep",
     "join_connect",
     "length",
     "loft",

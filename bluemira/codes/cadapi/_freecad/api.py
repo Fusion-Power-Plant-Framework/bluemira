@@ -867,6 +867,22 @@ def is_valid(obj) -> bool:
     return _get_api_attr(obj, "isValid")()
 
 
+def is_valid_deep(obj) -> bool:
+    """
+    Not implemented.
+
+    Returns
+    -------
+    :
+        A boolean for if the shape is valid.
+    """
+    bluemira_warn(
+        "Deep shape validation is not implemented for FreeCAD. "
+        "Returning regular validation."
+    )
+    return _get_api_attr(obj, "isValid")()
+
+
 def is_same(obj1: apiShape, obj2: apiShape) -> bool:
     """True if obj1 and obj2 have the same shape."""  # noqa: DOC201
     return obj1.isSame(obj2)

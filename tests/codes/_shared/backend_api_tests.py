@@ -515,6 +515,9 @@ class BackendApiTestsBase:
             x1=3, x2=16, n_TF=16, tf_wp_depth=0.5, tf_wp_width=0.5, d_offset=0.1
         )
         sweep = sweep_shape(xs2, wire_offset, frenet=frenet)
+        # It is enough to simply check that sweep exists since, for solids,
+        # sweep_shape now only returns geometry for which ``is_valid_deep``
+        # evaluates to true, otherwise it raises.
         assert sweep.is_valid()
         if frenet:
             assert "Attempting Planar Binormal fallback." in caplog.messages[0]
@@ -534,6 +537,9 @@ class BackendApiTestsBase:
             x1=3, x2=10, n_TF=18, tf_wp_depth=0.5, tf_wp_width=0.6, d_offset=0.2
         )
         sweep_frenet = sweep_shape(xs, wire, frenet=frenet)
+        # For the same reason as ``test_valid_offset``, we only need check
+        # sweep_frenet exists to know it is valid. This avoids calling the
+        # expensive ``is_valid_deep`` again.
         assert sweep_frenet.is_valid()
 
     @pytest.fixture
@@ -551,7 +557,9 @@ class BackendApiTestsBase:
         return boolean_cut(sweep_outer, sweep_inner)[0]
 
     def test_boolean_cut_hollow_coil(self, boolean_cut_princeton):
-        assert boolean_cut_princeton.is_valid()
+        # We must call ``is_valid_deep`` here because boolean cut does not currently
+        # guarantee returned geometry is truly valid
+        assert boolean_cut_princeton.is_valid_deep()
 
     def test_boolean_cut_cross_section(self, boolean_cut_princeton):
         """Cut complex swept solid with extruded block."""
@@ -562,4 +570,4 @@ class BackendApiTestsBase:
             (0, -10, 0),
         )
         sliced_coil = boolean_cut(boolean_cut_princeton, cut_tool)[0]
-        assert sliced_coil.is_valid()
+        assert sliced_coil.is_valid_deep()  # similar to ``test_boolean_cut_hollow_coil``
