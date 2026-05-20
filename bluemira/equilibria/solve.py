@@ -531,7 +531,7 @@ class PicardIterator:
         while self.i < self.maxiter:
             try:
                 next(iterator)
-            except StopIteration:  # noqa: PERF203
+            except StopIteration:
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:

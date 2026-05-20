@@ -75,7 +75,7 @@ class MaterialCache:
         for p in package:
             try:
                 self._material_packages.append(get_module(p))
-            except ImportError:  # noqa: PERF203
+            except ImportError:
                 bluemira_warn(f"Can't import {p}, skipping")
 
     def _get_material(self, name):

@@ -14,11 +14,10 @@ import json
 import operator
 from dataclasses import MISSING, Field, field
 from pathlib import Path
-from typing import TYPE_CHECKING, TextIO, TypedDict
+from typing import TYPE_CHECKING, NotRequired, TextIO, TypedDict
 
 import numpy as np
 from tabulate import tabulate
-from typing_extensions import NotRequired
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import OptVariablesError

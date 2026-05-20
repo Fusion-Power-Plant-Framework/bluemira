@@ -13,7 +13,7 @@ import requests
 from rich.progress import Progress
 
 
-async def get_size(url: str, timeout: int = 10) -> int:
+async def get_size(url: str, timeout: int = 10) -> int:  # noqa: ASYNC109
     """Get size of file
 
     Returns
@@ -52,7 +52,7 @@ async def _download(
     output: Path,
     *,
     chunk_size: int = 10000000,
-    timeout: int = 10,
+    timeout: int = 10,  # noqa: ASYNC109
 ):
     """Downloader event loop
 
@@ -64,7 +64,8 @@ async def _download(
     if not url.startswith(("http:", "https:")):
         raise ValueError("Must be an http or https url")
 
-    file_size = await get_size(url)
+    async with asyncio.timeout(timeout):
+        file_size = await get_size(url, timeout=timeout)
 
     if output.is_file() and output.stat().st_size == file_size:
         return

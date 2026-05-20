@@ -5,10 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Types for the optimisation module."""
 
-from typing import Protocol, TypedDict
+from typing import NotRequired, Protocol, TypedDict
 
 import numpy as np
-from typing_extensions import NotRequired
 
 
 class ObjectiveCallable(Protocol):

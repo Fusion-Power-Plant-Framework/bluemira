@@ -375,7 +375,7 @@ class TestSolidFacePlaneIntersect:
             try:
                 assert np.isclose(sl.length / self.twopi, self.big)
                 no_big += 1
-            except AssertionError:  # noqa: PERF203
+            except AssertionError:
                 assert np.isclose(sl.length / self.twopi, self.small)
                 no_small += 1
         assert no_big == len(_slice) // 2

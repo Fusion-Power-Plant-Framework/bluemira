@@ -71,7 +71,9 @@ class BMUnitRegistry(UnitRegistry):
         # space before on % so that M% is not a thing
         # M$ makes sense if a bit non-standard
         super().__init__(
-            fmt_locale="en_GB", preprocessors=[lambda x: x.replace("$", "USD ")]
+            fmt_locale="en_GB",
+            preprocessors=[lambda x: x.replace("$", "USD ")],
+            system="SI",
         )
 
         self._gas_flow_temperature = None
@@ -258,19 +260,25 @@ base_unit_defaults = {
     "[current]": CURRENT,
     "[temperature]": TEMP,
     "[substance]": QUANTITY,
-    "[luminosity]": "candela",
+    "[luminosity]": ureg.candela,
     "[angle]": ANGLE,
 }
 
 combined_unit_defaults = {
-    "[energy]": "joules",
-    "[pressure]": "pascal",
-    "[magnetic_field]": "tesla",
-    "[electric_potential]": "volt",
-    "[power]": "watt",
-    "[force]": "newton",
-    "[resistance]": "ohm",
+    "[energy]": ureg.joules,
+    "[pressure]": ureg.pascal,
+    "[magnetic_field]": ureg.tesla,
+    "[electric_potential]": ureg.volt,
+    "[power]": ureg.watt,
+    "[force]": ureg.newton,
+    "[resistance]": ureg.ohm,
 }
+
+ureg.default_preferred_units = [
+    *combined_unit_defaults.values(),
+    *base_unit_defaults.values(),
+]
+
 
 combined_unit_dimensions = {
     "[energy]": {"[length]": 2, "[mass]": 1, "[time]": -2},
@@ -281,19 +289,6 @@ combined_unit_dimensions = {
     "[force]": {"[length]": 2, "[mass]": 1, "[time]": -3},
     "[resistance]": {"[current]": -2, "[length]": 2, "[mass]": 1, "[time]": -3},
 }
-
-ANGLE_UNITS = [
-    "radian",
-    "turn",
-    "degree",
-    "arcminute",
-    "arcsecond",
-    "milliarcsecond",
-    "grade",
-    # "mil",  # this break milli conversion with current implementation
-    "steradian",
-    "square_degree",
-]
 
 # =============================================================================
 # Physical constants

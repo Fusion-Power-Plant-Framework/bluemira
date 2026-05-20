@@ -6,10 +6,9 @@
 import copy
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, field
-from typing import Any, Generic, TypeVar, TypedDict
+from typing import Any, Generic, NotRequired, TypeVar, TypedDict
 
 import numpy as np
-from typing_extensions import NotRequired
 
 from bluemira.geometry.optimisation import _tools
 from bluemira.geometry.optimisation._tools import KeepOutZone

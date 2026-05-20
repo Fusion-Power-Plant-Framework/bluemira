@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import copy
 import json
-from contextlib import suppress
 from dataclasses import dataclass, fields
 from operator import itemgetter
 from typing import TYPE_CHECKING, Any, ClassVar, get_args, get_type_hints
@@ -15,21 +14,14 @@ from typing import TYPE_CHECKING, Any, ClassVar, get_args, get_type_hints
 import pint
 from tabulate import tabulate
 
-from bluemira.base.constants import (
-    ANGLE_UNITS,
-    base_unit_defaults,
-    combined_unit_defaults,
-    combined_unit_dimensions,
-    raw_uc,
-    units_compatible,
-    ureg,
-)
+from bluemira.base.constants import units_compatible, ureg
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
     ParamDictT,
     Parameter,
     ParameterValueType,
 )
+from bluemira.base.parameter_frame._units import _validate_units
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
@@ -296,7 +288,7 @@ class ParameterFrame:
         for field in cls.__dataclass_fields__:
             try:
                 kwargs[field] = getattr(frame, field)
-            except AttributeError:  # noqa: PERF203
+            except AttributeError:
                 raise ValueError(
                     "Cannot create ParameterFrame from other. "
                     f"Other frame does not contain field '{field}'."
@@ -380,7 +372,7 @@ class ParameterFrame:
         for member in cls.__dataclass_fields__:
             try:
                 kwargs[member]
-            except KeyError as e:  # noqa: PERF203
+            except KeyError as e:
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
         return cls(**kwargs)
@@ -403,7 +395,7 @@ class ParameterFrame:
         """
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
-            _validate_units(member_param_data, value_type)
+            member_param_data = _validate_units(member_param_data, value_type)
         except pint.errors.PintError as pe:
             raise ValueError(
                 f"Unit conversion failed for {member} from {member_param_data['unit']}"
@@ -571,213 +563,6 @@ def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
     ):
         raise TypeError(f"Field '{field}' does not have type Parameter.")
     return get_args(member_type)
-
-
-def _validate_units(param_data: ParamDictT, value_type: Iterable[type]):
-    try:
-        quantity = ureg.Quantity(param_data["value"], param_data["unit"])
-    except ValueError:
-        try:
-            quantity = ureg.Quantity(f"{param_data['value']}*{param_data['unit']}")
-        except pint.errors.PintError as pe:
-            if param_data["value"] is None:
-                quantity = ureg.Quantity(
-                    1 if param_data["unit"] in {None, ""} else param_data["unit"]
-                )
-                param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT 🤯 😭:"
-            else:
-                raise ValueError("Unit conversion failed") from pe
-        else:
-            param_data["value"] = quantity.magnitude
-        param_data["unit"] = quantity.units
-    except KeyError as ke:
-        raise ValueError("Parameters need a value and a unit") from ke
-    except TypeError:
-        if param_data["value"] is None:
-            # dummy for None values
-            quantity = ureg.Quantity(
-                1 if param_data["unit"] in {None, ""} else param_data["unit"]
-            )
-        elif isinstance(param_data["value"], bool | str):
-            param_data["unit"] = "dimensionless"
-            return
-        else:
-            raise
-
-    if dimensionality := quantity.units.dimensionality:
-        unit = _fix_combined_units(_remake_units(dimensionality))
-    else:
-        unit = quantity.units
-
-    unit = _fix_weird_units(unit, quantity.units)
-
-    if unit != quantity.units and param_data["value"] is not None:
-        val = raw_uc(quantity.magnitude, quantity.units, unit)
-        if isinstance(param_data["value"], int) and int in value_type:
-            val = int(val)
-        param_data["value"] = val
-
-    param_data["unit"] = f"{unit:~P}"
-
-    if "MAD UNIT" in param_data.get("source", ""):
-        param_data["source"] += f"{quantity.magnitude}{param_data['unit']}"
-
-
-def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
-    """
-    Reconstruct unit from its dimensionality.
-
-    Parameters
-    ----------
-    dimensionality:
-        The dimensionality of the unit
-
-    Returns
-    -------
-    :
-        The reconstructed unit
-    """
-    dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
-    dim_pow = list(dimensionality.values())
-    return ureg.Unit(
-        ".".join([f"{j[0]}^{j[1]}" for j in zip(dim_list, dim_pow, strict=False)])
-    )
-
-
-def _fix_combined_units(unit: pint.Unit) -> pint.Unit:
-    """Converts base unit to a composite unit if they exist in the defaults.
-
-    Parameters
-    ----------
-    unit:
-        The unit to convert
-
-    Returns
-    -------
-    :
-        The converted unit
-    """
-    dim_keys = list(combined_unit_dimensions.keys())
-    dim_val = list(combined_unit_dimensions.values())
-    with suppress(ValueError):
-        return ureg.Unit(
-            combined_unit_defaults[dim_keys[dim_val.index(unit.dimensionality)]]
-        )
-    return ureg.Unit(unit)
-
-
-def _convert_angle_units(
-    modified_unit: pint.Unit, orig_unit_str: str, angle_unit: str
-) -> pint.Unit:
-    """
-    Converts angle units to the base unit default for angles.
-
-    Angles are dimensionless therefore dimensionality conversion
-    from pint doesn't work. Conversions between angle units is also not
-    very robust.
-
-    Parameters
-    ----------
-    modified_unit
-        reconstructed unit without the angle
-    orig_unit_str
-        the user supplied unit (without spaces)
-    angle_unit
-        the angle unit in `orig_unit`
-
-    Returns
-    -------
-    :
-        The converted unit
-    """
-    breaking_units = ["steradian", "square_degree"]
-    new_angle_unit = base_unit_defaults["[angle]"]
-    for b in breaking_units:
-        if b in orig_unit_str:
-            raise NotImplementedError(f"{breaking_units} not supported for conversion")
-    if f"{angle_unit}**" in orig_unit_str:
-        raise NotImplementedError("Exponent angles >1, <-1 are not supported")
-    unit_list = orig_unit_str.split("/", 1)
-    exp = "." if angle_unit in unit_list[0] else "/"
-    modified_unit = "".join(str(modified_unit).split(angle_unit))
-    return ureg.Unit(f"{modified_unit}{exp}{new_angle_unit}")
-
-
-def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Unit:
-    """
-    Essentially a crude unit parser for when we have no dimensions
-    or non-commutative dimensions.
-
-    Full power years (dimension [time]) and displacements per atom (dimensionless)
-    need to be readded to units as they will be removed by the dimensionality conversion.
-
-    Angle units are dimensionless and conversions between them are not robust
-
-    Returns
-    -------
-    :
-        The fixed unit
-
-    Raises
-    ------
-    ValueError
-        Multiple angle units provided
-    """
-    unit_str = f"{orig_unit:C}"
-
-    ang_unit = [ang for ang in ANGLE_UNITS if ang in unit_str]
-    if len(ang_unit) > 1:
-        raise ValueError(f"More than one angle unit not supported...🤯 {orig_unit}")
-    ang_unit = ang_unit[0] if len(ang_unit) == 1 else None
-
-    fpy = "full_power_year" in unit_str
-    dpa = "displacements_per_atom" in unit_str
-
-    if not (fpy or dpa) and ang_unit is None:
-        return ureg.Unit(modified_unit)
-
-    new_unit = _non_comutative_unit_conversion(
-        dict(modified_unit.dimensionality), unit_str.split("/", 1)[0], dpa, fpy
-    )
-
-    # Deal with angles
-    return _convert_angle_units(new_unit, unit_str, ang_unit) if ang_unit else new_unit
-
-
-def _non_comutative_unit_conversion(dimensionality, numerator, dpa, fpy):
-    """
-    Full power years (dimension [time]) and displacements per atom (dimensionless)
-    need to be readded to units as they will be removed by the dimensionality conversion.
-
-    Full power years even though time based is not the same as straight 'time' and
-    is therefore dealt with after other standard unit conversions.
-
-    Only first order of both of these units is dealt with.
-
-    Returns
-    -------
-    :
-        The converted unit
-    """
-    dpa_str = (
-        ("dpa." if "displacements_per_atom" in numerator else "dpa^-1.") if dpa else ""
-    )
-    if fpy:
-        if "full_power_year" in numerator:
-            dimensionality["[time]"] += -1
-            fpy_str = "fpy."
-        else:
-            dimensionality["[time]"] += 1
-            fpy_str = "fpy^-1."
-
-        if dimensionality["[time]"] == 0:
-            del dimensionality["[time]"]
-    else:
-        fpy_str = ""
-
-    return ureg.Unit(
-        f"{dpa_str}{fpy_str}{_fix_combined_units(_remake_units(dimensionality))}"
-    )
 
 
 @dataclass

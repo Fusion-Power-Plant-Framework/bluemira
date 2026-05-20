@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, TypedDict
+from typing import Any, Generic, Required, TypeVar, TypedDict
 
 import numpy as np
 import pint
@@ -37,12 +37,12 @@ config.typecheck_fail_callback = type_fail
 ParameterValueType = TypeVar("ParameterValueType")
 
 
-class ParamDictT(TypedDict):
+class ParamDictT(TypedDict, total=False):
     """Typed dictionary for a Parameter."""
 
     name: str
-    value: ParameterValueType
-    unit: str
+    value: Required[ParameterValueType]
+    unit: Required[str]
     source: str
     description: str
     long_name: str

@@ -378,7 +378,7 @@ class CodesSolver(abc.ABC):
         for key, val in send_recv.items():
             try:
                 p_map = param_mappings[key]
-            except KeyError:  # noqa: PERF203
+            except KeyError:
                 bluemira_warn(f"No mapping known for '{key}' in '{self.name}'.")
             else:
                 for sr_key, sr_val in val.items():

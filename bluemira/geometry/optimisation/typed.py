@@ -5,10 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Typing for the geometry optimisation module"""
 
-from typing import Protocol, TypedDict
+from typing import NotRequired, Protocol, TypedDict
 
 import numpy as np
-from typing_extensions import NotRequired
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
 

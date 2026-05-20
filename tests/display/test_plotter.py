@@ -45,7 +45,7 @@ class TestPlotOptions:
         for no, d in enumerate(d_view):
             try:
                 assert o_view[no] == d
-            except ValueError:  # noqa: PERF203
+            except ValueError:
                 assert all(o_view[no] == d)
 
     def test_options(self):
@@ -62,7 +62,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:  # noqa: PERF203
+                    except ValueError:
                         assert all(val[no] == d)
             else:
                 assert val == getattr(self.default, key)
@@ -79,7 +79,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] != d
-                    except ValueError:  # noqa: PERF203
+                    except ValueError:
                         assert all(val[no] == d)
                 assert val is not the_placement
             else:
@@ -99,7 +99,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:  # noqa: PERF203
+                    except ValueError:
                         assert all(val[no] == d)
             else:
                 assert val == getattr(self.default, key)
@@ -136,7 +136,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:  # noqa: PERF203
+                    except ValueError:
                         assert all(val[no] == d)
             else:
                 assert getattr(the_options, key) == val
@@ -157,7 +157,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:  # noqa: PERF203
+                    except ValueError:
                         assert all(val[no] == d)
             elif key.endswith("options") or key == "number_points":
                 assert getattr(the_options, key) == val
