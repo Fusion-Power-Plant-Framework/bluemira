@@ -456,7 +456,7 @@ def _get_planar_normal(wire: apiWire) -> tuple[float, float, float] | None:
         return (normal.x, normal.y, normal.z)
 
 
-def sweep_shape(  # noqa: C901
+def sweep_shape(  # noqa: C901, PLR0912
     profiles: Iterable[apiWire],
     path: apiWire,
     *,
@@ -563,6 +563,10 @@ def sweep_shape(  # noqa: C901
                         f"{attempt_name} sweep generated an invalid solid "
                         "that could not be healed."
                     ) from fix_exc
+                if not temp_result.isValid():
+                    raise FreeCADError(  # noqa: TRY301
+                        f"{attempt_name} sweep failed validation after healing."
+                    )
                 if not is_valid_deep(temp_result):
                     raise FreeCADError(  # noqa: TRY301
                         f"{attempt_name} sweep failed deep validation after healing."
@@ -836,10 +840,10 @@ def is_valid(obj) -> bool:
 
 
 def is_valid_deep(shape: apiShape) -> bool:
-    """Rigorously check shape validity."""
-    bluemira_warn(
-        "This validation can take a long time to run. Only use where necessary."
-    )
+    """
+    Rigorously check shape validity.
+    This can take a very long time to execute.
+    """
     # topological structure
     if not shape.isValid():
         return False

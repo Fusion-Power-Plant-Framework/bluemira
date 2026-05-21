@@ -508,6 +508,7 @@ class BackendApiTestsBase:
         )
         self._assert_arc_endpoints_match(ellipse_arc, reconstructed, reverse=reverse)
 
+    @pytest.mark.longrun
     @pytest.mark.parametrize("frenet", [True, False])
     def test_valid_offset(self, frenet, caplog):
         """Offset the Princeton D by a valid amount."""
