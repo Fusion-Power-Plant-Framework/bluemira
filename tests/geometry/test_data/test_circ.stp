@@ -1,9 +1,9 @@
 ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('Open CASCADE Model'),'2;1');
-FILE_NAME('Open CASCADE Shape Model','2026-04-09T18:07:50',('Author'),(
-    'Open CASCADE'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8'
-  ,'Unknown');
+FILE_NAME('Open CASCADE Shape Model','2026-04-09T18:07:50',('Bluemira'),
+  ('Bluemira'),'Open CASCADE STEP processor 7.8','Open CASCADE 7.8',
+  'Unknown');
 FILE_SCHEMA((
 'AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF. {1 0 10303 442 1 1 4 
 }'));
