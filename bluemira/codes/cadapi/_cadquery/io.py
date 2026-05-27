@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import cadquery as cq
+from OCP.APIHeaderSection import APIHeaderSection_MakeHeader
 from OCP.BRep import BRep_Builder
 from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCP.BRepMesh import BRepMesh_IncrementalMesh
@@ -34,7 +35,11 @@ from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Wr
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCP.StlAPI import StlAPI_Writer
 from OCP.TColStd import TColStd_IndexedDataMapOfStringString
-from OCP.TCollection import TCollection_AsciiString, TCollection_ExtendedString
+from OCP.TCollection import (
+    TCollection_AsciiString,
+    TCollection_ExtendedString,
+    TCollection_HAsciiString,
+)
 from OCP.TDataStd import TDataStd_Name
 from OCP.TDocStd import TDocStd_Document
 from OCP.TopLoc import TopLoc_Location
@@ -115,6 +120,13 @@ def make_compound(shapes: list[apiShape]) -> apiCompound:
     return cq.Shape.cast(comp)
 
 
+def _set_step_header_author(model):
+    """Set the FILE_NAME author and organization fields to 'Bluemira'."""
+    mk = APIHeaderSection_MakeHeader(model)
+    mk.SetAuthorValue(1, TCollection_HAsciiString("Bluemira"))
+    mk.SetOrganizationValue(1, TCollection_HAsciiString("Bluemira"))
+
+
 @contextlib.contextmanager
 def _step_write_settings():
     """Force the OCCT STEP writer into the same schema + unit as FreeCAD.
@@ -163,6 +175,7 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
         writer = STEPControl_Writer()
         for s in shapes:
             writer.Transfer(s.wrapped, STEPControl_AsIs)
+        _set_step_header_author(writer.Model())
         status = writer.Write(filename)
 
     if status != IFSelect_RetDone:
@@ -185,6 +198,7 @@ def _write_labeled_step(shapes, labels, filename):
         TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
     writer = STEPCAFControl_Writer()
     writer.Transfer(doc, STEPControl_AsIs)
+    _set_step_header_author(writer.ChangeWriter().Model())
     return writer.Write(str(filename))
 
 
@@ -298,6 +312,7 @@ def save_cad(
                 writer = STEPControl_Writer()
                 for s in shapes:
                     writer.Transfer(s.wrapped, STEPControl_AsIs)
+                _set_step_header_author(writer.Model())
                 status = writer.Write(str(filename))
         if status != IFSelect_RetDone:
             raise FreeCADError(f"Failed to write STEP file: {filename}")
