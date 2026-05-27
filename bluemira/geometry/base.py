@@ -255,6 +255,17 @@ class BluemiraGeo(ABC, meshing.Meshable):
         """
         return cadapi.is_valid(self.shape)
 
+    def is_valid_deep(self) -> bool:
+        """
+        Check if the shape is valid more thoroughly than ``is_valid``.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is valid.
+        """
+        return cadapi.is_valid_deep(self.shape)
+
     def is_same(self, obj: BluemiraGeo) -> bool:
         """
         Check if obj has the same shape as self
