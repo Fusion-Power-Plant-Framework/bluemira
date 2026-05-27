@@ -30,6 +30,7 @@ from OCP.BRepAdaptor import (
 )
 from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BuilderAlgo,
+    BRepAlgoAPI_Check,
     BRepAlgoAPI_Section,
     BRepAlgoAPI_Splitter,
 )
@@ -47,6 +48,7 @@ from OCP.BRepClass3d import BRepClass3d_SolidClassifier
 from OCP.BRepExtrema import BRepExtrema_DistShapeShape
 from OCP.BRepFilletAPI import BRepFilletAPI_MakeFillet2d
 from OCP.BRepGProp import BRepGProp
+from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
@@ -409,6 +411,23 @@ def _edge_junction_pairs(wire: apiWire) -> list[tuple[apiEdge, apiEdge]]:
     return pairs
 
 
+def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
+    """True if all consecutive edges in the wire are tangent at their joins.
+
+    For closed wires also checks the seam (last edge → first edge), matching
+    ``_freecadapi._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
+    via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
+    edge boundaries and would silently miss hard kinks (90° polygon corners).
+    """
+    for e_prev, e_next in _edge_junction_pairs(wire):
+        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
+        if cos_angle is None:
+            continue
+        if cos_angle < 1.0 - atol:
+            return False
+    return True
+
+
 def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     """Raise ``FreeCADError`` if the path has a non-tangent-continuous join.
 
@@ -420,18 +439,24 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     producing a self-intersecting / kinked solid. FreeCAD raises on this
     case, so we do too.
     """
-    for e_prev, e_next in _edge_junction_pairs(path):
-        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
-        if cos_angle is None:
-            continue
-        if cos_angle < 1.0 - tol:
-            raise FreeCADError(
-                "sweep_shape: path is not tangent-continuous at an interior "
-                f"vertex (cos(angle)={cos_angle:.6f})."
-            )
+    if not _wire_edges_tangent(path, atol=tol):
+        raise FreeCADError(
+            "sweep_shape: path is not tangent-continuous at an interior vertex."
+        )
 
 
-def sweep_shape(
+def _get_planar_normal(wire: apiWire) -> tuple[float, float, float] | None:
+    """Returns the normal vector if the wire is planar, otherwise None."""
+    try:
+        face = cq.Face.makeFromWires(wire)  # this succeeds if planar
+        normal = face.normalAt(None)
+    except ValueError:
+        return None  # wire is non-planar
+    else:
+        return (normal.x, normal.y, normal.z)
+
+
+def sweep_shape(  # noqa: C901, PLR0912
     profiles: Iterable[apiWire],
     path: apiWire,
     *,
@@ -462,34 +487,38 @@ def sweep_shape(
 
     _check_path_tangent_continuity(path)
 
-    # bluemira's sweep semantics match FreeCAD's ``Part.Wire.makePipeShell``:
-    # all profiles are section profiles along the path (multi-section sweep),
-    # not an outer+inner wires pair. For a single profile this degenerates to
-    # a plain pipe sweep.
-    try:
-        if len(profiles) == 1:
-            transition_mode = ["transformed", "right", "round"][transition]
-            result = cq.Solid.sweep(
-                profiles[0],
-                [],
-                path,
-                makeSolid=solid,
-                isFrenet=frenet,
-                transitionMode=transition_mode,
-            )
-        else:
-            # cq.Solid.sweep_multi doesn't expose ``transitionMode``, so drive
-            # BRepOffsetAPI_MakePipeShell directly — that way ``transition``
-            # is honoured in the multi-profile path too, matching FreeCAD's
-            # ``path.makePipeShell(profiles, solid, frenet, transition)`` which
-            # accepts it unconditionally.
+    planar_normal = _get_planar_normal(path)
+
+    # OCC's Frenet frame calculation relies on local path curvature. For planar paths
+    # with straight segments, this causes the frame to snap when transitioning into
+    # curved arcs, leading to self-intersecting wires that break boolean operations.
+
+    # To bypass this, calculate the normal vector of the plane the path is on. Then,
+    # explicitly pass this normal to the builder to lock the profile for the sweep.
+    # The attempts loop below will fallback to this approach if frenet=True but
+    # the geometry becomes invalid.
+
+    attempts = []
+    if frenet:
+        attempts.append(("Frenet", True, None))
+        if planar_normal:
+            attempts.append(("Planar Binormal Fallback", False, planar_normal))
+    elif planar_normal:
+        attempts.append(("Planar Binormal", False, planar_normal))
+    else:
+        attempts.append(("Standard Fixed", False, None))
+
+    result = None
+    last_exc = None
+    for attempt_name, use_frenet, use_binormal in attempts:
+        try:
             builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
-            builder.SetMode(frenet)
-            # Only override the transition mode when the user asked for a
-            # non-default value. Calling ``SetTransitionMode`` at all on a
-            # path without non-tangent transitions confuses OCCT's builder
-            # (Build returns IsDone=False even for the default ``Transformed``
-            # value), so we leave it alone in the common case.
+
+            if use_binormal:
+                builder.SetMode(gp_Dir(*use_binormal))
+            else:
+                builder.SetMode(use_frenet)
+
             if transition != 0:
                 builder.SetTransitionMode(
                     (
@@ -498,31 +527,68 @@ def sweep_shape(
                         BRepBuilderAPI_TransitionMode.BRepBuilderAPI_RoundCorner,
                     )[transition]
                 )
+
             for p in profiles:
                 builder.Add(p.wrapped)
+
             builder.Build()
+
             if not builder.IsDone():
                 raise FreeCADError(  # noqa: TRY301
                     "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
                 )
+
             if solid:
                 builder.MakeSolid()
-            result = cq.Shape.cast(builder.Shape())
-    except FreeCADError:
-        raise
-    except Exception as exc:
-        raise FreeCADError(f"CadQuery sweep failed: {exc}") from exc
 
-    # Multi-section sweeps on composite profiles produce shells whose adjacent
-    # faces do not share topological edges — ``isValid()`` still returns True,
-    # but downstream boolean/section operations silently drop individual faces
-    # because there is no shared boundary for them to propagate across. Sewing
-    # stitches the shell back together via vertex/edge merging within
-    # tolerance, restoring a single coherent boundary.
-    if solid and len(profiles) > 1:
-        result = _sewn_solid(result)
-    if solid and not result.isValid():
-        fix_shape(result)
+            temp_result = cq.Shape.cast(builder.Shape())
+
+            # Multi-section sweeps on composite profiles produce shells whose adjacent
+            # faces do not share topological edges — ``isValid()`` still returns True,
+            # but downstream boolean/section operations silently drop individual faces
+            # because there is no shared boundary for them to propagate across. Sewing
+            # stitches the shell back together via vertex/edge merging within
+            # tolerance, restoring a single coherent boundary.
+            if solid and len(profiles) > 1:
+                temp_result = _sewn_solid(temp_result)
+            # We could check ``is_valid_deep`` here, but it is extremely computationally
+            # expensive and invalid geometry will end up calling it twice.
+            # Instead, it is best to just call ``fix_shape`` regardless, it is much
+            # less expensive and means is_valid_deep only gets called once.
+            if solid:
+                try:
+                    fix_shape(temp_result)
+                except Exception as fix_exc:
+                    raise FreeCADError(
+                        f"{attempt_name} sweep generated an invalid solid "
+                        "that could not be healed."
+                    ) from fix_exc
+                if not temp_result.isValid():
+                    raise FreeCADError(  # noqa: TRY301
+                        f"{attempt_name} sweep failed validation after healing."
+                    )
+                if not is_valid_deep(temp_result):
+                    raise FreeCADError(  # noqa: TRY301
+                        f"{attempt_name} sweep failed deep validation after healing."
+                    )
+
+            result = temp_result
+            break
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            if attempt_name == "Frenet" and len(attempts) > 1:
+                bluemira_warn(
+                    "Frenet sweep failed. Attempting Planar Binormal fallback..."
+                )
+                continue  # try the next strategy
+            # If it's the last attempt in the list, let the loop finish and raise below
+
+    if result is None:
+        raise FreeCADError(
+            "Sweep failed. If the solid was invalid and could not be healed, "
+            "this usually happens when the profile is too large for the path's "
+            "minimum bend radius, causing the sweep to self-intersect."
+        ) from last_exc
 
     if solid:
         return result
@@ -550,7 +616,11 @@ def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
     maker = BRepBuilderAPI_MakeSolid(shells[0].wrapped)
     if not maker.IsDone():
         return solid
-    return cq.Solid(maker.Solid())
+    new_solid = cq.Solid(maker.Solid())
+    if not new_solid.isValid():
+        bluemira_warn("Failed to build valid new solid. Returning original solid.")
+        return solid
+    return new_solid
 
 
 def offset_wire(
@@ -655,23 +725,6 @@ def _wire_is_planar(wire: apiWire) -> bool:
         return face.geomType() == "PLANE"
     except Exception:  # noqa: BLE001
         return False
-
-
-def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
-    """True if all consecutive edges in the wire are tangent at their joins.
-
-    For closed wires also checks the seam (last edge → first edge), matching
-    ``_freecad.api._wire_edges_tangent``. Uses per-edge ``BRepAdaptor_Curve.D1``
-    via :func:`_edge_pair_cos_angle` — wire-level ``tangentAt`` smooths across
-    edge boundaries and would silently miss hard kinks (90° polygon corners).
-    """
-    for e_prev, e_next in _edge_junction_pairs(wire):
-        cos_angle = _edge_pair_cos_angle(e_prev, e_next)
-        if cos_angle is None:
-            continue
-        if cos_angle < 1.0 - atol:
-            return False
-    return True
 
 
 # ---------------------------------------------------------------------------
@@ -784,6 +837,43 @@ def is_closed(obj: apiShape) -> bool:
 def is_valid(obj) -> bool:
     """True if the shape is valid."""
     return obj.isValid()
+
+
+def is_valid_deep(shape: apiShape) -> bool:
+    """
+    Rigorously check shape validity.
+    This can take a very long time to execute.
+    """
+    # topological structure
+    if not shape.isValid():
+        return False
+
+    # inside out check
+    if isinstance(shape, cq.Solid) and shape.Volume() < _OCC_DEFAULT_TOL:
+        return False
+
+    # spatial self-intersections
+    bop_checker = BRepAlgoAPI_Check(shape.wrapped)  # this can take a very long time
+    if not bop_checker.IsValid():
+        return False
+
+    face_explorer = TopExp_Explorer(shape.wrapped, TopAbs_FACE)
+    if face_explorer.More():  # only run surface mesher if the shape contains faces
+        try:
+            # theLinDeflection=0.1 - coarse mesh to test it can build without crashing
+            # isRelative=False - all shapes checked with same tolerances
+            # theAngDeflection=0.5 - coarse curve checking for stability
+            # isInParallel=True
+            # parameters are purposefully coarse to reduce computational load
+            # but this is a good test for mathematical validity
+            mesh = BRepMesh_IncrementalMesh(shape.wrapped, 0.1, False, 0.5, True)
+            mesh.Perform()
+            if not mesh.IsDone():
+                return False
+        except Exception:  # noqa: BLE001
+            return False
+
+    return True
 
 
 def fix_shape(shape: apiShape, precision: float = 1e-6, min_length: float = 1e-8):
@@ -2396,6 +2486,7 @@ __all__ = [
     "is_null",
     "is_same",
     "is_valid",
+    "is_valid_deep",
     "join_connect",
     "length",
     "loft",
