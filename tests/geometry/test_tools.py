@@ -694,7 +694,7 @@ class TestSavingCAD:
         r"^\s*\('?(Bluemira|Open CASCADE|Author)|"
         r"PRODUCT\('(Part__FeaturePython|Open CASCADE STEP translator)|"
         r"SI_UNIT\(|"
-        r",'Unknown'\);"
+        r"'Unknown'\);"
     )
 
     def setup_method(self):
