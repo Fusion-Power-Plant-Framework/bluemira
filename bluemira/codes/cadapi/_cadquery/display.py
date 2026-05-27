@@ -133,9 +133,9 @@ def _compute_default_camera(parts: list[apiShape]) -> tuple[tuple, tuple]:
     FreeCAD-style xz side-view for genuinely 3D scenes. Returns
     ``(camera_position, look_at_target)`` as 3-tuples.
     """
-    from bluemira.codes.cadapi._cadquery.core import bounding_box  # noqa: PLC0415
+    from bluemira.codes import _geometryapi as cadapi  # noqa: PLC0415
 
-    bbs = [bounding_box(p) for p in parts]
+    bbs = [cadapi.bounding_box(p) for p in parts]
     xmin = min(b[0] for b in bbs)
     ymin = min(b[1] for b in bbs)
     zmin = min(b[2] for b in bbs)
