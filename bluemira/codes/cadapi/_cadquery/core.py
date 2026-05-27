@@ -101,7 +101,7 @@ from bluemira.codes.cadapi._cadquery.aliases import (
     apiSolid,
     apiWire,
 )
-from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.codes.error import CADError, CadQueryError, InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
@@ -315,7 +315,7 @@ def interpolate_bspline(
         edge = cq.Edge.makeSpline(pnts, tangents=tangents, periodic=closed)
         return cq.Wire.assembleEdges([edge])
     except Exception as exc:
-        raise FreeCADError(f"CadQuery was unable to make a spline: {exc}") from exc
+        raise CadQueryError(f"CadQuery was unable to make a spline: {exc}") from exc
 
 
 def make_face(wire: apiWire) -> apiFace:
@@ -323,9 +323,9 @@ def make_face(wire: apiWire) -> apiFace:
     try:
         face = cq.Face.makeFromWires(wire)
     except Exception as exc:
-        raise FreeCADError(f"An invalid face has been generated: {exc}") from exc
+        raise CadQueryError(f"An invalid face has been generated: {exc}") from exc
     if not face.isValid():
-        raise FreeCADError("An invalid face has been generated")
+        raise CadQueryError("An invalid face has been generated")
     return face
 
 
@@ -371,10 +371,10 @@ def revolve_shape(
         maker = BRepPrimAPI_MakeRevol(shape.wrapped, axis, math.radians(degree))
         maker.Build()
         return cq.Shape.cast(maker.Shape())
-    except FreeCADError:
+    except CadQueryError:
         raise
     except Exception as exc:
-        raise FreeCADError(f"CadQuery revolve failed: {exc}") from exc
+        raise CadQueryError(f"CadQuery revolve failed: {exc}") from exc
 
 
 def _edge_pair_cos_angle(e_prev: apiEdge, e_next: apiEdge) -> float | None:
@@ -429,7 +429,7 @@ def _wire_edges_tangent(wire: apiWire, atol: float = 1e-4) -> bool:
 
 
 def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
-    """Raise ``FreeCADError`` if the path has a non-tangent-continuous join.
+    """Raise ``CadQueryError`` if the path has a non-tangent-continuous join.
 
     Mirrors FreeCAD's ``Part.Wire.makePipeShell`` precondition: at every
     interior vertex of the sweep path, the end-tangent of the incoming
@@ -440,7 +440,7 @@ def _check_path_tangent_continuity(path: apiWire, tol: float = 1e-6) -> None:
     case, so we do too.
     """
     if not _wire_edges_tangent(path, atol=tol):
-        raise FreeCADError(
+        raise CadQueryError(
             "sweep_shape: path is not tangent-continuous at an interior vertex."
         )
 
@@ -477,7 +477,7 @@ def sweep_shape(  # noqa: C901, PLR0912
     none_closed = not any(closures)
 
     if not all_closed and not none_closed:
-        raise FreeCADError("You cannot mix open and closed profiles when sweeping.")
+        raise CadQueryError("You cannot mix open and closed profiles when sweeping.")
 
     if none_closed and solid:
         bluemira_warn(
@@ -534,7 +534,7 @@ def sweep_shape(  # noqa: C901, PLR0912
             builder.Build()
 
             if not builder.IsDone():
-                raise FreeCADError(  # noqa: TRY301
+                raise CadQueryError(  # noqa: TRY301
                     "BRepOffsetAPI_MakePipeShell failed for multi-profile sweep"
                 )
 
@@ -559,16 +559,16 @@ def sweep_shape(  # noqa: C901, PLR0912
                 try:
                     fix_shape(temp_result)
                 except Exception as fix_exc:
-                    raise FreeCADError(
+                    raise CadQueryError(
                         f"{attempt_name} sweep generated an invalid solid "
                         "that could not be healed."
                     ) from fix_exc
                 if not temp_result.isValid():
-                    raise FreeCADError(  # noqa: TRY301
+                    raise CadQueryError(  # noqa: TRY301
                         f"{attempt_name} sweep failed validation after healing."
                     )
                 if not is_valid_deep(temp_result):
-                    raise FreeCADError(  # noqa: TRY301
+                    raise CadQueryError(  # noqa: TRY301
                         f"{attempt_name} sweep failed deep validation after healing."
                     )
 
@@ -584,7 +584,7 @@ def sweep_shape(  # noqa: C901, PLR0912
             # If it's the last attempt in the list, let the loop finish and raise below
 
     if result is None:
-        raise FreeCADError(
+        raise CadQueryError(
             "Sweep failed. If the solid was invalid and could not be healed, "
             "this usually happens when the profile is too large for the path's "
             "minimum bend radius, causing the sweep to self-intersect."
@@ -670,12 +670,12 @@ def offset_wire(
     try:
         result_wires = wire.offset2D(thickness, kind=kind)
     except Exception as exc:
-        raise FreeCADError(
+        raise CadQueryError(
             f"CadQuery was unable to make an offset of wire: {exc}"
         ) from exc
 
     if not result_wires:
-        raise FreeCADError("offset_wire: no result produced")
+        raise CadQueryError("offset_wire: no result produced")
 
     if len(result_wires) > 1:
         # Inward offsets of self-intersecting / figure-8 / C-shaped wires can
@@ -693,7 +693,7 @@ def offset_wire(
     result = result_wires[0]
 
     if not open_wire and not result.IsClosed():
-        raise FreeCADError("offset failed to close wire")
+        raise CadQueryError("offset failed to close wire")
 
     return result
 
@@ -1043,16 +1043,15 @@ def dist_to_shape(
 
 
 def catch_caderr(new_error_type):
-    """Translate FreeCADError raised inside the decorated function into
-    *new_error_type*. Mirrors the FreeCAD backend so callers get a uniform
-    error-translation contract regardless of backend.
+    """Translate CADError raised inside the decorated function into
+    *new_error_type*.
     """
 
     def argswrap(func):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except FreeCADError as fe:
+            except CADError as fe:
                 raise new_error_type(fe.args[0]) from fe
 
         return wrapper
@@ -1355,7 +1354,7 @@ def split_wire(
 
     dist, _ = dist_to_shape(wire, vertex_shape)
     if dist > tolerance:
-        raise FreeCADError(
+        raise CadQueryError(
             f"Vertex is not close enough to the wire: distance {dist} > {tolerance}"
         )
 
@@ -1827,7 +1826,7 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
     algo.Build()
 
     if not algo.IsDone():
-        raise FreeCADError("Boolean fragments operation failed")
+        raise CadQueryError("Boolean fragments operation failed")
 
     compound = cq.Shape.cast(algo.Shape())
 

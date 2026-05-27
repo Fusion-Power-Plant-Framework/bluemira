@@ -193,7 +193,7 @@ def log_geometry_on_failure(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except cadapi.FreeCADError:
+        except cadapi.CADError:
             # Dump the data in the file
             if LogLevel(int(get_log_level(as_str=False) * 10)) == LogLevel.DEBUG:
                 data = _reconstruct_function_call(signature, *args, **kwargs)
@@ -589,7 +589,7 @@ def _make_polygon_fallback(
     return make_polygon(points, label, closed=closed)
 
 
-@fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
+@fallback_to(_make_polygon_fallback, cadapi.CADError)
 @log_geometry_on_failure
 def interpolate_bspline(
     points: npt.ArrayLike,
@@ -678,7 +678,7 @@ def force_wire_to_spline(
                 label=wire.label,
             )
             break
-        except cadapi.FreeCADError:
+        except cadapi.CADError:
             continue
 
     new_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
@@ -761,7 +761,7 @@ def make_circle_arc_3P(  # noqa: N802
     """
     try:
         output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
-    except cadapi.FreeCADError as e:
+    except cadapi.CADError as e:
         raise GeometryError(
             f"Failed to create BluemiraWire circle/arc from 3 points: {e}"
         ) from None
@@ -889,7 +889,7 @@ def _offset_wire_discretised(
     return wire
 
 
-@fallback_to(_offset_wire_discretised, cadapi.FreeCADError)
+@fallback_to(_offset_wire_discretised, cadapi.CADError)
 @log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
@@ -1132,7 +1132,7 @@ def revolve_shape(
 
     Raises
     ------
-    FreeCADError
+    CADError
         Cannot revolve shape
     """
     base = tuple(base)
@@ -1144,7 +1144,7 @@ def revolve_shape(
 
     try:
         return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
-    except cadapi.FreeCADError:
+    except cadapi.CADError:
         if degree == 360:  # noqa: PLR2004
             # We split into two separate revolutions of 180 degree and fuse them
             bluemira_warn(

@@ -38,7 +38,7 @@ from bluemira.codes.cadapi._cadquery.aliases import (
     apiEdge,
     apiWire,
 )
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import CadQueryError
 
 
 def make_bezier(
@@ -82,7 +82,7 @@ def make_bspline_g1_blend(
 
     Raises
     ------
-    FreeCADError
+    CadQueryError
         When the two edges' join points coincide (zero-length chord).
     """
     a1 = BRepAdaptor_Curve(edge1.wrapped)
@@ -98,7 +98,7 @@ def make_bspline_g1_blend(
     chord = gp_Vec(p0, p1)
     chord_len = chord.Magnitude()
     if chord_len == 0:
-        raise FreeCADError("Edges share identical endpoints")
+        raise CadQueryError("Edges share identical endpoints")
 
     t0.Normalize()
     t1.Normalize()
@@ -327,7 +327,7 @@ def make_circle_arc_3P(
             cq.Vector(*p1), cq.Vector(*p2), cq.Vector(*p3)
         )
     except Exception as e:
-        raise FreeCADError(str(e)) from e
+        raise CadQueryError(str(e)) from e
     if axis is None:
         return cq.Wire.assembleEdges([nat_edge])
 

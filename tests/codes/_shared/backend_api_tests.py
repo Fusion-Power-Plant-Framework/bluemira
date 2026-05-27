@@ -26,7 +26,7 @@ import pytest
 from scipy.special import ellipe
 
 from bluemira.base.constants import EPS
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import CADError
 from bluemira.geometry.constants import D_TOLERANCE, EPS_FREECAD
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonDDiscrete
@@ -236,9 +236,9 @@ class BackendApiTestsBase:
             "so one of the wires must have zero length."
         )
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             self.cadapi.split_wire(full_circle, (3, 0, 0), EPS * 10)
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             self.cadapi.split_wire(arc_of_circ, (3, 0, 0), EPS * 10)
 
     def test_split_nonperiodic_wire(self):
@@ -424,7 +424,7 @@ class BackendApiTestsBase:
     def test_catcherror(self):
         @self.cadapi.catch_caderr(ValueError)
         def func():
-            raise FreeCADError("Error")
+            raise CADError("Error")
 
         with pytest.raises(ValueError):  # noqa: PT011
             func()
@@ -448,7 +448,7 @@ class BackendApiTestsBase:
         assert np.allclose(
             self.cadapi.discretise(arc, 10), self.cadapi.discretise(arc3, 10)
         )
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             self.cadapi.make_circle_arc_3P(
                 [1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-1.0, 0.0, 0.0]
             )
