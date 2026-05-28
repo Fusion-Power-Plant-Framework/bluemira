@@ -523,7 +523,7 @@ class CoilSetMHDState(MHDState):
         self._coilset = coilset
 
     @property
-    def coilset(self):
+    def coilset(self) -> CoilSet:
         """Equilibria coilset"""
         return self._coilset
 
@@ -737,6 +737,7 @@ class Breakdown(CoilSetMHDState):
         # Set default breakdown point to grid centre
         x_mid = grid.x_min + 0.5 * (grid.x_max + grid.x_min)
         self.breakdown_point = kwargs.get("breakdown_point", (x_mid, 0))
+        print(f"{self.breakdown_point=}")
         self.filename = filename
 
     @classmethod
@@ -913,6 +914,7 @@ class Breakdown(CoilSetMHDState):
             The minimum poloidal magnetic flux at the edge of the breakdown
             region [V.s/rad]
         """
+        print(f"{self.psi(*self.breakdown_point)=}")
         return self.psi(*self.breakdown_point)
 
     def Bx(

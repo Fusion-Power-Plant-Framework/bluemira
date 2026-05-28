@@ -41,6 +41,8 @@ _Q = (
     1.24999999999870820058e-1,
     4.99999999999999999821e-1,
 )
+_C1 = 1.3862943611198906188e0
+_MACHEP = 1.1102230246251565404236316680908203125e-16  # 2**-53
 
 
 @nb.njit(cache=True)
@@ -76,14 +78,25 @@ def _ellipk(m: float) -> float:
     """
     if np.isnan(m):
         return np.nan
-    # Exact floating point comparison to match Cephes implementation.
-    if m == 1.0:  # noqa: RUF069
-        return np.inf
-    if m > 1.0:
-        return np.nan
+    # # Exact floating point comparison to match Cephes implementation.
+    # if m == 1.0:  # noqa: RUF069
+    #     return np.inf
+    # if m > 1.0:
+    #     return np.nan
 
-    p = 1.0 - m
-    return eval_polynomial(p, _P) - np.log(p) * eval_polynomial(p, _Q)
+    # p = 1.0 - m
+    # return eval_polynomial(p, _P) - np.log(p) * eval_polynomial(p, _Q)
+    if m > 1.0:
+        if np.isinf(m):
+            return 0.0
+        return _ellipk(1 / m) / np.sqrt(m)
+
+    if m > _MACHEP:
+        return eval_polynomial(m, _P) - np.log(m) * eval_polynomial(m, _Q)
+
+    if m == 0.0:
+        return np.inf
+    return _C1 - 0.5 * np.log(m)
 
 
 @nb.vectorize([nb.float64(nb.float64)], nopython=True, cache=True)
@@ -117,8 +130,9 @@ def ellipk_nb(m: _FloatOrArray) -> _FloatOrArray:
     .. [ellipk_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
     """
-    if m < 0.0:
-        # Reflection identity: K(m) = K(m/(m-1)) / sqrt(1-m)
-        # See [ellipk_1]_ 17.4.17.
-        return _ellipk(m / (m - 1.0)) / np.sqrt(1.0 - m)
-    return _ellipk(m)
+    # if m < 0.0:
+    #     # Reflection identity: K(m) = K(m/(m-1)) / sqrt(1-m)
+    #     # See [ellipk_1]_ 17.4.17.
+    #     return _ellipk(m / (m - 1.0)) / np.sqrt(1.0 - m)
+    # return _ellipk(m)
+    return _ellipk(1 - m)

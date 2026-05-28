@@ -11,7 +11,7 @@ from bluemira.magnetostatics._ellipk import _FloatOrArray, eval_polynomial
 
 _P = (
     1.53552577301013293365e-4,
-    2.50888492163602239211e-3,
+    2.50888492163602060990e-3,
     8.68786816565889628429e-3,
     1.07350949056076193403e-2,
     7.77395492516787092951e-3,
@@ -32,7 +32,7 @@ _Q = (
     3.34833904888224918614e-2,
     4.27180926518931511717e-2,
     5.85936634471101055642e-2,
-    9.37499997205916132169e-2,
+    9.37499997197644278445e-2,
     2.49999999999888314361e-1,
 )
 
@@ -52,17 +52,23 @@ def _ellipe(m: float) -> float:
     :
         E(m).
     """
-    if np.isnan(m):
-        return np.nan
-    # Exact floating point comparisons to match Cephes implementation.
-    if m == 0.0:  # noqa: RUF069
-        return np.pi / 2.0
-    if m == 1.0:  # noqa: RUF069
-        return 1.0
-    if m > 1.0:
-        return np.nan
+    # if np.isnan(m):
+    #     return np.nan
+    # # Exact floating point comparisons to match Cephes implementation.
+    # if m == 0.0:  # noqa: RUF069
+    #     return np.pi / 2.0
+    # if m == 1.0:  # noqa: RUF069
+    #     return 1.0
+    # if m > 1.0:
+    #     return np.nan
+
+    # x = 1.0 - m
 
     x = 1.0 - m
+    if x <= 0.0 and x == 0.0:
+        return 1.0
+    if x > 1.0:
+        return _ellipe(1.0 - 1 / x) * np.sqrt(x)
     return eval_polynomial(x, _P) - np.log(x) * (x * eval_polynomial(x, _Q))
 
 
@@ -97,8 +103,8 @@ def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray:
     .. [ellipe_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
     """
-    if m < 0.0:
-        # Reflection identity: E(m) = sqrt(1-m) * E(m/(m-1))
-        # See [ellipe_1]_ 17.4.17.
-        return np.sqrt(1.0 - m) * _ellipe(m / (m - 1.0))
+    # if m < 0.0:
+    #     # Reflection identity: E(m) = sqrt(1-m) * E(m/(m-1))
+    #     # See [ellipe_1]_ 17.4.17.
+    #     return np.sqrt(1.0 - m) * _ellipe(m / (m - 1.0))
     return _ellipe(m)
