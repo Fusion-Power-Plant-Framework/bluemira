@@ -453,7 +453,6 @@ class PulsedCoilsetDesign(ABC):
             eq, MagneticConstraintSet(self.eq_constraints), gamma=self.eq_config.gamma
         )
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
@@ -474,7 +473,6 @@ class PulsedCoilsetDesign(ABC):
         )
 
         program = PicardIterator(
-            eq,
             opt_problem,
             convergence=deepcopy(self.eq_config.convergence),
             relaxation=self.eq_config.relaxation,
@@ -559,7 +557,7 @@ class PulsedCoilsetDesign(ABC):
 
         return opt_problems
 
-    def converge_equilibrium(self, eq: Equilibrium, problem: CoilsetOptimisationProblem):
+    def converge_equilibrium(self, problem: CoilsetOptimisationProblem):
         """Converge an equilibrium problem from a 'frozen' plasma optimised state.
 
         Returns
@@ -568,7 +566,6 @@ class PulsedCoilsetDesign(ABC):
             The iterator
         """
         program = PicardIterator(
-            eq,
             problem,
             fixed_coils=True,
             convergence=deepcopy(self.eq_config.convergence),

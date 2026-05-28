@@ -7,14 +7,16 @@
 
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     PointType,
+    PsiContributions,
+    SphericalHarmonicApproximation,
+    SphericalHarmonicsParams,
+    SphericalHarmonicsResult,
     coil_harmonic_amplitude_matrix,
     coils_outside_fs_sphere,
     collocation_points,
     fs_fit_metric,
-    get_psi_harmonic_amplitudes,
     harmonic_amplitude_marix,
     plot_psi_comparision,
-    spherical_harmonic_approximation,
 )
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
@@ -36,8 +38,12 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
 
 __all__ = [
     "PointType",
+    "PsiContributions",
+    "SphericalHarmonicApproximation",
     "SphericalHarmonicConstraint",
     "SphericalHarmonicConstraintFunction",
+    "SphericalHarmonicsParams",
+    "SphericalHarmonicsResult",
     "ToroidalHarmonicConstraint",
     "ToroidalHarmonicConstraintFunction",
     "coil_harmonic_amplitude_matrix",
@@ -46,12 +52,10 @@ __all__ = [
     "collocation_points",
     "f_hypergeometric",
     "fs_fit_metric",
-    "get_psi_harmonic_amplitudes",
     "harmonic_amplitude_marix",
     "legendre_p",
     "legendre_q",
     "plot_psi_comparision",
-    "spherical_harmonic_approximation",
     "toroidal_harmonic_approximate_psi",
     "toroidal_harmonic_approximation",
     "toroidal_harmonic_grid_and_coil_setup",

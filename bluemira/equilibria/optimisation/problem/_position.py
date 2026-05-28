@@ -172,7 +172,7 @@ class CoilsetPositionCOP(EqCoilsetOptimisationProblem):
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
-            currents_expand_mat=self.coilset._opt_currents_expand_mat,
+            currents_expand_mat=self.eq.coilset._opt_currents_expand_mat,
         )
         return objective.f_objective(opt_currents)
 
