@@ -520,6 +520,52 @@ def build_radiation_plugs(
     return builder.build()
 
 
+def add_useful_parameters(reactor, reactor_config, reference_eq):
+    """Add useful parameters back to the global config"""
+    reactor_config.global_params.tf_wp_volume.set_value(
+        reactor.tf_coils.wp_volume, "BLUEMIRA"
+    )
+    reactor_config.global_params.pf_wp_volume.set_value(
+        reactor.pf_coils.wp_volume, "BLUEMIRA"
+    )
+
+    lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
+    reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+
+    eqs = [
+        reactor.equilibria.get_state(s).eq
+        for s in [
+            reactor.equilibria.SOF,
+            reactor.equilibria.EOF,
+            reactor.equilibria.BREAKDOWN,
+        ]
+    ]
+
+    tf_ccl = reactor.tf_coils.centreline.create_shape()
+    wp_in_wire = offset_wire(
+        tf_ccl, -0.5 * reactor_config.global_params.tf_wp_width.value, open_wire=False
+    )
+    x_min = wp_in_wire.bounding_box.x_min
+    points = wp_in_wire.discretise(200)
+    mask = np.where(points.x < x_min + 0.5)[0]
+    x, z = points.x[mask], points.z[mask]
+    Bx_tf, By, Bz_tf = reactor.tf_coils._field_solver.field(x, np.zeros_like(x), z)
+    peak_fields = []
+    for eq in eqs:
+        Bx = eq.Bx(x, z) + Bx_tf
+        Bz = eq.Bz(x, z) + Bz_tf
+        B_tot = np.sqrt(Bx**2 + By**2 + Bz**2)
+        peak_fields.append(np.max(B_tot))
+    peak_field_hifi = np.max(peak_fields)
+    reactor_config.global_params.TF_peak_field.set_value(peak_field_hifi, "BLUEMIRA")
+    peak_ripple_hifi = np.max(
+        reactor.tf_coils._field_solver.ripple(
+            lcfs.coords.x, np.zeros_like(lcfs.coords.x), lcfs.coords.z
+        )
+    )
+    reactor_config.global_params.TF_peak_ripple.set_value(peak_ripple_hifi, "BLUEMIRA")
+
+
 def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
@@ -740,6 +786,9 @@ if __name__ == "__main__":
             reactor_config.config_for("TF coils"),
             reactor.plasma.lcfs(),
             vv_thermal_shield.xz_boundary,
+        )
+        reactor_config.global_params.TF_peak_ripple_opt.set_value(
+            peak_opt_ripple, "BLUEMIRA"
         )
 
         eq_port_designer = EquatorialPortKOZDesigner(
