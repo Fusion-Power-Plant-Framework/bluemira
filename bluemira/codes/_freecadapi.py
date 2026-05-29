@@ -2850,7 +2850,7 @@ def _colourise(node: coin.SoNode, options: dict):
 
 
 def collect_verts_faces(
-    solid: apiShape, tesselation: float = 0.1
+    solid: apiShape, tessellation: float = 0.1
 ) -> tuple[np.ndarray | None, ...]:
     """
     Collects vertices and faces of parts and tessellates them
@@ -2860,7 +2860,7 @@ def collect_verts_faces(
     ----------
     solid:
         FreeCAD Part
-    tesselation:
+    tessellation:
         amount of tessellation for the mesh
 
     Returns
@@ -2877,7 +2877,7 @@ def collect_verts_faces(
     # collect
     for face in solid.Faces:
         # tessellation is likely to be the most expensive part of this
-        v, f = face.tessellate(tesselation)
+        v, f = face.tessellate(tessellation)
 
         if v != []:
             verts.append(np.array(v))
