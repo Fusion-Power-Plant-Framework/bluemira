@@ -161,24 +161,6 @@
     "source": "Input",
     "long_name": "TF coil ripple limit"
   },
-  "TF_peak_ripple_opt": {
-    "value": 0.0,
-    "unit": "percent",
-    "source": "Output",
-    "long_name": "TF coil peak ripple in optimisation problem"
-  },
-  "TF_peak_ripple": {
-    "value": 0.0,
-    "unit": "percent",
-    "source": "Output",
-    "long_name": "TF coil peak ripple"
-  },
-  "TF_peak_field": {
-    "value": 0.0,
-    "unit": "T",
-    "source": "Output",
-    "long_name": "Peak field inside the TF coil winding pack (including 3-D effects and PF contributions)"
-  },
   "T_e": {
     "value": 13,
     "unit": "kiloelectron_volt",
@@ -464,12 +446,6 @@
     "value": 0.2,
     "unit": "dimensionless",
     "source": "Input",
-    "long_name": "Minimum margin to vertical stability criterion"
-  },
-  "m_s": {
-    "value": 0.2,
-    "unit": "dimensionless",
-    "source": "Calculated",
     "long_name": "Margin to vertical stability criterion"
   },
   "l_i": {
@@ -617,20 +593,6 @@
     "source": "Input",
     "long_name": "TF coil winding pack radial width",
     "description": "Including insulation"
-  },
-  "tf_wp_volume": {
-    "value": 0.0,
-    "unit": "meter ** 3",
-    "source": "Calculated",
-    "long_name": "Total TF coil winding pack volume",
-    "description": "Calculated from the TF coil geometry and number of coils"
-  },
-  "pf_wp_volume": {
-    "value": 0.0,
-    "unit": "meter ** 3",
-    "source": "Calculated",
-    "long_name": "Total PF coil winding pack volume",
-    "description": "Calculated from the PF coil geometry"
   },
   "bb_min_angle": {
     "value": 70,

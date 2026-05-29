@@ -984,7 +984,7 @@ class PrincetonDDiscrete(PrincetonD):
         n_points: int | None = None,
         *,
         tolerance: float | None = None,
-        with_tangency: bool = True,
+        with_tangency: bool = False,
     ) -> BluemiraWire:
         """
         Make a CAD representation of the Princeton D.
