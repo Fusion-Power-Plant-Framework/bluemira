@@ -27,7 +27,6 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import NotClosedWireError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -505,9 +504,7 @@ class PFCoilSupportBuilder(Builder):
 
         rib_wire = make_polygon({"x": x, "y": 0.0, "z": z}, closed=True)
 
-        rib_face = BluemiraFace(rib_wire)
-
-        return rib_face
+        return BluemiraFace(rib_wire)
 
     def _make_ribs(self, width, support_face):
         xz_profile = self._make_rib_profile(support_face)
@@ -558,7 +555,6 @@ class PFCoilSupportBuilder(Builder):
         tf_coil_cut = extrude_shape(
             BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
         )
-
         tf_coil_cut.translate((0, -0.05 * width, 0))
         shape = boolean_cut(shape, tf_coil_cut)[0]
 

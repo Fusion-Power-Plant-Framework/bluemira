@@ -101,7 +101,7 @@ def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
 
     ib_fw_thick = params.get_values("tk_bb_fw_ib")[0]
     ib_bz_thick = params.get_values("tk_bb_bz_ib")[0]
-    ob_fw_thick = params.get_values("tk_bb_fw_ib")[0]  # TODO check should this be fw_ob?
+    ob_fw_thick = params.get_values("tk_bb_fw_ob")[0]
     ob_bz_thick = params.get_values("tk_bb_bz_ob")[0]
 
     ib_mnfld_thick = tk_bb_ib - ib_fw_thick - ib_bz_thick

@@ -224,13 +224,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         vessel_power, vessel_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "vacuum vessel power"
         )
-        fusion_power, fusion_power_err = cls._load_filter_power_err(
+        total_power, total_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "total power"
         )
-        # MC: There is power in the TF + CS, and probably the radiation shield
-        # that I am ignoring here. Perhaps worth adding filters for these
-        total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
 
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
         e_mult = cls.energy_multiplication(dt_n_power, total_power)
@@ -271,9 +267,9 @@ class OpenMCCSGResult(OpenMCResultBase):
             mult_power=mult_power,
             peak_bb_fe_damage=peak_bb_fe_damage,
             peak_bb_fe_damage_err=peak_bb_fe_damage_err,
-            photon_heat_flux=None,#cls._load_photon_heat_flux(
-                #statepoint, cell_names, cell_vols, src_rate
-            #),
+            photon_heat_flux=cls._load_photon_heat_flux(
+                statepoint, cell_names, cell_vols, src_rate
+            ),
         )
 
     @staticmethod
@@ -312,7 +308,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
+        heating_df = cls._load_dataframe_from_statepoint(
+            statepoint, "total power in known materials"
+        )
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
