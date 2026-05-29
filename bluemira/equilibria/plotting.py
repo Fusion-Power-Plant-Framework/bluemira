@@ -704,7 +704,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 self.eq.x,
                 self.eq.z,
                 self.psi,
-                levels=[psi],
+                levels=np.asarray([psi]).ravel(),
                 colors=color,
                 zorder=Zorder.FLUXSURFACE.value,
                 linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
