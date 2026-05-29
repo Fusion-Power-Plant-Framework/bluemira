@@ -202,6 +202,6 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[Constraint
             "name": geom.name,
             "f_constraint": to_optimiser_callable_from_cls(geom.f_ineq_constraint, geom),
             "df_constraint": df_constraint,
-            "tolerance": geom.tolerance * np.ones(geom.n_ineq_constraints),
+            "tolerance": geom.tolerance,
         }
     ]
