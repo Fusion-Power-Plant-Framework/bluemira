@@ -7,28 +7,34 @@
 (Including both printed/logged texts and images)
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 import openmc
-import pandas as pd
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.codes.openmc.make_csg import CellStage
 from bluemira.plasma_physics.reactions import E_DT_fusion
 from bluemira.radiation_transport.neutronics.constants import (
     FE_DPA_THRESHOLD_EV,
     get_dpa_coefficients,
 )
-from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
-    ZeroDNeutronicsResult,
-)
 from bluemira.utilities.tools import numpy_to_vtk
+
+if TYPE_CHECKING:
+    import pandas as pd
+
+    from bluemira.codes.openmc.make_csg import CellStage
+    from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
+        ZeroDNeutronicsResult,
+    )
 
 
 def _get_std_dev_iloc(df):
