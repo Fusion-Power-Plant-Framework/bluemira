@@ -719,7 +719,7 @@ class ComponentPlotter(BasePlotter):
                 if self.options._user_options:
                     options = self.options
                 else:
-                    options = comp.plot_options
+                    options = self.options
             else:
                 options = comp.plot_options
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)

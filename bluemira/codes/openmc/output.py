@@ -235,10 +235,6 @@ class OpenMCCSGResult(OpenMCResultBase):
         _fusion_power, _fusion_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "total power"
         )
-        # MC: There is power in the TF + CS, and probably the radiation shield
-        # that I am ignoring here. Perhaps worth adding filters for these
-        total_power = blanket_power + divertor_power + vessel_power
-        total_power_err = blanket_power_err + divertor_power_err + vessel_power_err
 
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
         e_mult = cls.energy_multiplication(dt_n_power, total_power)
