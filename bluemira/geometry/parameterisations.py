@@ -164,7 +164,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         """
         Optimisation tolerance for the geometry parameterisation.
         """
-        return np.array([np.finfo(float).eps])
+        return np.finfo(float).eps * np.ones(self.n_ineq_constraints)
 
     def get_x_norm_index(self, name: str) -> int:
         """
