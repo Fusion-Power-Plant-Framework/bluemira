@@ -319,18 +319,11 @@ ignore-names = [
     "*eV*",
     "I_not_dI",
     "*Li*",
-<<<<<<< HEAD
-<<<<<<< HEAD
-    "*SI*"
-=======
-    # api* types in _cadqueryapi.py mirror FreeCAD's Part.* naming so
-=======
+    "*SI*",
     # api* types in cadapi/_cadquery mirror FreeCAD's Part.* naming so
->>>>>>> 223aef4ff (Cad refactor (#4319))
     # isinstance()/type-alias callsites stay backend-agnostic
     "api*",
     "_apiFaceMeta",
->>>>>>> ead2f76f1 (Cadquery backend (#4297))
 ]
 
 [tool.ruff.lint.per-file-ignores]
