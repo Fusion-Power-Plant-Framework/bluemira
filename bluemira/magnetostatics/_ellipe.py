@@ -52,21 +52,18 @@ def _ellipe(m: float) -> float:
     :
         E(m).
     """
-    # if np.isnan(m):
-    #     return np.nan
-    # # Exact floating point comparisons to match Cephes implementation.
-    # if m == 0.0:  # noqa: RUF069
-    #     return np.pi / 2.0
-    # if m == 1.0:  # noqa: RUF069
-    #     return 1.0
-    # if m > 1.0:
-    #     return np.nan
-
-    # x = 1.0 - m
+    if np.isnan(m):
+        return np.nan
+    # Exact floating point comparisons to match Cephes implementation.
+    if m == 0.0:  # noqa: RUF069
+        return np.pi / 2.0
+    if m == 1.0:  # noqa: RUF069
+        return 1.0
+    if m > 1.0:
+        return np.nan
 
     x = 1.0 - m
-    if x <= 0.0 and x == 0.0:
-        return 1.0
+
     if x > 1.0:
         return _ellipe(1.0 - 1 / x) * np.sqrt(x)
     return eval_polynomial(x, _P) - np.log(x) * (x * eval_polynomial(x, _Q))
@@ -103,8 +100,4 @@ def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray:
     .. [ellipe_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
     """
-    # if m < 0.0:
-    #     # Reflection identity: E(m) = sqrt(1-m) * E(m/(m-1))
-    #     # See [ellipe_1]_ 17.4.17.
-    #     return np.sqrt(1.0 - m) * _ellipe(m / (m - 1.0))
     return _ellipe(m)
