@@ -601,17 +601,17 @@ class TestFindClockwiseAngle2d:
 
 @log_geometry_on_failure
 def naughty_function(wire, var=1, *, var2=(1, 2), **kwargs):  # noqa: ARG001
-    raise cadapi.FreeCADError
+    raise cadapi.CADError
 
 
 def naughty_function_result(wire, *, var2=(1, 2), **kwargs):  # noqa: ARG001
     return 41 + kwargs["missing_piece"]
 
 
-@fallback_to(naughty_function_result, cadapi.FreeCADError)
+@fallback_to(naughty_function_result, cadapi.CADError)
 @log_geometry_on_failure
 def naughty_function_fallback(wire, var=1, *, var2=(1, 2), **kwargs):  # noqa: ARG001
-    raise cadapi.FreeCADError
+    raise cadapi.CADError
 
 
 class TestLogFailedGeometryOperationSerialisation:
@@ -637,7 +637,7 @@ class TestLogFailedGeometryOperationSerialisation:
     def test_file_is_made(self, open_mock, wire):
         length = wire.length
 
-        with pytest.raises(cadapi.FreeCADError):
+        with pytest.raises(cadapi.CADError):
             naughty_function(wire, var2=[1, 2, 3], random_kwarg=np.pi)
 
         open_mock.assert_called_once()

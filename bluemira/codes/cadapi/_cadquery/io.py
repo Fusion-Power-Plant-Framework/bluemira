@@ -54,7 +54,7 @@ from bluemira.codes.cadapi._cadquery.aliases import (
     apiCompound,
     apiShape,
 )
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import CadQueryError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -179,7 +179,7 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
         status = writer.Write(filename)
 
     if status != IFSelect_RetDone:
-        raise FreeCADError(f"Failed to write STEP file: {filename}")
+        raise CadQueryError(f"Failed to write STEP file: {filename}")
 
 
 def _write_labeled_step(shapes, labels, filename):
@@ -235,7 +235,7 @@ def _write_stl(
     writer = StlAPI_Writer()
     writer.ASCIIMode = not binary
     if not writer.Write(target.wrapped, str(filename)):
-        raise FreeCADError(f"Failed to write STL file: {filename}")
+        raise CadQueryError(f"Failed to write STL file: {filename}")
 
 
 def _write_gltf(
@@ -268,7 +268,7 @@ def _write_gltf(
     file_info = TColStd_IndexedDataMapOfStringString()
     progress = Message_ProgressRange()
     if not writer.Perform(doc, file_info, progress):
-        raise FreeCADError(f"Failed to write glTF file: {filename}")
+        raise CadQueryError(f"Failed to write glTF file: {filename}")
 
 
 def save_cad(
@@ -315,14 +315,16 @@ def save_cad(
                 _set_step_header_author(writer.Model())
                 status = writer.Write(str(filename))
         if status != IFSelect_RetDone:
-            raise FreeCADError(f"Failed to write STEP file: {filename}")
+            raise CadQueryError(f"Failed to write STEP file: {filename}")
     elif cad_format == CADFileType.STL:
         _write_stl(shapes, filename)
     elif cad_format == CADFileType.GLTRANSMISSION:
         is_binary = str(filename).lower().endswith(".glb")
         _write_gltf(shapes, labels_list, filename, is_binary=is_binary)
     else:
-        raise FreeCADError(f"CAD format not supported by CadQuery backend: {cad_format}")
+        raise CadQueryError(
+            f"CAD format not supported by CadQuery backend: {cad_format}"
+        )
 
 
 _IMPORT_UNIT_SCALE_TO_METRES = {"m": 1.0, "mm": 1e-3, "cm": 1e-2, "km": 1e3}
@@ -346,7 +348,7 @@ def import_cad(
     reader = STEPControl_Reader()
     status = reader.ReadFile(str(file))
     if status != IFSelect_RetDone:
-        raise FreeCADError(f"Failed to read STEP file: {file}")
+        raise CadQueryError(f"Failed to read STEP file: {file}")
 
     reader.TransferRoots()
     shape = reader.OneShape()

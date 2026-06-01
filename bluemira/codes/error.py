@@ -10,7 +10,7 @@ Error classes for the codes module.
 
 import bluemira.base.error as base_err
 
-__all__ = ["CodesError"]
+__all__ = ["CADError", "CadQueryError", "CodesError", "FreeCADError"]
 
 
 class CodesError(base_err.BluemiraError):
@@ -19,9 +19,24 @@ class CodesError(base_err.BluemiraError):
     """
 
 
-class FreeCADError(base_err.BluemiraError):
+class CADError(base_err.BluemiraError):
     """
-    Error class for use in the geometry module where FreeCAD throws an error.
+    Base error class for CAD backend errors.
+
+    Catch this in backend-agnostic code (geometry layer, etc.)
+    to handle errors from any CAD backend.
+    """
+
+
+class FreeCADError(CADError):
+    """
+    Error class for FreeCAD backend errors.
+    """
+
+
+class CadQueryError(CADError):
+    """
+    Error class for CadQuery backend errors.
     """
 
 
