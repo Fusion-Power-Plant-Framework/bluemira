@@ -28,7 +28,7 @@ from OCP.BRep import BRep_Builder  # noqa: E402
 from OCP.TopoDS import TopoDS_Wire  # noqa: E402
 from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt, gp_Trsf  # noqa: E402
 
-from bluemira.codes.error import FreeCADError  # noqa: E402
+from bluemira.codes.error import CadQueryError  # noqa: E402
 from bluemira.geometry.error import GeometryError  # noqa: E402
 from bluemira.geometry.tools import convert  # noqa: E402
 from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
@@ -90,7 +90,7 @@ class TestCadqueryapi(BackendApiTestsBase):
     cadapi = cadapi
 
 
-@patch("bluemira.codes.error.FreeCADError", FreeCADError)
+@patch("bluemira.codes.error.CadQueryError", CadQueryError)
 @patch(f"{CORE}._edge_pair_cos_angle")
 @patch(f"{CORE}._edge_junction_pairs")
 class TestCheckPathTangentContinuity:
@@ -104,11 +104,11 @@ class TestCheckPathTangentContinuity:
         assert mock_cos_angle.call_count == 2
 
     def test_kinked_path_raises_error(self, mock_pairs, mock_cos_angle):
-        """Path with kink should raise FreeCADError."""
+        """Path with kink should raise CadQueryError."""
         mock_pairs.return_value = [(E1, E2)]
         mock_cos_angle.side_effect = [0.5]
 
-        with pytest.raises(FreeCADError) as e:
+        with pytest.raises(CadQueryError) as e:
             cadapi._check_path_tangent_continuity(MagicMock())
 
         assert "path is not tangent-continuous" in str(e.value)
@@ -133,20 +133,20 @@ class TestCheckPathTangentContinuity:
         assert mock_cos_angle.call_count == 1
 
     def test_outside_tolerance(self, mock_pairs, mock_cos_angle):
-        """Values outside tolerance limit should raise FreeCADError."""
+        """Values outside tolerance limit should raise CadQueryError."""
         mock_pairs.return_value = [(E1, E2)]
         tol = 1e-6
         mock_cos_angle.side_effect = [1.0 - (tol * 10)]
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CadQueryError):
             cadapi._check_path_tangent_continuity(MagicMock(), tol=tol)
 
     def test_raises_on_first_failure(self, mock_pairs, mock_cos_angle):
-        """Raise FreeCADError on first kink found."""
+        """Raise CadQueryError on first kink found."""
         mock_pairs.return_value = [(E1, E2), (E2, E3), (E3, E4)]
         mock_cos_angle.side_effect = [1.0, 0.0, 1.0]
 
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CadQueryError):
             cadapi._check_path_tangent_continuity(MagicMock())
 
         assert mock_cos_angle.call_count == 2
@@ -292,7 +292,7 @@ class TestSaveCadMeshFormats:
     # ---- Dispatcher edge cases --------------------------------------------
 
     def test_save_cad_rejects_unsupported_format(self, box, tmp_path):
-        with pytest.raises(cadapi.FreeCADError, match="not supported"):
+        with pytest.raises(cadapi.CadQueryError, match="not supported"):
             cadapi.save_cad(
                 [box], str(tmp_path / "x.iges"), cad_format=cadapi.CADFileType.IGES
             )
@@ -583,7 +583,7 @@ class TestInternalHelpers:
         # 90° kink at (1, 0, 0): incoming edge points +x, outgoing +y →
         # cos(angle) = 0, far below the 1 - 1e-6 tangent-continuity threshold.
         kinked = cadapi.make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
-        with pytest.raises(FreeCADError, match="tangent-continuous"):
+        with pytest.raises(CadQueryError, match="tangent-continuous"):
             cadapi._check_path_tangent_continuity(kinked)
 
     def test_check_path_tangent_continuity_straight_passes(self):
@@ -1618,9 +1618,9 @@ class TestCurves:
 
     def test_make_bspline_g1_blend_coincident_endpoints_raise(self):
         # Both edges meet at (1, 0, 0) — chord length is zero, the blend
-        # has no direction, so the helper raises FreeCADError.
+        # has no direction, so the helper raises CadQueryError.
         edge1 = cq.Edge.makeLine(cq.Vector(0, 0, 0), cq.Vector(1, 0, 0))
         edge2 = cq.Edge.makeLine(cq.Vector(1, 0, 0), cq.Vector(0, 1, 0))
         # edge1's last point and edge2's first point are both (1, 0, 0).
-        with pytest.raises(FreeCADError, match="identical endpoints"):
+        with pytest.raises(CadQueryError, match="identical endpoints"):
             cadapi.make_bspline_g1_blend(edge1, edge2)

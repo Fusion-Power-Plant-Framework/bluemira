@@ -43,10 +43,11 @@ from bluemira.codes.cadapi._cadquery.io import __all__ as _io_all
 from bluemira.codes.cadapi._cadquery.placement import *
 from bluemira.codes.cadapi._cadquery.placement import __all__ as _placement_all
 
-# Re-export error types under the same names the FreeCAD backend exposes them,
-# so ``cadapi.FreeCADError`` keeps resolving for callers that catch backend
-# errors without knowing which backend is active. The ``as X`` form is the
-# PEP 484 explicit-re-export pattern (recognised by pyright/mypy as public API).
+# Re-export error types so callers can use ``cadapi.CADError`` (backend-agnostic)
+# or ``cadapi.CadQueryError`` (CadQuery-specific).  ``FreeCADError`` is kept for
+# backward compatibility but should not be raised by this backend.
+from bluemira.codes.error import CADError as CADError
+from bluemira.codes.error import CadQueryError as CadQueryError
 from bluemira.codes.error import FreeCADError as FreeCADError
 from bluemira.codes.error import InvalidCADInputsError as InvalidCADInputsError
 from bluemira.geometry.error import GeometryError as GeometryError
@@ -60,6 +61,8 @@ __all__ = [  # noqa: PLE0604
     *_display_all,
     *_io_all,
     *_core_all,
+    "CADError",
+    "CadQueryError",
     "FreeCADError",
     "GeometryError",
     "InvalidCADInputsError",
