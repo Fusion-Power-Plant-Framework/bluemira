@@ -169,8 +169,11 @@ class TestEllipticalFunctionsRegression:
         np.asfortranarray(np.full((4, 3), 0.5)),
         np.linspace(-EPS, EPS, 201),
         np.linspace(1.0 - EPS, 1.0 + EPS, 201),
+        np.linspace(2.0 - EPS, 2.0 + EPS, 201),
+        np.inf,
+        -np.inf,
     ]
-    for _ in range(5):  # Tested with 80000, no failures
+    for _ in range(800):  # Tested with 80000, no failures
         fixtures.extend([
             [2.0 * rng.random(rng.integers(1, 10)) - 1.0],
             [2.0 * rng.random(rng.integers(1, 10)) - 2.0],

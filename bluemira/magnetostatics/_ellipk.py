@@ -89,6 +89,8 @@ def _ellipk(m: float) -> float:
 
     if m == 0.0:  # noqa: RUF069
         return np.inf
+    if m < 0.0:
+        return np.nan
     return _C1 - 0.5 * np.log(m)
 
 
