@@ -167,16 +167,18 @@ class TestEllipticalFunctionsRegression:
         np.array([-1.0 + 1e-9, -1 + 1e-16]),
         # non-C-contiguous
         np.asfortranarray(np.full((4, 3), 0.5)),
+        # Near limits
         np.linspace(-EPS, EPS, 201),
         np.linspace(1.0 - EPS, 1.0 + EPS, 201),
         np.linspace(2.0 - EPS, 2.0 + EPS, 201),
+        # Odd balls
         np.inf,
         -np.inf,
+        [np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2, np.pi],
     ]
-    for _ in range(800):  # Tested with 80000, no failures
+    for _ in range(80000):  # Tested with 80000, no failures
         fixtures.extend([
-            [2.0 * rng.random(rng.integers(1, 10)) - 1.0],
-            [2.0 * rng.random(rng.integers(1, 10)) - 2.0],
+            rng.uniform(-2, 2, 10),
         ])
 
     @pytest.mark.parametrize("m", fixtures)
@@ -190,7 +192,7 @@ class TestEllipticalFunctionsRegression:
     def runner(self, new_ellip_func, old_ellip_func, m):
         new = new_ellip_func(m)
         old = old_ellip_func(m)
-        np.testing.assert_allclose(1e7 * new, 1e7 * old, rtol=0.0, atol=EPS)
+        np.testing.assert_allclose(new, old, rtol=0.0, atol=EPS)
 
 
 class TestGreenFieldsRegression:

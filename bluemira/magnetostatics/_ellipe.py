@@ -52,15 +52,13 @@ def _ellipe(m: float) -> float:
     :
         E(m).
     """
-    if np.isnan(m):
+    if np.isnan(m) or m > 1.0:
         return np.nan
     # Exact floating point comparisons to match Cephes implementation.
     if m == 0.0:  # noqa: RUF069
         return np.pi / 2.0
     if m == 1.0:  # noqa: RUF069
         return 1.0
-    if m > 1.0:
-        return np.nan
 
     x = 1.0 - m
 
