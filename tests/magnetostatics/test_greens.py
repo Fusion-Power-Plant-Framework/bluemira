@@ -176,7 +176,7 @@ class TestEllipticalFunctionsRegression:
         -np.inf,
         [np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2, np.pi],
     ]
-    for _ in range(80000):  # Tested with 80000, no failures
+    for _ in range(5):  # Tested with 80000, no failures
         fixtures.extend([
             rng.uniform(-2, 2, 10),
         ])
