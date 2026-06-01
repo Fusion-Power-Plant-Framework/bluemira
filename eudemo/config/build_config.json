@@ -362,6 +362,7 @@
     }
   },
   "Coil structures": {
+    "sweep_transition": "round_corner",
     "material": {
       "PF ICS": "SS316_LN_MAT",
       "TF OIS": "SS316_LN_MAT",
