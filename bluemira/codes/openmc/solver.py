@@ -53,10 +53,6 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matproplib.conditions import OperationalConditions
 
-    from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
-        NeutronicsReactor,
-    )
-
 
 class OpenMCRunModes(BaseRunMode):
     """OpenMC run modes"""
