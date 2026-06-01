@@ -528,7 +528,7 @@ class BackendApiTestsBase:
         _, wire_offset, _, xs2 = self._chain_cad_operations(
             x1=3, x2=10, n_TF=10, tf_wp_depth=0.5, tf_wp_width=0.5, d_offset=1.0
         )
-        with pytest.raises(FreeCADError):
+        with pytest.raises(CADError):
             _ = sweep_shape(xs2, wire_offset, frenet=False)
 
     @pytest.mark.parametrize("frenet", [True, False])
