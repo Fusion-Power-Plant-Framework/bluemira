@@ -164,7 +164,7 @@ def import_mesh(
 
     # --- Read boundaries (if any)
     boundaries_mf = None
-    try:
+    try:  # noqa: PLW0717
         with io.XDMFFile(MPI.COMM_WORLD, boundary_file.as_posix(), "r") as xdmf:
             for name in ["boundaries", "FacetTags", "Grid", "boundaries", None]:
                 try:
@@ -182,7 +182,7 @@ def import_mesh(
     # --- Read subdomains (optional)
     subdomains_mf = None
     if subdomains:
-        try:
+        try:  # noqa: PLW0717
             with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
                 for name in ["subdomains", "CellTags", "Grid", None]:
                     try:

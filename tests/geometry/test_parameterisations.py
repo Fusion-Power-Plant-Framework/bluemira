@@ -48,7 +48,7 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 )
 def test_read_write(param_class: type[GeometryParameterisation]):
     tempdir = tempfile.mkdtemp()
-    try:
+    try:  # noqa: PLW0717
         the_path = Path(tempdir, f"{param_class.__name__}.json")
         param = param_class()
         param.to_json(the_path)
