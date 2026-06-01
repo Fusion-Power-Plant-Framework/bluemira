@@ -43,7 +43,7 @@ from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.cadapi._freecad.config import _freecad_save_config
-from bluemira.codes.error import FreeCADError, InvalidCADInputsError
+from bluemira.codes.error import CADError, FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
 
@@ -90,7 +90,7 @@ def catch_caderr(new_error_type):
         def wrapper(*args, **kwargs):
             try:
                 return func(*args, **kwargs)
-            except FreeCADError as fe:
+            except CADError as fe:
                 raise new_error_type(fe.args[0]) from fe
 
         return wrapper
