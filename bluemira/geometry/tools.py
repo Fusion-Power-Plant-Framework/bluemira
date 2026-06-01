@@ -1203,6 +1203,14 @@ class SweepShapeTransition(enum.IntEnum):
     RIGHT_CORNER = 1
     ROUND_CORNER = 2
 
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            if isinstance(value, str):
+                return cls[value.upper()]
+        except ValueError:
+            return super()._missing_(value)
+
 
 def sweep_shape(
     profiles: BluemiraWire | Iterable[BluemiraWire],
@@ -1210,7 +1218,7 @@ def sweep_shape(
     *,
     solid: bool = True,
     frenet: bool = True,
-    transition: SweepShapeTransition | int = SweepShapeTransition.ROUND_CORNER,
+    transition: SweepShapeTransition | int = SweepShapeTransition.DEFAULT,
     label: str = "",
 ) -> BluemiraSolid | BluemiraShell:
     """
