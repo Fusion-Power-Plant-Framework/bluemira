@@ -18,11 +18,8 @@ jobs:
       PYTHON_VERSION: "3.11"
     steps:
       - name: "Get information about the current run"
-        uses: potiuk/get-workflow-origin@e2dae063368361e4cd1f510e8785cd73bca9352e # v1_5
+        uses: ./actions/get-workflow-origin
         id: workflow-run-info
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          sourceRunId: ${{ github.event.workflow_run.id }}
       - name: Checkout
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
