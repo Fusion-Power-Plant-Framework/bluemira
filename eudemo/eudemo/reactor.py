@@ -627,7 +627,7 @@ if __name__ == "__main__":
         "CAD neutronics": 0.0,
     }
 
-    try:
+    try:  # noqa: PLW0717
         start = time.time()
         reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
         reactor = EUDEMO("EUDEMO", n_sectors=reactor_config.global_params.n_TF.value)

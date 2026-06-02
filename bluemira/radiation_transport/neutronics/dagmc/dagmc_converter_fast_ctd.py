@@ -182,7 +182,7 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
             f"{output_dagmc_model_path.stem}-imprinted.stp"
         )
 
-        try:
+        try:  # noqa: PLW0717
             if converter_config.use_cached_files and imprinted_geom_step_file_p.exists():
                 bluemira_print(
                     f"Using cached imprinted geometry: '{imprinted_geom_step_file_p}'"

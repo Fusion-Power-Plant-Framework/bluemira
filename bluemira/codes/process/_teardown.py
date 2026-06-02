@@ -334,7 +334,7 @@ class _MFileWrapper:
         """
         shield_th = data["dr_shld_thermal_inboard"]
 
-        try:
+        try:  # noqa: PLW0717
             rtfin = (
                 data["dr_bore"]
                 + data["dr_cs"]
