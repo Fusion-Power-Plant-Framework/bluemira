@@ -286,28 +286,33 @@ class CoilGroupPlotter(Plotter):
     ):
         super().__init__(ax)
         self._cg = coil
-        self.colors = kwargs.pop("facecolor", None)
+
+        self.facecolors = kwargs.pop("facecolor", None)
+        self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
         self.linewidth = kwargs.pop(
             "linewidth", PLOT_DEFAULTS["coil"]["linewidth"] + 0.5
         )
-        self.edgecolor = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
-        if "alpha" in kwargs:
-            # Alpha can be provided as a list or cycle to other systems, so make sure we
-            # support that here.
-            alpha = kwargs["alpha"]
-            if isinstance(alpha, cycle):
-                kwargs["alpha"] = next(alpha)
-            if isinstance(alpha, list):
-                kwargs["alpha"] = alpha[0]
+        self.mask = kwargs.pop("mask", True)
 
-        self.plot_coil(subcoil=subcoil, label=label, force=force, **kwargs)
+        alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
+        # Alpha can be provided as a list or cycle to other systems, so make sure we
+        # support that here.
+        if isinstance(alpha, cycle):
+            self.alpha = next(alpha)
+        elif isinstance(alpha, list):
+            self.alpha = alpha[0]
+        else:
+            self.alpha = alpha
+
+        self.plot_kwargs = kwargs
+
+        self.plot_coil(subcoil=subcoil, label=label, force=force)
         if label:  # Margins and labels fighting
             self.ax.set_xlim(left=-2)
             ymin, ymax = self.ax.get_ylim()
-            self.ax.set_ylim(bottom=ymin - 1)
-            self.ax.set_ylim(top=ymax + 1)
+            self.ax.set_ylim(bottom=ymin - 1, top=ymax + 1)
 
-    def plot_coil(self, subcoil, *, label=False, force=None, **kwargs):
+    def plot_coil(self, subcoil, *, label=False, force=None):
         """
         Plot a coil onto the Axes.
         """
@@ -325,32 +330,40 @@ class CoilGroupPlotter(Plotter):
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(
             zip(*arrays, strict=False)
         ):
+            ctype = CoilType(ct.name)
             if ctrl:
-                if self.colors is not None:
-                    ctype = CoilType(ct.name)
-                    if ctype is CoilType.PF:
-                        kwargs["facecolor"] = self.colors[0]
-                    elif ctype is CoilType.CS:
-                        kwargs["facecolor"] = self.colors[1]
+                current_fcolor = PLOT_DEFAULTS["coil"]["facecolor"].get(
+                    ctype.name, "white"
+                )
+                if self.facecolors is not None:
+                    if (
+                        isinstance(self.facecolors, (list, tuple))
+                        and len(self.facecolors) >= 2  # noqa: PLR2004
+                    ):
+                        if ctype is CoilType.PF:
+                            current_fcolor = self.facecolors[0]
+                        elif ctype is CoilType.CS:
+                            current_fcolor = self.facecolors[1]
+                    else:
+                        current_fcolor = self.facecolors
 
                 self._plot_coil(
                     x_b,
                     z_b,
                     ct,
-                    color=self.edgecolor,
-                    linewidth=self.linewidth,
-                    **kwargs,
+                    fill=True,
+                    facecolor=current_fcolor,
                 )
                 if subcoil:
                     _qx_b, _qz_b = qb[i]
                     for ind in range(_qx_b.shape[0]):
-                        self._plot_coil(_qx_b[ind], _qz_b[ind], ct, fill=False, **kwargs)
+                        self._plot_coil(_qx_b[ind], _qz_b[ind], ct, fill=False)
                 if label:
                     self._annotate_coil(x, z, dx, n, cur, ct, force=force, centre=centre)
                 if force is not None:
                     self.ax.arrow(x, z, 0, d_fz[i], color="r", width=0.1)
             else:
-                self._plot_coil(x_b, z_b, ct, **kwargs)
+                self._plot_coil(x_b, z_b, ct)
 
     def _plotting_array_shaping(self):
         """
@@ -439,34 +452,42 @@ class CoilGroupPlotter(Plotter):
             zorder=Zorder.TEXT.value,
         )
 
-    def _plot_coil(self, x_boundary, z_boundary, ctype, *, fill=True, **kwargs):
+    def _plot_coil(self, x_boundary, z_boundary, ctype, *, fill=True, facecolor=None):
         """
         Single coil plot utility
         """
-        mask = kwargs.pop("mask", True)
-
-        fcolor = kwargs.pop("facecolor", PLOT_DEFAULTS["coil"]["facecolor"][ctype.name])
-
-        color = kwargs.pop("edgecolor", PLOT_DEFAULTS["coil"]["edgecolor"])
-        linewidth = kwargs.pop("linewidth", PLOT_DEFAULTS["coil"]["linewidth"])
-        alpha = kwargs.pop("alpha", PLOT_DEFAULTS["coil"]["alpha"])
+        if facecolor is None:
+            facecolor = PLOT_DEFAULTS["coil"]["facecolor"].get(ctype.name, "white")
 
         x = np.append(x_boundary, x_boundary[0])
         z = np.append(z_boundary, z_boundary[0])
         if all(x_boundary == x_boundary[0]) or all(z_boundary == z_boundary[0]):
             self.ax.plot(
-                x[0], z[0], zorder=Zorder.WIRE.value, color="k", lw=linewidth, marker="+"
+                x[0],
+                z[0],
+                zorder=Zorder.WIRE.value,
+                color="k",
+                lw=self.linewidth,
+                marker="+",
+                **self.plot_kwargs,
             )
         else:
             self.ax.plot(
-                x, z, zorder=Zorder.WIRE.value, color=color, linewidth=linewidth
+                x,
+                z,
+                zorder=Zorder.WIRE.value,
+                color=self.edgecolor,
+                linewidth=self.linewidth,
+                **self.plot_kwargs,
             )
 
         if fill:
-            if mask:
+            if self.mask:
                 self.ax.fill(x, z, color="w", zorder=Zorder.FACE.value, alpha=1)
 
-            self.ax.fill(x, z, zorder=Zorder.FACE.value, color=fcolor, alpha=alpha)
+            self.ax.fill(
+                x, z, zorder=Zorder.FACE.value, color=facecolor, alpha=self.alpha
+            )
 
 
 class PlasmaCoilPlotter(Plotter):
