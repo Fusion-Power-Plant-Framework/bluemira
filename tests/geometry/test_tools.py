@@ -943,7 +943,8 @@ class TestForceWireToSpline:
         bm_debug.assert_called_once()
 
     def test_failure_case(self):
-        result = force_wire_to_spline(self.failure_wire, n_edges_max=400)
+        new_wire = force_wire_to_spline(self.failure_wire, n_edges_max=400)
+        assert np.isclose(new_wire.length, self.failure_wire.length, rtol=0.0, atol=1e-4)
 
 
 def _crude_connect(pipe_1, void_1, pipe_2, void_2):
