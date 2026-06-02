@@ -116,12 +116,14 @@ def ellipk_nb(m: _FloatOrArray) -> _FloatOrArray:
 
     [ellipk_1]_
 
-    Implementation based on the Cephes [ellipk_2]_ C library (MIT licensed; also used
-    by SciPy) - with help from Claude to translate the C into Python.
+    Implementation based on Scipy's XSF implementation [ellipk_3]_ of the Cephes C
+    [ellipk_2]_ library (MIT licensed) - with help from Claude to translate the C
+    into Python.
 
     .. [ellipk_1] Abramowitz, M., and I. A. Stegun. Handbook of Mathematical Functions.
                   Dover Publications, 1965.
     .. [ellipk_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
+    .. [ellipk_3] https://github.com/scipy/xsf/blob/a4e89b2aa684ed63f63e5ece79b916e1f0fe619b/include/xsf/cephes/ellpk.h
     """
     return _ellipk(1 - m)

@@ -90,12 +90,16 @@ def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray:
 
     [ellipe_1]_
 
-    Implementation based on the Cephes [ellipe_2]_ C library (MIT licensed; also used
-    by SciPy) - with help from Claude to translate the C into Python.
+    Implementation based on Scipy's XSF implementation [ellipe_3]_ of the Cephes C
+    library [ellipe_2]_ (MIT licensed) - with help from Claude to translate the C
+    into Python.
 
     .. [ellipe_1] Abramowitz, M., and I. A. Stegun. Handbook of Mathematical Functions.
                   Dover Publications, 1965.
     .. [ellipe_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
+    .. [ellipe_3] https://github.com/scipy/xsf/blob/a4e89b2aa684ed63f63e5ece79b916e1f0fe619b/include/xsf/cephes/ellpe.h
     """
+    # NOTE: Numba's vectorize does not support recursion, so we cannot call _ellipe from
+    # within, hence this wrapper function.
     return _ellipe(m)
