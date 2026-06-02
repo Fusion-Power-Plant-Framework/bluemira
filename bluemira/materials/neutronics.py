@@ -94,10 +94,7 @@ def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
         name="lithium_titanate",
         elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
-            density=(
-                packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)),
-                "g/cm^3",
-            )
+            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3")
         ),
         converters=OpenMCNeutronicConfig(
             enrichment=li_enrich_ao * 100,
@@ -362,21 +359,6 @@ def _make_hcpb_mats(
                 enrichment_type="atomic",
             ),
         ),
-        # inb_bz_mat=mixture(
-        #     name="inb_breeder_zone",#"HCPB-BL2017-v3",
-        #     materials=[
-        #         (eurofer_mat, 0.128), (helium_mat, 0.276),
-        #         (make_KALOS_ACB_mat(li_enrich_ao), 0.103),
-        #         (be12ti, 0.493)],
-        #     fraction_type="volume",
-        #     mix_condition=OperationalConditions(temperature=673.15, pressure=8e6),
-        #     converters=OpenMCNeutronicConfig(
-        #         material_id=102,
-        #         enrichment=li_enrich_ao * 100,
-        #         enrichment_target="Li6",
-        #         enrichment_type="atomic",
-        #     ),
-        # ),
         inb_mani_mat=mixture(
             name="inb_manifold",
             materials=[

@@ -27,7 +27,6 @@ from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
 from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
 )
-
 from eudemo.materials import (
     BE12TI_MAT,
     EUROFER_MAT,
