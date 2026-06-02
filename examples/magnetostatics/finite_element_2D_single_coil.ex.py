@@ -167,7 +167,7 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
 
 with warnings.catch_warnings() as w:
     warnings.simplefilter("error", UserWarning)
-    try:
+    try:  # noqa: PLW0717
         with pyvista_plot_show_save("cell_tags.png") as plotter:
             grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
             num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local

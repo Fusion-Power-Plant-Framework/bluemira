@@ -46,7 +46,6 @@ if TYPE_CHECKING:
     from os import PathLike
     from types import ModuleType
 
-    import numpy.typing as npt
     from numpy.random import SeedSequence
 
     from bluemira.display.palettes import ColorPalette
