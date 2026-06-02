@@ -35,14 +35,14 @@ class ColorPalette:
 
     def __init__(self, palette_map: dict[str, ColorType]):
         self._dict = palette_map
-        color_list = []
+        colour_list = []
         for v in palette_map.values():
             if isinstance(v, str | tuple):
-                color_list.append(v)
+                colour_list.append(v)
             else:
-                color_list.extend(v._palette)
-        self._palette = sns.color_palette(color_list)
-        self._cycle = cycle(color_list)
+                colour_list.extend(v._palette)
+        self._palette = sns.color_palette(colour_list)
+        self._cycle = cycle(colour_list)
 
     def keys(self):
         """

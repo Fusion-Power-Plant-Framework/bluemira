@@ -28,7 +28,7 @@ class DefaultDisplayOptions:
     colour: ColourDescriptor = ColourDescriptor()
     transparency: float = 0.0
     material: str = "wax"
-    tesselation: float = 0.05
+    tessellation: float = 0.05
     wires_on: bool = False
     wire_radius: float = 0.001
     smooth: bool = True
@@ -176,7 +176,7 @@ def add_features(
     for shape_i, (label, part, option) in enumerate(
         zip(labels, parts, options, strict=False)
     ):
-        verts, faces = cadapi.collect_verts_faces(part, option["tesselation"])
+        verts, faces = cadapi.collect_verts_faces(part, option["tessellation"])
 
         if not (verts is None or faces is None):
             m = ps.register_surface_mesh(

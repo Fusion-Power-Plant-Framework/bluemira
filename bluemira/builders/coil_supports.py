@@ -30,6 +30,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
+    SweepShapeTransition,
     boolean_cut,
     boolean_fuse,
     extrude_shape,
@@ -861,6 +862,13 @@ class OISBuilder(Builder):
             ois_xz_profiles = [ois_xz_profiles]
         self.ois_xz_profiles = ois_xz_profiles
 
+    @property
+    def sweep_transition(self) -> SweepShapeTransition:
+        """Sweep shape transition"""
+        return SweepShapeTransition(
+            self.build_config.get("sweep_transition", SweepShapeTransition.DEFAULT)
+        )
+
     def build(self) -> Component:
         """
         Build the PF coil support component.
@@ -911,7 +919,9 @@ class OISBuilder(Builder):
                 ois_profile_1.center_of_mass,
                 ois_profile_2.center_of_mass,
             ])
-            ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
+            ois_right = sweep_shape(
+                [ois_profile_1, ois_profile_2], path, transition=self.sweep_transition
+            )
 
             # Then we "chop" it in half, but without the boolean_cut operation
             # This is because I cba to write a project_shape function...
@@ -921,7 +931,9 @@ class OISBuilder(Builder):
                 ois_profile_1.center_of_mass,
                 ois_profile_mid.center_of_mass,
             ])
-            ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
+            ois_right = sweep_shape(
+                [ois_profile_1, ois_profile_mid], path, transition=self.sweep_transition
+            )
             ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 
             right_component = PhysicalComponent(

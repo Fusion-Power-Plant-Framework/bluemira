@@ -374,8 +374,8 @@ w1face = BluemiraFace(wire1)
 #
 # Creates a `PhysicalComponent` and plots it in the xz plane
 #
-# Note that if no face colour is set, a colour from the default palette will be chosen
-# by default. This will not be the same every time.
+# Note that if no face colour is set, a colour from the default palette will be chosen.
+# This will not be the same every time to make components distiguishable by default.
 
 # %%
 pd_phycomp = PhysicalComponent("Comp", face)
@@ -407,6 +407,9 @@ plt.show(block=True)
 # The custom setting of red loses out in priority to c3 comp being set specifically
 # to green. In latter 2 plots shows that returns to component default settings when
 # custom options are default or removed.
+#
+# Note they are the same because we have set colour options on a component and that
+# takes precidence.
 
 # %%
 group = Component("Components")

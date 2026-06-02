@@ -11,6 +11,7 @@ api for plotting using matplotlib
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -232,7 +233,7 @@ class DefaultPlotOptions:
     # View of object
     view: ViewDescriptor = ViewDescriptor()
     # use external object options or default plotter options
-    _external_options: bool = True
+    _user_options: bool = False
 
     @property
     def view_placement(self) -> BluemiraPlacement:
@@ -284,7 +285,9 @@ class BasePlotter(ABC):
         **kwargs,
     ):
         self.options = (
-            PlotOptions(**self._CLASS_PLOT_OPTIONS) if options is None else options
+            PlotOptions(**self._CLASS_PLOT_OPTIONS)
+            if options is None
+            else deepcopy(options)
         )
         self.options.modify(**kwargs)
         self.set_view(self.options._options.view)
@@ -713,10 +716,10 @@ class ComponentPlotter(BasePlotter):
             if comp.plot_options.face_options["color"] in flatten_iterable(
                 BLUE_PALETTE.as_hex()
             ):
-                if self.options._external_options:
-                    options = comp.plot_options
-                else:
+                if self.options._user_options:
                     options = self.options
+                else:
+                    options = comp.plot_options
             else:
                 options = comp.plot_options
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
@@ -769,7 +772,9 @@ def _validate_plot_inputs(
     if options is None:
         options = [None] * len(parts)
     elif not isinstance(options, list):
-        options = [options] * len(parts)
+        options = [deepcopy(options)] * len(parts)
+    else:
+        options = deepcopy(options)
 
     if len(options) != len(parts):
         raise DisplayError(
@@ -837,12 +842,7 @@ def plot_2d(
     :
         The axes with the plotted data.
     """
-    _external_options = options is not None
-    parts, options = _validate_plot_inputs(parts, options)
-
-    for part, option in zip(parts, options, strict=False):
-        plotter = _get_plotter_class(part)(option, **kwargs)
-        plotter.options._external_options = _external_options
+    for plotter, part in _plot2d3d_wrap(parts, options, kwargs):
         ax = plotter.plot_2d(part, ax, show=False)
 
     if show:
@@ -880,16 +880,36 @@ def plot_3d(
     :
         The axes with the plotted data.
     """
-    parts, options = _validate_plot_inputs(parts, options)
-
-    for part, option in zip(parts, options, strict=False):
-        plotter = _get_plotter_class(part)(option, **kwargs)
+    for plotter, part in _plot2d3d_wrap(parts, options, kwargs):
         ax = plotter.plot_3d(part, ax, show=False)
 
     if show:
         plotter.show()
 
     return ax
+
+
+def _plot2d3d_wrap(
+    parts: BluemiraGeoT | Iterable[BluemiraGeoT],
+    options: PlotOptions | Iterable[PlotOptions] | Iterable[None] | None = None,
+    kwargs=None,
+):
+    """Wraps default plot setting
+
+    Yields
+    ------
+    plotter:
+        the plotting object
+    part:
+        the part to be plotted
+    """
+    _user_options = options is not None or kwargs
+    parts, options = _validate_plot_inputs(parts, options)
+
+    for part, option in zip(parts, options, strict=False):
+        plotter = _get_plotter_class(part)(option, **kwargs or {})
+        plotter.options._user_options = _user_options
+        yield plotter, part
 
 
 class Plottable:
