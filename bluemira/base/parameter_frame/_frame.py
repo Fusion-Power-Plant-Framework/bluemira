@@ -447,6 +447,10 @@ class ParameterFrame:
         """
         try:
             pkey = keys.index("Parameter")
+        except (ValueError, AttributeError):
+            pkey = None
+
+        if pkey is not None:
             keys.pop(pkey)
             if "name" in keys:
                 keys.pop(keys.index("name"))
@@ -454,8 +458,6 @@ class ParameterFrame:
                 keys.pop(keys.index("unit"))
             keys.insert(pkey, "unit")
             keys.insert(pkey, "name")
-        except (ValueError, AttributeError):
-            pkey = None
 
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)

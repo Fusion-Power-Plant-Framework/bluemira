@@ -2337,7 +2337,7 @@ def boolean_fuse(
             )
             _make_shapes_coaxis(shapes)
 
-    try:
+    try:  # noqa: PLW0717
         if _type == apiWire:
             merged_shape = BOPTools.SplitAPI.booleanFragments(shapes, "Split")
             if len(merged_shape.Wires) > len(shapes):
@@ -3237,7 +3237,7 @@ def deserialise_shape(buffer):
     FreeCADError
         Wrapping the OCCError: BRep not done in a more understandable message.
     """
-    try:
+    try:  # noqa: PLW0717
         for type_, v in buffer.items():
             if type_ == "Wire":
                 return Part.Wire([deserialise_shape(edge) for edge in v])
