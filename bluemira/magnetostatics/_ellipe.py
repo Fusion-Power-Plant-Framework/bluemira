@@ -11,7 +11,7 @@ from bluemira.magnetostatics._ellipk import _FloatOrArray, eval_polynomial
 
 _P = (
     1.53552577301013293365e-4,
-    2.50888492163602239211e-3,
+    2.50888492163602060990e-3,
     8.68786816565889628429e-3,
     1.07350949056076193403e-2,
     7.77395492516787092951e-3,
@@ -32,7 +32,7 @@ _Q = (
     3.34833904888224918614e-2,
     4.27180926518931511717e-2,
     5.85936634471101055642e-2,
-    9.37499997205916132169e-2,
+    9.37499997197644278445e-2,
     2.49999999999888314361e-1,
 )
 
@@ -52,17 +52,18 @@ def _ellipe(m: float) -> float:
     :
         E(m).
     """
-    if np.isnan(m):
+    if np.isnan(m) or m > 1.0:
         return np.nan
     # Exact floating point comparisons to match Cephes implementation.
     if m == 0.0:  # noqa: RUF069
         return np.pi / 2.0
     if m == 1.0:  # noqa: RUF069
         return 1.0
-    if m > 1.0:
-        return np.nan
 
     x = 1.0 - m
+
+    if x > 1.0:
+        return _ellipe(1.0 - 1 / x) * np.sqrt(x)
     return eval_polynomial(x, _P) - np.log(x) * (x * eval_polynomial(x, _Q))
 
 
@@ -89,16 +90,16 @@ def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray:
 
     [ellipe_1]_
 
-    Implementation based on the Cephes [ellipe_2]_ C library (MIT licensed; also used
-    by SciPy) - with help from Claude to translate the C into Python.
+    Implementation based on Scipy's XSF implementation [ellipe_3]_ of the Cephes C
+    library [ellipe_2]_ (MIT licensed) - with help from Claude to translate the C
+    into Python.
 
     .. [ellipe_1] Abramowitz, M., and I. A. Stegun. Handbook of Mathematical Functions.
                   Dover Publications, 1965.
     .. [ellipe_2] Moshier, S. L. (2000). Cephes Math Library Release 2.8.
                   http://www.netlib.org/cephes
+    .. [ellipe_3] https://github.com/scipy/xsf/blob/a4e89b2aa684ed63f63e5ece79b916e1f0fe619b/include/xsf/cephes/ellpe.h
     """
-    if m < 0.0:
-        # Reflection identity: E(m) = sqrt(1-m) * E(m/(m-1))
-        # See [ellipe_1]_ 17.4.17.
-        return np.sqrt(1.0 - m) * _ellipe(m / (m - 1.0))
+    # NOTE: Numba's vectorize does not support recursion, so we cannot call _ellipe from
+    # within, hence this wrapper function.
     return _ellipe(m)

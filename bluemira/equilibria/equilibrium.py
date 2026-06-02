@@ -523,7 +523,7 @@ class CoilSetMHDState(MHDState):
         self._coilset = coilset
 
     @property
-    def coilset(self):
+    def coilset(self) -> CoilSet:
         """Equilibria coilset"""
         return self._coilset
 

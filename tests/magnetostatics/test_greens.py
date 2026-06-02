@@ -132,11 +132,12 @@ def test_greens_vs_greens_all():
     np.testing.assert_allclose(psi, psi2)
 
 
-ellip_params = pytest.mark.parametrize(
-    "m",
-    [
+class TestEllipticalFunctionsRegression:
+    rng = np.random.default_rng(846023420)
+    fixtures = [  # noqa: RUF012
         # nans
         np.nan,
+        [np.nan, np.nan],
         # in valid range [0, 1)
         0.314,
         np.linspace(0.0, np.nextafter(1.0, 0.0, dtype=np.float64), 201),
@@ -166,27 +167,19 @@ ellip_params = pytest.mark.parametrize(
         np.array([-1.0 + 1e-9, -1 + 1e-16]),
         # non-C-contiguous
         np.asfortranarray(np.full((4, 3), 0.5)),
-    ],
-)
-
-
-@ellip_params
-def test_ellipe_nb_matches_scipy_implementation(m):
-    np.testing.assert_allclose(ellipe_nb(m), scipy_ellipe(m))
-
-
-@ellip_params
-def test_ellipk_nb_matches_scipy_implementation(m):
-    np.testing.assert_allclose(ellipk_nb(m), scipy_ellipk(m))
-
-
-class TestEllipticalFunctionsRegression:
-    rng = np.random.default_rng(846023420)
-    fixtures = []  # noqa: RUF012
+        # Near limits
+        np.linspace(-EPS, EPS, 201),
+        np.linspace(1.0 - EPS, 1.0 + EPS, 201),
+        np.linspace(2.0 - EPS, 2.0 + EPS, 201),
+        # Odd balls
+        np.inf,
+        -np.inf,
+        [np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2, np.pi],
+    ]
     for _ in range(5):  # Tested with 80000, no failures
-        fixtures.append(  # noqa: PERF401
-            [2.0 * rng.random(rng.integers(1, 10)) - 1.0]
-        )
+        fixtures.extend([
+            rng.uniform(-2, 2, 10),
+        ])
 
     @pytest.mark.parametrize("m", fixtures)
     def test_ellipe_nb(self, m):
@@ -199,7 +192,7 @@ class TestEllipticalFunctionsRegression:
     def runner(self, new_ellip_func, old_ellip_func, m):
         new = new_ellip_func(m)
         old = old_ellip_func(m)
-        np.testing.assert_allclose(1e7 * new, 1e7 * old, atol=EPS)
+        np.testing.assert_allclose(new, old, rtol=0.0, atol=EPS)
 
 
 class TestGreenFieldsRegression:
