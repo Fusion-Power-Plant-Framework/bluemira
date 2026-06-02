@@ -683,7 +683,8 @@ def force_wire_to_spline(
 
     new_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
 
-    delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
+    n = min(len(original_points.xyz), len(new_points.xyz))
+    delta = np.linalg.norm(original_points.xyz[:, :n] - new_points.xyz[:, :n], ord=2)
     if delta > l2_tolerance:
         bluemira_warn(
             f"Forcing wire to spline with {n_discr} interpolation points did not achieve"
