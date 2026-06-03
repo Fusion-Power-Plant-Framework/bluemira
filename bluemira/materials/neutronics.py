@@ -390,25 +390,6 @@ def _make_hcpb_mats(
     )
 
 
-def new_hcpb_mat(eurofer_mat, tungsten_mat, be12ti_mat, li_enrich_ao: float):
-    """
-    This is obtained from Eurofusion IDM EFDA_D_2NUTXK: HCPB Design Report 2018
-    """
-    hcpb_bl2017_v3 = mixture(
-        name="HCPB-BL2017-v3",
-        materials=[
-            (eurofer_mat, 0.7681),
-            (tungsten_mat, 0.0141),
-            (make_KALOS_ACB_mat(li_enrich_ao), 0.0415),
-            (be12ti_mat, 0.1763),
-        ],
-        fraction_type="mass",
-        mix_condition=OperationalConditions(temperature=373.15, pressure=1e5),
-        converters=OpenMCNeutronicConfig(material_id=1000),
-    )
-    return hcpb_bl2017_v3
-
-
 def _make_wcll_mats(
     eurofer_mat, tungsten_mat, water_mat, li_enrich_ao: float
 ) -> ReactorBaseMaterials:
