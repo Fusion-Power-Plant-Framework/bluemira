@@ -230,7 +230,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         vessel_power, vessel_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "vacuum vessel power"
         )
-        fusion_power, fusion_power_err = cls._load_filter_power_err(
+        # TODO @CoronelBuendia: fix power to reinclude other components
+        # 4353
+        _fusion_power, _fusion_power_err = cls._load_filter_power_err(
             statepoint, src_rate, "total power"
         )
         # MC: There is power in the TF + CS, and probably the radiation shield
@@ -277,6 +279,8 @@ class OpenMCCSGResult(OpenMCResultBase):
             mult_power=mult_power,
             peak_bb_fe_damage=peak_bb_fe_damage,
             peak_bb_fe_damage_err=peak_bb_fe_damage_err,
+            # TODO @CoronelBuendia: Turn back on
+            # 4352
             photon_heat_flux=None,  # cls._load_photon_heat_flux(
             # statepoint, cell_names, cell_vols, src_rate
             # ),
@@ -318,6 +322,8 @@ class OpenMCCSGResult(OpenMCResultBase):
         """Load the heating (sorted by material) dataframe"""
         # mean and std. dev. are given in eV per source particle,
         # so we don't need to show them to the user.
+        # TODO @CoronelBuendia: do we want total power or total power in known materials
+        # 4353
         heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
