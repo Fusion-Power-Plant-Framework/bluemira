@@ -368,9 +368,7 @@ def pyvista_plot_show_save(filename: str = "field.svg"):
     """
     import pyvista  # noqa: PLC0415
 
-    if pyvista.OFF_SCREEN:
-        pyvista.start_xvfb()
-    plotter = pyvista.Plotter()
+    plotter = pyvista.Plotter(off_screen=pyvista.OFF_SCREEN)
 
     try:
         yield plotter
