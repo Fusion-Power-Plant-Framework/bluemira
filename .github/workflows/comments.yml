@@ -76,7 +76,7 @@ jobs:
         with:
           issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
           comment-author: "github-actions[bot]"
-          body-includes: ⚠️ Warning Report
+          body-includes: ⚠️ Howdy pal, here's your warnings
           direction: last
 
       - name: Create or update warning report comment
