@@ -41,6 +41,9 @@ jobs:
         with:
           version: ${{ matrix.process-version }}
 
+      - name: Setup headless graphics
+        uses: pyvista/setup-headless-display-action@8e2e9671dd0c7206a87ad6cc8b50b0dd544d14d8 # v3
+
       - name: Run examples
         shell: bash -l {0}
         run: |
@@ -56,6 +59,4 @@ jobs:
             -e 'plasmod_example' \
             -e 'equilibria/fem_fixed_boundary' \
             -e 'codes/ext_code_script' \
-            -e 'magnetostatics/finite_element_2D_single_coil' \
-            -e mesh/mesh_tutorial.ex.py \
             -e 'radiation_transport/run_cad_neutronics'
