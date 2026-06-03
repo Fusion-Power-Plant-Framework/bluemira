@@ -586,6 +586,8 @@ class ProcessInputs:
     t_plasma_energy_confinement_max: float | None = None
     i_bootstrap_current: int | None = None
     i_beta_component: int | None = None  # listed as an output...
+    i_plasma_shape: int | None = None
+    i_plasma_ignited: int | None = None
     i_plasma_current: int | None = None
     i_density_limit: int | None = None
     i_diamagnetic_current: int | None = None
