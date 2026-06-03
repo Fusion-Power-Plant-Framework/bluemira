@@ -442,7 +442,7 @@ class Constraint(ConstraintSelection, Model):
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
         (143,),
-        ("coppera_m2_max",),
+        ("tf_coppera_m2_max",),
         "TFC current / copper area < maximum",
     )
     EICH_SEP_DENSITY_CONSTRAINT = (76, (), (), "Eich critical separatrix density")
@@ -642,8 +642,8 @@ ITERATION_VAR_MAPPING = {
     "f_nd_impurity_electrons(13)": 135,  # Xenon
     "f_nd_impurity_electrons(14)": 136,  # Tungsten
     "fplhsep": 137,
-    "dx_hts_tape_rebco": 138,
-    "dx_hts_tape_copper": 139,
+    "dx_tf_hts_tape_rebco": 138,
+    "dx_tf_hts_tape_copper": 139,
     "dr_tf_wp_with_insulation": 140,
     # 141 PREVIOUS f-VALUE
     "nd_plasma_separatrix_electron": 142,
@@ -660,7 +660,7 @@ ITERATION_VAR_MAPPING = {
     "pfusife": 155,
     "rrin": 156,
     "fvs_cs_pf_total_ramp": 157,
-    "dx_croco_strand_copper": 158,
+    "dx_tf_croco_strand_copper": 158,
     "ftoroidalgap": 159,
     "f_avspace": 160,
     "fbetatry_lower": 161,

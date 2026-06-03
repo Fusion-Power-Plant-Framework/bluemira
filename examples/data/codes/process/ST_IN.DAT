@@ -242,7 +242,7 @@ dr_tf_plasma_case   = 0.05 * Inboard tf coil case inner (plasma side) thickness 
 dx_tf_side_case_min   = 0.10 * Inboard tf coil sidewall case thickness (m)
 c_tf_turn    = 7.5e+04 * Tf coil current per turn (a);
 f_a_tf_turn_cable_copper  = 0.4 * Copper fraction of cable conductor (tf coils)
-oacdcp   = 9.9963e+06 * Overall current density in tf coil inboard legs (a/m2)
+j_tf_coil_full_area   = 9.9963e+06 * Overall current density in tf coil inboard legs (a/m2)
 ripple_b_tf_plasma_edge_max   = 0.6 * Maximum allowable toroidal field ripple amplitude
 t_tf_superconductor_quench   = 3.0e+01 * Dump time for tf coil (s)
 n_tf_coils     = 18 * Number of tf coils (default = 50 for stellarators)
