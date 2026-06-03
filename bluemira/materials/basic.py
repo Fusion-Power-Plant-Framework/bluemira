@@ -19,6 +19,9 @@ def sm(self, op_cond):
     return self.youngs_modulus(op_cond) / (0.5 + 0.5 * self.poissons_ratio(op_cond))
 
 
+vacuum_void = Void(name="Vacuum")
+
+
 SS316 = material(
     "SS316 room temperature",
     properties=props(
@@ -87,6 +90,3 @@ CONCRETE = material(
     ),
 )
 """Typical concrete properties at room temperature"""
-
-
-vacuum_void = Void()

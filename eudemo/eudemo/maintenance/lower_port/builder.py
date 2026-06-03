@@ -27,7 +27,7 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
-from bluemira.materials import Void
+from bluemira.materials.basic import vacuum_void
 
 
 @dataclass
@@ -91,9 +91,7 @@ class TSLowerPortDuctBuilder(Builder):
         )
 
         pc = PhysicalComponent(self.name, duct, material=self.get_material(self.TS))
-        void = PhysicalComponent(
-            self.name + " voidspace", void, material=Void(name="vacuum")
-        )
+        void = PhysicalComponent(self.name + " voidspace", void, material=vacuum_void)
         apply_component_display_options(pc, color=BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
@@ -169,9 +167,7 @@ class VVLowerPortDuctBuilder(Builder):
         )
 
         pc = PhysicalComponent(self.name, duct, material=self.get_material(self.VV))
-        void = PhysicalComponent(
-            self.name + " voidspace", void, material=Void(name="vacuum")
-        )
+        void = PhysicalComponent(self.name + " voidspace", void, material=vacuum_void)
         apply_component_display_options(pc, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
 

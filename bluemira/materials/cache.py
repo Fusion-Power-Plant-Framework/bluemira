@@ -13,14 +13,11 @@ from __future__ import annotations
 import copy
 import types
 
-from matproplib.library.fluids import Void
 from matproplib.material import Material
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.error import MaterialsError
 from bluemira.utilities.tools import get_module
-
-vacuum_void = Void(name="Vacuum")
 
 
 class MaterialCache:

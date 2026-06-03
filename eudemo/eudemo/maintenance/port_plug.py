@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
+from matproplib.library.fluids import Void
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -23,7 +24,6 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.materials import Void
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

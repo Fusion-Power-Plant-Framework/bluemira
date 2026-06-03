@@ -10,6 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from matproplib.library.fluids import Void
 
 from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
@@ -18,7 +19,6 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.builders.thermal_shield import VVTSBuilder
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.tools import make_circle, make_polygon
-from bluemira.materials import Void
 
 REACTOR_NAME = "My Reactor"
 

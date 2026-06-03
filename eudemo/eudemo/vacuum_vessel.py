@@ -30,7 +30,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     force_wire_to_spline,
 )
-from bluemira.materials.basic import Void
+from bluemira.materials.basic import vacuum_void
 from eudemo.comp_managers import PortManagerMixin
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 
@@ -95,7 +95,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             VacuumVesselBuilder.BODY, final_shape, material=vv_body.material
         )
         sector_void = PhysicalComponent(
-            VacuumVesselBuilder.VOID, final_void, material=Void(name="vacuum")
+            VacuumVesselBuilder.VOID, final_void, material=vacuum_void
         )
 
         self._orphan_old_components(component)
@@ -204,7 +204,7 @@ class VacuumVesselBuilder(Builder):
 
         body = PhysicalComponent(self.BODY, face, material=self.get_material())
         vacuum = PhysicalComponent(
-            self.VOID, BluemiraFace(inner_vv), material=Void(name="vacuum")
+            self.VOID, BluemiraFace(inner_vv), material=vacuum_void
         )
         apply_component_display_options(body, color=BLUE_PALETTE[self.VV][0])
         apply_component_display_options(vacuum, color=(0, 0, 0))
@@ -239,5 +239,5 @@ class VacuumVesselBuilder(Builder):
             self.params.n_TF.value,
             [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
-            material=[self.get_material(), Void(name="vacuum")],
+            material=[self.get_material(), vacuum_void],
         )
