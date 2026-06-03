@@ -18,7 +18,7 @@ from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation._scipy.parameters import _make_alg_params
 from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
 from bluemira.optimisation._tools import (
-    _check_bounds,
+    _check_bounds_dims,
     _initial_guess_from_bounds,
     process_scipy_result,
 )
@@ -344,7 +344,7 @@ class ScipyOptimiser(Optimiser):
         ValueError
             Incorrect bounds dimensions.
         """
-        _check_bounds(self.n_variables, bounds)
+        _check_bounds_dims(self.n_variables, bounds)
         self._lower_bounds = bounds
 
     def set_upper_bounds(self, bounds: np.ndarray) -> None:
@@ -358,5 +358,5 @@ class ScipyOptimiser(Optimiser):
         ValueError
             Incorrect bounds dimensions.
         """
-        _check_bounds(self.n_variables, bounds)
+        _check_bounds_dims(self.n_variables, bounds)
         self._upper_bounds = bounds

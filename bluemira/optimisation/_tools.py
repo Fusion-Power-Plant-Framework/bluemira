@@ -173,7 +173,7 @@ def process_scipy_result(res: OptimizeResult, alg: str) -> np.ndarray:
     raise OptimisationError(f"{res.message}\n{res!s}")
 
 
-def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
+def _check_bounds_dims(n_dims: int, new_bounds: np.ndarray) -> None:
     """Validate that the bounds have the correct dimensions.
 
     Raises

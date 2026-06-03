@@ -20,7 +20,7 @@ from bluemira.optimisation._nlopt.functions import (
     ObjectiveFunction,
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._tools import _check_bounds, _initial_guess_from_bounds
+from bluemira.optimisation._tools import _check_bounds_dims, _initial_guess_from_bounds
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
 from bluemira.utilities.error import OptVariablesError
 
@@ -29,17 +29,22 @@ if TYPE_CHECKING:
 
     from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
-NLOPT_ALG_MAPPING = {
+NLOPT_LOCAL = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
     Algorithm.COBYLA: nlopt.LN_COBYLA,
     Algorithm.SBPLX: nlopt.LN_SBPLX,
     Algorithm.MMA: nlopt.LD_MMA,
     Algorithm.BFGS: nlopt.LD_LBFGS,
+}
+
+NLOPT_GLOBAL = {
     Algorithm.DIRECT: nlopt.GN_DIRECT,
     Algorithm.DIRECT_L: nlopt.GN_DIRECT_L,
     Algorithm.CRS: nlopt.GN_CRS2_LM,
     Algorithm.ISRES: nlopt.GN_ISRES,
 }
+
+NLOPT_ALG_MAPPING = {**NLOPT_LOCAL, **NLOPT_GLOBAL}
 
 
 class NloptOptimiser(Optimiser):
@@ -310,7 +315,8 @@ class NloptOptimiser(Optimiser):
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.set_lower_bounds`.
         """
         bounds = np.array(bounds)
-        _check_bounds(self._opt.get_dimension(), bounds)
+        _check_bounds_dims(self._opt.get_dimension(), bounds)
+        _check_bounds_vals(self.algorithm, bounds)
         self._opt.set_lower_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
         # approximate derivative, we must set the new bounds on the
@@ -326,7 +332,8 @@ class NloptOptimiser(Optimiser):
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.set_upper_bounds`.
         """
         bounds = np.array(bounds)
-        _check_bounds(self._opt.get_dimension(), bounds)
+        _check_bounds_dims(self._opt.get_dimension(), bounds)
+        _check_bounds_vals(self.algorithm, bounds)
         self._opt.set_upper_bounds(bounds)
         # As we use the optimisation variable bounds when calculating an
         # approximate derivative, we must set the new bounds on the
@@ -430,6 +437,24 @@ def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
         validated and converted algorithm
     """
     return Algorithm(algorithm)
+
+
+def _check_bounds_vals(algorithm: AlgorithmType, bounds: npt.ArrayLike) -> None:
+    """
+    Validate boundary values depending on the type of algorithm.
+    Local optimisations may have infinite bounds.
+    Global optimisations cannot.
+
+    Raises
+    ------
+    OptimisationParametersError
+        Invalid bounds for the specified algorithm.
+    """
+    if algorithm in NLOPT_GLOBAL and np.inf in bounds:
+        raise OptimisationParametersError(
+            f"Global optimisation algorithms, such as {algorithm.name}, "
+            "do not support infinite bounds. Please specify finite bounds."
+        )
 
 
 def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:
