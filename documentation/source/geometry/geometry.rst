@@ -2,11 +2,15 @@ geometry
 ========
 
 The ``geometry`` module contains the core functionality to represent objects used for a
-``bluemira`` analysis. The geometrical core of bluemira is based on FreeCAD package. A basic api has been
-implemented to interface with main FreeCAD objects and functions.
+``bluemira`` analysis. The geometrical core of bluemira is based on the OpenCASCADE package,
+by means of the FreeCAD Python wrapper. A basic api has been implemented to interface with
+the main FreeCAD objects and functions.
 
-.. note:: Currently only a minor part of the FreeCAD potentiality has been
-    implemented in the respective api.
+An alternative wrapper backend is available: cadquery. To change the backend, set the environment
+variable ``BLUEMIRA_GEOMETRY_BACKEND``.  Valid values: ``freecad`` (default), ``cadquery``.
+
+.. note::
+  The default backend is presently FreeCAD, but will be switched to cadquery in future.
 
 The geometrical module of bluemira implements the following main classes:
 
