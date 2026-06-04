@@ -118,6 +118,7 @@ numpy==2.2.6
     #   numpydantic
     #   pandas
     #   periodictable
+    #   pyclipr
     #   pyvista
     #   scikit-learn
     #   scipy
@@ -153,7 +154,7 @@ pooch==1.9.0
     # via pyvista
 py-cpuinfo==9.0.0
     # via tables
-pyclipper==1.4.0
+pyclipr==0.1.8
     # via bluemira (pyproject.toml)
 pydantic==2.13.2
     # via
