@@ -130,7 +130,7 @@ class PyCliprOffsetter:
         pco = ClipperOffset()
 
         # causes it to error
-        # pco.miterLimit = self.miter_limit
+        pco.miterLimit = self.miter_limit
         pco.scaleFactor = int(self.offset_scale)
 
         pco.addPath(path, self._jt, self._et)
