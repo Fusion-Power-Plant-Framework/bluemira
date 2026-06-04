@@ -132,6 +132,7 @@ class PyCliprOffsetter:
         # causes it to error
         pco.miterLimit = self.miter_limit
         pco.scaleFactor = int(self.offset_scale)
+        pco.arcTolerance = int(self.offset_scale * 0.25)
 
         pco.addPath(path, self._jt, self._et)
         offset_result = pco.execute(delta)
