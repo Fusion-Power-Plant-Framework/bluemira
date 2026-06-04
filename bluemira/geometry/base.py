@@ -328,13 +328,13 @@ class BluemiraGeo(ABC, meshing.Meshable):
         Returns
         -------
         vertices:
-            Array of the vertices (N, 3, dtype=float) from the tesselation operation
+            Array of the vertices (N, 3, dtype=float) from the tessellation operation
         indices:
-            Array of the indices (M, 3, dtype=int) from the tesselation operation
+            Array of the indices (M, 3, dtype=int) from the tessellation operation
 
         Notes
         -----
-        Once tesselated, an object's properties may change. Tesselation cannot be
+        Once tessellated, an object's properties may change. Tessellation cannot be
         reverted to a previous lower value, but can be increased (irreversibly).
         """
         return cadapi.tessellate(self.shape, tolerance)
