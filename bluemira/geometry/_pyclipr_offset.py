@@ -25,6 +25,27 @@ from bluemira.geometry.error import GeometryError
 __all__ = ["offset_clipper"]
 
 
+"""
+Scale factor for pyclipr integer coordinates.
+"""
+_CLIPPER_SCALE = 1_000_000
+"""
+Scales the arc tolerance to the offset distance. The documentation is not
+entirely clear in this regard, and the default value is 0.0 and causes all
+sorts of failures.
+
+abs(delta) * 10.0 also generally works, but scaling to the offset scale does not
+seem to work. Experimentally, abs(delta) * 1.0 appears to be a good balance
+between runtime and accuracy. Under the hood, this is probably being scaled
+somehow.
+See:
+    https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/Cl`ipperOffset/Properties/ArcTolerance.htm
+    https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
+"""
+
+_CLIPPER_ARC_SCALE = 1.0
+
+
 class OffsetClipperMethodType(Enum):
     """Enumeration of types of offset methods."""
 
@@ -88,7 +109,7 @@ class PyCliprOffsetter:
         miter_limit: float = 2.0,
     ):
         self.miter_limit = miter_limit
-        self.offset_scale = 1_000_000  # ? what to set to
+        self.offset_scale = _CLIPPER_SCALE
         match method:
             case OffsetClipperMethodType.SQUARE:
                 self._jt = JoinType.Square
@@ -173,20 +194,6 @@ class PyCliprOffsetter:
         ------
         GeometryError
             If the offset operation fails to produce any geometry
-
-        Notes
-        -----
-        Scales the arc tolerance to the offset distance. The documentation is not
-        entirely clear in this regard, and the default value is 0.0 and causes all
-        sorts of failures.
-
-        abs(delta) * 10.0 also generally works, but scaling to the offset scale does not
-        seem to work. Experimentally, abs(delta) * 1.0 appears to be a good balance
-        between runtime and accuracy. Under the hood, this is probably being scaled
-        somehow.
-        See:
-            https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/Cl`ipperOffset/Properties/ArcTolerance.htm
-            https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
         """
         # Create an offsetting object
         pco = ClipperOffset()
@@ -195,7 +202,7 @@ class PyCliprOffsetter:
         pco.scaleFactor = int(self.offset_scale)
 
         # NOTE: Scales the arc tolerance to the offset distance. See docstring
-        pco.arcTolerance = abs(delta) * 1.0
+        pco.arcTolerance = abs(delta) * _CLIPPER_ARC_SCALE
 
         pco.addPath(path, self._jt, self._et)
         offset_result = pco.execute(delta)
