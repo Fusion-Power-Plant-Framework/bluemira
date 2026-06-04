@@ -27,13 +27,18 @@ __all__ = ["offset_clipper"]
 
 """
 Scale factor for pyclipr integer coordinates.
+
+pyclipr's default (2^31 ~ 2.1e9) is chosen for maximum precision in boolean
+operations, but for offset operations it causes the ``JoinType.ROUND``
+arc-segment count to explode.
 """
 _CLIPPER_SCALE = 1_000_000
 
 """
 Scales the arc tolerance to the offset distance. The documentation is not
 entirely clear in this regard, and the default value in pyclipr is 0.0 and
-causes all sorts of failures.
+causes all sorts of failures (not 0.25 as documented, which was tested and
+found to be too slow).
 
 Here we scale the offset distance by a factor of 1.0, which seems to work well
 across a range of offsets (balance between runtime and accuracy).
