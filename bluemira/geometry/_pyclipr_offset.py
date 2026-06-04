@@ -17,6 +17,7 @@ import numpy as np
 import numpy.typing as npt
 from pyclipr import ClipperOffset, EndType, JoinType
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
@@ -101,13 +102,26 @@ class PyCliprOffsetter:
 
     @staticmethod
     def _transform_coords_to_path(coords: Coordinates) -> np.ndarray:
+        """
+        Transforms the Coordinates object into an oriented array
+
+        Parameters
+        ----------
+        coords:
+            The resulting offset coordinates
+
+        Returns
+        -------
+        :
+            The oriented Coordinates array
+        """
         com = coords.center_of_mass
 
-        coords_t = transform_coordinates_to_xz(
+        coords_t = _transform_coordinates_to_xz(
             coords, tuple(-np.array(com)), np.array([0.0, 1.0, 0.0])
         )
 
-        return coordinates_to_pyclippath(coords_t)
+        return coords_t.xz.T
 
     @staticmethod
     def _transform_offset_result_to_orig(
@@ -115,13 +129,25 @@ class PyCliprOffsetter:
     ) -> Coordinates:
         """
         Transforms the offset solution into a Coordinates object
+
+        Parameters
+        ----------
+        orig_coords:
+            The original coordinates, used to determine the plane and center of mass
+        result:
+            The resulting offset coordinates array (in x-z plane)
+
+        Returns
+        -------
+        :
+            The offset Coordinates array
         """
         orig_com = orig_coords.center_of_mass
         orig_norm_v = orig_coords.normal_vector
 
-        res_coords_t = pyclippath_to_coordinates(result)
+        res_coords_t = _pyclippath_to_coordinates(result)
 
-        return transform_coordinates_to_original(res_coords_t, orig_com, orig_norm_v)
+        return _transform_coordinates_to_original(res_coords_t, orig_com, orig_norm_v)
 
     def _perform_offset(
         self, path: npt.NDArray[np.float64], delta: float
@@ -129,28 +155,47 @@ class PyCliprOffsetter:
         """
         Performs the offset operation on the given path.
 
+
+        Parameters
+        ----------
+        path:
+            The path to offset, in the format used by pyclipr
+        delta:
+            The value of the offset [m]. Positive for increasing size, negative for
+            decreasing
+
+        Returns
+        -------
+        :
+            The resulting offset path, in the format used by pyclipr
+
+        Raises
+        ------
+        GeometryError:
+            If the offset operation fails to produce any geometry
+
         Notes
         -----
-        Scales the arc tolerance to the offset distance. The documentation is not entirely clear
-        in this regard, and the default value is 0.0 and causes all sorts of failures.
+        Scales the arc tolerance to the offset distance. The documentation is not
+        entirely clear in this regard, and the default value is 0.0 and causes all
+        sorts of failures.
 
-        abs(delta) * 10.0 also generally works, but scaling to the offset scale does not seem to work.
-        Experimentally, 1.0 appears to be a good balance between runtime and accuracy.
-        Under the hood, this is probably being scaled somehow.
+        abs(delta) * 10.0 also generally works, but scaling to the offset scale does not
+        seem to work. Experimentally, abs(delta) * 1.0 appears to be a good balance
+        between runtime and accuracy. Under the hood, this is probably being scaled
+        somehow.
         See:
-            https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/Properties/ArcTolerance.htm
+            https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/Cl`ipperOffset/Properties/ArcTolerance.htm
             https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
-
-
         """
         # Create an offsetting object
         pco = ClipperOffset()
 
-        # causes it to error
         pco.miterLimit = self.miter_limit
+        pco.scaleFactor = int(self.offset_scale)
+
         # NOTE: Scales the arc tolerance to the offset distance. See docstring
         pco.arcTolerance = abs(delta) * 1.0
-        pco.scaleFactor = int(self.offset_scale)
 
         pco.addPath(path, self._jt, self._et)
         offset_result = pco.execute(delta)
@@ -169,6 +214,29 @@ class PyCliprOffsetter:
         return offset_result
 
     def offset(self, orig_coords: Coordinates, delta: float) -> Coordinates:
+        """
+        Performs the offset operation on the given Coordinates.
+
+        Parameters
+        ----------
+        orig_coords:
+            The Coordinates to offset
+        delta:
+            The value of the offset [m]. Positive for increasing size, negative for
+            decreasing
+
+        Returns
+        -------
+        :
+            The offset Coordinates result
+
+        Raises
+        ------
+        GeometryError:
+            If the Coordinates are not planar
+        GeometryError:
+            If the Coordinates are not closed
+        """
         if not orig_coords.is_planar:
             raise GeometryError("Cannot offset non-planar coordinates.")
 
@@ -185,14 +253,30 @@ class PyCliprOffsetter:
         return self._transform_offset_result_to_orig(orig_coords, offset_path)
 
 
-def transform_coordinates_to_xz(
+def _transform_coordinates_to_xz(
     coordinates: Coordinates, base: tuple[float, float, float], direction: np.ndarray
 ) -> Coordinates:
     """
     Rotate coordinates to the x-z plane.
+
+    Parameters
+    ----------
+    coordinates:
+        The Coordinates to rotate
+    base:
+        The center of mass of the original coordinates, used as the base for the
+        transformation
+    direction:
+        The direction to rotate the normal vector to. This should be a unit vector.
+
+    Returns
+    -------
+    :
+        The rotated Coordinates array, with normal vector in the direction of the
+        y-axis
     """
     coordinates.translate(base)
-    if abs(coordinates.normal_vector[1]) == 1.0:
+    if np.isclose(abs(coordinates.normal_vector[1]), 1.0, rtol=0.0, atol=EPS):
         return coordinates
 
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
@@ -201,13 +285,28 @@ def transform_coordinates_to_xz(
     return Coordinates({"x": x, "y": y, "z": z})
 
 
-def transform_coordinates_to_original(
+def _transform_coordinates_to_original(
     coordinates: Coordinates,
     base: tuple[float, float, float],
     original_normal: np.ndarray,
 ) -> Coordinates:
     """
     Rotate coordinates back to original plane
+
+    Parameters
+    ----------
+    coordinates:
+        The resulting offset coordinates
+    base:
+        The center of mass of the original coordinates, used as the base for the
+        transformation
+    original_normal:
+        The normal vector of the original coordinates, used to determine the rotation
+
+    Returns
+    -------
+    :
+        The offset Coordinates array in the original plane
     """
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
     x, y, z = r.T @ coordinates
@@ -216,7 +315,7 @@ def transform_coordinates_to_original(
     return coordinates
 
 
-def pyclippath_to_coordinates(path: np.ndarray, *, close=True) -> Coordinates:
+def _pyclippath_to_coordinates(path: np.ndarray, *, close=True) -> Coordinates:
     """
     Transforms a pyclipper path into a bluemira Coordinates object
 
@@ -229,26 +328,11 @@ def pyclippath_to_coordinates(path: np.ndarray, *, close=True) -> Coordinates:
 
     Returns
     -------
-    The Coordinates from the path object
+    :
+        The Coordinates from the path object
     """
     x, z = path.T
     if close:
         x = np.append(x, x[0])
         z = np.append(z, z[0])
     return Coordinates({"x": x, "y": np.zeros(x.shape), "z": z})
-
-
-def coordinates_to_pyclippath(coords: Coordinates) -> np.ndarray:
-    """
-    Transforms a pyclipper path into a bluemira Coordinates object
-
-    Parameters
-    ----------
-    path:
-        The vertex polygon path formatting used in pyclipper
-
-    Returns
-    -------
-    The Coordinates from the path object
-    """
-    return coords.xz.T
