@@ -87,7 +87,7 @@ class PyCliprOffsetter:
         miter_limit: float = 2.0,
     ):
         self.miter_limit = miter_limit
-        self.offset_scale = 1  # ? what to set to
+        self.offset_scale = 1_000_000  # ? what to set to
         match method:
             case OffsetClipperMethodType.SQUARE:
                 self._jt = JoinType.Square
