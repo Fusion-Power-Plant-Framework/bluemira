@@ -171,7 +171,7 @@ class PyCliprOffsetter:
 
         Raises
         ------
-        GeometryError:
+        GeometryError
             If the offset operation fails to produce any geometry
 
         Notes
@@ -232,9 +232,8 @@ class PyCliprOffsetter:
 
         Raises
         ------
-        GeometryError:
+        GeometryError
             If the Coordinates are not planar
-        GeometryError:
             If the Coordinates are not closed
         """
         if not orig_coords.is_planar:
