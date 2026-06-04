@@ -1039,13 +1039,12 @@ def polygon_revolve_signed_volume(polygon: npt.ArrayLike) -> float:
     ZeroDivisionError, thus it is recast into the following (also the simplest) form:
     :math:`V = \\frac{\\pi}{3} (p_z - c_z) (p_x^2 + p_x c_x + c_x^2)`.
 
-    Adding together the signed volume of all edges, the excess negative volume from one
-    side would cancel out the excess positive volume from the other, such that
-    abs(signed volume)= the volume of the polygon after being revolved around the z-axis.
-    """
-    # TODO @OceanWong: insert graphics for notes in docstring
-    # 4265
+    To calculate the volume of the polygon in blue the contributions from the positive
+    volumes are summed alongside the negative volumes in green and red hatches
+    respectively.
 
+    .. figure:: /geometry/images/polygon_revolve_signed_volume.png
+    """
     polygon = np.asarray(polygon)
     if np.ndim(polygon) != 2 or np.shape(polygon)[0] != 2:  # noqa: PLR2004
         raise ValueError("This function takes in an np.ndarray of shape (2, N).")
