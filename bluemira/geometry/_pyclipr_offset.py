@@ -29,15 +29,19 @@ __all__ = ["offset_clipper"]
 Scale factor for pyclipr integer coordinates.
 """
 _CLIPPER_SCALE = 1_000_000
+
 """
 Scales the arc tolerance to the offset distance. The documentation is not
-entirely clear in this regard, and the default value is 0.0 and causes all
-sorts of failures.
+entirely clear in this regard, and the default value in pyclipr is 0.0 and
+causes all sorts of failures.
 
-abs(delta) * 10.0 also generally works, but scaling to the offset scale does not
-seem to work. Experimentally, abs(delta) * 1.0 appears to be a good balance
-between runtime and accuracy. Under the hood, this is probably being scaled
+Here we scale the offset distance by a factor of 1.0, which seems to work well
+across a range of offsets (balance between runtime and accuracy).
+
+10.0 also generally works, but scaling to the offset scale does not
+seem to work. Under the hood, this is probably being scaled
 somehow.
+
 See:
     https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/Cl`ipperOffset/Properties/ArcTolerance.htm
     https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
