@@ -91,13 +91,13 @@ class PyCliprOffsetter:
         match method:
             case OffsetClipperMethodType.SQUARE:
                 self._jt = JoinType.Square
-                self._et = EndType.Joined
+                self._et = EndType.Polygon
             case OffsetClipperMethodType.ROUND:
                 self._jt = JoinType.Round
-                self._et = EndType.Round
+                self._et = EndType.Polygon
             case OffsetClipperMethodType.MITER:
                 self._jt = JoinType.Miter
-                self._et = EndType.Joined
+                self._et = EndType.Polygon
 
     @staticmethod
     def _transform_coords_to_path(coords: Coordinates) -> np.ndarray:
