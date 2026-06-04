@@ -69,7 +69,7 @@ jobs:
           echo "${report_str}" >> $GITHUB_OUTPUT
           echo 'EOF' >> $GITHUB_OUTPUT
 
-      - name: Find warning report comment
+      - name: Find warning report comment TEST !
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
         uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: find-warning-report-comment
