@@ -7,7 +7,8 @@ by means of the FreeCAD Python wrapper. A basic api has been implemented to inte
 the main FreeCAD objects and functions.
 
 An alternative wrapper backend is available: cadquery. To change the backend, set the environment
-variable ``BLUEMIRA_GEOMETRY_BACKEND``.  Valid values: ``freecad`` (default), ``cadquery``.
+variable ``BLUEMIRA_GEOMETRY_BACKEND``.  Valid values: ``freecad`` (default), ``cadquery``. You
+can also use the cadquery viewer by simply calling ``show_cad(geometry, backend="cadquery")``.
 
 .. note::
   The default backend is presently FreeCAD, but will be switched to cadquery in future.
