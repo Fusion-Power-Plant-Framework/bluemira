@@ -27,9 +27,10 @@ class TestClipperOffset:
     # fmt: on
 
     @pytest.mark.parametrize("method", options)
+    @pytest.mark.parametrize("delta", (1.0, 1e-3, 1e6, -1.0, -1e-3))
     @pytest.mark.parametrize(
-        ("x", "y", "delta"),
-        [(x, y, 1.0), (x[::-1], y[::-1], 1.0), (x, y, -1.0), (x[::-1], y[::-1], -1.0)],
+        ("x", "y"),
+        [(x, y), (x[::-1], y[::-1]), (x, y), (x[::-1], y[::-1])],
     )
     def test_complex_polygon(self, x, y, delta, method):
         rng = np.random.default_rng()
@@ -42,7 +43,13 @@ class TestClipperOffset:
         ax.set_aspect("equal")
 
         distance = self._calculate_offset(coordinates, c)
-        np.testing.assert_almost_equal(distance, abs(delta), decimal=5)
+        print(distance, abs(delta))
+        np.testing.assert_allclose(
+            distance,
+            abs(delta),
+            rtol=1e-5,  # ~5 significant digits
+            atol=1e-5,  # ~ 0.01 mm tolerance
+        )
 
     @pytest.mark.parametrize("method", options)
     def test_complex_polygon_overoffset_raises_error(self, method):
