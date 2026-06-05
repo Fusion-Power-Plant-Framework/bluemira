@@ -539,26 +539,26 @@ def test_legendre_q_function():
 
 
 @pytest.mark.parametrize(
-    ("n_dof", "max_harmonic_mode", "max_n_dof", "expected_dof"),
+    ("n_dof", "n_mode_values", "max_n_dof", "expected_dof"),
     [
         # Case where max_n_dof is hit
-        (5, 5, 4, 4),
+        (5, 9, 4, 4),
         # Case where 2 * max_harmonic_mode is hit
-        (5, 2, 5, 3),
+        (5, 3, 5, 3),
         # Case where everything OK
-        (5, 5, 10, 5),
+        (5, 9, 10, 5),
         # Case where max_n_dof is exceed and still > 2 * max_harmonic_mode - 1
-        (10, 4, 9, 7),
+        (10, 7, 9, 7),
         # Case where n_dof is not specified and defaults to max
-        (None, 5, 9, 9),
+        (None, 9, 9, 9),
         # Case where n_dof is not specified and defaults to 2 * max_harmonic_mode - 1
-        (None, 4, 9, 7),
+        (None, 7, 9, 7),
     ],
 )
 def test_th_n_dof_limits(
-    n_dof: int | None, max_harmonic_mode: int, max_n_dof: int, expected_dof: int
+    n_dof: int | None, n_mode_values: int, max_n_dof: int, expected_dof: int
 ):
-    n_dof = _set_n_degrees_of_freedom(n_dof, max_harmonic_mode, max_n_dof)
+    n_dof = _set_n_degrees_of_freedom(n_dof, n_mode_values, max_n_dof)
     assert n_dof == expected_dof
 
 
@@ -1211,15 +1211,15 @@ class TestRegressionTH:
 
     def test_toroidal_harmonic_approximation(self):
         expected_cos_modes = np.array([0, 1, 2, 3, 4])
-        expected_sin_modes = np.array([3])
+        expected_sin_modes = np.array([2])
         expected_cos_amplitudes = np.array([
-            -4.23455112,
-            -3.52365388,
-            -10.05836255,
-            -7.74944276,
-            -6.82548272,
+            -4.23829422,
+            -3.58643918,
+            -10.5360716,
+            -11.88256446,
+            -14.99211588,
         ])
-        expected_sin_amplitudes = np.array([2.47437837])
+        expected_sin_amplitudes = np.array([-0.12978619])
 
         result = toroidal_harmonic_approximation(
             eq=self.eq,

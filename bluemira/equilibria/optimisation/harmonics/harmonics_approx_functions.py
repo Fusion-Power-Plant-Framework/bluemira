@@ -21,6 +21,7 @@ from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.display.plotter import Zorder
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.constants import X_AXIS_MIN
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import in_zone
@@ -201,12 +202,74 @@ class Collocation:
     z: np.ndarray
 
 
+class CollocationGrid:
+    """
+    A rectangular Grid object with regular rectangular cells for use in finite
+    difference calculations.
+
+    Parameters
+    ----------
+    x_min:
+        Minimum x grid coordinate (>0) [m]
+    x_max:
+        Maximum x grid coordinate [m]
+    z_min:
+        Minimum z grid coordinate [m]
+    z_max:
+        Maximum z grid coordinate [m]
+    """
+
+    __slots__ = (
+        "x",
+        "x_1d",
+        "x_max",
+        "x_min",
+        "z",
+        "z_1d",
+        "z_max",
+        "z_min",
+    )
+
+    def __init__(
+        self, x_min: float, x_max: float, z_min: float, z_max: float, nx: int, nz: int
+    ):
+        if x_min == x_max or z_min == z_max:
+            raise EquilibriaError("Invalid Grid dimensions specified.")
+
+        if x_min > x_max:
+            bluemira_warn(
+                f"x_min should be < x_max {x_min:.2f} > {x_max:.2f}. Switching x_min and"
+                " x_max."
+            )
+            x_min, x_max = x_max, x_min
+
+        if z_min > z_max:
+            bluemira_warn(
+                f"z_min should be < z_max {z_min:.2f} > {z_max:.2f}. Switching z_min and"
+                " z_max."
+            )
+            z_min, z_max = z_max, z_min
+
+        if x_min <= 0:  # Cannot calculate flux on machine axis - (divide by 0)
+            x_min = X_AXIS_MIN
+
+        self.x_min = x_min
+        self.x_max = x_max
+        self.z_min = z_min
+        self.z_max = z_max
+        self.x_1d = np.linspace(x_min, x_max, nx)
+        self.z_1d = np.linspace(z_min, z_max, nz)
+        self.x, self.z = np.meshgrid(self.x_1d, self.z_1d, indexing="ij")
+
+
 def collocation_points(
     plasma_boundary: Coordinates,
     point_type: PointType,
     n_points: int = 10,
     seed: int | None = None,
     grid_num: tuple[int, int] | None = None,
+    *,
+    use_mask: bool = True,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -308,7 +371,7 @@ def collocation_points(
         if grid_num is None:
             grid_num = (n_points, n_points)
         grid_num_x, grid_num_z = grid_num
-        rect_grid = Grid(
+        rect_grid = CollocationGrid(
             np.amin(x_bdry),
             np.amax(x_bdry),
             np.amin(z_bdry),
@@ -317,10 +380,14 @@ def collocation_points(
             nz=grid_num_z,
         )
 
-        # Only use grid points that are within boundary
-        mask = in_zone(
-            rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
-        )
+        if use_mask:
+            # Only use grid points that are within boundary
+            mask = in_zone(
+                rect_grid.x, rect_grid.z, plasma_boundary.xz.T, include_edges=True
+            )
+        else:
+            mask = np.ones_like(rect_grid.x)
+
         collocation_x = rect_grid.x[mask == 1]
         collocation_z = rect_grid.z[mask == 1]
 
