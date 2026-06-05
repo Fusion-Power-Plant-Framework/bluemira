@@ -6,9 +6,11 @@
 
 """Create specific materials from known blanket data."""
 
-from dataclasses import dataclass
+from __future__ import annotations
 
-from bluemira.base.parameter_frame._frame import ParameterFrame
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 from bluemira.materials.neutronics import (
     BlanketType,
     _make_dcll_mats,
@@ -17,6 +19,11 @@ from bluemira.materials.neutronics import (
     duplicate_mat_as,
 )
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
+
+if TYPE_CHECKING:
+    from matproplib.material import Material
+
+    from bluemira.base.parameter_frame._frame import ParameterFrame
 
 
 @dataclass(frozen=True)
@@ -132,12 +139,12 @@ def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
 
 
 def create_materials(
-    be12ti_mat,
-    eurofer_mat,
-    helium_mat,
-    lined_euro_mat,
-    tungsten_mat,
-    water_mat,
+    be12ti_mat: Material,
+    eurofer_mat: Material,
+    helium_mat: Material,
+    lined_euro_mat: Material,
+    tungsten_mat: Material,
+    water_mat: Material,
     blanket_type: BlanketType,
 ) -> NeutronicsMaterials:
     """
@@ -145,6 +152,18 @@ def create_materials(
 
     Parameters
     ----------
+    be12ti_mat:
+        A beryllium titanium compound material
+    eurofer_mat:
+        A Eurofer material
+    helium_mat:
+        A Helium material
+    lined_euro_mat:
+        A lined eurofer material commonly lined with aluminium oxide
+    tungsten_mat:
+        A tungsten material
+    water_mat:
+        A water material
     blanket_type:
         the blanket type
 

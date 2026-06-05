@@ -6,14 +6,20 @@
 
 """Create specific materials from known blanket data."""
 
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 from matproplib import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
-from matproplib.material import Material, material, mixture
+from matproplib.material import material, mixture
 from matproplib.properties.group import props
+
+if TYPE_CHECKING:
+    from matproplib.material import Material
 
 
 def make_PbLi_mat(li_enrich_ao) -> Material:
@@ -210,13 +216,28 @@ class BreederTypeParameters:
 
 
 def _make_dcll_mats(
-    eurofer_mat, helium_mat, lined_euro_mat, tungsten_mat, water_mat, li_enrich_ao: float
+    eurofer_mat: Material,
+    helium_mat: Material,
+    lined_euro_mat: Material,
+    tungsten_mat: Material,
+    water_mat: Material,
+    li_enrich_ao: float,
 ) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a dcll blanket.
 
     Parameters
     ----------
-    li_enrich_ao: float
+    eurofer_mat:
+        A Eurofer material
+    helium_mat:
+        A Helium material
+    lined_euro_mat:
+        A lined eurofer material commonly lined with aluminium oxide
+    tungsten_mat:
+        A tungsten material
+    water_mat:
+        A water material
+    li_enrich_ao:
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
 
@@ -292,12 +313,27 @@ def _make_dcll_mats(
 
 
 def _make_hcpb_mats(
-    be12ti_mat, eurofer_mat, helium_mat, tungsten_mat, water_mat, li_enrich_ao: float
+    be12ti_mat: Material,
+    eurofer_mat: Material,
+    helium_mat: Material,
+    tungsten_mat: Material,
+    water_mat: Material,
+    li_enrich_ao: float,
 ) -> ReactorBaseMaterials:
     """Creates openmc material definitions for an hcpb blanket.
 
     Parameters
     ----------
+    be12ti_mat:
+        A beryllium titanium compound material
+    eurofer_mat:
+        A Eurofer material
+    helium_mat:
+        A Helium material
+    tungsten_mat:
+        A tungsten material
+    water_mat:
+        A water material
     li_enrich_ao:
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
@@ -391,12 +427,21 @@ def _make_hcpb_mats(
 
 
 def _make_wcll_mats(
-    eurofer_mat, tungsten_mat, water_mat, li_enrich_ao: float
+    eurofer_mat: Material,
+    tungsten_mat: Material,
+    water_mat: Material,
+    li_enrich_ao: float,
 ) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a wcll blanket
 
     Parameters
     ----------
+    eurofer_mat:
+        A Eurofer material
+    tungsten_mat:
+        A tungsten material
+    water_mat:
+        A water material
     li_enrich_ao:
         Enrichment of Li-6 as a percentage
         to be parsed as argument to openmc.Material.add_element
