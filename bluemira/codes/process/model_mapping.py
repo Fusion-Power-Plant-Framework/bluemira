@@ -110,6 +110,22 @@ class PlasmaGeometryModel(PROCESSModel):
     MENARD = 11, ("triang", "aspect")
 
 
+class PlasmaShapeModel(PROCESSModel):
+    """
+    Switch for plasma shape
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_plasma_shape"
+
+    DOUBLE_ARC = 0
+    SAUTER = 1
+
+
 class PlasmaNullConfigurationModel(PROCESSModel):
     """
     Switch for single-null / double-null

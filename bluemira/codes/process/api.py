@@ -47,10 +47,13 @@ class InDat:
 OBS_VARS = {}
 
 try:
-    from process.impurity_radiation import ImpurityDataHeader, read_impurity_file
-    from process.io.in_dat import InDat  # noqa: F401
-    from process.io.mfile import MFile  # noqa: F401
-    from process.io.obsolete_vars import OBS_VARS
+    from process.core.io.in_dat import InDat  # noqa: F401
+    from process.core.io.mfile import MFile  # noqa: F401
+    from process.core.io.obsolete_vars import OBS_VARS
+    from process.models.physics.impurity_radiation import (
+        ImpurityDataHeader,
+        read_impurity_file,
+    )
 
     ENABLED = True
 except (ModuleNotFoundError, FileNotFoundError):

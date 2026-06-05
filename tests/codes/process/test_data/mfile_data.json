@@ -2404,7 +2404,7 @@
     "var_mod": "TF coils",
     "scan01": 15197000.0
   },
-  "oacdcp": {
+  "j_tf_coil_full_area": {
     "var_mod": "TF coils",
     "scan01": 7363600.0
   },

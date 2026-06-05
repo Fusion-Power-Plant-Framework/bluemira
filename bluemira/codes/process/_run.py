@@ -102,7 +102,7 @@ class Run(CodesTask):
                     break
 
     def _run_process(self):
-        bluemira_print(f"Running '{PROCESS_NAME}' systems code")
+        bluemira_print(f"Running '{PROCESS_NAME}' systems code with {self.in_dat_path}")
         command = [self.binary, "-i", self.in_dat_path]
         if self.solver is not None:
             command.extend(["--solver", self.solver])

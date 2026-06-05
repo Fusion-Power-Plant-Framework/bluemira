@@ -493,7 +493,7 @@ dr_tf_plasma_case   = 0.05 * inboard TF coil case plasma side thickness (m) (cal
 dx_tf_side_case_min   = 0.10 * inboard TF coil sidewall case thickness (m) (calculated for stellarators)
 c_tf_turn    = 6.5e+04 * TF coil current per turn (A); (calculated for stellarators) (calculated for
 f_a_tf_turn_cable_copper  = 0.6667 * copper fraction of cable conductor (TF coils)
-oacdcp   = 9.9963e+06 * Overall current density in TF coil inboard legs midplane (A/m2)
+j_tf_coil_full_area   = 9.9963e+06 * Overall current density in TF coil inboard legs midplane (A/m2)
 ripple_b_tf_plasma_edge_max   = 0.6 * aximum allowable toroidal field ripple_b_tf_plasma_edge amplitude at plasma edge (%)
 t_tf_superconductor_quench   = 3.0000e+01 * fast discharge time for TF coil in event of quench (s) (`iteration variable 56`)
 n_tf_coils     = 18 * Number of TF coils (default = 50 for stellarators); Number of TF coils outer legs for ST

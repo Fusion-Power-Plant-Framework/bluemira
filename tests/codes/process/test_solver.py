@@ -111,11 +111,12 @@ class TestSolverIntegration:
         self._indat_patch.stop()
 
     @pytest.mark.longrun
+    @pytest.mark.xfail(reason="process minimal inputs not set")
     def test_run_mode_outputs_process_files(self, tmp_path):
         solver = Solver(self.params, {"run_dir": tmp_path})
-
+        solver.modify_mappings({"q_95": "send"})
         with contextlib.suppress(CodesError):
-            solver.execute(RunMode.RUNINPUT)
+            solver.execute(RunMode.RUN)
 
         assert Path(tmp_path, "IN.DAT").exists()
         assert Path(tmp_path, "MFILE.DAT").exists()

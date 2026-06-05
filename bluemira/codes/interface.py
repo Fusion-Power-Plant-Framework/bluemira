@@ -13,7 +13,7 @@ from typing import Any
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
-from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.utilities import run_subprocess
 
 
@@ -267,6 +267,47 @@ class CodesTeardown(CodesTask):
         return output_value
 
 
+class SRMap(enum.Flag):
+    """
+    Flag for sending and recieveing values.
+
+    Allows easier specification in modify mappings
+    """
+
+    SEND = enum.auto()
+    RECV = enum.auto()
+    NOT_SEND = enum.auto()
+    NOT_RECV = enum.auto()
+    NOOP = enum.auto()
+    SEND_AND_RECV = SEND | RECV
+    SEND_AND_NOT_RECV = SEND | NOT_RECV
+    NOT_SEND_AND_RECV = NOT_SEND | RECV
+    NO_INTERACT = NOT_SEND | NOT_RECV
+
+    def set(self, param: ParameterMapping):
+        """Set the send and recieve values on the ParameterMapping"""
+        if SRMap.SEND in self:
+            setattr(param, SRMap.SEND.name.lower(), True)
+        if SRMap.RECV in self:
+            setattr(param, SRMap.RECV.name.lower(), True)
+        if SRMap.NOT_SEND in self:
+            setattr(param, SRMap.SEND.name.lower(), False)
+        if SRMap.NOT_RECV in self:
+            setattr(param, SRMap.RECV.name.lower(), False)
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return SRMap[value.upper()]
+        if isinstance(value, dict):
+            sbool_map = {True: cls.SEND, False: cls.NOT_SEND, None: cls.NOOP}
+            rbool_map = {True: cls.RECV, False: cls.NOT_RECV, None: cls.NOOP}
+            return (
+                sbool_map[value.get("send", None)] | rbool_map[value.get("recv", None)]
+            )
+        return super()._missing_(value)
+
+
 class CodesSolver(abc.ABC):
     """
     Base class for solvers running an external code.
@@ -350,7 +391,7 @@ class CodesSolver(abc.ABC):
             result = teardown(result)
         return result
 
-    def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
+    def modify_mappings(self, send_recv: dict[str, dict[str, bool] | str | SRMap]):
         """
         Modify the send/receive truth values of a parameter.
 
@@ -371,8 +412,12 @@ class CodesSolver(abc.ABC):
 
                 {
                     "var1": {"send": False, "recv": True},
-                    "var2": {"recv": False}
+                    "var2": "send",
+                    "var3": "not_recv",
+                    "var4": "send_and_recv",
                 }
+
+            See SRMap for a full list of possible string representations.
         """
         param_mappings = self.params.mappings
         for key, val in send_recv.items():
@@ -381,8 +426,7 @@ class CodesSolver(abc.ABC):
             except KeyError:
                 bluemira_warn(f"No mapping known for '{key}' in '{self.name}'.")
             else:
-                for sr_key, sr_val in val.items():
-                    setattr(p_map, sr_key, sr_val)
+                SRMap(val).set(p_map)
 
     @staticmethod
     def _get_execution_method(task: CodesTask, run_mode: BaseRunMode) -> Callable | None:
