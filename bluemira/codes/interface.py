@@ -287,13 +287,13 @@ class SRMap(enum.Flag):
     def set(self, param: ParameterMapping):
         """Set the send and recieve values on the ParameterMapping"""
         if SRMap.SEND in self:
-            setattr(param, SRMap.RECV.name.lower(), True)
-        if SRMap.RECV in self:
             setattr(param, SRMap.SEND.name.lower(), True)
+        if SRMap.RECV in self:
+            setattr(param, SRMap.RECV.name.lower(), True)
         if SRMap.NOT_SEND in self:
-            setattr(param, SRMap.RECV.name.lower(), False)
-        if SRMap.NOT_RECV in self:
             setattr(param, SRMap.SEND.name.lower(), False)
+        if SRMap.NOT_RECV in self:
+            setattr(param, SRMap.RECV.name.lower(), False)
 
     @classmethod
     def _missing_(cls, value):
