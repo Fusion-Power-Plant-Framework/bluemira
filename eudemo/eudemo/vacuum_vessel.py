@@ -49,7 +49,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         Returns
         -------
         :
-            A wire giving the vessel's boundary in the xz plane.
+            A wire giving the vessel's outer boundary in the xz plane.
 
         """
         return (

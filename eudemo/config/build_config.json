@@ -5,9 +5,9 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-    "run_mode": "read",
-    "read_dir": "$path_expand:./process",
-    "run_dir": "$path_expand:./process",
+    "run_mode": "run",
+    "read_dir": "$path_expand:./",
+    "run_dir": "$path_expand:./",
     "plot": false
   },
   "Fixed boundary equilibrium": {
@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -88,7 +88,7 @@
   },
   "IVC": {
     "Wall silhouette": {
-      "run_mode": "read",
+      "run_mode": "run",
       "param_class": "eudemo.ivc.wall_silhouette_parameterisation::WallPolySpline",
       "variables_map": {
         "x1": { "value": "r_fw_ib_in" },
@@ -114,11 +114,14 @@
   "Vacuum vessel": {
     "material": "VV_MATERIAL"
   },
+  "Vertical stability": {},
   "Divertor": {
     "material": "Homogenised_Divertor_2015"
   },
   "Neutronics": {
+    "enabled": false,
     "cross_section_xml": "$path_expand:./cross_section_data/cross_sections.xml",
+    "max_lost_particles": 1e2,
     "photon_transport": true,
     "electron_treatment": "ttb",
     "plot_axis": "xz",
@@ -126,7 +129,7 @@
     "CSG": {
       "enabled": true,
       "neutronics_output_path": "$path_expand:./neutronics/csg",
-      "particles": 10000,
+      "particles": 100000,
       "batches": 2,
       "run_mode": "run_and_plot",
       "openmc_write_summary": false,
@@ -137,7 +140,7 @@
       "export_dagmc_model": true,
       "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
       "neutronics_output_path": "$path_expand:./neutronics/dagmc",
-      "particles": 10000,
+      "particles": 100000,
       "batches": 2,
       "run_mode": "run",
       "rel_max_lost_particles": 1e-2,
@@ -163,7 +166,7 @@
     }
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
@@ -181,7 +184,7 @@
     "problem_settings": {
       "ripple_selector": {
         "cls": "bluemira.builders.tf_coils::EquispacedSelector",
-        "args": { "n_rip_points": 10 }
+        "args": { "n_rip_points": 50 }
       },
       "n_koz_points": 50,
       "nx": 1,
@@ -193,7 +196,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
