@@ -1297,7 +1297,7 @@ class TestInternalHelpers:
             ),
         ],
     )
-    @patch(f"{CORE}.bounding_box")
+    @patch("bluemira.codes._geometryapi.bounding_box")
     def test_compute_default_camera_orientations(
         self, mock_bb, bbox, expected_cam, expected_target
     ):
@@ -1309,7 +1309,7 @@ class TestInternalHelpers:
         assert cam == pytest.approx(expected_cam)
         assert target == pytest.approx(expected_target)
 
-    @patch(f"{CORE}.bounding_box")
+    @patch("bluemira.codes._geometryapi.bounding_box")
     def test_compute_default_camera_multipart_bounding_box(self, mock_bb):
         """Multiple parts merge into a single global bounding box."""
         mock_bb.side_effect = lambda p: p.bb
