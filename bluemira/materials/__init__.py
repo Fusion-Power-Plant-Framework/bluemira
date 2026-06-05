@@ -9,6 +9,6 @@
 Module-level functionality for materials.
 """
 
-from matproplib.library.fluids import Void
+from bluemira.materials.basic import vacuum_void
 
-__all__ = ["Void"]
+__all__ = ["vacuum_void"]

@@ -6,11 +6,12 @@
 
 """Create specific materials from known blanket data."""
 
-from dataclasses import dataclass
+from __future__ import annotations
 
-from bluemira.base.parameter_frame._frame import ParameterFrame
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
 from bluemira.materials.neutronics import (
-    EUROFER_MAT,
     BlanketType,
     _make_dcll_mats,
     _make_hcpb_mats,
@@ -18,6 +19,11 @@ from bluemira.materials.neutronics import (
     duplicate_mat_as,
 )
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
+
+if TYPE_CHECKING:
+    from matproplib.material import Material
+
+    from bluemira.base.parameter_frame._frame import ParameterFrame
 
 
 @dataclass(frozen=True)
@@ -132,12 +138,32 @@ def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
     )
 
 
-def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
+def create_materials(
+    be12ti_mat: Material,
+    eurofer_mat: Material,
+    helium_mat: Material,
+    lined_euro_mat: Material,
+    tungsten_mat: Material,
+    water_mat: Material,
+    blanket_type: BlanketType,
+) -> NeutronicsMaterials:
     """
     Create Materials Library by specifying just the blanket type
 
     Parameters
     ----------
+    be12ti_mat:
+        A beryllium titanium compound material
+    eurofer_mat:
+        A Eurofer material
+    helium_mat:
+        A Helium material
+    lined_euro_mat:
+        A lined eurofer material commonly lined with aluminium oxide
+    tungsten_mat:
+        A tungsten material
+    water_mat:
+        A water material
     blanket_type:
         the blanket type
 
@@ -153,11 +179,22 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
             li_enrich_ao = 0.9
 
     if blanket_type is BlanketType.DCLL:
-        base_materials = _make_dcll_mats(li_enrich_ao)
+        base_materials = _make_dcll_mats(
+            eurofer_mat,
+            helium_mat,
+            lined_euro_mat,
+            tungsten_mat,
+            water_mat,
+            li_enrich_ao,
+        )
     elif blanket_type is BlanketType.HCPB:
-        base_materials = _make_hcpb_mats(li_enrich_ao)
+        base_materials = _make_hcpb_mats(
+            be12ti_mat, eurofer_mat, helium_mat, tungsten_mat, water_mat, li_enrich_ao
+        )
     elif blanket_type is BlanketType.WCLL:
-        base_materials = _make_wcll_mats(li_enrich_ao)
+        base_materials = _make_wcll_mats(
+            eurofer_mat, tungsten_mat, water_mat, li_enrich_ao
+        )
     return NeutronicsMaterials(
         inb_vv_mat=base_materials.inb_vv_mat,
         inb_fw_mat=base_materials.inb_fw_mat,
@@ -175,13 +212,13 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
         outb_vv_mat=duplicate_mat_as(
             base_materials.inb_vv_mat, "outb_vacuum_vessel", 204
         ),
-        tf_coil_mat=duplicate_mat_as(EUROFER_MAT, "tf_coil", 401),
+        tf_coil_mat=duplicate_mat_as(eurofer_mat, "tf_coil", 401),
         container_mat=duplicate_mat_as(base_materials.inb_vv_mat, "container", 501),
         # surfaces
-        inb_sf_mat=duplicate_mat_as(EUROFER_MAT, "inb_sf", 601),
-        outb_sf_mat=duplicate_mat_as(EUROFER_MAT, "outb_sf", 602),
-        div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
+        inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
+        outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
+        div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
         # TODO @OceanNuclear: get shield material
         # 3659
-        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
+        rad_shield=duplicate_mat_as(eurofer_mat, "rad_shield", 604),
     )

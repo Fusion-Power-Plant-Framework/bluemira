@@ -27,6 +27,14 @@ from bluemira.radiation_transport.neutronics.geometry import TokamakDimensions
 from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
     NeutronicsReactor,
 )
+from eudemo.materials import (
+    BE12TI_MAT,
+    EUROFER_MAT,
+    HELIUM_MAT,
+    LINED_EURO_MAT,
+    TUNGSTEN_MAT,
+    WATER_MAT,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -103,7 +111,15 @@ def run_csg_neutronics(
     blanket_type = BlanketType(build_config.pop("blanket_type"))
     tokamak_geometry = get_preset_geometry(params)
     # TODO get these materials from the physical components
-    material_library = create_materials(blanket_type)
+    material_library = create_materials(
+        BE12TI_MAT,
+        EUROFER_MAT,
+        HELIUM_MAT,
+        LINED_EURO_MAT,
+        TUNGSTEN_MAT,
+        WATER_MAT,
+        blanket_type,
+    )
 
     params.update_from_dict(
         {

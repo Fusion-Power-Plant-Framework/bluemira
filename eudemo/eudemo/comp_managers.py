@@ -22,7 +22,7 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.tools import boolean_cut, boolean_fuse
-from bluemira.materials import Void
+from bluemira.materials.basic import vacuum_void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 from eudemo.tools import make_2d_view_components
 
@@ -286,14 +286,14 @@ class ThermalShield(PortManagerMixin, ComponentManager):
             vvts_target_name, final_shape, material=vvts_target_comp.material
         )
         vvts_sector_void = PhysicalComponent(
-            vvts_void_name, final_void, material=Void(name="vacuum")
+            vvts_void_name, final_void, material=vacuum_void
         )
 
         cts_sector_body = PhysicalComponent(
             cts_target_name, cts_target_shape, material=cts_target_comp.material
         )
         cts_sector_void = PhysicalComponent(
-            cts_void_name, cts_target_void, material=Void(name="vacuum")
+            cts_void_name, cts_target_void, material=vacuum_void
         )
 
         self._orphan_old_components([vvts, cts])

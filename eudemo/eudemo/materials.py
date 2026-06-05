@@ -16,7 +16,7 @@ from matproplib.library.tungsten import PlanseeTungsten
 from matproplib.material import material, mixture
 from matproplib.properties.group import props
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.materials.neutronics import make_KALOS_ACB_mat
 
 try:
@@ -27,12 +27,11 @@ try:
     SS316_LN_MAT = SS316_LN()
     TUNGSTEN_MAT = Tungsten()
 
-except ImportError:
-    bluemira_warn(
-        "You do not have eurofusion_materials installed, or do not have access. "
-        "We're going to use some representative imitation materials instead, "
-        "as opposed to the official, material descriptions."
+    bluemira_print(
+        "eurofusion_materials has been loaded."
+        "TUNGSTEN_MAT and EUROFER_MAT are loaded from that package."
     )
+except ImportError:
     EUROFER_MAT = material(
         name="eurofer",
         elements={
@@ -53,6 +52,22 @@ except ImportError:
 WATER_MAT = Water()
 HELIUM_MAT = Helium()
 HeavyConcrete = HeavyConcrete()
+
+AL2O3_MAT = material(
+    name="Aluminium Oxide",
+    elements={"Al27": 2, "O16": 3},
+    properties=props(density=(3.95, "g/cm^3")),
+    converters=OpenMCNeutronicConfig(),
+)()
+
+LINED_EURO_MAT = mixture(
+    name="Eurofer with Al2O3 lining",
+    materials=[(EUROFER_MAT, 2.0 / 2.4), (AL2O3_MAT, 0.4 / 2.4)],
+    fraction_type="volume",
+    mix_condition=OperationalConditions(temperature=673.15),
+    converters=OpenMCNeutronicConfig(),
+)
+
 
 VV_MATERIAL = mixture(
     name="inb_vacuum_vessel",
@@ -83,11 +98,13 @@ BB_FW_MATERIAL = mixture(
     converters=OpenMCNeutronicConfig(material_id=101),
 )
 
+BE12TI_MAT = Be12Ti()
+
 BB_BZ_MATERIAL = mixture(
     name="BZ_material",
     materials=[
         (EUROFER_MAT, structural_fraction_vo),
-        (Be12Ti(), multiplier_fraction_vo),
+        (BE12TI_MAT, multiplier_fraction_vo),
         (KALOS_ACB_MATERIAL, breeder_fraction_vo),
         (HELIUM_MAT, helium_fraction_vo),
     ],

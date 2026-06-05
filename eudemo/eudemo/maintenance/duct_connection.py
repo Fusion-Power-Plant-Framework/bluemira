@@ -30,7 +30,7 @@ from bluemira.geometry.tools import (
     offset_wire,
     point_inside_shape,
 )
-from bluemira.materials import Void
+from bluemira.materials.basic import vacuum_void
 
 if TYPE_CHECKING:
     from bluemira.base.reactor_config import ConfigParams
@@ -115,7 +115,7 @@ class TSUpperPortDuctBuilder(Builder):
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
-            material=Void(name="vacuum"),
+            material=vacuum_void,
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -216,9 +216,7 @@ class TSEquatorialPortDuctBuilder(Builder):
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
-        void = PhysicalComponent(
-            self.name + " voidspace", void, material=Void(name="vacuum")
-        )
+        void = PhysicalComponent(self.name + " voidspace", void, material=vacuum_void)
 
         apply_component_display_options(comp, BLUE_PALETTE[self.TS][0])
         apply_component_display_options(void, color=(0, 0, 0))
@@ -314,7 +312,7 @@ class VVUpperPortDuctBuilder(Builder):
         void = PhysicalComponent(
             self.name + " voidspace",
             extrude_shape(xy_voidface, (0, 0, self.z_max)),
-            material=Void(name="vacuum"),
+            material=vacuum_void,
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -332,7 +330,7 @@ class VVUpperPortDuctBuilder(Builder):
         comp = PhysicalComponent(self.name, xy_face)
         apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         void = PhysicalComponent(
-            self.name + " voidspace", xy_voidface, material=Void(name="vacuum")
+            self.name + " voidspace", xy_voidface, material=vacuum_void
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
@@ -411,9 +409,7 @@ class VVEquatorialPortDuctBuilder(Builder):
 
         void = extrude_shape(yz_voidface, vec)
         void.rotate(degree=degree)
-        void = PhysicalComponent(
-            self.name + " voidspace", void, material=Void(name="vacuum")
-        )
+        void = PhysicalComponent(self.name + " voidspace", void, material=vacuum_void)
 
         apply_component_display_options(comp, BLUE_PALETTE[self.VV][0])
         apply_component_display_options(void, color=(0, 0, 0))
