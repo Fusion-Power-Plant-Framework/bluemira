@@ -470,7 +470,7 @@ class Constraint(ConstraintSelection, Model):
         ("p_plasma_separatrix_min_mw",),
         "Divertor power lower limit",
     )
-    DENSITY_PROFILE_CONSISTENCY = (81, (154,), (), "Ne(0) > ne(ped) constraint")
+    DENSITY_PROFILE_CONSISTENCY = (81, (), (), "Ne(0) > ne(ped) constraint")
     STELLARATOR_COIL_CONSISTENCY = (82, (171,), ("toroidalgap",))
     STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
         83,
@@ -541,7 +541,6 @@ ITERATION_VAR_MAPPING = {
     "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
-    "fdene": 9,
     "hfact": 10,
     "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
@@ -565,8 +564,6 @@ ITERATION_VAR_MAPPING = {
     "fdivcol": 34,
     # 35, 36 PREVIOUS f-VALUE
     "j_cs_flat_top_end": 37,
-    "fjohc": 38,
-    "fjohc0": 39,
     # 40 PREVIOUS f-VALUE
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
@@ -575,7 +572,6 @@ ITERATION_VAR_MAPPING = {
     # 45, 46 PREVIOUS f-VALUE
     "feffcd": 47,
     # 48, 49 PREVIOUS f-VALUE
-    "fiooic": 50,
     # 51 PREVIOUS f-VALUE
     # 52 NOT USED
     # 53, 54 PREVIOUS f-VALUE
@@ -614,7 +610,6 @@ ITERATION_VAR_MAPPING = {
     # 95, 96, 97 PREVIOUS f-VALUE
     "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
-    "fl_h_threshold": 103,
     "fcwr": 104,
     # 105, 106 PREVIOUS f-VALUE
     "favail": 107,
@@ -656,7 +651,6 @@ ITERATION_VAR_MAPPING = {
     # 150, 151 NOT USED
     "f_nd_plasma_separatrix_greenwald": 152,
     "fp_plasma_separatrix_min_mw": 153,
-    "fne0": 154,
     "pfusife": 155,
     "rrin": 156,
     "fvs_cs_pf_total_ramp": 157,

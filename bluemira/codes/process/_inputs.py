@@ -61,7 +61,6 @@ class ProcessInputs:
     den_steel: float | None = None
     f_p_blkt_multiplication: float | None = None
     fblss: float | None = None
-    f_ster_div_single: float | None = None
     i_fw_blkt_vv_shape: int | None = None
     fw_armour_thickness: float | None = None
     i_blanket_type: int | None = None
@@ -352,11 +351,6 @@ class ProcessInputs:
     fbeta: float | None = None
     fbetatry_lower: float | None = None
     fcwr: float | None = None
-    fdene: float | None = None
-    fiooic: float | None = None
-    fjohc: float | None = None
-    fjohc0: float | None = None
-    fl_h_threshold: float | None = None
     fradpwr: float | None = None
     eta_cd_norm_hcd_primary_max: float | None = None
     pflux_fw_rad_max: float | None = None
@@ -577,7 +571,6 @@ class ProcessInputs:
     f_nd_plasma_separatrix_greenwald: float | None = None
     fkzohm: float | None = None
     fp_plasma_separatrix_min_mw: float | None = None
-    fne0: float | None = None
     f_plasma_fuel_tritium: float | None = None
     f_plasma_fuel_helium3: float | None = None
     f_c_plasma_non_inductive: float | None = None

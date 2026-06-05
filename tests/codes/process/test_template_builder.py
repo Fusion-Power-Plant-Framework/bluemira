@@ -292,10 +292,6 @@ class TestInDatOneForOne:
 
         template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 
-        # Modified f-values and bounds w.r.t. defaults
-        template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
-        template_builder.add_input_value("fdene", 1.2)  # f-value no longer iterable
-
         # Set model switches
         for model_choice in (
             BootstrapCurrentScalingLaw.SAUTER,

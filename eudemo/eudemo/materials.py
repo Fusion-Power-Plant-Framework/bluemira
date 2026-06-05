@@ -55,7 +55,7 @@ HeavyConcrete = HeavyConcrete()
 
 AL2O3_MAT = material(
     name="Aluminium Oxide",
-    elements={"Al27": 2, "O16": 3},
+    elements={"Al27": 2 / 5, "O16": 3 / 5},
     properties=props(density=(3.95, "g/cm^3")),
     converters=OpenMCNeutronicConfig(),
 )()
