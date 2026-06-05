@@ -102,8 +102,8 @@ jobs:
           # https://github.com/actions/runner/issues/409#issuecomment-752775072
           # PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
           PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
-          BLUEMIRA_GEOMETRY_BACKEND: ${{ matrix.backend }}
         run: |
+          export BLUEMIRA_GEOMETRY_BACKEND=${{ matrix.backend }}
           pytest --cov=bluemira \
                  --cov-report html:htmlcov_bluemira \
                  --cov-report xml \
