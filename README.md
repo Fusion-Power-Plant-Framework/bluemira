@@ -13,18 +13,20 @@ typical conceptual fusion reactor design activities.
 ``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
 [publications](#publications)).
 
-## Work in Progress!
+## Development and Timeline
 
-The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon
-a significant refactor of both code bases, delivering improved functionality, code
-quality, and hopefully maintainability. This, along with some resourcing issues has
-caused our feature roadmap to slip. A lot of functionality that was present in  ``BLUEPRINT`` and ``MIRA`` is not yet available in `bluemira`.
+The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon a significant refactor of both code bases, delivering improved functionality, code quality, and hopefully maintainability.
 
-`Bluemira` is very much under active development, and will likely be subject to API
-changes in the near future. We apologise in advance for these. Please do get in touch
-before starting to use any modules, so we can warn you of changes to come.
+In addition, we have created templates and examples;
+* [bluemira-template-project](https://github.com/Fusion-Power-Plant-Framework/bluemira-template-project): A template for a new `Bluemira` reactor project
+* [bluemira-stellarator](https://github.com/Fusion-Power-Plant-Framework/bluemira-stellarator): Stellarator design using `Bluemira`, Simsopt and `PROCESS`
+* [bluemira-spherical-tokamak](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak): Spherical Tokamak example for `Bluemira`
 
-Below is an overview of our development roadmap for 2024/25:
+and separate modules that others may find useful;
+* [eqdsk](https://github.com/Fusion-Power-Plant-Framework/eqdsk): g-eqdsk reading and writing with identification and conversion between COCOS versions
+* [matproplib](https://github.com/Fusion-Power-Plant-Framework/matproplib): A Materials Property library
+
+Below is an overview of our development roadmap for 2026/27:
 <p align="center">
   <a href="https://bluemira.readthedocs.io/en/latest/introduction.html#roadmap" target="_blank">
     <picture>
