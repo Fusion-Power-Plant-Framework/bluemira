@@ -294,7 +294,7 @@ class TestTessellate:
 
     def test_collect_verts_faces(self):
         solid = self._make_solid()
-        verts, faces = cqapi.collect_verts_faces(solid, tesselation=0.1)
+        verts, faces = cqapi.collect_verts_faces(solid, tessellation=0.1)
         assert verts is not None
         assert faces is not None
         assert verts.shape[1] == 3
