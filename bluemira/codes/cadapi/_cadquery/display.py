@@ -48,7 +48,7 @@ def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]
 
 
 def collect_verts_faces(
-    solid: apiShape, tesselation: float = 0.1
+    solid: apiShape, tessellation: float = 0.1
 ) -> tuple[np.ndarray | None, np.ndarray | None]:
     """Extract tessellated vertices and face indices for polyscope display."""
     all_verts = []
@@ -57,7 +57,7 @@ def collect_verts_faces(
 
     faces = solid.Faces()
     for face in faces:
-        verts, tris = face.tessellate(tesselation)
+        verts, tris = face.tessellate(tessellation)
         if verts:
             v_arr = np.array([[v.x, v.y, v.z] for v in verts], dtype=float)
             f_arr = np.array(tris, dtype=int) + voffset
@@ -109,7 +109,7 @@ class DefaultDisplayOptions:
     colour: ColourDescriptor = ColourDescriptor()
     transparency: float = 0.0
     material: str = "wax"
-    tesselation: float = 0.05
+    tessellation: float = 0.05
     wires_on: bool = False
     wire_radius: float = 0.001
     smooth: bool = True
