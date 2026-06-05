@@ -550,7 +550,7 @@ def add_useful_parameters(reactor, reactor_config, reference_eq):
     )
     x_min = wp_in_wire.bounding_box.x_min
     points = wp_in_wire.discretise(200)
-    mask = np.where(points.x < x_min + 0.5)[0]
+    mask = np.nonzero(points.x < x_min + 0.5)[0]
     x, z = points.x[mask], points.z[mask]
     Bx_tf, By, Bz_tf = reactor.tf_coils._field_solver.field(x, np.zeros_like(x), z)
     peak_fields = []
