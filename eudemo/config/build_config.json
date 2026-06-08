@@ -137,6 +137,7 @@
       "show_data": false
     },
     "DAGMC": {
+      "enabled": false,
       "export_dagmc_model": true,
       "dagmc_export_dir": "$path_expand:./neutronics/dagmc/dagmc_export",
       "neutronics_output_path": "$path_expand:./neutronics/dagmc",
@@ -168,7 +169,7 @@
   "TF coils": {
     "run_mode": "run",
     "file_path": "$path_expand:./TFCoilDesign.json",
-    "plot": false,
+    "plot": true,
     "material": {
       "Winding Pack": "SS316_LN_MAT",
       "Casing": "SS316_LN_MAT",
