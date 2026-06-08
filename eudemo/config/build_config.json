@@ -51,7 +51,7 @@
     }
   },
   "Dummy fixed boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -64,7 +64,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "diagnostic_plotting": {},
     "summary_plot": false,
     "plot": false,
@@ -116,7 +116,7 @@
   },
   "Vertical stability": {},
   "Divertor": {
-    "material": "Homogenised_Divertor_2015"
+    "material": "SS316_LN_MAT"
   },
   "Neutronics": {
     "enabled": false,
@@ -170,9 +170,9 @@
     "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": false,
     "material": {
-      "Winding Pack": "Toroidal_Field_Coil_2015",
-      "Casing": "Toroidal_Field_Coil_2015",
-      "Insulation": "Toroidal_Field_Coil_2015"
+      "Winding Pack": "SS316_LN_MAT",
+      "Casing": "SS316_LN_MAT",
+      "Insulation": "SS316_LN_MAT"
     },
     "param_class": "TripleArc",
     "variables_map": {
@@ -199,9 +199,9 @@
     "run_mode": "run",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
-      "Ground Insulation": "Poloidal_Field_Coil",
-      "Winding Pack": "Poloidal_Field_Coil",
-      "Casing": "Poloidal_Field_Coil"
+      "Ground Insulation": "SS316_LN_MAT",
+      "Winding Pack": "SS316_LN_MAT",
+      "Casing": "SS316_LN_MAT"
     },
     "verbose": false,
     "summary_plot": false,

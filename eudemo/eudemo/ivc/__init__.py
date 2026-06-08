@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from bluemira.base.designer import run_designer
 from bluemira.builders.tools import clip_wall_silhouette_at_xpoint, cut_wire_at_z_value
-from bluemira.geometry.tools import boolean_cut
+from bluemira.geometry.tools import CutLocation, boolean_cut
 from eudemo.ivc.divertor_silhouette import DivertorSilhouetteDesigner
 from eudemo.ivc.ivc_boundary import IVCBoundaryDesigner
 from eudemo.ivc.plasma_face import PlasmaFaceDesigner
@@ -63,18 +63,20 @@ def design_ivc(
     ).create_shape(label="wall")
 
     # Cut the wall boundary below the x-point in order to generate our blanket face.
-    wall_boundary = clip_wall_silhouette_at_xpoint(equilibrium, wall_boundary)
-    wall_boundary.close()
+    cut_wall_boundary = clip_wall_silhouette_at_xpoint(equilibrium, wall_boundary)
+
     divertor_shapes = DivertorSilhouetteDesigner(
         params,
         equilibrium=equilibrium,
-        wall=wall_boundary,
+        wall=cut_wall_boundary,
     ).execute()
+
     ivc_boundary = IVCBoundaryDesigner(params, wall_shape=wall_boundary).execute()
+
     plasma_face, divertor_face, div_wall_join_pt = PlasmaFaceDesigner(
         params,
         ivc_boundary=ivc_boundary,
-        wall_boundary=wall_boundary,
+        wall_boundary=cut_wall_boundary,
         divertor_silhouette=divertor_shapes,
     ).execute()
 
@@ -86,6 +88,7 @@ def design_ivc(
     wall_boundary = cut_wire_at_z_value(
         wall_boundary,
         plasma_face.bounding_box.z_min,
+        location=CutLocation.LOWER,
         point_name="lower limit of plasma bounding box",
     )
 
