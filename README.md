@@ -22,7 +22,7 @@ In addition, we have created templates and examples;
 * [bluemira-spherical-tokamak](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak): Spherical Tokamak example for `Bluemira`
 * [bluemira-stellarator](https://github.com/Fusion-Power-Plant-Framework/bluemira-stellarator): Stellarator design using `Bluemira`, Simsopt and `PROCESS`
 
-and separate modules that others may find useful;
+and separate packages that others may find useful;
 * [eqdsk](https://github.com/Fusion-Power-Plant-Framework/eqdsk): g-eqdsk reading and writing with identification and conversion between COCOS versions
 * [matproplib](https://github.com/Fusion-Power-Plant-Framework/matproplib): A Materials Property library
 * [tokamak-neutron-source](https://github.com/Fusion-Power-Plant-Framework/tokamak-neutron-source): A tool to create an arbitrary parametric tokamak neutron source
