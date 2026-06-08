@@ -185,7 +185,7 @@
     "problem_settings": {
       "ripple_selector": {
         "cls": "bluemira.builders.tf_coils::EquispacedSelector",
-        "args": { "n_rip_points": 50 }
+        "args": { "n_rip_points": 20, "x_frac": 0.5 }
       },
       "n_koz_points": 50,
       "nx": 1,

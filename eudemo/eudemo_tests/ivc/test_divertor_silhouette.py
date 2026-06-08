@@ -37,8 +37,6 @@ class TestDivertorSilhouetteDesigner:
         "div_L2D_ob": {"value": 1.45, "unit": "m"},
         "div_Ltarg_ib": {"value": 0.5, "unit": "m"},
         "div_Ltarg_ob": {"value": 0.5, "unit": "m"},
-        "strike_loc_ib": {"value": 0.5, "unit": ""},
-        "strike_loc_ob": {"value": 0.5, "unit": ""},
         "div_targ_angle_ib": {"value": 42, "unit": "degrees"},
         "div_targ_angle_ob": {"value": -25, "unit": "degrees"},
         "div_targ_type_ib": {"value": "verticle", "unit": ""},
