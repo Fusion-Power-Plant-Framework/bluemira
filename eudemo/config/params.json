@@ -993,6 +993,12 @@
   "div_targ_type_ob": { "value": "verticle", "unit": "" },
   "div_baffle_type_ib": { "value": "circle_baffle", "unit": "" },
   "div_baffle_type_ob": { "value": "circle_baffle", "unit": "" },
+  "div_type": {
+    "value": "SN",
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Divertor single (SN) or double (DN) null"
+  },
   "c_rm": {
     "value": 0.02,
     "unit": "meter",

@@ -192,6 +192,7 @@ class EUDEMOReactorParams(ParameterFrame):
     div_targ_type_ob: Parameter[str]
     div_baffle_type_ib: Parameter[str]
     div_baffle_type_ob: Parameter[str]
+    div_type: Parameter[str]
 
     # Remote maintenance
     c_rm: Parameter[float]

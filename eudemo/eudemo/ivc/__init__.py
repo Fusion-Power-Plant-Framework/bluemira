@@ -61,8 +61,10 @@ def design_ivc(
         build_config["Wall silhouette"],
         equilibrium=equilibrium,
     ).create_shape(label="wall")
+
     # Cut the wall boundary below the x-point in order to generate our blanket face.
     wall_boundary = clip_wall_silhouette_at_xpoint(equilibrium, wall_boundary)
+    wall_boundary.close()
     divertor_shapes = DivertorSilhouetteDesigner(
         params,
         equilibrium=equilibrium,
