@@ -34,12 +34,12 @@
      inkscape:snap-nodes="false"
      inkscape:object-nodes="true"
      inkscape:zoom="1.4142136"
-     inkscape:cx="408.35417"
-     inkscape:cy="263.39728"
-     inkscape:window-width="1852"
-     inkscape:window-height="1011"
-     inkscape:window-x="68"
-     inkscape:window-y="32"
+     inkscape:cx="408.35416"
+     inkscape:cy="263.39727"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
      inkscape:window-maximized="1"
      inkscape:current-layer="g35"
      height="150mm"
@@ -147,13 +147,13 @@
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan1">Improving </tspan><tspan
+             id="tspan10">Improving </tspan><tspan
              x="0"
-             y="28.133374"
-             id="tspan2">neutronics CSG </tspan><tspan
+             y="28.133373"
+             id="tspan11">neutronics CSG </tspan><tspan
              x="0"
-             y="44.120374"
-             id="tspan3">workflow</tspan></text>
+             y="44.120372"
+             id="tspan12">workflow</tspan></text>
       </g>
       <g
          id="g73"
@@ -239,7 +239,7 @@
       </g>
       <g
          id="g135"
-         transform="translate(-9.144764,137.81432)">
+         transform="translate(-5.6239739,137.81432)">
         <text
            transform="scale(1,-1)"
            style="font-variant:normal;font-weight:normal;font-size:18.7848px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -326,10 +326,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan4">Browser based </tspan><tspan
+             id="tspan13">Browser based </tspan><tspan
              x="0"
-             y="28.133374"
-             id="tspan5">tutorials</tspan></text>
+             y="28.133373"
+             id="tspan14">tutorials</tspan></text>
       </g>
       <g
          id="g267"
@@ -405,7 +405,7 @@
          style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path353" />
       <path
-         d="m 306.39888,325.02234 v 0 c 0,0.397 0.11402,0.822 0.31206,1.162 0.19804,0.369 0.5101,0.652 0.85016,0.85 0.36907,0.199 0.76615,0.312 1.16322,0.312 h 9.29877 v 0 c 0.39707,0 0.82215,-0.113 1.16222,-0.312 0.36907,-0.198 0.65212,-0.51 0.85116,-0.85 0.19804,-0.368 0.31206,-0.765 0.31206,-1.162 v 0 l 0.028,-11.622 v 0 c 0,-0.397 -0.11302,-0.822 -0.31205,-1.162 -0.19804,-0.369 -0.5101,-0.652 -0.85017,-0.851 -0.36907,-0.198 -0.76614,-0.312 -1.16222,-0.312 l -9.32777,-0.028 v 0 c -0.39707,0 -0.82315,0.113 -1.16322,0.312 -0.36807,0.198 -0.65212,0.51 -0.85016,0.85 -0.19804,0.369 -0.31206,0.766 -0.31206,1.163 z"
+         d="m 308.39605,325.02234 v 0 c 0,0.397 0.11402,0.822 0.31206,1.162 0.19804,0.369 0.5101,0.652 0.85016,0.85 0.36907,0.199 0.76615,0.312 1.16322,0.312 h 9.29877 v 0 c 0.39707,0 0.82216,-0.113 1.16222,-0.312 0.36907,-0.198 0.65212,-0.51 0.85116,-0.85 0.19804,-0.368 0.31206,-0.765 0.31206,-1.162 v 0 l 0.028,-11.622 v 0 c 0,-0.397 -0.11302,-0.822 -0.31205,-1.162 -0.19804,-0.369 -0.5101,-0.652 -0.85017,-0.851 -0.36907,-0.198 -0.76614,-0.312 -1.16222,-0.312 l -9.32777,-0.028 v 0 c -0.39706,0 -0.82315,0.113 -1.16322,0.312 -0.36807,0.198 -0.65212,0.51 -0.85016,0.85 -0.19804,0.369 -0.31206,0.766 -0.31206,1.163 z"
          style="fill:#5b9bd5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.0001"
          id="path554-5" />
       <g
@@ -418,10 +418,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan6">EUDEMO design into </tspan><tspan
+             id="tspan15">EUDEMO design into </tspan><tspan
              x="0"
-             y="28.133374"
-             id="tspan7">separate repo</tspan></text>
+             y="28.133373"
+             id="tspan16">separate repo</tspan></text>
       </g>
       <g
          id="g736"
@@ -433,10 +433,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan8">CAD engine </tspan><tspan
+             id="tspan17">CAD engine </tspan><tspan
              x="0"
-             y="28.133374"
-             id="tspan9">migration</tspan></text>
+             y="28.133373"
+             id="tspan21">migration</tspan></text>
       </g>
     </g>
   </g>
