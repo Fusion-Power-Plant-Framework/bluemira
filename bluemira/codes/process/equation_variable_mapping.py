@@ -541,6 +541,7 @@ ITERATION_VAR_MAPPING = {
     "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
     "fbeta": 8,
+    "fdene": 9,
     "hfact": 10,
     "p_hcd_primary_extra_heat_mw": 11,
     # NO LONGER USED "oacdp": 12,
@@ -610,6 +611,7 @@ ITERATION_VAR_MAPPING = {
     # 95, 96, 97 PREVIOUS f-VALUE
     "f_blkt_li6_enrichment": 98,
     # 99, 100, 101, 102 NOT USED
+    "f_h_mode_margin": 103,
     "fcwr": 104,
     # 105, 106 PREVIOUS f-VALUE
     "favail": 107,

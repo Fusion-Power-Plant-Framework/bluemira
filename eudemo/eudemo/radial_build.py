@@ -53,12 +53,17 @@ template_builder.set_optimisation_numerics(maxiter=1000, tolerance=1e-8)
 
 template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
+
 for constraint in (
     Constraint.BETA_CONSISTENCY,
     Constraint.GLOBAL_POWER_CONSISTENCY,
+    Constraint.RADIAL_BUILD_CONSISTENCY,
+):
+    template_builder.add_constraint(constraint, equality=True)
+
+for constraint in (
     Constraint.DENSITY_UPPER_LIMIT,
     Constraint.NWL_UPPER_LIMIT,
-    Constraint.RADIAL_BUILD_CONSISTENCY,
     Constraint.BURN_TIME_LOWER_LIMIT,
     Constraint.LH_THRESHHOLD_LIMIT,
     Constraint.NET_ELEC_LOWER_LIMIT,
@@ -113,15 +118,15 @@ template_builder.add_variable(
 )
 template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
 template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
-# template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
+template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
 
 # Set model switches
 for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.WESSON,
     BetaNormMaxModel.WESSON,
+    PlasmaProfileModel.WESSON,
     AlphaJModel.WESSON,
     PlasmaPedestalModel.PEDESTAL_GW,
     PlasmaNullConfigurationModel.SINGLE_NULL,
@@ -283,6 +288,14 @@ template_builder.add_input_values({
     "ucme": 3.0e8,
     # Suspicous stuff
     "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    # New stuff for PROCESS 3.4.1
+    "f_h_mode_margin": 1.1,
+    "f_alpha_energy_confinement_min": 5.0,
+    "rrr_tf_cu": 300.0,
+    "t_tf_quench_detection": 3.0,
+    "nflutfmax": 0.0,
+    "fdene": 1.2,
+    "max_vv_stress": 93e6,
 })
 
 
