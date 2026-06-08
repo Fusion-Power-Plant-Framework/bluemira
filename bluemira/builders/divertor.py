@@ -100,9 +100,6 @@ class DivertorDesignerParams(ParameterFrame):
     # Target length
     div_Ltarg_ib: Parameter[float]  # noqa: N815
     div_Ltarg_ob: Parameter[float]  # noqa: N815
-    # Target Location - fraction of target length from the PFR side of target
-    strike_loc_ib: Parameter[float]
-    strike_loc_ob: Parameter[float]
     # Target angle (ccw)
     div_targ_angle_ib: Parameter[float]
     div_targ_angle_ob: Parameter[float]
