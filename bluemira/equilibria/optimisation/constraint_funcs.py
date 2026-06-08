@@ -441,7 +441,7 @@ class CoilForceConstraintFunctions:
             self.grad[self.n_PF + i] = f_up - f_down
 
 
-class CoilForceConstraint(ConstraintFunction, CoilForceConstraintFunctions):
+class CoilForceConstraint(CoilForceConstraintFunctions, ConstraintFunction):
     """
     Combined constraint function for:
         - PF vertical force,
