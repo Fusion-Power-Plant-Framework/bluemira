@@ -11,23 +11,27 @@ These tests exercise the ~15 functions needed by the fusion_1 reactor model
 without involving FreeCAD, the geometry wrapper classes, or any GUI.
 """
 
+import os
+
 import numpy as np
 import pytest
 
 from bluemira.codes.error import InvalidCADInputsError
 
+# Only run in the cadquery CI leg -- these tests drive the _cadquery backend
+# directly, so running them in the freecad leg too would just double-execute.
+# Mirrors the guard in tests/codes/test_cadqueryapi.py.
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BLUEMIRA_GEOMETRY_BACKEND") != "cadquery",
+    reason="CadQuery backend tests; active backend is not cadquery",
+)
 
-def _skip_cadquery():
-    try:
-        import cadquery  # noqa: F401, PLC0415
-    except ImportError:
-        return True
-    return False
-
-
-pytestmark = pytest.mark.skipif(_skip_cadquery(), reason="cadquery not installed")
-
-import bluemira.codes.cadapi._cadquery as cqapi  # noqa: E402
+# Skip the whole module if the CadQuery backend can't be imported (e.g. cadquery
+# or its OCP/VTK runtime deps are missing). importorskip aborts the import as a
+# clean skip at collection time -- a bare module-level import here would raise a
+# collection error and take down the entire test session. Mirrors the guard in
+# tests/codes/test_cadqueryapi.py.
+cqapi = pytest.importorskip("bluemira.codes.cadapi._cadquery")
 
 # ---------------------------------------------------------------------------
 # Fixtures
