@@ -196,7 +196,7 @@ def run_dagmc_neutronics(
     tally_function=None,
 ) -> DAGMCOutput:
     """Creates and runs the DAGMC neutronics model"""  # noqa: DOC201
-    if build_config.get("enabled"):
+    if not build_config.get("enabled"):
         return None
 
     export_dagmc_model(reactor, build_config)
