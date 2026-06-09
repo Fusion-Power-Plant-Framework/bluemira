@@ -19,7 +19,7 @@ from matproplib.properties.group import props
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.materials.neutronics import make_KALOS_ACB_mat
 
-try:
+try:  # noqa: PLW0717
     from eurofusion_materials.library.steel import SS316_LN, EUROfer97
     from eurofusion_materials.library.tungsten import Tungsten
 
