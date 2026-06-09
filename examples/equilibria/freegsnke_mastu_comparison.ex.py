@@ -193,7 +193,6 @@ current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
 )
 
 program = PicardIterator(
-    eq,
     current_opt_problem,
     fixed_coils=True,
     diagnostic_plotting=PicardDiagnosticOptions(PicardDiagnostic.EQ),

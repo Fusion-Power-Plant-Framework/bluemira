@@ -11,7 +11,6 @@ Equilibrium optimisation constraint classes
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -54,7 +53,7 @@ def _get_dummy_equilibrium(equilibrium: Equilibrium):
     # TODO @hsaunders1904: Add passive coil contributions here
     # 3579
     dummy = equilibrium.plasma
-    dummy.coilset = deepcopy(equilibrium.coilset)
+    dummy.coilset = equilibrium.coilset
     return dummy
 
 
