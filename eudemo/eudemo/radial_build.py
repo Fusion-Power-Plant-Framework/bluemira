@@ -248,6 +248,7 @@ template_builder.add_input_values({
     "n_pf_coil_groups": 4,
     "j_pf_coil_wp_peak": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
     # TF coil inputs
+    "fiooic": 0.63437,
     "n_tf_coils": 16,
     "dr_tf_plasma_case": 0.06,
     "dx_tf_side_case_min": 0.05,
