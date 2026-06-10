@@ -120,6 +120,7 @@ template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
 template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
 template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
 
+
 # Set model switches
 for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
@@ -247,6 +248,8 @@ template_builder.add_input_values({
     "n_pf_coils_in_group": [1, 1, 2, 2],
     "n_pf_coil_groups": 4,
     "j_pf_coil_wp_peak": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+    "fjohc": 0.57941,
+    "fjohc0": 0.53923,
     # TF coil inputs
     "fiooic": 0.63437,
     "n_tf_coils": 16,

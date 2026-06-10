@@ -354,6 +354,8 @@ class ProcessInputs:
     fdene: float | None = None
     f_h_mode_margin: float | None = None
     fiooic: float | None = None
+    fjohc: float | None = None
+    fjohc0: float | None = None
     fradpwr: float | None = None
     eta_cd_norm_hcd_primary_max: float | None = None
     pflux_fw_rad_max: float | None = None
