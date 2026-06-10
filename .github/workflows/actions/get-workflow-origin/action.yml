@@ -1,0 +1,44 @@
+name: "Get workflow origin"
+description: "Get PR number and target branch from pull_request or workflow_run"
+
+outputs:
+  pr_number:
+    description: "Pull request number"
+  target_branch:
+    description: "Target (base) branch"
+
+runs:
+  using: "composite"
+  steps:
+    - id: compute
+      uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+      with:
+        script: |
+          const event = context.payload;
+
+          let pullRequestNumber = null;
+          let targetBranch = null;
+
+          if (event.pull_request) {
+            prNumber = event.pull_request.number;
+            targetBranch = event.pull_request.base.ref;
+          }
+          else if (event.workflow_run) {
+            const run_id = event.workflow_run.id;
+
+            // Find PR linked to the workflow run
+            const prs = await github.rest.actions.listWorkflowRunPullRequests({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id
+            });
+
+            if (prs.data.length > 0) {
+              const pr = prs.data[0];
+              pullRequestNumber = pr.number;
+              targetBranch = pr.base.ref;
+            }
+          }
+
+          core.setOutput("pr_number", pullRequestNumber);
+          core.setOutput("target_branch", targetBranch);
