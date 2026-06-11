@@ -233,7 +233,7 @@ class CollocationGrid:
     def __init__(
         self, x_min: float, x_max: float, z_min: float, z_max: float, nx: int, nz: int
     ):
-        if x_min == x_max or z_min == z_max:
+        if np.isclose(x_min, x_max) or np.isclose(z_min, z_max):
             raise EquilibriaError("Invalid Grid dimensions specified.")
 
         if x_min > x_max:
