@@ -1967,6 +1967,7 @@ def save_cad(
     cad_format: str | CADFileType = "stp",
     labels: Iterable[str] | None = None,
     doc_name: str = "Bluemira_FreeCAD_wrapper",
+    colours: Iterable[tuple[float, float, float] | None] | None = None,
     **kwargs,
 ):
     """
@@ -1996,6 +1997,12 @@ def save_cad(
     consistent with our units
     """
     cad_format = CADFileType(cad_format)
+
+    if colours is not None:
+        bluemira_warn(
+            "save_cad: per-shape colours are not supported by the FreeCAD "
+            "backend; exporting without them."
+        )
 
     filename = force_file_extension(filename, f".{cad_format.ext}")
 
