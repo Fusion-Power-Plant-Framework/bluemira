@@ -310,6 +310,27 @@ class TestTessellate:
         assert verts.shape[1] == 3
         assert edges.shape[1] == 2
 
+    def test_collect_wires_points_lie_on_wire(self):
+        # Points sit on the circle within the deflection; edges form a
+        # contiguous chain over valid vertex indices.
+        deflection = 0.05
+        circle = cqapi.make_circle(radius=5.0)
+        verts, edges = cqapi.collect_wires(circle, deflection=deflection)
+
+        radii = np.hypot(verts[:, 0], verts[:, 1])
+        assert np.allclose(radii, 5.0, atol=deflection)
+        assert np.allclose(verts[:, 2], 0.0, atol=1e-9)
+
+        assert edges.min() >= 0
+        assert edges.max() == len(verts) - 1
+        assert np.all(edges[:, 1] - edges[:, 0] == 1)
+
+    def test_collect_wires_is_curvature_adaptive(self):
+        # A long straight edge needs only its endpoints, independent of length.
+        line = cqapi.make_polygon([[0, 0, 0], [100.0, 0, 0]])
+        verts, _ = cqapi.collect_wires(line, deflection=0.01)
+        assert len(verts) <= 4, f"straight wire over-sampled: {len(verts)} points"
+
 
 # ---------------------------------------------------------------------------
 # Wire validation helpers
