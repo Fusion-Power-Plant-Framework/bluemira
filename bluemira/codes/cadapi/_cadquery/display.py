@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
+from OCP.BRepAdaptor import BRepAdaptor_CompCurve
+from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 
 from bluemira.utilities.tools import ColourDescriptor
 
@@ -78,28 +80,49 @@ def collect_wires(
     Parameters
     ----------
     deflection:
-        Maximum chord-height deviation; controls point density per wire.
-        (Polyscope passes this as ``Deflection=`` — absorbed by ``**_kwds``.)
+        Maximum chord-height deviation, in metres; controls point density per
+        wire. (Polyscope passes this as ``Deflection=`` — absorbed by
+        ``**_kwds``.)
     """
-    # Local import to avoid a top-level _core ↔ _display cycle. ``_core`` may
-    # also re-export from this module via __init__.
-    from bluemira.codes.cadapi._cadquery.core import _vector_to_numpy  # noqa: PLC0415
-
     all_verts = []
     all_edges = []
     voffset = 0
 
     for wire in solid.Wires():
-        # Sample N points proportional to length; at least 10.
-        n = max(10, int(wire.Length() / deflection))
-        pts = [_vector_to_numpy(wire.positionAt(t)) for t in np.linspace(0.0, 1.0, n)]
-        pts_arr = np.array(pts, dtype=float)
+        pts = _discretise_wire(wire, deflection)
+        n = len(pts)
         seg_idx = np.arange(voffset, voffset + n - 1)
-        all_verts.append(pts_arr)
+        all_verts.append(pts)
         all_edges.append(np.column_stack([seg_idx, seg_idx + 1]))
         voffset += n
 
     return np.vstack(all_verts), np.vstack(all_edges)
+
+
+_MIN_SEGMENT_POINTS = 2  # a drawable polyline needs at least two endpoints
+
+
+def _discretise_wire(wire: apiShape, deflection: float) -> np.ndarray:
+    """Sample a wire at a target chord-height *deflection*.
+
+    Curvature-adaptive: straight runs get few points, tight bends get more.
+    """
+    adaptor = BRepAdaptor_CompCurve(wire.wrapped)
+    sampler = GCPnts_QuasiUniformDeflection(adaptor, deflection)
+    n = sampler.NbPoints() if sampler.IsDone() else 0
+    if n < _MIN_SEGMENT_POINTS:
+        # Degenerate wire: use the parameter-range endpoints.
+        params = (adaptor.FirstParameter(), adaptor.LastParameter())
+        pts = np.empty((2, 3))
+        for i, t in enumerate(params):
+            p = adaptor.Value(t)
+            pts[i] = (p.X(), p.Y(), p.Z())
+        return pts
+    pts = np.empty((n, 3))
+    for i in range(n):
+        p = sampler.Value(i + 1)  # GCPnts points are 1-indexed
+        pts[i] = (p.X(), p.Y(), p.Z())
+    return pts
 
 
 @dataclass
