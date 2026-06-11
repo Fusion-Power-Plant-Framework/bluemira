@@ -29,6 +29,7 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.Interface import Interface_Static
 from OCP.Message import Message_ProgressRange
+from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
 from OCP.RWGltf import RWGltf_CafWriter
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
@@ -46,7 +47,7 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.TopTools import TopTools_HSequenceOfShape
 from OCP.TopoDS import TopoDS_Compound
 from OCP.XCAFApp import XCAFApp_Application
-from OCP.XCAFDoc import XCAFDoc_DocumentTool
+from OCP.XCAFDoc import XCAFDoc_ColorType, XCAFDoc_DocumentTool
 from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec
 
 from bluemira.codes.cadapi._cadquery.aliases import (
@@ -244,6 +245,7 @@ def _write_gltf(
     filename: str,
     *,
     is_binary: bool,
+    colours: list[tuple[float, float, float] | None] | None = None,
     lin_deflection: float = _DEFAULT_LIN_DEFLECTION,
     ang_deflection: float = _DEFAULT_ANG_DEFLECTION,
 ) -> None:
@@ -251,18 +253,31 @@ def _write_gltf(
 
     Triangulation must be precomputed on each shape before ``Perform`` —
     ``RWGltf_CafWriter`` does not auto-tessellate.
+
+    ``colours`` are sRGB ``(r, g, b)`` tuples in ``[0, 1]``, one per shape
+    (``None`` entries are skipped). Set as XCAF surface colours so the
+    writer emits glTF PBR materials.
     """
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
     app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
+    colour_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
     used_labels = (
         labels if labels is not None else [f"shape_{i}" for i in range(len(shapes))]
     )
-    for s, name in zip(shapes, used_labels, strict=True):
+    used_colours = colours if colours is not None else [None] * len(shapes)
+    for s, name, colour in zip(shapes, used_labels, used_colours, strict=True):
         _ensure_meshed(s, lin_deflection, ang_deflection)
         lbl = shape_tool.AddShape(s.wrapped, False)
         TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
+        if colour is not None:
+            r, g, b = colour
+            colour_tool.SetColor(
+                lbl,
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB),
+                XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+            )
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(str(filename)), is_binary)
     file_info = TColStd_IndexedDataMapOfStringString()
@@ -276,9 +291,14 @@ def save_cad(
     filename: str,
     cad_format: str | CADFileType = "stp",
     labels: Iterable[str] | None = None,
+    colours: list[tuple[float, float, float] | None] | None = None,
     **kwargs,
 ):
-    """Save CAD shapes to a file."""
+    """Save CAD shapes to a file.
+
+    ``colours`` are per-shape sRGB ``(r, g, b)`` tuples, currently only
+    honoured by the glTF/GLB export (written as PBR materials).
+    """
     if not isinstance(shapes, list):
         shapes = list(shapes)
     labels_list = list(labels) if labels is not None else None
@@ -320,7 +340,7 @@ def save_cad(
         _write_stl(shapes, filename)
     elif cad_format == CADFileType.GLTRANSMISSION:
         is_binary = str(filename).lower().endswith(".glb")
-        _write_gltf(shapes, labels_list, filename, is_binary=is_binary)
+        _write_gltf(shapes, labels_list, filename, is_binary=is_binary, colours=colours)
     else:
         raise CadQueryError(
             f"CAD format not supported by CadQuery backend: {cad_format}"

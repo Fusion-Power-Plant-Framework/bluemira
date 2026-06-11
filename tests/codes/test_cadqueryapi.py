@@ -289,6 +289,53 @@ class TestSaveCadMeshFormats:
             f"label not found in glTF node names: {node_names}"
         )
 
+    @staticmethod
+    def _glb_json(data: bytes) -> dict:
+        """Decode the JSON chunk of a binary GLB (12-byte header, then chunk)."""
+        chunk_len, chunk_type = struct.unpack_from("<I4s", data, 12)
+        assert chunk_type == b"JSON"
+        return json.loads(data[20 : 20 + chunk_len])
+
+    @staticmethod
+    def _srgb_to_linear(c: float) -> float:
+        # glTF ``baseColorFactor`` is linear; OCCT decodes the sRGB input.
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    def test_save_glb_writes_colours_as_materials(self, box, tmp_path):
+        small = cadapi.extrude_shape(
+            cadapi.make_polygon([(2, 0, 0), (3, 0, 0), (3, 1, 0), (2, 1, 0), (2, 0, 0)]),
+            (0, 0, 1),
+        )
+        colours = [(0.2, 0.4, 0.8), (0.8, 0.1, 0.1)]
+        path = tmp_path / "coloured.glb"
+        cadapi.save_cad(
+            [box, small], str(path), cad_format="glb", labels=["a", "b"], colours=colours
+        )
+
+        doc = self._glb_json(path.read_bytes())
+        mats = doc.get("materials", [])
+        assert len(mats) == 2, "one PBR material per coloured shape"
+
+        got = sorted(
+            tuple(m["pbrMetallicRoughness"]["baseColorFactor"][:3]) for m in mats
+        )
+        expected = sorted(tuple(self._srgb_to_linear(c) for c in rgb) for rgb in colours)
+        for g, e in zip(got, expected, strict=True):
+            assert g == pytest.approx(e, abs=1e-6)
+        # Default fully opaque alpha on every material.
+        for m in mats:
+            assert m["pbrMetallicRoughness"]["baseColorFactor"][3] == pytest.approx(1.0)
+
+    def test_save_glb_without_colours_has_no_materials(self, box, tmp_path):
+        # Regression: the export is unchanged when no colours are passed —
+        # geometry is written, but no PBR materials are emitted.
+        path = tmp_path / "plain.glb"
+        cadapi.save_cad([box], str(path), cad_format="glb", labels=["box"])
+
+        doc = self._glb_json(path.read_bytes())
+        assert doc.get("meshes"), "geometry should still be exported"
+        assert not doc.get("materials"), "no colours given → no materials emitted"
+
     # ---- Dispatcher edge cases --------------------------------------------
 
     def test_save_cad_rejects_unsupported_format(self, box, tmp_path):

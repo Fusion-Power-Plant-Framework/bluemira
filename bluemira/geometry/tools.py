@@ -1690,6 +1690,7 @@ def save_cad(
     filename: str | Path,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
+    colours: list[tuple[float, float, float] | None] | None = None,
     **kwargs,
 ):
     """
@@ -1705,6 +1706,9 @@ def save_cad(
         file format to save as
     names:
         Names of shapes to save
+    colours:
+        Per-shape sRGB ``(r, g, b)`` tuples in ``[0, 1]``. Currently only
+        the glTF/GLB export honours them (written as PBR materials).
     kwargs:
         arguments passed to cadapi save function
     """
@@ -1718,6 +1722,7 @@ def save_cad(
         Path(filename).as_posix(),
         cad_format=cad_format,
         labels=names,
+        colours=colours,
         **kwargs,
     )
 
