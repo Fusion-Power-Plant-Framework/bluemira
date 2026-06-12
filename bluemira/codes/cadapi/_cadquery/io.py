@@ -48,6 +48,7 @@ from OCP.TopTools import TopTools_HSequenceOfShape
 from OCP.TopoDS import TopoDS_Compound
 from OCP.XCAFApp import XCAFApp_Application
 from OCP.XCAFDoc import (
+    XCAFDoc_ColorType,
     XCAFDoc_DocumentTool,
     XCAFDoc_VisMaterial,
     XCAFDoc_VisMaterialPBR,
@@ -187,20 +188,35 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
         raise CadQueryError(f"Failed to write STEP file: {filename}")
 
 
-def _write_labeled_step(shapes, labels, filename):
+def _write_labeled_step(shapes, labels, filename, colours=None):
     """Write a STEP file as an XCAF assembly with one named PRODUCT per shape.
 
     Mirrors FreeCAD's ``save_cad(..., labels=...)`` behaviour: downstream
     tools (``fast_ctd``, DAGMC converters) look up solids by name, so each
     input shape must appear as a distinct named entity in the STEP file.
+
+    ``colours`` are sRGB ``(r, g, b)`` tuples in ``[0, 1]``, one per shape
+    (``None`` entries are skipped). Written as XCAF surface colours so the
+    writer emits STEP AP214 STYLED_ITEM entities — AP214-aware viewers
+    (FreeCAD desktop, Mayo, CAD Assistant) render the file in colour.
+    STEP has no PBR concept; only the diffuse colour is preserved.
     """
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
     app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    for s, name in zip(shapes, labels, strict=True):
+    colour_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    used_colours = colours if colours is not None else [None] * len(shapes)
+    for s, name, colour in zip(shapes, labels, used_colours, strict=True):
         lbl = shape_tool.AddShape(s.wrapped, False)
         TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
+        if colour is not None:
+            r, g, b = colour
+            colour_tool.SetColor(
+                lbl,
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB),
+                XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+            )
     writer = STEPCAFControl_Writer()
     writer.Transfer(doc, STEPControl_AsIs)
     _set_step_header_author(writer.ChangeWriter().Model())
@@ -312,8 +328,11 @@ def save_cad(
 ):
     """Save CAD shapes to a file.
 
-    ``colours`` are per-shape sRGB ``(r, g, b)`` tuples, currently only
-    honoured by the glTF/GLB export (written as PBR materials).
+    ``colours`` are per-shape sRGB ``(r, g, b)`` tuples. Honoured by
+    glTF/GLB (written as full PBR materials) and by STEP (written as
+    AP214 STYLED_ITEM surface colours, requires ``labels`` to drive the
+    XCAF-assembly path). STL ignores them — the format has no per-shape
+    colour concept.
     """
     if not isinstance(shapes, list):
         shapes = list(shapes)
@@ -343,7 +362,9 @@ def save_cad(
     if cad_format == CADFileType.STEP:
         with _step_write_settings():
             if labels_list:
-                status = _write_labeled_step(shapes, labels_list, filename)
+                status = _write_labeled_step(
+                    shapes, labels_list, filename, colours=colours
+                )
             else:
                 writer = STEPControl_Writer()
                 for s in shapes:
