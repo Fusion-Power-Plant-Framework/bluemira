@@ -32,7 +32,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryParameterisationError
+from bluemira.geometry.error import GeometryParameterisationError, OutOfBoundsError
 from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
@@ -1411,10 +1411,11 @@ def _get_centres(
 
     Raises
     ------
+    OutOfBoundsError
+        The total angle of the defined curves exceeds pi (reflection_zplane given)
+        or 2pi (reflection_zplane not given).
     GeometryParameterisationError
-        The total angle of the defined curves must be below pi (reflection_zplane given)
-        or below 2pi (reflection_zplane not given). And the parametrised curve must not
-        intersect itself. Otherwise, this error is raised.
+        The parametrised curve intersects itself.
     """
     a_start: float = 0.0
     xi, zi = x_start, z_start
@@ -1443,9 +1444,13 @@ def _get_centres(
 
     vertical_symmetry = reflection_zplane is not None
     if a_start >= 180 and vertical_symmetry:  # noqa: PLR2004
-        raise GeometryParameterisationError("The total angles should add up to <180°.")
+        raise OutOfBoundsError(
+            "The total angles should add up to <180°.", excess=a_start / 180 - 1
+        )
     if a_start >= 360 and not vertical_symmetry:  # noqa: PLR2004
-        raise GeometryParameterisationError("The total angles should add up to <360°.")
+        raise OutOfBoundsError(
+            "The total angles should add up to <360°.", excess=a_start / 360 - 1
+        )
 
     _, _, vec = _project_centroid(xc, zc, xi, zi, ri)
 
