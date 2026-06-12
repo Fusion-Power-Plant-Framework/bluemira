@@ -14,7 +14,7 @@ import pytest
 
 import bluemira.codes._geometryapi as _cadapi
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.error import GeometryParameterisationError
+from bluemira.geometry.error import GeometryParameterisationError, OutOfBoundsError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation._tools import KeepOutZone
 from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
@@ -589,6 +589,18 @@ class TestTripleArc:
         p.variables.sl.adjust(5)
         with pytest.raises(GeometryParameterisationError):
             p.create_shape()
+
+    def test_excessive_angles_raise_out_of_bounds_with_excess(self):
+        # Angles past the 180° symmetry limit raise the specific, optimiser-
+        # recoverable OutOfBoundsError, carrying how far out of bounds it is.
+        p = TripleArc()
+        p.adjust_variable("a1", value=120)
+        p.adjust_variable("a2", value=120)  # sum 240 -> 240/180 - 1
+        with pytest.raises(OutOfBoundsError) as exc_info:
+            p.create_shape()
+        assert exc_info.value.excess == pytest.approx(240 / 180 - 1)
+        # Still a GeometryParameterisationError, so existing handlers catch it.
+        assert isinstance(exc_info.value, GeometryParameterisationError)
 
     def test_plot(self):
         p = TripleArc()
