@@ -9,6 +9,8 @@ First Wall Silhouette designer
 
 from dataclasses import dataclass
 
+import numpy as np
+
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
 from bluemira.base.look_and_feel import (
@@ -183,6 +185,20 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             bluemira_debug(
                 f"Applying non-default settings to problem: {self.problem_settings}"
             )
+        _, x_points = find_OX_points(
+            self.equilibrium.x, self.equilibrium.z, self.equilibrium.psi()
+        )
+        x_point_z = x_points[0].z
+        z_margin = 0.05  # the wall must clear the x-point by this much, in metres
+
+        def f_x_point(geom: GeometryParameterisation) -> np.ndarray:
+            # Inequality constraint, satisfied when <= 0: the wall's lowest point
+            # sits at least ``z_margin`` below the separatrix x-point, so the
+            # first wall encloses it. Enforced here rather than only validated
+            # after the fact (see ``execute``).
+            z_min = geom.create_shape().bounding_box.z_min
+            return np.array([z_min - (x_point_z - z_margin)])
+
         result = optimise_geometry(
             parameterisation,
             algorithm=self.algorithm_name,
@@ -195,6 +211,13 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
                     n_discr=self.problem_settings.get("n_koz_points", 100),
                     byedges=False,
                 )
+            ],
+            ineq_constraints=[
+                {
+                    "name": "x_point_enclosure",
+                    "f_constraint": f_x_point,
+                    "tolerance": np.array([1e-8]),
+                }
             ],
         )
 
