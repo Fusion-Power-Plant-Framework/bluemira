@@ -164,9 +164,76 @@ def calculate_signed_distance(
     shape = parameterisation.create_shape()
     # Note that we do not discretise by edges here, as the number of
     # points must remain constant so the size of constraint vectors
-    # remain constant.
-    s = shape.discretise(n_shape_discr, byedges=False).xz
+    # remain constant. Sample densely, then resample to the requested count
+    # from a backend-independent anchor (see _canonical_loop_points).
+    dense = shape.discretise(max(8 * n_shape_discr, 200), byedges=False).xz
+    s = _canonical_loop_points(dense, n_shape_discr)
     return signed_distance_2D_polygon(s.T, zone_points.T).T
+
+
+def _canonical_loop_points(loop: np.ndarray, n: int) -> np.ndarray:
+    """Resample a closed loop to ``n`` points in a backend-independent way.
+
+    ``discretise`` starts at the wire's first edge and follows the wire's
+    stored direction, both of which depend on the backend-specific edge
+    ordering. For an otherwise identical loop this only phase-shifts (and can
+    reverse) the samples, yet it scrambles the per-element keep-out-zone
+    constraint vector between backends and sends the optimiser into a different
+    basin. Pinning the winding, anchoring at the outer-midplane point and
+    resampling at uniform arc length makes the constraint deterministic and
+    smooth in the design variables.
+
+    Parameters
+    ----------
+    loop:
+        ``(2, M)`` densely sampled closed loop in the xz plane.
+    n:
+        Number of points to return.
+
+    Returns
+    -------
+    :
+        ``(2, n)`` points at uniform arc length, measured from the anchor.
+    """
+    pts = loop.T
+    if np.allclose(pts[0], pts[-1]):
+        pts = pts[:-1]
+    # Consistent winding (counter-clockwise) via the shoelace signed area.
+    x, z = pts[:, 0], pts[:, 1]
+    if np.sum(x * np.roll(z, -1) - np.roll(x, -1) * z) < 0:
+        pts = pts[::-1]
+    # Cumulative arc length around the closed loop.
+    closed = np.vstack([pts, pts[:1]])
+    cum = np.concatenate([
+        [0.0],
+        np.cumsum(np.linalg.norm(np.diff(closed, axis=0), axis=1)),
+    ])
+    length = cum[-1]
+    # Anchor where the loop crosses the outboard horizontal ray from its
+    # centroid (the outer-midplane point). Unlike an axis-aligned or radial
+    # extremum, this crossing is unique, sits on the smooth outer wall and
+    # moves continuously as the shape changes, so it never jumps between
+    # optimiser iterations or between the backends' phase-shifted samplings.
+    # That matters because a resample repositions every point relative to the
+    # anchor, so an anchor that jumps scrambles the whole constraint vector.
+    c = pts.mean(axis=0)
+    dz = pts[:, 1] - c[1]
+    dz_next = np.roll(dz, -1)
+    outboard = (pts[:, 0] > c[0]) & (np.roll(pts[:, 0], -1) > c[0])
+    crossings = np.flatnonzero((dz <= 0) & (dz_next > 0) & outboard)
+    j = (
+        int(crossings[np.argmax(pts[crossings, 0])])
+        if len(crossings)
+        else int(np.argmax(pts[:, 0]))
+    )
+    t = dz[j] / (dz[j] - dz_next[j]) if dz[j] != dz_next[j] else 0.0
+    s0 = (cum[j] + t * (cum[j + 1] - cum[j])) % length
+    # Resample at uniform arc length from the anchor.
+    targets = (s0 + np.linspace(0.0, length, n, endpoint=False)) % length
+    return np.vstack([
+        np.interp(targets, cum, closed[:, 0]),
+        np.interp(targets, cum, closed[:, 1]),
+    ])
 
 
 def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:

@@ -11,7 +11,11 @@ import pytest
 from bluemira.geometry.error import OutOfBoundsError
 from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.optimisation._optimise import KeepOutZone
-from bluemira.geometry.optimisation._tools import to_objective, to_optimiser_callable
+from bluemira.geometry.optimisation._tools import (
+    _canonical_loop_points,
+    to_objective,
+    to_optimiser_callable,
+)
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,
@@ -340,3 +344,45 @@ class TestOutOfBoundsPenalty:
         x = arc.variables.get_normalised_values()
         f = to_objective(lambda g: g.create_shape().length, arc)
         assert np.isfinite(f(x))
+
+
+class TestCanonicalLoopPoints:
+    """``_canonical_loop_points`` resamples a closed loop to a fixed point
+    sequence that does not depend on where the discretisation starts or which
+    way it winds. This keeps the keep-out-zone constraint vector identical
+    between geometry backends, whose wire edge ordering otherwise phase-shifts
+    the samples and drives the optimiser into a different basin (the EUDEMO
+    wall-silhouette divergence).
+    """
+
+    @staticmethod
+    def _ellipse(n_pts: int, phase: float = 0.0, *, reverse: bool = False) -> np.ndarray:
+        # Dense closed loop: ellipse centred at (10, 0), whose outer-midplane
+        # anchor therefore sits at (13, 0).
+        theta = np.linspace(0.0, 2 * np.pi, n_pts, endpoint=False) + phase
+        pts = np.vstack([10 + 3 * np.cos(theta), 5 * np.sin(theta)])
+        return pts[:, ::-1] if reverse else pts
+
+    def test_returns_requested_count(self):
+        assert _canonical_loop_points(self._ellipse(400), 47).shape == (2, 47)
+
+    def test_anchored_at_outer_midplane(self):
+        out = _canonical_loop_points(self._ellipse(400), 60)
+        np.testing.assert_allclose(out[:, 0], [13.0, 0.0], atol=5e-3)
+
+    def test_invariant_to_sample_phase(self):
+        # Two dense samplings of the same loop starting at different points
+        # (as the two backends do) collapse to the same canonical points.
+        a = _canonical_loop_points(self._ellipse(400, phase=0.0), 60)
+        b = _canonical_loop_points(self._ellipse(400, phase=0.37), 60)
+        assert np.max(np.linalg.norm(a - b, axis=0)) < 1e-2
+
+    def test_invariant_to_winding(self):
+        a = _canonical_loop_points(self._ellipse(400), 60)
+        b = _canonical_loop_points(self._ellipse(400, reverse=True), 60)
+        np.testing.assert_allclose(a, b, atol=1e-9)
+
+    def test_points_lie_on_loop(self):
+        out = _canonical_loop_points(self._ellipse(400), 60)
+        on_ellipse = ((out[0] - 10) / 3) ** 2 + (out[1] / 5) ** 2
+        np.testing.assert_allclose(on_ellipse, 1.0, atol=1e-2)
