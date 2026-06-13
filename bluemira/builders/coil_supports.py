@@ -575,20 +575,24 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     ----------
     wire:
         Sub wire along which to place the OIS
-    keep_out_zone:
-        Region in which the OIS cannot be
+    keep_out_zones:
+        Regions in which the OIS cannot be
     n_koz_discr:
         Number of discretisation points to use when checking the keep-out zone constraint
     """
 
     def __init__(
-        self, wire: BluemiraWire, keep_out_zone: BluemiraFace, n_koz_discr: int = 100
+        self,
+        wire: BluemiraWire,
+        keep_out_zones: list[BluemiraFace],
+        n_koz_discr: int = 100,
     ):
         self.wire = wire
         self.n_koz_discr = n_koz_discr
-        self.koz_points = (
-            keep_out_zone.boundary[0].discretise(byedges=True, ndiscr=n_koz_discr).xz.T
-        )
+        self.koz_polygons = [
+            koz.boundary[0].discretise(byedges=True, ndiscr=n_koz_discr).xz.T
+            for koz in keep_out_zones
+        ]
 
     def objective(self, x: np.ndarray) -> float:
         """Objective function to maximise length."""  # noqa: DOC201
@@ -674,7 +678,16 @@ class StraightOISOptimisationProblem(OptimisationProblem):
             x_norm = np.array([0, D_TOLERANCE])
         straight_line = self.f_L_to_wire(self.wire, x_norm)
         straight_points = straight_line.discretise(ndiscr=self.n_koz_discr).xz.T
-        return signed_distance_2D_polygon(straight_points, self.koz_points)
+        # Stay outside every (possibly disjoint) keep-out zone. signed distance
+        # is positive inside a zone, so the binding zone is the one the line is
+        # most inside: take the worst (max) distance across zones.
+        return np.max(
+            [
+                signed_distance_2D_polygon(straight_points, poly)
+                for poly in self.koz_polygons
+            ],
+            axis=0,
+        )
 
     @staticmethod
     def constrain_x(x_norm: np.ndarray) -> np.ndarray:
@@ -752,11 +765,11 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
             join="arc",
         )
         ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
-        koz = self._make_ois_koz(koz_centreline)
+        ois_kozs = self._make_ois_koz(koz_centreline)
 
         ois_wires = []
         for region in ois_regions:
-            opt_problem = StraightOISOptimisationProblem(region, koz)
+            opt_problem = StraightOISOptimisationProblem(region, ois_kozs)
             result = opt_problem.optimise(
                 x0=np.array([0.0, 1.0]),
                 algorithm="COBYLA",
@@ -781,19 +794,19 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
         p4 = p1 + tk * normal
         return make_polygon([p1, p2, p3, p4], closed=True)
 
-    def _make_ois_koz(self, koz_centreline):
+    def _make_ois_koz(self, koz_centreline) -> list[BluemiraFace]:
         """
-        Make the (fused) keep-out-zone for the outer inter-coil structures.
+        Make the keep-out-zone faces for the outer inter-coil structures.
         """  # noqa: DOC201
-        # Note we use the same offset to the exclusion zones as for the OIS
-        # to the TF.
-        koz_wires = [
-            offset_wire(koz.boundary[0], self.params.g_ois_tf_edge.value)
+        # Same offset to the exclusion zones as for the OIS to the TF. The
+        # zones can be disjoint (a port keep-out zone need not touch the TF
+        # keep-out zone), so they are kept as a list rather than fused into a
+        # single face.
+        koz_faces = [
+            BluemiraFace(offset_wire(koz.boundary[0], self.params.g_ois_tf_edge.value))
             for koz in self.keep_out_zones
         ]
-        koz_faces = [BluemiraFace(koz) for koz in koz_wires]
-
-        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])
+        return [BluemiraFace(koz_centreline), *koz_faces]
 
     def _make_ois_regions(self, ois_centreline, koz_centreline):
         """
@@ -812,10 +825,12 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
                 closed=True,
             )
         )
-        cutter = BluemiraFace(koz_centreline)
-        cutter = boolean_fuse([cutter, inboard_cutter, *self.keep_out_zones])
-
-        ois_regions = boolean_cut(ois_centreline, cutter)
+        # Cut the centreline by each exclusion zone directly. The zones can be
+        # disjoint (a port keep-out zone need not touch the inboard cutter or
+        # the TF keep-out zone), so they are passed as a list of cut tools
+        # rather than fused into a single face first.
+        cutters = [BluemiraFace(koz_centreline), inboard_cutter, *self.keep_out_zones]
+        ois_regions = boolean_cut(ois_centreline, cutters)
 
         # Drop regions that are too short for OIS
         big_ois_regions = []

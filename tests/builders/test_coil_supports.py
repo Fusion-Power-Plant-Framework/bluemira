@@ -293,6 +293,23 @@ class TestStraightOISDesigner:
         ois_wires = designer.run()
         assert len(ois_wires) == n_ois
 
+    def test_run_handles_disjoint_keep_out_zones(self):
+        # The exclusion zones can be disjoint: a port keep-out zone need not
+        # touch the TF keep-out zone. Both the region selection and the OIS
+        # keep-out zone therefore handle a list of unconnected faces rather
+        # than fusing them into a single face, which requires them to connect.
+        disjoint_kozs = (
+            BluemiraFace(
+                make_polygon({"x": [6, 9, 9, 6], "z": [5, 5, 16, 16]}, closed=True)
+            ),
+            BluemiraFace(
+                make_polygon({"x": [15, 17, 17, 15], "z": [-1, -1, 1, 1]}, closed=True)
+            ),
+        )
+        designer = StraightOISDesigner(self.params, {}, self.tf_xz_face, disjoint_kozs)
+        ois_wires = designer.run()
+        assert len(ois_wires) >= 1
+
     def test_that_gradient_based_optimiser_works(self):
         wire = make_polygon({"x": [9, 8, 7, 6, 5, 4], "z": [0, 1, 2, 3, 3.5, 4]})
         wire = make_circle_arc_3P([9, 0, 0], [7, 0, 2], [4, 0, 4])
@@ -300,14 +317,14 @@ class TestStraightOISDesigner:
             make_polygon({"x": [6, 7, 7, 6], "z": [0, 0, 1.8, 1.8]}, closed=True)
         )
 
-        opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
+        opt_problem = StraightOISOptimisationProblem(wire, [keep_out_zone])
         result_1 = opt_problem.optimise(
             x0=np.array([0.0, 1.0]),
             algorithm="COBYLA",
             opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
         ).x
 
-        opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
+        opt_problem = StraightOISOptimisationProblem(wire, [keep_out_zone])
         result_2 = opt_problem.optimise(
             x0=np.array([0.0, 1.0]),
             algorithm="SLSQP",
