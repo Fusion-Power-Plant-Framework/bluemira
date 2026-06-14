@@ -17,6 +17,7 @@ import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -24,6 +25,7 @@ from bluemira.builders.tools import (
     make_circular_xy_ring,
 )
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 
@@ -76,14 +78,26 @@ class RadiationShieldBuilder(Builder):
     def build_xz(self) -> PhysicalComponent:
         """
         Build the x-z components of the radiation shield.
+
+        Raises
+        ------
+        BuilderError
+            The cryostat VV halves could not be fused into a single face.
         """  # noqa: DOC201
         cryo_vv_rot = self.cryo_vv.deepcopy()
         cryo_vv_rot.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
 
-        rs_inner = offset_wire(
-            boolean_fuse([self.cryo_vv, cryo_vv_rot]).boundary[0],
-            self.params.g_cr_rs.value,
-        )
+        # The shield wraps the cryostat VV joined with its mirror image. The
+        # fuse needs the two halves to meet; surface a clear error if they
+        # don't rather than a bare boolean-operation failure.
+        try:
+            cryo_vv_full = boolean_fuse([self.cryo_vv, cryo_vv_rot])
+        except GeometryError as e:
+            raise BuilderError(
+                "Could not fuse the cryostat VV with its mirror image into a "
+                "single face; the two halves do not meet."
+            ) from e
+        rs_inner = offset_wire(cryo_vv_full.boundary[0], self.params.g_cr_rs.value)
         rs_outer = offset_wire(rs_inner, self.params.tk_rs.value)
 
         # Now we slice in half
