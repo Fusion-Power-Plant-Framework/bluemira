@@ -196,10 +196,12 @@ def _write_labeled_step(shapes, labels, filename, colours=None):
     input shape must appear as a distinct named entity in the STEP file.
 
     ``colours`` are sRGB ``(r, g, b)`` tuples in ``[0, 1]``, one per shape
-    (``None`` entries are skipped). Written as XCAF surface colours so the
-    writer emits STEP AP214 STYLED_ITEM entities — AP214-aware viewers
-    (FreeCAD desktop, Mayo, CAD Assistant) render the file in colour.
-    STEP has no PBR concept; only the diffuse colour is preserved.
+    (``None`` entries are skipped). Written as XCAF surface colours, which OCCT
+    emits as STYLED_ITEM presentation entities. The caller fixes the schema to
+    AP242DIS (see ``_step_write_settings``); STYLED_ITEM is shared by AP214 and
+    AP242, so the AP242 file still renders in colour in AP242/AP214-aware
+    viewers (FreeCAD desktop, Mayo, CAD Assistant). STEP has no PBR concept;
+    only the diffuse colour is preserved.
     """
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
@@ -329,10 +331,10 @@ def save_cad(
     """Save CAD shapes to a file.
 
     ``colours`` are per-shape sRGB ``(r, g, b)`` tuples. Honoured by
-    glTF/GLB (written as full PBR materials) and by STEP (written as
-    AP214 STYLED_ITEM surface colours, requires ``labels`` to drive the
-    XCAF-assembly path). STL ignores them — the format has no per-shape
-    colour concept.
+    glTF/GLB (written as full PBR materials) and by STEP (written as XCAF
+    STYLED_ITEM surface colours in the AP242 output, requires ``labels`` to
+    drive the XCAF-assembly path). STL ignores them — the format has no
+    per-shape colour concept.
     """
     if not isinstance(shapes, list):
         shapes = list(shapes)
