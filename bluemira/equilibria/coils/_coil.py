@@ -558,6 +558,17 @@ class Coil(CoilFieldsMixin):
             " longer change the coil size."
         )
 
+    def unfix_size(self):
+        """
+        Unfixes the size of the coil
+        """
+        self._flag_sizefix = False
+        bluemira_debug(
+            "Coil size unfixed\n"
+            "Adjusting the current or max current density will now"
+            "change the coil size."
+        )
+
     def resize(self, current: float | None = None):
         """Resize coil given a current"""
         if not self._flag_sizefix:

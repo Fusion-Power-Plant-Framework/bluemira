@@ -187,6 +187,12 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         self.__run_func("fix_size")
 
+    def unfix_sizes(self):
+        """
+        Fix the sizes of coils in CoilGroup
+        """
+        self.__run_func("unfix_size")
+
     def resize(self, currents: float | list | np.ndarray):
         """
         Resize coils based on their current if their size is not fixed
@@ -1131,6 +1137,18 @@ class SymmetricCircuit(Circuit):
             self._get_primary_group_x_centre(),
             self._get_primary_group_z_centre(),
         ])
+
+    def fix_sizes(self):
+        """
+        Fix the sizes of coils in CoilGroup
+        """
+        self.__run_func("fix_size")
+
+    def unfix_sizes(self):
+        """
+        Fix the sizes of coils in CoilGroup
+        """
+        self.__run_func("unfix_size")
 
 
 @dataclass
