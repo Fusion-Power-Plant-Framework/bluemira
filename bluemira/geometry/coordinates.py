@@ -1191,7 +1191,7 @@ def _parse_dict(xyz_dict):
     return np.array([x, y, z])
 
 
-class Coordinates:
+class Coordinates:  # noqa: PLR0904
     """
     Coordinates object for storing ordered sets of coordinates.
 
@@ -1587,6 +1587,58 @@ class Coordinates:
 
         if self.closed:
             self._array = self._array[:, :-1]
+
+    def shift_start(self, x=0.0, y=0.0, z=0.0):
+        """
+        Change the start location of your coordinates array.
+        Will set to open if coords are closed.
+        """
+        if self.closed:
+            self.open()
+        idx = self._get_loc_idx(x, y, z)
+        if len(idx) != 1:
+            bluemira_warn("Doing nothing to coordinates start location.")
+        else:
+            self._array = np.concatenate(
+                [self._array[:, idx[0] :], self._array[:, : idx[0]]], axis=1
+            )
+
+    def _get_loc_idx(self, x, y, z):
+        (idx,) = np.where(
+            np.isclose(self._array[0], x)
+            & np.isclose(self._array[1], y)
+            & np.isclose(self._array[2], z)
+        )
+        if len(idx) > 1:
+            bluemira_warn("There is more than one point at this location.")
+        if len(idx) < 1:
+            bluemira_warn("There is no point at this location.")
+        return idx
+
+    def split_open(self, x=0.0, y=0.0, z=0.0):
+        """
+        Split an open set of coordinates at a given point and return two
+        sets of new coordinates.
+
+        Returns
+        -------
+        :
+            Coordinates from start of input coordinates up to
+            (but not including) user chosen point
+        :
+            Coordinates from user chosen point to the end of the
+            input coordinates
+        """
+        if self.closed:
+            self.open()
+        idx = self._get_loc_idx(x, y, z)
+        if len(idx) != 1:
+            bluemira_warn("Can not split coordinates.")
+            return None
+        return [
+            Coordinates(self._array[:, : idx[0]]),
+            Coordinates(self._array[:, idx[0] :]),
+        ]
 
     def insert(self, point: np.ndarray, index: int = 0):
         """
