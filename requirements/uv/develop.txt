@@ -163,7 +163,7 @@ markdown-it-py==4.2.0
     #   rich
 markupsafe==3.0.3
     # via jinja2
-matplotlib==3.10.9
+matplotlib==3.11.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
