@@ -155,7 +155,7 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def _plot_show_and_close(request):
     """Fixture to show and close plots
 
@@ -181,7 +181,7 @@ def _plot_show_and_close(request):
         plt.close()
 
 
-@pytest.fixture(scope="class", autouse=True)
+@pytest.fixture(scope="class", autouse=True)  # noqa: RUF076
 def _plot_show_and_close_class(request):
     """Fixture to show and close plots for marked classes
 
