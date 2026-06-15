@@ -89,6 +89,23 @@ class LegFlux:
         )
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
+        # Check we are using the x-points nearest the LCFS max and/or min z-coord.
+        (xlow,) = np.where(
+            np.isclose(np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
+        )
+        (xup,) = np.where(
+            np.isclose(np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
+        )
+        check_dn = isinstance(self.separatrix, list) and (len(xlow) + len(xup) < 2)  # noqa: PLR2004
+        check_sn = not isinstance(self.separatrix, list) and (len(xlow) + len(xup) < 1)
+        if check_dn or check_sn:
+            bluemira_print(
+                "Seperatrix shape is not as expected. Best keep an eye on it, "
+                "as seperatrix leg identification may not work."
+            )
+            self._red_flag = True
+        else:
+            self._red_flag = False
         self.rtol = rtol
         self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
         self.delta = np.max(eq.grid.x) - np.min(eq.grid.x)
@@ -305,7 +322,7 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
 
     """
     # Separatrix list is sorted by INNER then OUTER
-    separatrix.sort(key=lambda separatrix: separatrix.x[0])
+    separatrix.sort(key=lambda separatrix: separatrix.x[np.isclose(0, separatrix.z)])
     legs = []
     for half_sep in separatrix:
         for x_p in x_points:
