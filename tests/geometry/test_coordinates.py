@@ -448,7 +448,7 @@ class TestShortCoordinates:
     @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_get_loc_idx(self, caplog, c):
         idx = c._get_loc_idx(x=0.0, y=0.0, z=0.0)
-        assert idx == 0
+        assert idx[0] == 0
         _ = c._get_loc_idx(x=0.5, y=0.5, z=0.5)
         assert "There is no point at this location." in caplog.messages[1]
         c.insert(point=np.array([0.0, 0.0, 0.0]), index=0)
