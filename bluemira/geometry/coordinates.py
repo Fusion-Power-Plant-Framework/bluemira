@@ -1604,7 +1604,7 @@ class Coordinates:  # noqa: PLR0904
             )
 
     def _get_loc_idx(self, x, y, z):
-        (idx,) = np.where(
+        idx = np.nonzero(
             np.isclose(self._array[0], x)
             & np.isclose(self._array[1], y)
             & np.isclose(self._array[2], z)
