@@ -1706,8 +1706,10 @@ def save_cad(
     names:
         Names of shapes to save
     colours:
-        Per-shape sRGB ``(r, g, b)`` tuples in ``[0, 1]``. Currently only
-        the glTF/GLB export honours them (written as PBR materials).
+        Per-shape sRGB ``(r, g, b)`` tuples in ``[0, 1]``. Honoured by
+        the glTF/GLB export (full PBR materials) and by STEP (AP214
+        STYLED_ITEM surface colours; the CadQuery backend requires
+        ``names`` to drive the XCAF-assembly path). STL ignores them.
     kwargs:
         arguments passed to cadapi save function
     """
