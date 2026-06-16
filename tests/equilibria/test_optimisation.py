@@ -42,7 +42,7 @@ def coilset_setup(*, materials=False):
     if materials:
         coilset.assign_material("PF", j_max=12.5e6, b_max=12.5)
         coilset.assign_material("CS", j_max=12.5e6, b_max=12.5)
-        coilset.fix_sizes()
+        coilset.fix_size = True
 
     return coilset
 

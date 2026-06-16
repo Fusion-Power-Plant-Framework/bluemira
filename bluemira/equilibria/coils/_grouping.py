@@ -118,7 +118,9 @@ class CoilGroup(CoilGroupFieldsMixin):
         super().__init__(
             psi_analytic=psi_analytic, Bx_analytic=Bx_analytic, Bz_analytic=Bz_analytic
         )
-        self.fix_size = fix_size
+        # Default unless chosen by user
+        if fix_size is not None:
+            self.fix_size = fix_size
 
     def __repr__(self):
         """
@@ -859,10 +861,8 @@ class CoilGroup(CoilGroupFieldsMixin):
         self.__setter("j_max", values)
 
     @fix_size.setter
-    def fix_size(self, values: bool | Iterable[bool] | None):
+    def fix_size(self, values: bool | Iterable[bool]):
         """Get if coil size is fixed (True) or not (False)"""
-        if values is None:
-            self.__setter("fix_size", self.__getter("_flag_sizefix"))
         self.__setter("fix_size", values)
 
     @b_max.setter

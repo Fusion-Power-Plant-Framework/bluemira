@@ -337,7 +337,7 @@ class TestCoilGroup:
         initdx = self.group.dx
         initdz = self.group.dz
 
-        self.group.fix_sizes()
+        self.group.fix_size = True
         self.group.resize(10)
 
         np.testing.assert_allclose(self.group.dx, initdx)

@@ -115,7 +115,7 @@ def ref_eq(R_0, A) -> Equilibrium:  # noqa: D103
     coilset.assign_material("PF", j_max=12.5e6, b_max=11.0)
 
     cs = coilset.get_coiltype("CS")
-    cs.fix_sizes()
+    cs.fix_size = True
     cs.discretisation = 0.3
 
     B_0 = 4.8901  # T

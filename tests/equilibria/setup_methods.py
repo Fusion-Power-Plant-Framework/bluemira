@@ -61,7 +61,7 @@ def _coilset_setup(self, *, materials=False):
         # Max PF currents / sizes don't stack up in the CREATE document...
         self.coilset.assign_material("PF", j_max=12.5e6, b_max=12.5)
         self.coilset.assign_material("CS", j_max=12.5e6, b_max=12.5)
-        self.coilset.fix_sizes()
+        self.coilset.fix_size = True
 
     self.no_coils = len(names)
     self.coil_names = names
