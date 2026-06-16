@@ -29,7 +29,7 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.IFSelect import IFSelect_RetDone
 from OCP.Interface import Interface_Static
 from OCP.Message import Message_ProgressRange
-from OCP.Quantity import Quantity_Color, Quantity_TOC_sRGB
+from OCP.Quantity import Quantity_Color, Quantity_ColorRGBA, Quantity_TOC_sRGB
 from OCP.RWGltf import RWGltf_CafWriter
 from OCP.STEPCAFControl import STEPCAFControl_Writer
 from OCP.STEPControl import STEPControl_AsIs, STEPControl_Reader, STEPControl_Writer
@@ -47,7 +47,12 @@ from OCP.TopLoc import TopLoc_Location
 from OCP.TopTools import TopTools_HSequenceOfShape
 from OCP.TopoDS import TopoDS_Compound
 from OCP.XCAFApp import XCAFApp_Application
-from OCP.XCAFDoc import XCAFDoc_ColorType, XCAFDoc_DocumentTool
+from OCP.XCAFDoc import (
+    XCAFDoc_ColorType,
+    XCAFDoc_DocumentTool,
+    XCAFDoc_VisMaterial,
+    XCAFDoc_VisMaterialPBR,
+)
 from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec
 
 from bluemira.codes.cadapi._cadquery.aliases import (
@@ -183,20 +188,37 @@ def save_as_STP(shapes: list[apiShape], filename: str = "test", **kwargs):
         raise CadQueryError(f"Failed to write STEP file: {filename}")
 
 
-def _write_labeled_step(shapes, labels, filename):
+def _write_labeled_step(shapes, labels, filename, colours=None):
     """Write a STEP file as an XCAF assembly with one named PRODUCT per shape.
 
     Mirrors FreeCAD's ``save_cad(..., labels=...)`` behaviour: downstream
     tools (``fast_ctd``, DAGMC converters) look up solids by name, so each
     input shape must appear as a distinct named entity in the STEP file.
+
+    ``colours`` are sRGB ``(r, g, b)`` tuples in ``[0, 1]``, one per shape
+    (``None`` entries are skipped). Written as XCAF surface colours, which OCCT
+    emits as STYLED_ITEM presentation entities. The caller fixes the schema to
+    AP242DIS (see ``_step_write_settings``); STYLED_ITEM is shared by AP214 and
+    AP242, so the AP242 file still renders in colour in AP242/AP214-aware
+    viewers (FreeCAD desktop, Mayo, CAD Assistant). STEP has no PBR concept;
+    only the diffuse colour is preserved.
     """
     app = XCAFApp_Application.GetApplication_s()
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
     app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    for s, name in zip(shapes, labels, strict=True):
+    colour_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    used_colours = colours if colours is not None else [None] * len(shapes)
+    for s, name, colour in zip(shapes, labels, used_colours, strict=True):
         lbl = shape_tool.AddShape(s.wrapped, False)
         TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
+        if colour is not None:
+            r, g, b = colour
+            colour_tool.SetColor(
+                lbl,
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB),
+                XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+            )
     writer = STEPCAFControl_Writer()
     writer.Transfer(doc, STEPControl_AsIs)
     _set_step_header_author(writer.ChangeWriter().Model())
@@ -262,7 +284,7 @@ def _write_gltf(
     doc = TDocStd_Document(TCollection_ExtendedString("MDTV-XCAF"))
     app.NewDocument(TCollection_ExtendedString("MDTV-XCAF"), doc)
     shape_tool = XCAFDoc_DocumentTool.ShapeTool_s(doc.Main())
-    colour_tool = XCAFDoc_DocumentTool.ColorTool_s(doc.Main())
+    vis_tool = XCAFDoc_DocumentTool.VisMaterialTool_s(doc.Main())
     used_labels = (
         labels if labels is not None else [f"shape_{i}" for i in range(len(shapes))]
     )
@@ -273,11 +295,23 @@ def _write_gltf(
         TDataStd_Name.Set_s(lbl, TCollection_ExtendedString(str(name)))
         if colour is not None:
             r, g, b = colour
-            colour_tool.SetColor(
-                lbl,
-                Quantity_Color(r, g, b, Quantity_TOC_sRGB),
-                XCAFDoc_ColorType.XCAFDoc_ColorSurf,
+            # Write a full PBR material rather than only a baseColor. OCCT's
+            # RWGltf_CafWriter emits the implicit glTF defaults
+            # (metallicFactor=1, roughnessFactor=1 — i.e. fully metallic, fully
+            # rough) when no VisMaterial is set, which desaturates the colour
+            # to a metal-grey in spec-conformant viewers (Mayo, three.js, …).
+            # An explicit non-metal PBR keeps the colour saturated everywhere.
+            pbr = XCAFDoc_VisMaterialPBR()
+            pbr.BaseColor = Quantity_ColorRGBA(
+                Quantity_Color(r, g, b, Quantity_TOC_sRGB), 1.0
             )
+            pbr.Metallic = 0.0
+            pbr.Roughness = 0.8
+            pbr.IsDefined = True
+            vm = XCAFDoc_VisMaterial()
+            vm.SetPbrMaterial(pbr)
+            vm_lbl = vis_tool.AddMaterial(vm, TCollection_AsciiString(f"vm_{name}"))
+            vis_tool.SetShapeMaterial(lbl, vm_lbl)
 
     writer = RWGltf_CafWriter(TCollection_AsciiString(str(filename)), is_binary)
     file_info = TColStd_IndexedDataMapOfStringString()
@@ -296,8 +330,11 @@ def save_cad(
 ):
     """Save CAD shapes to a file.
 
-    ``colours`` are per-shape sRGB ``(r, g, b)`` tuples, currently only
-    honoured by the glTF/GLB export (written as PBR materials).
+    ``colours`` are per-shape sRGB ``(r, g, b)`` tuples. Honoured by
+    glTF/GLB (written as full PBR materials) and by STEP (written as XCAF
+    STYLED_ITEM surface colours in the AP242 output, requires ``labels`` to
+    drive the XCAF-assembly path). STL ignores them — the format has no
+    per-shape colour concept.
     """
     if not isinstance(shapes, list):
         shapes = list(shapes)
@@ -327,7 +364,9 @@ def save_cad(
     if cad_format == CADFileType.STEP:
         with _step_write_settings():
             if labels_list:
-                status = _write_labeled_step(shapes, labels_list, filename)
+                status = _write_labeled_step(
+                    shapes, labels_list, filename, colours=colours
+                )
             else:
                 writer = STEPControl_Writer()
                 for s in shapes:
