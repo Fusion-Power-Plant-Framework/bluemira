@@ -109,6 +109,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         psi_analytic: bool = False,
         Bx_analytic: bool = True,
         Bz_analytic: bool = True,
+        fix_size: bool | None = None,
     ):
         if any(not isinstance(c, Coil | CoilGroup) for c in coils) or not coils:
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
@@ -117,6 +118,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         super().__init__(
             psi_analytic=psi_analytic, Bx_analytic=Bx_analytic, Bz_analytic=Bz_analytic
         )
+        self.fix_size = fix_size
 
     def __repr__(self):
         """
@@ -180,18 +182,6 @@ class CoilGroup(CoilGroupFieldsMixin):
         return CoilGroupPlotter(
             self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
         )
-
-    def fix_sizes(self):
-        """
-        Fix the sizes of coils in CoilGroup
-        """
-        self.__run_func("fix_size")
-
-    def unfix_sizes(self):
-        """
-        Fix the sizes of coils in CoilGroup
-        """
-        self.__run_func("unfix_size")
 
     def resize(self, currents: float | list | np.ndarray):
         """
@@ -334,7 +324,6 @@ class CoilGroup(CoilGroupFieldsMixin):
                     j_max=0,
                     b_max=0,
                 )
-                coil.fix_size()
                 pfcoils.append(coil)
             coils = pfcoils
             bluemira_warn(
@@ -393,7 +382,6 @@ class CoilGroup(CoilGroupFieldsMixin):
                     ctype=ct or CoilType.PF,
                     name=cn,
                 )
-                coil.fix_size()  # Oh ja
                 pfcoils.append(coil)
 
         coils = pfcoils
@@ -781,6 +769,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("_flag_sizefix")
 
     @property
+    def fix_size(self):
+        """Get if coil size is fixed (True) or not (False)"""
+        return self.__getter("fix_size")
+
+    @property
     def _current_radius(self) -> np.ndarray:
         """Get coil current radius"""
         return self.__getter("_current_radius")
@@ -864,6 +857,13 @@ class CoilGroup(CoilGroupFieldsMixin):
     def j_max(self, values: float | Iterable[float]):
         """Set coil max current densities"""
         self.__setter("j_max", values)
+
+    @fix_size.setter
+    def fix_size(self, values: bool | Iterable[bool] | None):
+        """Get if coil size is fixed (True) or not (False)"""
+        if values is None:
+            self.__setter("fix_size", self.__getter("_flag_sizefix"))
+        self.__setter("fix_size", values)
 
     @b_max.setter
     def b_max(self, values: float | Iterable[float]):
@@ -1138,18 +1138,6 @@ class SymmetricCircuit(Circuit):
             self._get_primary_group_z_centre(),
         ])
 
-    def fix_sizes(self):
-        """
-        Fix the sizes of coils in CoilGroup
-        """
-        self.__run_func("fix_size")
-
-    def unfix_sizes(self):
-        """
-        Fix the sizes of coils in CoilGroup
-        """
-        self.__run_func("unfix_size")
-
 
 @dataclass
 class CoilSetOptimisationState:
@@ -1213,12 +1201,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         psi_analytic: bool = False,
         Bx_analytic: bool = True,
         Bz_analytic: bool = True,
+        fix_size: bool | None = None,
     ):
         super().__init__(
             *coils,
             psi_analytic=psi_analytic,
             Bx_analytic=Bx_analytic,
             Bz_analytic=Bz_analytic,
+            fix_size=fix_size,
         )
         self.control = control_names
 
