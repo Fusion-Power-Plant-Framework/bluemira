@@ -518,6 +518,50 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             / (self.x_end * eq.Bp(self.x_end, self.z_end))
         )
 
+    def divertor_index(self, eq: Equilibrium) -> float:
+        """
+        Divertor Index (DI) of the PartialOpenFluxSurface.
+
+        DI > 1: flux surfaces are more flared than a standard divertor
+        DI < 1: flux surfaces are less flared than a standard divertor
+
+        Appropriate to use when the PartialOpenFluxSurface is a divertor leg.
+
+        \t:math:`DI = \\frac{d_{end}}{B_{p, start}}}{\\frac{d_{start}}{B_{p, end}}}`
+
+        Where Bp is the poloidal field, d_start is the distance from x-point to point
+        on a divertor leg flux line that is closest to the strike point and d_end is
+        the distance from x-point to strike point.
+
+        From Kotschenreuther et al., 'Magnetic geometry and physics of advanced
+        divertors: The X-divertor and the snowflake'.
+
+        Parameters
+        ----------
+        eq:
+            Equilibrium with which to calculate the DI
+
+        Returns
+        -------
+        :
+            Divertor Index
+        """
+        # Get the x-point location for the legs
+        if eq.is_double_null:
+            xpts = eq._x_points[:2]
+            xpts = xpts[np.argmin(np.abs(self.z_end - [x.z for x in xpts]))]
+        else:
+            xpts = eq._x_points[0]
+
+        # Calculate distances along fs to x-point
+        distances = self.coords.distance_to([xpts.x, 0, xpts.z]).flatten(order="C")
+        argmin = np.argmin(distances)
+
+        # Calculate and return the DI
+        return (distances[-1] * eq.Bp(self.x_start, self.z_start)) / (
+            distances[argmin] * eq.Bp(self.x_end, self.z_end)
+        )
+
 
 @dataclass
 class CoreResults:
