@@ -267,6 +267,10 @@ class TestOpenFluxSurfaceStuff:
                 angle_dict_intersected[key], expected_a_dict[key], rtol=5e-3
             )
 
+        po_fs = PartialOpenFluxSurface(leg_dict["lower_inner"][0])
+        assert po_fs.flux_expansion(self.eq) == pytest.approx(0.01833, rel=1e-3)
+        assert po_fs.divertor_index(self.eq) == pytest.approx(0.55824, rel=1e-3)
+
 
 class TestClosedFluxSurface:
     def test_bad_geometry(self):
