@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.constants import CoilType
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
 from bluemira.equilibria.constants import COIL_DISCR, NBTI_B_MAX, NBTI_J_MAX
@@ -109,6 +109,10 @@ class Coil(CoilFieldsMixin):
         discretise the coil, value in [m]. The minimum size is COIL_DISCR
     n_turns:
         Number of turns
+    fix_size:
+        Whether or not to fix the coil size.
+        Default is True if coil size is input and False if no size is input.
+        You can not choose to fix the size if you have not chosen the size.
 
     Notes
     -----
@@ -154,6 +158,7 @@ class Coil(CoilFieldsMixin):
         psi_analytic: bool = False,
         Bx_analytic: bool = True,
         Bz_analytic: bool = True,
+        fix_size: bool | None = None,
     ):
         self._dx = None
         self._dz = None
@@ -186,6 +191,10 @@ class Coil(CoilFieldsMixin):
         if not self._flag_sizefix and None in {self.dx, self.dz}:
             self._dx, self._dz = 0, 0
             self._re_discretise()
+
+        # Default unless chosen by user
+        if fix_size is not None:
+            self.fix_size = fix_size
 
         super().__init__(
             psi_analytic=psi_analytic, Bx_analytic=Bx_analytic, Bz_analytic=Bz_analytic
@@ -357,6 +366,11 @@ class Coil(CoilFieldsMixin):
             self._quad_x, self._quad_z, self._quad_dx, self._quad_dz
         )
 
+    @property
+    def fix_size(self):
+        """Boolean representing if the coil size is fixed or not."""
+        return self._flag_sizefix
+
     @x.setter
     def x(self, value: float):
         """Set coil x position"""
@@ -435,6 +449,29 @@ class Coil(CoilFieldsMixin):
         self._discretisation = np.clip(floatify(value), COIL_DISCR, None)
         self._discretise()
 
+    @fix_size.setter
+    def fix_size(self, value: bool):
+        if value:
+            bluemira_debug(
+                "Coil size fixed\n"
+                "Adjusting the current or max current density will no"
+                " longer change the coil size."
+            )
+        else:
+            bluemira_debug(
+                "Coil size unfixed\n"
+                "Adjusting the current or max current density will now"
+                "change the coil size."
+            )
+        if value and None in {self.dx, self.dz}:
+            bluemira_print(
+                "Cannot fix the coil size if there is no size specified."
+                "Keeping coil sizes unfixed."
+            )
+            self._flag_sizefix = False
+        else:
+            self._flag_sizefix = value
+
     def assign_material(
         self,
         j_max: float = NBTI_J_MAX,
@@ -506,7 +543,7 @@ class Coil(CoilFieldsMixin):
         if dxdz_spec:
             # If dx and dz are specified, we presume the coil size should
             # remain fixed
-            self.fix_size()
+            self.fix_size = True
 
             self._set_coil_attributes()
             self._discretise()
@@ -515,7 +552,7 @@ class Coil(CoilFieldsMixin):
                 # Check there is a viable way to size the coil
                 raise EquilibriaError("Must specify either dx and dz or j_max.")
 
-            self._flag_sizefix = False
+            self.fix_size = False
 
     def _set_coil_attributes(self):
         self._current_radius = 0.5 * np.hypot(self.dx, self.dz)
@@ -546,17 +583,6 @@ class Coil(CoilFieldsMixin):
             self._quad_dz = np.full(x_sc.size, sc_dz)
 
             self._quad_weighting = np.ones(x_sc.size) / x_sc.size
-
-    def fix_size(self):
-        """
-        Fixes the size of the coil
-        """
-        self._flag_sizefix = True
-        bluemira_debug(
-            "Coil size fixed\n"
-            "Adjusting the current or max current density will no"
-            " longer change the coil size."
-        )
 
     def resize(self, current: float | None = None):
         """Resize coil given a current"""

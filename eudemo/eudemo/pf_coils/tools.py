@@ -201,7 +201,7 @@ def make_coilset(
     z_max = bb.z_max
     solenoid = make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS)
     for s in solenoid:
-        s.fix_size()
+        s.fix_size = True
 
     tf_track = offset_wire(
         tf_boundary, 1, fallback_method="miter", fallback_force_spline=True

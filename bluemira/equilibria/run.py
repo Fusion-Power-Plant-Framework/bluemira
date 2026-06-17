@@ -822,13 +822,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         for problem in sub_opt_problems:
             pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()
             pf_coils.resize(max_pf_currents)
-            pf_coils.fix_sizes()
+            pf_coils.fix_size = True
             pf_coils.discretisation = self.eq_config.coil_mesh_size
             problem.set_current_bounds(
                 np.concatenate([max_pf_currents, max_cs_currents])
             )
 
         consolidated_coilset = deepcopy(problem.eq.coilset)
-        consolidated_coilset.fix_sizes()
+        consolidated_coilset.fix_size = True
         consolidated_coilset.get_control_coils().current = 0
         return consolidated_coilset

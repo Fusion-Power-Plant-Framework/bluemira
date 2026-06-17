@@ -113,7 +113,7 @@ coilset = CoilSet(*coils)
 # Assign current density and peak field constraints
 coilset.assign_material("CS", j_max=16.5e6, b_max=12.5)
 coilset.assign_material("PF", j_max=12.5e6, b_max=11)
-coilset.fix_sizes()
+coilset.fix_size = True
 coilset.discretisation = 0.3
 
 coilset.plot()

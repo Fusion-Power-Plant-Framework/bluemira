@@ -126,7 +126,7 @@ coilset.assign_material("PF", j_max=12.5e6, b_max=11.0)
 # and mesh them already.
 
 cs = coilset.get_coiltype("CS")
-cs.fix_sizes()
+cs.fix_size = True
 cs.discretisation = 0.3
 
 # %% [markdown]
@@ -468,7 +468,7 @@ max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 for problem in [current_opt_problem_sof, current_opt_problem_eof]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents, strict=False):
         problem.eq.coilset[pf_name].resize(max_current)
-        problem.eq.coilset[pf_name].fix_size()
+        problem.eq.coilset[pf_name].fix_size = True
         problem.eq.coilset[pf_name].discretisation = 0.3
     problem.set_current_bounds(max_currents)
 
