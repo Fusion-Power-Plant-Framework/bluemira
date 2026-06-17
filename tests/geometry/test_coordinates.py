@@ -451,9 +451,13 @@ class TestShortCoordinates:
         assert idx[0] == 0
         _ = c._get_loc_idx(x=0.5, y=0.5, z=0.5)
         assert "There is no point at this location." in caplog.messages[1]
-        c.insert(point=np.array([0.0, 0.0, 0.0]), index=0)
-        _ = c._get_loc_idx(x=0.0, y=0.0, z=0.0)
-        assert "There is more than one point at this location." in caplog.messages[2]
+        new_c = Coordinates({"x": [0, 1, 0], "y": [0, 1, 0], "z": [0, 1, 0]})
+        idx = new_c._get_loc_idx(x=0.0, y=0.0, z=0.0)
+        assert idx[0] == 0
+        assert (
+            "There is more than one point at this location, returning first value."
+            in caplog.messages[2]
+        )
 
     @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_shift_start(self, caplog, c):
@@ -466,7 +470,7 @@ class TestShortCoordinates:
 
     @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_split_open(self, caplog, c):
-        _, _ = c.split_open(x=0.5, y=0.5, z=0.5)
+        _ = c.split_open(x=0.5, y=0.5, z=0.5)
         assert "There is no point at this location." in caplog.messages[0]
         assert "Can not split coordinates." in caplog.messages[1]
         c.insert(point=np.array([0.5, 0.5, 0.5]), index=1)

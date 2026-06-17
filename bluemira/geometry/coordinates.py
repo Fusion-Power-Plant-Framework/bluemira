@@ -1610,7 +1610,10 @@ class Coordinates:  # noqa: PLR0904
             & np.isclose(self._array[2], z)
         )
         if len(idx) > 1:
-            bluemira_warn("There is more than one point at this location.")
+            bluemira_warn(
+                "There is more than one point at this location, returning first value."
+            )
+            return [idx[0]]
         if len(idx) < 1:
             bluemira_warn("There is no point at this location.")
         return idx
