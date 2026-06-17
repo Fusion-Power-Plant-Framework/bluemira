@@ -468,7 +468,7 @@ max_currents = np.concatenate([max_pf_currents, max_cs_currents])
 for problem in [current_opt_problem_sof, current_opt_problem_eof]:
     for pf_name, max_current in zip(pf_coil_names, max_pf_currents, strict=False):
         problem.eq.coilset[pf_name].resize(max_current)
-        problem.eq.coilset[pf_name].fix_size()
+        problem.eq.coilset[pf_name].fix_size = True
         problem.eq.coilset[pf_name].discretisation = 0.3
     problem.set_current_bounds(max_currents)
 
