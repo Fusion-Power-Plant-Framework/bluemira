@@ -19,10 +19,7 @@ from __future__ import annotations
 from collections import UserList
 
 import cadquery as cq
-from OCP.BRep import BRep_Tool
 from OCP.TopAbs import TopAbs_REVERSED
-from OCP.TopExp import TopExp
-from OCP.TopoDS import TopoDS
 
 from bluemira.codes.cadapi._cadquery.core import _cq_area_prop
 
@@ -46,58 +43,40 @@ _orig_wire_start = cq.Wire.startPoint
 _orig_wire_end = cq.Wire.endPoint
 
 
-def _cq_topology_start_point(self) -> cq.Vector:
-    """True topological start point, respecting OCC REVERSED flags."""
-    try:
-        if isinstance(self, cq.Edge):
-            v_start = TopExp.FirstVertex_s(TopoDS.Edge_s(self.wrapped))
-        else:
-            v_start = TopExp.FirstVertex_s(TopoDS.Wire_s(self.wrapped))
-
-        if v_start.IsNull():
-            return (
-                _orig_edge_start(self)
-                if isinstance(self, cq.Edge)
-                else _orig_wire_start(self)
-            )
-
-        pt = BRep_Tool.Pnt_s(v_start)
-        return cq.Vector(pt.X(), pt.Y(), pt.Z())
-    except Exception:  # noqa: BLE001
-        return (
-            _orig_edge_start(self)
-            if isinstance(self, cq.Edge)
-            else _orig_wire_start(self)
-        )
+def _cq_edge_topology_start_point(self) -> cq.Vector:
+    """True topological start point, flipping t=0 and t=1 if REVERSED."""
+    if self.wrapped.Orientation() == TopAbs_REVERSED:
+        return _orig_edge_end(self)
+    return _orig_edge_start(self)
 
 
-def _cq_topology_end_point(self) -> cq.Vector:
-    """True topological end point, respecting OCC REVERSED flags."""
-    try:
-        if isinstance(self, cq.Edge):
-            v_end = TopExp.LastVertex_s(TopoDS.Edge_s(self.wrapped))
-        else:
-            v_end = TopExp.LastVertex_s(TopoDS.Wire_s(self.wrapped))
-
-        if v_end.IsNull():
-            return (
-                _orig_edge_end(self)
-                if isinstance(self, cq.Edge)
-                else _orig_wire_end(self)
-            )
-
-        pt = BRep_Tool.Pnt_s(v_end)
-        return cq.Vector(pt.X(), pt.Y(), pt.Z())
-    except Exception:  # noqa: BLE001
-        return (
-            _orig_edge_end(self) if isinstance(self, cq.Edge) else _orig_wire_end(self)
-        )
+def _cq_edge_topology_end_point(self) -> cq.Vector:
+    """True topological end point, flipping t=0 and t=1 if REVERSED."""
+    if self.wrapped.Orientation() == TopAbs_REVERSED:
+        return _orig_edge_start(self)
+    return _orig_edge_end(self)
 
 
-cq.Edge.startPoint = _cq_topology_start_point
-cq.Edge.endPoint = _cq_topology_end_point
-cq.Wire.startPoint = _cq_topology_start_point
-cq.Wire.endPoint = _cq_topology_end_point
+def _cq_wire_topology_start_point(self) -> cq.Vector:
+    """True topological start point of a wire, guaranteed by WireExplorer."""
+    edges = list(self)
+    if not edges:
+        return _orig_wire_start(self)
+    return edges[0].startPoint()
+
+
+def _cq_wire_topology_end_point(self) -> cq.Vector:
+    """True topological end point of a wire, guaranteed by WireExplorer."""
+    edges = list(self)
+    if not edges:
+        return _orig_wire_end(self)
+    return edges[-1].endPoint()
+
+
+cq.Edge.startPoint = _cq_edge_topology_start_point
+cq.Edge.endPoint = _cq_edge_topology_end_point
+cq.Wire.startPoint = _cq_wire_topology_start_point
+cq.Wire.endPoint = _cq_wire_topology_end_point
 
 
 for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
