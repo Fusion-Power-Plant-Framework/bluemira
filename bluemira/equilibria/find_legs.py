@@ -90,10 +90,10 @@ class LegFlux:
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
         # Check we are using the x-points nearest the LCFS max and/or min z-coord.
-        (xlow,) = np.nonzero(
+        xlow = np.flatnonzero(
             np.isclose(np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
         )
-        (xup,) = np.nonzero(
+        xup = np.flatnonzero(
             np.isclose(np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
         )
         check_dn = isinstance(self.separatrix, list) and (len(xlow) + len(xup) < 2)  # noqa: PLR2004
