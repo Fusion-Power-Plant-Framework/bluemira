@@ -11,6 +11,7 @@ api for plotting using matplotlib
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum
@@ -41,7 +42,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Iterator
 
     import numpy.typing as npt
     from matplotlib.axes import Axes
@@ -767,7 +768,7 @@ def _validate_plot_inputs(
         Number of options not equal to number of parts
     """
     if not isinstance(parts, list):
-        parts = [parts]
+        parts = list(parts) if isinstance(parts, Iterable) else [parts]
 
     if options is None:
         options = [None] * len(parts)
