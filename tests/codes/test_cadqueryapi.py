@@ -1469,6 +1469,49 @@ class TestInternalHelpers:
         np.testing.assert_allclose(axis, [0.0, 0.0, 1.0], atol=1e-9)
 
 
+class TestPatches:
+    """Direct unit tests for ``_cadquery/patches.py``.
+
+    These functions mostly patch behaviour to mirror FreeCAD, though some
+    target known bugs in CadQuery. The former are covered as a byproduct
+    of other tests, the latter require stricter testing to ensure expected
+    behaviour.
+    """
+
+    def test_wire_reversed_wire_start_end_points(self):
+        wire = cadapi.make_polygon([
+            (0, 0, 0),
+            (1, 0, -1),
+            (2, 0, 0),
+            (3, 0, 1),
+            (2, 0, 2),
+            (1, 0, 1),
+        ])
+
+        wire_reversed = cadapi.reverse_shape(wire)
+
+        assert wire.Orientation == "Forward"
+        assert wire_reversed.Orientation == "Reversed"
+
+        wire_edges_ordered = list(wire)
+        wire_reversed_edges_ordered = list(wire_reversed)
+
+        wire_num = len(wire_edges_ordered)
+        assert wire_num == len(wire_reversed_edges_ordered)
+
+        j = wire_num - 1
+        for i in range(wire_num):
+            assert (
+                wire_edges_ordered[i].startPoint()
+                == wire_reversed_edges_ordered[j].endPoint()
+            )
+            assert (
+                wire_edges_ordered[i].endPoint()
+                == wire_reversed_edges_ordered[j].startPoint()
+            )
+            j -= 1
+
+
 class TestCurves:
     """Direct unit tests for ``_cadquery/curves.py`` constructors.
 
