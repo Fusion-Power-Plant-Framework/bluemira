@@ -68,7 +68,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.15.17",
+    "ruff==0.15.18",
     "sphinx<8.2",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -384,3 +384,4 @@ ignore-names = [
 "bluemira/codes/openmc/{make_csg.py,output.py,solver.py}" = ["DOC201"]
 "bluemira/codes/process/_profiles.py" = ["DOC201"]
 "bluemira/codes/plasmod/*" = ["DOC201"]
+"{bluemira/codes,bluemira/radiation_transport,eudemo}/*" = ["D421"]

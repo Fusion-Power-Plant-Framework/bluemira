@@ -262,52 +262,52 @@ class Coil(CoilFieldsMixin):
 
     @property
     def x(self) -> float:
-        """Get coil x position"""
+        """Coil x position"""
         return self._x
 
     @property
     def z(self) -> float:
-        """Get coil z position"""
+        """Coil z position"""
         return self._z
 
     @property
     def position(self) -> np.ndarray:
-        """Get coil x, z position"""
+        """Coil x, z position"""
         return np.array([self.x, self.z])
 
     @property
     def ctype(self) -> CoilType:
-        """Get coil type"""
+        """Coil type"""
         return self._ctype
 
     @property
     def dx(self) -> float | None:
-        """Get coil width (half)"""
+        """Coil width (half)"""
         return self._dx
 
     @property
     def dz(self) -> float | None:
-        """Get coil height (half)"""
+        """Coil height (half)"""
         return self._dz
 
     @property
     def current(self) -> float:
-        """Get coil current"""
+        """Coil current"""
         return self._current
 
     @property
     def j_max(self) -> float:
-        """Get coil max current density"""
+        """Coil max current density"""
         return self._j_max
 
     @property
     def b_max(self) -> float:
-        """Get coil max field"""
+        """Coil max field"""
         return self._b_max
 
     @property
     def discretisation(self) -> float:
-        """Get coil discretisation"""
+        """Coil discretisation"""
         return self._discretisation
 
     @property
@@ -347,21 +347,21 @@ class Coil(CoilFieldsMixin):
 
     @property
     def x_boundary(self):
-        """Get coil x coordinate boundary"""
+        """Coil x coordinate boundary"""
         if getattr(self, "_x_boundary", None) is not None:
             return self._x_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[0]
 
     @property
     def z_boundary(self):
-        """Get coil z coordinate boundary"""
+        """Coil z coordinate boundary"""
         if getattr(self, "_z_boundary", None) is not None:
             return self._z_boundary
         return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
 
     @property
     def _quad_boundary(self):
-        """Get coil quadrature x,z coordinate boundary"""
+        """Coil quadrature x,z coordinate boundary"""
         return self._make_boundary(
             self._quad_x, self._quad_z, self._quad_dx, self._quad_dz
         )
@@ -435,7 +435,7 @@ class Coil(CoilFieldsMixin):
 
     @property
     def resistance(self):
-        """Get coil resistance"""
+        """Coil resistance"""
         return self._resistance
 
     @resistance.setter

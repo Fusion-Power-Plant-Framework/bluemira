@@ -241,10 +241,7 @@ class DisplayableCAD:
     @property
     def display_cad_options(self) -> DisplayCADOptions:
         """
-        Returns
-        -------
-        :
-            the options that will be used to display the object.
+        The options that will be used to display the object.
         """
         return self._display_cad_options
 
@@ -259,10 +256,7 @@ class DisplayableCAD:
     @property
     def _displayer(self) -> BaseDisplayer:
         """
-        Returns
-        -------
-        :
-            the options that will be used to display the object.
+        The options that will be used to display the object.
         """
         return _get_displayer_class(self)(self.display_cad_options)
 

@@ -625,12 +625,12 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def name(self) -> list:
-        """Get coil names"""
+        """Coil names"""
         return self.__getter("name").tolist()
 
     @property
     def primary_coil(self) -> Coil:
-        """Get primary coil, which is arbitrarily taken to
+        """Primary coil, which is arbitrarily taken to
         be the first coil in the group.
 
         Will recurse if the first coil itself is a CoilGroup.
@@ -681,77 +681,77 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def x(self) -> np.ndarray:
-        """Get coil x positions"""
+        """Coil x positions"""
         return self.__getter("x")
 
     @property
     def z(self) -> np.ndarray:
-        """Get coil z positions"""
+        """Coil z positions"""
         return self.__getter("z")
 
     @property
     def position(self):
-        """Get coil x, z positions"""
+        """Coil x, z positions"""
         return np.array([self.x, self.z])
 
     @property
     def ctype(self) -> list:
-        """Get coil types"""
+        """Coil types"""
         return self.__getter("ctype").tolist()
 
     @property
     def dx(self) -> np.ndarray:
-        """Get coil widths (half)"""
+        """Coil widths (half)"""
         return self.__getter("dx")
 
     @property
     def dz(self) -> np.ndarray:
-        """Get coil heights (half)"""
+        """Coil heights (half)"""
         return self.__getter("dz")
 
     @property
     def current(self) -> np.ndarray:
-        """Get coil currents"""
+        """Coil currents"""
         return self.__getter("current")
 
     @property
     def j_max(self) -> np.ndarray:
-        """Get coil max current density"""
+        """Coil max current density"""
         return self.__getter("j_max")
 
     @property
     def b_max(self) -> np.ndarray:
-        """Get coil max field"""
+        """Coil max field"""
         return self.__getter("b_max")
 
     @property
     def resistance(self) -> np.ndarray:
-        """Get coil resistance"""
+        """Coil resistance"""
         return self.__getter("resistance")
 
     @property
     def discretisation(self) -> np.ndarray:
-        """Get coil discretisations"""
+        """Coil discretisations"""
         return self.__getter("discretisation")
 
     @property
     def n_turns(self) -> np.ndarray:
-        """Get coil number of turns"""
+        """Coil number of turns"""
         return self.__getter("n_turns")
 
     @property
     def area(self) -> np.ndarray:
-        """Get coil areas"""
+        """Coil areas"""
         return self.__getter("area")
 
     @property
     def volume(self) -> np.ndarray:
-        """Get coil volumes"""
+        """Coil volumes"""
         return self.__getter("volume")
 
     @property
     def x_boundary(self) -> np.ndarray:
-        """Get coil x coordinate boundary"""
+        """Coil x coordinate boundary"""
         xb = self.__getter("x_boundary")
         if self.n_coils() > 1:
             return xb.reshape(-1, 4)
@@ -759,7 +759,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def z_boundary(self) -> np.ndarray:
-        """Get coil z coordinate boundary"""
+        """Coil z coordinate boundary"""
         zb = self.__getter("z_boundary")
         if self.n_coils() > 1:
             return zb.reshape(-1, 4)
@@ -767,7 +767,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def _flag_sizefix(self) -> np.ndarray:
-        """Get coil current radius"""
+        """Coil current radius"""
         return self.__getter("_flag_sizefix")
 
     @property
@@ -777,37 +777,37 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def _current_radius(self) -> np.ndarray:
-        """Get coil current radius"""
+        """Coil current radius"""
         return self.__getter("_current_radius")
 
     @property
     def _quad_x(self):
-        """Get coil x quadratures"""
+        """Coil x quadratures"""
         return self.__quad_getter("_quad_x")
 
     @property
     def _quad_z(self):
-        """Get coil z quadratures"""
+        """Coil z quadratures"""
         return self.__quad_getter("_quad_z")
 
     @property
     def _quad_dx(self):
-        """Get coil dx quadratures"""
+        """Coil dx quadratures"""
         return self.__quad_getter("_quad_dx")
 
     @property
     def _quad_dz(self):
-        """Get coil dz quadratures"""
+        """Coil dz quadratures"""
         return self.__quad_getter("_quad_dz")
 
     @property
     def _quad_weighting(self):
-        """Get coil quadrature weightings"""
+        """Coil quadrature weightings"""
         return self.__quad_getter("_quad_weighting")
 
     @property
     def _quad_boundary(self):
-        """Get coil quadrature boundaries"""
+        """Coil quadrature boundaries"""
         n = []
         qbs = self.__list_getter("_quad_boundary")
         for qb in qbs:
@@ -925,7 +925,7 @@ class Circuit(CoilGroup):
 
     @property
     def primary_group(self) -> Coil | CoilGroup:
-        """Get the first coil or group in the circuit as the 'primary_group'"""
+        """The first coil or group in the circuit as the 'primary_group'"""
         return self._coils[0]
 
     def add_coil(self, *coils: Coil | CoilGroup):
@@ -996,7 +996,7 @@ class SymmetricCircuit(Circuit):
 
     @property
     def symmetric_group(self) -> Coil | CoilGroup:
-        """Get the second coil or group as the 'symmetric_group'"""
+        """The second coil or group as the 'symmetric_group'"""
         return self._coils[1]
 
     def modify_symmetry(self, symmetry_line: np.ndarray):
@@ -1164,12 +1164,12 @@ class CoilSetOptimisationState:
 
     @property
     def positions(self) -> np.ndarray:
-        """Get the positions as a (2, N) array"""
+        """The positions as a (2, N) array"""
         return np.array([self.xs, self.zs])
 
     @property
     def positions_flat(self) -> np.ndarray:
-        """Get the positions as an array with xs and zs concatenated (xs then zs)"""
+        """The positions as an array with xs and zs concatenated (xs then zs)"""
         return np.concatenate([self.xs, self.zs])
 
 
@@ -1239,7 +1239,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     @property
     def control(self) -> list[str]:
-        """Get control coil names"""
+        """Control coil names"""
         return self._control
 
     @control.setter
@@ -1405,7 +1405,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def n_current_optimisable_coils(self) -> int:
         """
-        Get the number of all current optimisable coils.
+        The number of all current optimisable coils.
         If control coils are set then this is accounted for.
 
         This will only count the primary coil in the case of
@@ -1416,7 +1416,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def current_optimisable_coil_names(self) -> list[str]:
         """
-        Get the names of all current optimisable coils.
+        The names of all current optimisable coils.
         If control coils are set then this is accounted for.
 
         This will be the primary coil in the case of
@@ -1431,7 +1431,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def all_current_optimisable_coils(self) -> list[Coil]:
         """
-        Get a list of all coils that can be current optimised.
+        A list of all coils that can be current optimised.
         If control coils are set then this is accounted for.
         """
         return [self[cn] for cn in self.current_optimisable_coil_names]
@@ -1473,7 +1473,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def _opt_currents_inds(self) -> list[int]:
         """
-        Get the indices of the coils that can be optimised.
+        The indices of the coils that can be optimised.
         If control coils are set then this is accounted for.
 
         These indices are used to extract the optimisable currents from the CoilSet
@@ -1491,7 +1491,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def _opt_currents_expand_mat(self) -> np.ndarray:
         """
-        Get the optimisation currents expansion matrix.
+        The optimisation currents expansion matrix.
 
         This matrix is used to convert the optimisable currents to the full set of
         currents in the CoilSet.
@@ -1522,7 +1522,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def _opt_currents(self) -> np.ndarray:
         """
-        Get the currents for the optimisable coils.
+        The currents for the optimisable coils.
         If control coils are set then this is accounted for.
         """
         return self.current[self._opt_currents_inds]
@@ -1561,7 +1561,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def n_position_optimisable_coils(self) -> int:
         """
-        Get the number of coils that can be position optimised.
+        The number of coils that can be position optimised.
         If control coils are set then this is accounted for.
 
         This will only count the primary coil in the case of
@@ -1572,7 +1572,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def position_optimisable_coil_names(self) -> list[str]:
         """
-        Get the names of the coils that can be position optimised.
+        The names of the coils that can be position optimised.
         If control coils are set then this is accounted for.
 
         This will be the primary coil in the case of
@@ -1587,7 +1587,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @property
     def all_position_optimisable_coils(self) -> list[Coil]:
         """
-        Get the names of all coils that can be position optimised.
+        The names of all coils that can be position optimised.
         If control coils are set then this is accounted for.
         """
         return [self[cn] for cn in self.position_optimisable_coil_names]

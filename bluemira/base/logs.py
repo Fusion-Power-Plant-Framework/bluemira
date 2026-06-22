@@ -78,7 +78,7 @@ class LogLevel(Enum):
 
     @DynamicClassAttribute
     def value_for_logging(self) -> int:
-        """Return builtin logging level value"""
+        """Builtin logging level value"""
         return int(self.value * 10)
 
 

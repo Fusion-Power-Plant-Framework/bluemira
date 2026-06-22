@@ -274,21 +274,21 @@ class FileManager:
     @property
     def reactor_name(self):
         """
-        Gets the reactor name for this instance.
+        The reactor name for this instance.
         """
         return self._reactor_name
 
     @property
     def generated_data_root(self) -> str:
         """
-        Gets the generated data root directory for this instance.
+        The generated data root directory for this instance.
         """
         return self._generated_data_root
 
     @property
     def reference_data_root(self) -> str:
         """
-        Get the reference data root directory for this instance.
+        The reference data root directory for this instance.
         """
         return self._reference_data_root
 

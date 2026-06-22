@@ -133,7 +133,7 @@ class BaseManager(abc.ABC):
 
     @property
     def materials(self):
-        """Get all materials in the Manager"""
+        """All materials in the Manager"""
         return self.component().get_component_properties("material", first=False)[0]
 
     @staticmethod

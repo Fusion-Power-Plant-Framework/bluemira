@@ -505,14 +505,14 @@ class PicardIterator:
     @property
     def psi(self) -> npt.NDArray[np.float64]:
         """
-        Get the magnetic flux array.
+        The magnetic flux array.
         """
         return self._psi
 
     @property
     def j_tor(self) -> npt.NDArray[np.float64]:
         """
-        Get the toroidal current density array.
+        The toroidal current density array.
         """
         return self._j_tor
 
