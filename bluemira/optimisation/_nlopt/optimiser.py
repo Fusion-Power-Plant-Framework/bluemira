@@ -125,50 +125,35 @@ class NloptOptimiser(Optimiser):
     @property
     def algorithm(self) -> Algorithm:
         """
-        Returns
-        -------
-        :
-            the optimiser's algorithm.
+        The optimiser's algorithm.
         """
         return self._algorithm
 
     @property
     def opt_conditions(self) -> dict[str, float]:
         """
-        Returns
-        -------
-        :
-            the optimiser's stopping conditions.
+        The optimiser's stopping conditions.
         """
         return self._opt_conditions.to_dict()
 
     @property
     def opt_parameters(self) -> Mapping[str, int | float]:
         """
-        Returns
-        -------
-        :
-            the optimiser algorithms's parameters.
+        The optimiser algorithms's parameters.
         """
         return self._opt_parameters
 
     @property
     def lower_bounds(self) -> np.ndarray:
         """
-        Returns
-        -------
-        :
-            the lower bounds for the optimisation parameters.
+        The lower bounds for the optimisation parameters.
         """
         return self._opt.get_lower_bounds().copy()
 
     @property
     def upper_bounds(self) -> np.ndarray:
         """
-        Returns
-        -------
-        :
-            the upper bounds for the optimisation parameters.
+        The upper bounds for the optimisation parameters.
         """
         return self._opt.get_upper_bounds().copy()
 

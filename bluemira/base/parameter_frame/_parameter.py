@@ -191,12 +191,12 @@ class Parameter(Generic[ParameterValueType]):
 
     @property
     def name(self) -> str:
-        """Return the name of the parameter."""
+        """The name of the parameter."""
         return self._name
 
     @property
     def value(self) -> ParameterValueType:
-        """Return the current value of the parameter."""
+        """The current value of the parameter."""
         return self._value
 
     @value.setter
@@ -242,22 +242,22 @@ class Parameter(Generic[ParameterValueType]):
 
     @property
     def unit(self) -> str:
-        """Return the physical unit of the parameter."""
+        """The physical unit of the parameter."""
         return f"{self._unit:~P}"
 
     @property
     def source(self) -> str:
-        """Return the source that last set the value of this parameter."""
+        """The source that last set the value of this parameter."""
         return self._source
 
     @property
     def long_name(self) -> str:
-        """Return a long name for this parameter."""
+        """The long name for this parameter."""
         return self._long_name
 
     @property
     def description(self) -> str:
-        """Return a description for the parameter."""
+        """The description for the parameter."""
         return self._description
 
     def _add_history_record(self):
@@ -273,7 +273,7 @@ class Parameter(Generic[ParameterValueType]):
 
     @property
     def last(self) -> ParameterValue:
-        """Get the last value that isnt None from a parameter
+        """The last value that isnt None from a parameter
 
         Raises
         ------

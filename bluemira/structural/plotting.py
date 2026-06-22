@@ -228,7 +228,7 @@ class BasePlotter:
     @property
     def text_size(self) -> int:
         """
-        Get a reasonable guess of the font size to use in plotting.
+        A reasonable guess of the font size to use in plotting.
 
         Returns
         -------
