@@ -105,7 +105,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     @property
     def run_mode(self) -> str:
-        """Get the run mode of this designer."""
+        """The run mode of this designer."""
         return self.build_config.get(self.KEY_RUN_MODE, "run")
 
     def _get_run_func(self, mode: str) -> Callable:

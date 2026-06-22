@@ -384,3 +384,4 @@ ignore-names = [
 "bluemira/codes/openmc/{make_csg.py,output.py,solver.py}" = ["DOC201"]
 "bluemira/codes/process/_profiles.py" = ["DOC201"]
 "bluemira/codes/plasmod/*" = ["DOC201"]
+"{bluemira/codes,bluemira/radiation_transport,eudemo}/*" = ["D421"]
