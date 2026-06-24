@@ -492,6 +492,7 @@ class UnitFrame1(ParameterFrame):
     mass: Parameter[int]
     flag: Parameter[bool]
     string: Parameter[str]
+    percent: Parameter[float]
 
 
 @dataclass
@@ -542,6 +543,7 @@ class TestParameterFrameUnits:
         "mass": {"value": 1, "unit": "tonne"},
         "flag": {"value": False, "unit": ""},
         "string": {"value": "Hello 👋", "unit": ""},
+        "percent": {"value": 0.5, "unit": "%"},
     }
 
     COMPLEX_FRAME_DATA: ClassVar = {
@@ -592,6 +594,8 @@ class TestParameterFrameUnits:
         assert frame.flag.unit == ""
         assert frame.string.value == "Hello 👋"
         assert frame.string.unit == ""
+        assert frame.percent.value == 0.5  # noqa: RUF069
+        assert frame.percent.unit == "%"
 
     def test_complex_units_to_defaults(self):
         frame = UnitFrame2.from_dict(self.COMPLEX_FRAME_DATA)
