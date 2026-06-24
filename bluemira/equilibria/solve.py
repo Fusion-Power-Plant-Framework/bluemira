@@ -605,7 +605,7 @@ class PicardIterator:
             self._teardown()
         except EquilibriaError:
             self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
-            bluemira_error("No X point found. Failed to solve")
+            bluemira_error("No X point found. Failed to solve.")
         return self.result
 
     def check_converged(self, *, print_status: bool = True) -> bool:
