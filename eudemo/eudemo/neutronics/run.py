@@ -29,6 +29,7 @@ from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
 )
 from eudemo.materials import (
     BE12TI_MAT,
+    CONCRETE_MAT,
     EUROFER_MAT,
     HELIUM_MAT,
     LINED_EURO_MAT,
@@ -114,6 +115,7 @@ def run_csg_neutronics(
     material_library = create_materials(
         BE12TI_MAT,
         EUROFER_MAT,
+        CONCRETE_MAT,
         HELIUM_MAT,
         LINED_EURO_MAT,
         TUNGSTEN_MAT,

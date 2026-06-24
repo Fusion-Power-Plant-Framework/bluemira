@@ -51,7 +51,7 @@ except ImportError:
 
 WATER_MAT = Water()
 HELIUM_MAT = Helium()
-HeavyConcrete = HeavyConcrete()
+CONCRETE_MAT = HeavyConcrete()
 
 AL2O3_MAT = material(
     name="Aluminium Oxide",
