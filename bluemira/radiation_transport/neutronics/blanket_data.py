@@ -140,6 +140,7 @@ def get_preset_geometry(params: ParameterFrame) -> TokamakGeometry:
 
 def create_materials(
     be12ti_mat: Material,
+    concrete_mat: Material,
     eurofer_mat: Material,
     helium_mat: Material,
     lined_euro_mat: Material,
@@ -154,6 +155,8 @@ def create_materials(
     ----------
     be12ti_mat:
         A beryllium titanium compound material
+    concrete_mat:
+        A concrete material
     eurofer_mat:
         A Eurofer material
     helium_mat:
@@ -218,7 +221,5 @@ def create_materials(
         inb_sf_mat=duplicate_mat_as(eurofer_mat, "inb_sf", 601),
         outb_sf_mat=duplicate_mat_as(eurofer_mat, "outb_sf", 602),
         div_sf_mat=duplicate_mat_as(eurofer_mat, "div_sf", 603),
-        # TODO @OceanNuclear: get shield material
-        # 3659
-        rad_shield=duplicate_mat_as(eurofer_mat, "rad_shield", 604),
+        rad_shield=duplicate_mat_as(concrete_mat, "rad_shield", 604),
     )
