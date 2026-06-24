@@ -540,92 +540,74 @@ ITERATION_VAR_MAPPING = {
     "beta_total_vol_avg": 5,
     "nd_plasma_electrons_vol_avg": 6,
     "f_nd_beam_electron": 7,
-    "fbeta": 8,
-    "fdene": 9,
+    # 8,9 NOT USED
     "hfact": 10,
     "p_hcd_primary_extra_heat_mw": 11,
-    # NO LONGER USED "oacdp": 12,
+    "j_tf_coil_full_area": 12,
     "dr_tf_inboard": 13,
-    # 14, 15 PREVIOUS f-VALUE
+    # 14, 15 NOT USED
     "dr_cs": 16,
     "t_plant_pulse_dwell": 17,
     "q95": 18,
     "e_beam_kev": 19,
-    "tcpav": 20,
-    # 21 PREVIOUS f-VALUE
-    # 22 NOT USED
+    "temp_cp_average": 20,
+    # 21, 22 NOT USED
     "fcoolcp": 23,
-    # 24 NOT USED
-    # 25, 26, 27 PREVIOUS f-VALUE
-    "fradpwr": 28,
+    # 24, 25, 26, 27, 28 NOT USED
     "dr_bore": 29,
-    # 30 PREVIOUS f-VALUE
+    # 30 NOT USED
     "gapomin": 31,
-    # 32, 33 PREVIOUS f-VALUE
-    "fdivcol": 34,
-    # 35, 36 PREVIOUS f-VALUE
+    # 32, 33, 34, 35, 36 NOT USED
     "j_cs_flat_top_end": 37,
-    # 40 PREVIOUS f-VALUE
+    # 38, 39, 40 NOT USED
     "f_j_cs_start_pulse_end_flat_top": 41,
     "dr_cs_tf_gap": 42,
     # 43 NOT USED
     "f_c_plasma_non_inductive": 44,
-    # 45, 46 PREVIOUS f-VALUE
+    # 45, 46 NOT USED
     "feffcd": 47,
-    # 48, 49 PREVIOUS f-VALUE
-    # 51 PREVIOUS f-VALUE
-    # 52 NOT USED
-    # 53, 54 PREVIOUS f-VALUE
-    # 55 NOT USED
+    # 48, 49, 50, 51, 52, 53, 54, 55 NOT USED
     "t_tf_superconductor_quench": 56,
     "dr_tf_nose_case": 57,
     "dx_tf_turn_steel": 58,
     "f_a_tf_turn_cable_copper": 59,
     "c_tf_turn": 60,
     "dr_shld_vv_gap_inboard": 61,
-    # 62, 63, 64 PREVIOUS f-VALUE
+    # 62, 63, 64 NOT USED
     "t_plant_pulse_plasma_current_ramp_up": 65,
-    # 66, 67, 68 PREVIOUS f-VALUE
+    # 66, 67, 68 NOT USED
     "radius_cp_coolant_channel": 69,
     "vel_cp_coolant_midplane": 70,
-    # 71, 72 PREVIOUS f-VALUE
+    # 71, 72 NOT USED
     "dr_fw_plasma_gap_inboard": 73,
     "dr_fw_plasma_gap_outboard": 74,
     "f_dr_tf_outboard_inboard": 75,
-    # 76, 77, 78 NOT USED
-    # 79 PREVIOUS f-VALUE
-    # 80 NOT USED
+    # 76, 77, 78, 79, 80 NOT USED
     "edrive": 81,
     "drveff": 82,
     "tgain": 83,
     "chrad": 84,
     "pdrive": 85,
-    "frrmax": 86,
-    # 87, 88 NOT USED
-    # 89 PREVIOUS f-VALUE
+    # 86, 87, 88, 89 NOT USED
     "blbuith": 90,
     "blbuoth": 91,
-    # 92 PREVIOUS f-VALUE
+    # 92 NOT USED
     "dr_shld_inboard": 93,
     "dr_shld_outboard": 94,
-    # 95, 96, 97 PREVIOUS f-VALUE
+    # 95, 96, 97 NOT USED
     "f_blkt_li6_enrichment": 98,
-    # 99, 100, 101, 102 NOT USED
-    "f_h_mode_margin": 103,
+    # 99, 100, 101, 102, 103 NOT USED
     "fcwr": 104,
-    # 105, 106 PREVIOUS f-VALUE
-    "favail": 107,
+    # 105, 106, 107 NOT USED
     "breeder_f": 108,
     "f_nd_alpha_electron": 109,
-    # 110, 111, 112, 113 PREVIOUS f-VALUE
+    # 110, 111, 112, 113 NOT USED
     "len_fw_channel": 114,
-    # 115, 116, 117 PREVIOUS f-VALUE
+    # 115, 116, 117, 118 NOT USED
     "temp_plasma_separatrix_kev": 119,
-    "ttarget": 120,
-    "neratio": 121,
+    # 120, 121 NOT USED
     "f_a_cs_turn_steel": 122,
-    # 123 PREVIOUS f-VALUE
-    "qtargettotal": 124,
+    # 123, 124 NOT USED
     "f_nd_impurity_electrons(3)": 125,  # Beryllium
     "f_nd_impurity_electrons(4)": 126,  # Carbon
     "f_nd_impurity_electrons(5)": 127,  # Nitrogen
@@ -638,36 +620,32 @@ ITERATION_VAR_MAPPING = {
     "f_nd_impurity_electrons(12)": 134,  # Krypton
     "f_nd_impurity_electrons(13)": 135,  # Xenon
     "f_nd_impurity_electrons(14)": 136,  # Tungsten
-    "fplhsep": 137,
+    # 137 NOT USED
     "dx_tf_hts_tape_rebco": 138,
     "dx_tf_hts_tape_copper": 139,
     "dr_tf_wp_with_insulation": 140,
-    # 141 PREVIOUS f-VALUE
+    # 141 NOT USED
     "nd_plasma_separatrix_electron": 142,
-    "f_coppera_m2": 143,
-    # 144 PREVIOUS f-VALUE
+    # 143, 144 NOT USED
     "f_nd_plasma_pedestal_greenwald": 145,
-    # 146, 147 PREVIOUS f-VALUE
-    "fzactual": 148,
-    "fb_cs_limit_max": 149,
-    # 150, 151 NOT USED
+    # 146, 147, 148, 149, 150, 151 NOT USED
     "f_nd_plasma_separatrix_greenwald": 152,
-    "fp_plasma_separatrix_min_mw": 153,
+    # 153, 154 NOT USED
     "pfusife": 155,
     "rrin": 156,
-    "fvs_cs_pf_total_ramp": 157,
+    # 157 NOT USED
     "dx_tf_croco_strand_copper": 158,
-    "ftoroidalgap": 159,
-    "f_avspace": 160,
-    "fbetatry_lower": 161,
+    # 159, 160, 161 NOT USED
     "r_cp_top": 162,
-    "f_t_turn_tf": 163,
-    "f_crypmw": 164,
-    # 165 PREVIOUS f-VALUE
-    "f_copperaoh_m2": 166,
-    # 167, 168 PREVIOUS f-VALUE
+    # 163, 164, 165, 166, 167, 168 NOT USED
     "te0_ecrh_achievable": 169,
     "deg_div_field_plate": 170,
+    "casths_fraction": 171,
+    "dx_tf_side_case_min": 172,
+    "f_plasma_fuel_tritium": 173,
+    "triang": 174,
+    "kappa": 175,
+    "f_st_coil_aspect": 176,
 }
 
 
