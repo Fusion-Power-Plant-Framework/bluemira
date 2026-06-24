@@ -125,7 +125,7 @@ class TestTFCoilDesigner:
             separatrix=self.lcfs,
             keep_out_zone=self.vvts_koz,
         )
-        d_run, _ = designer.execute()
+        d_run, _, _ = designer.execute()
 
         designer_mock = TFCoilDesigner(
             self.PARAMS,

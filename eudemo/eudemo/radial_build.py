@@ -53,12 +53,17 @@ template_builder.set_optimisation_numerics(maxiter=1000, tolerance=1e-8)
 
 template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
+
 for constraint in (
     Constraint.BETA_CONSISTENCY,
     Constraint.GLOBAL_POWER_CONSISTENCY,
+    Constraint.RADIAL_BUILD_CONSISTENCY,
+):
+    template_builder.add_constraint(constraint, equality=True)
+
+for constraint in (
     Constraint.DENSITY_UPPER_LIMIT,
     Constraint.NWL_UPPER_LIMIT,
-    Constraint.RADIAL_BUILD_CONSISTENCY,
     Constraint.BURN_TIME_LOWER_LIMIT,
     Constraint.LH_THRESHHOLD_LIMIT,
     Constraint.NET_ELEC_LOWER_LIMIT,
@@ -113,42 +118,16 @@ template_builder.add_variable(
 )
 template_builder.add_variable("f_j_cs_start_pulse_end_flat_top", 0.93176)
 template_builder.add_variable("f_c_plasma_non_inductive", 0.39566)
-template_builder.add_variable("fncycle", 1.0)
-# template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
+template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
 
-# Modified f-values and bounds w.r.t. defaults
-template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
-template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-template_builder.adjust_variable(
-    "fl_h_threshold", 0.833, lower_bound=0.833, upper_bound=0.909
-)
-template_builder.adjust_variable("ft_burn_min", 1.0, upper_bound=1.0)
-
-# Modifying the initial variable vector to improve convergence
-template_builder.adjust_variable("fp_plant_electric_net_required_mw", 1.0)
-template_builder.adjust_variable("fstrcase", 1.0)
-template_builder.adjust_variable("ftmargtf", 1.0)
-template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("falpha_energy_confinement", 1.0)
-template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
-template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
-template_builder.adjust_variable("foh_stress", 1.0)
-template_builder.adjust_variable("fbeta_max", 0.48251)
-template_builder.adjust_variable("fpflux_fw_neutron_max_mw", 0.131)
-template_builder.adjust_variable("fmaxvvstress", 1.0)
-template_builder.adjust_variable("fpsepbqar", 1.0)
-template_builder.adjust_variable("fvdump", 1.0)
-template_builder.adjust_variable("fstrcond", 0.92007)
-template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
-template_builder.adjust_variable("fjprot", 1.0)
 
 # Set model switches
 for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.WESSON,
     BetaNormMaxModel.WESSON,
+    PlasmaProfileModel.WESSON,
     AlphaJModel.WESSON,
     PlasmaPedestalModel.PEDESTAL_GW,
     PlasmaNullConfigurationModel.SINGLE_NULL,
@@ -269,7 +248,10 @@ template_builder.add_input_values({
     "n_pf_coils_in_group": [1, 1, 2, 2],
     "n_pf_coil_groups": 4,
     "j_pf_coil_wp_peak": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+    "fjohc": 0.57941,
+    "fjohc0": 0.53923,
     # TF coil inputs
+    "fiooic": 0.63437,
     "n_tf_coils": 16,
     "dr_tf_plasma_case": 0.06,
     "dx_tf_side_case_min": 0.05,
@@ -284,18 +266,16 @@ template_builder.add_input_values({
     "qnuc": 1.292e4,
     "v_tf_coil_dump_quench_max_kv": 10.0,
     # Inputs we don't care about but must specify
-    "cfactr": 0.75,  # Ha!
+    "f_t_plant_available": 0.75,  # Ha!
     "kappa": 1.848,  # Should be overwritten
     "pflux_fw_neutron_max_mw": 8.0,  # Should never get even close to this
-    "tlife": 40.0,
+    "life_plant": 40.0,
     "abktflnc": 15.0,
     "adivflnc": 20.0,
     # For sanity...
     "pflux_div_heat_load_max_mw": 10,
     "prn1": 0.4,
     "b_tf_inboard_max": 11.2,
-    "fp_fusion_total_max_mw": 1.0,
-    "fb_tf_inboard_max": 1.0,
     "ibkt_life": 1,
     "fkzohm": 1.0245,
     "dintrt": 0.0,
@@ -312,7 +292,14 @@ template_builder.add_input_values({
     "ucme": 3.0e8,
     # Suspicous stuff
     "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-    "fp_hcd_injected_max": 1.0,
+    # New stuff for PROCESS 3.4.1
+    "f_h_mode_margin": 1.1,
+    "f_alpha_energy_confinement_min": 5.0,
+    "rrr_tf_cu": 300.0,
+    "t_tf_quench_detection": 3.0,
+    "nflutfmax": 0.0,
+    "fdene": 1.2,
+    "max_vv_stress": 93e6,
 })
 
 

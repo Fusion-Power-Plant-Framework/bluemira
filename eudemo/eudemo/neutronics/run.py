@@ -198,6 +198,9 @@ def run_dagmc_neutronics(
     tally_function=None,
 ) -> DAGMCOutput:
     """Creates and runs the DAGMC neutronics model"""  # noqa: DOC201
+    if not build_config.get("enabled"):
+        return None
+
     export_dagmc_model(reactor, build_config)
 
     mats = {"undef_material": Void(name="undef_material")}

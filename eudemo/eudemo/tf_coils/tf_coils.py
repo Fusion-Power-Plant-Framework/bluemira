@@ -40,6 +40,7 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.tools import (
+    SweepShapeTransition,
     boolean_cut,
     boolean_fuse,
     extrude_shape,
@@ -128,6 +129,24 @@ class TFCoil(ComponentManager):
             .shape.boundary[1]
         )
         return BluemiraFace([outer, inner])
+
+    @property
+    def wp_volume(self) -> float:
+        """
+        Returns
+        -------
+        :
+            The total volume of all TF WPs in m^3
+        """
+        return (
+            len(self._field_solver.sources)
+            * self
+            .component()
+            .get_component("xyz")
+            .get_component("Sector 1")
+            .get_component("Winding Pack 1")
+            .shape.volume
+        )
 
 
 @dataclass
@@ -271,8 +290,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         tk_offset = 0.5 * self.params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or use variable offset here too..)
-        tk_offset += np.sqrt(2) * self.params.tk_tf_front_ib.value
-        tk_offset += np.sqrt(2) * self.params.g_ts_tf.value
+        tk_offset += self.params.tk_tf_front_ib.value
+        tk_offset += self.params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
     def _derive_shape_params(self, variables_map: dict[str, str]) -> dict:
@@ -331,7 +350,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             shape_kwargs["tf_wp_width"] = self.params.tk_tf_wp.value
             shape_kwargs["tf_wp_depth"] = self.params.tk_tf_wp_y.value
             shape_kwargs["n_points"] = 50
-            shape_kwargs["tolerance"] = 1e-3
+            shape_kwargs["tolerance"] = 1e-2
 
         return shape_kwargs
 
@@ -411,11 +430,12 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         bluemira_print(f"Solving design problem: {type(design_problem).__name__}")
 
         result = design_problem.optimise()
+        peak_ripple = np.max(design_problem.ripple_values)
         result.to_json(self.file_path)
         if self.build_config.get("plot", False):
             design_problem.plot()
             plt.show()
-        return result, wp_cross_section
+        return result, wp_cross_section, peak_ripple
 
     def read(self) -> tuple[GeometryParameterisation, BluemiraWire]:
         """
@@ -683,7 +703,7 @@ class TFCoilBuilder(Builder):
         """
         # Should normally be gotten with wire_plane_intersect
         # (it's not OK to assume that the maximum x value occurs on the midplane)
-        x_out = self.centreline.bounding_box.x_max
+        x_out = np.max(self.centreline.discretise(byedges=True, ndiscr=2000).x)
         xs = BluemiraFace(deepcopy(self.wp_cross_section))
         xs2 = deepcopy(xs)
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
@@ -750,7 +770,12 @@ class TFCoilBuilder(Builder):
         :
             Winding pack x-y-z
         """
-        wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
+        wp_solid = sweep_shape(
+            self.wp_cross_section,
+            self.centreline,
+            transition=SweepShapeTransition.ROUND_CORNER,
+        )
+
         winding_pack = PhysicalComponent(
             self.WP, wp_solid, material=self.get_material(self.WP)
         )
@@ -769,7 +794,12 @@ class TFCoilBuilder(Builder):
             Insulation x-y-z
         """
         ins_solid = boolean_cut(
-            sweep_shape(ins_inner_face.boundary[0], self.centreline), wp_solid
+            sweep_shape(
+                ins_inner_face.boundary[0],
+                self.centreline,
+                transition=SweepShapeTransition.ROUND_CORNER,
+            ),
+            wp_solid,
         )[0]
         insulation = PhysicalComponent(
             self.INS, ins_solid, material=self.get_material(self.INS)
@@ -847,9 +877,11 @@ class TFCoilBuilder(Builder):
         )
         face = BluemiraFace([ins_outer, self.wp_cross_section])
 
+        points = self.centreline.discretise(byedges=True, ndiscr=2000)
+        x_max = np.max(points.x)
         outer_face = deepcopy(face)
         outer_face.translate((
-            self.centreline.bounding_box.x_max - outer_face.center_of_mass[0],
+            x_max - outer_face.center_of_mass[0],
             0,
             0,
         ))
@@ -867,7 +899,9 @@ class TFCoilBuilder(Builder):
         :
             xy casing cross-section
         """
-        tf_centreline_min = self.centreline.bounding_box.x_min
+        tf_centreline_min = np.min(
+            self.centreline.discretise(byedges=True, ndiscr=2000).x
+        )
 
         x_in = (
             tf_centreline_min
@@ -905,7 +939,11 @@ class TFCoilBuilder(Builder):
         dy_out[[0, 1]] = -dy_out[[0, 1]]
 
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
-        outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
+        outboard_wire.translate((
+            np.max(self.centreline.discretise(ndiscr=2000, byedges=True).x),
+            0,
+            0,
+        ))
 
         return y_in, inboard_wire, outboard_wire
 
@@ -928,6 +966,7 @@ class TFCoilBuilder(Builder):
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
+
         if len(wires) != 4:  # noqa: PLR2004
             raise BuilderError(
                 "Unexpected TF coil x-z cross-section. It is likely that a previous "
@@ -972,7 +1011,9 @@ class TFCoilBuilder(Builder):
         inner_xs_rect_bot = deepcopy(inner_xs_rect)
         inner_xs_rect_bot.translate((0, 0, z_turn_bot))
         return sweep_shape(
-            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
+            [inner_xs_rect_top, outer_xs, inner_xs_rect_bot],
+            self.centreline,
+            transition=SweepShapeTransition.ROUND_CORNER,
         )
 
     @staticmethod
@@ -981,6 +1022,7 @@ class TFCoilBuilder(Builder):
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         cut_wires = slice_shape(casing_solid, xz_plane)
         cut_wires.sort(key=lambda wire: wire.length)
+
         if len(cut_wires) != 2:  # noqa: PLR2004
             raise BuilderError(
                 f"Expecting 2 wires here but there are: {len(cut_wires)} of them"
@@ -990,14 +1032,13 @@ class TFCoilBuilder(Builder):
 
         # Get the outboard half of this wire
 
-        z_max = outer_wire.bounding_box.z_max
         # Should do this by optimisation, but parameter_at is fragile for circle arcs
         # Also cannot trust bounding boxes, ffs.
         points = outer_wire.discretise(ndiscr=1000, byedges=True)
         idx_max = np.argmax(points.z)
         idx_min = np.argmin(points.z)
-        x_max, z_max = points.x[idx_max], points.z[idx_max]
-        x_min, z_min = points.x[idx_min], points.z[idx_min]
+        x_max, z_max = points.x[idx_max], points.z[idx_max] + 0.001
+        x_min, z_min = points.x[idx_min], points.z[idx_min] - 0.001
 
         offset = 1.0
         x = [0, x_max, x_max, x_min, x_min, 0]

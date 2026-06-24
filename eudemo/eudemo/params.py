@@ -50,6 +50,7 @@ class EUDEMOReactorParams(ParameterFrame):
     kappa_95: Parameter[float]
     kappa: Parameter[float]
     m_s_limit: Parameter[float]
+    m_s: Parameter[float]
     l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
@@ -97,8 +98,13 @@ class EUDEMOReactorParams(ParameterFrame):
     TF_res_tot: Parameter[float]
     TF_respc_ob: Parameter[float]
     TF_ripple_limit: Parameter[float]
+    TF_peak_ripple_opt: Parameter[float]
+    TF_peak_ripple: Parameter[float]
+    TF_peak_field: Parameter[float]
     tf_wp_depth: Parameter[float]
     tf_wp_width: Parameter[float]
+    tf_wp_volume: Parameter[float]
+    pf_wp_volume: Parameter[float]
     tk_bb_ib: Parameter[float]
     tk_bb_ob: Parameter[float]
     tk_cr_vv: Parameter[float]
@@ -180,14 +186,13 @@ class EUDEMOReactorParams(ParameterFrame):
     # Divertor silhouette
     div_Ltarg_ib: Parameter[float]  # noqa: N815
     div_Ltarg_ob: Parameter[float]  # noqa: N815
-    strike_loc_ib: Parameter[float]
-    strike_loc_ob: Parameter[float]
     div_targ_angle_ib: Parameter[float]
     div_targ_angle_ob: Parameter[float]
     div_targ_type_ib: Parameter[str]
     div_targ_type_ob: Parameter[str]
     div_baffle_type_ib: Parameter[str]
     div_baffle_type_ob: Parameter[str]
+    div_type: Parameter[str]
 
     # Remote maintenance
     c_rm: Parameter[float]

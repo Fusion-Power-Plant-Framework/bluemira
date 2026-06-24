@@ -74,6 +74,7 @@ from eudemo.equilibria import (
     FixedEquilibriumDesigner,
     ReferenceFreeBoundaryEquilibriumDesigner,
 )
+from eudemo.equilibria.stability import run_vertical_stability_calculation
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.duct_connection import (
@@ -280,17 +281,18 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
     :
         TF coil component manager
     """
-    centreline, wp_cross_section = run_designer(
+    centreline, wp_cross_section, peak_ripple = run_designer(
         TFCoilDesigner,
         params,
         build_config,
         separatrix=separatrix,
         keep_out_zone=vvts_cross_section,
     )
+
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
     )
-    return TFCoil(builder.build(), builder._make_field_solver(), centreline)
+    return TFCoil(builder.build(), builder._make_field_solver(), centreline), peak_ripple
 
 
 def build_pf_coils(
@@ -520,6 +522,52 @@ def build_radiation_plugs(
     return builder.build()
 
 
+def add_useful_parameters(reactor, reactor_config, reference_eq):
+    """Add useful parameters back to the global config"""
+    reactor_config.global_params.tf_wp_volume.set_value(
+        reactor.tf_coils.wp_volume, "BLUEMIRA"
+    )
+    reactor_config.global_params.pf_wp_volume.set_value(
+        reactor.pf_coils.wp_volume, "BLUEMIRA"
+    )
+
+    lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
+    reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+
+    eqs = [
+        reactor.equilibria.get_state(s).eq
+        for s in [
+            reactor.equilibria.SOF,
+            reactor.equilibria.EOF,
+            reactor.equilibria.BREAKDOWN,
+        ]
+    ]
+
+    tf_ccl = reactor.tf_coils.centreline.create_shape()
+    wp_in_wire = offset_wire(
+        tf_ccl, -0.5 * reactor_config.global_params.tf_wp_width.value, open_wire=False
+    )
+    x_min = wp_in_wire.bounding_box.x_min
+    points = wp_in_wire.discretise(200)
+    mask = np.nonzero(points.x < x_min + 0.5)[0]
+    x, z = points.x[mask], points.z[mask]
+    Bx_tf, By, Bz_tf = reactor.tf_coils._field_solver.field(x, np.zeros_like(x), z)
+    peak_fields = []
+    for eq in eqs:
+        Bx = eq.Bx(x, z) + Bx_tf
+        Bz = eq.Bz(x, z) + Bz_tf
+        B_tot = np.sqrt(Bx**2 + By**2 + Bz**2)
+        peak_fields.append(np.max(B_tot))
+    peak_field_hifi = np.max(peak_fields)
+    reactor_config.global_params.TF_peak_field.set_value(peak_field_hifi, "BLUEMIRA")
+    peak_ripple_hifi = np.max(
+        reactor.tf_coils._field_solver.ripple(
+            lcfs.coords.x, np.zeros_like(lcfs.coords.x), lcfs.coords.z
+        )
+    )
+    reactor_config.global_params.TF_peak_ripple.set_value(peak_ripple_hifi, "BLUEMIRA")
+
+
 def save_reactor(reactor, reactor_config, folder_name):
     """
     Save a reactor to a folder data-structure
@@ -533,10 +581,9 @@ def save_reactor(reactor, reactor_config, folder_name):
         f"{folder_name}/equilibria", subfolder="eudemo"
     )
     tf_folder = make_bluemira_path(f"{folder_name}/TF_coil", subfolder="eudemo")
-
     # Copy across PROCESS outputs
     for fn in ["OUT.DAT", "MFILE.DAT"]:
-        shutil.copyfile(f"{config_folder}/process/{fn}", f"{process_folder}/{fn}")
+        shutil.copyfile(Path(config_folder, fn), Path(process_folder, fn))
     # Save equilibria
     try:
         sof: Equilibrium = reactor.equilibria.get_state(reactor.equilibria.SOF).eq
@@ -580,7 +627,6 @@ def save_reactor(reactor, reactor_config, folder_name):
     filename = f"{root}/BLUEMIRA_reactor_xy.pdf"
     f.savefig(filename, dpi=600, format="pdf")
 
-    # Save params
     filename = f"{root}/BLUEMIRA_OUT.json"
     json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
@@ -595,25 +641,27 @@ def save_reactor(reactor, reactor_config, folder_name):
     csg_root.mkdir(parents=True, exist_ok=True)
 
     csg_out_dict = {}
-    for k, v in reactor.neutronics.csg.results.__dict__.items():
-        if isinstance(v, float | dict):
-            csg_out_dict[k] = v
-        elif k == "statepoint_file":
-            csg_out_dict[k] = Path(csg_root, "run", v.name).as_posix()
+    if reactor.neutronics.csg is not None:  # TODO fix better
+        for k, v in reactor.neutronics.csg.results.__dict__.items():
+            if isinstance(v, float | dict):
+                csg_out_dict[k] = v
+            elif k == "statepoint_file":
+                csg_out_dict[k] = Path(csg_root, "run", v.name).as_posix()
 
-    json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
+        json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
 
-    # DAGMC
-    dag_root = Path(n_root, "dagmc")
-    dag_root.mkdir(parents=True, exist_ok=True)
+    if reactor.neutronics.dagmc is not None:  # TODO fix better
+        # DAGMC
+        dag_root = Path(n_root, "dagmc")
+        dag_root.mkdir(parents=True, exist_ok=True)
 
-    openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
-    openmc_res.pop("statepoint")
-    openmc_res["statepoint_file"] = Path(
-        dag_root, "run", openmc_res["statepoint_file"].name
-    ).as_posix()
+        openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
+        openmc_res.pop("statepoint")
+        openmc_res["statepoint_file"] = Path(
+            dag_root, "run", openmc_res["statepoint_file"].name
+        ).as_posix()
 
-    json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
+        json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
 
 
 if __name__ == "__main__":
@@ -709,9 +757,9 @@ if __name__ == "__main__":
         )
 
         zero_d_params = ZeroDNeutronicsModel(reactor_config.global_params).run()
-
         reactor_config.global_params.update_from_frame(zero_d_params)
         if reactor_config.config_for("Neutronics", "CSG").get("enabled", False):
+            neutronics_start = time.time()
             neutronics_csg = run_csg_neutronics(
                 reactor_config.params_for("Neutronics", "CSG").global_params,
                 reactor_config.config_for("Neutronics", "CSG"),
@@ -721,7 +769,10 @@ if __name__ == "__main__":
                 eq=reference_eq,
                 op_cond=OperationalConditions(temperature=298, pressure=101325),
             )
-            if reactor_config.config_for("Neutronics", "CSG")["show_data"]:
+            neutronics_end = time.time()
+            run_time_track["CSG neutronics"] = neutronics_end - neutronics_start
+
+            if reactor_config.config_for("Neutronics")["show_data"]:
                 reactor.neutronics.plot()
                 bluemira_print(f"{reactor.neutronics}")
         else:
@@ -735,11 +786,14 @@ if __name__ == "__main__":
             reactor.vacuum_vessel.xz_boundary,
         )
 
-        reactor.tf_coils = build_tf_coils(
+        reactor.tf_coils, peak_opt_ripple = build_tf_coils(
             reactor_config.params_for("TF coils"),
             reactor_config.config_for("TF coils"),
             reactor.plasma.lcfs(),
             vv_thermal_shield.xz_boundary,
+        )
+        reactor_config.global_params.TF_peak_ripple_opt.set_value(
+            peak_opt_ripple, "BLUEMIRA"
         )
 
         eq_port_designer = EquatorialPortKOZDesigner(
@@ -774,12 +828,15 @@ if __name__ == "__main__":
                 lower_port_koz_xz,
             ],
         )
-        debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
-        debug.extend([reactor.tf_coils.xz_outer_boundary])
-        debug.extend(reactor.pf_coils.xz_boundary)
-        # I know there are clashes, I need to put in dynamic bounds on position opt to
-        # include coil XS.
-        # show_cad(debug)
+
+        run_vertical_stability_calculation(
+            reactor_config.params_for("Vertical stability").global_params,
+            reactor_config.config_for("Vertical stability"),
+            reactor.equilibria.get_state(reactor.equilibria.SOF).eq,
+            reactor.vacuum_vessel.xz_boundary,
+            reactor.vacuum_vessel.xz_inner_boundary,
+            [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz],
+        )
 
         cryostat_thermal_shield = build_cryots(
             reactor_config.params_for("Thermal shield"),
@@ -817,8 +874,6 @@ if __name__ == "__main__":
         )
 
         # Incorporate ports
-        # TODO: Make potentially larger depending on where the PF
-        # coils ended up. Warn if this isn't the case.
 
         ts_upper_port, vv_upper_port = build_upper_port(
             reactor_config.params_for("Upper Port"),
@@ -886,23 +941,21 @@ if __name__ == "__main__":
             sspc_result["P_el_net"], "BLUEMIRA"
         )
 
-        lcfs = ClosedFluxSurface(reference_eq.get_LCFS())
-
-        reactor_config.global_params.V_p.set_value(lcfs.volume, "BLUEMIRA")
+        add_useful_parameters(reactor, reactor_config, reference_eq)
 
         end = time.time()
-
         run_time_track["Total"] = end - start
         n_config = reactor_config.config_for("Neutronics")
         particles = n_config.get("particles", n_config["DAGMC"]["particles"])
         neutrons = f"{particles:.2g}".replace(".", "_").replace("+", "")
-        a_string = f"{reactor_config.global_params.A.value:.2f}".replace(".", "_")
-        folder_name = f"results_v02/A_{a_string}_neut_{neutrons}"
+        a_string = f"{reactor_config.global_params.A.value:.3f}".replace(".", "_")
+        folder_name = f"results_v05/A_{a_string}_neut_{neutrons}"
         Path(folder_name).mkdir(exist_ok=True, parents=True)
         filename = f"{folder_name}/run_time.json"
         with open(filename, "w") as f:
             json.dump(run_time_track, f, indent=2)
         save_reactor(reactor, reactor_config, folder_name=folder_name)
+        plt.close("all")
 
     except Exception as e:
         bluemira_error(e.with_traceback(e.__traceback__))

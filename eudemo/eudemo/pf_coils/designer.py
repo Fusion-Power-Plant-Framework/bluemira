@@ -346,8 +346,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "phi_l_neg": {"value": 45.0},
             "phi_l_pos": {"value": 30.0},
         })
-        lcfs = lcfs_parameterisation.create_shape().discretise(byedges=True, ndiscr=250)
-        # from bluemira.geometry.coordinates import interpolate_points, Coordinates
+        lcfs = lcfs_parameterisation.create_shape().discretise(byedges=True, ndiscr=50)
 
         lcfs = self.ref_eq.eq.get_LCFS()
         x_lcfs, z_lcfs = lcfs.x, lcfs.z
