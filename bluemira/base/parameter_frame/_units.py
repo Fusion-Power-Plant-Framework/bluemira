@@ -170,7 +170,10 @@ def _convert_non_commutative(
 
     filtered_list = [unit_list[i] for i in filter_index]
     for no, i in enumerate(filtered_list):
-        if not i.dimensionality and get_key(i) != ureg.dpa:
+        if (
+            all(get_key(i) != a for a in {ureg.dpa, ureg.percent})
+            and not i.dimensionality
+        ):
             if get_key(i) in {ureg.steradian, ureg.square_degree}:
                 raise NotImplementedError("Solid angle conversion not supported")
 
