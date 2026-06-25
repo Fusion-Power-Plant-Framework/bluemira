@@ -477,7 +477,7 @@ class TestEquilibriumConstraints:
         eq = deepcopy(self.eq)
         problem = UnconstrainedTikhonovCurrentGradientCOP(eq, targets, gamma=1e-8)
         solver = PicardIterator(
-            eq, problem, check_constraints=True, fixed_coils=True, maxiter=30
+            problem, check_constraints=True, fixed_coils=True, maxiter=30
         )
         result = solver()
         assert result.constraints_satisfied
@@ -490,7 +490,7 @@ class TestEquilibriumConstraints:
             eq, constraints=targets.constraints, opt_conditions={"max_eval": 200}
         )
         solver = PicardIterator(
-            eq, problem, check_constraints=True, fixed_coils=True, maxiter=30
+            problem, check_constraints=True, fixed_coils=True, maxiter=30
         )
         result = solver()
         assert result.constraints_satisfied
