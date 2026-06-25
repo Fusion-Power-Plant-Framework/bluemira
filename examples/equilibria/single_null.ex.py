@@ -61,6 +61,8 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
+    DPsiDxConstraint,
+    DPsiDzConstraint,
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,
@@ -141,6 +143,7 @@ cs.discretisation = 0.3
 # Machine parameters
 R_0 = 8.938
 A = 3.1
+a = R_0 / A
 B_0 = 4.8901  # T
 I_p = 19.07e6  # A
 
@@ -178,15 +181,19 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # We'll use this to specify some constraints on the plasma equilibrium problem:
 # * An `IsofluxConstraint` forces the flux at a set of points to be equal
 # * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
+# * Constraints at the inboard and top of the desired LCFS for the gradients
+#   of flux
 
 # %%
+kappa_u = 1.6
+delta_u = 0.4
 lcfs_parameterisation = JohnerLCFS({
     "r_0": {"value": R_0},
     "z_0": {"value": 0.0},
-    "a": {"value": R_0 / A},
-    "kappa_u": {"value": 1.6},
+    "a": {"value": a},
+    "kappa_u": {"value": kappa_u},
     "kappa_l": {"value": 1.9},
-    "delta_u": {"value": 0.4},
+    "delta_u": {"value": delta_u},
     "delta_l": {"value": 0.4},
     "phi_u_neg": {"value": 0.0},
     "phi_u_pos": {"value": 0.0},
@@ -215,6 +222,9 @@ x_point = FieldNullConstraint(
     tolerance=1e-4,  # [T]
 )
 
+dpsi_dx_in = DPsiDzConstraint(R_0 - a, 0.0, 0.0)
+dpsi_dz_up = DPsiDxConstraint(R_0 - delta_u * a, kappa_u * a, 0.0)
+
 # %% [markdown]
 #
 # It's often very useful to solve an unconstrained optimised problem in order to get
@@ -232,7 +242,7 @@ x_point = FieldNullConstraint(
 
 # %%
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-    eq, MagneticConstraintSet([isoflux, x_point]), gamma=1e-7
+    eq, MagneticConstraintSet([isoflux, x_point, dpsi_dx_in, dpsi_dz_up]), gamma=1e-7
 )
 diagnostic_plotting = PicardDiagnosticOptions(plot=PicardDiagnostic.EQ)
 program = PicardIterator(
@@ -272,7 +282,7 @@ force_constraints = CoilForceConstraints(
 
 current_opt_problem = TikhonovCurrentCOP(
     eq,
-    targets=MagneticConstraintSet([isoflux]),
+    targets=MagneticConstraintSet([isoflux, dpsi_dx_in, dpsi_dz_up]),
     gamma=0.0,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6},
@@ -308,7 +318,14 @@ minimal_current_opt_problem = MinimalCurrentCOP(
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     max_currents=coilset.get_max_current(0.0),
-    constraints=[isoflux, x_point, field_constraints, force_constraints],
+    constraints=[
+        isoflux,
+        dpsi_dx_in,
+        dpsi_dz_up,
+        x_point,
+        field_constraints,
+        force_constraints,
+    ],
 )
 
 program = PicardIterator(
@@ -372,7 +389,7 @@ eof_psi_boundary = PsiConstraint(
 
 current_opt_problem_sof = TikhonovCurrentCOP(
     sof,
-    targets=MagneticConstraintSet([isoflux]),
+    targets=MagneticConstraintSet([isoflux, dpsi_dx_in, dpsi_dz_up]),
     gamma=1e-12,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
@@ -383,7 +400,7 @@ current_opt_problem_sof = TikhonovCurrentCOP(
 
 current_opt_problem_eof = TikhonovCurrentCOP(
     eof,
-    targets=MagneticConstraintSet([isoflux]),
+    targets=MagneticConstraintSet([isoflux, dpsi_dx_in, dpsi_dz_up]),
     gamma=1e-12,
     opt_algorithm="SLSQP",
     opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
