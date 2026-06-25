@@ -62,22 +62,26 @@ class ViewerBackend(Enum):
                 name = self.name.lower()
                 bluemira_warn(
                     f"Unable to import {name.capitalize()} viewer\n"
-                    f"Please 'pip install {name}' to use, falling back to FreeCAD."
+                    f"Please 'pip install {name}' to use,"
+                    f" falling back to {self.DEFAULT.name.lower()}."
                 )
-                return get_module(type(self).DEFAULT.value)
+                return get_module(self.DEFAULT.value)
             raise
 
     @classmethod
     def _missing_(cls, value):
         if isinstance(value, str):
             try:
-                backend = ViewerBackend[value.upper()]
+                backend = cls[value.upper()]
             except KeyError:
-                bluemira_warn(f"Unknown viewer backend '{value}' defaulting to FreeCAD")
-                backend = ViewerBackend.DEFAULT
+                bluemira_warn(
+                    f"Unknown viewer backend '{value}',"
+                    f" defaulting to {cls.DEFAULT.name.lower()}"
+                )
+                backend = cls.DEFAULT
             return backend
         bluemira_debug(f"No viewer '{value}' selecting default")
-        return ViewerBackend.DEFAULT
+        return cls.DEFAULT
 
 
 def get_default_options(backend=ViewerBackend.DEFAULT):
