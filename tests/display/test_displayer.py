@@ -94,7 +94,7 @@ class TestComponentDisplayer:
     @pytest.mark.parametrize(
         "viewer",
         [
-            "freecad",
+            _ACTIVE_BACKEND_REF,
             pytest.param(
                 "polyscope",
                 marks=pytest.mark.skipif(_skip_polyscope(), reason="Not installed"),
@@ -142,7 +142,7 @@ class TestGeometryDisplayer:
     @pytest.mark.parametrize(
         "viewer",
         [
-            "freecad",
+            _ACTIVE_BACKEND_REF,
             pytest.param(
                 "polyscope",
                 marks=pytest.mark.skipif(_skip_polyscope(), reason="Not installed"),
