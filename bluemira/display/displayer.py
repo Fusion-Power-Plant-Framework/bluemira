@@ -33,6 +33,12 @@ class ViewerBackend(Enum):
     POLYSCOPE = "bluemira.codes._polyscope"
     CADQUERY = "bluemira.codes.cadapi._cadquery"
 
+    @classmethod
+    @property
+    def DEFAULT(cls):  # noqa: N802
+        """Default viewer based on backend availability"""
+        return cls[os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").upper()]
+
     @lru_cache(2)
     def get_module(self):
         """Load viewer module
@@ -52,17 +58,33 @@ class ViewerBackend(Enum):
         try:
             return get_module(self.value)
         except (ModuleNotFoundError, FileNotFoundError):
-            if self.name != "FREECAD":
+            if self.name != self.DEFAULT.name:
                 name = self.name.lower()
                 bluemira_warn(
                     f"Unable to import {name.capitalize()} viewer\n"
-                    f"Please 'pip install {name}' to use, falling back to FreeCAD."
+                    f"Please 'pip install {name}' to use,"
+                    f" falling back to {self.DEFAULT.name.lower()}."
                 )
-                return get_module(type(self).FREECAD.value)
+                return get_module(self.DEFAULT.value)
             raise
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            try:
+                backend = cls[value.upper()]
+            except KeyError:
+                bluemira_warn(
+                    f"Unknown viewer backend '{value}',"
+                    f" defaulting to {cls.DEFAULT.name.lower()}"
+                )
+                backend = cls.DEFAULT
+            return backend
+        bluemira_debug(f"No viewer '{value}' selecting default")
+        return cls.DEFAULT
 
-def get_default_options(backend=ViewerBackend.FREECAD):
+
+def get_default_options(backend=ViewerBackend.DEFAULT):
     """
     Returns
     -------
@@ -84,7 +106,7 @@ class DisplayCADOptions(Options):
 
     __slots__ = ()
 
-    def __init__(self, backend=ViewerBackend.FREECAD, **kwargs):
+    def __init__(self, backend=ViewerBackend.DEFAULT, **kwargs):
         self._options = get_default_options(backend)
         super().__init__(**kwargs)
 
@@ -159,15 +181,7 @@ def show_cad(
     kwargs
         Passed on to modifications to the plotting style options and backend
     """
-    if backend is None:
-        backend = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad")
-    if isinstance(backend, str):
-        try:
-            backend = ViewerBackend[backend.upper()]
-        except KeyError:
-            bluemira_warn(f"Unknown viewer backend '{backend}' defaulting to FreeCAD")
-            backend = ViewerBackend.FREECAD
-
+    backend = ViewerBackend(backend)
     parts, options, labels = _validate_display_inputs(parts, options, labels)
 
     # Split kwargs by whether they correspond to a DisplayCADOptions field.
