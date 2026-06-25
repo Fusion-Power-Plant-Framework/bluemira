@@ -87,6 +87,11 @@ class TestBluemiraFace:
         vertices = face.vertexes
         assert len(vertices) == len(points) - 1
 
+    @pytest.mark.parametrize("shape", shapes)
+    def test_face_volume(self, shape):
+        face = BluemiraFace(shape)
+        assert face.volume == 0.0  # noqa: RUF069
+
 
 class TestNormalAt:
     normals = (

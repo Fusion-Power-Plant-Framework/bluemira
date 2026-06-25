@@ -266,3 +266,10 @@ class BluemiraFace(BluemiraGeo):
         The solids of the face. By definition an empty tuple.
         """
         return ()
+
+    @property
+    def volume(self) -> float:
+        """
+        The volume of a face. By convention 0.0.
+        """
+        return 0.0
