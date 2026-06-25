@@ -733,17 +733,22 @@ def _wire_is_planar(wire: apiWire) -> bool:
 
 
 def length(obj: apiShape) -> float:
-    """Total length of the shape (sum of all edge lengths).
+    """Total arc length of the shape.
 
-    Sum per-edge ``Length()`` rather than the composite ``cq.Wire.Length()``:
-    on CadQuery 2.7 / OCP 7.8 the composite-curve adaptor used by
-    ``cq.Wire.Length()`` segfaults on certain wires assembled from
-    ``BRepAlgoAPI_Section`` output (short, near-degenerate edges). Per-edge
-    ``BRepAdaptor_Curve``-based length is equivalent and stable.
+    Sums each edge's length from OCCT ``BRepGProp.LinearProperties`` — accurate
+    to machine precision and consistent across geometry backends, which matters
+    for shape optimisers that are sensitive to small length differences.
+    Iterating edges, rather than measuring the whole wire, avoids OCCT's
+    composite-curve adaptor, which can segfault on near-degenerate
+    section-derived wires.
     """
-    if isinstance(obj, cq.Edge):
-        return obj.Length()
-    return sum(e.Length() for e in obj.Edges())
+    edges = [obj] if isinstance(obj, cq.Edge) else obj.Edges()
+    total = 0.0
+    for edge in edges:
+        props = GProp_GProps()
+        BRepGProp.LinearProperties_s(edge.wrapped, props)
+        total += props.Mass()
+    return total
 
 
 def _occ_face_area(topods_face) -> float:

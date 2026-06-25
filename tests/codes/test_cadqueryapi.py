@@ -1597,3 +1597,47 @@ class TestCurves:
         # edge1's last point and edge2's first point are both (1, 0, 0).
         with pytest.raises(CadQueryError, match="identical endpoints"):
             cadapi.make_bspline_g1_blend(edge1, edge2)
+
+
+class TestPropertyAccuracy:
+    """``length`` matches the true arc length to machine precision.
+
+    Guards the per-edge ``BRepGProp`` length against a high-accuracy reference
+    (a quadrature of the arc-length integral) and the closed-form circle case.
+    """
+
+    # A cubic Bezier (no closed-form arc length) in the xz-plane.
+    CTRL_XZ = ((4.0, 2.0), (6.5, 5.5), (11.0, 4.0), (12.0, -1.0))
+
+    @classmethod
+    def _bezier(cls):
+        return cadapi.make_bezier([[x, 0.0, z] for x, z in cls.CTRL_XZ])
+
+    @classmethod
+    def _bezier_arc_length(cls):
+        # Independent ground truth: adaptive quadrature of the speed |B'(t)|.
+        from scipy.integrate import quad  # noqa: PLC0415
+
+        p = np.asarray(cls.CTRL_XZ, dtype=float)
+
+        def speed(t):
+            d = (
+                3 * (1 - t) ** 2 * (p[1] - p[0])
+                + 6 * (1 - t) * t * (p[2] - p[1])
+                + 3 * t**2 * (p[3] - p[2])
+            )
+            return float(np.hypot(*d))
+
+        value, _ = quad(speed, 0.0, 1.0, epsabs=1e-12, epsrel=1e-12)
+        return value
+
+    def test_bezier_length_matches_arc_length_integral(self):
+        # length must match the true arc-length integral to ~1e-8.
+        assert cadapi.length(self._bezier()) == pytest.approx(
+            self._bezier_arc_length(), rel=1e-7
+        )
+
+    def test_circle_length_is_exact(self):
+        # A circle's length equals its closed-form circumference 2*pi*r.
+        circle = cadapi.make_circle(radius=3.0, axis=(0, 1, 0))
+        assert cadapi.length(circle) == pytest.approx(2 * np.pi * 3.0, rel=1e-12)
