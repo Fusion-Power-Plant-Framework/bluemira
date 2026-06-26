@@ -8,11 +8,10 @@
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.constants import EPS_FREECAD, VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -348,9 +347,9 @@ def _split_segment(segment, split_positions) -> list[BluemiraWire]:
     """
     sub_segs = []
     for split_pos in split_positions:
-        split = segment.parameter_at(split_pos, tolerance=10 * EPS)
+        split = segment.parameter_at(split_pos, tolerance=EPS_FREECAD)
         sub_seg_1, segment = split_wire(
-            segment, segment.value_at(alpha=split), tolerance=10 * EPS
+            segment, segment.value_at(alpha=split), tolerance=EPS_FREECAD
         )
         if sub_seg_1:
             sub_segs.append(sub_seg_1)
