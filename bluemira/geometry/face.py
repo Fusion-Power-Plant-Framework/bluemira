@@ -13,12 +13,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import bluemira.codes._geometryapi as cadapi
-
-# import from bluemira
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
-
-# import from error
 from bluemira.geometry.error import DisjointedFaceError, NotClosedWireError
 from bluemira.geometry.wire import BluemiraWire
 
@@ -133,7 +130,7 @@ class BluemiraFace(BluemiraGeo):
         Raises
         ------
         DisjointedFaceError
-            More than 1 face created
+            Cutting the holes produced no face
         """
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
@@ -141,10 +138,23 @@ class BluemiraFace(BluemiraGeo):
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
             _faces = cadapi.face_cut_holes(face, fholes)
-            if len(_faces) == 1:
-                face = _faces[0]
-            else:
-                raise DisjointedFaceError("Any or more than one face has been created.")
+            if not _faces:
+                raise DisjointedFaceError("Cutting the holes produced no face.")
+            if len(_faces) > 1:
+                # Cutting the holes pinched the region into disjoint pieces
+                # (typically an inner boundary protruding past the outer one).
+                # Keep the dominant face rather than crashing, but warn so the
+                # suspect input geometry is not silently accepted.
+                _faces = sorted(_faces, key=cadapi.area, reverse=True)
+                discarded = sum(cadapi.area(f) for f in _faces[1:])
+                bluemira_warn(
+                    f"BluemiraFace: cutting holes produced {len(_faces)} disjoint "
+                    f"faces; keeping the largest (area {cadapi.area(_faces[0]):.4g}) "
+                    f"and discarding {len(_faces) - 1} fragment(s) totalling "
+                    f"{discarded:.4g}. An inner boundary likely protrudes past the "
+                    "outer boundary."
+                )
+            face = _faces[0]
 
         if not cadapi.is_valid(face):
             cadapi.fix_shape(face)
