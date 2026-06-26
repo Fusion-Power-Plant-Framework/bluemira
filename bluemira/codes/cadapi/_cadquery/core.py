@@ -997,6 +997,10 @@ def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
         return cq.Wire(builder.Wire())
 
     # If the sequential builder failed, fallback to combine algorithm.
+    bluemira_warn(
+        "Failed to join wires sequentially in the order provided. "
+        "Falling back to spatial assembly to heal the shape."
+    )
     result = cq.Wire.combine(wire_list)
     if isinstance(result, list) and len(result) > 1:
         bluemira_warn(
