@@ -1430,13 +1430,38 @@ def split_wire(
             d1 = p1.SquareDistance(pnt)
             t_split = t0 if d0 <= d1 else t1
         t_split = max(t0, min(t1, t_split))
-        if t_split - t0 > _ANGLE_PARALLEL_TOL:
-            edges_1.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()))
-        if t1 - t_split > _ANGLE_PARALLEL_TOL:
-            edges_2.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()))
+        is_reversed = e.wrapped.Orientation() == TopAbs_REVERSED
 
-    wire_1 = cq.Wire.assembleEdges(edges_1) if edges_1 else None
-    wire_2 = cq.Wire.assembleEdges(edges_2) if edges_2 else None
+        part_a = None
+        part_b = None
+
+        if t_split - t0 > _ANGLE_PARALLEL_TOL:
+            part_a = BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()
+        if t1 - t_split > _ANGLE_PARALLEL_TOL:
+            part_b = BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()
+
+        # reverse part orientations if the parent edge was reversed
+        if is_reversed:
+            if part_a:
+                part_a.Orientation(TopAbs_REVERSED)
+            if part_b:
+                part_b.Orientation(TopAbs_REVERSED)
+
+        if is_reversed:
+            # t1 -> t0 so part_b is first
+            if part_b:
+                edges_1.append(cq.Edge(part_b))
+            if part_a:
+                edges_2.append(cq.Edge(part_a))
+        else:
+            # t0 -> t1 so part_a is first
+            if part_a:
+                edges_1.append(cq.Edge(part_a))
+            if part_b:
+                edges_2.append(cq.Edge(part_b))
+
+    wire_1 = wire_from_wires(edges_1) if edges_1 else None
+    wire_2 = wire_from_wires(edges_2) if edges_2 else None
     return wire_1, wire_2
 
 

@@ -1511,6 +1511,32 @@ class TestPatches:
             )
             j -= 1
 
+    def test_wire_parameter_at_checks_reverse_orientation(self):
+        e1 = cadapi.make_polygon([(0, 0, 0), (10, 0, 0)])
+        e2 = cadapi.make_polygon([(10, 10, 0), (10, 0, 0)])
+        wire = cadapi.wire_from_wires([e1, e2])
+
+        vertex = (10.0, 2.5, 0.0)
+        param = cadapi.wire_parameter_at(wire, vertex)
+        assert param == pytest.approx(0.625)
+
+    def test_wire_value_at_checks_reverse_orientation(self):
+        e1 = cadapi.make_polygon([(0, 0, 0), (10, 0, 0)])
+        e2 = cadapi.make_polygon([(10, 10, 0), (10, 0, 0)])
+        wire = cadapi.wire_from_wires([e1, e2])
+
+        pt_start = cadapi.wire_value_at(wire, distance=0.0)
+        assert np.allclose(pt_start, [0.0, 0.0, 0.0])
+        pt_mid = cadapi.wire_value_at(wire, distance=10.0)
+        assert np.allclose(pt_mid, [10.0, 0.0, 0.0])
+        pt_reversed = cadapi.wire_value_at(wire, distance=15.0)
+        assert np.allclose(pt_reversed, [10.0, 5.0, 0.0])
+        pt_end = cadapi.wire_value_at(wire, distance=20.0)
+        assert np.allclose(pt_end, [10.0, 10.0, 0.0])
+
+        e2_start = wire.Edges()[1].positionAt(0.0).toTuple()
+        assert e2_start == pytest.approx((10.0, 10.0, 0.0))
+
 
 class TestCurves:
     """Direct unit tests for ``_cadquery/curves.py`` constructors.
