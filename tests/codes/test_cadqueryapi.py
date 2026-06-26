@@ -29,7 +29,9 @@ from OCP.TopoDS import TopoDS_Wire  # noqa: E402
 from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt, gp_Trsf  # noqa: E402
 
 from bluemira.codes.error import CadQueryError  # noqa: E402
+from bluemira.geometry.coordinates import Coordinates  # noqa: E402
 from bluemira.geometry.error import GeometryError  # noqa: E402
+from bluemira.geometry.parameterisations import TripleArc  # noqa: E402
 from bluemira.geometry.tools import convert  # noqa: E402
 from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
 
@@ -389,6 +391,19 @@ class TestWireFromWiresDisjoint:
         result = cadapi.wire_from_wires([short, long])
         assert "did not all join" in caplog.text
         assert result.Length() == pytest.approx(long.Length())
+
+    def test_wire_from_wires_order(self):
+        ta = TripleArc().create_shape()
+        ta_disc = ta.discretise(ndiscr=5, byedges=False)
+
+        target = Coordinates(  # known output from FreeCAD
+            [
+                [4.66692214, 6.31718193, 16.19387383, 14.35844429, 4.66692214],
+                [0.0, 0.0, 0.0, 0.0, 0.0],
+                [4.24006043, -6.27112426, -4.02433606, 5.93764141, 4.24006043],
+            ]
+        )
+        np.testing.assert_allclose(ta_disc.points, target.points)
 
 
 class TestInternalHelpers:

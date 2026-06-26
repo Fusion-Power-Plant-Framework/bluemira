@@ -974,11 +974,33 @@ def wire_from_edges(edge_list: list[apiEdge]) -> apiWire:
 def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
     """Create a single wire from a list of connected wires.
 
+    Uses BRepBuilderAPI_MakeWire builder to preserve the exact memory order
+    of the input list, perfectly matching FreeCAD's behavior for closed loops.
+
     If the inputs do not all connect into one wire, the longest piece is
     returned with a warning so the caller knows geometry was discarded.
     """
     if len(wire_list) == 1:
         return wire_list[0]
+
+    # Flatten into edges using ordered_edges like FreeCAD does.
+    all_edges = []
+    for w in wire_list:
+        all_edges.extend(ordered_edges(w))
+
+    # Build the wire sequentially.
+    builder = BRepBuilderAPI_MakeWire()
+    for e in all_edges:
+        builder.Add(e.wrapped)
+
+    if builder.IsDone():
+        return cq.Wire(builder.Wire())
+
+    # If the sequential builder failed, fallback to combine algorithm.
+    bluemira_warn(
+        "Failed to join wires sequentially in the order provided. "
+        "Falling back to spatial assembly to heal the shape."
+    )
     result = cq.Wire.combine(wire_list)
     if isinstance(result, list) and len(result) > 1:
         bluemira_warn(
