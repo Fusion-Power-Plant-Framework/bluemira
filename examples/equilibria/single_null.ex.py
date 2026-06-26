@@ -181,8 +181,10 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # We'll use this to specify some constraints on the plasma equilibrium problem:
 # * An `IsofluxConstraint` forces the flux at a set of points to be equal
 # * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
-# * A `DPsiDxConstraint` forces the gradient with respect to x of the poloidal flux at point to be a chosen value.
-# * A `DPsiDzConstraint` forces the gradient with respect to z of the poloidal flux at a point to be a chosen value.
+# * A `DPsiDxConstraint` forces the gradient with respect to x of the poloidal flux at
+#   point to be a chosen value.
+# * A `DPsiDzConstraint` forces the gradient with respect to z of the poloidal flux at
+#   a point to be a chosen value.
 # * Constraints at the inboard and top of the desired LCFS for the gradients
 #   of flux
 
