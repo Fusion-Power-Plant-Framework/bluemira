@@ -59,7 +59,7 @@ def select_eq(
     fixed_or_free: FixedOrFree = FixedOrFree.FREE,
     dummy_coils: CoilSet | None = None,
     from_cocos: int = BLUEMIRA_DEFAULT_COCOS,
-    qpsi_positive: bool = False,  # noqa: FBT001, FBT002
+    qpsi_positive: bool | None = None,  # noqa: FBT001
     control: CoilType | list[str] | None = None,
 ) -> FixedPlasmaEquilibrium | Equilibrium:
     """
@@ -120,7 +120,7 @@ def select_multi_eqs(
     dummy_coils: Sequence | None = None,
     from_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
     *,
-    qpsi_positive: bool | Iterable[bool] = False,
+    qpsi_positive: bool | Iterable[bool | None] | None = None,
     control_coils: CoilType | list[str] | None = None,
 ):
     """
@@ -179,7 +179,7 @@ def select_multi_eqs(
         )
     if is_num(from_cocos):
         from_cocos = np.ones(len(equilibrium_input)) * from_cocos
-    if isinstance(qpsi_positive, bool):
+    if isinstance(qpsi_positive, bool | None):
         qpsi_positive = len(equilibrium_input) * [qpsi_positive]
     if equilibrium_names is None:
         equilibrium_names = [

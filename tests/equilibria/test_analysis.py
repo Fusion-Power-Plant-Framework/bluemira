@@ -48,7 +48,7 @@ class TestEqAnalysis:
         cls.single_demoish_eq_fixed = select_eq(
             single_demoish_path, from_cocos=7, fixed_or_free=FixedOrFree.FIXED
         )
-        cls.double_demoish_eq = select_eq(double_demoish_path)
+        cls.double_demoish_eq = select_eq(double_demoish_path, qpsi_positive=False)
         cls.ref_free = cls.single_demoish_eq
         cls.ref_fixed = cls.single_demoish_eq
         cls.diag_ops_1 = EqDiagnosticOptions(
@@ -175,7 +175,10 @@ class TestMultiEqAnalysis:
         paths = [masty_path, double_demoish_path, single_demoish_path]
         equilibrium_names = ["Little DN", "Big DN", "Big SN"]
         cls.equilibria_dictionary = select_multi_eqs(
-            paths, equilibrium_names=equilibrium_names, from_cocos=[3, 3, 7]
+            paths,
+            equilibrium_names=equilibrium_names,
+            from_cocos=[3, 3, 7],
+            qpsi_positive=[False, False, None],
         )
         cls.multi_analysis = MultiEqAnalysis(equilibria_dict=cls.equilibria_dictionary)
         cls.pfb_masty = Coordinates({
