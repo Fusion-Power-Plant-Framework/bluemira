@@ -34,6 +34,7 @@ from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_Section,
     BRepAlgoAPI_Splitter,
 )
+from OCP.BRepBndLib import BRepBndLib
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeEdge,
     BRepBuilderAPI_MakeFace,
@@ -52,6 +53,7 @@ from OCP.BRepMesh import BRepMesh_IncrementalMesh
 from OCP.BRepOffsetAPI import BRepOffsetAPI_MakePipeShell, BRepOffsetAPI_ThruSections
 from OCP.BRepPrimAPI import BRepPrimAPI_MakePrism, BRepPrimAPI_MakeRevol
 from OCP.BRepTools import BRepTools_WireExplorer
+from OCP.Bnd import Bnd_Box
 from OCP.GCPnts import GCPnts_AbscissaPoint, GCPnts_UniformAbscissa
 from OCP.GProp import GProp_GProps
 from OCP.GeomAPI import GeomAPI_ProjectPointOnCurve, GeomAPI_ProjectPointOnSurf
@@ -1107,9 +1109,20 @@ def is_same(obj1: apiShape, obj2: apiShape) -> bool:
 
 
 def bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, float]:
-    """Return (xmin, ymin, zmin, xmax, ymax, zmax)."""
+    """
+    Implementation is identical to FreeCAD, although the default CadQuery function
+    is arguably better - should move back to it once FreeCAD is removed.
+
     bb = obj.BoundingBox()
-    return bb.xmin, bb.ymin, bb.zmin, bb.xmax, bb.ymax, bb.zmax
+
+    Return (xmin, ymin, zmin, xmax, ymax, zmax).
+    """
+    bbox = Bnd_Box()
+    BRepBndLib.Add_s(obj.wrapped, bbox, True)
+    bbox.SetGap(0.0)
+
+    xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+    return (xmin, ymin, zmin, xmax, ymax, zmax)
 
 
 def optimal_bounding_box(
@@ -1460,8 +1473,8 @@ def split_wire(
             if part_b:
                 edges_2.append(cq.Edge(part_b))
 
-    wire_1 = wire_from_wires(edges_1) if edges_1 else None
-    wire_2 = wire_from_wires(edges_2) if edges_2 else None
+    wire_1 = cq.Wire.assembleEdges(edges_1) if edges_1 else None
+    wire_2 = cq.Wire.assembleEdges(edges_2) if edges_2 else None
     return wire_1, wire_2
 
 
