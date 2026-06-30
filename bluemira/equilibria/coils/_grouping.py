@@ -1203,6 +1203,30 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Bz_analytic: bool = True,
         fix_size: bool | None = None,
     ):
+        # CoilSet coil constraints assume an ordering by ctype.
+        # Sort Coils by ctype here: PF then CS then any other (none, dummy, passive).
+        # The order of non PF/CS types does not matter.
+        pfcoils, cscoils, other_coils = [], [], []
+        for c in coils:
+            # We assume that any CoilGroups used to set up a Coilset
+            # are of the same ctype, as these will be Circuits or SymmetricCircuits.
+            if isinstance(c, Coil):
+                check_type = c.ctype
+            else:
+                if len(set(c.ctype)) != 1:
+                    raise ValueError(
+                        "Input CoilGroup contains Coils with differnt ctypes."
+                        f"See {c.name}."
+                    )
+                check_type = c.ctype[0]
+            if check_type.ctype == CoilType.PF:
+                pfcoils.append(c)
+            if check_type.ctype == CoilType.CS:
+                cscoils.append(c)
+            other_coils.append(c)
+        coils = pfcoils
+        coils.extend(cscoils)
+        coils.extend(other_coils)
         super().__init__(
             *coils,
             psi_analytic=psi_analytic,
