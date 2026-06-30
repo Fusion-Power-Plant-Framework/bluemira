@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml --resolution=highest --python-version=3.11 --extra pinned -o requirements/uv/examples.txt --extra examples
 annotated-types==0.7.0
     # via pydantic
-anyio==4.13.0
+anyio==4.14.1
     # via
     #   httpx
     #   jupyter-server
@@ -14,7 +14,7 @@ argon2-cffi-bindings==25.1.0
     # via argon2-cffi
 arrow==1.4.0
     # via isoduration
-asteval==1.0.8
+asteval==1.0.9
     # via bluemira (pyproject.toml)
 asttokens==3.0.1
     # via
@@ -32,13 +32,13 @@ babel==2.18.0
     #   bluemira (pyproject.toml)
     #   jupyterlab-server
     #   matproplib
-beautifulsoup4==4.14.3
+beautifulsoup4==4.15.0
     # via nbconvert
-bleach==6.3.0
+bleach==6.4.0
     # via nbconvert
-blosc2==4.1.2
+blosc2==4.6.0
     # via tables
-certifi==2026.2.25
+certifi==2026.6.17
     # via
     #   httpcore
     #   httpx
@@ -47,9 +47,9 @@ cffi==2.0.0
     # via argon2-cffi-bindings
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.0
+citeproc-py==0.9.3
     # via csl-reference
-click==8.3.2
+click==8.4.2
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -61,7 +61,7 @@ contourpy==1.3.3
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.2.0
+coolprop==8.0.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
@@ -69,19 +69,17 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.2
+cyclopts==4.19.0
     # via pyvista
-debugpy==1.8.20
+debugpy==1.8.21
     # via ipykernel
-decorator==5.2.1
+decorator==5.3.1
     # via ipython
 defusedxml==0.7.1
     # via nbconvert
 docstring-parser==0.18.0
     # via cyclopts
-docutils==0.22.4
-    # via rich-rst
-eqdsk==0.8.0
+eqdsk==0.9.0
     # via bluemira (pyproject.toml)
 executing==2.2.1
     # via stack-data
@@ -91,7 +89,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.62.1
+fonttools==4.63.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -107,7 +105,7 @@ httpcore==1.0.9
     # via httpx
 httpx==0.28.1
     # via jupyterlab
-idna==3.11
+idna==3.18
     # via
     #   anyio
     #   httpx
@@ -115,9 +113,9 @@ idna==3.11
     #   requests
 imageio==2.37.3
     # via bluemira (pyproject.toml)
-ipykernel==7.2.0
+ipykernel==7.3.0
     # via jupyterlab
-ipython==9.10.1
+ipython==9.15.0
     # via
     #   ipykernel
     #   ipywidgets
@@ -127,7 +125,7 @@ ipywidgets==8.1.8
     # via rich
 isoduration==20.11.0
     # via jsonschema
-jedi==0.19.2
+jedi==0.20.0
     # via ipython
 jinja2==3.1.6
     # via
@@ -137,7 +135,7 @@ jinja2==3.1.6
     #   nbconvert
 joblib==1.5.3
     # via scikit-learn
-json5==0.14.0
+json5==0.15.0
     # via jupyterlab-server
 jsonpointer==3.1.1
     # via jsonschema
@@ -148,7 +146,11 @@ jsonschema==4.26.0
     #   nbformat
 jsonschema-specifications==2025.9.1
     # via jsonschema
-jupyter-client==8.8.0
+jupyter-builder==1.0.2
+    # via
+    #   jupyterlab
+    #   notebook
+jupyter-client==8.9.1
     # via
     #   ipykernel
     #   jupyter-server
@@ -156,17 +158,18 @@ jupyter-client==8.8.0
 jupyter-core==5.9.1
     # via
     #   ipykernel
+    #   jupyter-builder
     #   jupyter-client
     #   jupyter-server
     #   jupyterlab
     #   nbclient
     #   nbconvert
     #   nbformat
-jupyter-events==0.12.0
+jupyter-events==0.12.1
     # via jupyter-server
 jupyter-lsp==2.3.1
     # via jupyterlab
-jupyter-server==2.17.0
+jupyter-server==2.20.0
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -175,7 +178,7 @@ jupyter-server==2.17.0
     #   notebook-shim
 jupyter-server-terminals==0.5.4
     # via jupyter-server
-jupyterlab==4.5.6
+jupyterlab==4.6.1
     # via notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
@@ -185,7 +188,7 @@ jupyterlab-server==2.28.0
     #   notebook
 jupyterlab-widgets==3.0.16
     # via ipywidgets
-jupytext==1.19.1
+jupytext==1.19.4
     # via bluemira (pyproject.toml)
 kiwisolver==1.5.0
     # via matplotlib
@@ -193,9 +196,9 @@ lark==1.3.1
     # via rfc3987-syntax
 llvmlite==0.47.0
     # via numba
-lxml==6.1.0
+lxml==6.1.1
     # via citeproc-py
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
     # via
     #   jupytext
     #   mdit-py-plugins
@@ -204,30 +207,32 @@ markupsafe==3.0.3
     # via
     #   jinja2
     #   nbconvert
-matplotlib==3.10.8
+matplotlib==3.11.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
     #   pyvista
     #   seaborn
     #   vtk
-matplotlib-inline==0.2.1
+matplotlib-inline==0.2.2
     # via
     #   ipykernel
     #   ipython
 matproplib==0.0.1
     # via bluemira (pyproject.toml)
-mdit-py-plugins==0.5.0
+mdit-py-plugins==0.6.1
     # via jupytext
 mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-mistune==3.2.0
+mistune==3.3.2
     # via nbconvert
-msgpack==1.1.2
+msgpack==1.2.1
     # via blosc2
-nbclient==0.10.4
+narwhals==2.22.1
+    # via scikit-learn
+nbclient==0.11.0
     # via nbconvert
 nbconvert==7.17.1
     # via jupyter-server
@@ -239,17 +244,17 @@ nbformat==5.10.4
     #   nbconvert
 ndindex==1.10.1
     # via blosc2
-nest-asyncio==1.6.0
+nest-asyncio2==1.7.2
     # via ipykernel
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
-notebook==7.5.5
+notebook==7.6.0
     # via bluemira (pyproject.toml)
 notebook-shim==0.2.4
     # via
     #   jupyterlab
     #   notebook
-numba==0.65.0
+numba==0.65.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
@@ -281,11 +286,11 @@ numpy==2.2.6
     #   scipy
     #   seaborn
     #   tables
-numpydantic==1.8.1
+numpydantic==1.10.0
     # via matproplib
 overrides==7.7.0
     # via jupyter-server
-packaging==26.1
+packaging==26.2
     # via
     #   ipykernel
     #   jupyter-events
@@ -297,11 +302,11 @@ packaging==26.1
     #   nbconvert
     #   pooch
     #   tables
-pandas==3.0.2
+pandas==3.0.4
     # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
-parso==0.8.6
+parso==0.8.7
     # via jedi
 periodictable==2.1.0
     # via
@@ -318,7 +323,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   jupyter-core
     #   pint
@@ -330,7 +335,9 @@ prometheus-client==0.25.0
 prompt-toolkit==3.0.52
     # via ipython
 psutil==7.2.2
-    # via ipykernel
+    # via
+    #   ipykernel
+    #   ipython
 ptyprocess==0.7.0
     # via
     #   pexpect
@@ -343,13 +350,14 @@ pyclipper==1.4.0
     # via bluemira (pyproject.toml)
 pycparser==3.0
     # via cffi
-pydantic==2.13.2
+pydantic==2.13.4
     # via
     #   bluemira (pyproject.toml)
+    #   blosc2
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.2
+pydantic-core==2.46.4
     # via pydantic
 pygments==2.20.0
     # via
@@ -357,6 +365,7 @@ pygments==2.20.0
     #   ipython-pygments-lexers
     #   nbconvert
     #   rich
+    #   rich-rst
 pyparsing==3.3.2
     # via
     #   matplotlib
@@ -369,7 +378,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==4.1.0
     # via jupyter-events
-pyvista==0.47.3
+pyvista==0.48.4
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -385,7 +394,7 @@ referencing==0.37.0
     #   jsonschema
     #   jsonschema-specifications
     #   jupyter-events
-requests==2.33.1
+requests==2.34.2
     # via
     #   blosc2
     #   jupyterlab-server
@@ -403,16 +412,17 @@ rfc3987-syntax==1.1.0
 rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
+    #   blosc2
     #   cyclopts
     #   meshio
     #   rich-rst
-rich-rst==1.3.2
+rich-rst==2.0.2
     # via cyclopts
-rpds-py==0.30.0
+rpds-py==2026.5.1
     # via
     #   jsonschema
     #   referencing
-scikit-learn==1.8.0
+scikit-learn==1.9.0
     # via bluemira (pyproject.toml)
 scipy==1.17.1
     # via
@@ -420,19 +430,17 @@ scipy==1.17.1
     #   numba-scipy
     #   pint
     #   scikit-learn
-scooby==0.11.0
+scooby==0.11.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
 send2trash==2.1.0
     # via jupyter-server
-setuptools==82.0.1
-    # via jupyterlab
 six==1.17.0
     # via
     #   python-dateutil
     #   rfc3339-validator
-soupsieve==2.8.3
+soupsieve==2.8.4
     # via beautifulsoup4
 stack-data==0.6.3
     # via ipython
@@ -445,10 +453,12 @@ terminado==0.18.1
     #   jupyter-server
     #   jupyter-server-terminals
 threadpoolctl==3.6.0
-    # via scikit-learn
-tinycss2==1.4.0
+    # via
+    #   blosc2
+    #   scikit-learn
+tinycss2==1.5.1
     # via bleach
-tornado==6.5.5
+tornado==6.5.7
     # via
     #   ipykernel
     #   jupyter-client
@@ -456,11 +466,12 @@ tornado==6.5.5
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.14.3
+traitlets==5.15.1
     # via
     #   ipykernel
     #   ipython
     #   ipywidgets
+    #   jupyter-builder
     #   jupyter-client
     #   jupyter-core
     #   jupyter-events
@@ -470,7 +481,7 @@ traitlets==5.14.3
     #   nbclient
     #   nbconvert
     #   nbformat
-typeguard==4.5.1
+typeguard==4.5.2
     # via bluemira (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -479,6 +490,7 @@ typing-extensions==4.15.0
     #   flexcache
     #   flexparser
     #   ipython
+    #   jupyter-client
     #   pint
     #   pydantic
     #   pydantic-core
@@ -488,17 +500,17 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-tzdata==2026.1
+tzdata==2026.2
     # via arrow
 uri-template==1.3.0
     # via jsonschema
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 vtk==9.3.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
-wcwidth==0.6.0
+wcwidth==0.8.1
     # via prompt-toolkit
 webcolors==25.10.0
     # via jsonschema

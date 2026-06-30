@@ -200,13 +200,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
     @property
     def optimal_bounding_box(self) -> BoundingBox:
         """
-        Get the optimised bounding box of the shape, via freecad's optimalBoundingBox
+        The optimised bounding box of the shape, via freecad's optimalBoundingBox
         method.
-
-        Returns
-        -------
-        :
-            The optimised bounding box of the shape.
 
         Notes
         -----

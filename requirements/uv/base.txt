@@ -4,7 +4,7 @@ annotated-types==0.7.0
     # via pydantic
 anytree==2.13.0
     # via bluemira (pyproject.toml)
-asteval==1.0.8
+asteval==1.0.9
     # via bluemira (pyproject.toml)
 asttokens==3.0.1
     # via matproplib
@@ -14,15 +14,15 @@ babel==2.18.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-blosc2==4.1.2
+blosc2==4.6.0
     # via tables
-certifi==2026.2.25
+certifi==2026.6.17
     # via requests
 charset-normalizer==3.4.7
     # via requests
-citeproc-py==0.9.0
+citeproc-py==0.9.3
     # via csl-reference
-click==8.3.2
+click==8.4.2
     # via
     #   bluemira (pyproject.toml)
     #   eqdsk
@@ -30,7 +30,7 @@ contourpy==1.3.3
     # via
     #   bluemira (pyproject.toml)
     #   matplotlib
-coolprop==7.2.0
+coolprop==8.0.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
@@ -38,19 +38,17 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.10.2
+cyclopts==4.19.0
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
-docutils==0.22.4
-    # via rich-rst
-eqdsk==0.8.0
+eqdsk==0.9.0
     # via bluemira (pyproject.toml)
 flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.62.1
+fonttools==4.63.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -58,7 +56,7 @@ fortranformat==2.0.3
     #   eqdsk
 gmsh==4.15.2
     # via bluemira (pyproject.toml)
-idna==3.11
+idna==3.18
     # via requests
 imageio==2.37.3
     # via bluemira (pyproject.toml)
@@ -68,11 +66,11 @@ kiwisolver==1.5.0
     # via matplotlib
 llvmlite==0.47.0
     # via numba
-lxml==6.1.0
+lxml==6.1.1
     # via citeproc-py
-markdown-it-py==4.0.0
+markdown-it-py==4.2.0
     # via rich
-matplotlib==3.10.8
+matplotlib==3.11.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
@@ -85,13 +83,15 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-msgpack==1.1.2
+msgpack==1.2.1
     # via blosc2
+narwhals==2.22.1
+    # via scikit-learn
 ndindex==1.10.1
     # via blosc2
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
-numba==0.65.0
+numba==0.65.1
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
@@ -123,14 +123,14 @@ numpy==2.2.6
     #   scipy
     #   seaborn
     #   tables
-numpydantic==1.8.1
+numpydantic==1.10.0
     # via matproplib
-packaging==26.1
+packaging==26.2
     # via
     #   matplotlib
     #   pooch
     #   tables
-pandas==3.0.2
+pandas==3.0.4
     # via seaborn
 periodictable==2.1.0
     # via
@@ -145,7 +145,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.9.6
+platformdirs==4.10.0
     # via
     #   pint
     #   pooch
@@ -155,16 +155,19 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.13.2
+pydantic==2.13.4
     # via
     #   bluemira (pyproject.toml)
+    #   blosc2
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.2
+pydantic-core==2.46.4
     # via pydantic
 pygments==2.20.0
-    # via rich
+    # via
+    #   rich
+    #   rich-rst
 pyparsing==3.3.2
     # via
     #   matplotlib
@@ -173,21 +176,22 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.47.3
+pyvista==0.48.4
     # via bluemira (pyproject.toml)
-requests==2.33.1
+requests==2.34.2
     # via
     #   blosc2
     #   pooch
 rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
+    #   blosc2
     #   cyclopts
     #   meshio
     #   rich-rst
-rich-rst==1.3.2
+rich-rst==2.0.2
     # via cyclopts
-scikit-learn==1.8.0
+scikit-learn==1.9.0
     # via bluemira (pyproject.toml)
 scipy==1.17.1
     # via
@@ -195,7 +199,7 @@ scipy==1.17.1
     #   numba-scipy
     #   pint
     #   scikit-learn
-scooby==0.11.0
+scooby==0.11.2
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
@@ -206,8 +210,10 @@ tables==3.11.1
 tabulate==0.10.0
     # via bluemira (pyproject.toml)
 threadpoolctl==3.6.0
-    # via scikit-learn
-typeguard==4.5.1
+    # via
+    #   blosc2
+    #   scikit-learn
+typeguard==4.5.2
     # via bluemira (pyproject.toml)
 typing-extensions==4.15.0
     # via
@@ -221,7 +227,7 @@ typing-extensions==4.15.0
     #   typing-inspection
 typing-inspection==0.4.2
     # via pydantic
-urllib3==2.6.3
+urllib3==2.7.0
     # via requests
 vtk==9.3.1
     # via

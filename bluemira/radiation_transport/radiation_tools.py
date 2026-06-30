@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
     from bluemira.equilibria.equilibrium import Equilibrium
 
-try:
+try:  # noqa: PLW0717
     from cherab.core.math import AxisymmetricMapper, sample3d
     from cherab.tools.emitters import RadiationFunction
     from raysect.core import Point3D, Vector3D, rotate_basis, translate

@@ -238,10 +238,7 @@ class DefaultPlotOptions:
     @property
     def view_placement(self) -> BluemiraPlacement:
         """
-        Returns
-        -------
-        :
-            the view as BluemiraPlacement
+        The view as BluemiraPlacement
         """
         return BluemiraPlacement(*self.view)
 
@@ -310,10 +307,7 @@ class BasePlotter(ABC):
     @property
     def ax(self) -> Axes:
         """
-        Returns
-        -------
-        :
-            the axes object
+        The axes object
         """
         try:
             return self._ax

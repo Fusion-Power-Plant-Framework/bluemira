@@ -646,12 +646,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     @property
     def radius(self) -> float:
         """
-        Get the radius of the CircularArcCurrentSource
-
-        Returns
-        -------
-        :
-            Radius of the CircularArcCurrentSource
+        The radius of the CircularArcCurrentSource
         """
         return self._radius
 
@@ -671,12 +666,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
     @property
     def breadth(self) -> float:
         """
-        Get the breadth of the CircularArcCurrentSource.
-
-        Returns
-        -------
-        :
-            Breadth of the CircularArcCurrentSource
+        The breadth of the CircularArcCurrentSource
         """
         return self._breadth
 

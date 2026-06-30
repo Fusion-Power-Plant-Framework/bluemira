@@ -197,7 +197,7 @@ def create_mesh(solovev, LCFS, lcar):
 
 @pytest.mark.longrun
 class TestSolovevZheng:
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="class", autouse=True)  # noqa: RUF076
     def setup_class(self, tmp_path_factory):
         cls = type(self)
         tmp_path = tmp_path_factory.mktemp("Solvev")
@@ -304,7 +304,7 @@ class TestSolovevZhengEquilibrium:
     test for the G-S solver.
     """
 
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="class", autouse=True)  # noqa: RUF076
     def setup_class(self, tmp_path_factory):
         cls = type(self)
         tmp_path = tmp_path_factory.mktemp("Solvev2")
