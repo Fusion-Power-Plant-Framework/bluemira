@@ -772,7 +772,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     @property
     def fix_size(self):
-        """Get if coil size is fixed (True) or not (False)"""
+        """Is coil size is fixed (True) or not (False)"""
         return self.__getter("fix_size")
 
     @property
