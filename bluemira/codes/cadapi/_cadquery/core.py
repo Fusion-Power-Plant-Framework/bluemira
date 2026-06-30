@@ -625,6 +625,32 @@ def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
     return new_solid
 
 
+def _fix_offset_orientation(wire: apiWire, result: apiWire) -> apiWire:
+    """
+    CadQuery has been known to reverse the orientation of wires input to
+    offset2D. This function re-orients the result wire so that it is the
+    same as the original wire.
+    """
+    orig_ori = wire.wrapped.Orientation()
+    res_ori = result.wrapped.Orientation()
+
+    if orig_ori != res_ori:
+        raw_edges = list(result)
+        raw_edges.reverse()
+
+        builder = BRepBuilderAPI_MakeWire()
+        for e in raw_edges:
+            reversed_shape = e.wrapped.Reversed()
+            reversed_edge = TopoDS.Edge_s(reversed_shape)
+            builder.Add(reversed_edge)
+
+        if builder.IsDone():
+            result = cq.Wire(builder.Wire())
+        else:
+            result = cq.Wire(result.wrapped.Reversed())
+    return result
+
+
 def offset_wire(
     wire: apiWire,
     thickness: float,
@@ -697,7 +723,7 @@ def offset_wire(
     if not open_wire and not result.IsClosed():
         raise CadQueryError("offset failed to close wire")
 
-    return result
+    return _fix_offset_orientation(wire, result)
 
 
 # ---------------------------------------------------------------------------
