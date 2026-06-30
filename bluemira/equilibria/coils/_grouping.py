@@ -1221,9 +1221,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 check_type = c.ctype[0]
             if check_type == CoilType.PF:
                 pfcoils.append(c)
-            if check_type == CoilType.CS:
+            elif check_type == CoilType.CS:
                 cscoils.append(c)
-            other_coils.append(c)
+            else:
+                other_coils.append(c)
         coils = pfcoils
         coils.extend(cscoils)
         coils.extend(other_coils)
