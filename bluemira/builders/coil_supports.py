@@ -762,8 +762,8 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
                 algorithm="COBYLA",
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
             ).x
-            p1 = region.value_at(result[0])
-            p2 = region.value_at(result[1])
+            p1 = region.value_at(np.min(result))
+            p2 = region.value_at(np.max(result))
             wire = self._make_ois_wire(p1, p2)
             ois_wires.append(wire)
         return ois_wires
