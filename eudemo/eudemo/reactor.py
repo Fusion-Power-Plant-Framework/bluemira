@@ -49,6 +49,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -798,6 +799,53 @@ if __name__ == "__main__":
                 BluemiraFace(disc_vv_int_wire), degree=180 if VISIBLE_MODE else 360
             )
 
+            def make_rectangle(z_max, z_min, r_max, r_min=0) -> BluemiraWire:
+                """Make a axis-aligned rectangle in the xz plane.
+
+                Returns
+                -------
+                :
+                    BluemiraWire of a rectangle.
+                """
+                pt_a = (r_max, z_max)
+                pt_b = (r_min, z_max)
+                pt_c = (r_min, z_min)
+                pt_d = (r_max, z_min)
+                return make_polygon(
+                    [(x, 0.0, z) for (x, z) in (pt_a, pt_b, pt_c, pt_d)], closed=True
+                )
+
+            tokamak_dimensions = reactor.neutronics.csg_reactor.tokamak_dimensions
+            rad_thickness = tokamak_dimensions.rad_shield.wall
+            top_int = disc_vv_ext_wire.bounding_box.z_max + D_TOLERANCE
+            bot_int = disc_vv_ext_wire.bounding_box.z_min - D_TOLERANCE
+            top_ext, bot_ext = top_int + rad_thickness, bot_int - rad_thickness
+            r_major_vv_int = disc_vv_ext_wire.bounding_box.x_max + D_TOLERANCE
+            r_major_vv_ext = r_major_vv_int + rad_thickness
+            int_cyl_wire = make_rectangle(top_int, bot_int, r_major_vv_int)
+            ext_cyl_wire = make_rectangle(top_ext, bot_ext, r_major_vv_ext)
+
+            tf_r = disc_vv_ext_wire.bounding_box.x_min
+            tf_thick = (
+                tokamak_dimensions.cs_coil.thickness
+            )  # wrong but we're running with it
+            cs_r = tf_r - tf_thick
+            tf_wire = make_rectangle(top_int, bot_int, tf_r)
+            cs_wire = make_rectangle(top_int, bot_int, cs_r)
+
+            int_cyl = revolve_shape(
+                BluemiraFace(int_cyl_wire), degree=180 if VISIBLE_MODE else 360
+            )
+            ext_cyl = revolve_shape(
+                BluemiraFace(ext_cyl_wire), degree=180 if VISIBLE_MODE else 360
+            )
+            tf_cyl = revolve_shape(
+                BluemiraFace(tf_wire), degree=180 if VISIBLE_MODE else 360
+            )
+            cs_cyl = revolve_shape(
+                BluemiraFace(cs_wire), degree=180 if VISIBLE_MODE else 360
+            )
+
             simplified_tokamak = Component("Tokamak for MCIO to split")
             cad_blanket = PhysicalComponent(
                 "blanket",
@@ -816,14 +864,35 @@ if __name__ == "__main__":
             cad_vv = PhysicalComponent(
                 "vacuum vessel", boolean_cut(ext_, int_)[0], parent=simplified_tokamak
             )
+
+            cad_rad_shield = PhysicalComponent(
+                "rad_shield", boolean_cut(ext_cyl, int_cyl)[0], parent=simplified_tokamak
+            )
+            cad_tf = PhysicalComponent(
+                "tf_coil near solenoid",
+                boolean_cut(tf_cyl, cs_cyl)[0],
+                parent=simplified_tokamak,
+            )
+            cad_cs = PhysicalComponent(
+                "cs_cyl near solenoid", cs_cyl, parent=simplified_tokamak
+            )
+
             save_cad(
-                [cad_blanket.shape, cad_divertor.shape, cad_vv.shape],
-                "Discretized_EUDEMO_LAR_for_MCIO_benchmark.STP",
+                [
+                    cad_blanket.shape,
+                    cad_divertor.shape,
+                    cad_vv.shape,
+                    cad_rad_shield.shape,
+                    cad_tf.shape,
+                    cad_cs.shape,
+                ],
+                "EUDEMO_LAR_6_components_for_MCIO_benchmark.STP",
             )
 
             import sys
 
             sys.exit()
+
         else:
             model = ZeroDNeutronicsModel(reactor_config.global_params)
             new_params = model.run()

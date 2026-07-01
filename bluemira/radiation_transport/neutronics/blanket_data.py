@@ -10,12 +10,13 @@ from dataclasses import dataclass
 
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.materials.neutronics import (
+    CONCRETE_MAT,
+    EUROFER_MAT,
     BlanketType,
     _make_dcll_mats,
     _make_hcpb_mats,
     _make_wcll_mats,
     duplicate_mat_as,
-    EUROFER_MAT,
 )
 from bluemira.radiation_transport.neutronics.materials import NeutronicsMaterials
 
@@ -148,9 +149,9 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
     """
     match blanket_type:
         case BlanketType.HCPB:
-            li_enrich_ao = 0.60  #
+            li_enrich_ao = 0.60
         case _:
-            li_enrich_ao = 0.90  #
+            li_enrich_ao = 0.90
 
     if blanket_type is BlanketType.DCLL:
         base_materials = _make_dcll_mats(li_enrich_ao)
@@ -158,30 +159,31 @@ def create_materials(blanket_type: BlanketType) -> NeutronicsMaterials:
         base_materials = _make_hcpb_mats(li_enrich_ao)
     elif blanket_type is BlanketType.WCLL:
         base_materials = _make_wcll_mats(li_enrich_ao)
+    container_mat = duplicate_mat_as(EUROFER_MAT, "container", 501)
+    rad_shield_mat = duplicate_mat_as(CONCRETE_MAT, "rad_shield", 604)
     return NeutronicsMaterials(
         inb_vv_mat=base_materials.inb_vv_mat,
-        inb_fw_mat=base_materials.inb_fw_mat,
-        inb_bz_mat=base_materials.inb_bz_mat,
-        inb_mani_mat=base_materials.inb_mani_mat,
+        inb_fw_mat=duplicate_mat_as(base_materials.inb_bz_mat, "inb_first_wall", 1001),
+        inb_bz_mat=duplicate_mat_as(base_materials.inb_bz_mat, "inb_breeder_zone", 1002),
+        inb_mani_mat=duplicate_mat_as(base_materials.inb_bz_mat, "inb_manifold", 1003),
         divertor_mat=base_materials.divertor_mat,
-        div_fw_mat=base_materials.div_fw_mat,
-        outb_fw_mat=duplicate_mat_as(base_materials.inb_fw_mat, "outb_first_wall", 201),
+        div_fw_mat=duplicate_mat_as(
+            base_materials.divertor_mat, "divertor_first_wall", 1004
+        ),
+        outb_fw_mat=duplicate_mat_as(base_materials.inb_bz_mat, "outb_first_wall", 1005),
         outb_bz_mat=duplicate_mat_as(
-            base_materials.inb_bz_mat, "outb_breeder_zone", 202
+            base_materials.inb_bz_mat, "outb_breeder_zone", 1006
         ),
-        outb_mani_mat=duplicate_mat_as(
-            base_materials.inb_mani_mat, "outb_manifold", 203
-        ),
+        outb_mani_mat=duplicate_mat_as(base_materials.inb_bz_mat, "outb_manifold", 1007),
         outb_vv_mat=duplicate_mat_as(
-            base_materials.inb_vv_mat, "outb_vacuum_vessel", 204
+            base_materials.inb_vv_mat, "outb_vacuum_vessel", 1008
         ),
-        tf_coil_mat=duplicate_mat_as(EUROFER_MAT, "tf_coil", 401),
-        container_mat=duplicate_mat_as(base_materials.inb_vv_mat, "container", 501),
-        # surfaces
-        inb_sf_mat=duplicate_mat_as(EUROFER_MAT, "inb_sf", 601),
-        outb_sf_mat=duplicate_mat_as(EUROFER_MAT, "outb_sf", 602),
-        div_sf_mat=duplicate_mat_as(EUROFER_MAT, "div_sf", 603),
-        # TODO @OceanNuclear: get shield material
-        # 3659
-        rad_shield=duplicate_mat_as(EUROFER_MAT, "rad_shield", 604),
+        tf_coil_mat=duplicate_mat_as(EUROFER_MAT, "tf_coil", 1009),
+        container_mat=container_mat,
+        inb_sf_mat=duplicate_mat_as(base_materials.inb_bz_mat, "inb_sf", 1010),
+        outb_sf_mat=duplicate_mat_as(base_materials.inb_bz_mat, "outb_sf", 1011),
+        div_sf_mat=duplicate_mat_as(
+            base_materials.divertor_mat, "divertor_surface", 1012
+        ),
+        rad_shield=rad_shield_mat,
     )

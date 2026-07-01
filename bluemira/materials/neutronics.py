@@ -10,15 +10,15 @@ from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 
-from bluemira.base.look_and_feel import bluemira_warn
+from matproplib import OperationalConditions
 from matproplib.converters.neutronics import OpenMCNeutronicConfig
 from matproplib.library.beryllium import Be12Ti
-from matproplib.library.fluids import Water, Helium
+from matproplib.library.fluids import Helium, Water
 from matproplib.library.tungsten import PlanseeTungsten
-from matproplib import OperationalConditions
 from matproplib.material import Material, material, mixture
 from matproplib.properties.group import props
-from matproplib.properties.dependent import Density
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 try:
     from eurofusion_materials.library.steel import EUROfer97
@@ -85,6 +85,26 @@ except ImportError:
         properties=props(density=0.008867),
     )()
 
+from matproplib.converters.neutronics import OpenMCNeutronicConfig
+
+OrdinaryConcrete = material(
+    "Concrete, Ordinary (NBS 03)",
+    elements={
+        "H": 0.008485,
+        "C": 0.050064,
+        "O": 0.473483,
+        "Mg": 0.024183,
+        "Al": 0.036063,
+        "Si": 0.145100,
+        "S": 0.002970,
+        "K": 0.001697,
+        "Ca": 0.246924,
+        "Fe": 0.011031,
+    },
+    properties=props(as_field=True, density=2350),
+    converters=OpenMCNeutronicConfig(),
+)
+CONCRETE_MAT = OrdinaryConcrete()
 al2o3_mat = material(
     name="Aluminium Oxide",
     elements={"Al27": 2 / 5, "O16": 3 / 5},
