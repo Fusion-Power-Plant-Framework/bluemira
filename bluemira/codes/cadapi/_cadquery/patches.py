@@ -36,6 +36,49 @@ def _cq_reverse(self) -> None:
     self.wrapped = cq.Shape.cast(reversed_shape).wrapped
 
 
+# Cache original methods to prevent infinite recursion in fallbacks
+_orig_edge_start = cq.Edge.startPoint
+_orig_edge_end = cq.Edge.endPoint
+_orig_wire_start = cq.Wire.startPoint
+_orig_wire_end = cq.Wire.endPoint
+
+
+def _cq_edge_topology_start_point(self) -> cq.Vector:
+    """True topological start point, flipping t=0 and t=1 if REVERSED."""
+    if self.wrapped.Orientation() == TopAbs_REVERSED:
+        return _orig_edge_end(self)
+    return _orig_edge_start(self)
+
+
+def _cq_edge_topology_end_point(self) -> cq.Vector:
+    """True topological end point, flipping t=0 and t=1 if REVERSED."""
+    if self.wrapped.Orientation() == TopAbs_REVERSED:
+        return _orig_edge_start(self)
+    return _orig_edge_end(self)
+
+
+def _cq_wire_topology_start_point(self) -> cq.Vector:
+    """True topological start point of a wire, guaranteed by WireExplorer."""
+    edges = list(self)
+    if not edges:
+        return _orig_wire_start(self)
+    return edges[0].startPoint()
+
+
+def _cq_wire_topology_end_point(self) -> cq.Vector:
+    """True topological end point of a wire, guaranteed by WireExplorer."""
+    edges = list(self)
+    if not edges:
+        return _orig_wire_end(self)
+    return edges[-1].endPoint()
+
+
+cq.Edge.startPoint = _cq_edge_topology_start_point
+cq.Edge.endPoint = _cq_edge_topology_end_point
+cq.Wire.startPoint = _cq_wire_topology_start_point
+cq.Wire.endPoint = _cq_wire_topology_end_point
+
+
 for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
     if not hasattr(_cls, "Orientation") or not isinstance(
         _cls.__dict__.get("Orientation"), property
