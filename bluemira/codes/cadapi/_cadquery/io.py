@@ -433,7 +433,7 @@ def import_cad(
         shells = result_shape.Shells()
         solids = result_shape.Solids()
         if edges and not wires and not shells and not solids:
-            try:
+            try:  # noqa: PLW0717
                 edge_seq = TopTools_HSequenceOfShape()
                 for e in edges:
                     edge_seq.Append(e.wrapped)

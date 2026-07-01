@@ -15,6 +15,7 @@ import os
 import re
 import sys
 from argparse import ArgumentParser
+from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
 from unittest import mock
@@ -132,7 +133,6 @@ def run_examples(
         ):
             with suppress(ImportError, AttributeError):
                 mock.patch(_name).start()
-        mock.patch.object(pv.Plotter, "show", return_value=None).start()
 
     failed = []
     for example in example_files:

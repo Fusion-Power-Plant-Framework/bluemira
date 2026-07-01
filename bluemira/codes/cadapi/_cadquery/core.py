@@ -348,7 +348,7 @@ def revolve_shape(
       FreeCAD's ``Part.Wire.revolve`` behaviour.  This is implemented via OCC's
       ``BRepPrimAPI_MakeRevol`` which does not add caps for open angles.
     """
-    try:
+    try:  # noqa: PLW0717
         if isinstance(shape, cq.Face):
             axis_start = cq.Vector(*base)
             axis_end = cq.Vector(
@@ -511,7 +511,7 @@ def sweep_shape(  # noqa: C901, PLR0912
     result = None
     last_exc = None
     for attempt_name, use_frenet, use_binormal in attempts:
-        try:
+        try:  # noqa: PLW0717
             builder = BRepOffsetAPI_MakePipeShell(path.wrapped)
 
             if use_binormal:
