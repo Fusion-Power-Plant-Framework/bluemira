@@ -1155,6 +1155,34 @@ def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
     return _vector_to_numpy(edge.tangentAt(param))
 
 
+def wire_tangent_at(wire: apiWire, param: float) -> np.ndarray:
+    """Return the unit tangent of *wire* at normalised parameter *param* in [0, 1]."""
+    if not (0 <= param <= 1):
+        raise CadQueryError("Tangent parameter must be between 0 and 1.")
+
+    adaptor = BRepAdaptor_CompCurve(wire.wrapped)
+
+    target_length = param * length(wire)
+
+    # find the point along the wire
+    abscissa_point = GCPnts_AbscissaPoint(
+        adaptor, target_length, adaptor.FirstParameter()
+    )
+    if not abscissa_point.IsDone():
+        raise CadQueryError(f"Failed to calculate abscissa point for tangent at {param}")
+
+    param = abscissa_point.Parameter()
+
+    pnt = gp_Pnt()
+    vec = gp_Vec()
+    adaptor.D1(param, pnt, vec)  # calculate point and tangent vector
+
+    if vec.Magnitude() > _POINT_COINCIDENCE_TOL:
+        vec.Normalize()
+
+    return np.array([vec.X(), vec.Y(), vec.Z()])
+
+
 def start_point(obj: apiShape) -> np.ndarray:
     """Start point of the first ordered edge (not orientation-aware)."""
     return _vector_to_numpy(ordered_edges(obj)[0].startPoint())
@@ -2597,6 +2625,7 @@ __all__ = [
     "wire_from_edges",
     "wire_from_wires",
     "wire_parameter_at",
+    "wire_tangent_at",
     "wire_value_at",
     "wires",
 ]

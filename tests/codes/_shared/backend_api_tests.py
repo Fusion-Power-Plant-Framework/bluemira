@@ -572,3 +572,43 @@ class BackendApiTestsBase:
         )
         sliced_coil = boolean_cut(boolean_cut_princeton, cut_tool)[0]
         assert sliced_coil.is_valid_deep()  # similar to ``test_boolean_cut_hollow_coil``
+
+    def test_wire_tangent_at_complex(self):
+        e1 = make_polygon([(0, 0, 0), (10, 0, 0)])
+
+        p_start = (20, 10, 0)
+        val = 10.0 * (np.sqrt(2) / 2.0)
+        p_mid = (10 + val, 10 - val, 0)
+        p_end = (10, 0, 0)
+        e2 = self.cadapi.make_circle_arc_3P(p_start, p_mid, p_end)
+        arc_length = 5 * np.pi
+
+        e3 = make_polygon([(20, 10, 0), (20, 10, 10)])
+
+        wire = self.cadapi.wire_from_wires([e1, e2, e3])
+
+        total_length = 10 + arc_length + 10
+
+        tan1 = self.cadapi.wire_tangent_at(wire, 5.0 / total_length)
+        assert np.allclose(tan1, (1.0, 0.0, 0.0))
+
+        distance_to_arc_mid = 10.0 + (arc_length / 2.0)
+        tan2 = self.cadapi.wire_tangent_at(wire, distance_to_arc_mid / total_length)
+
+        val = np.sqrt(2) / 2
+        assert np.allclose(tan2, (val, val, 0.0))
+
+        distance_to_z_mid = 10.0 + arc_length + 5.0
+        tan3 = self.cadapi.wire_tangent_at(wire, distance_to_z_mid / total_length)
+        assert np.allclose(tan3, (0.0, 0.0, 1.0))
+
+    def test_wire_tangent_at_orientation(self):
+        e1 = make_polygon([(0, 0, 0), (10, 0, 0)])
+        e2 = make_polygon([(10, 10, 0), (10, 0, 0)])
+        wire = self.cadapi.wire_from_wires([e1, e2])
+
+        tan1 = self.cadapi.wire_tangent_at(wire, 0.25)
+        assert np.allclose(tan1, (1.0, 0.0, 0.0))
+
+        tan2 = self.cadapi.wire_tangent_at(wire, 0.75)
+        assert np.allclose(tan2, (0.0, 1.0, 0.0))

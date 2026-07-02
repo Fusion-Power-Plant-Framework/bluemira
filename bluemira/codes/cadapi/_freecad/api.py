@@ -955,6 +955,57 @@ def edge_tangent_at(edge: apiEdge, param: float) -> np.ndarray:
     return vector_to_numpy(v)
 
 
+def wire_tangent_at(wire: apiWire, param: float) -> np.ndarray:
+    """Return the unit tangent of *wire* at normalised parameter *param* in [0, 1].
+
+    Returns
+    -------
+    :
+        The tangent vector at *param* as a numpy array.
+
+    Raises
+    ------
+    FreeCADError
+        If the parameter is not normalised.
+    """
+    if not (0.0 <= param <= 1.0):
+        raise FreeCADError("Tangent parameter must be between 0 and 1.")
+
+    target_length = param * wire.Length
+    current_len = 0.0
+
+    for i, edge in enumerate(wire.Edges):
+        edge_len = edge.Length
+
+        # check if the target distance falls within this edge.
+        if (
+            current_len + edge_len >= target_length - MAX_PRECISION
+            or i == len(wire.Edges) - 1
+        ):
+            # calculate distance along this specific edge
+            dist_on_edge = target_length - current_len
+            dist_on_edge = max(0.0, min(edge_len, dist_on_edge))
+
+            is_reversed = edge.Orientation == "Reversed"
+
+            math_dist = edge_len - dist_on_edge if is_reversed else dist_on_edge
+
+            # convert arc-length distance to b-spline parameter
+            raw_param = edge.getParameterByLength(math_dist)
+
+            vec = edge.tangentAt(raw_param)
+
+            if is_reversed:
+                vec = vec.multiply(-1.0)
+
+            vec.normalize()
+            return np.array([vec.x, vec.y, vec.z])
+
+        current_len += edge_len
+
+    return np.array([0.0, 0.0, 0.0])
+
+
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""  # noqa: DOC201
     point = obj.OrderedEdges[0].firstVertex().Point
