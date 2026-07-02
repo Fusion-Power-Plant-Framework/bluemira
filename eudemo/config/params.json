@@ -1315,21 +1315,21 @@
     "value": 0.1,
     "unit": "",
     "source": "Input",
-    "long_name": "Fraction of neutron power that goes into the blanket",
+    "long_name": "Fraction of neutron power that goes into the divertor",
     "description": "Used in 0-D neutronics model"
   },
   "f_n_vessel": {
     "value": 0.04,
     "unit": "",
     "source": "Input",
-    "long_name": "Fraction of neutron power that goes into the blanket",
+    "long_name": "Fraction of neutron power that goes into the vacuum vessel",
     "description": "Used in 0-D neutronics model"
   },
   "f_n_aux": {
     "value": 0.05,
     "unit": "",
     "source": "Input",
-    "long_name": "Fraction of neutron power that goes into the blanket",
+    "long_name": "Fraction of neutron power that goes into auxiliary systems",
     "description": "Used in 0-D neutronics model"
   },
   "tk_bb_fw_ib": {
