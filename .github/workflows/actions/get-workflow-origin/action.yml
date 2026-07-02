@@ -39,10 +39,14 @@ runs:
                 repo: context.repo.repo,
               });
 
-              core.info(`Found ${prs.data.length} PRs`);
-
+              let num_prs = prs.data.length;
               let pr;
-              if (prs.data.length > 0) {
+              if (num_prs > 1) {
+                core.warning('${num_prs} PRs found.');
+                core.info('Proceeding with first PR');
+              }
+
+              if (num_prs > 0) {
                 pr = prs.data[0];
                 pr_number = pr.number;
                 target_branch = pr.base.ref;
