@@ -255,6 +255,29 @@ class BluemiraWire(BluemiraGeo):
         except CADError as e:
             raise GeometryError(e.args[0]) from None
 
+    def tangent_at(self, param: float) -> np.ndarray:
+        """
+        Get the tangent at a point along a wire.
+
+        Parameters
+        ----------
+        param:
+            Normalised parameter along a wire.
+
+        Returns
+        -------
+        Tangent vector along the wire at the parameter.
+
+        Raises
+        ------
+        GeometryError
+            If the input parameter is not normalised.
+        """
+        try:
+            return cadapi.wire_tangent_at(self.shape, param)
+        except CADError as e:
+            raise GeometryError(e.args[0]) from None
+
     def start_point(self) -> Coordinates:
         """
         Returns
