@@ -875,22 +875,7 @@ def find_LCFS_separatrix(
 
         coords = find_flux_surfs(x, z, psi, high, o_points=o_points, x_points=x_points)
         loops = [Coordinates({"x": c.T[0], "z": c.T[1]}) for c in coords]
-        if flux_surface.closed and len(loops) == 1:
-            # Split in two if we have one separatrix that loops
-            # around the coils within the grid.
-            loop = loops[0]
-            x, z = (
-                loop.x[loop.z == np.max(loop.z)][0],
-                loop.z[loop.z == np.max(loop.z)][0],
-            )
-            loop.shift_start(x=x, z=z)
-            x, z = (
-                loop.x[loop.z == np.min(loop.z)][0],
-                loop.z[loop.z == np.min(loop.z)][0],
-            )
-            loops = loop.split_open(x=x, z=z)
         loops.sort(key=lambda loop: -loop.length)
-        [lp.set_ccw() for lp in loops]
         separatrix = loops[:2]
 
     return lcfs, separatrix

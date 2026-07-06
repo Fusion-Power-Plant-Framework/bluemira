@@ -330,7 +330,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             Divertor keep out zone
         """
         # TODO move to plasma component manager
-        legs = LegFlux(self.equilibrium).get_legs(n_layers=1, dx_off=0.0)
+        legs = LegFlux(self.equilibrium).legs
 
         ib_leg = make_polygon(legs["lower_inner"][0].xyz)
         ob_leg = make_polygon(legs["lower_outer"][0].xyz)

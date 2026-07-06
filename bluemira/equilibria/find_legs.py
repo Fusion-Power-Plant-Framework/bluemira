@@ -59,23 +59,40 @@ class LegFlux:
         Input Equilibrium
     psi_n_tol:
         The normalised psi tolerance to use
-    delta_start:
+    delta_lcfs:
         Search range value for finding LCFS. Will search for the transition from a
         "closed" to "open" flux surface for normalised flux values
-        between 1 - delta_start and 1 + delta_start.
+        between 1 - delta_lcfs and 1 + delta_lcfs.
     rtol:
         Relative tolerance used for finding configuration of
         separatrix split for double null
+    n_layers:
+        Number of flux surfaces to extract for each leg
+    x_offsets:
+        Total span in radial space of the flux surfaces to extract
+    delta_legs:
+        intersection point x value +- delta_legs is used to find starting point
+        of leg flux see '_extract_leg'.
+    delta_legs_offsets:
+        intersection point x value +- delta_legs_offsets is used to find starting point
+        of offsets leg flux see '_extract_offsets'.
     """
 
     def __init__(
         self,
         eq: Equilibrium,
         psi_n_tol: float = 1e-6,
-        delta_start: float = 0.01,
+        delta_lcfs: float = 0.01,
         rtol: float = 1e-3,
+        n_layers: int = 1,
+        x_offsets: float = 0.0,
+        delta_legs: float | None = None,
+        delta_legs_offsets: float | None = None,
     ):
-        self.eq = eq
+        # Red flag will be set true if we get unexpected separatrix shapes
+        self._red_flag = False
+
+        self.n_null = NumNull.DN if eq.is_double_null else NumNull.SN
         o_points, x_points = eq.get_OX_points()
         lcfs, self.separatrix = find_LCFS_separatrix(
             eq.x,
@@ -85,35 +102,132 @@ class LegFlux:
             x_points,
             double_null=eq.is_double_null,
             psi_n_tol=psi_n_tol,
-            delta_start=delta_start,
+            delta_start=delta_lcfs,
         )
+        self._set_oxpts_and_check(self, lcfs, o_points, x_points)
+
+        if eq.is_double_null and isinstance(self.separatrix, Coordinates):
+            if not self.separatrix.closed:
+                self._print_warning_set_flag()
+            else:
+                # Split in two if we have one separatrix that loops
+                # around the coils within the grid.
+                loop = self.separatrix
+                x, z = (
+                    loop.x[loop.z == np.max(loop.z)][0],
+                    loop.z[loop.z == np.max(loop.z)][0],
+                )
+                loop.shift_start(x=x, z=z)
+                x, z = (
+                    loop.x[loop.z == np.min(loop.z)][0],
+                    loop.z[loop.z == np.min(loop.z)][0],
+                )
+                loops = loop.split_open(x=x, z=z)
+                loops.sort(key=lambda loop: -loop.length)
+                [lp.set_ccw() for lp in loops]
+                self.separatrix = loops
+                self._red_flag = False
+
+        self.rtol = rtol
+        self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
+        self.n_layers = n_layers
+        self.x_offsets = x_offsets
+        self.delta_legs = delta_legs or np.max(eq.grid.x) - np.min(eq.grid.x)
+        self.delta_legs_offsets = delta_legs_offsets or eq.grid.dx
+        self.sort_split = self._which_legs()
+        legs = self._get_legs()
+        if n_layers > 1:
+            legs = self._get_leg_offsets(legs, eq)
+        self._legs = legs
+
+    @property
+    def legs(self):
+        """Separatrix legs in dictionary."""
+        return self._legs
+
+    def update_legs(
+        self,
+        eq: Equilibrium,
+        n_layers: int = 1,
+        x_offsets: float = 0.0,
+        delta_legs: float | None = None,
+        delta_legs_offsets: float | None = None,
+    ):
+        """
+        Update the legs dictionary with changed input parameters.
+
+        Parameters
+        ----------
+        n_layers:
+            Number of flux surfaces to extract for each leg
+        x_offsets:
+            Total span in radial space of the flux surfaces to extract
+        delta_legs:
+            intersection point x value +- delta_legs is used to find starting point
+            of leg flux see '_extract_leg'.
+        delta_legs_offsets:
+            intersection point x value +- delta_legs_offsets is used to find
+            starting point of offsets leg flux see '_extract_offsets'.
+
+        Returns
+        -------
+        leg_dict:
+            Dictionary of separatrix legs (lists of coordinates), with keys:
+            - lower_inner
+            - lower_outer
+            - upper_inner
+            - upper_outer
+
+        Raises
+        ------
+        ValueError
+            If more than one flux surface is requested for each leg but the
+            span in radial space to extract them from is zero.
+        """
+        self.delta_legs = delta_legs or self.delta_legs
+        self.delta_legs_offsets = delta_legs_offsets or self.delta_legs_offsets
+
+        self._legs = self._get_legs(eq)
+        if n_layers == 1:
+            return self._legs
+
+        if x_offsets <= 0.0:
+            raise ValueError(
+                "x_offsets must be greater than zero if there is more than one "
+                "flux surface to extractcfor each divertor leg (n_layers > 1)."
+            )
+
+        self._legs = self.get_leg_offsets(self._legs, eq)
+        return self._legs
+
+    def _print_warning_set_flag(self):
+        bluemira_print(
+            "Seperatrix shape is not as expected. Best keep an eye on it, "
+            "as seperatrix leg identification may not work."
+        )
+        self._red_flag = True
+
+    def _set_oxpts_and_check(self, lcfs, o_points, x_points):
+        """Keep the relevant O and X points, check their locations are as expected."""
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
         # Check we are using the x-points nearest the LCFS max and/or min z-coord.
         xlow = np.flatnonzero(
-            np.isclose(np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
+            np.isclose(
+                np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=self.delta_lcfs
+            )
         )
         xup = np.flatnonzero(
-            np.isclose(np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_start)
-        )
-        check_dn = isinstance(self.separatrix, list) and (len(xlow) + len(xup) < 2)  # noqa: PLR2004
-        check_sn = not isinstance(self.separatrix, list) and (len(xlow) + len(xup) < 1)
-        if check_dn or check_sn:
-            bluemira_print(
-                "Seperatrix shape is not as expected. Best keep an eye on it, "
-                "as seperatrix leg identification may not work."
+            np.isclose(
+                np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=self.delta_lcfs
             )
-            self._red_flag = True
-        else:
-            self._red_flag = False
-        self.rtol = rtol
-        self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
-        self.delta = np.max(eq.grid.x) - np.min(eq.grid.x)
-        self.delta_offsets = eq.grid.dx
-        self.dx_offsets = None
-        self.n_null, self.sort_split = self.which_legs()
+        )
+        if self.n_null == NumNull.SN and (len(xlow) + len(xup) < 1):
+            self._print_warning_set_flag()
+        if self.n_null == NumNull.DN and (len(xlow) + len(xup) < 2):  # noqa: PLR2004
+            self._print_warning_set_flag()
 
-    def which_legs(self):
+    def _which_legs(self):
         """
         Determine how to find and sort legs.
         For a double null this function:
@@ -122,8 +236,6 @@ class LegFlux:
 
         Returns
         -------
-        n_null:
-            Weather it is single (SN) or double null (DN) Configuration
         sort_split:
             How the separatrix has been split.
             Z - split into Upper and Lower
@@ -131,7 +243,7 @@ class LegFlux:
 
         """
         # --- Double Null ---
-        if isinstance(self.separatrix, list):
+        if self.n_null == NumNull.DN:
             # Sort LOWER then UPPER
             self.x_points.sort(key=lambda x_point: x_point.z)
             # Check to determine configuration (separatrix list is sorted by
@@ -148,57 +260,39 @@ class LegFlux:
             if legs_upper_lower:
                 # Sort LOWER then UPPER when use get_legs
                 # self.separatrix remains sorted by loop length
-                return NumNull.DN, SortSplit.Z
+                return SortSplit.Z
             # Sort IN then OUT when use get_legs
             # self.separatrix remains sorted by loop length
-            return NumNull.DN, SortSplit.X
+            return SortSplit.X
         # --- Single Null ---
         self.x_points = self.x_points[0]
-        return NumNull.SN, SortSplit.X
+        return SortSplit.X
 
-    def get_leg_offsets(self, leg_dict):
+    def _get_leg_offsets(self, leg_dict, eq):
         """
         Expands the leg list if user requires offset flux surfaces.
         """  # noqa: DOC201
+        dx_offsets = np.linspace(0, self.x_offsets, self.n_layers)[1:]
         for name in leg_dict:
             leg = leg_dict[name]
             direction = -1 if name.find("inner") != -1 else 1
             if len(leg) > 0 and leg[0] is not None:
                 leg.extend(
                     _extract_offsets(
-                        self.eq,
+                        eq,
                         leg[0],
                         direction,
                         self.o_point,
-                        self.dx_offsets,
-                        self.delta_offsets,
+                        dx_offsets,
+                        self.delta_legs_offsets,
                     )
                 )
                 leg_dict[name] = leg
         return leg_dict
 
-    def get_legs(
-        self,
-        n_layers: int = 1,
-        dx_off: float = 0.0,
-        delta: float | None = None,
-        delta_offsets: float | None = None,
-    ):
+    def _get_legs(self):
         """
         Get separatrix legs.
-
-        Parameters
-        ----------
-        n_layers:
-            Number of flux surfaces to extract for each leg
-        dx_off:
-            Total span in radial space of the flux surfaces to extract
-        delta:
-            intersection point x value +- delta is used to find starting point
-            of leg flux see '_extract_leg'.
-        delta_offsets:
-            intersection point x value +- delta_offsets is used to find starting point
-            of offsets leg flux see '_extract_offsets'.
 
         Returns
         -------
@@ -222,41 +316,24 @@ class LegFlux:
         interpolation and local minimum finding tolerances.
 
         """
-        if delta is not None:
-            self.delta = delta
-        if delta_offsets is not None:
-            self.delta_offsets = delta_offsets
-        if n_layers > 1:
-            self.dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
-        "Get the legs of a separatrix."
         # --- Single Null ---
         if self.n_null == NumNull.SN:
-            leg_dict = get_single_null_legs(
-                self.separatrix, self.delta, self.o_point, self.x_points
+            return get_single_null_legs(
+                self.separatrix, self.delta_legs, self.o_point, self.x_points
             )
-            if self.dx_offsets is not None:
-                return self.get_leg_offsets(leg_dict)
-            return leg_dict
 
         # --- Double Null ---
         if self.sort_split == SortSplit.Z:
-            leg_dict = get_legs_double_null_zsplit(
+            return get_legs_double_null_zsplit(
                 self.separatrix,
-                self.delta,
+                self.delta_legs,
                 self.x_points,
                 self.o_point,
                 self.x_range_lcfs,
             )
-            if self.dx_offsets is not None:
-                return self.get_leg_offsets(leg_dict)
-            return leg_dict
-
-        leg_dict = get_legs_double_null_xsplit(
+        return get_legs_double_null_xsplit(
             self.separatrix, self.delta, self.x_points, self.o_point
         )
-        if self.dx_offsets is not None:
-            return self.get_leg_offsets(leg_dict)
-        return leg_dict
 
 
 def get_legs_length_and_angle(

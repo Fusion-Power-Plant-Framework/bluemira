@@ -365,7 +365,7 @@ _ax = multi_analysis.plot_compare_flux_surfaces(
 # We have set 'radians' to False to plot in degrees.
 ax = multi_analysis.plot_divertor_length_angle(
     plasma_facing_boundary_list=[pfb_masty, pfb_sin_demoish, pfb_dou_demoish],
-    dx_off=0.5,
+    x_offset=0.5,
     n_layers=10,
     radian=False,
 )
