@@ -174,8 +174,8 @@ class TestGetLegs:
         test_falsified_dn_eq = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         test_falsified_dn_eq.x_points = x_points[:2]
         test_falsified_dn_eq.separatrix = separatrix
-        assert test_falsified_dn_eq.n_null == NumNull.DN
-        assert test_falsified_dn_eq.sort_split == SortSplit.Z
+        test_falsified_dn_eq.n_null = NumNull.DN
+        assert test_falsified_dn_eq._which_legs() == SortSplit.Z
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
@@ -260,9 +260,17 @@ class TestGetLegs:
         )
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
-        legs = legflux.legs
+        legflux.n_null = NumNull.DN
+        legflux.sort_split = legflux._which_legs()
+        legs = legflux._get_legs()
         x_points = self.dn_eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert "upper_inner" in legs
+        assert "upper_outer" in legs
+        legs = legflux.update_legs(self.falsified_dn_eq)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs

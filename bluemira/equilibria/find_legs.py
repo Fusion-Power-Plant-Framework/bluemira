@@ -104,7 +104,7 @@ class LegFlux:
             psi_n_tol=psi_n_tol,
             delta_start=delta_lcfs,
         )
-        self._set_oxpts_and_check(self, lcfs, o_points, x_points)
+        self._set_oxpts_and_check(lcfs, delta_lcfs, o_points, x_points)
 
         if eq.is_double_null and isinstance(self.separatrix, Coordinates):
             if not self.separatrix.closed:
@@ -187,7 +187,7 @@ class LegFlux:
         self.delta_legs = delta_legs or self.delta_legs
         self.delta_legs_offsets = delta_legs_offsets or self.delta_legs_offsets
 
-        self._legs = self._get_legs(eq)
+        self._legs = self._get_legs()
         if n_layers == 1:
             return self._legs
 
@@ -207,20 +207,16 @@ class LegFlux:
         )
         self._red_flag = True
 
-    def _set_oxpts_and_check(self, lcfs, o_points, x_points):
+    def _set_oxpts_and_check(self, lcfs, delta_lcfs, o_points, x_points):
         """Keep the relevant O and X points, check their locations are as expected."""
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
         # Check we are using the x-points nearest the LCFS max and/or min z-coord.
         xlow = np.flatnonzero(
-            np.isclose(
-                np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=self.delta_lcfs
-            )
+            np.isclose(np.min(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_lcfs)
         )
         xup = np.flatnonzero(
-            np.isclose(
-                np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=self.delta_lcfs
-            )
+            np.isclose(np.max(lcfs.z), [xp.z for xp in self.x_points], rtol=delta_lcfs)
         )
         if self.n_null == NumNull.SN and (len(xlow) + len(xup) < 1):
             self._print_warning_set_flag()
@@ -332,7 +328,7 @@ class LegFlux:
                 self.x_range_lcfs,
             )
         return get_legs_double_null_xsplit(
-            self.separatrix, self.delta, self.x_points, self.o_point
+            self.separatrix, self.delta_legs, self.x_points, self.o_point
         )
 
 
@@ -709,7 +705,7 @@ def calculate_connection_length(
                 "Please use flux surface geometry method or input a target location."
             )
 
-        legflux = LegFlux(eq=eq, psi_n_tol=psi_n_tol, delta_start=delta_start, rtol=rtol)
+        legflux = LegFlux(eq=eq, psi_n_tol=psi_n_tol, delta_lcfs=delta_start, rtol=rtol)
 
         if legflux.n_null == NumNull.DN:
             if legflux.sort_split == SortSplit.X:
