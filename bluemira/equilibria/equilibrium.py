@@ -1675,8 +1675,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
                 minimise_dli,
                 x0=self.profiles.shape.coeffs,
                 algorithm="SLSQP_SCIPY",
-                bounds=tuple(np.full((len(self.profiles.shape.coeffs), 2), (-1, 3)).T),
-                opt_conditions={"maxiter": 30, "eps": 1e-4},
+                bounds=(-1, 3),
+                opt_conditions={"max_eval": 30},
+                opt_parameters={"eps": 1e-4},
             )
             self.profiles.shape.adjust_parameters(res.x)
 
@@ -2261,7 +2262,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             psi_err,
             x0=np.atleast_1d(np.asarray(x)),
             algorithm="NELDER_MEAD",
-            opt_conditions={"xatol": 1e-7},
+            opt_conditions={"xtol_abs": 1e-7},
         )
         return res.x.item(), z.item()
 
