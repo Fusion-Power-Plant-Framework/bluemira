@@ -292,7 +292,9 @@ class TestGetLegs:
         legflux = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
-        legs = legflux.legs
+        legflux.n_null = NumNull.DN
+        legflux.sort_split = legflux._which_legs()
+        legs = legflux._get_legs()
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
