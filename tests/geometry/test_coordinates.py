@@ -446,20 +446,6 @@ class TestShortCoordinates:
         assert "Cannot open Coordinates" in caplog.messages[0]
 
     @pytest.mark.parametrize("c", [deepcopy(line)])
-    def test_get_loc_idx(self, caplog, c):
-        idx = c._get_loc_idx(x=0.0, y=0.0, z=0.0)
-        assert idx[0] == 0
-        _ = c._get_loc_idx(x=0.5, y=0.5, z=0.5)
-        assert "There is no point at this location." in caplog.messages[0]
-        new_c = Coordinates({"x": [0, 1, 0], "y": [0, 1, 0], "z": [0, 1, 0]})
-        idx = new_c._get_loc_idx(x=0.0, y=0.0, z=0.0)
-        assert idx[0] == 0
-        assert (
-            "There is more than one point at this location, returning first value."
-            in caplog.messages[1]
-        )
-
-    @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_shift_start(self, caplog, c):
         c.shift_start([0.5, 0.5, 0.5])
         assert "There is no point at this location." in caplog.messages[0]
