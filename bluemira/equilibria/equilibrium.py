@@ -2262,9 +2262,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
         res = minimize(
             psi_err,
-            np.array(x),
+            np.atleast_1d(np.asarray(x)),
             method="Nelder-Mead",
-            args=(z),
+            args=np.atleast_1d(np.asarray(z)),
             options={"xatol": 1e-7, "disp": False},
         )
         return res.x[0], z
