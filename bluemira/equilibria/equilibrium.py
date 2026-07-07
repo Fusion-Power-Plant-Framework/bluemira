@@ -2260,7 +2260,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
         res = optimise(
             psi_err,
-            x0=np.atleast_1d(np.asarray(x)),
+            x0=x,
             algorithm="NELDER_MEAD",
             opt_conditions={"xtol_abs": 1e-7},
         )
