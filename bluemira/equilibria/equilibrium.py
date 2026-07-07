@@ -2249,9 +2249,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         zMP:
             z coordinate of the midplane point with flux value Xpsi
         """
-        z = np.atleast_1d(np.asarray(z))
 
-        def psi_err(x_opt, z_opt=z):
+        def psi_err(x_opt, z_opt):
             """
             The psi error minimisation objective function.
             """  # noqa: DOC201
@@ -2259,7 +2258,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             return abs(psi - x_psi)
 
         res = optimise(
-            psi_err,
+            lambda x: psi_err(x, np.atleast_1d(np.asarray(z))),
             x0=x,
             algorithm="NELDER_MEAD",
             opt_conditions={"xtol_abs": 1e-7},
