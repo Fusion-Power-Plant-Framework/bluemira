@@ -206,7 +206,7 @@ class SuperSankey(Sankey):
             return np.sum(np.abs(tip2 - new_tip))
 
         x0 = np.zeros(2)
-        result = optimise(minimise_dxdy, x0=x0, algorithm="SCIPY_SLSQP")
+        result = optimise(minimise_dxdy, x0=x0, algorithm="SLSQP_SCIPY")
         self.extent = extent  # Finish clean-up
         return result.x
 

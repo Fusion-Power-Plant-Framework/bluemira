@@ -120,7 +120,7 @@ class Solovev:
         #     self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
         if self._psi_ax is None:
             result = optimise(
-                lambda x: -self.psi(x), x0=(self.R_0, 0), algorithm="SCIPY_SLSQP"
+                lambda x: -self.psi(x), x0=(self.R_0, 0), algorithm="SLSQP_SCIPY"
             )
             self._psi_ax = self.psi(result.x)
             self._rz_ax = result.x
