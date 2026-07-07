@@ -21,7 +21,6 @@ import numpy.typing as npt
 import tabulate
 from eqdsk import EQDSKInterface
 from eqdsk.cocos import COCOS
-from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0, raw_uc
 from bluemira.base.file import get_bluemira_path
@@ -70,6 +69,7 @@ from bluemira.equilibria.profiles import (
     Profile,
 )
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.optimisation import optimise
 from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
@@ -2251,23 +2251,22 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         zMP:
             z coordinate of the midplane point with flux value Xpsi
         """
+        z = np.atleast_1d(np.asarray(z))
 
-        def psi_err(x_opt, *args):
+        def psi_err(x_opt, z_opt=z):
             """
             The psi error minimisation objective function.
             """  # noqa: DOC201
-            z_opt = args[0]
             psi = self.psi(x_opt, z_opt)[0]
             return abs(psi - x_psi)
 
-        res = minimize(
+        res = optimise(
             psi_err,
-            np.atleast_1d(np.asarray(x)),
-            method="Nelder-Mead",
-            args=np.atleast_1d(np.asarray(z)),
-            options={"xatol": 1e-7, "disp": False},
+            x0=np.atleast_1d(np.asarray(x)),
+            algorithm="NELDER_MEAD",
+            opt_conditions={"xatol": 1e-7},
         )
-        return res.x[0], z
+        return res.x.item(), z.item()
 
     def analyse_core(
         self, n_points: int = 50, *, plot: bool = True, ax=None
