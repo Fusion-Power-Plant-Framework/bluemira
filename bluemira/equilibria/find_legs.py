@@ -117,12 +117,12 @@ class LegFlux:
                     loop.x[loop.z == np.max(loop.z)][0],
                     loop.z[loop.z == np.max(loop.z)][0],
                 )
-                loop.shift_start(x=x, z=z)
+                loop.shift_start([x, 0.0, z])
                 x, z = (
                     loop.x[loop.z == np.min(loop.z)][0],
                     loop.z[loop.z == np.min(loop.z)][0],
                 )
-                loops = loop.split_open(x=x, z=z)
+                loops = loop.split_open([x, 0.0, z])
                 loops.sort(key=lambda loop: -loop.length)
                 [lp.set_ccw() for lp in loops]
                 self.separatrix = loops

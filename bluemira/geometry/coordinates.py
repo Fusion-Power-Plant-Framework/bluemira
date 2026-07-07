@@ -1588,37 +1588,16 @@ class Coordinates:  # noqa: PLR0904
         if self.closed:
             self._array = self._array[:, :-1]
 
-    def shift_start(self, x=0.0, y=0.0, z=0.0):
+    def shift_start(self, point: npt.ArrayLike):
         """
         Change the start location of your coordinates array.
         Will set to open if coords are closed.
         """
-        if self.closed:
-            self.open()
-        idx = self._get_loc_idx(x, y, z)
-        if len(idx) != 1:
-            bluemira_warn("Doing nothing to coordinates start location.")
-        else:
-            self._array = np.concatenate(
-                [self._array[:, idx[0] :], self._array[:, : idx[0]]], axis=1
-            )
+        point = np.array(point)
+        idx = len(self._array[0]) - self.argmin(point) - 1
+        self._array = np.roll(self._array, idx)
 
-    def _get_loc_idx(self, x, y, z):
-        (idx,) = np.nonzero(
-            np.isclose(self._array[0], x)
-            & np.isclose(self._array[1], y)
-            & np.isclose(self._array[2], z)
-        )
-        if len(idx) > 1:
-            bluemira_warn(
-                "There is more than one point at this location, returning first value."
-            )
-            return [idx[0]]
-        if len(idx) < 1:
-            bluemira_warn("There is no point at this location.")
-        return idx
-
-    def split_open(self, x=0.0, y=0.0, z=0.0):
+    def split_open(self, point: npt.ArrayLike):
         """
         Split an open set of coordinates at a given point and return two
         sets of new coordinates.
@@ -1632,12 +1611,8 @@ class Coordinates:  # noqa: PLR0904
             Coordinates from user chosen point to the end of the
             input coordinates
         """
-        if self.closed:
-            self.open()
-        idx = self._get_loc_idx(x, y, z)
-        if len(idx) != 1:
-            bluemira_warn("Can not split coordinates.")
-            return None
+        point = np.array(point)
+        idx = self.argmin(point)
         return [
             Coordinates(self._array[:, : idx[0]]),
             Coordinates(self._array[:, idx[0] :]),

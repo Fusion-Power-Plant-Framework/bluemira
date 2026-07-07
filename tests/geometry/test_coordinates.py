@@ -461,20 +461,20 @@ class TestShortCoordinates:
 
     @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_shift_start(self, caplog, c):
-        c.shift_start(x=0.5, y=0.5, z=0.5)
+        c.shift_start([0.5, 0.5, 0.5])
         assert "There is no point at this location." in caplog.messages[0]
         assert "Doing nothing to coordinates start location." in caplog.messages[1]
         c.insert(point=np.array([0.5, 0.5, 0.5]), index=2)
-        c.shift_start(x=0.5, y=0.5, z=0.5)
+        c.shift_start([0.5, 0.5, 0.5])
         assert c == Coordinates([[0.5, 0.0, 1.0], [0.5, 0.0, 1.0], [0.5, 0.0, 1.0]])
 
     @pytest.mark.parametrize("c", [deepcopy(line)])
     def test_split_open(self, caplog, c):
-        _ = c.split_open(x=0.5, y=0.5, z=0.5)
+        _ = c.split_open([0.5, 0.5, 0.5])
         assert "There is no point at this location." in caplog.messages[0]
         assert "Can not split coordinates." in caplog.messages[1]
         c.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
-        c1, c2 = c.split_open(x=0.5, y=0.5, z=0.5)
+        c1, c2 = c.split_open([0.5, 0.5, 0.5])
         assert c1 == Coordinates({"x": [0], "y": [0], "z": [0]})
         assert c2 == Coordinates({"x": [0.5, 1], "y": [0.5, 1], "z": [0.5, 1]})
 
