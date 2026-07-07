@@ -151,7 +151,7 @@ kiwisolver==1.5.0
     # via matplotlib
 librt==0.11.0
     # via mypy
-llvmlite==0.47.0
+llvmlite==0.48.0
     # via numba
 lxml==6.1.1
     # via citeproc-py
@@ -214,7 +214,7 @@ nlopt==2.10.0
     # via bluemira (pyproject.toml)
 nodeenv==1.10.0
     # via pre-commit
-numba==0.65.1
+numba==0.66.0
     # via
     #   bluemira (pyproject.toml)
     #   numba-scipy
