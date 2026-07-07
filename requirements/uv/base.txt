@@ -64,7 +64,7 @@ joblib==1.5.3
     # via scikit-learn
 kiwisolver==1.5.0
     # via matplotlib
-llvmlite==0.47.0
+llvmlite==0.48.0
     # via numba
 lxml==6.1.1
     # via citeproc-py
@@ -91,7 +91,7 @@ ndindex==1.10.1
     # via blosc2
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
-numba==0.65.1
+numba==0.66.0
     # via bluemira (pyproject.toml)
 numexpr==2.14.1
     # via
