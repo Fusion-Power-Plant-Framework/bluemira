@@ -2264,7 +2264,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             algorithm="NELDER_MEAD",
             opt_conditions={"xtol_abs": 1e-7},
         )
-        return res.x.item(), z.item()
+        return res.x.item(), z_arr.item()
 
     def analyse_core(
         self, n_points: int = 50, *, plot: bool = True, ax=None
