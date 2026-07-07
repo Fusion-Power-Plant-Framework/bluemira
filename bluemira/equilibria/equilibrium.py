@@ -70,7 +70,6 @@ from bluemira.equilibria.profiles import (
 )
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
-from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 if TYPE_CHECKING:
@@ -1672,16 +1671,14 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             return abs(self._li - li)
 
         try:  # There is no physical reason for it, but it is useful.
-            bounds = [[-1, 3] for _ in range(len(self.profiles.shape.coeffs))]
-            res = minimize(
+            res = optimise(
                 minimise_dli,
-                self.profiles.shape.coeffs,
-                method="SLSQP",
-                bounds=bounds,
-                options={"maxiter": 30, "eps": 1e-4},
+                x0=self.profiles.shape.coeffs,
+                algorithm="SLSQP_SCIPY",
+                bounds=tuple(np.full((len(self.profiles.shape.coeffs), 2), (-1, 3)).T),
+                opt_conditions={"maxiter": 30, "eps": 1e-4},
             )
-            alpha_star = process_scipy_result(res, "SLSQP")
-            self.profiles.shape.adjust_parameters(alpha_star)
+            self.profiles.shape.adjust_parameters(res.x)
 
         except StopIteration:
             pass

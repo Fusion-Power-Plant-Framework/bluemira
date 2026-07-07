@@ -23,6 +23,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     plot_scalar_field,
 )
 from bluemira.magnetostatics.fem_utils import model_to_mesh
+from bluemira.optimisation import optimise
 
 
 class Solovev:
@@ -118,7 +119,7 @@ class Solovev:
         # if self._psi_ax is None:
         #     self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
         if self._psi_ax is None:
-            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0))
+            result = optimise(lambda x: -self.psi(x), x0=(self.R_0, 0))
             self._psi_ax = self.psi(result.x)
             self._rz_ax = result.x
         return self._psi_ax
