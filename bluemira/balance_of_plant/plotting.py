@@ -16,10 +16,10 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.sankey import Sankey
-from scipy.optimize import minimize
 
 from bluemira.base.constants import raw_uc
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+from bluemira.optimisation import optimise
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -206,7 +206,7 @@ class SuperSankey(Sankey):
             return np.sum(np.abs(tip2 - new_tip))
 
         x0 = np.zeros(2)
-        result = minimize(minimise_dxdy, x0, method="SLSQP")
+        result = optimise(minimise_dxdy, x0=x0, algorithm="SCIPY_SLSQP")
         self.extent = extent  # Finish clean-up
         return result.x
 
