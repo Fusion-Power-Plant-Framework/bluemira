@@ -158,6 +158,8 @@ def optimise(
     ValueError
         x0 or dimension not provided or sizes differ
     """
+    if x0 is not None:
+        x0 = np.atleast_1d(np.asarray(x0))
     if dimensions is None:
         if x0 is not None:
             dimensions = x0.size
