@@ -630,38 +630,40 @@ def save_reactor(reactor, reactor_config, folder_name):
     filename = f"{root}/BLUEMIRA_OUT.json"
     json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
-    # Save neutronics
-    n_root = Path(root, "neutronics")
+    n_conf_path = Path(config_folder, "neutronics")
+    if n_conf_path.exists():
+        # Save neutronics
+        n_root = Path(root, "neutronics")
+        n_root.mkdir(parents=True, exist_ok=True)
 
-    shutil.copytree(Path(config_folder, "neutronics"), n_root, dirs_exist_ok=True)
+        shutil.copytree(n_conf_path, n_root, dirs_exist_ok=True)
 
-    n_root.mkdir(parents=True, exist_ok=True)
-    # CSG
-    csg_root = Path(n_root, "csg")
-    csg_root.mkdir(parents=True, exist_ok=True)
+        # CSG
+        csg_root = Path(n_root, "csg")
+        csg_root.mkdir(parents=True, exist_ok=True)
 
-    csg_out_dict = {}
-    if reactor.neutronics.csg is not None:  # TODO fix better
-        for k, v in reactor.neutronics.csg.results.__dict__.items():
-            if isinstance(v, float | dict):
-                csg_out_dict[k] = v
-            elif k == "statepoint_file":
-                csg_out_dict[k] = Path(csg_root, "run", v.name).as_posix()
+        csg_out_dict = {}
+        if reactor.neutronics.csg is not None:  # TODO fix better
+            for k, v in reactor.neutronics.csg.results.__dict__.items():
+                if isinstance(v, float | dict):
+                    csg_out_dict[k] = v
+                elif k == "statepoint_file":
+                    csg_out_dict[k] = Path(csg_root, "run", v.name).as_posix()
 
-        json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
+            json_writer(csg_out_dict, Path(csg_root, "openmc_result.json"), indent=2)
 
-    if reactor.neutronics.dagmc is not None:  # TODO fix better
-        # DAGMC
-        dag_root = Path(n_root, "dagmc")
-        dag_root.mkdir(parents=True, exist_ok=True)
+        if reactor.neutronics.dagmc is not None:  # TODO fix better
+            # DAGMC
+            dag_root = Path(n_root, "dagmc")
+            dag_root.mkdir(parents=True, exist_ok=True)
 
-        openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
-        openmc_res.pop("statepoint")
-        openmc_res["statepoint_file"] = Path(
-            dag_root, "run", openmc_res["statepoint_file"].name
-        ).as_posix()
+            openmc_res = copy(reactor.neutronics.dagmc.results.__dict__)
+            openmc_res.pop("statepoint")
+            openmc_res["statepoint_file"] = Path(
+                dag_root, "run", openmc_res["statepoint_file"].name
+            ).as_posix()
 
-        json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
+            json_writer(openmc_res, Path(dag_root, "openmc_result.json"), indent=2)
 
 
 if __name__ == "__main__":
