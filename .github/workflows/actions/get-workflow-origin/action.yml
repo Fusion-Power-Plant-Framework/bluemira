@@ -43,7 +43,7 @@ runs:
               let pr;
               if (num_prs > 1) {
                 core.warning('${num_prs} PRs found.');
-                core.info('Proceeding with first PR');
+                core.info('Proceeding with first PR: ${prs.data[0].number}');
               }
 
               if (num_prs > 0) {
