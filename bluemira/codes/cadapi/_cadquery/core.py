@@ -64,7 +64,6 @@ from OCP.GeomAbs import (
 )
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Surface
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
-from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from OCP.TopAbs import (
     TopAbs_FACE,
     TopAbs_IN,
@@ -1604,26 +1603,21 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     result = shapes[0].fuse(*shapes[1:])
 
     if all(isinstance(s, cq.Face) for s in shapes) and isinstance(result, cq.Compound):
-        # OCC's fuse on faces that merely touch at an edge produces a Compound
-        # of disconnected faces — UnifySameDomain can't merge them because they
-        # don't share any TopoDS edge. Sew the inputs first to establish edge
-        # sharing, then unify to collapse coplanar neighbours into one face.
-        sewing = BRepBuilderAPI_Sewing(1e-6)
-        for s in shapes:
-            sewing.Add(s.wrapped)
-        sewing.Perform()
-        sewn = cq.Shape.cast(sewing.SewedShape())
-        unified = _unify_same_domain(sewn)
-        if isinstance(unified, cq.Face):
-            result = unified
-        else:
-            unified_faces = _collect_subshapes(unified, cq.Face)
+        out = shapes
+        for _ in range(2):
+            out = _sew_shapes(out)
+            if isinstance(out, cq.Face):
+                result = out
+                break
+            unified_faces = _collect_subshapes(out, cq.Face)
             if len(unified_faces) == 1:
-                result = unified_faces[0]
+                out = unified_faces[0]
+                if isinstance(out, cq.Face):
+                    result = out
+                    break
 
-    if remove_splitter:
-        with contextlib.suppress(Exception):
-            result = result.clean()
+    elif remove_splitter:
+        result = _unify_same_domain(result)
 
     # For wire inputs: OCC fuse returns a compound; try to assemble a single wire.
     if all(isinstance(s, cq.Wire) for s in shapes):
@@ -1671,12 +1665,22 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     return result
 
 
+def _sew_shapes(s_to_sew, tolerance=1e-5):
+    # OCC's fuse on faces that merely touch at an edge produces a Compound
+    # of disconnected faces — UnifySameDomain can't merge them because they
+    # don't share any TopoDS edge. Sew the inputs first to establish edge
+    # sharing, then unify to collapse coplanar neighbours into one face.
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+    for s in s_to_sew:
+        sewing.Add(s.wrapped)
+    sewing.Perform()
+    return _unify_same_domain(cq.Shape.cast(sewing.SewedShape()))
+
+
 def _unify_same_domain(shape: apiShape) -> apiShape:
     """Merge coplanar connected faces and collinear edges via OCC UnifySameDomain."""
     try:
-        unifier = ShapeUpgrade_UnifySameDomain(shape.wrapped, True, True, True)
-        unifier.Build()
-        return cq.Shape.cast(unifier.Shape())
+        return shape.clean()
     except Exception as exc:  # noqa: BLE001
         bluemira_warn(f"UnifySameDomain failed: {exc}")
         return shape
