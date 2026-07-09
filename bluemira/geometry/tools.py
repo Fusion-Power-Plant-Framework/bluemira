@@ -2087,9 +2087,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         return convert(merged_shape, label)
-
-    except Exception as e:  # noqa: BLE001
-        raise GeometryError(f"Boolean fuse operation failed: {e}") from None
+    except Exception as e:
+        raise GeometryError(f"Boolean fuse operation failed: {e}") from e
 
 
 def boolean_cut(
