@@ -1,0 +1,64 @@
+name: "Get workflow origin"
+description: "Get PR number and target branch from pull_request or workflow_run"
+
+outputs:
+  pullRequestNumber:
+    description: "Pull request number"
+    value: ${{ steps.compute.outputs.pr_number }}
+  targetBranch:
+    description: "Target (base) branch"
+    value: ${{ steps.compute.outputs.target_branch }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: compute
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
+      with:
+        script: |
+          try {
+            const event = context.payload;
+
+            let pr_number = null;
+            let target_branch = null;
+
+            core.info(`Event type: ${event.pull_request ? 'pull_request' : 'workflow_run'}`);
+
+            if (event.pull_request) {
+              pr_number = event.pull_request.number;
+              target_branch = event.pull_request.base.ref;
+            }
+            else if (event.workflow_run) {
+              const head_sha = event.workflow_run.head_commit.id;
+              core.info(`Looking for PR with commit: ${event.workflow_run.head_commit.id}`);
+
+              // Find PR linked to the commit that triggered the workflow
+              const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                commit_sha: head_sha,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+
+              let num_prs = prs.data.length;
+              let pr;
+              if (num_prs > 1) {
+                core.warning('${num_prs} PRs found.');
+                core.info('Proceeding with first PR: ${prs.data[0].number}');
+              }
+
+              if (num_prs > 0) {
+                pr = prs.data[0];
+                pr_number = pr.number;
+                target_branch = pr.base.ref;
+              }
+              else {
+                core.warning(`No PR found for commit ${context.sha}`);
+              }
+            }
+
+            core.setOutput("pr_number", pr_number);
+            core.setOutput("target_branch", target_branch);
+            core.info(`Outputs set - PR: ${pr_number}, Branch: ${target_branch}`);
+          } catch (error) {
+            core.setFailed(`Script failed: ${error.message}`);
+          }
