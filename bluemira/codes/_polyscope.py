@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -104,7 +104,7 @@ def show_cad(
 
     if None in part_options:
         part_options = [
-            DefaultDisplayOptions() if o is None else o for o in part_options
+            asdict(DefaultDisplayOptions()) if o is None else o for o in part_options
         ]
 
     transparency = "none"

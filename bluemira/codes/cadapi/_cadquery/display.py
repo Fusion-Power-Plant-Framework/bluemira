@@ -15,7 +15,7 @@ Display helpers for the CadQuery backend.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -179,7 +179,7 @@ def show_cad(
     # Allows separate defaults to polyscope
     if None in part_options:
         part_options = [
-            DefaultDisplayOptions() if o is None else o for o in part_options
+            asdict(DefaultDisplayOptions()) if o is None else o for o in part_options
         ]
 
     ps_backend.show_cad(
