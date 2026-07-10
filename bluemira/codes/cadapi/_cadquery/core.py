@@ -2051,6 +2051,12 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
 
     compound = cq.Shape.cast(algo.Shape())
 
+    # if not compound.isValid():
+    #     break
+    #     solids = _collect_subshapes(compound, cq.Solid)
+    #     if all(isinstance(s, cq.Solid) for s in solids):
+    #         compound = make_compound([_reconstruct_solid(s) for s in solids])
+
     # Build fragment map: for each input, collect its Modified/Generated outputs.
     # If a shape is unmodified (no intersection), its list is empty — matching
     # FreeCAD's generalFuse behaviour where unmodified shapes yield [].
@@ -2059,6 +2065,12 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
         frags = [cq.Shape.cast(t) for t in algo.Modified(s.wrapped)]
         if not frags:
             frags = [cq.Shape.cast(t) for t in algo.Generated(s.wrapped)]
+        frags = [
+            f
+            if f.isValid()
+            else (_reconstruct_solid(f) if isinstance(f, cq.Solid) else f)
+            for f in frags
+        ]
         fragment_map.append(frags)
 
     return compound, fragment_map
