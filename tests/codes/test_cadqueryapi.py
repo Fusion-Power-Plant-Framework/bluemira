@@ -1010,19 +1010,59 @@ class TestInternalHelpers:
         assert len(unified.Edges()) == len(clean.Edges())
 
     @patch(f"{CORE}.bluemira_warn")
-    @patch(f"{CORE}.ShapeUpgrade_UnifySameDomain")
-    def test_unify_same_domain_exception(self, mock_unify, mock_warn):
-        """Exceptions are caught."""
-        unifier = MagicMock()
-        unifier.Build.side_effect = RuntimeError("Fake Error")
-        mock_unify.return_value = unifier
+    def test_unify_same_domain_exception(self, mock_warn):
+        """A failure in clean() is caught and the input shape returned unchanged."""
+        shape = MagicMock()
+        shape.clean.side_effect = RuntimeError("Fake Error")
 
-        box = _make_box()
-        result = cadapi._unify_same_domain(box)
+        result = cadapi._unify_same_domain(shape)
 
         mock_warn.assert_called_once()
         assert "UnifySameDomain failed" in mock_warn.call_args[0][0]
-        assert result is box
+        assert result is shape
+
+    # ---- _align_faces_coaxis / co-axis boolean_fuse -----------------------------
+
+    @staticmethod
+    def _xz_face(pts):
+        """Planar face in the xz-plane from a list of (x, 0, z) points."""
+        return cadapi.make_face(cadapi.make_polygon(pts).close())
+
+    def test_align_faces_coaxis_reverses_antiparallel(self):
+        """A face whose normal is anti-parallel to the first is reversed to match."""
+        a = self._xz_face([[0, 0, 0], [2, 0, 0], [2, 0, 2], [0, 0, 2]])
+        b = self._xz_face([[1, 0, 1], [1, 0, 3], [3, 0, 3], [3, 0, 1]])
+        assert np.dot(cadapi.normal_at(a), cadapi.normal_at(b)) < 0
+
+        aligned = cadapi._align_faces_coaxis([a, b])
+        ref = cadapi._face_normal(aligned[0])
+        assert np.dot(cadapi._face_normal(aligned[1]), ref) > 0
+
+    def test_align_faces_coaxis_leaves_aligned_unchanged(self):
+        """Already co-axis faces are returned unchanged (same objects, no reversal)."""
+        a = self._xz_face([[0, 0, 0], [2, 0, 0], [2, 0, 2], [0, 0, 2]])
+        b = self._xz_face([[1, 0, 0], [3, 0, 0], [3, 0, 2], [1, 0, 2]])
+        assert np.dot(cadapi.normal_at(a), cadapi.normal_at(b)) > 0
+
+        aligned = cadapi._align_faces_coaxis([a, b])
+        assert aligned[0] is a
+        assert aligned[1] is b
+
+    def test_boolean_fuse_faces_opposite_normals_single_face(self):
+        """Overlapping coplanar faces with anti-parallel normals fuse to one face.
+
+        Regression: faces built from boolean results come out with a flipped
+        normal relative to plain polygons (e.g. the lower-port KOZ vs the
+        upper/eq-port KOZs). OCC's fuse then yields a multi-face compound and
+        boolean_fuse used to raise "gives more than one face".
+        """
+        a = self._xz_face([[0, 0, 0], [2, 0, 0], [2, 0, 2], [0, 0, 2]])
+        b = self._xz_face([[1, 0, 1], [1, 0, 3], [3, 0, 3], [3, 0, 1]])
+        assert np.dot(cadapi.normal_at(a), cadapi.normal_at(b)) < 0
+
+        fused = cadapi.boolean_fuse([a, b])
+        assert isinstance(fused, cq.Face)
+        assert len(fused.Faces()) == 1
 
     # ---- _assemble_wires_from_edges -----------------------------------------------
 
