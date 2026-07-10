@@ -1594,28 +1594,75 @@ def extrude_shape(shape: apiShape, vec) -> apiShape:
 # ---------------------------------------------------------------------------
 
 
+def _face_normal(face: apiFace) -> np.ndarray:
+    """Oriented unit normal of a planar face (accounts for face orientation)."""
+    normal = normal_at(face)
+    if face.wrapped.Orientation() == TopAbs_REVERSED:
+        normal = -normal
+    return normal
+
+
+def _align_faces_coaxis(faces: list) -> list:
+    """Reverse planar faces whose normal is anti-parallel to the first face.
+
+    OCC's boolean fuse treats coplanar faces of opposite orientation as separate
+    domains and refuses to merge them, yielding a multi-face compound. Faces built
+    from boolean results routinely come out with a flipped normal relative to plain
+    polygons, so we align them first — mirroring the FreeCAD backend's
+    ``_make_shapes_coaxis``. Already-aligned inputs are returned unchanged.
+    """
+    ref = _face_normal(faces[0])
+    aligned = [faces[0]]
+    reversed_any = False
+    for face in faces[1:]:
+        if np.dot(_face_normal(face), ref) < 0:
+            aligned.append(reverse_shape(face))
+            reversed_any = True
+        else:
+            aligned.append(face)
+    if reversed_any:
+        bluemira_warn(
+            "Boolean fuse on faces that are not co-axis. Reversing to align normals."
+        )
+    return aligned
+
+
+def _merge_fused_faces(result: apiShape, shapes: list) -> apiShape:
+    """Collapse a compound of fused coplanar faces into a single face.
+
+    Overlapping co-axis faces merge via UnifySameDomain; faces that merely touch
+    at an edge need sewing first to establish shared edges. Returns the merged
+    face, or the unchanged compound if neither approach yields a single face.
+    """
+    unified = _unify_same_domain(result)
+    if isinstance(unified, cq.Face):
+        return unified
+    unified_faces = _collect_subshapes(unified, cq.Face)
+    if len(unified_faces) == 1:
+        return unified_faces[0]
+    out = shapes
+    for _ in range(2):
+        out = _sew_shapes(out)
+        if isinstance(out, cq.Face):
+            return out
+        sewn_faces = _collect_subshapes(out, cq.Face)
+        if len(sewn_faces) == 1:
+            return sewn_faces[0]
+    return result
+
+
 def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     """Boolean union of a list of shapes."""
     if not isinstance(shapes, list):
         raise TypeError(f"{shapes} is not a list.")
     if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes required.")
+    if all(isinstance(s, cq.Face) for s in shapes):
+        shapes = _align_faces_coaxis(shapes)
     result = shapes[0].fuse(*shapes[1:])
 
     if all(isinstance(s, cq.Face) for s in shapes) and isinstance(result, cq.Compound):
-        out = shapes
-        for _ in range(2):
-            out = _sew_shapes(out)
-            if isinstance(out, cq.Face):
-                result = out
-                break
-            unified_faces = _collect_subshapes(out, cq.Face)
-            if len(unified_faces) == 1:
-                out = unified_faces[0]
-                if isinstance(out, cq.Face):
-                    result = out
-                    break
-
+        result = _merge_fused_faces(result, shapes)
     elif remove_splitter:
         result = _unify_same_domain(result)
 
