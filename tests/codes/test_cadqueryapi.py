@@ -1048,6 +1048,25 @@ class TestInternalHelpers:
         assert aligned[0] is a
         assert aligned[1] is b
 
+    def test_align_faces_coaxis_skips_non_planar(self):
+        """One non-planar face disables alignment for the whole list.
+
+        ``_face_normal`` samples the normal at one point; on a curved face that is
+        a meaningless coaxis criterion, so alignment is skipped. ``a`` and ``b`` are
+        anti-parallel (would normally be reversed to match) — the curved face is
+        what keeps ``b`` untouched here.
+        """
+        a = self._xz_face([[0, 0, 0], [2, 0, 0], [2, 0, 2], [0, 0, 2]])
+        b = self._xz_face([[1, 0, 1], [1, 0, 3], [3, 0, 3], [3, 0, 1]])
+        assert np.dot(cadapi._face_normal(a), cadapi._face_normal(b)) < 0
+        curved = next(
+            f for f in cq.Solid.makeCylinder(1.0, 2.0).Faces() if f.geomType() != "PLANE"
+        )
+        aligned = cadapi._align_faces_coaxis([a, b, curved])
+        assert aligned[0] is a
+        assert aligned[1] is b  # not reversed — the curved face disabled alignment
+        assert aligned[2] is curved
+
     def test_boolean_fuse_faces_opposite_normals_single_face(self):
         """Overlapping coplanar faces with anti-parallel normals fuse to one face.
 
