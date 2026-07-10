@@ -1713,6 +1713,8 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
         if all(isinstance(s, cq.Solid) for s in shapes):
             solids = _collect_subshapes(result, cq.Solid)
             if len(solids) == 1:
+                if not solids[0].isValid():
+                    return _reconstruct_solid(solids[0])
                 return solids[0]
             if len(solids) > 1:
                 raise GeometryError(
@@ -1720,6 +1722,58 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
                 )
 
     return result
+
+
+def _reconstruct_solid(cq_solid: apiSolid):
+    sh = _collect_subshapes(cq_solid, cq.Shell)
+    print("Solid", cq_solid.isValid(), cq_solid.Orientation)
+    if len(sh) > 1:
+        raise NotImplementedError
+    ss = sh[0]
+    print("Shell", ss.isValid(), ss.Orientation, ss)
+    fc = _collect_subshapes(ss, cq.Face)
+    new_faces = []
+    for f in fc:
+        print("Face", f.isValid(), f.Orientation)
+        if not f.isValid():
+            wc = _collect_subshapes(f, cq.Wire)
+            if len(wc) > 1:
+                # probably face with a hole in
+                raise NotImplementedError
+            w = wc[0]
+            print("Wire", w.isValid(), w.Orientation)
+            new_face = _face_from_wires_tolerant(wire_from_edges(w.Edges()), [])
+            import ipdb
+
+            ipdb.set_trace()
+            print("New face", new_face.isValid(), new_face.Orientation)
+            new_faces.append(new_face)
+        else:
+            new_faces.append(f)
+
+    shell = make_shell(new_faces)
+    print("new shell", shell.isValid(), shell.Orientation)
+    solid = make_solid(shell)
+    print("new solid", solid.isValid(), solid.Orientation)
+    if not solid.isValid():
+        sh = _collect_subshapes(solid, cq.Shell)
+        print("Solid", solid.isValid(), solid.Orientation)
+        for ss in sh:
+            print("Shell", ss.isValid(), ss.Orientation)
+            sh2 = _collect_subshapes(ss, cq.Shell)
+            for _sh in sh2:
+                print("inner shells", _sh.isValid(), _sh.Orientation)
+                fc = _collect_subshapes(_sh, cq.Face)
+                for f in fc:
+                    print("Face", f.isValid(), f.Orientation)
+                    if not f.isValid():
+                        wc = _collect_subshapes(f, cq.Wire)
+                        for w in wc:
+                            print("Wire", w.isValid(), w.Orientation)
+                            edges = w.Edges()
+                            for e in edges:
+                                print("Edge", e.isValid(), e.Orientation)
+    return solid
 
 
 def _sew_shapes(s_to_sew, tolerance=1e-5):
