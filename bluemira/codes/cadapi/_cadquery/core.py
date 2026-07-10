@@ -1620,7 +1620,14 @@ def _align_faces_coaxis(faces: list) -> list:
     from boolean results routinely come out with a flipped normal relative to plain
     polygons, so we align them first — mirroring the FreeCAD backend's
     ``_make_shapes_coaxis``. Already-aligned inputs are returned unchanged.
+
+    Coaxis alignment only makes sense for planar faces: a curved face has no single
+    normal, so ``_face_normal`` (sampled at one point) can't judge its orientation.
+    If any face is non-planar the list is returned untouched, matching FreeCAD's
+    ``findPlane``-based check which applies only to planar shapes.
     """
+    if not all(face.geomType() == "PLANE" for face in faces):
+        return faces
     ref = _face_normal(faces[0])
     aligned = [faces[0]]
     reversed_any = False
