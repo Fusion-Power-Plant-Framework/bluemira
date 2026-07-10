@@ -57,9 +57,9 @@ from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec
 
 from bluemira.codes.cadapi._cadquery.aliases import (
     _ANGLE_PARALLEL_TOL,
-    apiCompound,
     apiShape,
 )
+from bluemira.codes.cadapi._cadquery.core import make_compound
 from bluemira.codes.error import CadQueryError
 
 if TYPE_CHECKING:
@@ -114,16 +114,6 @@ class CADFileType(enum.Enum):
     @classmethod
     def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         return ()
-
-
-def make_compound(shapes: list[apiShape]) -> apiCompound:
-    """Make a compound of multiple shapes."""
-    comp = TopoDS_Compound()
-    b = BRep_Builder()
-    b.MakeCompound(comp)
-    for s in shapes:
-        b.Add(comp, s.wrapped)
-    return cq.Shape.cast(comp)
 
 
 def _set_step_header_author(model):

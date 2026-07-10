@@ -22,7 +22,7 @@ from typing import TYPE_CHECKING
 
 import cadquery as cq
 import numpy as np
-from OCP.BRep import BRep_Tool
+from OCP.BRep import BRep_Builder, BRep_Tool
 from OCP.BRepAdaptor import (
     BRepAdaptor_CompCurve,
     BRepAdaptor_Curve,
@@ -75,7 +75,7 @@ from OCP.TopAbs import (
 )
 from OCP.TopExp import TopExp_Explorer
 from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
-from OCP.TopoDS import TopoDS
+from OCP.TopoDS import TopoDS, TopoDS_Compound
 from OCP.gp import (
     gp_Ax1,
     gp_Ax2,
@@ -1240,6 +1240,16 @@ def make_solid(shell: apiShell) -> apiSolid:
     """Create a solid from a shell."""
     builder = BRepBuilderAPI_MakeSolid(shell.wrapped)
     return cq.Solid(builder.Solid())
+
+
+def make_compound(shapes: list[apiShape]) -> apiCompound:
+    """Make a compound of multiple shapes."""
+    comp = TopoDS_Compound()
+    b = BRep_Builder()
+    b.MakeCompound(comp)
+    for s in shapes:
+        b.Add(comp, s.wrapped)
+    return cq.Shape.cast(comp)
 
 
 # ---------------------------------------------------------------------------
