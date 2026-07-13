@@ -82,7 +82,7 @@ class TestExtrudeOrientation:
         [0.5, 0, -0.5],
     )
 
-    @pytest.fixture(autouse=True)  # noqa: RUF076
+    @pytest.fixture(autouse=True)
     def _setup(self, extrusion):
         profile = cadapi.make_polygon(self.VERTS)
         face = cadapi.apiFace(profile)
