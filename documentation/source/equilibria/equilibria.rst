@@ -499,6 +499,32 @@ common to apply a set of magnetic constraints to the equilibrium problem. These 
 based on measurements from experiments or based on some design criteria the user wishes
 to meet.
 
+A list of available equilibrium constraints are:
+
+.. currentmodule:: bluemira.equilibria.optimisation.constraints
+
+.. autosummary::
+   :nosignatures:
+
+   UpdateableConstraint
+   FieldConstraints
+   CoilFieldConstraints
+   CoilForceConstraints
+   MagneticConstraint
+   AbsoluteMagneticConstraint
+   RelativeMagneticConstraint
+   FieldNullConstraint
+   VerticalFieldConstraint
+   RadialFieldConstraint
+   PsiConstraint
+   DPsiDxConstraint
+   DPsiDzConstraint
+   IsofluxConstraint
+   PsiBoundaryConstraint
+   MagneticConstraintSet
+   AutoConstraints
+
+
 A ``MagneticConstraintSet`` can be sub-classed or initialised with ``MagneticConstraints``.
 
 Two categories of magnetic constraints are supported: absolute and relative magnetic
