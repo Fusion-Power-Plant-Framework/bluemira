@@ -54,12 +54,12 @@ class TestEqAnalysis:
         cls.diag_ops_1 = EqDiagnosticOptions(
             psi_diff=PsiPlotType.PSI_ABS_DIFF,
             split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
-            plot_mask=EqPlotMask.IN_LCFS,
+            plot_mask=EqPlotMask.LCFS_IN,
         )
         cls.diag_ops_2 = EqDiagnosticOptions(
             psi_diff=PsiPlotType.PSI_ABS_DIFF,
             split_psi_plots=EqSubplots.XZ,
-            plot_mask=EqPlotMask.IN_LCFS,
+            plot_mask=EqPlotMask.LCFS_IN,
         )
 
     def test_select_eq(self):
