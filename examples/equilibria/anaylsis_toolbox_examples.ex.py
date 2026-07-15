@@ -180,7 +180,7 @@ diag_ops_1 = EqDiagnosticOptions(
 diag_ops_2 = EqDiagnosticOptions(
     psi_diff=PsiPlotType.PSI_REL_DIFF,
     split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
-    plot_mask=EqPlotMask.REF_LCFS_IN,
+    plot_mask=EqPlotMask.MASK_VALUES_INSIDE_REF_LCFS,
 )
 # Here we create our two analysis classes
 eq_analysis_1 = EqAnalysis(

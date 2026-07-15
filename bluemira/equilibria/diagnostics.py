@@ -102,17 +102,17 @@ class EqPlotMask(Flag):
 
     NONE = auto()
     "No mask."
-    LCFS_IN = auto()
+    MASK_VALUES_INSIDE_CHOSEN_LCFS = auto()
     """Mask out values inside chosen LCFS."""
-    LCFS_OUT = auto()
+    MASK_VALUES_OUTSIDE_CHOSEN_LCFS = auto()
     """Mask out values outside chosen LCFS."""
-    REF_LCFS_IN = auto()
+    MASK_VALUES_INSIDE_REF_LCFS = auto()
     """Mask out values inside reference LCFS."""
-    REF_LCFS_OUT = auto()
+    MASK_VALUES_OUTSIDE_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
-    COMBO_LCFS_IN = auto()
+    MASK_VALUES_INSIDE_COMBO_LCFS = auto()
     """Mask out values inside chosen and reference LCFS."""
-    COMBO_LCFS_OUT = auto()
+    MASK_VALUES_OUTSIDE_COMBO_LCFS = auto()
     """Mask out values outside chosen and reference LCFS."""
     DIV_AREA = (
         auto()
@@ -122,20 +122,30 @@ class EqPlotMask(Flag):
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
     """Mask out the values outside a chosen polygon area."""
-    INPUT = LCFS_IN | LCFS_OUT
-    REF = REF_LCFS_IN | REF_LCFS_OUT
-    COMBO = COMBO_LCFS_IN | COMBO_LCFS_OUT
+    INPUT = MASK_VALUES_INSIDE_CHOSEN_LCFS | MASK_VALUES_OUTSIDE_CHOSEN_LCFS
+    REF = MASK_VALUES_INSIDE_REF_LCFS | MASK_VALUES_OUTSIDE_REF_LCFS
+    COMBO = MASK_VALUES_INSIDE_COMBO_LCFS | MASK_VALUES_OUTSIDE_COMBO_LCFS
     LCFS = (
-        REF_LCFS_IN
-        | REF_LCFS_OUT
-        | LCFS_IN
-        | LCFS_OUT
-        | COMBO_LCFS_IN
-        | COMBO_LCFS_OUT
+        MASK_VALUES_INSIDE_REF_LCFS
+        | MASK_VALUES_OUTSIDE_REF_LCFS
+        | MASK_VALUES_INSIDE_CHOSEN_LCFS
+        | MASK_VALUES_OUTSIDE_CHOSEN_LCFS
+        | MASK_VALUES_INSIDE_COMBO_LCFS
+        | MASK_VALUES_OUTSIDE_COMBO_LCFS
         | NONE
     )
-    IN = LCFS_IN | REF_LCFS_IN | COMBO_LCFS_IN
-    OUT = LCFS_OUT | REF_LCFS_OUT | COMBO_LCFS_OUT | DIV_AREA | POLYGON
+    MASK_INSIDE = (
+        MASK_VALUES_INSIDE_CHOSEN_LCFS
+        | MASK_VALUES_INSIDE_REF_LCFS
+        | MASK_VALUES_INSIDE_COMBO_LCFS
+    )
+    MASK_OUTSIDE = (
+        MASK_VALUES_OUTSIDE_CHOSEN_LCFS
+        | MASK_VALUES_OUTSIDE_REF_LCFS
+        | MASK_VALUES_OUTSIDE_COMBO_LCFS
+        | DIV_AREA
+        | POLYGON
+    )
 
 
 class InterpGrid(Enum):
