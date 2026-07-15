@@ -102,17 +102,17 @@ class EqPlotMask(Flag):
 
     NONE = auto()
     "No mask."
-    MASK_VALUES_INSIDE_CHOSEN_LCFS = auto()
+    INSIDE_CHOSEN_LCFS = auto()
     """Mask out values inside chosen LCFS."""
-    MASK_VALUES_OUTSIDE_CHOSEN_LCFS = auto()
+    OUTSIDE_CHOSEN_LCFS = auto()
     """Mask out values outside chosen LCFS."""
-    MASK_VALUES_INSIDE_REF_LCFS = auto()
+    INSIDE_REF_LCFS = auto()
     """Mask out values inside reference LCFS."""
-    MASK_VALUES_OUTSIDE_REF_LCFS = auto()
+    OUTSIDE_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
-    MASK_VALUES_INSIDE_COMBO_LCFS = auto()
+    INSIDE_COMBO_LCFS = auto()
     """Mask out values inside chosen and reference LCFS."""
-    MASK_VALUES_OUTSIDE_COMBO_LCFS = auto()
+    OUTSIDE_COMBO_LCFS = auto()
     """Mask out values outside chosen and reference LCFS."""
     DIV_AREA = (
         auto()
@@ -122,29 +122,21 @@ class EqPlotMask(Flag):
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
     """Mask out the values outside a chosen polygon area."""
-    INPUT = MASK_VALUES_INSIDE_CHOSEN_LCFS | MASK_VALUES_OUTSIDE_CHOSEN_LCFS
-    REF = MASK_VALUES_INSIDE_REF_LCFS | MASK_VALUES_OUTSIDE_REF_LCFS
-    COMBO = MASK_VALUES_INSIDE_COMBO_LCFS | MASK_VALUES_OUTSIDE_COMBO_LCFS
+    INPUT = INSIDE_CHOSEN_LCFS | OUTSIDE_CHOSEN_LCFS
+    REF = INSIDE_REF_LCFS | OUTSIDE_REF_LCFS
+    COMBO = INSIDE_COMBO_LCFS | OUTSIDE_COMBO_LCFS
     LCFS = (
-        MASK_VALUES_INSIDE_REF_LCFS
-        | MASK_VALUES_OUTSIDE_REF_LCFS
-        | MASK_VALUES_INSIDE_CHOSEN_LCFS
-        | MASK_VALUES_OUTSIDE_CHOSEN_LCFS
-        | MASK_VALUES_INSIDE_COMBO_LCFS
-        | MASK_VALUES_OUTSIDE_COMBO_LCFS
+        INSIDE_REF_LCFS
+        | OUTSIDE_REF_LCFS
+        | INSIDE_CHOSEN_LCFS
+        | OUTSIDE_CHOSEN_LCFS
+        | INSIDE_COMBO_LCFS
+        | OUTSIDE_COMBO_LCFS
         | NONE
     )
-    MASK_INSIDE = (
-        MASK_VALUES_INSIDE_CHOSEN_LCFS
-        | MASK_VALUES_INSIDE_REF_LCFS
-        | MASK_VALUES_INSIDE_COMBO_LCFS
-    )
-    MASK_OUTSIDE = (
-        MASK_VALUES_OUTSIDE_CHOSEN_LCFS
-        | MASK_VALUES_OUTSIDE_REF_LCFS
-        | MASK_VALUES_OUTSIDE_COMBO_LCFS
-        | DIV_AREA
-        | POLYGON
+    INSIDE = INSIDE_CHOSEN_LCFS | INSIDE_REF_LCFS | INSIDE_COMBO_LCFS
+    OUTSIDE = (
+        OUTSIDE_CHOSEN_LCFS | OUTSIDE_REF_LCFS | OUTSIDE_COMBO_LCFS | DIV_AREA | POLYGON
     )
 
 
