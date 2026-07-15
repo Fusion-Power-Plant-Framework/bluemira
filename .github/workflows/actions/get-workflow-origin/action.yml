@@ -30,7 +30,7 @@ runs:
             }
             else if (event.workflow_run) {
               const head_sha = event.workflow_run.head_commit.id;
-              core.info(`Looking for PR with commit: ${event.workflow_run.head_commit.id}`);
+              core.info(`Looking for PR with commit: ${head_sha}`);
 
               // Find PR linked to the commit that triggered the workflow
               const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
@@ -52,7 +52,7 @@ runs:
                 target_branch = pr.base.ref;
               }
               else {
-                core.warning(`No PR found for commit ${context.sha}`);
+                core.warning(`No PR found for commit ${head_sha}`);
               }
             }
 
