@@ -1397,11 +1397,11 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def apply_mask(self, mask_type):
         """Apply mask to psi."""
-        if mask_type in EqPlotMask.IN:
+        if mask_type in EqPlotMask.MASK_INSIDE:
             self.coilset_psi *= self.mask
             self.plasma_psi *= self.mask
             self.total_psi *= self.mask
-        elif mask_type in EqPlotMask.OUT:
+        elif mask_type in EqPlotMask.MASK_OUTSIDE:
             self.coilset_psi *= abs(self.mask - 1)
             self.plasma_psi *= abs(self.mask - 1)
             self.total_psi *= abs(self.mask - 1)
