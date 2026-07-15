@@ -445,24 +445,46 @@ class TestShortCoordinates:
         assert len(caplog.messages) == 1
         assert "Cannot open Coordinates" in caplog.messages[0]
 
-    @pytest.mark.parametrize("c", [deepcopy(line)])
-    def test_shift_start(self, caplog, c):
-        c.shift_start([0.5, 0.5, 0.5])
-        assert "There is no point at this location." in caplog.messages[0]
-        assert "Doing nothing to coordinates start location." in caplog.messages[1]
-        c.insert(point=np.array([0.5, 0.5, 0.5]), index=2)
-        c.shift_start([0.5, 0.5, 0.5])
-        assert c == Coordinates([[0.5, 0.0, 1.0], [0.5, 0.0, 1.0], [0.5, 0.0, 1.0]])
+    @pytest.mark.parametrize(
+        ("coord", "coord_test", "coord_test_2"),
+        [
+            (
+                deepcopy(point),
+                Coordinates([[0.0], [0.0], [0.0]]),
+                Coordinates([[0.5, 0.0], [0.5, 0.0], [0.5, 0.0]]),
+            ),
+            (
+                deepcopy(line),
+                Coordinates([[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]),
+                Coordinates([[0.5, 1.0, 0.0], [0.5, 1.0, 0.0], [0.5, 1.0, 0.0]]),
+            ),
+        ],
+    )
+    def test_shift_start(self, coord, coord_test, coord_test_2):
+        coord.shift_start([0.5, 0.5, 0.5])
+        assert coord == coord_test
+        coord.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
+        coord.shift_start([0.5, 0.5, 0.5])
+        assert coord == coord_test_2
 
-    @pytest.mark.parametrize("c", [deepcopy(line)])
-    def test_split_open(self, caplog, c):
-        _ = c.split_open([0.5, 0.5, 0.5])
-        assert "There is no point at this location." in caplog.messages[0]
-        assert "Can not split coordinates." in caplog.messages[1]
-        c.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
-        c1, c2 = c.split_open([0.5, 0.5, 0.5])
-        assert c1 == Coordinates({"x": [0], "y": [0], "z": [0]})
-        assert c2 == Coordinates({"x": [0.5, 1], "y": [0.5, 1], "z": [0.5, 1]})
+    @pytest.mark.parametrize("coord", [deepcopy(point), deepcopy(line)])
+    def test_split_open(self, coord):
+        c1, c2 = coord.split_open([0.5, 0.5, 0.5])
+        assert (
+            c1 == coord if len(coord.x) < 2 else c1 == Coordinates([[0.0], [0.0], [0.0]])
+        )
+        assert (
+            c2 is None if len(coord.x) < 2 else c2 == Coordinates([[1.0], [1.0], [1.0]])
+        )
+        c1, c2 = coord.split_open([0.6, 0.6, 0.6])
+        assert c1 == coord
+        assert c2 is None
+        coord.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
+        c1, c2 = coord.split_open([0.5, 0.5, 0.5])
+        assert c1 == Coordinates([[0.0, 0.5], [0.0, 0.5], [0.0, 0.5]])
+        assert (
+            c2 is None if len(coord.x) < 3 else c2 == Coordinates([[1.0], [1.0], [1.0]])
+        )
 
     @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_check_ccw(self, c):

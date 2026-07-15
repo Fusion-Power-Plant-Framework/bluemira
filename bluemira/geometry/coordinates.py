@@ -1594,7 +1594,7 @@ class Coordinates:  # noqa: PLR0904
         Will set to open if coords are closed.
         """
         point = np.array(point)
-        idx = len(self._array[0]) - self.argmin(point) - 1
+        idx = len(self._array[0]) - self.argmin(point)
         self._array = np.roll(self._array, idx)
 
     def split_open(self, point: npt.ArrayLike):
@@ -1606,17 +1606,26 @@ class Coordinates:  # noqa: PLR0904
         -------
         :
             Coordinates from start of input coordinates up to
-            (but not including) user chosen point
+            and including user chosen point
         :
             Coordinates from user chosen point to the end of the
             input coordinates
         """
+        if len(self._array[0]) < 2:  # noqa: PLR2004
+            bluemira_warn("Can not split a single point.")
+            return (Coordinates(self._array), None)
+
         point = np.array(point)
-        idx = self.argmin(point)
-        return [
-            Coordinates(self._array[:, : idx[0]]),
-            Coordinates(self._array[:, idx[0] :]),
-        ]
+        idx = self.argmin(point) + 1
+
+        if idx == len(self._array[0]):
+            bluemira_warn("Can not split. Input point is at the last index of array.")
+            return (Coordinates(self._array[:, :idx]), None)
+
+        return (
+            Coordinates(self._array[:, :idx]),
+            Coordinates(self._array[:, idx:]),
+        )
 
     def insert(self, point: np.ndarray, index: int = 0):
         """
