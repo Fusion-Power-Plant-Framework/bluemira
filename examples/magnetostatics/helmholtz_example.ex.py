@@ -35,6 +35,9 @@ Simple HelmholzCage example with different current sources.
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.display import plot_2d
+from bluemira.display.plotter import PlotOptions
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, offset_wire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import (
@@ -48,15 +51,18 @@ from bluemira.utilities.plot_tools import Plot3D
 # Set up some geometry and key parameters
 
 # %%
-n_TF = 6
+n_TF = 12
 current = 20e6
 breadth = 0.5
-depth = 1.0
+depth = 0.5
 radius = 6
 x_c = 9
 z_c = 0
 
 circle = make_circle(radius, center=(x_c, 0, z_c), axis=(0, 1, 0))
+inner_circle = make_circle(radius - breadth, center=(x_c, 0, z_c), axis=(0, 1, 0))
+outer_circle = make_circle(radius + breadth, center=(x_c, 0, z_c), axis=(0, 1, 0))
+tf_xz_shape = BluemiraFace([outer_circle, inner_circle])
 
 # %% [markdown]
 # Make a Biot-Savart filament (which needs to be properly discretised)
@@ -139,22 +145,52 @@ x = np.linspace(0, 18, nx)
 z = np.linspace(0, 14, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
 
-biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
-analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
-analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
+# biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
+# analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
+# analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
 
-biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
-analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
-analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
+# biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
+# analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
+# analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
 
+nx, nz = 50, 50
+x = np.linspace(2, 18, nx)
+z = np.linspace(-7.5, 7.5, nz)
+xx, zz = np.meshgrid(x, z, indexing="ij")
+analytical_xz2_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
+analytical_xz2_fields = np.sqrt(np.sum(analytical_xz2_fields**2, axis=0))
+ripple = analytical_tf_cage1.ripple(xx, np.zeros_like(xx), zz)[1]
 # %% [markdown]
 #
 # Let's visualise the results
 
 
 # %%
-def plot_cage_results(cage, xz_fields, xy_fields):
+
+
+def plot_2d_cage_results(xz_fields, label="$B$ [T]"):
+    """
+    Plot utility for contours in 2-D projections in matplotlib.
+    """
+    b_max = np.amax(xz_fields)
+    levels = np.linspace(0, b_max, 20)
+    f, ax = plt.subplots()
+    cm = ax.contourf(xx, zz, xz_fields, levels=levels, cmap="magma", zorder=-1)
+    plot_2d(
+        tf_xz_shape,
+        options=PlotOptions(face_options={"color": "g", "alpha": 0.5}),
+        ax=ax,
+        show=False,
+    )
+    f = plt.gcf()
+    cb0 = f.colorbar(cm)
+    cb0.ax.set_title(label)
+    ax.set_xlabel("x [m]")
+    ax.set_ylabel("z [m]")
+
+
+def plot_3d_cage_results(cage, xz_fields, xy_fields):
     """
     Plot utility for contours in 3-D projections in matplotlib.
     """
@@ -195,8 +231,42 @@ def plot_cage_results(cage, xz_fields, xy_fields):
     ax.set_ylabel("z [m]")
 
 
+ripple_masked = np.ma.masked_outside(ripple, 0, 30.0)
+plot_2d_cage_results(ripple_masked, label=r"$\delta_{TF}$ [%]")
+plt.show()
+
+plot_2d_cage_results(analytical_xz2_fields)
+ax = plt.gca()
+
+one_over_r_2d = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / xx
+ax.contour(
+    xx, zz, one_over_r_2d, levels=20, cmap="viridis", linestyles="dashed", zorder=10
+)
+plt.show()
+x_line = np.linspace(2.0, 18, 100)
+b_analytical_line = analytical_tf_cage1.field(
+    x_line, np.zeros_like(x_line), np.zeros_like(x_line)
+)[1]
+one_over_r = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / x_line
+f, ax = plt.subplots()
+ax.plot(x_line, b_analytical_line, label="Trapezoidal Prism")
+ax.plot(
+    x_line,
+    analytical_tf_cage2.field(x_line, np.zeros_like(x_line), np.zeros_like(x_line))[1],
+    label="Circular Arc",
+)
+ax.plot(x_line, one_over_r, label="1/r", linestyle="dashed")
+ax.plot([2.5, 2.5], [-6, 27], color="k", ls="-.", alpha=0.5)
+ax.plot([3.5, 3.5], [-6, 27], color="k", ls="-.", alpha=0.5)
+ax.plot([15.5, 15.5], [-6, 27], color="k", ls="-.", alpha=0.5)
+ax.plot([14.5, 14.5], [-6, 27], color="k", ls="-.", alpha=0.5)
+ax.set_xlabel("x [m]")
+ax.set_ylim([-5, 25])
+ax.set_ylabel("$B_{T}$ [T]")
+ax.legend()
+plt.show()
 # Plot the two cages and the results in the two planes
-plot_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
-plot_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
-plot_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)
+# plot_3d_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
+# plot_3d_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
+# plot_3d_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)
 plt.show()
