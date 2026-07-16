@@ -78,6 +78,7 @@ params = RippleConstrainedLengthGOPParams.from_dict({
 # %% [markdown]
 # # Set up the opimisation problem
 
+# %%
 problem = RippleConstrainedLengthGOP(
     parameterisation,
     algorithm="SLSQP",
