@@ -89,6 +89,9 @@ biotsavart_circuit = BiotSavartFilament(
     filaments, radius=fil_radius, current=current / (n_filaments_x * n_filaments_y)
 )
 
+biotsavart_circuit.plot()
+plt.show()
+
 # %% [markdown]
 # Make an analytical circuit with a rectangular cross-section comprised
 # of several trapezoidal prism elements
@@ -98,6 +101,9 @@ coordinates = circle.discretise(ndiscr=100, byedges=True)
 analytical_circuit1 = ArbitraryPlanarRectangularXSCircuit(
     coordinates, breadth=breadth, depth=depth, current=current
 )
+
+analytical_circuit1.plot()
+plt.show()
 
 # %% [markdown]
 # Make an analytical circuit of a circle arc with a rectangular cross-section
@@ -115,6 +121,9 @@ analytical_circuit2 = CircularArcCurrentSource(
     current=current,
 )
 
+analytical_circuit1.plot()
+plt.show()
+
 # %% [markdown]
 # Pattern the three circuits into HelmholtzCages
 
@@ -123,8 +132,13 @@ biotsavart_tf_cage = HelmholtzCage(biotsavart_circuit, n_TF=n_TF)
 analytical_tf_cage1 = HelmholtzCage(analytical_circuit1, n_TF=n_TF)
 analytical_tf_cage2 = HelmholtzCage(analytical_circuit2, n_TF=n_TF)
 
+# Let's look at the circular arc cage
+analytical_tf_cage2.plot()
+plt.show()
+
 # %% [markdown]
-# Calculate the fields in the x-y and x-z planes
+# Calculate the fields in the x-y and x-z planes for the three different
+# source terms
 
 # %%
 nx, ny = 50, 50
@@ -145,22 +159,30 @@ x = np.linspace(0, 18, nx)
 z = np.linspace(0, 14, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
 
-# biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
-# analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
-# analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
+biotsavart_xz_fields = biotsavart_tf_cage.field(xx, np.zeros_like(xx), zz)
+analytical_xz_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
+analytical_xz_fields2 = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
 
-# biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
-# analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
-# analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
+# Note we are going to look at |B|, not B_T
+biotsavart_xz_fields = np.sqrt(np.sum(biotsavart_xz_fields**2, axis=0))
+analytical_xz_fields = np.sqrt(np.sum(analytical_xz_fields**2, axis=0))
+analytical_xz_fields2 = np.sqrt(np.sum(analytical_xz_fields2**2, axis=0))
 
+# %% [markdown]
+# Calculate the toroidal field ripple in the x-z plane
 
+# %%
 nx, nz = 50, 50
 x = np.linspace(2, 18, nx)
 z = np.linspace(-7.5, 7.5, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
-analytical_xz2_fields = analytical_tf_cage1.field(xx, np.zeros_like(xx), zz)
+analytical_xz2_fields = analytical_tf_cage2.field(xx, np.zeros_like(xx), zz)
 analytical_xz2_fields = np.sqrt(np.sum(analytical_xz2_fields**2, axis=0))
-ripple = analytical_tf_cage1.ripple(xx, np.zeros_like(xx), zz)[1]
+ripple = analytical_tf_cage2.ripple(xx, np.zeros_like(xx), zz)[1]
+
+# We're going to mask the ripple as it can become non-sensical outside the TF
+# coil region (0 - 0) / (0 + 0)
+ripple_masked = np.ma.masked_outside(ripple, 0, 30.0)
 # %% [markdown]
 #
 # Let's visualise the results
@@ -231,28 +253,36 @@ def plot_3d_cage_results(cage, xz_fields, xy_fields):
     ax.set_ylabel("z [m]")
 
 
-ripple_masked = np.ma.masked_outside(ripple, 0, 30.0)
+# %%
 plot_2d_cage_results(ripple_masked, label=r"$\delta_{TF}$ [%]")
 plt.show()
 
+# %% [markdown]
+# Compare the toroidal field from the current sources in 2-D and
+# along the midplane with the analytical 1/r model
+
+# %%
 plot_2d_cage_results(analytical_xz2_fields)
 ax = plt.gca()
-
 one_over_r_2d = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / xx
 ax.contour(
     xx, zz, one_over_r_2d, levels=20, cmap="viridis", linestyles="dashed", zorder=10
 )
 plt.show()
+
 x_line = np.linspace(2.0, 18, 100)
-b_analytical_line = analytical_tf_cage1.field(
+b_t_trapezoids = analytical_tf_cage1.field(
+    x_line, np.zeros_like(x_line), np.zeros_like(x_line)
+)[1]
+b_t_circular_arc = analytical_tf_cage2.field(
     x_line, np.zeros_like(x_line), np.zeros_like(x_line)
 )[1]
 one_over_r = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / x_line
 f, ax = plt.subplots()
-ax.plot(x_line, b_analytical_line, label="Trapezoidal Prism")
+ax.plot(x_line, b_t_trapezoids, label="Trapezoidal Prism")
 ax.plot(
     x_line,
-    analytical_tf_cage2.field(x_line, np.zeros_like(x_line), np.zeros_like(x_line))[1],
+    b_t_circular_arc,
     label="Circular Arc",
 )
 ax.plot(x_line, one_over_r, label="1/r", linestyle="dashed")
@@ -265,8 +295,12 @@ ax.set_ylim([-5, 25])
 ax.set_ylabel("$B_{T}$ [T]")
 ax.legend()
 plt.show()
+
+# %% [markdown]
 # Plot the two cages and the results in the two planes
-# plot_3d_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
-# plot_3d_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
-# plot_3d_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)
+
+# %%
+plot_3d_cage_results(analytical_tf_cage1, analytical_xz_fields, analytical_xy_fields)
+plot_3d_cage_results(analytical_tf_cage2, analytical_xz_fields2, analytical_xy_fields2)
+plot_3d_cage_results(biotsavart_tf_cage, biotsavart_xz_fields, biotsavart_xy_fields)
 plt.show()
