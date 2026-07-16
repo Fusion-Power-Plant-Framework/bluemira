@@ -263,9 +263,20 @@ plt.show()
 plot_2d_cage_results(analytical_xz2_fields)
 ax = plt.gca()
 one_over_r_2d = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / xx
-ax.contour(
-    xx, zz, one_over_r_2d, levels=20, cmap="viridis", linestyles="dashed", zorder=10
+cs = ax.contour(
+    xx,
+    zz,
+    one_over_r_2d,
+    levels=np.linspace(0, np.max(analytical_xz2_fields), 20),
+    cmap="viridis",
+    linestyles="dashed",
+    zorder=10,
 )
+fig = plt.gcf()
+
+# Second colorbar
+cb1 = fig.colorbar(cs, ax=ax, pad=0.12)
+cb1.ax.set_title(r"$\propto 1/r$ [T]")
 plt.show()
 
 x_line = np.linspace(2.0, 18, 200)
@@ -283,7 +294,7 @@ ax.plot(
     b_t_circular_arc,
     label="Circular Arc",
 )
-ax.plot(x_line, one_over_r, label="1/r", linestyle="dashed")
+ax.plot(x_line, one_over_r, label=r"$\propto 1/r$", linestyle="dashed")
 ax.plot([2.5, 2.5], [-6, 27], color="k", ls="-.", alpha=0.5)
 ax.plot([3.5, 3.5], [-6, 27], color="k", ls="-.", alpha=0.5)
 ax.plot([15.5, 15.5], [-6, 27], color="k", ls="-.", alpha=0.5)
