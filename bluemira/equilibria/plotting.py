@@ -1393,7 +1393,8 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             self.grid.x, self.grid.z, mask_matx, input_lcfs.xz.T, include_edges=False
         )
         # Note use '+' as we want any area in ref or input LCFS.
-        return ref_mask + input_mask
+# Note use 'or' as we want any area in ref or input LCFS.
+return np.multiply(np.logical_or(ref_mask, input_mask), 1)
 
     def apply_mask(self, mask_type):
         """Apply mask to psi."""
