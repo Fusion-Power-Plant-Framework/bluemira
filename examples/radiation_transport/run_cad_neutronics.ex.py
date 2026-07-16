@@ -30,13 +30,23 @@ from pathlib import Path
 
 import openmc
 
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.openmc import DAGMCSolver
 from bluemira.codes.openmc.sources import make_tokamak_source
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.materials.cache import establish_material_cache, get_cached_material
 
+try:
+    __file__  # noqa: B018
+except NameError:
+    __file__ = Path(
+        get_bluemira_path("radiation_transport", "examples"), "run_cad_neutronics.ex.py"
+    )
+
+data_par = Path(
+    get_bluemira_path("design", "examples"), "optimised_reactor.ex.py"
+).parent
 par = Path(__file__).parent
 # %% [markdown]
 # # Running a DAGMC model in OpenMC
@@ -44,9 +54,9 @@ par = Path(__file__).parent
 # %%
 # OptimisedReactor can be exported by running examples/design/optimised_reactor.ex.py
 # Change this to the name of your DAGMC model
-dag_model_path = par / "OptimisedReactor.h5m"
-meta_data_path = par / "OptimisedReactor.meta.json"
-eq_data_path = par / "OptimisedReactor.eq.json"
+dag_model_path = data_par / "OptimisedReactor.h5m"
+meta_data_path = data_par / "OptimisedReactor.meta.json"
+eq_data_path = data_par / "OptimisedReactor.eq.json"
 
 # %%
 

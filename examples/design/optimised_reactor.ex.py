@@ -36,7 +36,7 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
-from bluemira.base.file import get_bluemira_root
+from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -75,6 +75,11 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import establish_material_cache
 from bluemira.optimisation import Algorithm
+
+try:
+    __file__  # noqa: B018
+except NameError:
+    __file__ = Path(get_bluemira_path("design", "examples"), "optimised_reactor.ex.py")
 
 
 # %%
@@ -473,5 +478,7 @@ r.show_cad(construction_params={"n_sectors": 8})
 r.save_cad(
     cad_format="dagmc",
     construction_params={"without_components": [r.plasma], "group_by_materials": True},
-    directory=Path(__file__).parent,
+    directory=str(Path(__file__).parent),
 )
+
+# %%
