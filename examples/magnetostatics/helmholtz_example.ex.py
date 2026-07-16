@@ -154,7 +154,7 @@ analytical_xy_fields = np.sqrt(np.sum(analytical_xy_fields**2, axis=0))
 analytical_xy_fields2 = np.sqrt(np.sum(analytical_xy_fields2**2, axis=0))
 
 nx, nz = 50, 51
-x = np.linspace(0, 18, nx)
+x = np.linspace(0.001, 18, nx)
 z = np.linspace(-10, 10, nz)
 xx, zz = np.meshgrid(x, z, indexing="ij")
 
@@ -284,7 +284,6 @@ ax.plot(
     label="Circular Arc",
 )
 ax.plot(x_line, one_over_r, label="1/r", linestyle="dashed")
-
 ax.plot([2.5, 2.5], [-6, 27], color="k", ls="-.", alpha=0.5)
 ax.plot([3.5, 3.5], [-6, 27], color="k", ls="-.", alpha=0.5)
 ax.plot([15.5, 15.5], [-6, 27], color="k", ls="-.", alpha=0.5)
