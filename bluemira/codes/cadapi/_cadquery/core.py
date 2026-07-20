@@ -1606,15 +1606,34 @@ def _merge_fused_faces(result: apiShape, shapes: list) -> apiShape:
     unified_faces = _collect_subshapes(unified, cq.Face)
     if len(unified_faces) == 1:
         return unified_faces[0]
-    out = shapes
-    for _ in range(2):
-        out = _sew_shapes(out)
-        if isinstance(out, cq.Face):
-            return out
-        sewn_faces = _collect_subshapes(out, cq.Face)
-        if len(sewn_faces) == 1:
-            return sewn_faces[0]
+    sewn_shapes = _sew_shapes(shapes)
+    if isinstance(sewn_shapes, cq.Face):
+        return sewn_shapes
+    sewn_faces = _collect_subshapes(sewn_shapes, cq.Face)
+    if len(sewn_faces) == 1:
+        return sewn_faces[0]
     return result
+
+
+def _sew_shapes(s_to_sew, tolerance=1e-5):
+    # OCC's fuse on faces that merely touch at an edge produces a Compound
+    # of disconnected faces — UnifySameDomain can't merge them because they
+    # don't share any TopoDS edge. Sew the inputs first to establish edge
+    # sharing, then unify to collapse coplanar neighbours into one face.
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+    for s in s_to_sew:
+        sewing.Add(s.wrapped)
+    sewing.Perform()
+    return _unify_same_domain(cq.Shape.cast(sewing.SewedShape()))
+
+
+def _unify_same_domain(shape: apiShape) -> apiShape:
+    """Merge coplanar connected faces and collinear edges via OCC UnifySameDomain."""
+    try:
+        return shape.clean()
+    except Exception as exc:  # noqa: BLE001
+        bluemira_warn(f"UnifySameDomain failed: {exc}")
+        return shape
 
 
 def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
@@ -1630,7 +1649,7 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     if all(isinstance(s, cq.Face) for s in shapes) and isinstance(result, cq.Compound):
         result = _merge_fused_faces(result, shapes)
     elif remove_splitter:
-        result = _unify_same_domain(result)
+        result = _remove_splitter(result)
 
     # For wire inputs: OCC fuse returns a compound; try to assemble a single wire.
     if all(isinstance(s, cq.Wire) for s in shapes):
@@ -1678,25 +1697,38 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     return result
 
 
-def _sew_shapes(s_to_sew, tolerance=1e-5):
-    # OCC's fuse on faces that merely touch at an edge produces a Compound
-    # of disconnected faces — UnifySameDomain can't merge them because they
-    # don't share any TopoDS edge. Sew the inputs first to establish edge
-    # sharing, then unify to collapse coplanar neighbours into one face.
-    sewing = BRepBuilderAPI_Sewing(tolerance)
-    for s in s_to_sew:
-        sewing.Add(s.wrapped)
-    sewing.Perform()
-    return _unify_same_domain(cq.Shape.cast(sewing.SewedShape()))
+def _remove_splitter(shape: apiShape) -> apiShape:
+    """Drop the splitter faces and edges a boolean leaves behind.
 
+    Tidying up is optional; a correct shape is not. On solids bounded by spline
+    faces the underlying ``UnifySameDomain`` can merge faces it should not and
+    return a shape that fails ``BRepCheck`` and reports a nonsense volume, which
+    downstream is worse than the splitters it removed: the next boolean either
+    yields garbage or dies on a null shape. So refuse a result that is invalid
+    when the input was not.
 
-def _unify_same_domain(shape: apiShape) -> apiShape:
-    """Merge coplanar connected faces and collinear edges via OCC UnifySameDomain."""
+    The guard covers solids only. On faces this same tidy-up doubles as a repair
+    step -- a fused compound of coplanar faces can fail ``isValid`` both before
+    and after while still merging into the one face the caller needs -- so there
+    validity is not a signal that anything went wrong.
+
+    Returns
+    -------
+    :
+        The tidied shape, or the original if tidying failed or broke it.
+    """
     try:
-        return shape.clean()
+        cleaned = shape.clean()
     except Exception as exc:  # noqa: BLE001
-        bluemira_warn(f"UnifySameDomain failed: {exc}")
+        bluemira_warn(f"Splitter removal failed: {exc}")
         return shape
+    has_solids = TopExp_Explorer(shape.wrapped, TopAbs_SOLID).More()
+    if has_solids and shape.isValid() and not cleaned.isValid():
+        bluemira_warn(
+            "Splitter removal turned a valid solid invalid; keeping the split one."
+        )
+        return shape
+    return cleaned
 
 
 def _assemble_wires_from_edges(edges: list) -> list:
