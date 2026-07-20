@@ -329,7 +329,6 @@ ignore-names = [
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 "bluemira/__init__.py" = ["TID252"]
-"bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/model_mapping.py" = ["PLR6301", "DOC201"]
 # cadapi/_cadquery/* is an experimental backend mirroring _freecad/api's
 # surface; several patterns are either inherited from FreeCAD's API
