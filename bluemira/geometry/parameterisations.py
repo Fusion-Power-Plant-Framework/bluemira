@@ -2708,6 +2708,10 @@ class PictureFrame(
 class ProcessDOptVariables(OptVariablesFrame):
     """
     Process D-shaped TF coil geometry parameterisation variables.
+
+    NOTE: The offset parameter is left in here, as PROCESS'
+    description of the TF coil geometry is for the plasma-facing
+    surface of the winding pack, not the current centreline.
     """
 
     x1: OptVariable = ov("x1", 6.0)
