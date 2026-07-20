@@ -37,6 +37,7 @@ from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
     make_circle,
+    make_ellipse,
     make_polygon,
     wire_closure,
 )
@@ -2715,21 +2716,27 @@ class ProcessDOptVariables(OptVariablesFrame):
     """
 
     # Same as x5
-    x1: OptVariable = ov("x1", 3.432064)
-    z1: OptVariable = ov("z1", 4.923935)
+    x1: OptVariable = ov("x1", 3.432064, lower_bound=3.4, upper_bound=5.0)
+    z1: OptVariable = ov("z1", 4.923935, lower_bound=4.0, upper_bound=6.0)
 
     # Same as x4
-    x2: OptVariable = ov("x2", 7.603035)
-    z2: OptVariable = ov("z2", 8.206558)
+    x2: OptVariable = ov("x2", 7.603035, lower_bound=7.0, upper_bound=9.0)
+    z2: OptVariable = ov("z2", 8.206558, lower_bound=7.0, upper_bound=9.0)
 
-    x3: OptVariable = ov("x3", 15.39204)
+    x3: OptVariable = ov("x3", 15.39204, lower_bound=13.0, upper_bound=18.0)
     # z3 is always 0.0
 
-    z4: OptVariable = ov("z4", -9.292868)
+    z4: OptVariable = ov("z4", -9.292868, lower_bound=-10.0, upper_bound=-8.0)
 
-    z5: OptVariable = ov("z5", -5.575721)
+    z5: OptVariable = ov("z5", -5.575721, lower_bound=-6.0, upper_bound=-5.0)
 
-    offset: OptVariable = ov("offset", 0.0)
+    offset: OptVariable = ov(
+        "offset",
+        -0.32754486599153443,
+        lower_bound=-1.0,
+        upper_bound=1.0,
+        description="Offset from the ellipse",
+    )
     dz: OptVariable = ov(
         "dz", 0, lower_bound=-1, upper_bound=1, description="Vertical offset from z=0"
     )
@@ -2767,6 +2774,32 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             z0 + r * np.sin(theta),
         )
 
+    @staticmethod
+    def _make_arc(center, a, b, start, end):
+
+        if a >= b:
+            major = a
+            minor = b
+            major_axis = (1, 0, 0)
+            minor_axis = (0, 0, 1)
+        else:
+            start += 90
+            end += 90
+            major = b
+            minor = a
+            major_axis = (0, 0, 1)
+            minor_axis = (1, 0, 0)
+
+        return make_ellipse(
+            center=center,
+            major_radius=major,
+            minor_radius=minor,
+            major_axis=major_axis,
+            minor_axis=minor_axis,
+            start_angle=start,
+            end_angle=end,
+        )
+
     def create_shape(
         self,
         label: str = "",
@@ -2787,17 +2820,56 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         :
             CAD Wire of the Process D geometry
         """
-        x1, z1, x2, z2, x3, z4, z5, offset, dz = self.variables
+        x1, z1, x2, z2, x3, z4, z5, offset, dz = self.variables.values
 
         n = n_points // 4
+        segments = [
+            # Inboard lower
+            self._make_arc(
+                center=(x2, 0, z5),
+                a=x2 - x1 - offset,
+                b=z5 - z4 - offset,
+                start=-180,
+                end=-90,
+            ),
+            # Outboard lower
+            self._make_arc(
+                center=(x2, 0, 0),
+                a=x3 - x2 - offset,
+                b=-z4 - offset,
+                start=-90,
+                end=0,
+            ),
+            # Outboard upper
+            self._make_arc(
+                center=(x2, 0, 0),
+                a=x3 - x2 - offset,
+                b=z2 - offset,
+                start=0,
+                end=90,
+            ),
+            # Inboard upper
+            self._make_arc(
+                center=(x2, 0, z1),
+                a=x2 - x1 - offset,
+                b=z2 - z1 - offset,
+                start=90,
+                end=180,
+            ),
+        ]
+
+        from bluemira.display import plot_2d
+
+        plot_2d(segments)
+        return BluemiraWire(segments, label=label)
 
         xx1, zz1 = self._ellipse_arc(
             a=x2 - x1 - offset,
             b=z2 - z1 - offset,
             x0=x2,
             z0=z1,
-            ang1=np.pi,
-            ang2=np.pi / 2,
+            theta0=np.pi,
+            theta1=np.pi / 2,
             n=n,
         )
 
@@ -2806,8 +2878,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             b=z2 - offset,
             x0=x2,
             z0=0.0,
-            ang1=np.pi / 2,
-            ang2=0.0,
+            theta0=np.pi / 2,
+            theta1=0.0,
             n=n,
         )
 
@@ -2816,8 +2888,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             b=-z4 - offset,
             x0=x2,
             z0=0.0,
-            ang1=0.0,
-            ang2=-np.pi / 2,
+            theta0=0.0,
+            theta1=-np.pi / 2,
             n=n,
         )
 
@@ -2826,8 +2898,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             b=z5 - z4 - offset,
             x0=x2,
             z0=z5,
-            ang1=-np.pi / 2,
-            ang2=-np.pi,
+            theta0=-np.pi / 2,
+            theta1=-np.pi,
             n=n,
         )
 
