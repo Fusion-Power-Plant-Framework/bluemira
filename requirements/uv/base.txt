@@ -89,7 +89,7 @@ narwhals==2.22.1
     # via scikit-learn
 ndindex==1.10.1
     # via blosc2
-nlopt==2.10.0
+nlopt==2.11.0
     # via bluemira (pyproject.toml)
 numba==0.66.0
     # via
