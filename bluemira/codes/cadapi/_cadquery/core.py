@@ -1622,8 +1622,7 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
                 result = unified_faces[0]
 
     if remove_splitter:
-        with contextlib.suppress(Exception):
-            result = result.clean()
+        result = _remove_splitter(result)
 
     # For wire inputs: OCC fuse returns a compound; try to assemble a single wire.
     if all(isinstance(s, cq.Wire) for s in shapes):
@@ -1669,6 +1668,40 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
                 )
 
     return result
+
+
+def _remove_splitter(shape: apiShape) -> apiShape:
+    """Drop the splitter faces and edges a boolean leaves behind.
+
+    Tidying up is optional; a correct shape is not. On solids bounded by spline
+    faces the underlying ``UnifySameDomain`` can merge faces it should not and
+    return a shape that fails ``BRepCheck`` and reports a nonsense volume, which
+    downstream is worse than the splitters it removed: the next boolean either
+    yields garbage or dies on a null shape. So refuse a result that is invalid
+    when the input was not.
+
+    The guard covers solids only. On faces this same tidy-up doubles as a repair
+    step -- a fused compound of coplanar faces can fail ``isValid`` both before
+    and after while still merging into the one face the caller needs -- so there
+    validity is not a signal that anything went wrong.
+
+    Returns
+    -------
+    :
+        The tidied shape, or the original if tidying failed or broke it.
+    """
+    try:
+        cleaned = shape.clean()
+    except Exception as exc:  # noqa: BLE001
+        bluemira_warn(f"Splitter removal failed: {exc}")
+        return shape
+    has_solids = TopExp_Explorer(shape.wrapped, TopAbs_SOLID).More()
+    if has_solids and shape.isValid() and not cleaned.isValid():
+        bluemira_warn(
+            "Splitter removal turned a valid solid invalid; keeping the split one."
+        )
+        return shape
+    return cleaned
 
 
 def _unify_same_domain(shape: apiShape) -> apiShape:

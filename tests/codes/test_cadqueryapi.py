@@ -1024,6 +1024,62 @@ class TestInternalHelpers:
         assert "UnifySameDomain failed" in mock_warn.call_args[0][0]
         assert result is box
 
+    # ---- _remove_splitter --------------------------------------------------
+
+    def test_remove_splitter_merges_coplanar_faces(self):
+        """The splitter faces left by a fuse are removed."""
+        box1 = _make_box()
+        box2 = cadapi.translate_shape(_make_box(), (1, 0, 0))
+        split = box1.fuse(box2)
+        assert len(split.Faces()) > 6
+
+        assert len(cadapi._remove_splitter(split).Faces()) == 6
+
+    @patch(f"{CORE}.bluemira_warn")
+    def test_remove_splitter_rejects_invalid_solid(self, mock_warn):
+        """A tidy-up that breaks a valid solid is discarded.
+
+        OCC's UnifySameDomain can merge faces of a spline-bounded solid that it
+        should not and hand back a shape that fails BRepCheck with a nonsense
+        volume. Splitter faces are cosmetic; a corrupt solid is not.
+        """
+        solid = _make_box()
+        broken = MagicMock()
+        broken.isValid.return_value = False
+
+        with patch.object(type(solid), "clean", return_value=broken):
+            result = cadapi._remove_splitter(solid)
+
+        mock_warn.assert_called_once()
+        assert "invalid" in mock_warn.call_args[0][0]
+        assert result is solid
+
+    def test_remove_splitter_guard_does_not_apply_to_faces(self):
+        """On faces an invalid tidy-up is the repair, not a failure.
+
+        Fusing coplanar faces yields a compound that fails ``isValid`` before and
+        after unification while still merging into the single face the caller
+        needs; guarding that away would break the merge.
+        """
+        face = _make_box().Faces()[0]
+        cleaned = MagicMock()
+        cleaned.isValid.return_value = False
+
+        with patch.object(type(face), "clean", return_value=cleaned):
+            assert cadapi._remove_splitter(face) is cleaned
+
+    @patch(f"{CORE}.bluemira_warn")
+    def test_remove_splitter_exception(self, mock_warn):
+        """A failure in clean() warns and returns the shape unchanged."""
+        solid = _make_box()
+
+        with patch.object(type(solid), "clean", side_effect=RuntimeError("Fake Error")):
+            result = cadapi._remove_splitter(solid)
+
+        mock_warn.assert_called_once()
+        assert "Splitter removal failed" in mock_warn.call_args[0][0]
+        assert result is solid
+
     # ---- _assemble_wires_from_edges -----------------------------------------------
 
     def test_assemble_wires_from_edges_empty(self):
