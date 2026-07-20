@@ -50,13 +50,15 @@ class PolyhedralKernel(abc.ABC):
     Baseclass for the polyhedral prism magnetostatics kernel
     """
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def field(*args) -> npt.NDArray[np.float64]:
         """
         Magnetic field
         """
 
-    @abc.abstractstaticmethod
+    @staticmethod
+    @abc.abstractmethod
     def vector_potential(*args) -> npt.NDArray[np.float64]:
         """
         Vector potential

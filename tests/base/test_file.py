@@ -49,7 +49,7 @@ def test_try_get_bluemira_path_raises(path, subfolder):
         try_get_bluemira_path(path, subfolder=subfolder, allow_missing=False)
 
 
-@pytest.fixture(scope="session", autouse=True)  # noqa: RUF076
+@pytest.fixture(scope="session", autouse=True)
 def file_manager_good(tmp_path_factory):
     """
     Create a FileManager to run some tests on.
@@ -71,7 +71,7 @@ def file_manager_good(tmp_path_factory):
         remove_dir_and_subs(file_gen_path.as_posix())
 
 
-@pytest.fixture(scope="session", autouse=True)  # noqa: RUF076
+@pytest.fixture(scope="session", autouse=True)
 def file_manager_bad(tmp_path_factory):
     """
     Create a FileManager to run some tests on.
