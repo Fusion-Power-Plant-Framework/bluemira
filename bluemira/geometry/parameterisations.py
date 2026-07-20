@@ -2702,3 +2702,133 @@ class PictureFrame(
 
         xmin, xmax = ax.get_xlim()
         ax.set_xlim(xmin, xmax * 1.1)
+
+
+@dataclass
+class ProcessDOptVariables(OptVariablesFrame):
+    """
+    Process D-shaped TF coil geometry parameterisation variables.
+    """
+
+    x1: OptVariable = ov("x1", 6.0)
+    z1: OptVariable = ov("z1", 6.5)
+
+    x2: OptVariable = ov("x2", 8.0)
+    z2: OptVariable = ov("z2", 9.0)
+
+    x3: OptVariable = ov("x3", 15.0)
+
+    x4: OptVariable = ov("x4", 15.0)
+    z4: OptVariable = ov("z4", -9.0)
+
+    x5: OptVariable = ov("x5", 8.0)
+    z5: OptVariable = ov("z5", -6.5)
+
+    offset: OptVariable = ov("offset", 0.0)
+
+
+class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
+    """
+    Process D-shaped TF coil geometry parameterisation.
+    """
+
+    __slots__ = ()
+
+    def __init__(self, var_dict=None):
+        variables = ProcessDOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    @staticmethod
+    def _ellipse_arc(
+        a: float,
+        b: float,
+        x0: float,
+        z0: float,
+        theta0: float,
+        theta1: float,
+        n: int,
+    ) -> tuple[np.ndarray, np.ndarray]:
+
+        theta = np.linspace(theta0, theta1, n)
+
+        r = ((np.cos(theta) / a) ** 2 + (np.sin(theta) / b) ** 2) ** (-0.5)
+
+        return (
+            x0 + r * np.cos(theta),
+            z0 + r * np.sin(theta),
+        )
+
+    def create_shape(
+        self,
+        label: str = "",
+        n_points: int = 200,
+    ) -> BluemiraWire:
+        """
+        Make a CAD representation of the Process D geometry.
+
+        Parameters
+        ----------
+        label:
+            Label to give the wire
+        n_points:
+            Number of points to discretise the shape into
+
+        Returns
+        -------
+        :
+            CAD Wire of the Process D geometry
+        """
+        x1, z1, x2, z2, x3, x4, z4, x5, z5, offset = self.variables
+
+        n = n_points // 4
+
+        xx1, zz1 = self._ellipse_arc(
+            a=x2 - x1 - offset,
+            b=z2 - z1 - offset,
+            x0=x2,
+            z0=z1,
+            ang1=np.pi,
+            ang2=np.pi / 2,
+            n=n,
+        )
+
+        xx2, zz2 = self._ellipse_arc(
+            a=x3 - x2 - offset,
+            b=z2 - offset,
+            x0=x2,
+            z0=0.0,
+            ang1=np.pi / 2,
+            ang2=0.0,
+            n=n,
+        )
+
+        xx3, zz3 = self._ellipse_arc(
+            a=x3 - x2 - offset,
+            b=-z4 - offset,
+            x0=x4,
+            z0=0.0,
+            ang1=0.0,
+            ang2=-np.pi / 2,
+            n=n,
+        )
+
+        xx4, zz4 = self._ellipse_arc(
+            a=x4 - x5 - offset,
+            b=z5 - z4 - offset,
+            x0=x4,
+            z0=z5,
+            ang1=-np.pi / 2,
+            ang2=-np.pi,
+            n=n,
+        )
+
+        x = np.concatenate([xx1, xx2, xx3, xx4, [xx1[0]]])
+        z = np.concatenate([zz1, zz2, zz3, zz4, [zz1[0]]])
+
+        xyz = np.array([x, np.zeros_like(x), z])
+
+        return BluemiraWire(
+            [interpolate_bspline(xyz.T)],
+            label=label,
+        )
