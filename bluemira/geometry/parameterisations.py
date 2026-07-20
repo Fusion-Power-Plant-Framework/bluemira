@@ -2714,21 +2714,25 @@ class ProcessDOptVariables(OptVariablesFrame):
     surface of the winding pack, not the current centreline.
     """
 
-    x1: OptVariable = ov("x1", 6.0)
-    z1: OptVariable = ov("z1", 6.5)
+    # Same as x5
+    x1: OptVariable = ov("x1", 3.432064)
+    z1: OptVariable = ov("z1", 4.923935)
 
-    x2: OptVariable = ov("x2", 8.0)
-    z2: OptVariable = ov("z2", 9.0)
+    # Same as x4
+    x2: OptVariable = ov("x2", 7.603035)
+    z2: OptVariable = ov("z2", 8.206558)
 
-    x3: OptVariable = ov("x3", 15.0)
+    x3: OptVariable = ov("x3", 15.39204)
+    # z3 is always 0.0
 
-    x4: OptVariable = ov("x4", 15.0)
-    z4: OptVariable = ov("z4", -9.0)
+    z4: OptVariable = ov("z4", -9.292868)
 
-    x5: OptVariable = ov("x5", 8.0)
-    z5: OptVariable = ov("z5", -6.5)
+    z5: OptVariable = ov("z5", -5.575721)
 
     offset: OptVariable = ov("offset", 0.0)
+    dz: OptVariable = ov(
+        "dz", 0, lower_bound=-1, upper_bound=1, description="Vertical offset from z=0"
+    )
 
 
 class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
@@ -2783,7 +2787,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         :
             CAD Wire of the Process D geometry
         """
-        x1, z1, x2, z2, x3, x4, z4, x5, z5, offset = self.variables
+        x1, z1, x2, z2, x3, z4, z5, offset, dz = self.variables
 
         n = n_points // 4
 
@@ -2810,7 +2814,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         xx3, zz3 = self._ellipse_arc(
             a=x3 - x2 - offset,
             b=-z4 - offset,
-            x0=x4,
+            x0=x2,
             z0=0.0,
             ang1=0.0,
             ang2=-np.pi / 2,
@@ -2818,9 +2822,9 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         )
 
         xx4, zz4 = self._ellipse_arc(
-            a=x4 - x5 - offset,
+            a=x2 - x1 - offset,
             b=z5 - z4 - offset,
-            x0=x4,
+            x0=x2,
             z0=z5,
             ang1=-np.pi / 2,
             ang2=-np.pi,
@@ -2832,7 +2836,9 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
         xyz = np.array([x, np.zeros_like(x), z])
 
-        return BluemiraWire(
+        wire = BluemiraWire(
             [interpolate_bspline(xyz.T)],
             label=label,
         )
+        wire.translate((0, 0, dz))
+        return wire
