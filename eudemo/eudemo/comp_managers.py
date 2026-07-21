@@ -23,7 +23,7 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.tools import boolean_cut, boolean_fuse
 from bluemira.materials.basic import vacuum_void
-from eudemo.maintenance.duct_connection import pipe_pipe_join
+from eudemo.maintenance.duct_connection import join_ports
 from eudemo.tools import make_2d_view_components
 
 if TYPE_CHECKING:
@@ -230,22 +230,16 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         if isinstance(ports, Component):
             ports = [ports]
 
+        tool_shapes = []
         tool_voids = []
-        new_shape_pieces = []
         for port in ports:
             port_xyz = port.get_component("xyz")
-            tool_shape = port_xyz.get_component(port.name).shape
-            tool_void = port_xyz.get_component(port.name + " voidspace").shape
-            tool_voids.append(tool_void)
-            result_pieces = pipe_pipe_join(
-                vvts_target_shape, vvts_target_void, tool_shape, tool_void
-            )
-            # Assume the body is the biggest piece
-            result_pieces.sort(key=lambda solid: -solid.volume)
-            vvts_target_shape = result_pieces[0]
-            new_shape_pieces.extend(result_pieces[1:])
+            tool_shapes.append(port_xyz.get_component(port.name).shape)
+            tool_voids.append(port_xyz.get_component(port.name + " voidspace").shape)
 
-        final_shape = boolean_fuse([vvts_target_shape, *new_shape_pieces])
+        final_shape = join_ports(
+            vvts_target_shape, vvts_target_void, tool_shapes, tool_voids
+        )
         final_void = boolean_fuse([vvts_target_void, *tool_voids])
         return final_shape, final_void, tool_voids
 
@@ -276,6 +270,11 @@ class ThermalShield(PortManagerMixin, ComponentManager):
             ports, vvts_target_shape, vvts_target_void
         )
 
+        # TODO @s-oli: both cuts below assume the body is the biggest piece and
+        # drop the remainder silently. Now that the port join itself is exact,
+        # decide whether that heuristic should stay -- and if so, at least make
+        # it consistent: the second cut takes [0] without sorting, and
+        # boolean_cut does not order its result.
         temp = boolean_cut(final_shape, cts_target_shape)
         temp.sort(key=lambda solid: -solid.volume)
         final_shape = temp[0]

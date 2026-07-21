@@ -32,7 +32,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.materials.basic import vacuum_void
 from eudemo.comp_managers import PortManagerMixin
-from eudemo.maintenance.duct_connection import pipe_pipe_join
+from eudemo.maintenance.duct_connection import join_ports
 
 if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
@@ -91,21 +91,14 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
         if isinstance(ports, Component):
             ports = [ports]
 
+        tool_shapes = []
         tool_voids = []
-        new_shape_pieces = []
-        for i, port in enumerate(ports):
-            if i > 0:
-                target_shape = boolean_fuse(new_shape_pieces)
-
+        for port in ports:
             port_xyz = port.get_component("xyz")
-            tool_shape = port_xyz.get_component(port.name).shape
-            tool_void = port_xyz.get_component(port.name + " voidspace").shape
-            tool_voids.append(tool_void)
-            new_shape_pieces = pipe_pipe_join(
-                target_shape, target_void, tool_shape, tool_void
-            )
+            tool_shapes.append(port_xyz.get_component(port.name).shape)
+            tool_voids.append(port_xyz.get_component(port.name + " voidspace").shape)
 
-        final_shape = boolean_fuse(new_shape_pieces)
+        final_shape = join_ports(target_shape, target_void, tool_shapes, tool_voids)
         final_void = boolean_fuse([target_void, *tool_voids])
 
         sector_body = PhysicalComponent(
