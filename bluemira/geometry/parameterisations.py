@@ -2716,19 +2716,59 @@ class ProcessDOptVariables(OptVariablesFrame):
     """
 
     # Same as x5
-    x1: OptVariable = ov("x1", 3.432064, lower_bound=3.4, upper_bound=5.0)
-    z1: OptVariable = ov("z1", 4.923935, lower_bound=4.0, upper_bound=6.0)
+    x1: OptVariable = ov(
+        "x1",
+        3.432064,
+        lower_bound=3.4,
+        upper_bound=5.0,
+        description="Radius of the first and fifth ellipse arc.",
+    )
+    z1: OptVariable = ov(
+        "z1",
+        4.923935,
+        lower_bound=4.0,
+        upper_bound=6.0,
+        description="Vertical position of the first ellipse arc.",
+    )
 
     # Same as x4
-    x2: OptVariable = ov("x2", 7.603035, lower_bound=7.0, upper_bound=9.0)
-    z2: OptVariable = ov("z2", 8.206558, lower_bound=7.0, upper_bound=9.0)
+    x2: OptVariable = ov(
+        "x2",
+        7.603035,
+        lower_bound=7.0,
+        upper_bound=9.0,
+        description="Radius of the second and fourth ellipse arc.",
+    )
+    z2: OptVariable = ov(
+        "z2",
+        8.206558,
+        lower_bound=7.0,
+        upper_bound=9.0,
+        description="Vertical position of the second ellipse arc.",
+    )
 
-    x3: OptVariable = ov("x3", 15.39204, lower_bound=13.0, upper_bound=18.0)
-    # z3 is always 0.0
+    x3: OptVariable = ov(
+        "x3",
+        15.39204,
+        lower_bound=13.0,
+        upper_bound=18.0,
+        description="Radius of the third ellipse arc.",
+    )  # z3 is always 0.0
 
-    z4: OptVariable = ov("z4", -9.292868, lower_bound=-10.0, upper_bound=-8.0)
-
-    z5: OptVariable = ov("z5", -5.575721, lower_bound=-6.0, upper_bound=-5.0)
+    z4: OptVariable = ov(
+        "z4",
+        -9.292868,
+        lower_bound=-10.0,
+        upper_bound=-8.0,
+        description="Vertical position of the fourth ellipse arc.",
+    )
+    z5: OptVariable = ov(
+        "z5",
+        -5.575721,
+        lower_bound=-6.0,
+        upper_bound=-5.0,
+        description="Vertical position of the fifth ellipse arc.",
+    )
 
     offset: OptVariable = ov(
         "offset",
@@ -2755,36 +2795,14 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         super().__init__(variables)
 
     @staticmethod
-    def _ellipse_arc(
-        a: float,
-        b: float,
-        x0: float,
-        z0: float,
-        theta0: float,
-        theta1: float,
-        n: int,
-    ) -> tuple[np.ndarray, np.ndarray]:
-
-        theta = np.linspace(theta0, theta1, n)
-
-        r = ((np.cos(theta) / a) ** 2 + (np.sin(theta) / b) ** 2) ** (-0.5)
-
-        return (
-            x0 + r * np.cos(theta),
-            z0 + r * np.sin(theta),
-        )
-
-    @staticmethod
     def _make_arc(center, a, b, start, end):
 
-        if a >= b:
+        if abs(a) >= abs(b):
             major = a
             minor = b
             major_axis = (1, 0, 0)
             minor_axis = (0, 0, 1)
         else:
-            start += 90
-            end += 90
             major = b
             minor = a
             major_axis = (0, 0, 1)
@@ -2803,7 +2821,6 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
     def create_shape(
         self,
         label: str = "",
-        n_points: int = 200,
     ) -> BluemiraWire:
         """
         Make a CAD representation of the Process D geometry.
@@ -2812,8 +2829,6 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         ----------
         label:
             Label to give the wire
-        n_points:
-            Number of points to discretise the shape into
 
         Returns
         -------
@@ -2822,7 +2837,6 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         """
         x1, z1, x2, z2, x3, z4, z5, offset, dz = self.variables.values
 
-        n = n_points // 4
         segments = [
             # Inboard lower
             self._make_arc(
@@ -2837,8 +2851,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
                 center=(x2, 0, 0),
                 a=x3 - x2 - offset,
                 b=-z4 - offset,
-                start=-90,
-                end=0,
+                start=90,
+                end=180,
             ),
             # Outboard upper
             self._make_arc(
@@ -2858,59 +2872,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             ),
         ]
 
-        from bluemira.display import plot_2d
-
-        plot_2d(segments)
-        return BluemiraWire(segments, label=label)
-
-        xx1, zz1 = self._ellipse_arc(
-            a=x2 - x1 - offset,
-            b=z2 - z1 - offset,
-            x0=x2,
-            z0=z1,
-            theta0=np.pi,
-            theta1=np.pi / 2,
-            n=n,
-        )
-
-        xx2, zz2 = self._ellipse_arc(
-            a=x3 - x2 - offset,
-            b=z2 - offset,
-            x0=x2,
-            z0=0.0,
-            theta0=np.pi / 2,
-            theta1=0.0,
-            n=n,
-        )
-
-        xx3, zz3 = self._ellipse_arc(
-            a=x3 - x2 - offset,
-            b=-z4 - offset,
-            x0=x2,
-            z0=0.0,
-            theta0=0.0,
-            theta1=-np.pi / 2,
-            n=n,
-        )
-
-        xx4, zz4 = self._ellipse_arc(
-            a=x2 - x1 - offset,
-            b=z5 - z4 - offset,
-            x0=x2,
-            z0=z5,
-            theta0=-np.pi / 2,
-            theta1=-np.pi,
-            n=n,
-        )
-
-        x = np.concatenate([xx1, xx2, xx3, xx4, [xx1[0]]])
-        z = np.concatenate([zz1, zz2, zz3, zz4, [zz1[0]]])
-
-        xyz = np.array([x, np.zeros_like(x), z])
-
-        wire = BluemiraWire(
-            [interpolate_bspline(xyz.T)],
-            label=label,
-        )
+        wire = BluemiraWire(segments, label=label)
+        wire.close()
         wire.translate((0, 0, dz))
         return wire
