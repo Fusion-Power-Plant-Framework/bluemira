@@ -689,3 +689,4 @@ class TestProcessD:
         wire = p.create_shape()
         assert len(wire._boundary) == 5
         assert wire.is_closed()
+        assert BluemiraFace(wire).is_valid()
