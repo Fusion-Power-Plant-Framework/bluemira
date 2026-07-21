@@ -2899,7 +2899,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
     @staticmethod
     def _make_arc(center, a, b, start, end):
-
+        # NOTE: OCCT expects the major axis to be the largest of the two radii,
+        # so we need to swap them if necessary.
         if abs(a) >= abs(b):
             major = a
             minor = b
