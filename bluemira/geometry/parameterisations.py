@@ -2788,35 +2788,55 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
     """
 
     __slots__ = ()
+    n_ineq_constraints = 4
 
     def __init__(self, var_dict=None):
         variables = ProcessDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    @staticmethod
-    def _make_arc(center, a, b, start, end):
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint for ProcessD.
 
-        if abs(a) >= abs(b):
-            major = a
-            minor = b
-            major_axis = (1, 0, 0)
-            minor_axis = (0, 0, 1)
-        else:
-            major = b
-            minor = a
-            major_axis = (0, 0, 1)
-            minor_axis = (1, 0, 0)
+        Constrain such that the radii and vertical positions of the ellipse
+        centers produce ellipses that do not overlap.
 
-        return make_ellipse(
-            center=center,
-            major_radius=major,
-            minor_radius=minor,
-            major_axis=major_axis,
-            minor_axis=minor_axis,
-            start_angle=start,
-            end_angle=end,
-        )
+        Returns
+        -------
+        :
+            Inequality constraint for ProcessD.
+        """
+        x_norm = self.variables.get_normalised_values()
+        x_actual = self.process_x_norm_fixed(x_norm)
+        x1, z1, x2, z2, x3, z4, z5, _, _ = x_actual
+        return np.array([x1 - x2, x2 - x3, z1 - z2, z4 - z5])
+
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint gradient.
+
+        Returns
+        -------
+        :
+            Jacobian of the inequality constraints.
+        """
+        x_norm = self.variables.get_normalised_values()
+        gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
+
+        rows = [
+            {"x1": 1.0, "x2": -1.0},
+            {"x2": 1.0, "x3": -1.0},
+            {"z1": 1.0, "z2": -1.0},
+            {"z4": 1.0, "z5": -1.0},
+        ]
+
+        for i, row in enumerate(rows):
+            for var, coeff in row.items():
+                if not self.variables[var].fixed:
+                    gradient[i, self.get_x_norm_index(var)] = coeff
+
+        return gradient
 
     def create_shape(
         self,
@@ -2876,3 +2896,27 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         wire.close()
         wire.translate((0, 0, dz))
         return wire
+
+    @staticmethod
+    def _make_arc(center, a, b, start, end):
+
+        if abs(a) >= abs(b):
+            major = a
+            minor = b
+            major_axis = (1, 0, 0)
+            minor_axis = (0, 0, 1)
+        else:
+            major = b
+            minor = a
+            major_axis = (0, 0, 1)
+            minor_axis = (1, 0, 0)
+
+        return make_ellipse(
+            center=center,
+            major_radius=major,
+            minor_radius=minor,
+            major_axis=major_axis,
+            minor_axis=minor_axis,
+            start_angle=start,
+            end_angle=end,
+        )
