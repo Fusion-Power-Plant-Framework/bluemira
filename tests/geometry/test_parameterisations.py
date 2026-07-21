@@ -690,3 +690,19 @@ class TestProcessD:
         assert len(wire._boundary) == 5
         assert wire.is_closed()
         assert BluemiraFace(wire).is_valid()
+
+    def test_length(self):
+        p = ProcessD({
+            "x1": {"value": 4.0462172494949},
+            "z1": {"value": 4.465810238652615},
+            "x2": {"value": 7.961804920730897},
+            "z2": {"value": 7.443017064421025},
+            "x3": {"value": 14.464358888249548},
+            "z4": {"value": -8.543803465848422},
+            "z5": {"value": -5.1262820795090525},
+            "dz": {"value": 0.0},
+            "offset": {"value": -0.5 * 1.34276898010257173e00},
+        })
+        s = p.create_shape()
+        length = s.length
+        assert np.isclose(length, 4.78416875040924054e01, rtol=1e-6, atol=0.0)
