@@ -19,7 +19,9 @@ from __future__ import annotations
 from collections import UserList
 
 import cadquery as cq
+from OCP.ShapeAnalysis import ShapeAnalysis
 from OCP.TopAbs import TopAbs_REVERSED
+from OCP.TopoDS import TopoDS_Vertex
 
 from bluemira.codes.cadapi._cadquery.core import _cq_area_prop
 
@@ -36,43 +38,41 @@ def _cq_reverse(self) -> None:
     self.wrapped = cq.Shape.cast(reversed_shape).wrapped
 
 
-# Cache original methods to prevent infinite recursion in fallbacks
-_orig_edge_start = cq.Edge.startPoint
-_orig_edge_end = cq.Edge.endPoint
-_orig_wire_start = cq.Wire.startPoint
-_orig_wire_end = cq.Wire.endPoint
+def _start_point(self) -> cq.Vector:
+    v1, _ = TopoDS_Vertex(), TopoDS_Vertex()
+    ShapeAnalysis.FindBounds_s(self.wrapped, v1, _)
+
+    return cq.Vertex(v1).Center()
+
+
+def _end_point(self) -> cq.Vector:
+    _, v2 = TopoDS_Vertex(), TopoDS_Vertex()
+    ShapeAnalysis.FindBounds_s(self.wrapped, _, v2)
+
+    return cq.Vertex(v2).Center()
 
 
 def _cq_edge_topology_start_point(self) -> cq.Vector:
-    """True topological start point, flipping t=0 and t=1 if REVERSED."""
-    if self.wrapped.Orientation() == TopAbs_REVERSED:
-        return _orig_edge_end(self)
-    return _orig_edge_start(self)
+    """True topological start point"""
+    return _start_point(self)
 
 
 def _cq_edge_topology_end_point(self) -> cq.Vector:
-    """True topological end point, flipping t=0 and t=1 if REVERSED."""
-    if self.wrapped.Orientation() == TopAbs_REVERSED:
-        return _orig_edge_start(self)
-    return _orig_edge_end(self)
+    """True topological end point"""
+    return _end_point(self)
 
 
 def _cq_wire_topology_start_point(self) -> cq.Vector:
     """True topological start point of a wire, guaranteed by WireExplorer."""
-    edges = list(self)
-    if not edges:
-        return _orig_wire_start(self)
-    return edges[0].startPoint()
+    return _start_point(self)
 
 
 def _cq_wire_topology_end_point(self) -> cq.Vector:
     """True topological end point of a wire, guaranteed by WireExplorer."""
-    edges = list(self)
-    if not edges:
-        return _orig_wire_end(self)
-    return edges[-1].endPoint()
+    return _end_point(self)
 
 
+# Cache original methods to prevent infinite recursion in fallbacks
 cq.Edge.startPoint = _cq_edge_topology_start_point
 cq.Edge.endPoint = _cq_edge_topology_end_point
 cq.Wire.startPoint = _cq_wire_topology_start_point

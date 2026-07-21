@@ -1493,6 +1493,11 @@ class TestPatches:
         assert wire.Orientation == "Forward"
         assert wire_reversed.Orientation == "Reversed"
 
+        assert wire.startPoint() == cq.Vector([0, 0, 0])
+        assert wire.endPoint() == cq.Vector([1, 0, 1])
+        assert wire_reversed.startPoint() == cq.Vector([1, 0, 1])
+        assert wire_reversed.endPoint() == cq.Vector([0, 0, 0])
+
         wire_edges_ordered = list(wire)
         wire_reversed_edges_ordered = list(wire_reversed)
 
