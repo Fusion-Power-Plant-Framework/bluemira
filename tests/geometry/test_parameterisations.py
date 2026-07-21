@@ -24,6 +24,7 @@ from bluemira.geometry.parameterisations import (
     PolySpline,
     PrincetonD,
     PrincetonDDiscrete,
+    ProcessD,
     SextupleArc,
     TripleArc,
     _calculate_discrete_constant_tension_shape,
@@ -678,3 +679,13 @@ class TestSextupleArc:
     def test_plot(self):
         p = SextupleArc()
         p.plot(labels=True)
+
+
+class TestProcessD:
+    @pytest.mark.parametrize("offset", [0, 0.1, -0.1])
+    def test_segments(self, offset):
+        p = ProcessD()
+        p.adjust_variable("offset", value=offset)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 5
+        assert wire.is_closed()
