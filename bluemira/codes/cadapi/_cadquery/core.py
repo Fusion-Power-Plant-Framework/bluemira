@@ -1467,10 +1467,25 @@ def split_wire(
             d1 = p1.SquareDistance(pnt)
             t_split = t0 if d0 <= d1 else t1
         t_split = max(t0, min(t1, t_split))
+
+        is_reversed = e.wrapped.Orientation() == TopAbs_REVERSED
+        part_a = part_b = None
         if t_split - t0 > _ANGLE_PARALLEL_TOL:
-            edges_1.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()))
+            part_a = BRepBuilderAPI_MakeEdge(curve, t0, t_split).Edge()
         if t1 - t_split > _ANGLE_PARALLEL_TOL:
-            edges_2.append(cq.Edge(BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()))
+            part_b = BRepBuilderAPI_MakeEdge(curve, t_split, t1).Edge()
+
+        if is_reversed:
+            for part in (part_a, part_b):
+                if part:
+                    part.Orientation(TopAbs_REVERSED)
+            first, second = part_b, part_a
+        else:
+            first, second = part_a, part_b
+        if first:
+            edges_1.append(cq.Edge(first))
+        if second:
+            edges_2.append(cq.Edge(second))
 
     wire_1 = cq.Wire.assembleEdges(edges_1) if edges_1 else None
     wire_2 = cq.Wire.assembleEdges(edges_2) if edges_2 else None
