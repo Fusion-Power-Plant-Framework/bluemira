@@ -2821,35 +2821,46 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             abs(z2 - z1) - abs(x2 - x1),
         ])
 
-    # def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-    #     """
-    #     Inequality constraint gradient.
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint gradient.
 
-    #     Returns
-    #     -------
-    #     :
-    #         Jacobian of the inequality constraints.
-    #     """
-    #     x_norm = self.variables.get_normalised_values()
-    #     gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
+        Returns
+        -------
+        :
+            Jacobian of the inequality constraints.
+        """
+        x_norm = self.variables.get_normalised_values()
+        x_actual = self.process_x_norm_fixed(x_norm)
 
-    #     rows = [
-    #         {"x1": 1.0, "x2": -1.0},
-    #         {"x2": 1.0, "x3": -1.0},
-    #         {"z1": 1.0, "z2": -1.0},
-    #         {"z4": 1.0, "z5": -1.0},
-    #         {"x1": 1.0, "x2": -1.0, "z4": 1.0, "z5": -1.0},
-    #         {"x2": 1.0, "x3": -1.0, "z4": -1.0},
-    #         {"x2": 1.0, "x3": -1.0, "z2": 1.0},
-    #         {"x1": 1.0, "x2": -1.0, "z1": -1.0, "z2": 1.0},
-    #     ]
+        x1, z1, x2, z2, x3, z4, z5, _, _ = x_actual
 
-    #     for i, row in enumerate(rows):
-    #         for var, coeff in row.items():
-    #             if not self.variables[var].fixed:
-    #                 gradient[i, self.get_x_norm_index(var)] = coeff
+        gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
 
-    #     return gradient
+        s1 = np.sign(z5 - z4)
+        s2 = np.sign(x2 - x1)
+        s3 = np.sign(-z4)
+        s4 = np.sign(x3 - x2)
+        s5 = np.sign(z2)
+        s6 = np.sign(z2 - z1)
+
+        rows = [
+            {"x1": 1.0, "x2": -1.0},
+            {"x2": 1.0, "x3": -1.0},
+            {"z1": 1.0, "z2": -1.0},
+            {"z4": 1.0, "z5": -1.0},
+            {"x1": s2, "x2": -s2, "z4": -s1, "z5": s1},
+            {"x2": s4, "x3": -s4, "z4": -s3},
+            {"x2": s4, "x3": -s4, "z2": s5},
+            {"x1": s2, "x2": -s2, "z1": -s6, "z2": s6},
+        ]
+
+        for i, row in enumerate(rows):
+            for var, coeff in row.items():
+                if not self.variables[var].fixed:
+                    gradient[i, self.get_x_norm_index(var)] = coeff
+
+        return gradient
 
     def create_shape(
         self,
