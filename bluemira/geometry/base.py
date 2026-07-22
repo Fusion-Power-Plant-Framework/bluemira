@@ -15,7 +15,7 @@ import enum
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
@@ -27,6 +27,8 @@ if TYPE_CHECKING:
 
 
 class _Orientation(enum.Enum):
+    """Topological orientation flag for wires, edges, and faces."""
+
     FORWARD = "Forward"
     REVERSED = "Reversed"
 
@@ -69,9 +71,9 @@ class BluemiraGeo(ABC, meshing.Meshable):
         self.__orientation = _Orientation(value)
 
     def _check_reverse(self, obj):
-        if self._orientation != _Orientation(obj.Orientation):
-            obj.reverse()
-            self._orientation = _Orientation(obj.Orientation)
+        if self._orientation != _Orientation(cadapi.orientation(obj)):
+            obj = cadapi.reverse_shape(obj)
+            self._orientation = _Orientation(cadapi.orientation(obj))
         return obj
 
     @staticmethod
@@ -248,6 +250,17 @@ class BluemiraGeo(ABC, meshing.Meshable):
         """
         return cadapi.is_valid(self.shape)
 
+    def is_valid_deep(self) -> bool:
+        """
+        Check if the shape is valid more thoroughly than ``is_valid``.
+
+        Returns
+        -------
+        :
+            A boolean for if the shape is valid.
+        """
+        return cadapi.is_valid_deep(self.shape)
+
     def is_same(self, obj: BluemiraGeo) -> bool:
         """
         Check if obj has the same shape as self
@@ -310,13 +323,13 @@ class BluemiraGeo(ABC, meshing.Meshable):
         Returns
         -------
         vertices:
-            Array of the vertices (N, 3, dtype=float) from the tesselation operation
+            Array of the vertices (N, 3, dtype=float) from the tessellation operation
         indices:
-            Array of the indices (M, 3, dtype=int) from the tesselation operation
+            Array of the indices (M, 3, dtype=int) from the tessellation operation
 
         Notes
         -----
-        Once tesselated, an object's properties may change. Tesselation cannot be
+        Once tessellated, an object's properties may change. Tessellation cannot be
         reverted to a previous lower value, but can be increased (irreversibly).
         """
         return cadapi.tessellate(self.shape, tolerance)

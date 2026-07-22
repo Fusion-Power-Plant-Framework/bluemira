@@ -12,13 +12,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes._freecadapi as cadapi
-
-# import from bluemira
+import bluemira.codes._geometryapi as cadapi
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
-
-# import from error
 from bluemira.geometry.error import DisjointedFaceError, NotClosedWireError
 from bluemira.geometry.wire import BluemiraWire
 
@@ -59,7 +56,7 @@ class BluemiraFace(BluemiraGeo):
     def _plotting_wires(self):
         # the for must be done using face.shape.Wires because FreeCAD
         # re-orient the Wires in the correct way for display.
-        for w in self.shape.Wires:
+        for w in cadapi.wires(self.shape):
             yield BluemiraWire(w)
 
     def copy(self):
@@ -133,18 +130,31 @@ class BluemiraFace(BluemiraGeo):
         Raises
         ------
         DisjointedFaceError
-            More than 1 face created
+            Cutting the holes produced no face
         """
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
-            face = face.cut(fholes)
-            if len(face.Faces) == 1:
-                face = face.Faces[0]
-            else:
-                raise DisjointedFaceError("Any or more than one face has been created.")
+            _faces = cadapi.face_cut_holes(face, fholes)
+            if not _faces:
+                raise DisjointedFaceError("Cutting the holes produced no face.")
+            if len(_faces) > 1:
+                # Cutting the holes pinched the region into disjoint pieces
+                # (typically an inner boundary protruding past the outer one).
+                # Keep the dominant face rather than crashing, but warn so the
+                # suspect input geometry is not silently accepted.
+                _faces = sorted(_faces, key=cadapi.area, reverse=True)
+                discarded = sum(cadapi.area(f) for f in _faces[1:])
+                bluemira_warn(
+                    f"BluemiraFace: cutting holes produced {len(_faces)} disjoint "
+                    f"faces; keeping the largest (area {cadapi.area(_faces[0]):.4g}) "
+                    f"and discarding {len(_faces) - 1} fragment(s) totalling "
+                    f"{discarded:.4g}. An inner boundary likely protrudes past the "
+                    "outer boundary."
+                )
+            face = _faces[0]
 
         if not cadapi.is_valid(face):
             cadapi.fix_shape(face)
@@ -166,8 +176,8 @@ class BluemiraFace(BluemiraGeo):
     def _create(cls, obj: cadapi.apiFace, label="") -> BluemiraFace:
         if isinstance(obj, cadapi.apiFace):
             bmwires = []
-            for w in obj.Wires:
-                w_orientation = w.Orientation
+            for w in cadapi.wires(obj):
+                w_orientation = cadapi.orientation(w)
                 bm_wire = BluemiraWire(w)
                 bm_wire._orientation = w_orientation
                 if cadapi.is_closed(w):
@@ -177,7 +187,7 @@ class BluemiraFace(BluemiraGeo):
             bmface = cls(None, label=label)
             bmface._set_shape(obj)
             bmface._boundary = bmwires
-            bmface._orientation = obj.Orientation
+            bmface._orientation = cadapi.orientation(obj)
 
             return bmface
 
@@ -204,7 +214,7 @@ class BluemiraFace(BluemiraGeo):
         and N the number of discretisation points.
         """
         points = []
-        for w in self.shape.Wires:
+        for w in cadapi.wires(self.shape):
             if byedges:
                 points.append(cadapi.discretise_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:
@@ -235,7 +245,9 @@ class BluemiraFace(BluemiraGeo):
         """
         The edges of the face.
         """
-        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
+        return tuple(
+            BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.edges(self.shape)
+        )
 
     @property
     def wires(self) -> tuple[BluemiraWire]:
@@ -264,3 +276,10 @@ class BluemiraFace(BluemiraGeo):
         The solids of the face. By definition an empty tuple.
         """
         return ()
+
+    @property
+    def volume(self) -> float:
+        """
+        The volume of a face. By convention 0.0.
+        """
+        return 0.0

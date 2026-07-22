@@ -30,7 +30,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
@@ -193,7 +193,7 @@ def log_geometry_on_failure(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except cadapi.FreeCADError:
+        except cadapi.CADError:
             # Dump the data in the file
             if LogLevel(int(get_log_level(as_str=False) * 10)) == LogLevel.DEBUG:
                 data = _reconstruct_function_call(signature, *args, **kwargs)
@@ -280,7 +280,7 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
-    return cadapi.apiVertex(*point)
+    return cadapi.make_vertex(*point)
 
 
 class GeometryCreationIn(Protocol):
@@ -589,7 +589,7 @@ def _make_polygon_fallback(
     return make_polygon(points, label, closed=closed)
 
 
-@fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
+@fallback_to(_make_polygon_fallback, cadapi.CADError)
 @log_geometry_on_failure
 def interpolate_bspline(
     points: npt.ArrayLike,
@@ -670,7 +670,7 @@ def force_wire_to_spline(
 
     original_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
 
-    for n_discr in np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int):
+    for n_discr in np.array(original_n_edges * np.linspace(1.0, 0.1, 9), dtype=int):
         points = wire.discretise(ndiscr=int(n_discr), byedges=False)
         try:
             wire = BluemiraWire(
@@ -678,7 +678,7 @@ def force_wire_to_spline(
                 label=wire.label,
             )
             break
-        except cadapi.FreeCADError:
+        except cadapi.CADError:
             continue
 
     new_points = wire.discretise(ndiscr=2 * original_n_edges, byedges=False)
@@ -762,7 +762,7 @@ def make_circle_arc_3P(  # noqa: N802
     """
     try:
         output = cadapi.make_circle_arc_3P(p1, p2, p3, axis)
-    except cadapi.FreeCADError as e:
+    except cadapi.CADError as e:
         raise GeometryError(
             f"Failed to create BluemiraWire circle/arc from 3 points: {e}"
         ) from None
@@ -890,7 +890,7 @@ def _offset_wire_discretised(
     return wire
 
 
-@fallback_to(_offset_wire_discretised, cadapi.FreeCADError)
+@fallback_to(_offset_wire_discretised, cadapi.CADError)
 @log_geometry_on_failure
 def offset_wire(
     wire: BluemiraWire,
@@ -1132,7 +1132,7 @@ def revolve_shape(
 
     Raises
     ------
-    FreeCADError
+    CADError
         Cannot revolve shape
     """
     base = tuple(base)
@@ -1144,7 +1144,7 @@ def revolve_shape(
 
     try:
         return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
-    except cadapi.FreeCADError:
+    except cadapi.CADError:
         if degree == 360:  # noqa: PLR2004
             # We split into two separate revolutions of 180 degree and fuse them
             bluemira_warn(
@@ -1310,7 +1310,7 @@ def fillet_chamfer_decorator(*, chamfer: bool):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(wire, radius):
-            edges = wire.shape.OrderedEdges
+            edges = cadapi.ordered_edges(wire.shape)
             func_name = "chamfer" if chamfer else "fillet"
             if len(edges) < 2:  # noqa: PLR2004
                 raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
@@ -1689,6 +1689,7 @@ def save_cad(
     filename: str | Path,
     cad_format: str | cadapi.CADFileType = "stp",
     names: str | list[str] | None = None,
+    colours: list[tuple[float, float, float] | None] | None = None,
     **kwargs,
 ):
     """
@@ -1704,6 +1705,11 @@ def save_cad(
         file format to save as
     names:
         Names of shapes to save
+    colours:
+        Per-shape sRGB ``(r, g, b)`` tuples in ``[0, 1]``. Honoured by
+        the glTF/GLB export (full PBR materials) and by STEP (AP214
+        STYLED_ITEM surface colours; the CadQuery backend requires
+        ``names`` to drive the XCAF-assembly path). STL ignores them.
     kwargs:
         arguments passed to cadapi save function
     """
@@ -1717,6 +1723,7 @@ def save_cad(
         Path(filename).as_posix(),
         cad_format=cad_format,
         labels=names,
+        colours=colours,
         **kwargs,
     )
 
@@ -2080,9 +2087,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     try:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         return convert(merged_shape, label)
-
-    except Exception as e:  # noqa: BLE001
-        raise GeometryError(f"Boolean fuse operation failed: {e}") from None
+    except Exception as e:
+        raise GeometryError(f"Boolean fuse operation failed: {e}") from e
 
 
 def boolean_cut(

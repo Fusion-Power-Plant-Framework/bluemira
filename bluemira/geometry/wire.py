@@ -12,9 +12,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
-from bluemira.codes.error import FreeCADError
+from bluemira.codes.error import CADError
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
@@ -60,9 +60,9 @@ class BluemiraWire(BluemiraGeo):
         orientations = []
         for boundary in self.boundary:
             if isinstance(boundary, cadapi.apiWire):
-                orient = boundary.Orientation
+                orient = cadapi.orientation(boundary)
             elif isinstance(boundary, self.__class__):
-                orient = boundary.shape.Orientation
+                orient = cadapi.orientation(boundary.shape)
             orientations.append(orient)
 
         if orientations.count(orientations[0]) != len(orientations):
@@ -71,8 +71,8 @@ class BluemiraWire(BluemiraGeo):
                 f" {orientations}"
             )
         self._orientation = orientations[0]
-        if self._orientation != _Orientation(self.shape.Orientation):
-            self.shape.reverse()
+        if self._orientation != _Orientation(cadapi.orientation(self.shape)):
+            self._set_shape(cadapi.reverse_shape(self.shape))
 
     @staticmethod
     def _converter(func):
@@ -94,7 +94,7 @@ class BluemiraWire(BluemiraGeo):
         return self._create_wire()
 
     def _create_wire(self, *, check_reverse: bool = True):
-        wire = cadapi.apiWire(self._get_wires())
+        wire = cadapi.wire_from_wires(self._get_wires())
 
         if not cadapi.is_valid(wire):
             cadapi.fix_shape(wire)
@@ -104,23 +104,17 @@ class BluemiraWire(BluemiraGeo):
         return wire
 
     def _get_wires(self) -> list[cadapi.apiWire]:
-        """
-        Returns
-        -------
-        :
-            List of wires of which the shape consists of.
-        """
-        wires = []
+        result = []
         for o in self.boundary:
             if isinstance(o, cadapi.apiWire):
-                for w in o.Wires:
-                    wire = cadapi.apiWire(w.OrderedEdges)
-                    if self._orientation != _Orientation(wire.Orientation):
-                        wire.reverse()
-                    wires += [wire]
+                for w in cadapi.wires(o):
+                    wire = w
+                    if self._orientation != _Orientation(cadapi.orientation(wire)):
+                        wire = cadapi.reverse_shape(wire)
+                    result += [wire]
             else:
-                wires += o._get_wires()
-        return wires
+                result += o._get_wires()
+        return result
 
     def __add__(self, other: BluemiraWire) -> BluemiraWire:
         """Add two wires
@@ -258,7 +252,30 @@ class BluemiraWire(BluemiraGeo):
             return cadapi.wire_parameter_at(
                 self.shape, vertex=vertex, tolerance=tolerance
             )
-        except FreeCADError as e:
+        except CADError as e:
+            raise GeometryError(e.args[0]) from None
+
+    def tangent_at(self, param: float) -> np.ndarray:
+        """
+        Get the tangent at a point along a wire.
+
+        Parameters
+        ----------
+        param:
+            Normalised parameter along a wire.
+
+        Returns
+        -------
+        Tangent vector along the wire at the parameter.
+
+        Raises
+        ------
+        GeometryError
+            If the input parameter is not normalised.
+        """
+        try:
+            return cadapi.wire_tangent_at(self.shape, param)
+        except CADError as e:
             raise GeometryError(e.args[0]) from None
 
     def start_point(self) -> Coordinates:
@@ -299,7 +316,8 @@ class BluemiraWire(BluemiraGeo):
         The ordered edges of the wire.
         """
         return tuple(
-            BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)
+            BluemiraWire(cadapi.wire_from_edges([o]))
+            for o in cadapi.ordered_edges(self.shape)
         )
 
     @property

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import pytest
 
+from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
@@ -86,6 +87,61 @@ class TestBluemiraFace:
         face = BluemiraFace(wire)
         vertices = face.vertexes
         assert len(vertices) == len(points) - 1
+
+    @pytest.mark.parametrize("shape", shapes)
+    def test_face_volume(self, shape):
+        face = BluemiraFace(shape)
+        assert face.volume == 0.0  # noqa: RUF069
+
+
+class TestFaceWithProtrudingHole:
+    """Face-with-hole where the inner wire protrudes past the outer boundary.
+
+    Reproduces the EUDEMO demo crash on the CadQuery backend: the
+    ``WallSilhouetteDesigner`` optimisation converged to a wall whose IVC
+    boundary no longer enclosed the divertor, so ``plasma_facing_wire``
+    protruded ~0.25 m below ``ivc_boundary``. The boolean cut then pinches off
+    a tiny sliver, so ``face_cut_holes`` returns >1 face. ``_create_face`` now
+    keeps the dominant face and warns rather than raising ``DisjointedFaceError``.
+
+    Not a geometry-backend bug: FreeCAD's ``Part.cut`` yields the same two
+    faces on the identical geometry. The root cause is upstream optimiser
+    brittleness; keeping the dominant face is defence-in-depth.
+
+    The geometry here is a minimal stand-in: an outer box with a narrow
+    downward spike whose tip a hole cuts straight across, pinching it off.
+    """
+
+    @staticmethod
+    def _outer() -> BluemiraWire:
+        return make_polygon(
+            {"x": [-5, 5, 5, 0.5, 0, -0.5, -5], "z": [5, 5, -4, -4, -6, -4, -4]},
+            closed=True,
+        )
+
+    @staticmethod
+    def _hole() -> BluemiraWire:
+        return make_polygon(
+            {"x": [-0.4, 0.4, 0.4, -0.4], "z": [-3, -3, -5, -5]}, closed=True
+        )
+
+    def test_cut_pinches_off_a_sliver_face(self):
+        # Characterises the mechanism: the cut yields a dominant face plus a
+        # small isolated sliver (true on both geometry backends).
+        faces = cadapi.face_cut_holes(
+            cadapi.apiFace(self._outer().shape), [cadapi.apiFace(self._hole().shape)]
+        )
+        areas = sorted(BluemiraFace._create(f).area for f in faces)
+        assert len(faces) == 2
+        assert areas[0] < 1.0  # the sliver
+        assert areas[1] > 80.0  # the dominant face
+
+    def test_face_from_protruding_hole_keeps_dominant_and_warns(self, caplog):
+        # _create_face keeps the dominant face (not the sliver) instead of
+        # crashing, and warns that a fragment was discarded.
+        face = BluemiraFace([self._outer(), self._hole()])
+        assert face.area == pytest.approx(89.24, abs=0.5)
+        assert "protrudes past the outer boundary" in caplog.text
 
 
 class TestNormalAt:

@@ -123,16 +123,24 @@ class TestDuctConnection:
 
         # is the bigger wire inside the smaller wire
         assert diff > 0
-
-        for no, (e1, e2) in enumerate(
+        once = twice = 0
+        for _no, (e1, e2) in enumerate(
             zip(
                 sorted(
                     xy.wires[0].edges,
-                    key=lambda x: (*tuple(-x.start_point().xy.flatten()), -x.length),
+                    key=lambda x: np.sum([
+                        *tuple(-x.start_point().y.flatten()),
+                        *tuple(-x.end_point().y.flatten()),
+                        -x.length,
+                    ]),
                 ),
                 sorted(
                     xy.wires[1].edges,
-                    key=lambda x: (*tuple(-x.start_point().xy.flatten()), -x.length),
+                    key=lambda x: np.sum([
+                        *tuple(-x.start_point().y.flatten()),
+                        *tuple(-x.end_point().y.flatten()),
+                        -x.length,
+                    ]),
                 ),
                 strict=False,
             )
@@ -143,10 +151,18 @@ class TestDuctConnection:
             assert np.isclose(cross_2d(v1, v2), 0)
 
             # Are they the right distance apart
-            if no in {0, 3}:
-                assert np.isclose(distance_to(e1, e2)[0], port_wall * 2)
-            else:
-                assert np.isclose(distance_to(e1, e2)[0], port_wall)
+            if np.isclose(distance_to(e1, e2)[0], port_wall * 2):
+                twice += 1
+            elif np.isclose(distance_to(e1, e2)[0], port_wall):
+                once += 1
+
+        if _no == 2:
+            assert once == 2
+            assert twice == 1
+        elif _no == 3:
+            assert once == twice == 2
+        else:
+            raise ValueError("Some wires are the wrong distance apart")
 
         o_sector, i_sector, o_wires, o_c = self._make_sectors(port_koz, angle)
 

@@ -16,6 +16,7 @@ from enum import Enum
 from functools import wraps
 from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict
 
+from matplotlib import colors
 from matproplib.library.fluids import Void
 
 from bluemira.base.components import (
@@ -38,7 +39,7 @@ if TYPE_CHECKING:
 
     from matproplib.material import Material
 
-    import bluemira.codes._freecadapi as cadapi
+    import bluemira.codes._geometryapi as cadapi
     from bluemira.base.reactor import ComponentManager
 
 
@@ -359,8 +360,8 @@ def save_components_cad(
     cad_format:
         CAD file format
     """
-    shapes, names, mats = get_properties_from_components(
-        components, ("shape", "name", "material"), extract=False
+    shapes, names, mats, cad_options = get_properties_from_components(
+        components, ("shape", "name", "material", "display_cad_options"), extract=False
     )
 
     if cad_format == "dagmc":
@@ -375,7 +376,8 @@ def save_components_cad(
             converter_config=kwargs.get("converter_config"),
         )
     else:
-        save_cad(shapes, filename, cad_format, names, **kwargs)
+        colours = [None if o is None else colors.to_rgb(o.colour) for o in cad_options]
+        save_cad(shapes, filename, cad_format, names, colours=colours, **kwargs)
 
 
 def show_components_cad(components: ComponentT | Iterable[ComponentT], **kwargs):

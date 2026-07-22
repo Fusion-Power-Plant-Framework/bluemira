@@ -72,7 +72,7 @@ class TestHardBoundingBox:
         bb = self.solid.optimal_bounding_box
         vertices2, indices2 = solid._tessellate(1.0)
         assert np.isclose(bb.z_min, -5.0)
-        # Test that bounding box via tesselation did not modify properties
+        # Test that bounding box via tessellation did not modify properties
         np.testing.assert_allclose(vertices, vertices2)
         np.testing.assert_allclose(indices, indices2)
         vertices3, _ = solid._tessellate(0.01)

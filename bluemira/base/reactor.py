@@ -31,7 +31,7 @@ from bluemira.base.tools import (
 if TYPE_CHECKING:
     from os import PathLike
 
-    import bluemira.codes._freecadapi as cadapi
+    import bluemira.codes._geometryapi as cadapi
     from bluemira.base.components import ComponentT
 
 

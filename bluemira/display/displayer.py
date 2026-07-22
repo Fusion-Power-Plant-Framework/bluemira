@@ -10,6 +10,7 @@ api for plotting using CAD backend
 
 from __future__ import annotations
 
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import lru_cache
@@ -28,8 +29,15 @@ if TYPE_CHECKING:
 class ViewerBackend(Enum):
     """CAD viewer backends."""
 
-    FREECAD = "bluemira.codes._freecadapi"
+    FREECAD = "bluemira.codes.cadapi._freecad.api"
     POLYSCOPE = "bluemira.codes._polyscope"
+    CADQUERY = "bluemira.codes.cadapi._cadquery"
+
+    @classmethod
+    @property
+    def DEFAULT(cls):  # noqa: N802
+        """Default viewer based on backend availability"""
+        return cls[os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").upper()]
 
     @lru_cache(2)
     def get_module(self):
@@ -50,17 +58,33 @@ class ViewerBackend(Enum):
         try:
             return get_module(self.value)
         except (ModuleNotFoundError, FileNotFoundError):
-            if self.name != "FREECAD":
+            if self.name != self.DEFAULT.name:
                 name = self.name.lower()
                 bluemira_warn(
                     f"Unable to import {name.capitalize()} viewer\n"
-                    f"Please 'pip install {name}' to use, falling back to FreeCAD."
+                    f"Please 'pip install {name}' to use,"
+                    f" falling back to {self.DEFAULT.name.lower()}."
                 )
-                return get_module(type(self).FREECAD.value)
+                return get_module(self.DEFAULT.value)
             raise
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            try:
+                backend = cls[value.upper()]
+            except KeyError:
+                bluemira_warn(
+                    f"Unknown viewer backend '{value}',"
+                    f" defaulting to {cls.DEFAULT.name.lower()}"
+                )
+                backend = cls.DEFAULT
+            return backend
+        bluemira_debug(f"No viewer '{value}' selecting default")
+        return cls.DEFAULT
 
-def get_default_options(backend=ViewerBackend.FREECAD):
+
+def get_default_options(backend=ViewerBackend.DEFAULT):
     """
     Returns
     -------
@@ -82,7 +106,7 @@ class DisplayCADOptions(Options):
 
     __slots__ = ()
 
-    def __init__(self, backend=ViewerBackend.FREECAD, **kwargs):
+    def __init__(self, backend=ViewerBackend.DEFAULT, **kwargs):
         self._options = get_default_options(backend)
         super().__init__(**kwargs)
 
@@ -137,7 +161,7 @@ def show_cad(
     | list[dict[str, float | str | None]]
     | None = None,
     labels: str | list[str] | None = None,
-    backend: str | ViewerBackend = ViewerBackend.FREECAD,
+    backend: str | ViewerBackend | None = None,
     **kwargs,
 ):
     """
@@ -152,35 +176,40 @@ def show_cad(
     labels
         Labels to use for each part object
     backend
-        Viewer backend
+        Viewer backend. If ``None``, falls back to the
+        ``BLUEMIRA_GEOMETRY_BACKEND`` environment variable, then to FreeCAD.
     kwargs
         Passed on to modifications to the plotting style options and backend
     """
-    if isinstance(backend, str):
-        try:
-            backend = ViewerBackend[backend.upper()]
-        except KeyError:
-            bluemira_warn(f"Unknown viewer backend '{backend}' defaulting to FreeCAD")
-            backend = ViewerBackend.FREECAD
-
+    backend = ViewerBackend(backend)
     parts, options, labels = _validate_display_inputs(parts, options, labels)
+
+    # Split kwargs by whether they correspond to a DisplayCADOptions field.
+    # ``Options.__slots__ = ("_options",)`` rejects unknown attributes via
+    # AttributeError, so any backend-specific kwarg (FreeCAD's camera_rotation,
+    # polyscope's up_direction/fps/…, our cadquery backend's hide_gui_panels)
+    # would crash if forwarded to DisplayCADOptions. Route them to the backend
+    # only, and let the cosmetic ones still bind to the per-part options.
+    opts_field_names = set(DisplayCADOptions(backend=backend).as_dict().keys())
+    opts_kwargs = {k: v for k, v in kwargs.items() if k in opts_field_names}
+    viewer_kwargs = {k: v for k, v in kwargs.items() if k not in opts_field_names}
 
     new_options = []
     for o in options:
         if isinstance(o, DisplayCADOptions):
             temp = DisplayCADOptions(**o.as_dict(), backend=backend)
-            temp.modify(**kwargs)
+            temp.modify(**opts_kwargs)
             new_options.append(temp)
         else:
             new_options.append(
-                DisplayCADOptions(**{**kwargs, **(o or {})}, backend=backend)
+                DisplayCADOptions(**{**opts_kwargs, **(o or {})}, backend=backend)
             )
 
     backend.get_module().show_cad(
         [part.shape for part in parts],
         [o.as_dict() for o in new_options],
         labels,
-        **kwargs,
+        **viewer_kwargs,
     )
 
 

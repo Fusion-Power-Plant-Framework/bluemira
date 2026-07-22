@@ -6,14 +6,14 @@
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING
 
 import numpy as np
 import polyscope as ps
 from matplotlib import colors
 
-import bluemira.codes._freecadapi as cadapi
+import bluemira.codes._geometryapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import ColourDescriptor
 
@@ -44,10 +44,43 @@ class DefaultDisplayOptions:
         self.colour = value
 
 
+def _compute_default_camera(parts: list[cadapi.apiShape]) -> tuple[tuple, tuple]:
+    """Pick a sensible polyscope camera position based on geometry extents.
+
+    Auto-aligns to the flat axis when the geometry is planar (e.g. the wires
+    produced by ``reactor.show_cad('xz')`` all live at y≈0); falls back to a
+    FreeCAD-style xz side-view for genuinely 3D scenes. Returns
+    ``(camera_position, look_at_target)`` as 3-tuples.
+    """  # noqa: DOC201
+    bbs = [cadapi.bounding_box(p) for p in parts]
+    xmin = min(b[0] for b in bbs)
+    ymin = min(b[1] for b in bbs)
+    zmin = min(b[2] for b in bbs)
+    xmax = max(b[3] for b in bbs)
+    ymax = max(b[4] for b in bbs)
+    zmax = max(b[5] for b in bbs)
+    center = ((xmin + xmax) / 2, (ymin + ymax) / 2, (zmin + zmax) / 2)
+    ex, ey, ez = xmax - xmin, ymax - ymin, zmax - zmin
+    m = max(ex, ey, ez) or 1.0
+    d = 1.5 * m  # camera distance — 1.5x the dominant extent gives a comfortable framing
+    flat = 0.01 * m  # near-zero extent threshold (1% of dominant)
+    if ey < flat:  # flat in y → look at xz plane from -y (the dim='xz' case)
+        cam = (center[0], center[1] - d, center[2])
+    elif ex < flat:  # flat in x → look at yz plane from +x
+        cam = (center[0] + d, center[1], center[2])
+    elif ez < flat:  # flat in z → look at xy plane from +z (top-down)
+        cam = (center[0], center[1], center[2] + d)
+    else:  # 3D → xz side-view, mirrors _freecad.api.show_cad's (90,0,0) default
+        cam = (center[0], center[1] - d, center[2])
+    return cam, center
+
+
 def show_cad(
     parts: cadapi.apiShape | list[cadapi.apiShape],
     part_options: list[dict],
     labels: list[str],
+    *,
+    show_gui_panels: bool = True,
     **kwargs,
 ):
     """
@@ -64,12 +97,14 @@ def show_cad(
     **kwargs:
         options passed to polyscope
     """
+    parts_list = parts if isinstance(parts, list) else [parts]
+
     if part_options is None:
         part_options = [None]
 
     if None in part_options:
         part_options = [
-            DefaultDisplayOptions() if o is None else o for o in part_options
+            asdict(DefaultDisplayOptions()) if o is None else o for o in part_options
         ]
 
     transparency = "none"
@@ -88,6 +123,13 @@ def show_cad(
     )
 
     add_features(labels, parts, part_options)
+
+    cam, target = _compute_default_camera(parts_list)
+    ps.look_at(cam, target)
+
+    # Polyscope's panel toggle is a process-wide global; set it explicitly
+    # both ways so a previous call with the opposite setting doesn't leak.
+    ps.set_build_default_gui_panels(show_gui_panels)
 
     ps.show()
 

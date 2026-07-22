@@ -18,6 +18,10 @@ variables:
   LC_ALL: "C"
   PYTHONIOENCODING: "utf-8"
 
+  # Geometry CAD backend: freecad | cadquery
+  # Override locally with: conda env config vars set BLUEMIRA_GEOMETRY_BACKEND=cadquery -n bluemira
+  BLUEMIRA_GEOMETRY_BACKEND: "freecad"
+
 dependencies:
   - python >=3.11,<3.13
   - cmake
@@ -30,12 +34,12 @@ dependencies:
   - mpi4py
   - graphviz
   - h5py==3.13.0
-  - pybind11==3.0.1
-  - pybind11-global==3.0.1
-  - pytools==2025.2.4
+  - pytools==2025.2.5
   - vtk==9.3.1
   - libopenblas
   - pythonocc-core
+  - cadquery=2.7.0
+  - nlopt=2.10.0
   - pip
   - pip:
       - -r ../requirements/uv/all.txt

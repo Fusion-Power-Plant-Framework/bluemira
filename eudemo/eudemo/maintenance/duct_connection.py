@@ -21,6 +21,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_fragments,
@@ -585,6 +586,11 @@ def pipe_pipe_join(
     void:
         Solid of the joined pipe-pipe void
 
+    Raises
+    ------
+    GeometryError
+        If the target and tool do not intersect.
+
     Notes
     -----
     This approach is more brittle than a classic fuse, fuse, cut operation, but is
@@ -592,6 +598,13 @@ def pipe_pipe_join(
     are to be expected.
     """
     _, (target_fragments, tool_fragments) = boolean_fragments([target_shape, tool_shape])
+
+    if not target_fragments or not tool_fragments:
+        raise GeometryError(
+            "pipe_pipe_join: the target and tool do not intersect, so there is "
+            "nothing to join. A port aimed at a hole an earlier port already cut "
+            "will do this."
+        )
 
     # Keep the largest piece of the target by volume (opinionated)
     # This is in case its COG is inside the tool void
