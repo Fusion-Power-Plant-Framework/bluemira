@@ -789,6 +789,9 @@ class TestProcessD:
         })
         s = p.create_shape()
         length = s.length
+        assert len(s._boundary) == 5
+        assert s.is_closed()
+        assert BluemiraFace(s).is_valid()
         assert np.isclose(length, 4.78416875040924054e01, rtol=1e-6, atol=0.0)
 
     def test_optimisation(self):
@@ -798,7 +801,6 @@ class TestProcessD:
         or constraints.
         """
         p = ProcessD()
-        p.adjust_variable("x1", value=5.0)
         koz = make_circle(5, center=(10, 0, 0), axis=(0, 1, 0))
         problem = MinimumLengthGOP(
             p,
@@ -810,9 +812,9 @@ class TestProcessD:
         )
         result = problem.optimise()
         solution = result.create_shape()
-        plot_2d([solution, koz])
-        assert solution.is_valid()
+        assert len(solution._boundary) == 5
         assert solution.is_closed()
+        assert BluemiraFace(solution).is_valid()
         x_min = result.variables.x1.value + abs(result.variables.offset.value)
         x_max = result.variables.x3.value - abs(result.variables.offset.value)
         assert np.isclose(x_min, 10 - 5, atol=1e-3, rtol=0.0)
