@@ -40,8 +40,14 @@ _OCC_DEFAULT_TOL = 1e-6
 #: choice is too close to the input direction.
 _AXIS_DOMINANCE_TOL = 0.9
 
+WORKING_PRECISION = 1e-5
+MIN_PRECISION = 1e-5
+MAX_PRECISION = 1e-5
 
 __all__ = [
+    "MAX_PRECISION",
+    "MIN_PRECISION",
+    "WORKING_PRECISION",
     "apiCompound",
     "apiEdge",
     "apiShape",
