@@ -789,10 +789,14 @@ class TestProcessD:
         })
         s = p.create_shape()
         length = s.length
-        plot_2d(s)
         assert np.isclose(length, 4.78416875040924054e01, rtol=1e-6, atol=0.0)
 
     def test_optimisation(self):
+        """
+        Use the parameterisation in anger in a constrained optimisation problem
+        Useful for detecting if there is anything wrong with the parameterisation
+        or constraints.
+        """
         p = ProcessD()
         p.adjust_variable("x1", value=5.0)
         koz = make_circle(5, center=(10, 0, 0), axis=(0, 1, 0))
@@ -809,3 +813,7 @@ class TestProcessD:
         plot_2d([solution, koz])
         assert solution.is_valid()
         assert solution.is_closed()
+        x_min = result.variables.x1.value + abs(result.variables.offset.value)
+        x_max = result.variables.x3.value - abs(result.variables.offset.value)
+        assert np.isclose(x_min, 10 - 5, atol=1e-3, rtol=0.0)
+        assert np.isclose(x_max, 10 + 5, atol=1e-3, rtol=0.0)
