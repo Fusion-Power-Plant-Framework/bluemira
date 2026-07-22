@@ -1,10 +1,10 @@
-# 1. Caching vs. recreation of geometry from Matryoshkas
+# 6. Replacement of the CAD backend
 
-Date: 2022-06-15 - 2022-11-30
+Date: 2026-04-16 - 2026-7-22
 
 ## Status
 
-Proposed
+Accepted
 
 ## Context
 
