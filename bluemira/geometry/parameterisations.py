@@ -2788,7 +2788,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
     """
 
     __slots__ = ()
-    n_ineq_constraints = 4
+    n_ineq_constraints = 8
 
     def __init__(self, var_dict=None):
         variables = ProcessDOptVariables()
@@ -2810,33 +2810,46 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
         x_norm = self.variables.get_normalised_values()
         x_actual = self.process_x_norm_fixed(x_norm)
         x1, z1, x2, z2, x3, z4, z5, _, _ = x_actual
-        return np.array([x1 - x2, x2 - x3, z1 - z2, z4 - z5])
+        return np.array([
+            x1 - x2,
+            x2 - x3,
+            z1 - z2,
+            z4 - z5,
+            abs(z5 - z4) - abs(x2 - x1),
+            abs(-z4) - abs(x3 - x2),
+            abs(z2) - abs(x3 - x2),
+            abs(z2 - z1) - abs(x2 - x1),
+        ])
 
-    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
-        """
-        Inequality constraint gradient.
+    # def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
+    #     """
+    #     Inequality constraint gradient.
 
-        Returns
-        -------
-        :
-            Jacobian of the inequality constraints.
-        """
-        x_norm = self.variables.get_normalised_values()
-        gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
+    #     Returns
+    #     -------
+    #     :
+    #         Jacobian of the inequality constraints.
+    #     """
+    #     x_norm = self.variables.get_normalised_values()
+    #     gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
 
-        rows = [
-            {"x1": 1.0, "x2": -1.0},
-            {"x2": 1.0, "x3": -1.0},
-            {"z1": 1.0, "z2": -1.0},
-            {"z4": 1.0, "z5": -1.0},
-        ]
+    #     rows = [
+    #         {"x1": 1.0, "x2": -1.0},
+    #         {"x2": 1.0, "x3": -1.0},
+    #         {"z1": 1.0, "z2": -1.0},
+    #         {"z4": 1.0, "z5": -1.0},
+    #         {"x1": 1.0, "x2": -1.0, "z4": 1.0, "z5": -1.0},
+    #         {"x2": 1.0, "x3": -1.0, "z4": -1.0},
+    #         {"x2": 1.0, "x3": -1.0, "z2": 1.0},
+    #         {"x1": 1.0, "x2": -1.0, "z1": -1.0, "z2": 1.0},
+    #     ]
 
-        for i, row in enumerate(rows):
-            for var, coeff in row.items():
-                if not self.variables[var].fixed:
-                    gradient[i, self.get_x_norm_index(var)] = coeff
+    #     for i, row in enumerate(rows):
+    #         for var, coeff in row.items():
+    #             if not self.variables[var].fixed:
+    #                 gradient[i, self.get_x_norm_index(var)] = coeff
 
-        return gradient
+    #     return gradient
 
     def create_shape(
         self,
@@ -2871,8 +2884,8 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
                 center=(x2, 0, 0),
                 a=x3 - x2 - offset,
                 b=-z4 - offset,
-                start=90,
-                end=180,
+                start=-90,
+                end=0,
             ),
             # Outboard upper
             self._make_arc(
@@ -2901,6 +2914,9 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
     def _make_arc(center, a, b, start, end):
         # NOTE: OCCT expects the major axis to be the largest of the two radii,
         # so we need to swap them if necessary.
+        # Documentation is poor, this was one of the 64 possible combinations
+        # that worked...
+
         if abs(a) >= abs(b):
             major = a
             minor = b
@@ -2911,6 +2927,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             minor = a
             major_axis = (0, 0, 1)
             minor_axis = (1, 0, 0)
+            start, end = 90 - end, 90 - start
 
         return make_ellipse(
             center=center,
