@@ -23,6 +23,8 @@ runs:
     - name: Install process
       working-directory: "/home/runner/work/"
       shell: bash -l {0}
+      env:
+        REPO: ${{ github.event.repository.name }}
       run: |
-        cd bluemira/process
+        cd $REPO/process
         pip install .
