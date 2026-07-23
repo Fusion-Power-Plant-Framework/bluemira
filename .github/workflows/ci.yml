@@ -101,7 +101,7 @@ jobs:
           # Flag to run longrun tests when merging dependency updates
           # https://github.com/actions/runner/issues/409#issuecomment-752775072
           # PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
-          PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
+          PYTEST_PRIVATE: ${{ (!github.event.pull_request.head.repo.fork && github.repository == 'fusion-power-plant-framework/bluemira') && '--private' || '' }}
         run: |
           export BLUEMIRA_GEOMETRY_BACKEND=${{ matrix.backend }}
           pytest --cov=bluemira \
