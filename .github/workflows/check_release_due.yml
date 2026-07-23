@@ -13,6 +13,7 @@ jobs:
     # every Monday, then check if the current date is a multiple of 6 weeks
     # from the very first release date.
     runs-on: ubuntu-latest
+    if: ${{ github.repository == 'fusion-power-plant-framework/bluemira' }}
     steps:
       - name: Check Date
         id: check-date
