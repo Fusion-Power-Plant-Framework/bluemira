@@ -745,7 +745,7 @@ class ComponentPlotter(BasePlotter):
 
 
 def _validate_plot_inputs(
-    parts: BluemiraGeoT | list[BluemiraGeoT],
+    parts: Coordinates | BluemiraGeoT | list[BluemiraGeoT | Coordinates],
     options: PlotOptions | list[None] | list[PlotOptions] | None,
 ) -> tuple[list[BluemiraGeoT], list[PlotOptions] | list[None]]:
     """
@@ -762,7 +762,11 @@ def _validate_plot_inputs(
         Number of options not equal to number of parts
     """
     if not isinstance(parts, list):
-        parts = list(parts) if isinstance(parts, Iterable) else [parts]
+        parts = (
+            list(parts)
+            if isinstance(parts, Iterable) and not isinstance(parts, Coordinates)
+            else [parts]
+        )
 
     if options is None:
         options = [None] * len(parts)
