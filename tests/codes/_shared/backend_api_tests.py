@@ -584,7 +584,7 @@ class BackendApiTestsBase:
 
         result = self.cadapi.boolean_cut(wire1.shape, wire2.shape, split=False)
         assert len(result) == 1
-        assert result[0].Length == pytest.approx(2 * np.sqrt(2))
+        assert result[0].Length() == pytest.approx(2 * np.sqrt(2))
 
     def test_wire_tangent_at_complex(self):
         e1 = self.cadapi.make_polygon([(0, 0, 0), (10, 0, 0)])
