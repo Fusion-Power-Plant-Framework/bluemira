@@ -207,16 +207,9 @@ def _elliptic_derivatives(e, k, k2):
 
     .. math::
 
-        \frac{dE}{d(k^2)}
-        =
-        \frac{E-K}{2k^2},
-
-    .. math::
-
+        \frac{dE}{d(k^2)}=\frac{E-K}{2k^2},\qquad
         \frac{dK}{d(k^2)}
-        =
-        \frac{E-(1-k^2)K}
-        {2k^2(1-k^2)}.
+        =\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
     """
     one_minus_k2 = 1.0 - k2
     inv_2k2 = 0.5 / k2
@@ -267,17 +260,12 @@ def greens_psi(
 
     Notes
     -----
-    \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
-    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k^2)-2\\mathbf{E}(k^2)]`\n
-    Where:
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+    .. math::
+        G_\psi=    \frac{\mu_0}{4\pi}[(2-k^2)K(k^2)-2E(k^2)]
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
 
-    Negative x or xc values should not be used.
+    Negative x or xc values are outside the intended domain.
     """
     axis = x <= 0.0
 
@@ -324,22 +312,17 @@ def greens_dpsi_dx(
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) =`
-    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
-    \t:math:`\\dfrac{1}{u}`
-    \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
-    Where:
-    \t:math:`h^{2}\\equiv z_{c}-z`\n
-    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
-    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
-    \t:math:`w^{2}\\equiv x^2 -x_{c}^2 - h^2`\n
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+    .. math::
+
+        \frac{\partial G_\psi}{\partial x}
+        =\frac{\mu_0}{2\pi}x
+        \left(I_1+w^2I_2\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
-    Its analytical axis value is 0.0.
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
     radial_term = _radial_response(xc, zc, x, z)
 
@@ -382,22 +365,17 @@ def greens_dpsi_dz(
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) =`
-    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
-    \t:math:`\\dfrac{h}{u}`
-    \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
-    Where:
-    \t:math:`h^{2}\\equiv z_{c}-z`\n
-    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
-    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
-    \t:math:`v^{2}\\equiv x^2 +x_{c}^2 + h^2`\n
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+    .. math::
+
+        \frac{\partial G_\psi}{\partial z}
+        =\frac{\mu_0}{2\pi}h
+        \left(I_1-v^2I_2\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
-    Its analytical axis value is 0.0.
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
     axis = x <= 0.0
 
@@ -447,7 +425,9 @@ def greens_Bx(
         =-\frac{\\mu_0}{2\\pi}\frac{h}{x}
         \\left(I_1-v^2I_2\right).
 
-    The analytical axis value is 0.0.
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
@@ -505,6 +485,10 @@ def greens_Bz(
         G_{B_z}(0,z)=
         \frac{\\mu_0x_c^2}
         {2\\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
+
+    The axis value is calculated analytically.
+
+    Negative x or xc values are outside the intended domain.
     """
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
     e, k = _elliptic_integrals(k2)
@@ -562,7 +546,11 @@ def greens_dbz_dx(
         \right],
 
     where :math:`F=K(k^2)+E(k^2)w^2/d^2` and
-    :math:`d^2=(x-x_c)^2+h^2`. The analytical axis value is zero.
+    :math:`d^2=(x-x_c)^2+h^2`.
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
@@ -634,6 +622,17 @@ def greens_all(
     Calculate poloidal flux, radial field, and vertical field together.
 
     Geometry, masks, and elliptic integrals are each evaluated once.
+
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
