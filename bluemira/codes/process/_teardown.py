@@ -219,6 +219,14 @@ class Teardown(CodesTeardown):
         return output_value
 
 
+ONLY_READ_FROM_FILE = (
+    "dz_blkt_upper",
+    "a_tf_wp_no_insulation",
+    "f_j_cs_start_end_flat_top",
+    "f_ster_div_single",
+)
+
+
 class _MFileWrapper:
     """
     Utility class to wrap a PROCESS MFile, and map its data to bluemira
@@ -248,7 +256,11 @@ class _MFileWrapper:
         """
         self.data = {}
         for process_param_name, value in self.mfile.data.items():
-            param_name = update_obsolete_vars(process_param_name)
+            param_name = (
+                process_param_name
+                if process_param_name in ONLY_READ_FROM_FILE
+                else update_obsolete_vars(process_param_name)
+            )
             if param_name is None:
                 bluemira_warn(
                     f"{self._name} parameter '{process_param_name}' is obsolete and has"
