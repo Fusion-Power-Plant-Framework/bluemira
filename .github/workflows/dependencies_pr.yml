@@ -18,7 +18,7 @@ jobs:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
       - name: Permissions Check
-        uses: Fusion-Power-Plant-Framework/fppf-actions/permission_check@6f2617b074ecab16bef7dc43918a36b2af60a0e9
+        uses: Fusion-Power-Plant-Framework/fppf-actions/permission_check@e13cd27e6b440725eb682b52d6446604ce6c5b8b
         with:
           token: ${{ secrets.FPPF_BOT_AUTH_KEY }}
 
