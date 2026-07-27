@@ -92,10 +92,6 @@ ndindex==1.10.1
 nlopt==2.10.0
     # via bluemira (pyproject.toml)
 numba==0.65.1
-    # via
-    #   bluemira (pyproject.toml)
-    #   numba-scipy
-numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787
     # via bluemira (pyproject.toml)
 numexpr==2.14.1
     # via
@@ -196,7 +192,6 @@ scikit-learn==1.9.0
 scipy==1.17.1
     # via
     #   bluemira (pyproject.toml)
-    #   numba-scipy
     #   pint
     #   scikit-learn
 scooby==0.11.2

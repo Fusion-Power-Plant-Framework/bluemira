@@ -32,8 +32,6 @@ dependencies = [
     "meshio>=4.0",
     "nlopt>=2.7.1",
     "numba>=0.59",
-    # we should remove this once numba-scipy starts to be more regularly maintained
-    "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy>=1.26.0",
     "pint[scipy]>=0.25.3",
     "periodictable>=1.4",
@@ -48,9 +46,6 @@ dependencies = [
     "typeguard>=3.0.1",
     "scipy>=1.16.0",
 ]
-
-[project.entry-points.numba_extensions]
-init = "numba_scipy:_init_extension"
 
 [project.urls]
 homepage = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
@@ -79,7 +74,6 @@ examples = ["notebook", "jupytext", "rich[jupyter]"]
 pinned = [
     "nlopt==2.10.0",
     "numba==0.65.1",
-    "numba-scipy @ git+https://github.com/numba/numba-scipy@23c3b33440ea1fe0f84d05d269fb4a3df4b92787",
     "numpy==2.2.6",
     "matplotlib==3.11.0",
     "scipy==1.17.1",
