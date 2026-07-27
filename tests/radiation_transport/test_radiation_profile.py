@@ -86,8 +86,6 @@ class TestCoreRadiation:
             "k_0": {"value": 2000.0, "unit": "dimensionless"},
             "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
             "P_sep": {"value": 100, "unit": "MW"},
-            "theta_inner_target": {"value": 5.0, "unit": "deg"},
-            "theta_outer_target": {"value": 5.0, "unit": "deg"},
             **midplane_params,
         }
 
@@ -273,7 +271,7 @@ class TestCoreRadiation:
             f_ion_t,
             self.source.sol_rad.b_pol_out_tar,
             self.source.sol_rad.b_pol_sep_omp,
-            self.source.params.theta_outer_target.value,
+            self.source.sol_rad.alpha_lfs,
             self.source.sol_rad.r_sep_omp,
             self.source.sol_rad.x_strike_lfs,
             self.source.params.fw_lambda_q_near_omp.value,
@@ -289,7 +287,7 @@ class TestCoreRadiation:
             f_ion_t,
             self.source.sol_rad.b_pol_out_tar,
             self.source.sol_rad.b_pol_sep_omp,
-            self.source.params.theta_outer_target.value,
+            self.source.sol_rad.alpha_lfs,
             self.source.sol_rad.r_sep_omp,
             self.source.sol_rad.x_strike_lfs,
             self.source.params.fw_lambda_q_near_omp.value,

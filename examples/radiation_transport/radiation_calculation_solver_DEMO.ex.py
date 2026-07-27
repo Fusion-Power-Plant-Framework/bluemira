@@ -125,8 +125,6 @@ params = {
     "T_e_0": {"value": 21.442, "unit": "keV"},
     "T_e_ped": {"value": 5.059, "unit": "keV"},
     "T_e_sep": {"value": 0.16, "unit": "keV"},
-    "theta_inner_target": {"value": 5.0, "unit": "deg"},
-    "theta_outer_target": {"value": 5.0, "unit": "deg"},
 }
 
 # %%

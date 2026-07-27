@@ -1931,18 +1931,6 @@
       }
     }
   },
-  "theta_inner_target": {
-    "name": "Angle between flux line tangent at inner strike point and SOL side of inner target",
-    "value": 20,
-    "unit": "deg",
-    "source": "Input"
-  },
-  "theta_outer_target": {
-    "name": "Angle between flux line tangent at outer strike point and SOL side of outer target",
-    "value": 20,
-    "unit": "deg",
-    "source": "Input"
-  },
   "tk_bb_arm": {
     "name": "Tungsten armour thickness",
     "value": 0.002,
