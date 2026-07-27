@@ -127,10 +127,6 @@ class RadiationSourceParams(ParameterFrame):
     """Electron temperature pedestal height"""
     T_e_sep: Parameter[float]
     """Electron temperature at separatrix"""
-    theta_inner_target: Parameter[float]
-    """Inner divertor poloidal angle with the separatrix flux line"""
-    theta_outer_target: Parameter[float]
-    """Outer divertor poloidal angle with the separatrix flux line"""
 
 
 class Radiation:
@@ -1083,7 +1079,6 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_tar = self.b_pol_out_tar
             b_pol_u = self.b_pol_sep_omp
             r_sep_mp = self.r_sep_omp
-            # alpha = self.params.theta_outer_target.value
             alpha = self.alpha_lfs
             b_tot_tar = self.b_tot_out_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
@@ -1093,7 +1088,6 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_tar = self.b_pol_inn_tar
             b_pol_u = self.b_pol_sep_imp
             r_sep_mp = self.r_sep_imp
-            # alpha = self.params.theta_inner_target.value
             alpha = self.alpha_hfs
             b_tot_tar = self.b_tot_inn_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
