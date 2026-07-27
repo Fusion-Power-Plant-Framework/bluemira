@@ -1,3 +1,13 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""
+Green's functions mappings for psi, Bx, and Bz
+"""
+
 import numba as nb
 import numpy as np
 
@@ -6,6 +16,8 @@ from bluemira.magnetostatics._ellipe import ellipe_nb
 from bluemira.magnetostatics._ellipk import ellipk_nb
 
 __all__ = [
+    "circular_coil_inductance_elliptic",
+    "circular_coil_inductance_kirchhoff",
     "greens_Bx",
     "greens_Bz",
     "greens_all",
@@ -13,6 +25,7 @@ __all__ = [
     "greens_dpsi_dx",
     "greens_dpsi_dz",
     "greens_psi",
+    "square_coil_inductance_kirchhoff",
 ]
 
 
@@ -58,7 +71,7 @@ def clip_nb(
     return val
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _common_geometry(xc, zc, x, z):
     r"""
     Calculate the geometry shared by the Green's functions.
@@ -85,13 +98,13 @@ def _common_geometry(xc, zc, x, z):
     return h, u, u2, k2
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _elliptic_integrals(k2):
     """Evaluate E(k²) and K(k²)."""
     return ellipe_nb(k2), ellipk_nb(k2)
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _i1_i2(u, u2, k2, e, k):
     r"""
     Calculate
@@ -112,7 +125,7 @@ def _i1_i2(u, u2, k2, e, k):
     return i1, i2
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _radial_term(xc, x, h, i1, i2):
     r"""
     Calculate
@@ -131,7 +144,7 @@ def _radial_term(xc, x, h, i1, i2):
     return i1 + w2 * i2
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _vertical_term(xc, x, h, i1, i2):
     r"""
     Calculate
@@ -150,7 +163,7 @@ def _vertical_term(xc, x, h, i1, i2):
     return i1 - v2 * i2
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _radial_response(xc, zc, x, z):
     """Calculate the term shared by dpsi/dx and Bz."""
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
@@ -160,7 +173,7 @@ def _radial_response(xc, zc, x, z):
     return _radial_term(xc, x, h, i1, i2)
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _vertical_response(xc, zc, x, z):
     """Calculate the quantities shared by dpsi/dz and Bx."""
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
@@ -170,7 +183,7 @@ def _vertical_response(xc, zc, x, z):
     return h, _vertical_term(xc, x, h, i1, i2)
 
 
-@nb.njit(cache=True, inline="always")
+@nb.njit(nopython=True, cache=True, inline="always")
 def _axis_bz(xc, zc, z):
     r"""
     Calculate the analytical vertical field on the symmetry axis.
@@ -187,8 +200,8 @@ def _axis_bz(xc, zc, z):
     return 0.5 * MU_0 * xc * xc / (u2 * np.sqrt(u2))
 
 
-@nb.njit(cache=True, inline="always")
-def _elliptic_parameter_derivatives(e, k, k2):
+@nb.njit(nopython=True, cache=True, inline="always")
+def _elliptic_derivatives(e, k, k2):
     r"""
     Calculate elliptic-integral derivatives with respect to ``k²``.
 
@@ -208,13 +221,13 @@ def _elliptic_parameter_derivatives(e, k, k2):
     one_minus_k2 = 1.0 - k2
     inv_2k2 = 0.5 / k2
 
-    dE_dk2 = (e - k) * inv_2k2
-    dK_dk2 = (e - one_minus_k2 * k) * inv_2k2 / one_minus_k2
+    dE_dk2 = (e - k) * inv_2k2  # noqa: N806
+    dK_dk2 = (e - one_minus_k2 * k) * inv_2k2 / one_minus_k2  # noqa: N806
 
     return dK_dk2, dE_dk2
 
 
-@nb.njit(cache=True)
+@nb.njit(nopython=True, cache=True)
 def greens_psi(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -224,9 +237,47 @@ def greens_psi(
     d_zc: float = 0,  # noqa: ARG001
 ) -> float | np.ndarray:
     """
-    Calculate poloidal flux due to a unit circular current filament.
+    Calculate poloidal flux at (x, z) due to a unit current at (xc, zc)
+    using a Greens function.
 
-    The analytical axis value is zero.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        Poloidal magnetic flux per radian response at (x, z)
+
+    Raises
+    ------
+    ZeroDivisionError
+        if xc == x == 0
+
+    Notes
+    -----
+    \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
+    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
+    \t:math:`[(2-\\mathbf{K}(k^2)-2\\mathbf{E}(k^2)]`\n
+    Where:
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values should not be used.
     """
     axis = x <= 0.0
 
@@ -248,9 +299,47 @@ def greens_dpsi_dx(
     d_zc: float = 0,  # noqa: ARG001
 ) -> float | np.ndarray:
     """
-    Calculate the radial derivative of the poloidal flux.
+    Calculate the radial derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
 
-    Its analytical axis value is zero.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        Radial derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) =`
+    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
+    \t:math:`\\dfrac{1}{u}`
+    \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
+    Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`w^{2}\\equiv x^2 -x_{c}^2 - h^2`\n
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
+
+    Its analytical axis value is 0.0.
     """
     radial_term = _radial_response(xc, zc, x, z)
 
@@ -268,9 +357,47 @@ def greens_dpsi_dz(
     d_zc: float = 0,  # noqa: ARG001
 ) -> float | np.ndarray:
     """
-    Calculate the vertical derivative of the poloidal flux.
+    Calculate the vertical derivative of the poloidal flux at (x, z)
+    due to a unit current at (xc, zc) using a Greens function.
 
-    Its analytical axis value is zero.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        Vertical derivative of the poloidal flux response at (x, z)
+
+    Notes
+    -----
+    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) =`
+    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
+    \t:math:`\\dfrac{h}{u}`
+    \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
+    Where:
+    \t:math:`h^{2}\\equiv z_{c}-z`\n
+    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
+    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
+    \t:math:`v^{2}\\equiv x^2 +x_{c}^2 + h^2`\n
+    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
+    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
+    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+
+    The implementation used here refactors the above to avoid some zero divisions.
+
+    Its analytical axis value is 0.0.
     """
     axis = x <= 0.0
 
@@ -292,7 +419,35 @@ def greens_Bx(
     """
     Calculate the radial magnetic-field response.
 
-    The analytical axis value is zero.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        Radial magnetic field response at (x, z)
+
+    Notes
+    -----
+    .. math::
+
+        G_{B_x}
+        =-\frac{\\mu_0}{2\\pi}\frac{h}{x}
+        \\left(I_1-v^2I_2\right).
+
+    The analytical axis value is 0.0.
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
@@ -315,7 +470,41 @@ def greens_Bz(
     """
     Calculate the vertical magnetic-field response.
 
-    Axis entries use the analytical circular-filament field.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        Vertical magnetic field response at (x, z)
+
+    Notes
+    -----
+    .. math::
+
+        G_{B_z}
+        =\frac{\\mu_0}{2\\pi}
+        \\left(I_1+w^2I_2\right).
+
+    On the symmetry axis,
+
+    .. math::
+
+        G_{B_z}(0,z)=
+        \frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
     """
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
     e, k = _elliptic_integrals(k2)
@@ -337,10 +526,43 @@ def greens_dbz_dx(
     x: float | np.ndarray,
     z: float | np.ndarray,
 ) -> float | np.ndarray:
-    """
+    r"""
     Calculate the radial derivative of the vertical magnetic field.
 
-    The analytical axis value is zero.
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+    d_xc:
+        The coil half-width (overload argument)
+    d_zc:
+        The coil half-height (overload argument)
+
+    Returns
+    -------
+    :
+        The gradient of the vertical magnetic field
+
+    Notes
+    -----
+    .. math::
+
+        \frac{\partial B_z}{\partial x}
+        =\frac{\partial B_x}{\partial z}
+        =\frac{\mu_0}{2\pi}
+        \left[
+            \frac{1}{u}\frac{\partial F}{\partial x}
+            -\frac{x+x_c}{u^3}F
+        \right],
+
+    where :math:`F=K(k^2)+E(k^2)w^2/d^2` and
+    :math:`d^2=(x-x_c)^2+h^2`. The analytical axis value is zero.
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
@@ -355,7 +577,7 @@ def greens_dbz_dx(
     w2 = xc * xc - x * x - h2
 
     e, k = _elliptic_integrals(k2)
-    dK_dk2, dE_dk2 = _elliptic_parameter_derivatives(
+    dK_dk2, dE_dk2 = _elliptic_derivatives(
         e,
         k,
         k2,

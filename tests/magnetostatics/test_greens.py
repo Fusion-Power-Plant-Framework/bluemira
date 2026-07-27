@@ -230,20 +230,31 @@ class TestGreensEdgeCases:
             greens_dpsi_dz,
             greens_dpsi_dx,
             greens_Bx,
+            greens_dbz_dx,
+        ],
+    )
+    @pytest.mark.parametrize("axis_point", [[1, 1, 0, 0]])
+    def test_greens_on_axis(self, func, axis_point):
+        assert func(*axis_point) == 0.0
+
+    def test_greens_Bz_axis(self):
+        assert greens_Bz(1, 1, 0, 0) > 0.0
+
+    @pytest.mark.parametrize(
+        "func",
+        [
+            greens_psi,
+            greens_dpsi_dz,
+            greens_dpsi_dx,
+            greens_Bx,
             greens_Bz,
             greens_dbz_dx,
         ],
     )
-    @pytest.mark.parametrize("fail_point", [[0, 0, 0, 0]])
-    def test_greens_on_axis(self, func, fail_point):
+    @pytest.mark.parametrize("origin_point", [[0, 0, 0, 0]])
+    def test_greens_origin_singularity(self, func, origin_point):
         with pytest.raises(ZeroDivisionError):
-            func(*fail_point)
-
-    @pytest.mark.parametrize("func", [greens_Bx, greens_Bz, greens_dbz_dx])
-    @pytest.mark.parametrize("fail_point", [[1, 1, 0, 10], [-1, -1, 0, 10]])
-    def test_greens_on_axis_field(self, func, fail_point):
-        with pytest.raises(ZeroDivisionError):
-            func(*fail_point)
+            func(*origin_point)
 
     @pytest.mark.parametrize("func", [greens_Bx, greens_dpsi_dz, greens_dbz_dx])
     @pytest.mark.parametrize("zero_point", [[1, 1, 1, 1], [-1, -1, -1, -1]])
