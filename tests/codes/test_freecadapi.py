@@ -40,6 +40,10 @@ class TestFreecadapi(BackendApiTestsBase):
     def offsetter(wire):
         return cadapi.offset_wire(wire, 0.05, join="intersect", open_wire=False)
 
+    test_boolean_cut_split_arg = pytest.mark.xfail(reason="freecad coplanar check")(
+        BackendApiTestsBase.test_boolean_cut_split_arg
+    )
+
     def test_multi_offset_wire_without_arranged_edges(self):
         """
         FreeCAD Topological naming bug
