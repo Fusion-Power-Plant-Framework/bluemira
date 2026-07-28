@@ -32,17 +32,7 @@ __all__ = [
 GREENS_ZERO = 1e-8
 
 
-@nb.vectorize(nopython=True, cache=True)
-def _clip_k2(k2):
-    """Keep the elliptic parameter strictly inside 0 < k² < 1."""
-    if k2 < GREENS_ZERO:
-        return GREENS_ZERO
-    if k2 > 1.0 - GREENS_ZERO:
-        return 1.0 - GREENS_ZERO
-    return k2
-
-
-@nb.vectorize(nopython=True, cache=True)
+@nb.vectorize(cache=True)
 def clip_nb(
     val: float | np.ndarray, val_min: float, val_max: float
 ) -> float | np.ndarray:
@@ -71,7 +61,7 @@ def clip_nb(
     return val
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _common_geometry(xc, zc, x, z):
     r"""
     Calculate the geometry shared by the Green's functions.
@@ -93,18 +83,18 @@ def _common_geometry(xc, zc, x, z):
 
     u2 = xp * xp + h * h
     u = np.sqrt(u2)
-    k2 = _clip_k2(4.0 * x * xc / u2)
+    k2 = clip_nb(4.0 * x * xc / u2, GREENS_ZERO, 1.0 - GREENS_ZERO)
 
     return h, u, u2, k2
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _elliptic_integrals(k2):
     """Evaluate E(k²) and K(k²)."""
     return ellipe_nb(k2), ellipk_nb(k2)
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _i1_i2(u, u2, k2, e, k):
     r"""
     Calculate
@@ -125,7 +115,7 @@ def _i1_i2(u, u2, k2, e, k):
     return i1, i2
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _radial_term(xc, x, h, i1, i2):
     r"""
     Calculate
@@ -144,7 +134,7 @@ def _radial_term(xc, x, h, i1, i2):
     return i1 + w2 * i2
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _vertical_term(xc, x, h, i1, i2):
     r"""
     Calculate
@@ -163,7 +153,7 @@ def _vertical_term(xc, x, h, i1, i2):
     return i1 - v2 * i2
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _radial_response(xc, zc, x, z):
     """Calculate the term shared by dpsi/dx and Bz."""
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
@@ -173,7 +163,7 @@ def _radial_response(xc, zc, x, z):
     return _radial_term(xc, x, h, i1, i2)
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _vertical_response(xc, zc, x, z):
     """Calculate the quantities shared by dpsi/dz and Bx."""
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
@@ -183,7 +173,7 @@ def _vertical_response(xc, zc, x, z):
     return h, _vertical_term(xc, x, h, i1, i2)
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _axis_bz(xc, zc, z):
     r"""
     Calculate the analytical vertical field on the symmetry axis.
@@ -200,7 +190,7 @@ def _axis_bz(xc, zc, z):
     return 0.5 * MU_0 * xc * xc / (u2 * np.sqrt(u2))
 
 
-@nb.njit(nopython=True, cache=True, inline="always")
+@nb.njit(cache=True, inline="always")
 def _elliptic_derivatives(e, k, k2):
     r"""
     Calculate elliptic-integral derivatives with respect to ``k²``.
@@ -220,7 +210,7 @@ def _elliptic_derivatives(e, k, k2):
     return dK_dk2, dE_dk2
 
 
-@nb.njit(nopython=True, cache=True)
+@nb.njit(cache=True)
 def greens_psi(
     xc: float | np.ndarray,
     zc: float | np.ndarray,
@@ -261,7 +251,7 @@ def greens_psi(
     Notes
     -----
     .. math::
-        G_\psi=    \frac{\mu_0}{4\pi}[(2-k^2)K(k^2)-2E(k^2)]
+        G_\\psi=    \frac{\\mu_0}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
 
@@ -314,9 +304,9 @@ def greens_dpsi_dx(
     -----
     .. math::
 
-        \frac{\partial G_\psi}{\partial x}
-        =\frac{\mu_0}{2\pi}x
-        \left(I_1+w^2I_2\right).
+        \frac{\\partial G_\\psi}{\\partial x}
+        =\frac{\\mu_0}{2\\pi}x
+        \\left(I_1+w^2I_2\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
@@ -367,9 +357,9 @@ def greens_dpsi_dz(
     -----
     .. math::
 
-        \frac{\partial G_\psi}{\partial z}
-        =\frac{\mu_0}{2\pi}h
-        \left(I_1-v^2I_2\right).
+        \frac{\\partial G_\\psi}{\\partial z}
+        =\frac{\\mu_0}{2\\pi}h
+        \\left(I_1-v^2I_2\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
@@ -523,10 +513,6 @@ def greens_dbz_dx(
         Calculation x locations
     z:
         Calculation z locations
-    d_xc:
-        The coil half-width (overload argument)
-    d_zc:
-        The coil half-height (overload argument)
 
     Returns
     -------
@@ -565,7 +551,7 @@ def greens_dbz_dx(
     w2 = xc * xc - x * x - h2
 
     e, k = _elliptic_integrals(k2)
-    dK_dk2, dE_dk2 = _elliptic_derivatives(
+    dK_dk2, dE_dk2 = _elliptic_derivatives(  # noqa: N806
         e,
         k,
         k2,
@@ -633,6 +619,15 @@ def greens_all(
         Calculation x locations
     z:
         Calculation z locations
+
+    Returns
+    -------
+    psi:
+        Poloidal flux response
+    Bx:
+        Radial magnetic field response
+    Bz:
+        Vertical magnetic field response
     """
     axis = x <= 0.0
     x_safe = np.where(axis, 1.0, x)
@@ -697,7 +692,7 @@ def circular_coil_inductance_elliptic(
         , 1.0 - 10^{-8}\\right)\\right)
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
-    k = _clip_k2(k)
+    k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
     return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk_nb(k) - ellipe_nb(k))
 
 

@@ -235,7 +235,7 @@ class TestGreensEdgeCases:
     )
     @pytest.mark.parametrize("axis_point", [[1, 1, 0, 0]])
     def test_greens_on_axis(self, func, axis_point):
-        assert func(*axis_point) == 0.0
+        assert func(*axis_point) == 0.0  # noqa: RUF069
 
     def test_greens_Bz_axis(self):
         assert greens_Bz(1, 1, 0, 0) > 0.0
