@@ -269,7 +269,10 @@ class TestGreenFieldsRegression2:
     ):
         self.runner(new_greens_func, old_greens_func, case, xc, zc, x, z)
 
-    @pytest.mark.xfail
+    @pytest.mark.xfail(
+        reason="Approaching logarithmic singularity - differences in"
+        " numerical implementation."
+    )
     @pytest.mark.parametrize(
         ("new_greens_func", "old_greens_func", "case", "xc", "zc", "x", "z"),
         [
