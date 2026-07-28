@@ -491,7 +491,13 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: Axes | None = None, *, field: EqBPlotParam = EqBPlotParam.PSI):
+    def plot(
+        self,
+        ax: Axes | None = None,
+        *,
+        plasma: bool = True,
+        field: EqBPlotParam = EqBPlotParam.PSI,
+    ):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
 
@@ -500,7 +506,7 @@ class FixedPlasmaEquilibrium(MHDState):
         :
             the plot axis
         """
-        return FixedPlasmaEquilibriumPlotter(self, ax, field=field)
+        return FixedPlasmaEquilibriumPlotter(self, ax, plasma=plasma, field=field)
 
 
 class CoilSetMHDState(MHDState):
@@ -2368,9 +2374,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         psi_2 = x_points[1].psi
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
-    def plot(
-        self, ax: Axes | None = None, *, plasma: bool = False, show_ox: bool = True
-    ):
+    def plot(self, ax: Axes | None = None, *, plasma: bool = True, show_ox: bool = True):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
 
