@@ -77,7 +77,7 @@ def _common_geometry(xc, zc, x, z):
     .. math::
 
         k^2 = \frac{4xx_c}{u^2}.
-    """
+    """  # noqa: DOC201
     h = z - zc
     xp = x + xc
 
@@ -90,7 +90,7 @@ def _common_geometry(xc, zc, x, z):
 
 @nb.njit(cache=True, inline="always")
 def _elliptic_integrals(k2):
-    """Evaluate E(k²) and K(k²)."""
+    """Evaluate E(k²) and K(k²)."""  # noqa: DOC201
     return ellipe_nb(k2), ellipk_nb(k2)
 
 
@@ -106,7 +106,7 @@ def _i1_i2(u, u2, k2, e, k):
     .. math::
 
         I_2 = \frac{E(k^2)}{u^3(1-k^2)}.
-    """
+    """  # noqa: DOC201
     inv_u = 1.0 / u
 
     i1 = k * inv_u
@@ -129,7 +129,7 @@ def _radial_term(xc, x, h, i1, i2):
     .. math::
 
         w^2=x_c^2-x^2-h^2.
-    """
+    """  # noqa: DOC201
     w2 = xc * xc - x * x - h * h
     return i1 + w2 * i2
 
@@ -148,14 +148,14 @@ def _vertical_term(xc, x, h, i1, i2):
     .. math::
 
         v^2=x^2+x_c^2+h^2.
-    """
+    """  # noqa: DOC201
     v2 = x * x + xc * xc + h * h
     return i1 - v2 * i2
 
 
 @nb.njit(cache=True, inline="always")
 def _radial_response(xc, zc, x, z):
-    """Calculate the term shared by dpsi/dx and Bz."""
+    """Calculate the term shared by dpsi/dx and Bz."""  # noqa: DOC201
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
     e, k = _elliptic_integrals(k2)
     i1, i2 = _i1_i2(u, u2, k2, e, k)
@@ -165,7 +165,7 @@ def _radial_response(xc, zc, x, z):
 
 @nb.njit(cache=True, inline="always")
 def _vertical_response(xc, zc, x, z):
-    """Calculate the quantities shared by dpsi/dz and Bx."""
+    """Calculate the quantities shared by dpsi/dz and Bx."""  # noqa: DOC201
     h, u, u2, k2 = _common_geometry(xc, zc, x, z)
     e, k = _elliptic_integrals(k2)
     i1, i2 = _i1_i2(u, u2, k2, e, k)
@@ -183,7 +183,7 @@ def _axis_bz(xc, zc, z):
         B_z(0,z)=
         \frac{\mu_0x_c^2}
         {2\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
-    """
+    """  # noqa: DOC201
     h = z - zc
     u2 = xc * xc + h * h
 
@@ -200,7 +200,7 @@ def _elliptic_derivatives(e, k, k2):
         \frac{dE}{d(k^2)}=\frac{E-K}{2k^2},\qquad
         \frac{dK}{d(k^2)}
         =\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
-    """
+    """  # noqa: DOC201
     one_minus_k2 = 1.0 - k2
     inv_2k2 = 0.5 / k2
 
