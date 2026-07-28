@@ -16,6 +16,8 @@ import bluemira.codes._geometryapi as _cadapi
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation._tools import KeepOutZone
+from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PFrameSection,
@@ -24,6 +26,7 @@ from bluemira.geometry.parameterisations import (
     PolySpline,
     PrincetonD,
     PrincetonDDiscrete,
+    ProcessD,
     SextupleArc,
     TripleArc,
     _calculate_discrete_constant_tension_shape,
@@ -33,6 +36,7 @@ from bluemira.geometry.tools import (
     SweepShapeTransition,
     boolean_cut,
     extrude_shape,
+    make_circle,
     make_polygon,
     offset_wire,
     sweep_shape,
@@ -678,3 +682,140 @@ class TestSextupleArc:
     def test_plot(self):
         p = SextupleArc()
         p.plot(labels=True)
+
+
+class MinimumLengthGOP(GeomOptimisationProblem):
+    """
+    Minimum length shape optimisation problem.
+
+    Parameters
+    ----------
+    parameterisation:
+        Geometry parameterisation for the shape
+    algorithm:
+        Optimisation algorithm to use
+    opt_conditions:
+        Optimisation termination conditions dictionary
+    opt_parameters:
+        Optimisation parameters dictionary
+    keep_out_zone:
+        Zone boundary which the WP may not enter
+    koz_con_tol:
+        Tolerance with which to apply the keep-out-zone constraints
+    n_koz_points:
+        Number of discretised points to use when enforcing the keep-out-zone constraint
+
+    The geometry parameterisation is updated in place
+    """
+
+    def __init__(
+        self,
+        parameterisation: GeometryParameterisation,
+        algorithm: str,
+        opt_conditions: dict[str, float],
+        opt_parameters: dict[str, float],
+        keep_out_zone: BluemiraWire | None = None,
+        koz_con_tol: float = 1e-3,
+        n_koz_points: int = 100,
+    ):
+        self.parameterisation = parameterisation
+        self.algorithm = algorithm
+        self.opt_parameters = opt_parameters
+        self.opt_conditions = opt_conditions
+        if keep_out_zone:
+            self._keep_out_zone = [
+                KeepOutZone(
+                    keep_out_zone,
+                    byedges=True,
+                    dl=keep_out_zone.length / 200,
+                    tol=koz_con_tol,
+                    shape_n_discr=n_koz_points,
+                )
+            ]
+        else:
+            self._keep_out_zone = []
+
+    @staticmethod
+    def objective(parameterisation: GeometryParameterisation) -> float:
+        """
+        Objective function (minimise length)
+        """
+        return parameterisation.create_shape().length
+
+    def keep_out_zones(self) -> list[KeepOutZone]:
+        """
+        Keep out zone
+        """
+        return self._keep_out_zone
+
+    def optimise(self) -> GeometryParameterisation:
+        """
+        Solve the GeometryOptimisationProblem.
+        """
+        self.parameterisation = (
+            super()
+            .optimise(
+                self.parameterisation,
+                algorithm=self.algorithm,
+                opt_conditions=self.opt_conditions,
+                opt_parameters=self.opt_parameters,
+            )
+            .geom
+        )
+        return self.parameterisation
+
+
+class TestProcessD:
+    @pytest.mark.parametrize("offset", [0, 0.1, -0.1])
+    def test_segments(self, offset):
+        p = ProcessD()
+        p.adjust_variable("offset", value=offset)
+        wire = p.create_shape()
+        assert len(wire._boundary) == 5
+        assert wire.is_closed()
+        assert BluemiraFace(wire).is_valid()
+
+    def test_length(self):
+        p = ProcessD({
+            "x1": {"value": 4.0462172494949},
+            "z1": {"value": 4.465810238652615},
+            "x2": {"value": 7.961804920730897},
+            "z2": {"value": 7.443017064421025},
+            "x3": {"value": 14.464358888249548},
+            "z4": {"value": -8.543803465848422},
+            "z5": {"value": -5.1262820795090525},
+            "dz": {"value": 0.0},
+            "offset": {"value": -0.5 * 1.34276898010257173e00},
+        })
+        s = p.create_shape()
+        length = s.length
+        assert len(s._boundary) == 5
+        assert s.is_closed()
+        assert BluemiraFace(s).is_valid()
+        assert np.isclose(length, 4.78416875040924054e01, rtol=1e-6, atol=0.0)
+
+    def test_optimisation(self):
+        """
+        Use the parameterisation in anger in a constrained optimisation problem
+        Useful for detecting if there is anything wrong with the parameterisation
+        or constraints.
+        """
+        p = ProcessD()
+        koz = make_circle(5, center=(10, 0, 0), axis=(0, 1, 0))
+        problem = MinimumLengthGOP(
+            p,
+            "SLSQP",
+            {"max_eval": 2000, "ftol_rel": 1e-12},
+            {},
+            keep_out_zone=koz,
+            n_koz_points=200,
+        )
+        result = problem.optimise()
+        solution = result.create_shape()
+        assert len(solution._boundary) == 5
+        assert solution.is_closed()
+        assert BluemiraFace(solution).is_valid()
+        x_min = result.variables.x1.value + abs(result.variables.offset.value)
+        x_max = result.variables.x3.value - abs(result.variables.offset.value)
+        assert np.isclose(x_min, 10 - 5, atol=1e-3, rtol=0.0)
+        assert np.isclose(x_max, 10 + 5, atol=1e-3, rtol=0.0)

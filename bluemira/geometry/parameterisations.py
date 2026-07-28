@@ -37,6 +37,7 @@ from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
     make_circle,
+    make_ellipse,
     make_polygon,
     wire_closure,
 )
@@ -2702,3 +2703,249 @@ class PictureFrame(
 
         xmin, xmax = ax.get_xlim()
         ax.set_xlim(xmin, xmax * 1.1)
+
+
+@dataclass
+class ProcessDOptVariables(OptVariablesFrame):
+    """
+    Process D-shaped TF coil geometry parameterisation variables.
+
+    NOTE: The offset parameter is left in here, as PROCESS'
+    description of the TF coil geometry is for the plasma-facing
+    surface of the winding pack, not the current centreline.
+    """
+
+    # Same as x5
+    x1: OptVariable = ov(
+        "x1",
+        3.432064,
+        lower_bound=3.4,
+        upper_bound=5.0,
+        description="Radius of the first and fifth ellipse arc.",
+    )
+    z1: OptVariable = ov(
+        "z1",
+        4.923935,
+        lower_bound=4.0,
+        upper_bound=6.0,
+        description="Vertical position of the first ellipse arc.",
+    )
+
+    # Same as x4
+    x2: OptVariable = ov(
+        "x2",
+        7.603035,
+        lower_bound=7.0,
+        upper_bound=9.0,
+        description="Radius of the second and fourth ellipse arc.",
+    )
+    z2: OptVariable = ov(
+        "z2",
+        8.206558,
+        lower_bound=7.0,
+        upper_bound=9.0,
+        description="Vertical position of the second ellipse arc.",
+    )
+
+    x3: OptVariable = ov(
+        "x3",
+        15.39204,
+        lower_bound=13.0,
+        upper_bound=18.0,
+        description="Radius of the third ellipse arc.",
+    )  # z3 is always 0.0
+
+    z4: OptVariable = ov(
+        "z4",
+        -9.292868,
+        lower_bound=-10.0,
+        upper_bound=-8.0,
+        description="Vertical position of the fourth ellipse arc.",
+    )
+    z5: OptVariable = ov(
+        "z5",
+        -5.575721,
+        lower_bound=-6.0,
+        upper_bound=-5.0,
+        description="Vertical position of the fifth ellipse arc.",
+    )
+
+    offset: OptVariable = ov(
+        "offset",
+        -0.32754486599153443,
+        lower_bound=-1.0,
+        upper_bound=1.0,
+        description="Offset from the ellipse",
+    )
+    dz: OptVariable = ov(
+        "dz", 0, lower_bound=-1, upper_bound=1, description="Vertical offset from z=0"
+    )
+
+
+class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
+    """
+    Process D-shaped TF coil geometry parameterisation.
+    """
+
+    __slots__ = ()
+    n_ineq_constraints = 8
+
+    def __init__(self, var_dict=None):
+        variables = ProcessDOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint for ProcessD.
+
+        Constrain such that the radii and vertical positions of the ellipse
+        centers produce ellipses that do not overlap.
+
+        Returns
+        -------
+        :
+            Inequality constraint for ProcessD.
+        """
+        x_norm = self.variables.get_normalised_values()
+        x_actual = self.process_x_norm_fixed(x_norm)
+        x1, z1, x2, z2, x3, z4, z5, _, _ = x_actual
+        return np.array([
+            x1 - x2,
+            x2 - x3,
+            z1 - z2,
+            z4 - z5,
+            abs(z5 - z4) - abs(x2 - x1),
+            abs(-z4) - abs(x3 - x2),
+            abs(z2) - abs(x3 - x2),
+            abs(z2 - z1) - abs(x2 - x1),
+        ])
+
+    def df_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint gradient.
+
+        Returns
+        -------
+        :
+            Jacobian of the inequality constraints.
+        """
+        x_norm = self.variables.get_normalised_values()
+        x_actual = self.process_x_norm_fixed(x_norm)
+
+        x1, z1, x2, z2, x3, z4, z5, _, _ = x_actual
+
+        gradient = np.zeros((self.n_ineq_constraints, len(x_norm)))
+
+        s1 = np.sign(z5 - z4)
+        s2 = np.sign(x2 - x1)
+        s3 = np.sign(-z4)
+        s4 = np.sign(x3 - x2)
+        s5 = np.sign(z2)
+        s6 = np.sign(z2 - z1)
+
+        rows = [
+            {"x1": 1.0, "x2": -1.0},
+            {"x2": 1.0, "x3": -1.0},
+            {"z1": 1.0, "z2": -1.0},
+            {"z4": 1.0, "z5": -1.0},
+            {"x1": s2, "x2": -s2, "z4": -s1, "z5": s1},
+            {"x2": s4, "x3": -s4, "z4": -s3},
+            {"x2": s4, "x3": -s4, "z2": s5},
+            {"x1": s2, "x2": -s2, "z1": -s6, "z2": s6},
+        ]
+
+        for i, row in enumerate(rows):
+            for var, coeff in row.items():
+                if not self.variables[var].fixed:
+                    gradient[i, self.get_x_norm_index(var)] = coeff
+
+        return gradient
+
+    def create_shape(
+        self,
+        label: str = "",
+    ) -> BluemiraWire:
+        """
+        Make a CAD representation of the Process D geometry.
+
+        Parameters
+        ----------
+        label:
+            Label to give the wire
+
+        Returns
+        -------
+        :
+            CAD Wire of the Process D geometry
+        """
+        x1, z1, x2, z2, x3, z4, z5, offset, dz = self.variables.values
+
+        segments = [
+            # Inboard lower
+            self._make_arc(
+                center=(x2, 0, z5),
+                a=x2 - x1 - offset,
+                b=z5 - z4 - offset,
+                start=-180,
+                end=-90,
+            ),
+            # Outboard lower
+            self._make_arc(
+                center=(x2, 0, 0),
+                a=x3 - x2 - offset,
+                b=-z4 - offset,
+                start=-90,
+                end=0,
+            ),
+            # Outboard upper
+            self._make_arc(
+                center=(x2, 0, 0),
+                a=x3 - x2 - offset,
+                b=z2 - offset,
+                start=0,
+                end=90,
+            ),
+            # Inboard upper
+            self._make_arc(
+                center=(x2, 0, z1),
+                a=x2 - x1 - offset,
+                b=z2 - z1 - offset,
+                start=90,
+                end=180,
+            ),
+        ]
+
+        wire = BluemiraWire(segments, label=label)
+        wire.close()
+        wire.translate((0, 0, dz))
+        return wire
+
+    @staticmethod
+    def _make_arc(center, a, b, start, end):
+        # NOTE: OCCT expects the major axis to be the largest of the two radii,
+        # so we need to swap them if necessary.
+        # Documentation is poor, this was one of the 64 possible combinations
+        # that worked...
+
+        if abs(a) >= abs(b):
+            major = a
+            minor = b
+            major_axis = (1, 0, 0)
+            minor_axis = (0, 0, 1)
+        else:
+            major = b
+            minor = a
+            major_axis = (0, 0, 1)
+            minor_axis = (1, 0, 0)
+            start, end = 90 - end, 90 - start
+
+        return make_ellipse(
+            center=center,
+            major_radius=major,
+            minor_radius=minor,
+            major_axis=major_axis,
+            minor_axis=minor_axis,
+            start_angle=start,
+            end_angle=end,
+        )
