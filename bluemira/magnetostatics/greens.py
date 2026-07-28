@@ -63,7 +63,7 @@ def clip_nb(
 
 @nb.njit(cache=True, inline="always")
 def _common_geometry(xc, zc, x, z):
-    r"""
+    """
     Calculate the geometry shared by the Green's functions.
 
     .. math::
@@ -96,7 +96,7 @@ def _elliptic_integrals(k2):
 
 @nb.njit(cache=True, inline="always")
 def _i1_i2(u, u2, k2, e, k):
-    r"""
+    """
     Calculate
 
     .. math::
@@ -117,7 +117,7 @@ def _i1_i2(u, u2, k2, e, k):
 
 @nb.njit(cache=True, inline="always")
 def _radial_term(xc, x, h, i1, i2):
-    r"""
+    """
     Calculate
 
     .. math::
@@ -136,7 +136,7 @@ def _radial_term(xc, x, h, i1, i2):
 
 @nb.njit(cache=True, inline="always")
 def _vertical_term(xc, x, h, i1, i2):
-    r"""
+    """
     Calculate
 
     .. math::
@@ -175,14 +175,14 @@ def _vertical_response(xc, zc, x, z):
 
 @nb.njit(cache=True, inline="always")
 def _axis_bz(xc, zc, z):
-    r"""
+    """
     Calculate the analytical vertical field on the symmetry axis.
 
     .. math::
 
         B_z(0,z)=
-        \frac{\mu_0x_c^2}
-        {2\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
+        \frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
     """  # noqa: DOC201
     h = z - zc
     u2 = xc * xc + h * h
@@ -192,12 +192,12 @@ def _axis_bz(xc, zc, z):
 
 @nb.njit(cache=True, inline="always")
 def _elliptic_derivatives(e, k, k2):
-    r"""
+    """
     Calculate elliptic-integral derivatives with respect to ``k²``.
 
     .. math::
 
-        \frac{dE}{d(k^2)}=\frac{E-K}{2k^2},\qquad
+        \frac{dE}{d(k^2)}=\frac{E-K}{2k^2},\\qquad
         \frac{dK}{d(k^2)}
         =\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
     """  # noqa: DOC201
@@ -500,7 +500,7 @@ def greens_dbz_dx(
     x: float | np.ndarray,
     z: float | np.ndarray,
 ) -> float | np.ndarray:
-    r"""
+    """
     Calculate the radial derivative of the vertical magnetic field.
 
     Parameters
@@ -523,11 +523,11 @@ def greens_dbz_dx(
     -----
     .. math::
 
-        \frac{\partial B_z}{\partial x}
-        =\frac{\partial B_x}{\partial z}
-        =\frac{\mu_0}{2\pi}
-        \left[
-            \frac{1}{u}\frac{\partial F}{\partial x}
+        \frac{\\partial B_z}{\\partial x}
+        =\frac{\\partial B_x}{\\partial z}
+        =\frac{\\mu_0}{2\\pi}
+        \\left[
+            \frac{1}{u}\frac{\\partial F}{\\partial x}
             -\frac{x+x_c}{u^3}F
         \right],
 
