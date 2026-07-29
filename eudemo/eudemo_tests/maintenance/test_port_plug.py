@@ -17,16 +17,18 @@ class TestCastellationBuilder:
 
     @pytest.mark.parametrize(
         ("xi", "xo", "zh", "yw", "vec", "x_offsets", "c_offsets", "exp_v"),
-        zip(
-            [9.0, 9.0, 6.0],  # x_inboard
-            [16.0, 15.0, 9.0],  # x_outboard
-            [5.0, 4.0, 2.0],  # z_height
-            [3.0, 2.0, 1.0],  # y_widths
-            [(1, 0, 0), (1, 0, 0), (1, 0, 0.5)],  # extrusion vectors
-            [[1.0], [1.0, 1.0], [0.5]],  # y/z castellation_offsets
-            [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
-            [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
-            strict=False,
+        list(
+            zip(
+                [9.0, 9.0, 6.0],  # x_inboard
+                [16.0, 15.0, 9.0],  # x_outboard
+                [5.0, 4.0, 2.0],  # z_height
+                [3.0, 2.0, 1.0],  # y_widths
+                [(1, 0, 0), (1, 0, 0), (1, 0, 0.5)],  # extrusion vectors
+                [[1.0], [1.0, 1.0], [0.5]],  # y/z castellation_offsets
+                [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
+                [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
+                strict=False,
+            )
         ),
     )
     def test_cst_builder(self, xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v):
