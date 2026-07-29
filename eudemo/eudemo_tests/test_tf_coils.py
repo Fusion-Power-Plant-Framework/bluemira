@@ -196,7 +196,7 @@ class TestTFCoilBuilder:
     }
 
     @pytest.mark.parametrize(
-        ("centreline", "wp_xs"), zip(*centreline_setup(), strict=False)
+        ("centreline", "wp_xs"), list(zip(*centreline_setup(), strict=False))
     )
     def test_components_and_segments(self, centreline, wp_xs):
         builder = TFCoilBuilder(self.params, {}, centreline, wp_xs)
