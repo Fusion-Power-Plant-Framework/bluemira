@@ -41,7 +41,10 @@ class TestFEModel:
         self.ss316 = SS316()
         self.op_cond = STPConditions()
 
-    @pytest.mark.parametrize(("sup", "dof"), zip([False, True], [5, 6], strict=False))
+    @pytest.mark.parametrize(
+        ("sup", "dof"),
+        [(False, 5), (True, 6)],
+    )
     def test_errors(self, sup, dof):
         """
         Checks rigid-body motion detection (insufficient constraints)
