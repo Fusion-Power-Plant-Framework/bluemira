@@ -62,7 +62,8 @@ class TestGetNSectors:
     }
 
     @pytest.mark.parametrize(
-        ("ttl", "sector_degree"), zip(np.arange(1, 16), sector_degree, strict=False)
+        ("ttl", "sector_degree"),
+        list(zip(np.arange(1, 16), sector_degree, strict=False)),
     )
     @pytest.mark.parametrize("degree", np.arange(0, 361, step=60))
     def test_get_n_sectors_degree(self, degree, ttl, sector_degree):
@@ -70,7 +71,9 @@ class TestGetNSectors:
         assert np.isclose(s_deg, sector_degree)
 
     @pytest.mark.parametrize("ttl", n_sectors.keys())
-    @pytest.mark.parametrize(("ind", "degree"), enumerate(np.arange(0, 361, step=60)))
+    @pytest.mark.parametrize(
+        ("ind", "degree"), list(enumerate(np.arange(0, 361, step=60)))
+    )
     def test_get_n_sectors_amount(self, ind, degree, ttl):
         _, n_sec = get_n_sectors(ttl, degree)
         assert np.isclose(n_sec, self.n_sectors[ttl][ind])

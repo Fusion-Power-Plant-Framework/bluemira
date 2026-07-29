@@ -16,6 +16,8 @@ PARAM_FILE = Path(Path(__file__).parent, "data", "params.json").as_posix()
 class TestProcessSolverParams:
     params = PlasmodSolverParams.from_json(PARAM_FILE)
 
-    @pytest.mark.parametrize("param", params, ids=lambda p: p.name)
+    @pytest.mark.parametrize(
+        "param", tuple(PlasmodSolverParams.from_json(PARAM_FILE)), ids=lambda p: p.name
+    )
     def test_mapping_defined_for_param(self, param):
         assert isinstance(self.params.mappings[param.name], ParameterMapping)

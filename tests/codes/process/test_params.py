@@ -13,6 +13,10 @@ from tests.codes.process.utilities import PARAM_FILE
 class TestProcessSolverParams:
     params = ProcessSolverParams.from_json(PARAM_FILE)
 
-    @pytest.mark.parametrize("param", params, ids=lambda p: p.name)
+    @pytest.mark.parametrize(
+        "param",
+        tuple(ProcessSolverParams.from_json(PARAM_FILE)),
+        ids=lambda p: p.name,
+    )
     def test_mapping_defined_for_param(self, param):
         assert isinstance(self.params.mappings[param.name], ParameterMapping)
