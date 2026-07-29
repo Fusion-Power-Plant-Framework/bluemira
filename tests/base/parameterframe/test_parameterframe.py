@@ -348,10 +348,12 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize(
         ("head_keys", "result"),
-        zip(
-            [None, ["name", "value"]],
-            [ParamDictT.__annotations__.keys(), ["name", "value"]],
-            strict=False,
+        list(
+            zip(
+                [None, ["name", "value"]],
+                [ParamDictT.__annotations__.keys(), ["name", "value"]],
+                strict=False,
+            )
         ),
     )
     def test_tabulate_headers(self, head_keys, result):
