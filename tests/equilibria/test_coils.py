@@ -274,11 +274,13 @@ class TestSemiAnalytic:
 
     @pytest.mark.parametrize(
         ("fd", "gfunc", "anfunc"),
-        zip(
-            ["Bx", "Bz"],
-            [greens_Bx, greens_Bz],
-            [semianalytic_Bx, semianalytic_Bz],
-            strict=False,
+        list(
+            zip(
+                ["Bx", "Bz"],
+                [greens_Bx, greens_Bz],
+                [semianalytic_Bx, semianalytic_Bz],
+                strict=False,
+            )
         ),
     )
     def test_bfield(self, fd, gfunc, anfunc):
