@@ -1402,7 +1402,7 @@ return np.multiply(np.logical_or(ref_mask, input_mask), 1)
             self.coilset_psi *= self.mask
             self.plasma_psi *= self.mask
             self.total_psi *= self.mask
-        elif mask_type in EqPlotMask.OUTSIDE:
+        elif mask_type in EqPlotMask.INSIDE:
             self.coilset_psi *= abs(self.mask - 1)
             self.plasma_psi *= abs(self.mask - 1)
             self.total_psi *= abs(self.mask - 1)
