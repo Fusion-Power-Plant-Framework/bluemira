@@ -295,11 +295,8 @@ class RegionInterpolator(XZGeometryInterpolator):
         if intervals.size == 0:
             return np.empty((0, 2), dtype=float)
 
-        if intervals.ndim != 2 or intervals.shape[1] != 2:  # noqa: PLR2004
+        if intervals.shape[1] != 2:  # noqa: PLR2004
             raise PositionerError("Horizontal intervals must have shape (n, 2).")
-
-        if not np.all(np.isfinite(intervals)):
-            raise PositionerError("Horizontal intervals contain non-finite coordinates.")
 
         # Do not depend on the orientation of the sliced edge.
         intervals = np.sort(intervals, axis=1)
@@ -310,7 +307,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         tolerance = RegionInterpolator._coordinate_tolerance(intervals)
 
-        merged: list[list[float]] = [[float(intervals[0, 0]), float(intervals[0, 1])]]
+        merged = [intervals[0, (0, 1)]]
 
         for left, right in intervals[1:]:
             previous = merged[-1]
@@ -322,24 +319,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         return np.asarray(merged, dtype=float)
 
-    @staticmethod
-    def _make_horizontal_plane(z: float) -> BluemiraPlane:
-        """
-        Construct a plane whose intersection with the x-z geometry is at z.
-
-        Parameters
-        ----------
-        z:
-            Physical z coordinate.
-
-        Returns
-        -------
-        :
-            Horizontal slicing plane.
-        """
-        return BluemiraPlane.from_3_points([0.0, 0.0, z], [1.0, 0.0, z], [0.0, 1.0, z])
-
-    def _face_intervals_at(self, z: float) -> np.ndarray:
+    def _face_intervals_at(self, intersections: list[BluemiraWire] | None) -> np.ndarray:
         """
         Slice a face and return its filled horizontal intervals.
 
@@ -353,27 +333,24 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Parameters
         ----------
-        z:
-            Physical z coordinate.
+        intersections:
+            intesections with a plane at z
 
         Returns
         -------
         :
             Sorted and merged filled intervals.
         """
-        plane = self._make_horizontal_plane(z)
-        sliced_edges = slice_shape(self.geometry, plane)
-
-        if sliced_edges is None:
+        if intersections is None:
             return np.empty((0, 2), dtype=float)
 
         intervals: list[tuple[float, float]] = []
 
-        for sliced_edge in sliced_edges:
+        for sliced_edge in intersections:
             try:
                 start_x = sliced_edge.start_point().x
                 end_x = sliced_edge.end_point().x
-            except (AttributeError, TypeError, ValueError, PositionerError):
+            except (AttributeError, TypeError):
                 continue
 
             left, right = sorted((start_x, end_x))
@@ -384,24 +361,34 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         return self._merge_intervals(np.asarray(intervals, dtype=float))
 
-    def _wire_intersections_at(self, z: float) -> np.ndarray:
+    def _wire_intersections_at(self, intersections: np.ndarray) -> np.ndarray:
         """
         Slice a boundary wire and return its distinct x intersections.
 
         Parameters
         ----------
-        z:
-            Physical z coordinate.
+        intersections:
+            intesections with a plane at z
 
         Returns
         -------
         :
             Sorted array of distinct x coordinates.
         """
-        plane = self._make_horizontal_plane(z)
-        intersections = slice_shape(self.geometry, plane)
+        x_values = self._intersection_x_values(intersections)
 
-        return self._intersection_x_values(intersections)
+        if len(x_values) == 0:
+            return np.empty((0, 2), dtype=float)
+
+        if len(x_values) == 1:
+            return np.array([[x_values[0], x_values[0]]], dtype=float)
+
+        if len(x_values) % 2 == 0:
+            return self._merge_intervals(x_values.reshape(-1, 2))
+
+        # An odd number greater than one is usually a tangent or vertex
+        # degeneracy. The caller will try a nearby interior slice.
+        return np.empty((0, 2), dtype=float)
 
     def _try_intervals_at(self, z: float) -> np.ndarray:
         """
@@ -418,24 +405,15 @@ class RegionInterpolator(XZGeometryInterpolator):
             Valid intervals, or an empty array when the slice is degenerate or
             cannot be consistently interpreted.
         """
+        intersections = slice_shape(
+            self.geometry,
+            BluemiraPlane.from_3_points([0.0, 0.0, z], [1.0, 0.0, z], [0.0, 1.0, z]),
+        )
+
         if isinstance(self.geometry, BluemiraFace):
-            return self._face_intervals_at(z)
+            return self._face_intervals_at(intersections)
 
-        x_values = self._wire_intersections_at(z)
-
-        if len(x_values) == 0:
-            return np.empty((0, 2), dtype=float)
-
-        if len(x_values) == 1:
-            return np.array([[x_values[0], x_values[0]]], dtype=float)
-
-        if len(x_values) % 2 == 0:
-            intervals = x_values.reshape(-1, 2)
-            return self._merge_intervals(intervals)
-
-        # An odd number greater than one is usually a tangent or vertex
-        # degeneracy. The caller will try a nearby interior slice.
-        return np.empty((0, 2), dtype=float)
+        return self._wire_intersections_at(intersections)
 
     def _intervals_at(self, z: float) -> np.ndarray:
         """
@@ -544,8 +522,10 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         # Using side="right" implements the documented right-continuous seam
         # convention. At an exact seam, the interval to the right is selected.
-        interval_index = int(np.searchsorted(cumulative_widths, distance, side="right"))
-        interval_index = min(interval_index, len(intervals) - 1)
+        interval_index = min(
+            int(np.searchsorted(cumulative_widths, distance, side="right")),
+            len(intervals) - 1,
+        )
 
         previous_width = (
             0.0 if interval_index == 0 else float(cumulative_widths[interval_index - 1])
