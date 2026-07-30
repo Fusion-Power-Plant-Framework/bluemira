@@ -19,13 +19,12 @@ from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import PositionerError
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-
-    from bluemira.geometry.wire import BluemiraWire
 
 
 class XZGeometryInterpolator(abc.ABC):
@@ -179,7 +178,10 @@ class RegionInterpolator(XZGeometryInterpolator):
     def __init__(self, geometry: BluemiraWire | BluemiraFace):
         super().__init__(geometry)
 
-        if not geometry.is_closed():
+        if (isinstance(geometry, BluemiraWire) and not geometry.is_closed()) or (
+            isinstance(geometry, BluemiraFace)
+            and not all(g.is_closed() for g in geometry.boundary)
+        ):
             raise PositionerError(
                 "RegionInterpolator can only handle faces or closed wires."
             )
