@@ -1398,7 +1398,7 @@ return np.multiply(np.logical_or(ref_mask, input_mask), 1)
 
     def apply_mask(self, mask_type):
         """Apply mask to psi."""
-        if mask_type in EqPlotMask.INSIDE:
+        if mask_type in EqPlotMask.OUTSIDE:
             self.coilset_psi *= self.mask
             self.plasma_psi *= self.mask
             self.total_psi *= self.mask
