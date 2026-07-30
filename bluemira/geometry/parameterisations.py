@@ -89,6 +89,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     """
 
     __slots__ = ("_variables", "name")
+    param_cls: type[OptVariablesFrameT] | None = None
 
     def __init__(self, variables: OptVariablesFrameT | VarDictT, **kwargs):  # noqa: ARG002
         """
@@ -98,8 +99,15 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             Set of optimisation variables of the GeometryParameterisation
         kwargs:
             Keyword arguments for use in subclasses of GeometryParameterisation
+
+        Raises
+        ------
+        TypeError
+            If the subclass does not define a valid ``param_cls``.
         """
         self.name = self.__class__.__name__
+        if self.param_cls is None:
+            raise TypeError(f"{self.__class__.__name__} must define param_cls")
         if not isinstance(variables, self.param_cls):
             if isinstance(variables, dict):
                 variables = self.param_cls.from_dict(variables)
@@ -111,12 +119,6 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 )
                 variables = self.param_cls()
         self._variables = variables
-
-    @property
-    @abc.abstractmethod
-    def param_cls(self) -> type[OptVariablesFrameT]:
-        """The ParameterFrame class defining this designer's parameters."""
-        ...
 
     @property
     def n_ineq_constraints(self) -> int:

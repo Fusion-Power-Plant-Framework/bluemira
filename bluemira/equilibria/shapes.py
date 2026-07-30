@@ -10,7 +10,6 @@ Useful parameterisations for plasma flux surface shapes.
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TypedDict
 
 import numpy as np
 import numpy.typing as npt
@@ -19,12 +18,7 @@ from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import (
-    OptVarVarDictValueT,
-    OptVariable,
-    OptVariablesFrame,
-    ov,
-)
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 __all__ = [
     "CunninghamLCFS",
@@ -180,16 +174,6 @@ class ZakharovLCFSOptVariables(OptVariablesFrame):
     )
 
 
-class ZakharovLCFSOptVarDictT(TypedDict, total=False):
-    """Typed Dict for ZakharovLCFSOptVariables"""
-
-    r_0: OptVarVarDictValueT
-    z_0: OptVarVarDictValueT
-    a: OptVarVarDictValueT
-    kappa: OptVarVarDictValueT
-    delta: OptVarVarDictValueT
-
-
 class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
     """
     Zakharov last closed flux surface geometry parameterisation.
@@ -197,7 +181,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: ZakharovLCFSOptVarDictT | None = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = ZakharovLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -298,17 +282,6 @@ class CunninghamLCFSOptVariables(OptVariablesFrame):
     )
 
 
-class CunninghamLCFSOptVarDictT(TypedDict, total=False):
-    """Typed Dict for CunninghamLCFSOptVariables"""
-
-    r_0: OptVarVarDictValueT
-    z_0: OptVarVarDictValueT
-    a: OptVarVarDictValueT
-    kappa: OptVarVarDictValueT
-    delta: OptVarVarDictValueT
-    delta2: OptVarVarDictValueT
-
-
 class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
     """
     Cunningham last closed flux surface geometry parameterisation.
@@ -316,7 +289,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: CunninghamLCFSOptVarDictT | None = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = CunninghamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -418,17 +391,6 @@ class ManickamLCFSOptVariables(OptVariablesFrame):
     )
 
 
-class ManickamLCFSOptVarDictT(TypedDict, total=False):
-    """Typed Dict for ManickamLCFSOptVariables"""
-
-    r_0: OptVarVarDictValueT
-    z_0: OptVarVarDictValueT
-    a: OptVarVarDictValueT
-    kappa: OptVarVarDictValueT
-    delta: OptVarVarDictValueT
-    indent: OptVarVarDictValueT
-
-
 class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
     """
     Manickam last closed flux surface geometry parameterisation.
@@ -436,7 +398,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: ManickamLCFSOptVarDictT | None = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = ManickamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -702,19 +664,6 @@ class KuiroukidisLCFSOptVariables(OptVariablesFrame):
     )
 
 
-class KuiroukidisLCFSOptVarDictT(TypedDict, total=False):
-    """Typed Dict for KuiroukidisLCFSOptVariables"""
-
-    r_0: OptVarVarDictValueT
-    z_0: OptVarVarDictValueT
-    a: OptVarVarDictValueT
-    kappa_u: OptVarVarDictValueT
-    kappa_l: OptVarVarDictValueT
-    delta_u: OptVarVarDictValueT
-    delta_l: OptVarVarDictValueT
-    n_power: OptVarVarDictValueT
-
-
 class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
     """
     Kuiroukidis last closed flux surface geometry parameterisation (adjusted).
@@ -722,7 +671,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: KuiroukidisLCFSOptVarDictT | None = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = KuiroukidisLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1102,22 +1051,6 @@ class JohnerLCFSOptVariables(OptVariablesFrame):
     )
 
 
-class JohnerLCFSOptVarDictT(TypedDict, total=False):
-    """Typed Dict for JohnerLCFSOptVariables"""
-
-    r_0: OptVarVarDictValueT
-    z_0: OptVarVarDictValueT
-    a: OptVarVarDictValueT
-    kappa_u: OptVarVarDictValueT
-    kappa_l: OptVarVarDictValueT
-    delta_u: OptVarVarDictValueT
-    delta_l: OptVarVarDictValueT
-    phi_u_neg: OptVarVarDictValueT
-    phi_u_pos: OptVarVarDictValueT
-    phi_l_neg: OptVarVarDictValueT
-    phi_l_pos: OptVarVarDictValueT
-
-
 class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
     """
     Johner last closed flux surface geometry parameterisation.
@@ -1125,7 +1058,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: JohnerLCFSOptVarDictT | None = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = JohnerLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
