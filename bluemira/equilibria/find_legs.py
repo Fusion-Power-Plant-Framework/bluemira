@@ -111,7 +111,7 @@ class LegFlux:
         # so sometimes this can happen if the flux surface wraps around the
         # lower divertor coils rather that extending off the grid.
         if eq.is_double_null and len(self.separatrix) != 2:  # noqa: PLR2004
-            self._split()
+            self.separatrix = split(self.separatrix)
 
         self.rtol = rtol
         self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
@@ -354,6 +354,43 @@ class LegFlux:
         return get_legs_double_null_xsplit(
             self.separatrix, self.delta_legs, self.x_points, self.o_point
         )
+
+
+def split(separatrix):
+    """
+    Method used to split a separatrix in two if we have one that loops
+    around the coils within the grid and thus appears 'closed'.
+
+    Returns
+    -------
+    loops:
+        list of split coordinates
+    """
+    loop = separatrix if isinstance(separatrix, Coordinates) else separatrix[0]
+    max_point = np.array([
+        loop.x[loop.z == np.max(loop.z)][0],
+        0.0,
+        loop.z[loop.z == np.max(loop.z)][0],
+    ])
+    min_point = np.array([
+        loop.x[loop.z == np.min(loop.z)][0],
+        0.0,
+        loop.z[loop.z == np.min(loop.z)][0],
+    ])
+    # Move start of array to top of upper divertor region and open coords
+    idx = len(loop._array[0]) - loop.argmin(max_point)
+    for i in [0, 1, 2]:
+        loop._array[i] = np.roll(loop._array[i], idx)
+    # Split into two at bottom of lower divertor region
+    idx = loop.argmin(min_point) + 1
+    loops = [
+        Coordinates(loop._array[:, :idx]),
+        Coordinates(loop._array[:, idx:]),
+    ]
+    # Sort and set direction
+    loops.sort(key=lambda loop: -loop.length)
+    [lp.set_ccw() for lp in loops]
+    return loops
 
 
 def get_legs_length_and_angle(
