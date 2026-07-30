@@ -460,32 +460,6 @@ class TestShortCoordinates:
             ),
         ],
     )
-    def test_shift_start(self, coord, coord_test, coord_test_2):
-        coord.shift_start([0.5, 0.5, 0.5])
-        assert coord == coord_test
-        coord.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
-        coord.shift_start([0.5, 0.5, 0.5])
-        assert coord == coord_test_2
-
-    @pytest.mark.parametrize("coord", [deepcopy(point), deepcopy(line)])
-    def test_split_open(self, coord):
-        c1, c2 = coord.split_open([0.5, 0.5, 0.5])
-        assert (
-            c1 == coord if len(coord.x) < 2 else c1 == Coordinates([[0.0], [0.0], [0.0]])
-        )
-        assert (
-            c2 is None if len(coord.x) < 2 else c2 == Coordinates([[1.0], [1.0], [1.0]])
-        )
-        c1, c2 = coord.split_open([0.6, 0.6, 0.6])
-        assert c1 == coord
-        assert c2 is None
-        coord.insert(point=np.array([0.5, 0.5, 0.5]), index=1)
-        c1, c2 = coord.split_open([0.5, 0.5, 0.5])
-        assert c1 == Coordinates([[0.0, 0.5], [0.0, 0.5], [0.0, 0.5]])
-        assert (
-            c2 is None if len(coord.x) < 3 else c2 == Coordinates([[1.0], [1.0], [1.0]])
-        )
-
     @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_check_ccw(self, c):
         assert not c.check_ccw()

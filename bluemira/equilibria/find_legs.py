@@ -105,28 +105,13 @@ class LegFlux:
             delta_start=delta_lcfs,
         )
         self._set_oxpts_and_check(lcfs, delta_lcfs, o_points, x_points)
-
-        if eq.is_double_null and isinstance(self.separatrix, Coordinates):
-            if not self.separatrix.closed:
-                self._print_warning_set_flag()
-            else:
-                # Split in two if we have one separatrix that loops
-                # around the coils within the grid.
-                loop = self.separatrix
-                x, z = (
-                    loop.x[loop.z == np.max(loop.z)][0],
-                    loop.z[loop.z == np.max(loop.z)][0],
-                )
-                loop.shift_start([x, 0.0, z])
-                x, z = (
-                    loop.x[loop.z == np.min(loop.z)][0],
-                    loop.z[loop.z == np.min(loop.z)][0],
-                )
-                loops = [*loop.split_open([x, 0.0, z])]
-                loops.sort(key=lambda loop: -loop.length)
-                [lp.set_ccw() for lp in loops]
-                self.separatrix = loops
-                self._red_flag = False
+        # If we have a 'closed' flux surface then we need to
+        # artificially open it at the top and bottom.
+        # We have not introduced a first wall or divertor silhouette,
+        # so sometimes this can happen if the flux surface wraps around the
+        # lower divertor coils rather that extending off the grid.
+        if eq.is_double_null and len(self.separatrix) != 2:  # noqa: PLR2004
+            self._split()
 
         self.rtol = rtol
         self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
@@ -139,6 +124,45 @@ class LegFlux:
         if n_layers > 1:
             legs = self._get_leg_offsets(legs, eq)
         self._legs = legs
+
+    def _split(self):
+        """
+        Method used to split a separatrix in two if we have one that loops
+        around the coils within the grid and thus appears 'closed'.
+        """
+        loop = (
+            self.separatrix
+            if isinstance(self.separatrix, Coordinates)
+            else self.separatrix[0]
+        )
+
+        max_point = np.array([
+            loop.x[loop.z == np.max(loop.z)][0],
+            0.0,
+            loop.z[loop.z == np.max(loop.z)][0],
+        ])
+        min_point = np.array([
+            loop.x[loop.z == np.min(loop.z)][0],
+            0.0,
+            loop.z[loop.z == np.min(loop.z)][0],
+        ])
+
+        # Move start of array to top of upper divertor region and open coords
+        idx = len(loop._array[0]) - loop.argmin(max_point)
+        for i in [0, 1, 2]:
+            loop._array[i] = np.roll(loop._array[i], idx)
+
+        # Split into two at bottom of lower divertor region
+        idx = loop.argmin(min_point) + 1
+        loops = [
+            Coordinates(self._array[:, :idx]),
+            Coordinates(self._array[:, idx:]),
+        ]
+
+        # Sort, set direction and update
+        loops.sort(key=lambda loop: -loop.length)
+        [lp.set_ccw() for lp in loops]
+        self.separatrix = loops
 
     @property
     def legs(self):
@@ -395,7 +419,7 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
 
     """
     # Separatrix list is sorted by INNER then OUTER
-    separatrix.sort(key=lambda separatrix: separatrix.x[np.isclose(0, separatrix.z)])
+    separatrix.sort(key=lambda separatrix: separatrix.x[0])
     legs = []
     for half_sep in separatrix:
         for x_p in x_points:

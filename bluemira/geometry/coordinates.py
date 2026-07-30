@@ -1191,7 +1191,7 @@ def _parse_dict(xyz_dict):
     return np.array([x, y, z])
 
 
-class Coordinates:  # noqa: PLR0904
+class Coordinates:
     """
     Coordinates object for storing ordered sets of coordinates.
 
@@ -1587,45 +1587,6 @@ class Coordinates:  # noqa: PLR0904
 
         if self.closed:
             self._array = self._array[:, :-1]
-
-    def shift_start(self, point: npt.ArrayLike):
-        """
-        Change the start location of your coordinates array.
-        Will set to open if coords are closed.
-        """
-        point = np.array(point)
-        idx = len(self._array[0]) - self.argmin(point)
-        self._array = np.roll(self._array, idx)
-
-    def split_open(self, point: npt.ArrayLike):
-        """
-        Split an open set of coordinates at a given point and return two
-        sets of new coordinates.
-
-        Returns
-        -------
-        :
-            Coordinates from start of input coordinates up to
-            and including user chosen point
-        :
-            Coordinates from user chosen point to the end of the
-            input coordinates
-        """
-        if len(self._array[0]) < 2:  # noqa: PLR2004
-            bluemira_warn("Can not split a single point.")
-            return (Coordinates(self._array), None)
-
-        point = np.array(point)
-        idx = self.argmin(point) + 1
-
-        if idx == len(self._array[0]):
-            bluemira_warn("Can not split. Input point is at the last index of array.")
-            return (Coordinates(self._array[:, :idx]), None)
-
-        return (
-            Coordinates(self._array[:, :idx]),
-            Coordinates(self._array[:, idx:]),
-        )
 
     def insert(self, point: np.ndarray, index: int = 0):
         """
