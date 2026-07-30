@@ -46,6 +46,7 @@ from bluemira.utilities.opt_variables import (
     OptVarVarDictValueT,
     OptVariable,
     OptVariablesFrame,
+    VarDictT,
     ov,
 )
 from bluemira.utilities.plot_tools import str_to_latex
@@ -89,7 +90,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
 
     __slots__ = ("_variables", "name")
 
-    def __init__(self, variables: OptVariablesFrameT, **kwargs):  # noqa: ARG002
+    def __init__(self, variables: OptVariablesFrameT | VarDictT, **kwargs):  # noqa: ARG002
         """
         Parameters
         ----------
@@ -99,7 +100,23 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             Keyword arguments for use in subclasses of GeometryParameterisation
         """
         self.name = self.__class__.__name__
+        if not isinstance(variables, self.param_cls):
+            if isinstance(variables, dict):
+                variables = self.param_cls.from_dict(variables)
+            else:
+                bluemira_warn(
+                    f"{self.name}: expected variables of type "
+                    f"{self.param_cls.__name__}, got {type(variables).__name__}. "
+                    "Using default values."
+                )
+                variables = self.param_cls()
         self._variables = variables
+
+    @property
+    @abc.abstractmethod
+    def param_cls(self) -> type[OptVariablesFrameT]:
+        """The ParameterFrame class defining this designer's parameters."""
+        ...
 
     @property
     def n_ineq_constraints(self) -> int:

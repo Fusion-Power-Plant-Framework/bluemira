@@ -438,6 +438,34 @@ class OptVariablesFrame:
 
         return super().__new__(cls)
 
+    @classmethod
+    def from_dict(cls, variables):
+        """
+        Create a subclass instance of OptVariablesFrame from a dictionary.
+
+        Parameters
+        ----------
+        variables:
+            Dictionary containing values for the optimisation variables.
+            The keys must correspond to the names of the OptVariable fields.
+
+        Returns
+        -------
+        OptVariablesFrame
+            An instance of the calling subclass with values updated from the provided
+            dictionary.
+
+        Notes
+        -----
+        Class validation is performed during instantiation via ``__new__``.
+        """
+        obj = cls()
+        obj.adjust_variables(
+            variables,
+            strict_bounds=False,
+        )
+        return obj
+
     def __iter__(self) -> Iterator[OptVariable]:
         """
         Iterate over this frame's parameters.
