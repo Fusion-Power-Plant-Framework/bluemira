@@ -59,7 +59,6 @@ class LBFGSBParams:
 class TNCParams:
     """Options for TNC."""
 
-    maxiter: int | None = None
     eps: float | Any | None = None
     scale: list[float] | None = None
     offset: float | None = None

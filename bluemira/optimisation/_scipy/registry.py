@@ -68,7 +68,7 @@ SCIPY_REGISTRY: dict[Algorithm, ScipyAlgConfig] = {
         alg_name="tnc",
         param_cls=TNCParams,
         condition_overrides={
-            "max_eval": "maxiter",
+            "max_eval": "maxfun",
             "ftol_rel": "ftol",
             "ftol_abs": "ftol",
         },
