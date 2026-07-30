@@ -1392,7 +1392,6 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         input_mask = _in_plasma(
             self.grid.x, self.grid.z, mask_matx, input_lcfs.xz.T, include_edges=False
         )
-        # Note use '+' as we want any area in ref or input LCFS.
 # Note use 'or' as we want any area in ref or input LCFS.
 return np.multiply(np.logical_or(ref_mask, input_mask), 1)
 
