@@ -90,7 +90,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     __slots__ = ("_variables", "name")
     param_cls: type[OptVariablesFrameT] | None = None
 
-    def __init__(self, variables: OptVariablesFrameT | VarDictT, **kwargs):  # noqa: ARG002
+    def __init__(self, variables: OptVariablesFrameT | VarDictT | None = None, **kwargs):  # noqa: ARG002
         """
         Parameters
         ----------
@@ -105,18 +105,17 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             If the subclass does not define a valid ``param_cls``.
         """
         self.name = self.__class__.__name__
-        if self.param_cls is None:
-            raise TypeError(f"{self.__class__.__name__} must define param_cls")
-        if not isinstance(variables, self.param_cls):
-            if isinstance(variables, dict):
-                variables = self.param_cls.update_from_dict(variables)
-            else:
-                bluemira_warn(
-                    f"{self.name}: expected variables of type "
-                    f"{self.param_cls.__name__}, got {type(variables).__name__}. "
-                    "Using default values."
-                )
-                variables = self.param_cls()
+        if variables is None:
+            variables = self.param_cls()
+        elif isinstance(variables, dict):
+            variables = self.param_cls.update_from_dict(variables)
+        elif not isinstance(variables, self.param_cls):
+            bluemira_warn(
+                f"{self.name}: expected variables of type "
+                f"{self.param_cls.__name__}, got {type(variables).__name__}. "
+                "Using default values."
+            )
+            variables = self.param_cls()
         self._variables = variables
 
     @property
@@ -2573,9 +2572,8 @@ class PictureFrame(
         if isinstance(inner, str):
             inner = PFrameSection[inner]
         self.inner = inner
-
-        variables.configure(self.upper, self.lower, self.inner)
         super().__init__(variables)
+        self.variables.configure(self.upper, self.lower, self.inner)
 
     def __deepcopy__(self, memo) -> PictureFrame:
         """Picture Frame deepcopy
