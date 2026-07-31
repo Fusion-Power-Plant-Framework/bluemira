@@ -7,16 +7,12 @@
 Wall Silhouette Parameterisations
 """
 
-import copy
-from typing import ClassVar
-
 from bluemira.geometry.parameterisations import (
     PolySpline,
     PolySplineOptVariables,
     PrincetonD,
     PrincetonDOptVariables,
 )
-from bluemira.utilities.opt_variables import OptVarVarDictValueT
 
 
 class WallPolySpline(PolySpline):
@@ -25,7 +21,7 @@ class WallPolySpline(PolySpline):
     based on the PolySpline parameterisation.
     """
 
-    _defaults: ClassVar = {
+    param_cls: type[PolySplineOptVariables] = PolySplineOptVariables.update_from_dict({
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "z2": {"value": 0},
@@ -36,13 +32,11 @@ class WallPolySpline(PolySpline):
         "tilt": {"value": 0},
         "lower": {"value": 0.5},
         "bottom": {"value": 0.2},
-    }
+    })
 
     def __init__(self, variables: PolySplineOptVariables | None = None):
-        defaults = copy.deepcopy(self._defaults)
-        if variables:
-            defaults.update(variables.as_dict())
-        super().__init__(defaults)
+
+        super().__init__(variables)
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value
@@ -89,17 +83,14 @@ class WallPrincetonD(PrincetonD):
     based on the PrincetonD parameterisation.
     """
 
-    _defaults: ClassVar[dict[str, OptVarVarDictValueT]] = {
+    param_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables.update_from_dict({
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "dz": {"value": -0.5},
-    }
+    })
 
     def __init__(self, variables: PrincetonDOptVariables | None = None):
-        defaults = copy.deepcopy(self._defaults)
-        if variables:
-            defaults.update(variables.as_dict())
-        super().__init__(defaults)
+        super().__init__(variables)
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value
