@@ -23,6 +23,8 @@
 """
 A simple user-facing reactor example, showing some of the building blocks, and how to
 combine them.
+
+Hello
 """
 
 # %%
