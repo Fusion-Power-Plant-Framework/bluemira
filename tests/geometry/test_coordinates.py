@@ -445,21 +445,6 @@ class TestShortCoordinates:
         assert len(caplog.messages) == 1
         assert "Cannot open Coordinates" in caplog.messages[0]
 
-    @pytest.mark.parametrize(
-        ("coord", "coord_test", "coord_test_2"),
-        [
-            (
-                deepcopy(point),
-                Coordinates([[0.0], [0.0], [0.0]]),
-                Coordinates([[0.5, 0.0], [0.5, 0.0], [0.5, 0.0]]),
-            ),
-            (
-                deepcopy(line),
-                Coordinates([[0.0, 1.0], [0.0, 1.0], [0.0, 1.0]]),
-                Coordinates([[0.5, 1.0, 0.0], [0.5, 1.0, 0.0], [0.5, 1.0, 0.0]]),
-            ),
-        ],
-    )
     @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_check_ccw(self, c):
         assert not c.check_ccw()
