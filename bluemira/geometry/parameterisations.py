@@ -88,7 +88,8 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     """
 
     __slots__ = ("_variables", "name")
-    param_cls: type[OptVariablesFrameT] | None = None
+
+    optvar_cls: type[OptVariablesFrameT] | None = None
 
     def __init__(self, variables: OptVariablesFrameT | VarDictT | None = None, **kwargs):  # noqa: ARG002
         """
@@ -102,25 +103,25 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         Raises
         ------
         TypeError
-            If the subclass does not define a valid ``param_cls``.
+            If the subclass does not define a valid ``optvar_cls``.
         """
         self.name = self.__class__.__name__
-        if self.param_cls is None:
+        if self.optvar_cls is None:
             raise TypeError(
                 "The type of optimisation variables for the parameterisation"
                 "is not defined. Please set them up."
             )
         if variables is None:
-            variables = self.param_cls()
+            variables = self.optvar_cls()
         elif isinstance(variables, dict):
-            variables = self.param_cls.update_from_dict(variables)
-        elif not isinstance(variables, type(self.param_cls)):
+            variables = self.optvar_cls.update_from_dict(variables)
+        elif not isinstance(variables, type(self.optvar_cls)):
             bluemira_warn(
                 f"{self.name}: expected variables of type "
-                f"{type(self.param_cls)}, got {type(variables).__name__}. "
+                f"{type(self.optvar_cls)}, got {type(variables).__name__}. "
                 "Using default values."
             )
-            variables = self.param_cls()
+            variables = self.optvar_cls()
         self._variables = variables
 
     @property
@@ -649,7 +650,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    param_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables
+    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables
 
     def create_shape(
         self, label: str = "", n_points: int = 2000, *, with_tangency: bool = False
@@ -1172,7 +1173,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    param_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles
+    optvar_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1536,7 +1537,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    param_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables
+    optvar_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1802,7 +1803,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
 
     __slots__ = ()
-    param_cls: type[PolySplineOptVariables] = PolySplineOptVariables
+    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -2561,7 +2562,7 @@ class PictureFrame(
         for leg in ["inner", "upper", "lower", "outer"]
         for var in ["", "_vars"]
     )
-    param_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables
+    optvar_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables
 
     def __init__(
         self,
@@ -2797,7 +2798,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints = 8
-    param_cls: type[ProcessDOptVariables] = ProcessDOptVariables
+    optvar_cls: type[ProcessDOptVariables] = ProcessDOptVariables
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """

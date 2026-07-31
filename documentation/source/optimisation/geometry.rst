@@ -38,7 +38,7 @@ representing our circle.
     class Circle(GeometryParameterisation):
         """Geometry parameterisation for a circle in the xz-plane."""
 
-        param_cls: type[CircleOptVariables] = CircleOptVariables
+        optvar_cls: type[CircleOptVariables] = CircleOptVariables
 
         def create_shape(self, label: str = "") -> BluemiraWire:
             """Create the circle."""

@@ -78,7 +78,7 @@ class TGeometryParameterisationOptVariables(OptVariablesFrame):
 class TestGeometryParameterisation:
     def test_subclass(self):
         class TestPara(GeometryParameterisation[TGeometryParameterisationOptVariables]):
-            param_cls: type[TGeometryParameterisationOptVariables] = (
+            optvar_cls: type[TGeometryParameterisationOptVariables] = (
                 TGeometryParameterisationOptVariables
             )
 

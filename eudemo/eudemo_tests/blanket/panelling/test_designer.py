@@ -50,7 +50,7 @@ def make_cut_johner():
     larger radius than default, then cut it below a z-coordinate that
     might be the x-point in an equilibrium.
     """
-    johner_wire = JohnerLCFS(variables={"r_0": {"value": 10.5}}).create_shape()
+    johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
     return cut_wire_below_z(johner_wire, 1 / 4)
 
 

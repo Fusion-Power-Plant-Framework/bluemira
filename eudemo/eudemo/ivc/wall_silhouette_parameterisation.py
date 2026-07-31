@@ -7,12 +7,15 @@
 Wall Silhouette Parameterisations
 """
 
+from typing import ClassVar
+
 from bluemira.geometry.parameterisations import (
     PolySpline,
     PolySplineOptVariables,
     PrincetonD,
     PrincetonDOptVariables,
 )
+from bluemira.utilities.opt_variables import OptVarVarDictValueT
 
 
 class WallPolySpline(PolySpline):
@@ -21,7 +24,7 @@ class WallPolySpline(PolySpline):
     based on the PolySpline parameterisation.
     """
 
-    param_cls: type[PolySplineOptVariables] = PolySplineOptVariables.update_from_dict({
+    _defaults: ClassVar = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "z2": {"value": 0},
@@ -32,11 +35,21 @@ class WallPolySpline(PolySpline):
         "tilt": {"value": 0},
         "lower": {"value": 0.5},
         "bottom": {"value": 0.2},
-    })
+    }
+
+    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables
 
     def __init__(self, variables: PolySplineOptVariables | None = None):
 
-        super().__init__(variables)
+        super().__init__(self._defaults)
+
+        if variables:
+            if not isinstance(variables, PolySplineOptVariables):
+                raise TypeError(
+                    f"variables must be PrincetonDOptVariables or None,"
+                    f"not {type(variables).__name__}"
+                )
+            self.variables.update_from_dict(variables.as_dict())
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value
@@ -83,14 +96,24 @@ class WallPrincetonD(PrincetonD):
     based on the PrincetonD parameterisation.
     """
 
-    param_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables.update_from_dict({
+    _defaults: ClassVar[dict[str, OptVarVarDictValueT]] = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "dz": {"value": -0.5},
-    })
+    }
+    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables
 
     def __init__(self, variables: PrincetonDOptVariables | None = None):
-        super().__init__(variables)
+
+        super().__init__(self._defaults)
+
+        if variables:
+            if not isinstance(variables, PrincetonDOptVariables):
+                raise TypeError(
+                    f"variables must be PrincetonDOptVariables or None,"
+                    f"not {type(variables).__name__}"
+                )
+            self.variables.update_from_dict(variables.as_dict())
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value

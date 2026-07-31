@@ -25,7 +25,7 @@ class CircleOptVariables(OptVariablesFrame):
 
 
 class Circle(GeometryParameterisation):
-    param_cls: type[CircleOptVariables] = CircleOptVariables
+    optvar_cls: type[CircleOptVariables] = CircleOptVariables
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         return make_circle(
