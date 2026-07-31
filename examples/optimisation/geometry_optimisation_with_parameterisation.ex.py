@@ -34,7 +34,7 @@ from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 
 @dataclass
@@ -49,10 +49,7 @@ class CircleOptVariables(OptVariablesFrame):
 class Circle(GeometryParameterisation):
     """Geometry parameterisation for a circle in the xz-plane."""
 
-    def __init__(self, var_dict: VarDictT | None = None):
-        opt_variables = CircleOptVariables()
-        opt_variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(opt_variables)
+    param_cls: type[CircleOptVariables] = CircleOptVariables
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """Create the circle."""

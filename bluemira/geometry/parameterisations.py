@@ -109,7 +109,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             raise TypeError(f"{self.__class__.__name__} must define param_cls")
         if not isinstance(variables, self.param_cls):
             if isinstance(variables, dict):
-                variables = self.param_cls.from_dict(variables)
+                variables = self.param_cls.update_from_dict(variables)
             else:
                 bluemira_warn(
                     f"{self.name}: expected variables of type "
