@@ -18,7 +18,7 @@ from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 __all__ = [
     "CunninghamLCFS",
@@ -181,10 +181,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = ZakharovLCFSOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[ZakharovLCFSOptVariables] = ZakharovLCFSOptVariables
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -288,11 +285,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
     """
 
     __slots__ = ()
-
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = CunninghamLCFSOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[CunninghamLCFSOptVariables] = CunninghamLCFSOptVariables
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -397,11 +390,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
     """
 
     __slots__ = ()
-
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = ManickamLCFSOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[ManickamLCFSOptVariables] = ManickamLCFSOptVariables
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -671,10 +660,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = KuiroukidisLCFSOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[KuiroukidisLCFSOptVariables] = KuiroukidisLCFSOptVariables
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -1058,10 +1044,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = JohnerLCFSOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[JohnerLCFSOptVariables] = JohnerLCFSOptVariables
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
