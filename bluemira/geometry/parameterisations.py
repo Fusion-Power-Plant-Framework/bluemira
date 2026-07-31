@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import TYPE_CHECKING, Generic, TextIO, TypeVar, TypedDict
+from typing import TYPE_CHECKING, Generic, TextIO, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,7 +43,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import (
-    OptVarVarDictValueT,
     OptVariable,
     OptVariablesFrame,
     VarDictT,
@@ -617,22 +616,14 @@ class PrincetonDOptVariables(OptVariablesFrame):
     )
 
 
-class PrincetonDOptVarDictT(TypedDict, total=False):
-    """Typed Dict for PrincetonDOptVariables"""
-
-    x1: OptVarVarDictValueT
-    x2: OptVarVarDictValueT
-    dz: OptVarVarDictValueT
-
-
 class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     """
     Princeton D geometry parameterisation, with n_TF = ∞.
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation.
 
     Notes
     -----
@@ -641,7 +632,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         from bluemira.geometry.parameterisations import PrincetonD
         PrincetonD().plot(labels=True)
 
-    The dictionary keys in var_dict are:
+    The variables are:
 
     x1: float
         Radial position of inner limb [m]
@@ -654,11 +645,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-
-    def __init__(self, var_dict: PrincetonDOptVarDictT | None = None):
-        variables = PrincetonDOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables
 
     def create_shape(
         self, label: str = "", n_points: int = 2000, *, with_tangency: bool = False
@@ -954,8 +941,8 @@ class PrincetonDDiscrete(PrincetonD):
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation.
 
     Raises
     ------
@@ -970,7 +957,7 @@ class PrincetonDDiscrete(PrincetonD):
         from bluemira.geometry.parameterisations import PrincetonDDiscrete
         PrincetonDDiscrete(n_TF=16, tf_wp_width=0.5, tf_wp_depth=0.8).plot(labels=True)
 
-    The dictionary keys in var_dict are:
+    The variables are:
 
     x1: float
         Radial position of inner limb [m]
@@ -989,14 +976,14 @@ class PrincetonDDiscrete(PrincetonD):
 
     def __init__(
         self,
-        var_dict: PrincetonDOptVarDictT | None = None,
+        variables: PrincetonDOptVariables | None = None,
         n_TF: int | None = None,
         tf_wp_width: float | None = None,
         tf_wp_depth: float | None = None,
         n_points: int = 50,
         tolerance: float = 1e-3,
     ):
-        super().__init__(var_dict)
+        super().__init__(variables)
         if n_TF is None:
             raise GeometryParameterisationError("Must specify n_TF.")
         if tf_wp_width is None or tf_wp_depth is None:
@@ -1140,26 +1127,14 @@ class TripleArcOptVaribles(OptVariablesFrame):
     )
 
 
-class TripleArcOptVarDictT(TypedDict, total=False):
-    """Typed Dict for TripleArcOptVaribles"""
-
-    x1: OptVarVarDictValueT
-    dz: OptVarVarDictValueT
-    sl: OptVarVarDictValueT
-    f1: OptVarVarDictValueT
-    f2: OptVarVarDictValueT
-    a1: OptVarVarDictValueT
-    a2: OptVarVarDictValueT
-
-
 class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     """
     Triple-arc up-down symmetric geometry parameterisation.
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation.
 
     Notes
     -----
@@ -1172,7 +1147,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     Source: [doi:10.12688/f1000research.28224.1](https://doi.org/10.12688/f1000research.28224.1)
 
-    The dictionary keys in var_dict are:
+    The variables are::
 
     x1: float
         Radial position of inner limb [m]
@@ -1193,11 +1168,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-
-    def __init__(self, var_dict: TripleArcOptVarDictT | None = None):
-        variables = TripleArcOptVaribles()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1373,23 +1344,6 @@ class SextupleArcOptVariables(OptVariablesFrame):
     )
 
 
-class SextupleArcOptVarDictT(TypedDict, total=False):
-    """Typed Dict for SextupleArcOptVariables"""
-
-    x1: OptVarVarDictValueT
-    z1: OptVarVarDictValueT
-    r1: OptVarVarDictValueT
-    r2: OptVarVarDictValueT
-    r3: OptVarVarDictValueT
-    r4: OptVarVarDictValueT
-    r5: OptVarVarDictValueT
-    a1: OptVarVarDictValueT
-    a2: OptVarVarDictValueT
-    a3: OptVarVarDictValueT
-    a4: OptVarVarDictValueT
-    a5: OptVarVarDictValueT
-
-
 def _project_centroid(
     xc: float, zc: float, xi: float, zi: float, ri: float
 ) -> tuple[float, float, npt.NDArray[np.float64]]:
@@ -1554,8 +1508,8 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation..
 
     Notes
     -----
@@ -1564,7 +1518,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         from bluemira.geometry.parameterisations import SextupleArc
         SextupleArc().plot(labels=True)
 
-    The dictionary keys in var_dict are:
+    The variables are::
 
     x1: float
         Radial position of inner limb [m]
@@ -1578,11 +1532,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-
-    def __init__(self, var_dict: SextupleArcOptVarDictT | None = None):
-        variables = SextupleArcOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1797,38 +1747,14 @@ class PolySplineOptVariables(OptVariablesFrame):
     )
 
 
-class PolySplineOptVarDictT(TypedDict, total=False):
-    """Typed Dict for PolySplineOptVariables"""
-
-    x1: OptVarVarDictValueT
-    x2: OptVarVarDictValueT
-    z2: OptVarVarDictValueT
-    height: OptVarVarDictValueT
-    top: OptVarVarDictValueT
-    upper: OptVarVarDictValueT
-    dz: OptVarVarDictValueT
-    flat: OptVarVarDictValueT
-    tilt: OptVarVarDictValueT
-    bottom: OptVarVarDictValueT
-    lower: OptVarVarDictValueT
-    l0s: OptVarVarDictValueT
-    l1s: OptVarVarDictValueT
-    l2s: OptVarVarDictValueT
-    l3s: OptVarVarDictValueT
-    l0e: OptVarVarDictValueT
-    l1e: OptVarVarDictValueT
-    l2e: OptVarVarDictValueT
-    l3e: OptVarVarDictValueT
-
-
 class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation..
 
     Notes
     -----
@@ -1837,7 +1763,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         from bluemira.geometry.parameterisations import PolySpline
         PolySpline().plot(labels=True)
 
-    The dictionary keys in var_dict are:
+    The variables are::
 
     x1: float
         Radial position of inner limb [m]
@@ -1872,12 +1798,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
 
     __slots__ = ()
-
-    def __init__(self, var_dict: PolySplineOptVarDictT | None = None):
-        variables = PolySplineOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-
-        super().__init__(variables)
+    param_cls: type[PolySplineOptVariables] = PolySplineOptVariables
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -2574,22 +2495,6 @@ class PictureFrameOptVariables(OptVariablesFrame):
             self.z3.fixed = True
 
 
-class PictureFrameOptVarDictT(TypedDict, total=False):
-    """Typed Dict for PictureFrameOptVariables"""
-
-    x1: OptVarVarDictValueT
-    x2: OptVarVarDictValueT
-    z1: OptVarVarDictValueT
-    z2: OptVarVarDictValueT
-    ri: OptVarVarDictValueT
-    ro: OptVarVarDictValueT
-    x3: OptVarVarDictValueT
-    z1_peak: OptVarVarDictValueT
-    z2_peak: OptVarVarDictValueT
-    x4: OptVarVarDictValueT
-    z3: OptVarVarDictValueT
-
-
 class PictureFrame(
     GeometryParameterisation[PictureFrameOptVariables], PictureFrameTools
 ):
@@ -2598,8 +2503,8 @@ class PictureFrame(
 
     Parameters
     ----------
-    var_dict:
-        Dictionary with which to update the default values of the parameterisation.
+    variables:
+        Variables with which to update the default values of the parameterisation.
 
     Notes
     -----
@@ -2607,13 +2512,13 @@ class PictureFrame(
 
         from bluemira.geometry.parameterisations import PictureFrame
         PictureFrame(
-                     inner="TAPERED_INNER",
-                     upper="FLAT",
-                     lower="CURVED",
-                     var_dict={'ri': {'value': 1}}
+            inner="TAPERED_INNER",
+            upper="FLAT",
+            lower="CURVED",
+            variables={'ri': {'value': 1}}
         ).plot(labels=True)
 
-    The base dictionary keys in var_dict are:
+    The variables are:
 
     x1: float
         Radial position of inner limb [m]
@@ -2652,10 +2557,11 @@ class PictureFrame(
         for leg in ["inner", "upper", "lower", "outer"]
         for var in ["", "_vars"]
     )
+    param_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables
 
     def __init__(
         self,
-        var_dict: PictureFrameOptVarDictT | None = None,
+        variables: PictureFrameOptVariables | None = None,
         *,
         upper: str | PFrameSection = PFrameSection.FLAT,
         lower: str | PFrameSection = PFrameSection.FLAT,
@@ -2668,8 +2574,6 @@ class PictureFrame(
             inner = PFrameSection[inner]
         self.inner = inner
 
-        variables = PictureFrameOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
         variables.configure(self.upper, self.lower, self.inner)
         super().__init__(variables)
 
@@ -2890,11 +2794,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints = 8
-
-    def __init__(self, var_dict=None):
-        variables = ProcessDOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        super().__init__(variables)
+    param_cls: type[ProcessDOptVariables] = ProcessDOptVariables
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
