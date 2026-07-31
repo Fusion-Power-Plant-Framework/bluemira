@@ -638,12 +638,12 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 
     The variables are:
 
-    x1: float
-        Radial position of inner limb [m]
-    x2: float
-        Radial position of outer limb [m]
-    dz: float
-        Vertical offset from z=0 [m]
+        x1: float
+            Radial position of inner limb [m]
+        x2: float
+            Radial position of outer limb [m]
+        dz: float
+            Vertical offset from z=0 [m]
 
     """
 
@@ -963,12 +963,12 @@ class PrincetonDDiscrete(PrincetonD):
 
     The variables are:
 
-    x1: float
-        Radial position of inner limb [m]
-    x2: float
-        Radial position of outer limb [m]
-    dz: float
-        Vertical offset from z=0 [m]
+        x1: float
+            Radial position of inner limb [m]
+        x2: float
+            Radial position of outer limb [m]
+        dz: float
+            Vertical offset from z=0 [m]
 
     Please note, when using this shape as a sweep path, you must use frenet=False.
     This is because of limitations in CAD, which we are trying to resolve.
@@ -1151,22 +1151,22 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     Source: [doi:10.12688/f1000research.28224.1](https://doi.org/10.12688/f1000research.28224.1)
 
-    The variables are::
+    The variables are:
 
-    x1: float
-        Radial position of inner limb [m]
-    dz: float
-        Vertical offset from z=0 [m]
-    sl: float
-        Length of inboard straigh section [m]
-    f1: float
-        radii of top and bottom left arc [m]
-    f2: float
-        radii of top and bottom middle arc [m]
-    a1: float
-        top left and bottom left arc angle [degrees]
-    a2: float
-        top middle and bottom middle arc angle [degrees]
+        x1: float
+            Radial position of inner limb [m]
+        dz: float
+            Vertical offset from z=0 [m]
+        sl: float
+            Length of inboard straigh section [m]
+        f1: float
+            radii of top and bottom left arc [m]
+        f2: float
+            radii of top and bottom middle arc [m]
+        a1: float
+            top left and bottom left arc angle [degrees]
+        a2: float
+            top middle and bottom middle arc angle [degrees]
 
     """
 
@@ -1522,16 +1522,16 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         from bluemira.geometry.parameterisations import SextupleArc
         SextupleArc().plot(labels=True)
 
-    The variables are::
+    The variables are:
 
-    x1: float
-        Radial position of inner limb [m]
-    z1: float
-        Inboard limb height [m]
-    r1 - r5: float
-        arc radius [m]
-    a1 - a5: float
-        arc angle [degrees]
+        x1: float
+            Radial position of inner limb [m]
+        z1: float
+            Inboard limb height [m]
+        r1 - r5: float
+            arc radius [m]
+        a1 - a5: float
+            arc angle [degrees]
     """
 
     __slots__ = ()
@@ -1767,7 +1767,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         from bluemira.geometry.parameterisations import PolySpline
         PolySpline().plot(labels=True)
 
-    The variables are::
+    The variables are:
 
     x1: float
         Radial position of inner limb [m]
