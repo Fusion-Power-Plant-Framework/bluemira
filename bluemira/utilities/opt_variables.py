@@ -439,9 +439,9 @@ class OptVariablesFrame:
         return super().__new__(cls)
 
     @classmethod
-    def from_dict(cls, variables):
+    def update_from_dict(cls, variables):
         """
-        Create a subclass instance of OptVariablesFrame from a dictionary.
+        Update a subclass instance of OptVariablesFrame from a dictionary.
 
         Parameters
         ----------
