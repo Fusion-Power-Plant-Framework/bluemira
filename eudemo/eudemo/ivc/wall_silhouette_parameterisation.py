@@ -7,15 +7,11 @@
 Wall Silhouette Parameterisations
 """
 
+import copy
 from typing import ClassVar
 
-from bluemira.geometry.parameterisations import (
-    PolySpline,
-    PolySplineOptVariables,
-    PrincetonD,
-    PrincetonDOptVariables,
-)
-from bluemira.utilities.opt_variables import OptVarVarDictValueT
+from bluemira.geometry.parameterisations import PolySpline, PrincetonD
+from bluemira.utilities.opt_variables import OptVarVarDictValueT, VarDictT
 
 
 class WallPolySpline(PolySpline):
@@ -37,19 +33,11 @@ class WallPolySpline(PolySpline):
         "bottom": {"value": 0.2},
     }
 
-    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables
-
-    def __init__(self, variables: PolySplineOptVariables | None = None):
-
-        super().__init__(self._defaults)
-
-        if variables:
-            if not isinstance(variables, PolySplineOptVariables):
-                raise TypeError(
-                    f"variables must be PrincetonDOptVariables or None,"
-                    f"not {type(variables).__name__}"
-                )
-            self.variables.update_from_dict(variables.as_dict())
+    def __init__(self, var_dict: VarDictT | None = None):
+        defaults = copy.deepcopy(self._defaults)
+        if var_dict:
+            defaults.update(var_dict)
+        super().__init__(defaults)
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value
@@ -101,19 +89,12 @@ class WallPrincetonD(PrincetonD):
         "x2": {"value": 12.1},
         "dz": {"value": -0.5},
     }
-    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables
 
-    def __init__(self, variables: PrincetonDOptVariables | None = None):
-
-        super().__init__(self._defaults)
-
-        if variables:
-            if not isinstance(variables, PrincetonDOptVariables):
-                raise TypeError(
-                    f"variables must be PrincetonDOptVariables or None,"
-                    f"not {type(variables).__name__}"
-                )
-            self.variables.update_from_dict(variables.as_dict())
+    def __init__(self, var_dict: VarDictT | None = None):
+        defaults = copy.deepcopy(self._defaults)
+        if var_dict:
+            defaults.update(var_dict)
+        super().__init__(defaults)
 
         ib_radius = self.variables.x1.value
         ob_radius = self.variables.x2.value
