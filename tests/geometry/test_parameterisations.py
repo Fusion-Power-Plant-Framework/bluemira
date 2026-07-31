@@ -78,9 +78,9 @@ class TGeometryParameterisationOptVariables(OptVariablesFrame):
 class TestGeometryParameterisation:
     def test_subclass(self):
         class TestPara(GeometryParameterisation[TGeometryParameterisationOptVariables]):
-            def __init__(self):
-                variables = TGeometryParameterisationOptVariables()
-                super().__init__(variables)
+            param_cls: type[TGeometryParameterisationOptVariables] = (
+                TGeometryParameterisationOptVariables
+            )
 
             def create_shape(self, **kwargs):  # noqa: ARG002
                 return BluemiraWire(

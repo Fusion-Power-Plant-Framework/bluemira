@@ -105,14 +105,19 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             If the subclass does not define a valid ``param_cls``.
         """
         self.name = self.__class__.__name__
+        if self.param_cls is None:
+            raise TypeError(
+                "The type of optimisation variables for the parameterisation"
+                "is not defined. Please set them up."
+            )
         if variables is None:
             variables = self.param_cls()
         elif isinstance(variables, dict):
             variables = self.param_cls.update_from_dict(variables)
-        elif not isinstance(variables, self.param_cls):
+        elif not isinstance(variables, type(self.param_cls)):
             bluemira_warn(
                 f"{self.name}: expected variables of type "
-                f"{self.param_cls.__name__}, got {type(variables).__name__}. "
+                f"{type(self.param_cls)}, got {type(variables).__name__}. "
                 "Using default values."
             )
             variables = self.param_cls()
