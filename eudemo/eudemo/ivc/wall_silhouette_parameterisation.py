@@ -12,9 +12,9 @@ from typing import ClassVar
 
 from bluemira.geometry.parameterisations import (
     PolySpline,
-    PolySplineOptVarDictT,
+    PolySplineOptVariables,
     PrincetonD,
-    PrincetonDOptVarDictT,
+    PrincetonDOptVariables,
 )
 from bluemira.utilities.opt_variables import OptVarVarDictValueT
 
@@ -38,10 +38,10 @@ class WallPolySpline(PolySpline):
         "bottom": {"value": 0.2},
     }
 
-    def __init__(self, var_dict: PolySplineOptVarDictT | None = None):
+    def __init__(self, variables: PolySplineOptVariables | None = None):
         defaults = copy.deepcopy(self._defaults)
-        if var_dict:
-            defaults.update(var_dict)
+        if variables:
+            defaults.update(variables.as_dict())
         super().__init__(defaults)
 
         ib_radius = self.variables.x1.value
@@ -95,10 +95,10 @@ class WallPrincetonD(PrincetonD):
         "dz": {"value": -0.5},
     }
 
-    def __init__(self, var_dict: PrincetonDOptVarDictT | None = None):
+    def __init__(self, variables: PrincetonDOptVariables | None = None):
         defaults = copy.deepcopy(self._defaults)
-        if var_dict:
-            defaults.update(var_dict)
+        if variables:
+            defaults.update(variables.as_dict())
         super().__init__(defaults)
 
         ib_radius = self.variables.x1.value
