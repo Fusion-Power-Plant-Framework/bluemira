@@ -1378,11 +1378,11 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             bluemira_warn("Unable to find input equilibrium LCFS")
             return None
 
-        if mask_type in EqPlotMask.REF:
+        if mask_type in EqPlotMask._REF:
             return _in_plasma(
                 self.grid.x, self.grid.z, mask_matx, ref_lcfs.xz.T, include_edges=False
             )
-        if mask_type in EqPlotMask.INPUT:
+        if mask_type in EqPlotMask._INPUT:
             return _in_plasma(
                 self.grid.x, self.grid.z, mask_matx, input_lcfs.xz.T, include_edges=False
             )
@@ -1397,11 +1397,11 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
 
     def apply_mask(self, mask_type):
         """Apply mask to psi."""
-        if mask_type in EqPlotMask.OUTSIDE:
+        if mask_type in EqPlotMask._OUTSIDE:
             self.coilset_psi *= self.mask
             self.plasma_psi *= self.mask
             self.total_psi *= self.mask
-        elif mask_type in EqPlotMask.INSIDE:
+        elif mask_type in EqPlotMask._INSIDE:
             self.coilset_psi *= abs(self.mask - 1)
             self.plasma_psi *= abs(self.mask - 1)
             self.total_psi *= abs(self.mask - 1)
@@ -1449,9 +1449,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         """Plot flux differences"""
         # Apply mask
         if self.diag_ops.plot_mask is not None:
-            if self.diag_ops.plot_mask not in EqPlotMask.LCFS:
+            if self.diag_ops.plot_mask not in EqPlotMask._LCFS:
                 raise NotImplementedError(
-                    "Chosen mask is not yet available please choosea LCFS mask type."
+                    "Chosen mask is not yet available please choose a LCFS mask type."
                 )
             self.apply_mask(self.diag_ops.plot_mask)
 
