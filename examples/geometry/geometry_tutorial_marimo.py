@@ -19,7 +19,6 @@ def _():
     # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
     #
     # SPDX-License-Identifier: LGPL-2.1-or-later
-
     """
     A geometry tutorial for users.
     """
@@ -48,7 +47,6 @@ def _(mo):
 
     Let's start out by importing all the basic objects, and some typical tools
     """)
-    return
 
 
 @app.cell
@@ -125,7 +123,6 @@ def _(mo):
     considering a simple linear segmented wire with vertexes on
     (0,0,0), (1,0,0), and (1,1,0).
     """)
-    return
 
 
 @app.cell
@@ -147,7 +144,6 @@ def _(mo):
     mo.md(r"""
     Concatenation of more wires is also allowed:
     """)
-    return
 
 
 @app.cell
@@ -165,7 +161,6 @@ def _(mo):
     In such a case, sub-wires are still accessible as separate entities and
     can be returned through a search operation on the full wire:
     """)
-    return
 
 
 @app.cell
@@ -187,7 +182,6 @@ def _(mo):
     mo.md(r"""
     More complex geometries can be created using splines, arcs, etc.
     """)
-    return
 
 
 @app.cell
@@ -211,13 +205,11 @@ def _(mo):
     In such a case, the created wire is closed. A check can be done interrogating
     the is_closed function of the wire:
     """)
-    return
 
 
 @app.cell
 def _(closed_wire):
     print(f"wire is closed: {closed_wire.is_closed()}")
-    return
 
 
 @app.cell(hide_code=True)
@@ -226,7 +218,6 @@ def _(mo):
     Also, note that the sub-wires have been passed in "end-to-start": the end point of the
     current wire in the list should match the start point of the next wire in the list.
     """)
-    return
 
 
 @app.cell(hide_code=True)
@@ -236,7 +227,6 @@ def _(mo):
 
     A closed planar 1-D geometry can be used as boundary to generate a 2-D face.
     """)
-    return
 
 
 @app.cell
@@ -252,7 +242,6 @@ def _(mo):
     A matplotlib-style plotting of a face can be made similarly to what was done for
     a wire, i.e. using a FacePlotter
     """)
-    return
 
 
 @app.cell
@@ -269,14 +258,13 @@ def _(mo):
     If more than one closed wire is given as boundary for a face, the first one is
     used as the external boundary and subsequent ones are considered as holes.
     """)
-    return
 
 
 @app.cell
 def _(BluemiraFace, Coordinates, closed_wire, face_plotter, make_polygon):
-    _points = Coordinates({'x': [1, 2, 2, 1], 'y': [1, 1, 2, 2]})
-    hole = make_polygon(_points, label='hole', closed=True)
-    face_with_hole = BluemiraFace(boundary=[closed_wire, hole], label='face_with_hole')
+    _points = Coordinates({"x": [1, 2, 2, 1], "y": [1, 1, 2, 2]})
+    hole = make_polygon(_points, label="hole", closed=True)
+    face_with_hole = BluemiraFace(boundary=[closed_wire, hole], label="face_with_hole")
     print(face_with_hole)
     face_plotter.plot_2d(face_with_hole)
     return face_with_hole, hole
@@ -288,7 +276,6 @@ def _(mo):
     Starting from 1-D or 2-D geometries, 3-D objects can be created, for example,
     by revolution or extrusion.
     """)
-    return
 
 
 @app.cell
@@ -310,13 +297,11 @@ def _(mo):
     Geometry objects can be displayed via `show_cad`, and the appearance
     of said objects customised by specifying `color` and `transparency`.
     """)
-    return
 
 
 @app.cell
 def _(DisplayCADOptions, first_solid, show_cad):
     show_cad(first_solid, DisplayCADOptions(color="blue", transparency=0.1))
-    return
 
 
 @app.cell(hide_code=True)
@@ -334,7 +319,6 @@ def _(mo):
 
     Let's take a little peek under the hood of our solid:
     """)
-    return
 
 
 @app.cell
@@ -343,14 +327,17 @@ def _(BluemiraFace, BluemiraShell, BluemiraSolid, BluemiraWire, first_solid):
 
     i, j, k = 0, 0, 0  # This is just to facilitate comprehension
     for i, shell in enumerate(first_solid.boundary):
-        print(f"Shell: {i}.{j}.{k} is a BluemiraShell: {isinstance(shell, BluemiraShell)}")
+        print(
+            f"Shell: {i}.{j}.{k} is a BluemiraShell: {isinstance(shell, BluemiraShell)}"
+        )
         for j, face in enumerate(shell.boundary):
-            print(f"Face: {i}.{j}.{k} is a BluemiraFace: {isinstance(face, BluemiraFace)}")
+            print(
+                f"Face: {i}.{j}.{k} is a BluemiraFace: {isinstance(face, BluemiraFace)}"
+            )
             for k, wire in enumerate(face.boundary):
                 print(
                     f"Wire: {i}.{j}.{k} is a BluemiraWire: {isinstance(wire, BluemiraWire)}"
                 )
-    return
 
 
 @app.cell(hide_code=True)
@@ -365,7 +352,6 @@ def _(mo):
 
     Just as example, we are going to apply a translation to our "face_with_hole".
     """)
-    return
 
 
 @app.cell
@@ -392,7 +378,6 @@ def _(face_plotter, face_with_hole, hole, plt, wire_plotter):
     wire_plotter.plot_2d(hole, ax=ax, show=False)
     plt.title("Translated wire test")
     plt.show()
-    return
 
 
 @app.cell(hide_code=True)
@@ -410,7 +395,6 @@ def _(mo):
     It's not a good idea to make a polygon with lots of very small sides
     for this. It's computationally expensive, and it will look ugly.
     """)
-    return
 
 
 @app.cell
@@ -423,7 +407,10 @@ def _(DisplayCADOptions, interpolate_bspline, make_polygon, np, show_cad):
     spline = interpolate_bspline(_points)
     _points = np.array([x, y + 3, z])
     polygon = make_polygon(_points)
-    show_cad([spline, polygon], [DisplayCADOptions(color='blue'), DisplayCADOptions(color='red')])
+    show_cad(
+        [spline, polygon],
+        [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")],
+    )
     return polygon, spline
 
 
@@ -435,7 +422,6 @@ def _(DisplayCADOptions, extrude_shape, polygon, show_cad, spline):
         [extrude_shape(spline, vector), extrude_shape(polygon, vector)],
         [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")],
     )
-    return
 
 
 @app.cell(hide_code=True)
@@ -449,7 +435,6 @@ def _(mo):
     * revolve a shape `revolve_shape`
     * sweep a shape `sweep_shape`
     """)
-    return
 
 
 @app.cell
@@ -457,7 +442,9 @@ def _(BluemiraFace, make_polygon, np, revolve_shape, show_cad):
     # Make a hollow cylinder, by revolving a rectangle
     _points = np.array([[4, 5, 5, 4], [0, 0, 0, 0], [2, 2, 3, 3]])
     rectangle = BluemiraFace(make_polygon(_points, closed=True))
-    hollow_cylinder = revolve_shape(rectangle, base=(0, 0, 0), direction=(0, 0, 1), degree=360)
+    hollow_cylinder = revolve_shape(
+        rectangle, base=(0, 0, 0), direction=(0, 0, 1), degree=360
+    )
     show_cad(hollow_cylinder)
     return (rectangle,)
 
@@ -475,11 +462,12 @@ def _(
     # Sweep a profile along a path
     _points = np.array([[4.5, 4.5], [0, 3], [2.5, 2.5]])
     straight_line = make_polygon(_points)
-    quarter_turn = make_circle(center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90)
+    quarter_turn = make_circle(
+        center=(3, 3, 2.5), axis=(0, 0, 1), radius=1.5, end_angle=90
+    )
     path = BluemiraWire([straight_line, quarter_turn])
     solid = sweep_shape(rectangle.boundary[0], path)
     show_cad(solid)
-    return
 
 
 @app.cell(hide_code=True)
@@ -491,7 +479,6 @@ def _(mo):
     * You can join geometries together with `boolean_fuse`
     * You can cut geometries from one another with `boolean_cut`
     """)
-    return
 
 
 @app.cell
@@ -528,7 +515,6 @@ def _(mo):
     * Translate
     * Scale
     """)
-    return
 
 
 @app.cell
@@ -541,7 +527,6 @@ def _(DisplayCADOptions, cut_box_1, show_cad):
     new_cut_box_1.scale(3)
     blue_red_options = [DisplayCADOptions(color="blue"), DisplayCADOptions(color="red")]
     show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
-    return
 
 
 @app.cell(hide_code=True)
@@ -552,7 +537,6 @@ def _(mo):
     Many different CAD file types can be written,
     for a full list see the `CADFileType` class.
     """)
-    return
 
 
 @app.cell
@@ -569,7 +553,6 @@ def _(Path, cut_box_1, get_bluemira_path, save_cad):
             get_bluemira_path("", subfolder="generated_data"), my_file_path
         ).as_posix(),
     )
-    return
 
 
 if __name__ == "__main__":
