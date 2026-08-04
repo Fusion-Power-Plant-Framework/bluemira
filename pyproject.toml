@@ -110,6 +110,9 @@ version-file = "bluemira/_version.py"
 [tool.hatch.metadata]
 allow-direct-references = true  # remove after reference published
 
+[tool.marimo.runtime]
+pythonpath = ["src"]
+
 [tool.coverage.report]
 "exclude_also" = [
     "if __name__ == .__main__.:",
