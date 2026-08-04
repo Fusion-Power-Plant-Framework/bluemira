@@ -171,9 +171,13 @@ class ChargedParticleSolver:
     ]:
         """
         Get arrays of flux surface values.
+        Removes any flux surfaces that do not intersect the first wall (a warning will
+        print if this is the case, see flux_surfaces.py).
 
         Returns
         -------
+        flux_surfaces:
+            the array of flux surfaces
         x_mp:
             the array of mid-plane intersection point x-coordinate for each flux surface
         z_mp:
@@ -185,12 +189,28 @@ class ChargedParticleSolver:
         alpha:
             the array of alpha angle for each flux surface
         """
+        alpha = np.array([fs.alpha for fs in flux_surfaces])
+
+        # Remove flux surfaces that do not intersect the first wall.
+        no_cross = alpha == None  # noqa: E711
+        if any(no_cross):
+            alpha = [
+                value
+                for (value, remove) in zip(alpha, no_cross, strict=False)
+                if not remove
+            ]
+            flux_surfaces = [
+                value
+                for (value, remove) in zip(flux_surfaces, no_cross, strict=False)
+                if not remove
+            ]
+
         x_mp = np.array([fs.x_start for fs in flux_surfaces])
         z_mp = np.array([fs.z_start for fs in flux_surfaces])
         x_fw = np.array([fs.x_end for fs in flux_surfaces])
         z_fw = np.array([fs.z_end for fs in flux_surfaces])
-        alpha = np.array([fs.alpha for fs in flux_surfaces])
-        return x_mp, z_mp, x_fw, z_fw, alpha
+
+        return flux_surfaces, x_mp, z_mp, x_fw, z_fw, alpha
 
     def _make_flux_surfaces_ob(self):
         """
@@ -359,11 +379,11 @@ class ChargedParticleSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
 
-        x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
-            self.flux_surfaces_ob_down
+        self.flux_surfaces_ob_down, x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = (
+            self._get_arrays(self.flux_surfaces_ob_down)
         )
-        _, _, x_hfs_inter, z_hfs_inter, alpha_hfs = self._get_arrays(
-            self.flux_surfaces_ob_up
+        self.flux_surfaces_ob_up, _, _, x_hfs_inter, z_hfs_inter, alpha_hfs = (
+            self._get_arrays(self.flux_surfaces_ob_up)
         )
 
         # Calculate values at OMP
@@ -432,17 +452,27 @@ class ChargedParticleSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
 
-        (x_omp, z_omp, x_lfs_down_inter, z_lfs_down_inter, alpha_lfs_down) = (
-            self._get_arrays(self.flux_surfaces_ob_down)
+        (
+            self.flux_surfaces_ob_down,
+            x_omp,
+            z_omp,
+            x_lfs_down_inter,
+            z_lfs_down_inter,
+            alpha_lfs_down,
+        ) = self._get_arrays(self.flux_surfaces_ob_down)
+        self.flux_surfaces_ob_up, _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = (
+            self._get_arrays(self.flux_surfaces_ob_up)
         )
-        _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = self._get_arrays(
-            self.flux_surfaces_ob_up
-        )
-        (x_imp, z_imp, x_hfs_down_inter, z_hfs_down_inter, alpha_hfs_down) = (
-            self._get_arrays(self.flux_surfaces_ib_down)
-        )
-        _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = self._get_arrays(
-            self.flux_surfaces_ib_up
+        (
+            self.flux_surfaces_ib_down,
+            x_imp,
+            z_imp,
+            x_hfs_down_inter,
+            z_hfs_down_inter,
+            alpha_hfs_down,
+        ) = self._get_arrays(self.flux_surfaces_ib_down)
+        self.flux_surfaces_ib_up, _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = (
+            self._get_arrays(self.flux_surfaces_ib_up)
         )
 
         # Calculate values at OMP
