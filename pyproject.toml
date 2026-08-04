@@ -63,7 +63,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.16.0",
+    "ruff==0.16.2",
     "sphinx<8.2",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -152,6 +152,7 @@ pythonpath = ['.', 'eudemo']
 target-version = "py311"
 line-length = 89
 output-format= "concise"
+output-prefer-rule-codes = true
 exclude = [
     ".git",
     "__pycache__",
