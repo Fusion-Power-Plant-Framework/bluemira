@@ -6,13 +6,10 @@
 #     "pyside6==6.11.1",
 # ]
 #
-# [[tool.uv.index]]
-# name = "bluemira-index"
-# url = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
-# explicit = true
 #
 # [tool.uv.sources]
-# bluemira = { path = "../../", editable = true, index = "bluemira-index" }
+# bluemira = ["bluemira @ git+https://github.com/Fusion-Power-Plant-Framework/bluemira"]
+# process = ["process @ git+https://github.com/ukaea/process@v3.4.1"]
 # ///
 import marimo
 
