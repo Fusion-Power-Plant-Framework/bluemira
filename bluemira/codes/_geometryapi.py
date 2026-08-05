@@ -20,9 +20,7 @@ rest of the codebase is backend-agnostic.
 
 from __future__ import annotations
 
-import os
-
-_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").lower()
+_BACKEND = "cadquery"
 
 if _BACKEND == "cadquery":
     import bluemira.codes.cadapi._cadquery as _impl
