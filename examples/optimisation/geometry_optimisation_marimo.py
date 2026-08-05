@@ -20,11 +20,17 @@ app = marimo.App()
 @app.cell
 def _():
     import marimo as mo
-    import os
-os.environ.setdefault(key="BLUEMIRA_GEOMETRY_BACKEND", value="cadquery")
-
+   
     return (mo,)
 
+@app.cell
+def _():
+    import os
+    os.environ.setdefault(key="BLUEMIRA_GEOMETRY_BACKEND", value="cadquery")
+
+    import subprocess
+    subprocess.run(["pip", "install", "-q", "git+https://github.com/Fusion-Power-Plant-Framework/bluemira"])
+    return 
 
 @app.cell
 def _():
