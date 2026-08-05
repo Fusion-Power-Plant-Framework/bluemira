@@ -88,14 +88,13 @@ class TestCircularArcCurrentSourceSuperposition:
 
     origin = np.zeros(3)
 
-    ds = np.array([1.0, 0.0, 0.0])
-    normal = np.array([0.0, 1.0, 0.0])
-    t_vec = np.array([0.0, 0.0, 1.0])
-
     radius = 1.0
     breadth = 0.05
     depth = 0.05
     current = 1000.0
+
+    atol = 1e-12
+    rtol = 0.0
 
     test_points = [  # noqa: RUF012
         (0.0, 0.0, 0.0),
@@ -106,29 +105,67 @@ class TestCircularArcCurrentSourceSuperposition:
         (np.linspace(-2, 2), np.linspace(-2, 2), np.linspace(-2, 2)),
     ]
 
-    @classmethod
-    def make_arc(cls, start_angle_deg: float, dtheta_deg: float):
-        """Construct an arc starting at start_angle_deg."""
+    axis_bases = [  # noqa: RUF012
+        pytest.param(
+            np.array([1.0, 0.0, 0.0]),
+            np.array([0.0, 1.0, 0.0]),
+            np.array([0.0, 0.0, 1.0]),
+            id="axis-z",
+        ),
+        pytest.param(
+            np.array([1.0, 0.0, 0.0]),
+            np.array([0.0, 0.0, -1.0]),
+            np.array([0.0, 1.0, 0.0]),
+            id="axis-y",
+        ),
+    ]
 
+    @staticmethod
+    def rotate_arc_basis(
+        ds0: np.ndarray,
+        normal0: np.ndarray,
+        t_vec: np.ndarray,
+        start_angle_deg: float,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Rotate the local arc start basis about the ring axis.
+
+        The returned basis preserves:
+            ds x normal == t_vec
+
+        The convention matches the circular arc source:
+            ds points towards the start of the arc.
+        """
         theta = np.deg2rad(start_angle_deg)
 
-        _ds = np.array([
-            np.cos(theta),
-            np.sin(theta),
-            0.0,
-        ])
+        ds = np.cos(theta) * ds0 + np.sin(theta) * normal0
+        normal = -np.sin(theta) * ds0 + np.cos(theta) * normal0
 
-        _normal = np.array([
-            -np.sin(theta),
-            np.cos(theta),
-            0.0,
-        ])
+        return ds, normal, t_vec
+
+    @staticmethod
+    def make_arc(
+        ds0: np.ndarray,
+        normal0: np.ndarray,
+        t_vec: np.ndarray,
+        start_angle_deg: float,
+        dtheta_deg: float,
+    ):
+        """Construct an arc starting at start_angle_deg."""
+        cls = TestCircularArcCurrentSourceSuperposition
+
+        ds, normal, t_vec = cls.rotate_arc_basis(
+            ds0,
+            normal0,
+            t_vec,
+            start_angle_deg,
+        )
 
         return CircularArcCurrentSource(
             origin=cls.origin,
-            ds=_ds,
-            normal=_normal,
-            t_vec=cls.t_vec,
+            ds=ds,
+            normal=normal,
+            t_vec=t_vec,
             breadth=cls.breadth,
             depth=cls.depth,
             radius=cls.radius,
@@ -136,29 +173,105 @@ class TestCircularArcCurrentSourceSuperposition:
             current=cls.current,
         )
 
-    @pytest.mark.parametrize("point", test_points)
-    def test_full_ring_equals_two_half_rings(self, point):
-        """360° ring == 180° + 180°."""
+    @staticmethod
+    def make_decomposed_arc(
+        ds0: np.ndarray,
+        normal0: np.ndarray,
+        t_vec: np.ndarray,
+        start_angle_deg: float,
+        dtheta_deg: float,
+        n_segments: int,
+    ) -> SourceGroup:
+        """Construct an arc as a group of n equivalent smaller arcs."""
+        cls = TestCircularArcCurrentSourceSuperposition
 
-        full_ring = self.make_arc(0.0, 360.0)
+        segment_angle = dtheta_deg / n_segments
 
-        half_rings = SourceGroup([
-            self.make_arc(0.0, 180.0),
-            self.make_arc(180.0, 180.0),
+        return SourceGroup([
+            cls.make_arc(
+                ds0=ds0,
+                normal0=normal0,
+                t_vec=t_vec,
+                start_angle_deg=start_angle_deg + i * segment_angle,
+                dtheta_deg=segment_angle,
+            )
+            for i in range(n_segments)
         ])
 
-        b_full = full_ring.field(*point)
+    @staticmethod
+    def assert_sources_close(source_a, source_b, point):
+        """Assert that two sources produce the same field at point."""
+        cls = TestCircularArcCurrentSourceSuperposition
 
-        b_halves = half_rings.field(*point)
+        b_a = source_a.field(*point)
+        b_b = source_b.field(*point)
 
         np.testing.assert_allclose(
-            b_full,
-            b_halves,
-            rtol=0.0,
-            atol=1e-12,
+            b_a,
+            b_b,
+            rtol=cls.rtol,
+            atol=cls.atol,
         )
 
-    def _plot_source_comp(self, full_ring, half_rings):
+    @pytest.mark.parametrize("point", test_points)
+    @pytest.mark.parametrize(("ds0", "normal0", "t_vec"), axis_bases)
+    def test_full_ring_equals_two_half_rings(
+        self,
+        point,
+        ds0,
+        normal0,
+        t_vec,
+    ):
+        """360 degree ring == 180 degree + 180 degree, for multiple axes."""
+        full_ring = self.make_arc(
+            ds0=ds0,
+            normal0=normal0,
+            t_vec=t_vec,
+            start_angle_deg=0.0,
+            dtheta_deg=360.0,
+        )
+
+        half_rings = self.make_decomposed_arc(
+            ds0=ds0,
+            normal0=normal0,
+            t_vec=t_vec,
+            start_angle_deg=0.0,
+            dtheta_deg=360.0,
+            n_segments=2,
+        )
+
+        self.assert_sources_close(full_ring, half_rings, point)
+
+    @pytest.mark.parametrize("point", test_points)
+    @pytest.mark.parametrize(("ds0", "normal0", "t_vec"), axis_bases)
+    def test_full_ring_equals_four_quarter_rings(
+        self,
+        point,
+        ds0,
+        normal0,
+        t_vec,
+    ):
+        """360 degree ring == 4 x 90 degree arcs, for multiple axes."""
+        full_ring = self.make_arc(
+            ds0=ds0,
+            normal0=normal0,
+            t_vec=t_vec,
+            start_angle_deg=0.0,
+            dtheta_deg=360.0,
+        )
+
+        quarter_rings = self.make_decomposed_arc(
+            ds0=ds0,
+            normal0=normal0,
+            t_vec=t_vec,
+            start_angle_deg=0.0,
+            dtheta_deg=360.0,
+            n_segments=4,
+        )
+
+        self.assert_sources_close(full_ring, quarter_rings, point)
+
+    def _plot_source_comp(self, full_ring, segmented_ring):
         n_points = 50
         dim = 1.6
         x = np.linspace(-dim, dim, n_points)
@@ -168,7 +281,7 @@ class TestCircularArcCurrentSourceSuperposition:
         zz = 0.3 * np.ones_like(xx)
 
         b_full = np.linalg.norm(full_ring.field(xx, yy, zz), axis=0)
-        b_halves = np.linalg.norm(half_rings.field(xx, yy, zz), axis=0)
+        b_segmented = np.linalg.norm(segmented_ring.field(xx, yy, zz), axis=0)
 
         fig = plt.figure(figsize=(9, 4))
         gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 0.05], wspace=0.15)
@@ -178,43 +291,19 @@ class TestCircularArcCurrentSourceSuperposition:
         cax = fig.add_subplot(gs[0, 2])
 
         levels = np.linspace(
-            min(b_full.min(), b_halves.min()),
-            max(b_full.max(), b_halves.max()),
+            min(b_full.min(), b_segmented.min()),
+            max(b_full.max(), b_segmented.max()),
             30,
         )
 
         ax0.contourf(xx, yy, b_full, levels=levels, cmap="magma")
-        cm = ax1.contourf(xx, yy, b_halves, levels=levels, cmap="magma")
+        cm = ax1.contourf(xx, yy, b_segmented, levels=levels, cmap="magma")
 
-        for a in (ax0, ax1):
-            a.set_aspect("equal")
-            a.set_xlabel("x [m]")
-            a.set_ylabel("y [m]")
+        for ax in (ax0, ax1):
+            ax.set_aspect("equal")
+            ax.set_xlabel("x [m]")
+            ax.set_ylabel("y [m]")
 
         cb = fig.colorbar(cm, cax=cax)
         cb.set_label(r"$|\mathbf{B}|$ [T]")
         plt.show()
-
-    @pytest.mark.parametrize("point", test_points)
-    def test_full_ring_equals_four_quarter_rings(self, point):
-        """360° ring == 4 x 90° arcs."""
-
-        full_ring = self.make_arc(0.0, 360.0)
-
-        quarter_rings = SourceGroup([
-            self.make_arc(0.0, 90.0),
-            self.make_arc(90.0, 90.0),
-            self.make_arc(180.0, 90.0),
-            self.make_arc(270.0, 90.0),
-        ])
-
-        b_quarters = quarter_rings.field(*point)
-
-        b_full = full_ring.field(*point)
-
-        np.testing.assert_allclose(
-            b_full,
-            b_quarters,
-            rtol=0.0,
-            atol=1e-12,
-        )
