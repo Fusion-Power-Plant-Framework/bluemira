@@ -3,13 +3,13 @@
 # dependencies = [
 #     "bluemira",
 #     "marimo>=0.23.16",
-#     "pyside6==6.11.1",
+#     "PySide6==6.11.1",
 # ]
 #
 #
 # [tool.uv.sources]
-# bluemira = {git = "https://github.com/Fusion-Power-Plant-Framework/bluemira"}
-# process = {git = "https://github.com/ukaea/process@v3.4.1"}
+# bluemira = { git = "https://github.com/Fusion-Power-Plant-Framework/bluemira" }
+# process = { git = "https://github.com/ukaea/process@v3.4.1" }
 # ///
 import marimo
 

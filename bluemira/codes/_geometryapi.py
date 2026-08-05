@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import os
 
-_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").lower()
+_BACKEND = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").lower()
 
 if _BACKEND == "cadquery":
     import bluemira.codes.cadapi._cadquery as _impl
