@@ -4,8 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from copy import deepcopy
-from matplotlib import pyplot as plt
 import numpy as np
 import pytest
 
@@ -98,7 +96,7 @@ class TestCircularArcCurrentSourceSuperposition:
     depth = 0.05
     current = 1000.0
 
-    test_points = [
+    test_points = [  # noqa: RUF012
         (0.0, 0.0, 0.0),
         (0.1, 0.0, 0.05),
         (0.2, -0.1, 0.0),
@@ -112,26 +110,22 @@ class TestCircularArcCurrentSourceSuperposition:
 
         theta = np.deg2rad(start_angle_deg)
 
-        ds = np.array(
-            [
-                np.cos(theta),
-                np.sin(theta),
-                0.0,
-            ]
-        )
+        _ds = np.array([
+            np.cos(theta),
+            np.sin(theta),
+            0.0,
+        ])
 
-        normal = np.array(
-            [
-                -np.sin(theta),
-                np.cos(theta),
-                0.0,
-            ]
-        )
+        _normal = np.array([
+            -np.sin(theta),
+            np.cos(theta),
+            0.0,
+        ])
 
         return CircularArcCurrentSource(
             origin=cls.origin,
-            ds=ds,
-            normal=normal,
+            ds=_ds,
+            normal=_normal,
             t_vec=cls.t_vec,
             breadth=cls.breadth,
             depth=cls.depth,
@@ -163,7 +157,7 @@ class TestCircularArcCurrentSourceSuperposition:
 
     @pytest.mark.parametrize("point", test_points)
     def test_full_ring_equals_four_quarter_rings(self, point):
-        """360° ring == 4 × 90° arcs."""
+        """360° ring == 4 x 90° arcs."""
 
         full_ring = self.make_arc(0.0, 360.0)
 
