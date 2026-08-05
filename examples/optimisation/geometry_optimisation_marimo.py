@@ -20,6 +20,8 @@ app = marimo.App()
 @app.cell
 def _():
     import marimo as mo
+    import os
+os.environ.setdefault(key="BLUEMIRA_GEOMETRY_BACKEND", value="cadquery")
 
     return (mo,)
 
