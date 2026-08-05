@@ -151,7 +151,7 @@ class TestCircularArcCurrentSourceSuperposition:
         np.testing.assert_allclose(
             b_full,
             b_halves,
-            rtol=1e-10,
+            rtol=0.0,
             atol=1e-12,
         )
 
@@ -175,6 +175,6 @@ class TestCircularArcCurrentSourceSuperposition:
         np.testing.assert_allclose(
             b_full,
             b_quarters,
-            rtol=1e-10,
+            rtol=0.0,
             atol=1e-12,
         )
