@@ -8,8 +8,8 @@
 #
 #
 # [tool.uv.sources]
-# bluemira = ["bluemira @ git+https://github.com/Fusion-Power-Plant-Framework/bluemira"]
-# process = ["process @ git+https://github.com/ukaea/process@v3.4.1"]
+# bluemira = {git = "https://github.com/Fusion-Power-Plant-Framework/bluemira"}
+# process = {git = "https://github.com/ukaea/process@v3.4.1"}
 # ///
 import marimo
 
