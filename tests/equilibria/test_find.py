@@ -19,7 +19,8 @@ from bluemira.equilibria.find import (
     find_local_minima,
     inv_2x2_matrix,
 )
-from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit, split
+from bluemira.geometry.coordinates import Coordinates
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -57,6 +58,26 @@ def test_inv_2x2_jacobian():
     inv_jac_true = np.linalg.inv(np.array([[a, b], [c, d]]))
     inv_jac = inv_2x2_matrix(a, b, c, d)
     assert np.allclose(inv_jac_true, inv_jac)
+
+
+@pytest.mark.parametrize("n_null", [NumNull.SN, NumNull.DN])
+def test_split(n_null):
+    n = 1000
+    theta = np.linspace(0, 2 * np.pi, n)
+    x, z = np.cos(theta), np.sin(theta) + 1
+    circle = Coordinates([x, np.zeros(n), z])
+    circle.close()
+    assert circle.closed
+    sep = split(circle, n_null)
+    if n_null == NumNull.DN:
+        assert len(sep) == 2
+        assert not sep[0].closed
+        assert not sep[1].closed
+        assert sep[0].z[0] == np.max(circle.z)
+        assert circle.z[sep[1].z[0] == np.argmin(circle.z) + 1]
+    else:
+        assert not sep.closed
+        assert sep.z[0] == np.max(circle.z)
 
 
 class TestFindLCFSSeparatrix:

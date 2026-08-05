@@ -110,8 +110,15 @@ class LegFlux:
         # We have not introduced a first wall or divertor silhouette,
         # so sometimes this can happen if the flux surface wraps around the
         # lower divertor coils rather that extending off the grid.
-        if eq.is_double_null and len(self.separatrix) != 2:  # noqa: PLR2004
-            self.separatrix = split(self.separatrix)
+        if (eq.is_double_null and len(self.separatrix) != 2) or (  # noqa: PLR2004
+            not eq.is_double_null and self.separatrix.closed
+        ):
+            self.separatrix = split(
+                self.separatrix
+                if isinstance(self.separatrix, Coordinates)
+                else self.separatrix[0],
+                self.n_null,
+            )
 
         self.rtol = rtol
         self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
@@ -124,45 +131,6 @@ class LegFlux:
         if n_layers > 1:
             legs = self._get_leg_offsets(legs, eq)
         self._legs = legs
-
-    def _split(self):
-        """
-        Method used to split a separatrix in two if we have one that loops
-        around the coils within the grid and thus appears 'closed'.
-        """
-        loop = (
-            self.separatrix
-            if isinstance(self.separatrix, Coordinates)
-            else self.separatrix[0]
-        )
-
-        max_point = np.array([
-            loop.x[loop.z == np.max(loop.z)][0],
-            0.0,
-            loop.z[loop.z == np.max(loop.z)][0],
-        ])
-        min_point = np.array([
-            loop.x[loop.z == np.min(loop.z)][0],
-            0.0,
-            loop.z[loop.z == np.min(loop.z)][0],
-        ])
-
-        # Move start of array to top of upper divertor region and open coords
-        idx = len(loop._array[0]) - loop.argmin(max_point)
-        for i in [0, 1, 2]:
-            loop._array[i] = np.roll(loop._array[i], idx)
-
-        # Split into two at bottom of lower divertor region
-        idx = loop.argmin(min_point) + 1
-        loops = [
-            Coordinates(self._array[:, :idx]),
-            Coordinates(self._array[:, idx:]),
-        ]
-
-        # Sort, set direction and update
-        loops.sort(key=lambda loop: -loop.length)
-        [lp.set_ccw() for lp in loops]
-        self.separatrix = loops
 
     @property
     def legs(self):
@@ -233,6 +201,7 @@ class LegFlux:
 
     def _set_oxpts_and_check(self, lcfs, delta_lcfs, o_points, x_points):
         """Keep the relevant O and X points, check their locations are as expected."""
+        # TODO@geograham: #4463
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
         # Check we are using the x-points nearest the LCFS max and/or min z-coord.
@@ -356,41 +325,55 @@ class LegFlux:
         )
 
 
-def split(separatrix):
+def split(septrx: Coordinates, n_null: NumNull):
     """
-    Method used to split a separatrix in two if we have one that loops
+    Method used to split a separatrix if we have one that loops
     around the coils within the grid and thus appears 'closed'.
+
+    Parameters
+    ----------
+    septrx:
+        Coordinates of closed seperatrix
+    n_null:
+        Single or Double Null
 
     Returns
     -------
     loops:
         list of split coordinates
     """
-    loop = separatrix if isinstance(separatrix, Coordinates) else separatrix[0]
-    max_point = np.array([
-        loop.x[loop.z == np.max(loop.z)][0],
-        0.0,
-        loop.z[loop.z == np.max(loop.z)][0],
-    ])
-    min_point = np.array([
-        loop.x[loop.z == np.min(loop.z)][0],
-        0.0,
-        loop.z[loop.z == np.min(loop.z)][0],
-    ])
-    # Move start of array to top of upper divertor region and open coords
-    idx = len(loop._array[0]) - loop.argmin(max_point)
+    points = [
+        np.array([
+            septrx.x[septrx.z == np.max(septrx.z)][0],
+            0.0,
+            septrx.z[septrx.z == np.max(septrx.z)][0],
+        ]),
+        np.array([
+            septrx.x[septrx.z == np.min(septrx.z)][0],
+            0.0,
+            septrx.z[septrx.z == np.min(septrx.z)][0],
+        ]),
+    ]
+    points = sorted(points, key=lambda arr: abs(arr[-1]), reverse=True)
+
+    # Move start of array to top/bottom of upper/lower divertor region and open coords
+    idx = len(septrx._array[0]) - septrx.argmin(points[0])
     for i in [0, 1, 2]:
-        loop._array[i] = np.roll(loop._array[i], idx)
-    # Split into two at bottom of lower divertor region
-    idx = loop.argmin(min_point) + 1
-    loops = [
-        Coordinates(loop._array[:, :idx]),
-        Coordinates(loop._array[:, idx:]),
+        septrx._array[i] = np.roll(septrx._array[i], idx)
+    if n_null == NumNull.SN:
+        septrx.set_ccw()
+        return septrx
+
+    # Split into two in the other divertor region
+    idx = septrx.argmin(points[1]) + 1
+    septrxs = [
+        Coordinates(septrx._array[:, :idx]),
+        Coordinates(septrx._array[:, idx:]),
     ]
     # Sort and set direction
-    loops.sort(key=lambda loop: -loop.length)
-    [lp.set_ccw() for lp in loops]
-    return loops
+    septrxs.sort(key=lambda septrx: -septrx.length)
+    [lp.set_ccw() for lp in septrxs]
+    return septrxs
 
 
 def get_legs_length_and_angle(
