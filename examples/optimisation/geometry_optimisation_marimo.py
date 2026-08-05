@@ -2,10 +2,16 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "bluemira",
+#     "marimo>=0.23.16",
+#     "pyside6==6.11.1",
 # ]
+# [[tool.uv.index]]
+# name = "bluemira-index"
+# url = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
+# explicit = true
 #
 # [tool.uv.sources]
-# bluemira = { path = "../../", editable = true }
+# bluemira = { path = "../../", editable = true, index = bluemira-index }
 # ///
 import marimo
 
