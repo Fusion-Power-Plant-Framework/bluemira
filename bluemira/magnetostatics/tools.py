@@ -10,6 +10,7 @@ Just-in-time compilation and LowLevelCallable speed-up tools.
 
 import warnings
 from collections.abc import Callable, Iterable
+from itertools import pairwise
 
 import numba as nb
 import numpy as np
@@ -257,6 +258,15 @@ def _quad_helper(
     return sign * result
 
 
+def _shift_if_singular_angle(value: float, eps: float, *, plus: bool) -> float:
+    nearest_pi_multiple = np.round(value / np.pi) * np.pi
+    if np.isclose(value, nearest_pi_multiple, atol=eps, rtol=0.0):
+        if plus:
+            return value + eps
+        return value - eps
+    return value
+
+
 def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> float:
     """
     Utility for integration of a function between bounds.
@@ -311,27 +321,26 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
             sign,
             points=points,
             limit=400,
-            )
+        )
     except (IntegrationWarning, ValueError, FloatingPointError):
         pass
 
     # 3. Expensive path: split and nudge endpoints around likely singularities.
+    eps = 1e-12 * max(1.0, abs(lower), abs(upper), width)
+
     split_points = [lower, *points, upper]
 
     result = 0.0
 
     try:
-        for a, b in zip(split_points[:-1], split_points[1:], strict=False):
-            if b <= a:
-                continue
-
+        for a, b in pairwise(split_points):
             with warnings.catch_warnings():
                 warnings.filterwarnings("error", category=IntegrationWarning)
 
                 result += _quad_helper(
                     func,
-                    a,
-                    b,
+                    _shift_if_singular_angle(a, eps, plus=True),
+                    _shift_if_singular_angle(b, eps, plus=False),
                     args,
                     sign=1.0,
                     limit=200,
