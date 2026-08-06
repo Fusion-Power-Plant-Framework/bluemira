@@ -229,50 +229,118 @@ def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
     return LowLevelCallable(wrapped.ctypes)
 
 
+def _quad_helper(
+    func: Callable,
+    lower: float,
+    upper: float,
+    args: tuple[float, ...],
+    sign: float,
+    *,
+    points=None,
+    limit: int = 50,
+) -> float:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=IntegrationWarning)
+
+        result = quad(
+            func,
+            lower,
+            upper,
+            args=args,
+            points=points,
+            limit=limit,
+        )[0]
+
+    if not np.isfinite(result):
+        raise MagnetostaticsIntegrationError("Infinite integral result!")
+
+    return sign * result
+
+
 def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> float:
     """
-    Utility for integration of a function between bounds. Easier to refactor
-    integration methods.
+    Utility for integration of a function between bounds.
 
     Parameters
     ----------
     func:
-        The function to integrate. The integration variable should be the last
-        argument of this function.
+        The function to integrate. The integration variable should be the first
+        argument of this function, as expected by scipy.integrate.quad.
     args:
         The iterable of static arguments to the function.
     bound1:
-        The lower integration bound
+        The first integration bound.
     bound2:
-        The upper integration bound
+        The second integration bound.
 
     Returns
     -------
     :
-        The value of the integral of the function between the bounds
+        The value of the integral of the function between the bounds.
 
     Raises
     ------
     MagnetostaticsIntegrationError
-        Integration failed
+        Integration failed.
     """
-    warnings.filterwarnings("error", category=IntegrationWarning)
-    try:
-        result = quad(func, bound1, bound2, args=args)[0]
-    except IntegrationWarning:
-        # First attempt at fixing the integration problem
-        points = [
-            0.25 * (bound2 - bound1),
-            0.5 * (bound2 - bound1),
-            0.75 * (bound2 - bound1),
-        ]
-        try:
-            result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
-        except IntegrationWarning as error:
-            raise MagnetostaticsIntegrationError from error
+    lower, upper = min(bound1, bound2), max(bound1, bound2)
+    sign = np.sign(bound2 - bound1)
+    if sign == 0:
+        return 0.0
 
-    warnings.filterwarnings("default", category=IntegrationWarning)
-    return result
+    # 1. Cheap path: try normal quad first.
+    try:
+        return _quad_helper(func, lower, upper, args, sign)
+    except (IntegrationWarning, ValueError, FloatingPointError):
+        pass
+
+    # 2. Medium path: use simple absolute breakpoints.
+    width = upper - lower
+    points = [
+        lower + 0.25 * width,
+        lower + 0.50 * width,
+        lower + 0.75 * width,
+    ]
+
+    try:
+        return _quad_helper(
+            func,
+            lower,
+            upper,
+            args,
+            sign,
+            points=points,
+            limit=400,
+            )
+    except (IntegrationWarning, ValueError, FloatingPointError):
+        pass
+
+    # 3. Expensive path: split and nudge endpoints around likely singularities.
+    split_points = [lower, *points, upper]
+
+    result = 0.0
+
+    try:
+        for a, b in zip(split_points[:-1], split_points[1:], strict=False):
+            if b <= a:
+                continue
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error", category=IntegrationWarning)
+
+                result += _quad_helper(
+                    func,
+                    a,
+                    b,
+                    args,
+                    sign=1.0,
+                    limit=200,
+                )
+
+    except (IntegrationWarning, ValueError, FloatingPointError) as error:
+        raise MagnetostaticsIntegrationError from error
+
+    return sign * result
 
 
 def n_integrate(

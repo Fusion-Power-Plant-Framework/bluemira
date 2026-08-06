@@ -27,6 +27,62 @@ from bluemira.magnetostatics.tools import (
 __all__ = ["CircularArcCurrentSource"]
 
 
+ANGLE_ATOL = 1e-12
+LENGTH_ATOL = 1e-12
+LOG_EPS = 1e-300
+TWO_PI = 2.0 * np.pi
+
+
+def _is_close(a: float, b: float, atol: float) -> bool:
+    """Scalar isclose with zero relative tolerance."""
+    return np.isclose(a, b, rtol=0.0, atol=atol)
+
+
+def _prepare_primitive_args(
+    r_pc: float,
+    r_j: float,
+    z_k: float,
+    phi_pc: float,
+    theta: float,
+) -> tuple[float, float, float, float, float]:
+    """
+    Normalise angles and snap near-singular primitive inputs.
+
+    This makes near-surface and near-endpoint field points use the same
+    singularity branches as exact singular points.
+    """
+    # Preserve full-circle arcs instead of reducing them to zero.
+    if _is_close(theta, TWO_PI, ANGLE_ATOL):
+        theta = TWO_PI
+    else:
+        theta = np.mod(theta, TWO_PI)
+
+    phi_pc = np.mod(phi_pc, TWO_PI)
+
+    if _is_close(phi_pc, TWO_PI, ANGLE_ATOL):
+        phi_pc = 0.0
+
+    if _is_close(phi_pc, 0.0, ANGLE_ATOL):
+        phi_pc = 0.0
+    elif _is_close(phi_pc, theta, ANGLE_ATOL):
+        phi_pc = theta
+    elif _is_close(phi_pc, np.pi, ANGLE_ATOL):
+        phi_pc = np.pi
+
+    if _is_close(z_k, 0.0, LENGTH_ATOL):
+        z_k = 0.0
+
+    if _is_close(r_j, r_pc, LENGTH_ATOL):
+        r_j = r_pc
+
+    return r_pc, r_j, z_k, phi_pc, theta
+
+
+def _angle_in_arc(phi_pc: float, theta: float) -> bool:
+    """Return whether phi_pc lies inside or on the local arc interval."""
+    return -ANGLE_ATOL <= phi_pc <= theta + ANGLE_ATOL
+
+
 # Full integrands free of singularities
 
 
@@ -53,9 +109,10 @@ def brc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(
-        r_j - r_pc * cos_psi + sqrt_term
-    )
+    log_arg = r_j - r_pc * cos_psi + sqrt_term
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(log_arg)
 
 
 @jit_llc4
@@ -80,9 +137,17 @@ def bzc_integrand_full_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> fl
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term) - r_pc * cos_psi * np.log(
-        -z_k + sqrt_term
-    )
+    term_1 = 0.0
+    if z_k != 0:
+        log_arg_1 = r_j - r_pc * cos_psi + sqrt_term
+        if log_arg_1 <= 0:
+            log_arg_1 = LOG_EPS
+            term_1 = -z_k * np.log(log_arg_1)
+
+    log_arg_2 = -z_k + sqrt_term
+    if log_arg_2 <= 0:
+        log_arg_2 = LOG_EPS
+    return term_1 - r_pc * cos_psi * np.log(log_arg_2)
 
 
 # Integrands to treat singularities
@@ -135,7 +200,11 @@ def bf1_r_pccos2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> f
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return r_pc * cos_psi**2 * np.log(r_j - r_pc * cos_psi + sqrt_term)
+    log_arg = r_j - r_pc * cos_psi + sqrt_term
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+
+    return r_pc * cos_psi**2 * np.log(log_arg)
 
 
 @jit_llc3
@@ -222,9 +291,16 @@ def bf1_zk_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     -------
     The result of the integrand at a single point
     """
+    if z_k == 0:
+        return 0.0
+
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term)
+    log_arg = r_j - r_pc * cos_psi + sqrt_term
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+
+    return -z_k * np.log(log_arg)
 
 
 @jit_llc4
@@ -251,7 +327,11 @@ def bf2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -r_pc * cos_psi * np.log(-z_k + sqrt_term)
+    log_arg = -z_k + sqrt_term
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+
+    return -r_pc * cos_psi * np.log(log_arg)
 
 
 @jit_llc3
@@ -275,7 +355,11 @@ def bf2_0_pi_integrand(psi: float, r_pc: float, z_k: float) -> float:
     The result of the integrand at a single point for 0 to pi integral
     """
     cos_psi = np.cos(psi)
-    return r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2))
+    log_arg = z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2)
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+
+    return r_pc * cos_psi * np.log(log_arg)
 
 
 @jit_llc4
@@ -578,6 +662,9 @@ def primitive_brc(
     -------
     The result of the Brc primitive
     """
+    r_pc, r_j, z_k, phi_pc, theta = _prepare_primitive_args(
+        r_pc, r_j, z_k, phi_pc, theta
+    )
     args = (r_pc, r_j, z_k)  # The function arguments for integration
     singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
     if not singularities:
@@ -641,6 +728,9 @@ def primitive_btc(
     :
         The result of the Btc primitive.
     """
+    r_pc, r_j, z_k, phi_pc, theta = _prepare_primitive_args(
+        r_pc, r_j, z_k, phi_pc, theta
+    )
     args = (r_pc, r_j, z_k)
     singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
 
@@ -720,6 +810,9 @@ def primitive_bzc(
     -------
     The result of the Bzc primitive
     """
+    r_pc, r_j, z_k, phi_pc, theta = _prepare_primitive_args(
+        r_pc, r_j, z_k, phi_pc, theta
+    )
     args = (r_pc, r_j, z_k)  # The function arguments for integration
     bf1_singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
     bf2_singularities = (r_j == r_pc) and (z_k >= 0) and (0 <= phi_pc <= theta)
