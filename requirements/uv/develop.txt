@@ -29,7 +29,7 @@ babel==2.18.0
     #   bluemira (pyproject.toml)
     #   matproplib
     #   sphinx
-blosc2==4.9.1
+blosc2==4.10.1
     # via tables
 certifi==2026.7.22
     # via
@@ -40,7 +40,7 @@ cfgv==3.5.0
     # via pre-commit
 charset-normalizer==3.4.9
     # via requests
-citeproc-py==0.10.3
+citeproc-py==0.10.4
     # via csl-reference
 click==8.4.2
     # via
@@ -57,18 +57,16 @@ coolprop==8.0.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-coverage==7.15.2
+coverage==7.15.3
     # via pytest-cov
 csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.2
+cyclopts==4.22.5
     # via pyvista
 debugpy==1.8.21
     # via ipykernel
-decorator==5.3.1
-    # via ipython
 distlib==0.4.3
     # via virtualenv
 docstring-parser==0.18.0
@@ -82,9 +80,9 @@ eqdsk==0.9.0
     # via bluemira (pyproject.toml)
 executing==2.2.1
     # via stack-data
-fastjsonschema==2.22.0
+fastjsonschema==2.22.1
     # via nbformat
-filelock==3.32.0
+filelock==3.32.2
     # via
     #   python-discovery
     #   virtualenv
@@ -104,7 +102,7 @@ greenlet==3.5.4
     # via sqlalchemy
 h11==0.16.0
     # via httpcore
-h2==4.4.0
+h2==4.4.1
     # via httpx
 hpack==4.2.0
     # via h2
@@ -133,7 +131,7 @@ iniconfig==2.3.0
     # via pytest
 ipykernel==7.3.0
     # via myst-nb
-ipython==9.15.0
+ipython==9.16.1
     # via
     #   ipykernel
     #   myst-nb
@@ -220,7 +218,7 @@ nbclient==0.11.0
     # via
     #   jupyter-cache
     #   myst-nb
-nbformat==5.10.4
+nbformat==5.11.0
     # via
     #   jupyter-cache
     #   jupytext
@@ -264,7 +262,7 @@ numpy==2.2.6
     #   tables
 numpydantic==1.10.0
     # via matproplib
-packaging==26.2
+packaging==26.3
     # via
     #   ipykernel
     #   jupytext
@@ -299,7 +297,6 @@ platformdirs==4.11.0
     #   jupyter-core
     #   pint
     #   pooch
-    #   python-discovery
     #   virtualenv
 pluggy==1.6.0
     # via
@@ -367,7 +364,7 @@ python-dateutil==2.9.0.post0
     #   jupyter-client
     #   matplotlib
     #   pandas
-python-discovery==1.5.0
+python-discovery==1.5.1
     # via virtualenv
 pyvista==0.48.4
     # via bluemira (pyproject.toml)
@@ -472,7 +469,7 @@ tornado==6.5.7
     # via
     #   ipykernel
     #   jupyter-client
-traitlets==5.15.1
+traitlets==5.16.1
     # via
     #   ipykernel
     #   ipython
@@ -504,7 +501,7 @@ typing-inspection==0.4.2
     # via pydantic
 urllib3==2.7.0
     # via requests
-virtualenv==21.7.0
+virtualenv==21.7.1
     # via pre-commit
 vtk==9.3.1
     # via
