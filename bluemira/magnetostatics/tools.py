@@ -342,13 +342,18 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
 
     try:
         for a, b in pairwise(split_points):
+            aa = _shift_if_singular_angle(a, eps, plus=True)
+            bb = _shift_if_singular_angle(b, eps, plus=False)
+            if bb <= aa:
+                continue
+
             with warnings.catch_warnings():
                 warnings.filterwarnings("error", category=IntegrationWarning)
 
                 result += _quad_helper(
                     func,
-                    _shift_if_singular_angle(a, eps, plus=True),
-                    _shift_if_singular_angle(b, eps, plus=False),
+                    aa,
+                    bb,
                     args,
                     sign=1.0,
                     limit=200,

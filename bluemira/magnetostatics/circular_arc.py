@@ -853,7 +853,7 @@ def primitive_bzc(
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, -theta, np.pi - theta)
 
-        elif phi_pc == theta:
+        if phi_pc == theta:
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, np.pi, np.pi - theta)
 
@@ -1129,11 +1129,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         r1, r2, z1, z2 = self._cylindrical_to_working(zp)
 
         br = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
-        if np.isclose(self._dtheta, 2 * np.pi, rtol=0.0, atol=EPS):
+        bz = Bz_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+        if np.isclose(abs(self._dtheta), 2 * np.pi, rtol=0.0, atol=EPS):
             bt = 0.0
         else:
             bt = Bt_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
-        bz = Bz_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
 
         bx = br * np.cos(tp) - bt * np.sin(tp)
         by = br * np.sin(tp) + bt * np.cos(tp)
