@@ -2949,3 +2949,470 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             start_angle=start,
             end_angle=end,
         )
+
+
+def solve_tangent_arc(p1, t1, p3, t3):
+    """
+    Find the radius and straight length of a circle arc that is tangent to:
+    * A circle arc ending at p1 with tangent t1 (coincident too)
+    * A line through p3 with tangent t3 (no coincidence requirement)
+
+    Parameters
+    ----------
+    p1:
+        End point of the circle arc
+    t1:
+        Tangent vector of the circle arc at p1
+    p3:
+        Point through which the line passes
+    t3:
+        Tangent vector of the line at p3
+
+    Returns
+    -------
+    radius:
+        Radius of the circle arc
+    center:
+        Center of the circle arc
+    start_angle:
+        Start angle of the circle arc (degrees)
+    end_angle:
+        End angle of the circle arc (degrees)
+    p2:
+        Tangency point on line
+
+    Raises
+    ------
+    ValueError
+        If tangents are parallel
+
+    Notes
+    -----
+    Circle center must satisfy:
+       center = p1 + radius * n1
+       center = p3 + straight * t3 + radius * n3
+    Solve for radius and straight
+    """
+    p1 = np.array([p1[0], p1[2]], dtype=float)
+    p3 = np.array([p3[0], p3[2]], dtype=float)
+
+    t1 = np.array([t1[0], t1[2]], dtype=float)
+    t3 = -np.array([t3[0], t3[2]], dtype=float)  # just my convention..
+
+    t1 /= np.linalg.norm(t1)
+    t3 /= np.linalg.norm(t3)
+
+    cross = t1[0] * t3[1] - t1[1] * t3[0]
+
+    sign = np.sign(cross)
+
+    if abs(sign) < 1e-12:  # noqa: PLR2004
+        raise ValueError("Tangents are parallel.")
+
+    n1 = sign * np.array([-t1[1], t1[0]])
+    n3 = sign * np.array([-t3[1], t3[0]])
+
+    A = np.column_stack([n1 - n3, -t3])
+
+    radius, straight = np.linalg.solve(A, p3 - p1)
+
+    center = p1 + radius * n1
+
+    p2 = p3 + straight * t3
+    end_angle = np.arctan2(p1[1] - center[1], p1[0] - center[0])
+
+    start_angle = np.arctan2(p2[1] - center[1], p2[0] - center[0])
+
+    return radius, straight, center, np.rad2deg(start_angle), np.rad2deg(end_angle)
+
+
+def _normalize(v):
+    v = np.asarray(v, float)
+    return v / np.linalg.norm(v)
+
+
+def _project_point_to_line(p, a, t):
+    # projection of p onto line (a + s t)
+    t = _normalize(t)
+    return a + np.dot(p - a, t) * t
+
+
+def _get_angle_between_vectors(t1, t2):
+    cross = t1[0] * t2[1] - t1[1] * t2[0]
+    dot = np.clip(np.dot(t1, t2), -1.0, 1.0)
+
+    theta = np.arctan2(cross, dot)
+    if theta < 0:
+        theta += 2 * np.pi
+    return theta
+
+
+def solve_fillet(p1, t1, p2, t2, radius):
+    """
+    Solve for a fillet of a specified radius between two lines.
+
+    Parameters
+    ----------
+    p1:
+        2-D point on the first line
+    t1:
+        Vector of the first line
+    p2:
+        2-D point on the second line
+    t2:
+        Vector of the second line
+
+
+    Returns
+    -------
+    center:
+        Center point of the fillet
+    a0:
+        Start angle of the fillet
+    a1:
+        End angle of the fillet
+    p4:
+        Start point of the fillet
+    p3:
+        End point of the fillet
+
+    Notes
+    -----
+    If t1 and t2 are parallel this will raise some error or another.
+    """
+    p1 = np.asarray(p1, float)
+    p2 = np.asarray(p2, float)
+
+    t1 = _normalize(t1)
+    t2 = _normalize(t2)
+
+    # Singular matrix potential here...
+    A = np.column_stack([t1, -t2])
+    s, _ = np.linalg.solve(A, p2 - p1)
+    intersection = p1 + s * t1
+
+    theta = _get_angle_between_vectors(t1, t2)
+
+    # bisector direction
+    b = t1 + t2
+    if np.linalg.norm(b) < 1e-12:  # noqa: PLR2004
+        b = t1 - t2
+    b = _normalize(b)
+
+    # orient bisector consistently
+    if np.cross(t1, t2) < 0:
+        b = -b
+
+    # distance from intersection to center
+    d = radius / np.sin(theta / 2)
+
+    center = intersection + d * b
+
+    p4 = _project_point_to_line(center, p1, t1)
+    p3 = _project_point_to_line(center, p2, t2)
+
+    arc_point_a = p4 - center
+    arc_point_b = p3 - center
+
+    a0 = np.arctan2(arc_point_a[1], arc_point_a[0])
+    a1 = np.arctan2(arc_point_b[1], arc_point_b[0])
+
+    return center, np.degrees(a0), np.degrees(a1), p4, p3
+
+
+def _project_centroid(
+    xc: float, zc: float, xi: float, zi: float, ri: float
+) -> tuple[float, float, npt.NDArray[np.float64]]:
+    """
+    Lengthen the tail of a curvature vector until it hits the center of curvature.
+
+    Parameters
+    ----------
+    xc:
+        x-coordinate of a point on the curvature vector
+    zc:
+        z-coordinate of a point on the curvature vector
+    xi:
+        x-coordinate of a point on the curve
+    zi:
+        z-coordinate of a point on the curve
+    ri:
+        Radius of curvature.
+
+    Returns
+    -------
+    xc:
+        x-coodinate of Center of curvature
+    zc:
+        z-coodinate of Center of curvature
+    vec:
+        unit vector pointed from the center of curvature towards the point on the curve.
+    """
+    vec = np.array([xi - xc, zi - zc])
+    vec /= np.linalg.norm(vec)
+    xc = xi - vec[0] * ri
+    zc = zi - vec[1] * ri
+    return xc, zc, vec
+
+
+def _convert_to_global_angle(angle: float) -> float:
+    return 180 - angle
+
+
+def _my_get_centres(
+    angles: list[float],
+    radii: list[float],
+    x_start: float,
+    z_start: float,
+    a_start: float = 0.0,
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]], list[float]]:
+    """Get the centres of each arc for parameterisations that are made purely of arcs.
+
+    Parameters
+    ----------
+    angles:
+        The angle spanned by each defined arc, a1, a2, a3, a4 [degrees]
+    radii:
+        The radius of curvature of each defined arc, r1, r2, r3, r4 [m]
+    x_start:
+        x-coordinate (major radius) of the start point of the first arc.
+    z_start:
+        z-coordinate (height) of the start point of the first arc.
+
+    Returns
+    -------
+    centres: list[tuple[float, float]]
+        The x-z coordinates of the center of curvature of each arc.
+    angle_ranges: list[tuple[float, float]]
+        The start and end angle for each arc.
+    radii_curvature: list[float]
+        The radius of curvature for each arc.
+
+    Raises
+    ------
+    GeometryParameterisationError
+        The total angle of the defined curves must be below 2pi.
+        And the parametrised curve must not intersect itself.
+        Otherwise, this error is raised.
+    """
+    xi, zi = x_start, z_start
+    xc = x_start + radii[0]  # center of curvature is on the right of the start point.
+    zc = z_start
+
+    centres = []
+    angle_ranges = []
+    radii_curvature = []
+
+    # start at 180°, and count DOWN towards -180°
+    for i, (ai, ri) in enumerate(zip(angles, radii, strict=True)):
+        if i > 0:
+            xc, zc, _ = _project_centroid(xc, zc, xi, zi, ri)
+
+        start_angle = _convert_to_global_angle(a_start)
+        a_start += ai
+        end_angle = _convert_to_global_angle(a_start)
+
+        xi = xc + ri * np.cos(np.deg2rad(end_angle))
+        zi = zc + ri * np.sin(np.deg2rad(end_angle))
+
+        centres.append((xc, zc))
+        angle_ranges.append((start_angle, end_angle))
+        radii_curvature.append(ri)
+    return centres, angle_ranges, radii_curvature
+
+
+@dataclass
+class SimpleCarabinerOptVariables(OptVariablesFrame):
+    """Variables to optimise for the simple Carabiner shape with
+    default values.
+    """
+
+    x1: OptVariable = ov(
+        "x1",
+        3.0,
+        lower_bound=1.5,
+        upper_bound=10,
+        description="Inner limb radius",
+    )
+    z1: OptVariable = ov(
+        "z1",
+        3.0,
+        lower_bound=0,
+        upper_bound=5,
+        description="Vertical position of the inner limb start point",
+    )
+    dz: OptVariable = ov(
+        "dz",
+        0.0,
+        lower_bound=-1.0,
+        upper_bound=1.0,
+        description="Vertical offset",
+    )
+    r1: OptVariable = ov(
+        "r1", 1.0, lower_bound=0.5, upper_bound=3, description="1st arc radius"
+    )
+    r2: OptVariable = ov(
+        "r2", 2.5, lower_bound=0.5, upper_bound=5, description="2nd arc radius"
+    )
+    r3: OptVariable = ov(
+        "r3", 1.5, lower_bound=0.5, upper_bound=3, description="3rd arc radius"
+    )
+    a1: OptVariable = ov(
+        "a1",
+        90,
+        lower_bound=70,
+        upper_bound=120,
+        description="1st arc angle [degrees]",
+    )
+    a2: OptVariable = ov(
+        "a2",
+        100,
+        lower_bound=70,
+        upper_bound=120,
+        description="2nd arc angle [degrees]",
+    )
+
+
+class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
+    """
+    Simple carabiner geometry parameterisation.
+
+    Parameters
+    ----------
+    var_dict:
+        Dictionary with which to update the default values of the parameterisation.
+
+    Notes
+    -----
+    .. plot::
+
+        from bluemira.geometry.parameterisations import SimpleCarabiner
+        SimpleCarabiner().plot(labels=True)
+
+    The dictionary keys in var_dict are:
+
+    x1: float
+        Radial position of inner limb [m]
+    z1: float
+        Vertical start position of the upper-left circle arc
+    dz: float
+        Vertical offset
+    r1, r2, r3: float
+        arc radii [m]
+    a1, a2: float
+        arc angles [degrees]
+    """
+
+    __slots__ = ()
+    n_ineq_constraints: int = 4
+
+    def __init__(self, var_dict: VarDictT | None = None):
+        variables = SimpleCarabinerOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        super().__init__(variables)
+
+    def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
+        """
+        Inequality constraint for Carabiner.
+
+        Constrain such that sum of the 4 angles is less than or equal to 360
+        degrees.
+
+        Returns
+        -------
+        :
+            Inequality constraint for Carabiner.
+        """
+        x_norm = self.variables.get_normalised_values()
+        a1, a2 = self.process_x_norm_fixed(x_norm)[-2:]
+
+        p1, p2, p3, p4, t2 = self._preamble()[4:]
+
+        return np.array([
+            180 - a1 - a2,
+            p4[1] - p1[1] - cadapi.WORKING_PRECISION,
+            p3[1] - p2[1] - cadapi.WORKING_PRECISION,
+            abs(t2[2]) - 1.0 - cadapi.WORKING_PRECISION,
+        ])
+
+    def _preamble(self):
+        x1, z1, _, r1, r2, r3, a1, a2 = self.variables.values
+
+        wires = []
+        for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
+            zip(
+                *_my_get_centres([a1, a2], [r1, r2], x1, z1, 0),
+                strict=True,
+            ),
+        ):
+            arc = make_circle(
+                ri,
+                center=(xc, 0, zc),
+                start_angle=(end_angle),
+                end_angle=(start_angle),
+                axis=(0, -1, 0),
+                label=f"arc_{i}",
+            )
+            wires.append(arc)
+
+        p1 = [x1, 0.0, z1]
+        t1 = [0, 0, -1.0]
+        p2 = arc.start_point().xyz.T[0]
+        t2 = arc._shape.Edges[0].tangentAt(arc._shape.Edges[0].FirstParameter)
+        t2 = -np.array([t2.x, t2.y, t2.z])
+
+        center, start, end, p4, p3 = solve_fillet(
+            p1[0:3:2], t1[0:3:2], p2[0:3:2], t2[0:3:2], r3
+        )
+        return wires, center, start, end, p1, p2, p3, p4, t2
+
+    def create_shape(self, label: str = "") -> BluemiraWire:
+        """
+        Make a CAD representation of the Carabiner arc.
+
+        Parameters
+        ----------
+        label:
+            Label to give the wire
+
+        Returns
+        -------
+        CAD Wire of the geometry
+        """
+        dz, r3 = self.variables.values[[2, 5]]
+
+        wires, center, start, end, _, p2, p3, _, _ = self._preamble()
+        wires.sort(key=lambda w: w.center_of_mass[0])
+
+        arc_3 = make_circle(
+            r3,
+            center=(center[0], 0, center[1]),
+            start_angle=start,
+            end_angle=end,
+            axis=(0, -1, 0),
+            label="arc_2",
+        )
+        p3 = arc_3.end_point().xyz.T[0]
+
+        try:
+            outer_straight_segment = make_polygon([p2, p3], "outer_straight_segment")
+            wires.append(outer_straight_segment)
+        except Exception:  # noqa: BLE001, S110
+            # TODO (mcoleman): Wrap failure in FreeCAD #9999.
+            # I can't work out at what precision this errors
+            pass
+
+        wires.append(arc_3)
+
+        final = BluemiraWire(wires, label=label)
+        if not final.is_closed():
+            inner_straight_segment = wire_closure(
+                BluemiraWire(wires), label="inner_straight_segment"
+            )
+            wires.append(inner_straight_segment)
+
+            final = BluemiraWire(wires, label=label)
+
+        final.translate((0, 0, dz))
+
+        return final
