@@ -830,6 +830,14 @@ class TestSimpleCarabiner:
         assert wire.is_closed()
         assert BluemiraFace(wire).is_valid()
 
+    def test_fillet_too_big_errors(self):
+        with pytest.raises(GeometryParameterisationError):
+            p = SimpleCarabiner({
+                "r1": {"value": 1.0},
+                "r2": {"value": 2},
+                "r3": {"value": 3},
+            })
+
     def test_optimisation(self):
         """
         Use the parameterisation in anger in a constrained optimisation problem

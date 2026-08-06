@@ -3235,6 +3235,17 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
         variables = SimpleCarabinerOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+        _, _, _, _, p1, p2, p3, p4, t2 = self._preamble()
+        a1 = self.variables.a1.value
+        a2 = self.variables.a2.value
+
+        if any((
+            p4[1] - p1[1] > cadapi.WORKING_PRECISION,
+            p3[1] - p2[1] > cadapi.WORKING_PRECISION,
+            abs(t2[2]) - 1.0 > cadapi.WORKING_PRECISION,
+            180 - a1 - a2 > 0,
+        )):
+            raise GeometryParameterisationError("Invalid initial variable combination.")
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -3251,7 +3262,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
         x_norm = self.variables.get_normalised_values()
         a1, a2 = self.process_x_norm_fixed(x_norm)[-2:]
 
-        p1, p2, p3, p4, t2 = self._preamble()[4:]
+        _, _, _, _, p1, p2, p3, p4, t2 = self._preamble()
 
         return np.array([
             180 - a1 - a2,
@@ -3289,6 +3300,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
         center, start, end, p4, p3 = solve_fillet(
             p1[0:3:2], t1[0:3:2], p2[0:3:2], t2[0:3:2], r3
         )
+
         return wires, center, start, end, p1, p2, p3, p4, t2
 
     def create_shape(self, label: str = "") -> BluemiraWire:
