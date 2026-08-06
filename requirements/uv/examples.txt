@@ -36,18 +36,18 @@ beautifulsoup4==4.15.0
     # via nbconvert
 bleach==6.4.0
     # via nbconvert
-blosc2==4.9.1
+blosc2==4.10.1
     # via tables
 certifi==2026.7.22
     # via
     #   httpcore
     #   httpx
     #   requests
-cffi==2.1.0
+cffi==2.1.1
     # via argon2-cffi-bindings
 charset-normalizer==3.4.9
     # via requests
-citeproc-py==0.10.3
+citeproc-py==0.10.4
     # via csl-reference
 click==8.4.2
     # via
@@ -69,12 +69,10 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.2
+cyclopts==4.22.5
     # via pyvista
 debugpy==1.8.21
     # via ipykernel
-decorator==5.3.1
-    # via ipython
 defusedxml==0.7.1
     # via nbconvert
 docstring-parser==0.18.0
@@ -83,7 +81,7 @@ eqdsk==0.9.0
     # via bluemira (pyproject.toml)
 executing==2.2.1
     # via stack-data
-fastjsonschema==2.22.0
+fastjsonschema==2.22.1
     # via nbformat
 flexcache==0.3
     # via pint
@@ -101,7 +99,7 @@ gmsh==4.15.2
     # via bluemira (pyproject.toml)
 h11==0.16.0
     # via httpcore
-h2==4.4.0
+h2==4.4.1
     # via httpx
 hpack==4.2.0
     # via h2
@@ -123,7 +121,7 @@ imageio==2.37.4
     # via bluemira (pyproject.toml)
 ipykernel==7.3.0
     # via jupyterlab
-ipython==9.15.0
+ipython==9.16.1
     # via
     #   ipykernel
     #   ipywidgets
@@ -154,7 +152,7 @@ jsonschema==4.26.0
     #   nbformat
 jsonschema-specifications==2025.9.1
     # via jsonschema
-jupyter-builder==1.1.1
+jupyter-builder==1.2.1
     # via
     #   jupyterlab
     #   notebook
@@ -244,7 +242,7 @@ nbclient==0.11.0
     # via nbconvert
 nbconvert==7.17.1
     # via jupyter-server
-nbformat==5.10.4
+nbformat==5.11.0
     # via
     #   jupyter-server
     #   jupytext
@@ -294,7 +292,7 @@ numpydantic==1.10.0
     # via matproplib
 overrides==7.7.0
     # via jupyter-server
-packaging==26.2
+packaging==26.3
     # via
     #   ipykernel
     #   jupyter-events
@@ -468,7 +466,7 @@ tornado==6.5.7
     #   jupyterlab
     #   notebook
     #   terminado
-traitlets==5.15.1
+traitlets==5.16.1
     # via
     #   ipykernel
     #   ipython
