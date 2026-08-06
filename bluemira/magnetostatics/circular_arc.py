@@ -350,11 +350,8 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
 
 
 def bf1_r_pccos2_zk0_0_pi(r_pc: float, r_j: float) -> float:
-    """
-    Calculate the BF1(r_pc*cos(psi)^2) integral for 0 to pi.
-
-    From 0 to pi for r_j <= r_pc and z_k == 0
-
+    """    if log_arg <= 0:
+        log_arg = LOG_EPS
     Parameters
     ----------
     r_pc:
@@ -625,7 +622,7 @@ def primitive_brc(
         if theta == np.pi:
             result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
 
-        if theta == 2 * np.pi:
+        if theta == TWO_PI:
             # cos(-psi)^2 == cos(psi)^2
             result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
         else:
@@ -643,7 +640,7 @@ def primitive_brc(
         # cos(-psi)^2 == cos(psi)^2
         result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
         result -= integrate(
-            bf1_r_pccos2_integrand, args, phi_pc - theta, 2 * np.pi - theta
+            bf1_r_pccos2_integrand, args, phi_pc - theta, TWO_PI - theta
         )
 
     return result
@@ -690,7 +687,7 @@ def primitive_btc(
         if theta == np.pi:
             result += bf1_r_pcsincos_zk0_0_pi(r_pc, r_j)
 
-        elif theta == 2 * np.pi:
+        elif theta == TWO_PI:
             result += 0.0
 
         else:
@@ -723,7 +720,7 @@ def primitive_btc(
             bf1_r_pcsincos_integrand,
             args,
             phi_pc - theta,
-            2 * np.pi - theta,
+            TWO_PI - theta,
         )
 
     return result
@@ -766,7 +763,7 @@ def primitive_bzc(
     result = 0
     if bf1_singularities:
         # Treat BF1(-z_k)
-        if phi_pc == 0 and theta != np.pi and theta != 2 * np.pi:
+        if phi_pc == 0 and theta != np.pi and theta != TWO_PI:
             # At pi and 2 * pi the BF1 integral is 0
             # Elsewhere:
             # result += 0 (the first part of BF1 is 0)
@@ -779,7 +776,7 @@ def primitive_bzc(
         else:
             # result += 0 (the first part of BF1 is 0)
             result -= integrate(
-                bf1_zk_integrand, args, phi_pc - theta, 2 * np.pi - theta
+                bf1_zk_integrand, args, phi_pc - theta, TWO_PI - theta
             )
 
     else:
@@ -798,7 +795,7 @@ def primitive_bzc(
 
         else:
             result += 2 * bf2_rj_rpc_0_pi(r_pc, z_k)
-            result -= integrate(bf2_integrand, args, phi_pc - theta, 2 * np.pi - theta)
+            result -= integrate(bf2_integrand, args, phi_pc - theta, TWO_PI - theta)
 
     else:
         # BF2 is normal
