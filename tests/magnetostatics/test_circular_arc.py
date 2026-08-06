@@ -52,8 +52,8 @@ class TestCircularArcCurrentSource:
 
         # Because this is a circular calculation, we expect them to be almost identical
         assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
-        # np.testing.assert_allclose(Bx_coil, Bx)
-        # np.testing.assert_allclose(Bz_coil, Bz)
+        np.testing.assert_allclose(Bx_coil, Bx)
+        np.testing.assert_allclose(Bz_coil, Bz)
 
         self.arc.plot()
         _plot_verification_test(
