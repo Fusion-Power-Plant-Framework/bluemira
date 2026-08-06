@@ -3351,7 +3351,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
                 start_angle=(end_angle),
                 end_angle=(start_angle),
                 axis=(0, -1, 0),
-                label=f"arc_{i}",
+                label=f"arc_{i + 1}",
             )
             wires.append(arc)
 
@@ -3390,7 +3390,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
             start_angle=start,
             end_angle=end,
             axis=(0, -1, 0),
-            label="arc_2",
+            label="arc_3",
         )
         p3 = arc_3.end_point().xyz.T[0]
 
