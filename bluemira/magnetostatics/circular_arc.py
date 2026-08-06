@@ -27,7 +27,7 @@ from bluemira.magnetostatics.tools import (
 __all__ = ["CircularArcCurrentSource"]
 
 
-LOG_EPS = 1e-300
+LOG_EPS = np.finfo(float).tiny
 TWO_PI = 2.0 * np.pi
 
 # Full integrands free of singularities
@@ -350,8 +350,9 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
 
 
 def bf1_r_pccos2_zk0_0_pi(r_pc: float, r_j: float) -> float:
-    """    if log_arg <= 0:
+    """If log_arg <= 0:
         log_arg = LOG_EPS
+
     Parameters
     ----------
     r_pc:
@@ -639,9 +640,7 @@ def primitive_brc(
     else:
         # cos(-psi)^2 == cos(psi)^2
         result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-        result -= integrate(
-            bf1_r_pccos2_integrand, args, phi_pc - theta, TWO_PI - theta
-        )
+        result -= integrate(bf1_r_pccos2_integrand, args, phi_pc - theta, TWO_PI - theta)
 
     return result
 
@@ -763,7 +762,7 @@ def primitive_bzc(
     result = 0
     if bf1_singularities:
         # Treat BF1(-z_k)
-        if phi_pc == 0 and theta != np.pi and theta != TWO_PI:
+        if phi_pc == 0 and theta not in {np.pi, TWO_PI}:
             # At pi and 2 * pi the BF1 integral is 0
             # Elsewhere:
             # result += 0 (the first part of BF1 is 0)
@@ -775,9 +774,7 @@ def primitive_bzc(
 
         else:
             # result += 0 (the first part of BF1 is 0)
-            result -= integrate(
-                bf1_zk_integrand, args, phi_pc - theta, TWO_PI - theta
-            )
+            result -= integrate(bf1_zk_integrand, args, phi_pc - theta, TWO_PI - theta)
 
     else:
         # BF1 is normal

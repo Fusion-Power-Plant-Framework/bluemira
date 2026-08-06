@@ -52,8 +52,8 @@ class TestCircularArcCurrentSource:
 
         # Because this is a circular calculation, we expect them to be almost identical
         assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
-        np.testing.assert_allclose(Bx_coil, Bx)
-        np.testing.assert_allclose(Bz_coil, Bz)
+        assert np.allclose(Bx_coil, Bx)
+        assert np.allclose(Bz_coil, Bz)
 
         self.arc.plot()
         _plot_verification_test(
@@ -258,7 +258,8 @@ class TestCircularArcCurrentSourceSuperposition:
             radius_offsets = [0.0]
             z_offsets = [0.0]
         else:
-            # TODO: Address near-singularity integration errors
+            # TODO(CoronelBuendia): https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/4468
+            # Address near-singularity integration errors
             angle_offsets = [-np.rad2deg(cls.angle_eps), np.rad2deg(cls.angle_eps)]
             radius_offsets = [-cls.length_eps, cls.length_eps]
             z_offsets = [-cls.length_eps, cls.length_eps]
