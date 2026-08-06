@@ -16,7 +16,7 @@ babel==2.18.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-blosc2==4.9.1
+blosc2==4.10.1
     # via tables
 certifi==2026.7.22
     # via
@@ -25,7 +25,7 @@ certifi==2026.7.22
     #   requests
 charset-normalizer==3.4.9
     # via requests
-citeproc-py==0.10.3
+citeproc-py==0.10.4
     # via csl-reference
 click==8.4.2
     # via
@@ -43,7 +43,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.2
+cyclopts==4.22.5
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -63,7 +63,7 @@ gmsh==4.15.2
     # via bluemira (pyproject.toml)
 h11==0.16.0
     # via httpcore
-h2==4.4.0
+h2==4.4.1
     # via httpx
 hpack==4.2.0
     # via h2
@@ -141,7 +141,7 @@ numpy==2.2.6
     #   tables
 numpydantic==1.10.0
     # via matproplib
-packaging==26.2
+packaging==26.3
     # via
     #   matplotlib
     #   pooch
