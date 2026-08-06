@@ -260,7 +260,7 @@ def get_eqs(equilibria_dict):
 def get_leg_flux_info(
     eq_list,
     n_layers=10,
-    dx_off=0.1,
+    x_offsets=0.1,
     plasma_facing_boundary_list=None,
     legs_to_plot=DivLegsToPlot.ALL,
 ) -> tuple[list[dict[str, float | np.ndarray]], list[dict[str, float | np.ndarray]]]:
@@ -273,7 +273,7 @@ def get_leg_flux_info(
         List of Equilibrium objects to compare
     n_layers:
         Number of flux surfaces to extract for each leg
-    dx_off:
+    x_offsets:
         Total span in radial space of the flux surfaces to extract
     plasma_facing_boundary_list:
         List of associated plasma facing boundary coordinates
@@ -298,8 +298,7 @@ def get_leg_flux_info(
     if plasma_facing_boundary_list is None:
         plasma_facing_boundary_list = [None] * len(eq_list)
     for eq, pfb in zip(eq_list, plasma_facing_boundary_list, strict=False):
-        legflux = LegFlux(eq)
-        legs = legflux.get_legs(n_layers=n_layers, dx_off=dx_off)
+        legs = LegFlux(eq=eq, n_layers=n_layers, x_offsets=x_offsets).legs
         lgth, ang = get_legs_length_and_angle(eq, legs, pfb)
         if legs_to_plot in DivLegsToPlot.PAIR:
             location = "lower" if legs_to_plot is DivLegsToPlot.LW else "upper"
@@ -1354,7 +1353,7 @@ class MultiEqAnalysis:
     def plot_divertor_length_angle(
         self,
         n_layers=10,
-        dx_off=0.10,
+        x_offsets=0.10,
         plasma_facing_boundary_list=None,
         legs_to_plot=DivLegsToPlot.ALL,
         ax=None,
@@ -1369,7 +1368,7 @@ class MultiEqAnalysis:
         ----------
         n_layers:
             Number of flux surfaces to extract for each leg
-        dx_off:
+        x_offsets:
             Total span in radial space of the flux surfaces to extract
         plasma_facing_boundary_list:
             List of associated plasma facing boundary coordinates
@@ -1392,7 +1391,7 @@ class MultiEqAnalysis:
         lengths, angles = get_leg_flux_info(
             self.equilibria,
             n_layers=n_layers,
-            dx_off=dx_off,
+            x_offsets=x_offsets,
             plasma_facing_boundary_list=plasma_facing_boundary_list,
             legs_to_plot=legs_to_plot,
         )
@@ -1409,7 +1408,7 @@ class MultiEqAnalysis:
             elif legs_to_plot in DivLegsToPlot.PAIR:
                 _, ax = plt.subplots(2, 2, sharex="col")
 
-        def plot_div_value(i, value, ax, name, n_layers=n_layers, dx_off=dx_off):
+        def plot_div_value(i, value, ax, name, n_layers=n_layers, dx_off=x_offsets):
             for j, (k, v) in enumerate(value.items()):
                 ax[i, j].plot(
                     np.arange(n_layers) * (dx_off / n_layers), v, label=name, marker="."

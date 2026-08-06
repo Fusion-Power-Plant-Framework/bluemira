@@ -72,7 +72,7 @@ def get_separatrix_legs(
     """
     # A flag specifying which end of the plasma (i.e., upper or lower)
     # we want the legs from will need to be added
-    legs = LegFlux(equilibrium).get_legs()
+    legs = LegFlux(equilibrium).legs
     return {
         LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
         LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],

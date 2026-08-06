@@ -401,7 +401,9 @@ class TestShortCoordinates:
         line2 = Coordinates([[0, 1], [0, 1], [0, 1]])
         assert line == line2
 
-    @pytest.mark.parametrize(("c", "length"), [(point, 0.0), (line, np.sqrt(3))])
+    @pytest.mark.parametrize(
+        ("c", "length"), [(deepcopy(point), 0.0), (deepcopy(line), np.sqrt(3))]
+    )
     def test_length(self, c, length):
         measured = c.length
         np.testing.assert_almost_equal(measured, length)
@@ -417,41 +419,45 @@ class TestShortCoordinates:
         assert not c.is_planar
 
     @pytest.mark.parametrize(
-        ("c", "com"), [(point, np.array([0, 0, 0])), (line, np.array([0.5, 0.5, 0.5]))]
+        ("c", "com"),
+        [
+            (deepcopy(point), np.array([0, 0, 0])),
+            (deepcopy(line), np.array([0.5, 0.5, 0.5])),
+        ],
     )
     def test_center_of_mass(self, c, com):
         measured = c.center_of_mass
         np.testing.assert_allclose(measured, com)
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_closed(self, c):
         assert not c.closed
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_close(self, c, caplog):
         c.close()
         assert len(caplog.messages) == 1
         assert "Cannot close Coordinates" in caplog.messages[0]
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_open(self, c, caplog):
         c.open()
         assert len(caplog.messages) == 1
         assert "Cannot open Coordinates" in caplog.messages[0]
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_check_ccw(self, c):
         assert not c.check_ccw()
 
-    @pytest.mark.parametrize(("c", "lenn"), [(point, 1), (line, 2)])
+    @pytest.mark.parametrize(("c", "lenn"), [(deepcopy(point), 1), (deepcopy(line), 2)])
     def test_len(self, c, lenn):
         assert len(c) == lenn
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_T(self, c):
         np.testing.assert_allclose(c.T[0], np.array([0, 0, 0]))
 
-    @pytest.mark.parametrize("c", [point, line])
+    @pytest.mark.parametrize("c", [deepcopy(point), deepcopy(line)])
     def test_points(self, c):
         np.testing.assert_allclose(c.points[0], np.array([0, 0, 0]))
 

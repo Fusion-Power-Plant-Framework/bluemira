@@ -19,7 +19,8 @@ from bluemira.equilibria.find import (
     find_local_minima,
     inv_2x2_matrix,
 )
-from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit, split
+from bluemira.geometry.coordinates import Coordinates
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -57,6 +58,26 @@ def test_inv_2x2_jacobian():
     inv_jac_true = np.linalg.inv(np.array([[a, b], [c, d]]))
     inv_jac = inv_2x2_matrix(a, b, c, d)
     assert np.allclose(inv_jac_true, inv_jac)
+
+
+@pytest.mark.parametrize("n_null", [NumNull.SN, NumNull.DN])
+def test_split(n_null):
+    n = 1000
+    theta = np.linspace(0, 2 * np.pi, n)
+    x, z = np.cos(theta), np.sin(theta) + 1
+    circle = Coordinates([x, np.zeros(n), z])
+    circle.close()
+    assert circle.closed
+    sep = split(circle, n_null)
+    if n_null == NumNull.DN:
+        assert len(sep) == 2
+        assert not sep[0].closed
+        assert not sep[1].closed
+        assert sep[0].z[0] == np.max(circle.z)
+        assert sep[1].z[0] == circle.z[np.argmin(circle.z) + 1]
+    else:
+        assert not sep.closed
+        assert sep.z[0] == np.max(circle.z)
 
 
 class TestFindLCFSSeparatrix:
@@ -174,14 +195,12 @@ class TestGetLegs:
         test_falsified_dn_eq = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         test_falsified_dn_eq.x_points = x_points[:2]
         test_falsified_dn_eq.separatrix = separatrix
-        n_null, sort_split = test_falsified_dn_eq.which_legs()
-        assert n_null == NumNull.DN
-        assert sort_split == SortSplit.Z
+        test_falsified_dn_eq.n_null = NumNull.DN
+        assert test_falsified_dn_eq._which_legs() == SortSplit.Z
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
-        legflux = LegFlux(self.sn_eq)
-        legs = legflux.get_legs(n_layers, 0.2)
+        legs = LegFlux(eq=self.sn_eq, n_layers=n_layers, x_offsets=0.2).legs
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -193,15 +212,15 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_point)
 
     def test_single_one_layer(self):
-        legflux = LegFlux(self.sn_eq)
-        legs = legflux.get_legs(1, 0.0)
+        legflux = LegFlux(eq=self.sn_eq, n_layers=1, x_offsets=0.0)
+        legs = legflux.legs
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
-        legs = legflux.get_legs(1, 1.0)
+        legs = legflux.update_legs(eq=self.sn_eq, n_layers=1, x_offsets=0.0)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -212,8 +231,7 @@ class TestGetLegs:
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_double_null(self, n_layers):
-        legflux = LegFlux(self.dn_eq)
-        legs = legflux.get_legs(n_layers, 0.2)
+        legs = LegFlux(eq=self.dn_eq, n_layers=n_layers, x_offsets=0.2).legs
         x_points = self.dn_eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
@@ -228,15 +246,15 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_p)
 
     def test_double_one_layer(self):
-        legflux = LegFlux(self.dn_eq)
-        legs = legflux.get_legs(1, 0.0)
+        legflux = LegFlux(eq=self.dn_eq, n_layers=1, x_offsets=0.0)
+        legs = legflux.legs
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
-        legs = legflux.get_legs(1, 1.0)
+        legs = legflux.update_legs(eq=self.dn_eq, n_layers=1, x_offsets=1.0)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -258,13 +276,22 @@ class TestGetLegs:
             double_null=True,
             psi_n_tol=1e-6,
         )
-        legflux = LegFlux(self.falsified_dn_eq, rtol=1e-2)
+        legflux = LegFlux(
+            eq=self.falsified_dn_eq, rtol=1e-2, n_layers=n_layers, x_offsets=0.2
+        )
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
-        legflux.n_null, legflux.sort_split = legflux.which_legs()
-        legs = legflux.get_legs(n_layers, 0.2)
+        legflux.n_null = NumNull.DN
+        legflux.sort_split = legflux._which_legs()
+        legs = legflux._get_legs()
         x_points = self.dn_eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert "upper_inner" in legs
+        assert "upper_outer" in legs
+        legs = legflux.update_legs(self.falsified_dn_eq)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -286,15 +313,16 @@ class TestGetLegs:
         legflux = LegFlux(self.falsified_dn_eq, rtol=1e-2)
         legflux.x_points = x_points[:2]
         legflux.separatrix = separatrix
-        legflux.n_null, legflux.sort_split = legflux.which_legs()
-        legs = legflux.get_legs(1, 0.0)
+        legflux.n_null = NumNull.DN
+        legflux.sort_split = legflux._which_legs()
+        legs = legflux._get_legs()
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
-        legs = legflux.get_legs(1, 1.0)
+        legs = legflux.update_legs(eq=self.falsified_dn_eq, n_layers=1, x_offsets=1.0)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs

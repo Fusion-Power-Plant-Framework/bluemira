@@ -154,6 +154,7 @@ physics_datclass = eq_analysis_double.physics_info_table()
 # Control coil information in a table.
 # Note that control can be a coil type, list of control coil names,
 # or None if all coils are control coils.
+
 table = eq_analysis_single.control_coil_table(control=CoilType.PF)
 
 # %% [markdown]
@@ -365,7 +366,7 @@ _ax = multi_analysis.plot_compare_flux_surfaces(
 # We have set 'radians' to False to plot in degrees.
 ax = multi_analysis.plot_divertor_length_angle(
     plasma_facing_boundary_list=[pfb_masty, pfb_sin_demoish, pfb_dou_demoish],
-    dx_off=0.5,
+    x_offsets=0.5,
     n_layers=10,
     radian=False,
 )

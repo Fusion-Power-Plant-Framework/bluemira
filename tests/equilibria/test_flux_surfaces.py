@@ -233,7 +233,7 @@ class TestOpenFluxSurfaceStuff:
         OpenFluxSurfece or PartialOpenFluxSurface
         """
         # Get the legs from the equilibria
-        leg_dict = LegFlux(self.eq).get_legs()
+        leg_dict = LegFlux(self.eq).legs
         # Add the upper legs as 'None' for testing
         leg_dict["upper_inner"] = [None]
         leg_dict["upper_outer"] = [None]
