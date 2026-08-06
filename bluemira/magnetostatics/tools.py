@@ -311,7 +311,15 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
         lower + 0.50 * width,
         lower + 0.75 * width,
     ]
+    points.extend(
+        np.pi
+        * np.arange(
+            int(np.floor(lower / np.pi)) - 1,
+            int(np.ceil(upper / np.pi)) + 2,
+        )
+    )
 
+    points = sorted({p for p in points if np.isfinite(p) and lower < p < upper})
     try:
         return _quad_helper(
             func,
@@ -320,7 +328,7 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
             args,
             sign,
             points=points,
-            limit=400,
+            limit=200,
         )
     except (IntegrationWarning, ValueError, FloatingPointError):
         pass
