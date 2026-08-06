@@ -74,7 +74,7 @@ def test_split(n_null):
         assert not sep[0].closed
         assert not sep[1].closed
         assert sep[0].z[0] == np.max(circle.z)
-        assert circle.z[sep[1].z[0] == np.argmin(circle.z) + 1]
+        assert sep[1].z[0] == circle.z[np.argmin(circle.z) + 1]
     else:
         assert not sep.closed
         assert sep.z[0] == np.max(circle.z)
