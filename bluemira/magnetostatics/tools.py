@@ -340,7 +340,7 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
 
     result = 0.0
 
-    try:
+    try:  # noqa: PLW0717
         for a, b in pairwise(split_points):
             aa = _shift_if_singular_angle(a, eps, plus=True)
             bb = _shift_if_singular_angle(b, eps, plus=False)
