@@ -853,7 +853,7 @@ def primitive_bzc(
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, -theta, np.pi - theta)
 
-        if phi_pc == theta:
+        elif phi_pc == theta:
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, np.pi, np.pi - theta)
 

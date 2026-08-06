@@ -50,8 +50,8 @@ class TestCircularArcCurrentSource:
         Bp_coil = np.hypot(Bx_coil, Bz_coil)
 
         # Because this is a circular calculation, we expect them to be almost identical
-        assert np.allclose(Bx_coil, Bx)
-        assert np.allclose(Bz_coil, Bz)
+        assert np.testing.assert_allclose(Bx_coil, Bx)
+        assert np.testing.assert_allclose(Bz_coil, Bz)
 
         self.arc.plot()
         _plot_verification_test(
