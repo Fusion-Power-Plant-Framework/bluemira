@@ -331,10 +331,21 @@ def _get_sep_out_intersection(
 
 
 def _make_flux_surfaces(
-    x, z, equilibrium, o_point, yz_plane, dl: float | None = None
-) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
+    x, z, equilibrium, o_point, yz_plane, closed_perimiter, dl: float | None = None
+) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface] | None:
     """
     Make individual PartialOpenFluxSurface through a point.
+
+    Check if flux surfaces are closed and:
+
+    - Open any closed flux surfaces that are actually open.
+    At this stage we have no knowledge of the first wall so
+    a flux surface that does not extend off the grid will be
+    classed as open.
+
+    - Ignore any genuinely closed flux surfaces resulting
+    from the errors associated with finding a contour line
+    on a grid.
 
     Returns
     -------
@@ -347,9 +358,12 @@ def _make_flux_surfaces(
     coords = Coordinates({"x": coords_arr[0], "z": coords_arr[1]})
     if dl is not None:
         coords = coords.interpolate(dl=dl, preserve_points=True)
-    if coords.closed:
-        coords.open()
-    return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
+    if not coords.closed:
+        return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
+    coords.open()
+    if coords.length > 1.05 * closed_perimiter:
+        return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
+    return None
 
 
 def _make_flux_surfaces_ibob(
@@ -366,6 +380,11 @@ def _make_flux_surfaces_ibob(
     """
     Make the flux surfaces on the inboard or outboard.
 
+    Note: this function opens flux surfaces outside the LCFS
+    with closed coords. This is too avoid errors resulting from
+    open flux surfaces that appear closed because
+    they do not extend off the grid.
+
     Returns
     -------
     flux_surfaces_lfs:
@@ -373,12 +392,18 @@ def _make_flux_surfaces_ibob(
     flux_surfaces_hfs:
         outboard flux surfaces
     """
+    lcfs_perimter = equilibrium.get_LCFS().length
     sign = 1 if outboard else -1
     flux_surfaces = [
-        _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane, dl)
+        fs
         for x in np.arange(
             x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp)
         )
+        if (
+            fs := _make_flux_surfaces(
+                x, o_point.z, equilibrium, o_point, yz_plane, lcfs_perimter, dl
+            )
+        )
+        is not None
     ]
-
     return tuple(map(list, zip(*flux_surfaces, strict=True)))

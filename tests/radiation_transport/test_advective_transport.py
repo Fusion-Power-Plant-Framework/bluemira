@@ -195,6 +195,7 @@ class TestChargedParticleRecursionSN:
                 self.solver.eq,
                 self.solver._o_point,
                 self.solver._yz_plane,
+                self.solver.eq.get_LCFS().length,
             )
 
             self.solver.flux_surfaces_ob_down.append(lfs)
@@ -266,6 +267,7 @@ class TestChargedParticleRecursionDN:
                 self.solver.eq,
                 self.solver._o_point,
                 self.solver._yz_plane,
+                self.solver.eq.get_LCFS().length,
             )
 
             self.solver.flux_surfaces_ob_down.append(lfs)
