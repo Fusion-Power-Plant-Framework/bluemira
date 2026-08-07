@@ -1155,12 +1155,15 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
             Whether or not to plot the coordinate systems
         """
         super().plot(ax=ax, show_coord_sys=show_coord_sys)
-        ax = plt.gca()
-        theta = self._dtheta
-        x, y = make_circle_arc(
-            self.radius, 0, 0, angle=theta / 2, start_angle=theta / 4, n_points=200
-        )
-        centre_arc = np.array([x, y, np.zeros(200)]).T
-        points = self._local_to_global(centre_arc)
-        ax.plot(*points.T, color="r")
-        ax.plot([points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r")
+        if show_coord_sys:
+            ax = plt.gca()
+            theta = self._dtheta
+            x, y = make_circle_arc(
+                self.radius, 0, 0, angle=theta / 2, start_angle=theta / 4, n_points=200
+            )
+            centre_arc = np.array([x, y, np.zeros(200)]).T
+            points = self._local_to_global(centre_arc)
+            ax.plot(*points.T, color="r")
+            ax.plot(
+                [points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r"
+            )
