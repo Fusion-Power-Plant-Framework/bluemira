@@ -826,7 +826,7 @@ class TestSimpleCarabiner:
     def test_segments(self):
         p = SimpleCarabiner()
         wire = p.create_shape()
-        assert len(wire._boundary) == 5
+        assert len(wire.boundary) == 5
         assert wire.is_closed()
         assert BluemiraFace(wire).is_valid()
 
@@ -856,7 +856,7 @@ class TestSimpleCarabiner:
         )
         result = problem.optimise()
         solution = result.create_shape()
-        assert len(solution._boundary) == 5
+        assert len(solution.boundary) == 5
         assert solution.is_closed()
         assert BluemiraFace(solution).is_valid()
         x_min = result.variables.x1.value
