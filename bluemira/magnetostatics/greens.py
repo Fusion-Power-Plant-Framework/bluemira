@@ -76,7 +76,7 @@ def _common_geometry(xc, zc, x, z):
 
     .. math::
 
-        k^2 = \frac{4xx_c}{u^2}.
+        k^2 = \\frac{4xx_c}{u^2}.
     """  # noqa: DOC201
     h = z - zc
     xp = x + xc
@@ -101,11 +101,11 @@ def _i1_i2(u, u2, k2, e, k):
 
     .. math::
 
-        I_1 = \frac{K(k^2)}{u},
+        I_1 = \\frac{K(k^2)}{u},
 
     .. math::
 
-        I_2 = \frac{E(k^2)}{u^3(1-k^2)}.
+        I_2 = \\frac{E(k^2)}{u^3(1-k^2)}.
     """  # noqa: DOC201
     inv_u = 1.0 / u
 
@@ -181,8 +181,8 @@ def _axis_bz(xc, zc, z):
     .. math::
 
         B_z(0,z)=
-        \frac{\\mu_0x_c^2}
-        {2\\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
+        \\frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\\right]^{3/2}}.
     """  # noqa: DOC201
     h = z - zc
     u2 = xc * xc + h * h
@@ -197,9 +197,9 @@ def _elliptic_derivatives(e, k, k2):
 
     .. math::
 
-        \frac{dE}{d(k^2)}=\frac{E-K}{2k^2},\\qquad
-        \frac{dK}{d(k^2)}
-        =\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
+        \\frac{dE}{d(k^2)}=\\frac{E-K}{2k^2},\\qquad
+        \\frac{dK}{d(k^2)}
+        =\\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
     """  # noqa: DOC201
     one_minus_k2 = 1.0 - k2
     inv_2k2 = 0.5 / k2
@@ -251,7 +251,8 @@ def greens_psi(
     Notes
     -----
     .. math::
-        G_\\psi=    \frac{\\mu_0}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
+
+        G_\\psi= \\frac{\\mu_0}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
 
@@ -304,9 +305,9 @@ def greens_dpsi_dx(
     -----
     .. math::
 
-        \frac{\\partial G_\\psi}{\\partial x}
-        =\frac{\\mu_0}{2\\pi}x
-        \\left(I_1+w^2I_2\right).
+        \\frac{\\partial G_\\psi}{\\partial x}
+        =\\frac{\\mu_0}{2\\pi}x
+        \\left(I_1+w^2I_2\\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
@@ -357,9 +358,9 @@ def greens_dpsi_dz(
     -----
     .. math::
 
-        \frac{\\partial G_\\psi}{\\partial z}
-        =\frac{\\mu_0}{2\\pi}h
-        \\left(I_1-v^2I_2\right).
+        \\frac{\\partial G_\\psi}{\\partial z}
+        =\\frac{\\mu_0}{2\\pi}h
+        \\left(I_1-v^2I_2\\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
 
@@ -412,8 +413,8 @@ def greens_Bx(
     .. math::
 
         G_{B_x}
-        =-\frac{\\mu_0}{2\\pi}\frac{h}{x}
-        \\left(I_1-v^2I_2\right).
+        =-\\frac{\\mu_0}{2\\pi}\\frac{h}{x}
+        \\left(I_1-v^2I_2\\right).
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
 
@@ -465,16 +466,16 @@ def greens_Bz(
     .. math::
 
         G_{B_z}
-        =\frac{\\mu_0}{2\\pi}
-        \\left(I_1+w^2I_2\right).
+        =\\frac{\\mu_0}{2\\pi}
+        \\left(I_1+w^2I_2\\right).
 
     On the symmetry axis,
 
     .. math::
 
         G_{B_z}(0,z)=
-        \frac{\\mu_0x_c^2}
-        {2\\left[x_c^2+(z-z_c)^2\right]^{3/2}}.
+        \\frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\\right]^{3/2}}.
 
     The axis value is calculated analytically.
 
@@ -523,13 +524,13 @@ def greens_dbz_dx(
     -----
     .. math::
 
-        \frac{\\partial B_z}{\\partial x}
-        =\frac{\\partial B_x}{\\partial z}
-        =\frac{\\mu_0}{2\\pi}
+        \\frac{\\partial B_z}{\\partial x}
+        =\\frac{\\partial B_x}{\\partial z}
+        =\\frac{\\mu_0}{2\\pi}
         \\left[
-            \frac{1}{u}\frac{\\partial F}{\\partial x}
-            -\frac{x+x_c}{u^3}F
-        \right],
+            \\frac{1}{u}\\frac{\\partial F}{\\partial x}
+            -\\frac{x+x_c}{u^3}F
+        \\right],
 
     where :math:`F=K(k^2)+E(k^2)w^2/d^2` and
     :math:`d^2=(x-x_c)^2+h^2`.
@@ -678,6 +679,7 @@ def circular_coil_inductance_elliptic(
     The inductance is given by
 
     .. math::
+
         L = \\mu_{0} (2 r - r_c) \\Biggl((1 - k^2 / 2)~
         \\int_0^{\\frac{\\pi}{2}} \\frac{d\\theta}{\\sqrt{1 - k~
         \\sin (\\theta)^2}} - \\int_0^{\\frac{\\pi}{2}}~
@@ -687,6 +689,7 @@ def circular_coil_inductance_elliptic(
     permeability, and
 
     .. math::
+
         k = \\max\\left(10^{-8}, \\min~
         \\left(\\frac{4r(r - r_c)}{(2r - r_c)^2}~
         , 1.0 - 10^{-8}\\right)\\right)
@@ -716,6 +719,7 @@ def circular_coil_inductance_kirchhoff(
     -----
 
     .. math::
+
         Inductance = \\mu_{0} * radius * (log(8 * radius / rc) - 2 + 0.25)
 
     where :math:`\\mu_{0}` is the vacuum permeability
