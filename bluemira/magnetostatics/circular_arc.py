@@ -390,6 +390,8 @@ def bf2_rj_rpc_0_pi(r_pc: float, z_k: float) -> float:
     -------
     The result of the integral for 0 to pi
     """
+    if np.isclose(z_k, 0.0, rtol=0.0, atol=EPS):
+        return 0.5 * np.pi * r_pc
     return np.pi * r_pc + integrate(bf2_0_pi_integrand, (r_pc, z_k), 0, np.pi)
 
 
@@ -623,7 +625,7 @@ def primitive_brc(
         if theta == np.pi:
             result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
 
-        if theta == TWO_PI:
+        elif theta == TWO_PI:
             # cos(-psi)^2 == cos(psi)^2
             result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
         else:
@@ -768,7 +770,7 @@ def primitive_bzc(
             # result += 0 (the first part of BF1 is 0)
             result -= integrate(bf1_zk_integrand, args, -theta, np.pi - theta)
 
-        if phi_pc == theta:
+        elif phi_pc == theta:
             # result += 0 (the first part of BF1 is 0)
             result -= integrate(bf1_zk_integrand, args, np.pi, np.pi - theta)
 
