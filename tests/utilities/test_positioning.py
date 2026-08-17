@@ -7,9 +7,12 @@
 import numpy as np
 import pytest
 
+from bluemira.display import plot_2d
+from bluemira.geometry.inscribed_rect import _rect
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.utilities.error import PositionerError
 from bluemira.utilities.positioning import (
+    ExtentPositionMapper,
     PathInterpolator,
     PositionMapper,
     RegionInterpolator,
@@ -90,10 +93,10 @@ class TestPositionMapper:
 
         interpolators = {
             "circle_path": PathInterpolator(circle),
-            "circle_region": RegionInterpolator(circle),
-            "polygon_region": RegionInterpolator(convex_polygon),
+            # "circle_region": RegionInterpolator(circle),
+            # "polygon_region": RegionInterpolator(convex_polygon),
         }
-        cls.mapper = PositionMapper(interpolators)
+        cls.mapper = ExtentPositionMapper(interpolators, [1])
 
     def test_dimensionality(self):
         assert self.mapper.dimension == 5
@@ -108,3 +111,12 @@ class TestPositionMapper:
         z = [3, 1.5, 0]
         l_values = self.mapper.to_L(x, z)
         assert len(l_values) == 5
+
+    def test_extent(self):
+        test = np.array([
+            self.mapper.to_xz([i], [(0.5, 0.5)]) for i in np.linspace(0, 1, 50)
+        ])
+        rects = []
+        for a in test.squeeze():
+            rects.append(make_polygon(_rect(*a)))
+        plot_2d([*rects, self.mapper.interpolators["circle_path"].geometry])

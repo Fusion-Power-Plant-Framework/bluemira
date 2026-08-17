@@ -505,6 +505,7 @@ class ExtentPositionMapper(PositionMapper):
 
     def _to_xz_generator(self, l_values, extents=None):
         extents = self._process_extents(extents)
+        l_ind = 0
         for name, xz in super()._to_xz_generator(l_values):
             max_dx, max_dz = np.inf, np.inf
 
@@ -516,9 +517,15 @@ class ExtentPositionMapper(PositionMapper):
                     max_dx, max_dz = inscribed_rect_in_poly(
                         *shape["region"], *xz, **shape["kwargs"]
                     )
+                    l_ind += 2
                 if tool.dimension == 1:
-                    # for 1D region shift centre point so that extents lie on the correct side of the 'seam'
-                    pass
+                    # Shift centre point so that extents
+                    # lie on the correct side of the 'seam'
+                    projected_offset = (
+                        tool.geometry.tangent_at(l_values[l_ind])[(0, 2),] * extent * 2
+                    )
+                    xz += projected_offset
+                    l_ind += 1
 
             yield name, xz, np.min([[max_dx, max_dz], extent], axis=0)
 
@@ -543,6 +550,6 @@ class ExtentPositionMapper(PositionMapper):
     ) -> dict[str, np.ndarray]:
         """Convert parametric-space values to physical coordinates in dictionary form with extent awareness."""
         return {
-            name: np.array([[*xz, *dxdz]]).T
+            name: np.asarray([*xz, *dxdz])
             for name, xz, dxdz in self._to_xz_generator(l_values, extents)
         }
