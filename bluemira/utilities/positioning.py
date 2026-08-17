@@ -17,6 +17,7 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
+from bluemira.geometry.inscribed_rect import inscribed_rect_in_poly
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 from bluemira.utilities.error import PositionerError
@@ -25,6 +26,7 @@ from bluemira.utilities.tools import is_num
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from bluemira.geometry.face import BluemiraFace
     from bluemira.geometry.wire import BluemiraWire
 
 
@@ -377,6 +379,13 @@ class PositionMapper:
             list_values.append(values)
         return list_values
 
+    def _to_xz_generator(self, l_values):
+        try:
+            for i, (name, tool) in enumerate(self.interpolators.items()):
+                yield name, np.asarray(tool.to_xz(l_values[i : i + tool.dimension]))
+        except IndexError:
+            self._check_length(self._vector_to_list(l_values))
+
     def to_xz(self, l_values: np.ndarray) -> npt.NDArray[np.float64]:
         """
         Convert a set of parametric-space values to physical x-z coordinates.
@@ -393,11 +402,7 @@ class PositionMapper:
         z:
             Array of z coordinates
         """
-        l_values = self._vector_to_list(l_values)
-        self._check_length(l_values)
-        return np.array([
-            tool.to_xz(l_values[i]) for i, tool in enumerate(self.interpolators.values())
-        ]).T
+        return np.array([xz for _, xz in self._to_xz_generator(l_values)]).T
 
     def to_xz_dict(self, l_values: np.ndarray) -> dict[str, np.ndarray]:
         """
@@ -413,12 +418,7 @@ class PositionMapper:
         -------
         Dictionary of x-z values corresponding to each interpolator
         """
-        l_values = self._vector_to_list(l_values)
-        self._check_length(l_values)
-        xz_dict = {}
-        for i, (key, tool) in enumerate(self.interpolators.items()):
-            xz_dict[key] = np.asarray(tool.to_xz(l_values[i]))
-        return xz_dict
+        return dict(self._to_xz_generator(l_values))
 
     def to_L(self, x: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
@@ -456,3 +456,93 @@ class PositionMapper:
         The names of the interpolators
         """
         return list(self.interpolators.keys())
+
+
+class ExtentPositionMapper(PositionMapper):
+    def __init__(
+        self,
+        interpolators: dict[str, XZGeometryInterpolator],
+        extents: dict[str, BluemiraWire | BluemiraFace | tuple[float, float] | float]
+        | list[BluemiraWire | BluemiraFace | tuple[float, float] | float]
+        | None,
+        **inscribed_rect_kwargs,
+    ):
+        super().__init__(interpolators)
+        if extents is not None:
+            self._add_extents(extents, inscribed_rect_kwargs)
+
+    def _add_extents(self, extents, inscribed_rect_kwargs):
+        """Add dx and dz information to the stored shapes."""
+        # Validate input
+        self._shapes = {}
+        extents = self._process_extents(extents)
+
+        for name, shape in self.interpolators.items():
+            if shape.dimension == 2:
+                self._shapes[name] = {
+                    "region": shape.geometry.discretise(100, byedges=True).xz,
+                    "kwargs": {
+                        "aspectratio": self._get_aspectratio(extents[name]),
+                        **inscribed_rect_kwargs,
+                    },
+                }
+
+    def _process_extents(self, extents):
+        if not isinstance(extents, dict):
+            return dict(zip(self.interpolator_names, extents, strict=False))
+        return extents
+
+    @staticmethod
+    def _get_aspectratio(extent):
+        if isinstance(extent, float | int):
+            return extent
+
+        if isinstance(extent, tuple):
+            return extent[0] / extent[1]
+
+        bb = extent.bounding_box
+        return np.ptp([bb.x_max, bb.x_min]) / np.ptp([bb.z_max, bb.z_min])
+
+    def _to_xz_generator(self, l_values, extents=None):
+        extents = self._process_extents(extents)
+        for name, xz in super()._to_xz_generator(l_values):
+            max_dx, max_dz = np.inf, np.inf
+
+            extent = extents[name]
+            if hasattr(self, "_shapes"):
+                tool = self.interpolators[name]
+                if tool.dimension == 2:
+                    shape = self._shapes[name]
+                    max_dx, max_dz = inscribed_rect_in_poly(
+                        *shape["region"], *xz, **shape["kwargs"]
+                    )
+                if tool.dimension == 1:
+                    # for 1D region shift centre point so that extents lie on the correct side of the 'seam'
+                    pass
+
+            yield name, xz, np.min([[max_dx, max_dz], extent], axis=0)
+
+    def to_xz(
+        self,
+        l_values: np.ndarray,
+        extents: dict[str, tuple[float, float]]
+        | list[tuple[float, float]]
+        | None = None,
+    ) -> npt.NDArray[np.float64]:
+        """Convert parametric-space values to physical x-z coordinates with extent awareness."""
+        return np.asarray([
+            [*xz, *dxdz] for _, xz, dxdz in self._to_xz_generator(l_values, extents)
+        ]).T
+
+    def to_xz_dict(
+        self,
+        l_values: np.ndarray,
+        extents: dict[str, tuple[float, float]]
+        | list[tuple[float, float]]
+        | None = None,
+    ) -> dict[str, np.ndarray]:
+        """Convert parametric-space values to physical coordinates in dictionary form with extent awareness."""
+        return {
+            name: np.array([[*xz, *dxdz]]).T
+            for name, xz, dxdz in self._to_xz_generator(l_values, extents)
+        }
