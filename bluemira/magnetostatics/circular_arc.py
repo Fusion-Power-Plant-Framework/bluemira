@@ -609,8 +609,9 @@ def primitive_brc(
     The result of the Brc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
-    singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
-    if not singularities:
+    is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
+
+    if not is_singular_corner:
         # No singularities
         return integrate(brc_integrand_full, args, -phi_pc, theta - phi_pc)
 
@@ -670,9 +671,9 @@ def primitive_btc(
         The result of the Btc primitive.
     """
     args = (r_pc, r_j, z_k)
-    singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
+    is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
 
-    if not singularities:
+    if not is_singular_corner:
         return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
 
     # Treat singularities
