@@ -436,16 +436,20 @@ class ProcessInputs:
     eta_ecrh_injector_wall_plug: float | None = None
     eta_beam_injector_wall_plug: float | None = None
     feffcd: float | None = None
+    f_p_beam_orbit_loss: float | None = None
     f_radius_beam_tangency_rmajor: float | None = None
     f_beam_tritium: float | None = None
     eta_cd_norm_ecrh: float | None = None
     xi_ebw: float | None = None
     i_hcd_primary: int | None = None
+    i_hcd_secondary: int | None = None
     i_ecrh_wave_mode: int | None = None
     irfcf: int | None = None
     dx_beam_shield: float | None = None
     p_hcd_primary_extra_heat_mw: float | None = None  # Listed as an output
+    p_hcd_secondary_extra_heat_mw: float | None = None  # Listed as an output
     p_hcd_injected_max: float | None = None
+    p_hcd_secondary_injected_mw: float | None = None
     n_beam_decay_lengths_core_required: float | None = None
 
     # Impurity radiation
