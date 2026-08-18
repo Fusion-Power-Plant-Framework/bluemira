@@ -609,6 +609,7 @@ def primitive_brc(
     The result of the Brc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
+    # Sub-set of paper singularities that don't perform well in integration
     is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
 
     if not is_singular_corner:
@@ -671,6 +672,7 @@ def primitive_btc(
         The result of the Btc primitive.
     """
     args = (r_pc, r_j, z_k)
+    # Sub-set of paper singularities that don't perform well in integration
     is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
 
     if not is_singular_corner:
