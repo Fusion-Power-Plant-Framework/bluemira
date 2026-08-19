@@ -119,9 +119,10 @@ class PROCESSTemplateBuilder:
         """
         Set a model switch to the PROCESS run
         """
-        if model_choice.switch_name in self._models:
+        sw = model_choice.switch_name
+        if sw in self._models:
             bluemira_warn(f"Over-writing model choice {model_choice}.")
-        self._models[model_choice.switch_name] = model_choice
+        self._models[sw] = model_choice
 
     def add_constraint(self, constraint: Constraint, *, equality: bool = False):
         """
