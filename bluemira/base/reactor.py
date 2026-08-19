@@ -23,7 +23,7 @@ from typing import (
 
 from rich.progress import track
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import Component
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
@@ -36,11 +36,6 @@ from bluemira.base.tools import (
     save_components_cad,
     show_components_cad,
 )
-from bluemira.builders.tools import get_n_sectors
-from bluemira.geometry.despliner import has_splines
-from bluemira.geometry.error import GeometryError
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon, revolve_shape
 
 if TYPE_CHECKING:
     from os import PathLike
