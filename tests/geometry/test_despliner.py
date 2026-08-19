@@ -167,7 +167,7 @@ def splined_d_shape_component():
 
 @pytest.mark.parametrize(
     "discretisation",
-    [10, 20, 25],
+    [20, 25, 50],
 )
 def test_create_desplined_component(splined_d_shape_component, discretisation):
     """
@@ -184,3 +184,12 @@ def test_create_desplined_component(splined_d_shape_component, discretisation):
         )
         is False
     )
+
+    xz_boundaries = (
+        desplined_component
+        .get_component("xz")
+        .get_component_properties("shape")
+        .boundary
+    )
+    for wire in xz_boundaries:
+        assert len(wire.vertexes.T) == discretisation + 1
