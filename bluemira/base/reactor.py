@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Literal, get_args, get_type_hints
 
 from rich.progress import track
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import Component
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
@@ -27,11 +27,6 @@ from bluemira.base.tools import (
     save_components_cad,
     show_components_cad,
 )
-from bluemira.builders.tools import get_n_sectors
-from bluemira.geometry.despliner import has_splines
-from bluemira.geometry.error import GeometryError
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon, revolve_shape
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -337,117 +332,6 @@ class ComponentManager(BaseManager):
             ),
             **kwargs,
         )
-
-    def create_desplined_component(
-        self,
-        n_TF: int,
-        discretisation: int = 100,
-        degree: float = 360.0,
-    ) -> Component:
-        """
-        Despline relevant splined edges and
-        return the component tree wrapped by this manager.
-
-        Parameters
-        ----------
-        n_TF
-            number of TF coils in your geometry
-        discretisation
-            discretisation for splined edges
-        degree
-            The angle [°] around which to build the xyz
-            component, by default 360.
-
-        Returns
-        -------
-        :
-            The underlying component, with all descendants.
-
-        Raises
-        ------
-        GeometryError
-            If xz and xyz components are not found
-
-        ComponentError
-            if multiple xz faces found
-        """
-        xyz_component = self.component().get_component("xyz")
-        comp_name = self.component().name
-        if xyz_component:
-            if not has_splines(xyz_component.get_component_properties("shape").shape):
-                # already spline-less.
-                return xyz_component
-            if len(xyz_component.children) != 1:
-                bluemira_warn(
-                    f"The xyz component for {comp_name} has multiple children"
-                    "considering only the first child in conversions"
-                )
-        else:
-            bluemira_warn(
-                "The component manager does not have"
-                "xyz component. cannot automatically"
-                "determine if splines exist."
-            )
-            # despline anyway
-
-        # xz component
-        xz_component = self.component().get_component("xz")
-
-        if not xz_component:
-            raise GeometryError(
-                "The component manager does not have"
-                "xz component. create_desplined_component()"
-                "only works with xz component"
-            )
-
-        # confirm that it has only one face
-        xz_faces = xz_component.leaves
-        if len(xz_faces) != 1:
-            raise ComponentError(
-                "The component should only have one face in the xz plane but"
-                f"{xz_faces} were found. Please check the output of your Builder."
-            )
-
-        boundaries = xz_faces[0].shape.boundary
-
-        discretised_boundaries = [
-            make_polygon(
-                points=wire.discretise(ndiscr=discretisation, byedges=True),
-                closed=wire.is_closed(),
-            )
-            for wire in boundaries
-        ]
-
-        # rebuild the face
-        rebuilt_face = BluemiraFace(
-            discretised_boundaries, label=xz_faces[0].shape.label
-        )
-
-        # rebuild the xz physical component
-        rebuilt_xz_phys_comp = PhysicalComponent(
-            name=xz_component.name, shape=rebuilt_face
-        )
-
-        # rebuild the xyz physical component
-        sector_degree, n_sectors = get_n_sectors(n_TF, degree)
-        rebuilt_shape = revolve_shape(
-            rebuilt_face,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=sector_degree * n_sectors,
-        )
-        rebuilt_xyz_phys_comp = PhysicalComponent(
-            name=xyz_component.name,
-            shape=rebuilt_shape,
-            material=xyz_component.children[0].material,
-        )
-
-        # Component tree with xz and xyz PhysicalComponents
-        component = Component(self.component().name)
-        component.add_child(Component("xz", children=[rebuilt_xz_phys_comp]))
-        component.add_child(Component("xyz", children=[rebuilt_xyz_phys_comp]))
-
-        return component
 
 
 class Reactor(BaseManager):
