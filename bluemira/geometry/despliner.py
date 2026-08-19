@@ -7,33 +7,35 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import ComponentError
 from bluemira.builders.tools import get_n_sectors
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon, revolve_shape
 
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
-def has_splines(solid) -> bool:
+
+def has_splines(bm_solid: BluemiraSolid) -> bool:
     """
     Inspect if the solid has faces
     containing spline/Bezier edges.
 
     Parameters
     ----------
-    solid:
-        CadQuery solid or FreeCAD shape.
+    bm_solid:
+        BluemiraSolid
 
     Returns
     -------
     bool
         True if the solid has splines, else False
-
-    Raises
-    ------
-    NotImplementedError
-        If a face itself is a BSpline or Bezier surface.
     """
+    # access the cadquery/freecad solid shape
+    solid = bm_solid.shape
     planar_faces = []
     revolution_faces = []
 
@@ -51,9 +53,7 @@ def has_splines(solid) -> bool:
         )
 
         if face_type in {"BSPLINE", "BEZIER", "BSplineSurface", "BezierSurface"}:
-            raise NotImplementedError(
-                f"Face {i} has unsupported {face_type} surface geometry."
-            )
+            return True
 
         edges = (
             face.Edges()
@@ -149,7 +149,7 @@ def create_desplined_component(
 
         face = xz_faces[0].shape
 
-        if not has_splines(xyz_child.get_component_properties("shape").shape):
+        if not has_splines(xyz_child.get_component_properties("shape")):
             desplined_xz.add_child(xz_child)
             desplined_xyz.add_child(xyz_child)
             continue
