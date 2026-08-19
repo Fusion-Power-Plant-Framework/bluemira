@@ -17,23 +17,23 @@ from bluemira.geometry.tools import (
 )
 
 
-def make_unit_box():
+@pytest.fixture
+def unit_box():
     face = BluemiraFace(
-        make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True)
+        make_polygon(
+            [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+            closed=True,
+        )
     )
     return extrude_shape(face, [0, 0, 1])
 
 
-def make_bspline_solid(points, vec, closed):
-    return extrude_shape(BluemiraFace(interpolate_bspline(points, closed)), vec)
-
-
-def make_bspline_surface():
+@pytest.fixture
+def bspline_surface_extruded():
     poles = np.array([
         [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]],
         [[0.0, 1.0, 0.0], [1.0, 1.0, 0.0]],
     ])
-
     surface = make_bsplinesurface(
         poles,
         mults_u=[2, 2],
@@ -49,55 +49,54 @@ def make_bspline_surface():
     return extrude_shape(surface, [0, 1, 0])
 
 
-def make_bezier_solid(points, vec, closed):
-    return extrude_shape(BluemiraFace(make_bezier(points, closed)), vec)
+@pytest.fixture
+def bspline_xz_extruded():
+    points = {
+        "x": [0.0, 1.0, 0.0, -1.0, 0.0],
+        "y": 0,
+        "z": [1.0, 0.0, -1.0, 0.0, 1.0],
+    }
+    return extrude_shape(
+        BluemiraFace(interpolate_bspline(points, closed=True)),
+        [0, 1, 0],
+    )
+
+
+@pytest.fixture
+def bspline_xy_extruded():
+    points = {
+        "x": [0.0, 1.0, 0.0, -1.0, 0.0],
+        "y": [1.0, 0.0, -1.0, 0.0, 1.0],
+        "z": 0,
+    }
+    return extrude_shape(
+        BluemiraFace(interpolate_bspline(points, closed=True)),
+        [0, 0, 1],
+    )
+
+
+@pytest.fixture
+def bezier_yz_extruded():
+    points = {
+        "x": 0,
+        "y": [0.0, 1.0, 0.0, -1.0, 0.0],
+        "z": [1.0, 0.0, -1.0, 0.0, 1.0],
+    }
+    return extrude_shape(
+        BluemiraFace(make_bezier(points, closed=True)),
+        [1, 0, 0],
+    )
 
 
 @pytest.mark.parametrize(
-    ("shape_func", "args", "expected"),
+    ("fixture", "expected"),
     [
-        (make_unit_box, (), False),
-        (make_bspline_surface, (), True),
-        (
-            make_bspline_solid,
-            (
-                {
-                    "x": [0.0, 1.0, 0.0, -1.0, 0.0],
-                    "y": 0,
-                    "z": [1.0, 0.0, -1.0, 0.0, 1.0],
-                },
-                [0, 1, 0],
-                True,
-            ),
-            True,
-        ),
-        (
-            make_bspline_solid,
-            (
-                {
-                    "x": [0.0, 1.0, 0.0, -1.0, 0.0],
-                    "y": [1.0, 0.0, -1.0, 0.0, 1.0],
-                    "z": 0,
-                },
-                [0, 0, 1],
-                True,
-            ),
-            True,
-        ),
-        (
-            make_bezier_solid,
-            (
-                {
-                    "x": 0,
-                    "y": [0.0, 1.0, 0.0, -1.0, 0.0],
-                    "z": [1.0, 0.0, -1.0, 0.0, 1.0],
-                },
-                [1, 0, 0],
-                True,
-            ),
-            True,
-        ),
+        ("unit_box", False),
+        ("bspline_surface_extruded", True),
+        ("bspline_xz_extruded", True),
+        ("bspline_xy_extruded", True),
+        ("bezier_yz_extruded", True),
     ],
 )
-def test_has_splines(shape_func, args, expected):
-    assert has_splines(shape_func(*args)) is expected
+def test_has_splines(request, fixture, expected):
+    assert has_splines(request.getfixturevalue(fixture)) is expected
