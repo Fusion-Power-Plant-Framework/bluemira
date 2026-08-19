@@ -101,7 +101,8 @@ def create_desplined_component_360(
     inp_component
         Component containing the original 2D (xz) and 3D (xyz) geometry.
     discretisation
-        Discretisation for splined edges.
+        Discretisation for splined boundary (the total boundary of the
+        face that has splined face is discretised).
 
     Returns
     -------
