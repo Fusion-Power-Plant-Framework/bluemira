@@ -9,6 +9,7 @@ PROCESS model mappings
 """
 
 from dataclasses import dataclass, field
+from itertools import cycle
 
 from bluemira.codes.utilities import Model
 
@@ -41,11 +42,13 @@ class ModelSelection:
         List of required inputs for the model selection
     description:
         Short description of the model selection
+    switches
     """
 
     _value_: int
     requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
+    _switches: list[str] | None = field(repr=False, default=None)
 
 
 class PROCESSModel(ModelSelection, Model):
@@ -1144,7 +1147,9 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "i_hcd_primary"
+        if self._switches is None:
+            self._switches = cycle(["i_hcd_primary", "i_hcd_secondary"])
+        return next(self._switches)
 
     FENSTER_LH = 1
     ICYCCD = 2
@@ -1158,6 +1163,20 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
     ECRH_HARE = 11
     EBW_UI = 12
     ECRH_O = 13
+
+
+class CurrentDriveCalculationSwitch(PROCESSModel):
+    """Current Drive calculation switch"""
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_hcd_calculations"
+
+    OFF = 0
+    ON = 1
 
 
 class ECRHWaveModel(PROCESSModel):
