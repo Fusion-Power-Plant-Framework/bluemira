@@ -603,7 +603,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return [
             {
                 "f_constraint": self.constrain_koz,
-                "tolerance": np.full(self.n_koz_discr, 1e-6),
+                "tolerance": np.full(self.n_koz_discr * len(self.koz_polygons), 1e-6),
             },
             {
                 "f_constraint": self.constrain_x,
@@ -679,15 +679,12 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         straight_line = self.f_L_to_wire(self.wire, x_norm)
         straight_points = straight_line.discretise(ndiscr=self.n_koz_discr).xz.T
         # Stay outside every (possibly disjoint) keep-out zone. signed distance
-        # is positive inside a zone, so the binding zone is the one the line is
-        # most inside: take the worst (max) distance across zones.
-        return np.max(
-            [
-                signed_distance_2D_polygon(straight_points, poly)
-                for poly in self.koz_polygons
-            ],
-            axis=0,
-        )
+        # is positive inside a zone, concatenating means we avoid all of them
+        # whilst still having a chance at some decent gradients
+        return np.concatenate([
+            signed_distance_2D_polygon(straight_points, poly)
+            for poly in self.koz_polygons
+        ])
 
     @staticmethod
     def constrain_x(x_norm: np.ndarray) -> np.ndarray:

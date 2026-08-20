@@ -330,6 +330,7 @@ class TestStraightOISDesigner:
             algorithm="SLSQP",
             opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
         ).x
+        print(result_2)
 
         length_1 = result_1[1] - result_1[0]
         length_2 = result_2[1] - result_2[0]
