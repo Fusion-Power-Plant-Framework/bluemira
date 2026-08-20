@@ -96,6 +96,8 @@ def create_desplined_component_360(
     This is suitable for axisymmetric neutronics, where the geometry is
     assumed to be toroidally symmetric.
 
+    **Does not consider more than one child under xz or xyz components
+
     Parameters
     ----------
     inp_component
@@ -186,4 +188,39 @@ def create_desplined_component_360(
     return Component(
         inp_component.name,
         children=[desplined_xz, desplined_xyz],
+    )
+
+
+def despline_component_tree(
+    component: Component,
+    discretisation: int,
+) -> Component:
+    """
+    Despline all components in the tree
+
+    Returns
+    -------
+    :
+        The underlying components, all desplined,
+        with all descendants.
+
+    Notes
+    -----
+    * returned components would have only xz
+    and xyz views
+    """
+    children = {child.name: child for child in component.children}
+
+    if "xz" in children and "xyz" in children:
+        return create_desplined_component_360(
+            inp_component=component,
+            discretisation=discretisation,
+        )
+
+    return Component(
+        component.name,
+        children=[
+            despline_component_tree(child, discretisation)
+            for child in component.children
+        ],
     )

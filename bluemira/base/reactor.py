@@ -27,6 +27,7 @@ from bluemira.base.tools import (
     save_components_cad,
     show_components_cad,
 )
+from bluemira.geometry.despliner import despline_component_tree
 
 if TYPE_CHECKING:
     from os import PathLike
@@ -332,6 +333,24 @@ class ComponentManager(BaseManager):
             ),
             **kwargs,
         )
+
+    def get_desplined_component_tree(self, discretisation: int) -> Component:
+        """
+        Despline all components, and return a
+        new component tree wrapped by this manager.
+
+        Returns
+        -------
+        :
+            The underlying component, all desplined,
+            with all descendants.
+
+        Notes
+        -----
+        * returned components would have only xz
+        and xyz views
+        """
+        return despline_component_tree(self.component(), discretisation)
 
 
 class Reactor(BaseManager):
