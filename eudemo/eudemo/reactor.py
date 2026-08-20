@@ -630,13 +630,11 @@ def save_reactor(reactor, reactor_config, folder_name):
     filename = f"{root}/BLUEMIRA_OUT.json"
     json_writer(reactor_config.global_params.to_dict(use_last=True), filename, indent=2)
 
-    n_conf_path = Path(config_folder, "neutronics")
-    if n_conf_path.exists():
-        # Save neutronics
-        n_root = Path(root, "neutronics")
-        n_root.mkdir(parents=True, exist_ok=True)
-
-        shutil.copytree(n_conf_path, n_root, dirs_exist_ok=True)
+    n_root = Path(root, "neutronics")
+    n_root.mkdir(parents=True, exist_ok=True)
+    config_neutronics = Path(config_folder, "neutronics")
+    if config_neutronics.is_dir():
+        shutil.copytree(config_neutronics, n_root, dirs_exist_ok=True)
 
         # CSG
         csg_root = Path(n_root, "csg")
