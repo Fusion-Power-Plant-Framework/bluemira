@@ -677,7 +677,13 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": "^", "markersize": 8, "color": "b", "linestyle": "None"}
+        kwargs = {
+            "marker": "^",
+            "markersize": 8,
+            "color": "b",
+            "linestyle": "None",
+            "zorder": Zorder.CONSTRAINT.value,
+        }
         ax.plot(self.x, self.z, **kwargs)
 
 
@@ -730,7 +736,13 @@ class RadialFieldConstraint(AbsoluteMagneticConstraint):
         """
         Plot the constraint onto an Axes.
         """
-        kwargs = {"marker": ">", "markersize": 8, "color": "b", "linestyle": "None"}
+        kwargs = {
+            "marker": ">",
+            "markersize": 8,
+            "color": "b",
+            "linestyle": "None",
+            "zorder": Zorder.CONSTRAINT.value,
+        }
         ax.plot(self.x, self.z, **kwargs)
 
 
