@@ -1948,6 +1948,9 @@ def boolean_common(shape: apiShape, tools: list) -> list[apiShape]:
     op = BRepAlgoAPI_Common()
     op.SetArguments(args)
     op.SetTools(tool_list)
+    # Off by default, and then the operands come back modified: a second
+    # intersection against the same shape reports no overlap at all.
+    op.SetNonDestructive(True)
     op.Build()
     if not op.IsDone() or op.Shape().IsNull():
         return []
