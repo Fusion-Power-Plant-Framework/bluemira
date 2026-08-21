@@ -31,6 +31,7 @@ from OCP.BRepAdaptor import (
 from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BuilderAlgo,
     BRepAlgoAPI_Check,
+    BRepAlgoAPI_Common,
     BRepAlgoAPI_Section,
     BRepAlgoAPI_Splitter,
 )
@@ -1928,6 +1929,41 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
     return [result]
 
 
+def boolean_common(shape: apiShape, tools: list) -> list[apiShape]:
+    """Boolean intersection — return list of result shapes.
+
+    Empty when the operands only touch: shared faces are not an intersection.
+    Uses ``BRepAlgoAPI_Common`` rather than ``cq.Shape.intersect``, whose
+    unconditional cast turns the empty result into a ``ValueError``.
+    """
+    if not isinstance(tools, list):
+        tools = [tools]
+
+    args = TopTools_ListOfShape()
+    args.Append(shape.wrapped)
+    tool_list = TopTools_ListOfShape()
+    for t in tools:
+        tool_list.Append(t.wrapped)
+
+    op = BRepAlgoAPI_Common()
+    op.SetArguments(args)
+    op.SetTools(tool_list)
+    op.Build()
+    if not op.IsDone() or op.Shape().IsNull():
+        return []
+
+    result = cq.Shape.cast(op.Shape())
+    if isinstance(shape, apiSolid):
+        return _collect_subshapes(result, cq.Solid)
+    if isinstance(shape, cq.Shell):
+        return _collect_subshapes(result, cq.Shell)
+    if isinstance(shape, apiFace):
+        return _collect_subshapes(result, cq.Face)
+    if isinstance(shape, apiWire):
+        return _collect_subshapes(result, cq.Wire)
+    return [result]
+
+
 def face_cut_holes(face: apiFace, holes: list) -> list:
     """Cut hole faces out of an outer face.
 
@@ -2640,6 +2676,7 @@ __all__ = [
     "apiFace",
     "area",
     "arrange_edges",
+    "boolean_common",
     "boolean_cut",
     "boolean_fragments",
     "boolean_fuse",

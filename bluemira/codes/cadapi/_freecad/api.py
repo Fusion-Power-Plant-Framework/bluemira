@@ -2566,6 +2566,42 @@ def boolean_cut(
     return output
 
 
+def boolean_common(shape: apiShape, tools: list[apiShape]) -> list[apiShape]:
+    """
+    Intersection of shape and a given (list of) topo shape.
+
+    Parameters
+    ----------
+    shape:
+        the reference object
+    tools:
+        List of FreeCAD shape objects to intersect with.
+
+    Returns
+    -------
+    Result of the boolean operation, of the same dimension as ``shape``. Empty
+    when the operands only touch: shared faces are not an intersection.
+    """
+    _type = type(shape)
+
+    if not isinstance(tools, list):
+        tools = [tools]
+
+    common = shape.common(tools)
+    if common.isNull():
+        return []
+
+    if _type == apiWire:
+        return common.Wires
+    if _type == apiFace:
+        return common.Faces
+    if _type == apiShell:
+        return common.Shells
+    if _type == apiSolid:
+        return common.Solids
+    raise NotImplementedError(f"Common function not implemented for {_type} objects.")
+
+
 def face_cut_holes(face: apiFace, holes: list[apiFace]) -> list[apiFace]:
     """Cut hole faces out of an outer face without the coplanar guard.
 

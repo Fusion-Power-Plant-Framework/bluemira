@@ -25,6 +25,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    boolean_common,
     boolean_cut,
     boolean_fragments,
     boolean_fuse,
@@ -674,14 +675,27 @@ def join_ports(
 
     Notes
     -----
-    Fuses the target with every duct at once and removes both sets of voids
-    afterwards, rather than fragmenting and reassembling one duct at a time.
-    The intermediate results of the incremental approach never become inputs to
-    the next boolean, so nothing accumulates, and OCC sees the whole problem in
-    one go instead of a chain of partial ones.
+    Fuses the target with every duct at once and removes the duct voids
+    afterwards, rather than fragmenting and reassembling one duct at a time, so
+    no intermediate result feeds the next boolean.
+
+    ``target_void`` never cuts the body; only the duct parts reaching into it
+    do. See the comment there.
     """
-    fused = boolean_fuse([target_shape, *tool_shapes])
-    pieces = boolean_cut(fused, [target_void, *tool_voids])
+    # The wall is built around its void, so the two only share faces, and OCC
+    # does not survive cutting one by the other: 4 m^3 where 96 m^3 is right, or
+    # nothing at all, reported as valid either way. Cut with the duct intrusions
+    # instead -- small local solids, and per duct, because on the fused body OCC
+    # reports no intersection at all.
+    intrusions = [
+        piece for shape in tool_shapes for piece in boolean_common(shape, [target_void])
+    ]
+
+    # ``boolean_fuse`` wants two shapes; no ports is a no-op, not an error.
+    fused = boolean_fuse([target_shape, *tool_shapes]) if tool_shapes else target_shape
+
+    cutters = [*tool_voids, *intrusions]
+    pieces = boolean_cut(fused, cutters) if cutters else [fused]
 
     if not pieces:
         raise GeometryError("join_ports: cutting the voids left nothing behind.")

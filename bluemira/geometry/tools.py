@@ -2138,6 +2138,39 @@ def boolean_cut(
     return convert(cut_shape, shape.label)
 
 
+def boolean_common(
+    shape: BluemiraGeoT, tools: BluemiraGeoT | Iterable[BluemiraGeoT]
+) -> list[BluemiraGeoT]:
+    """
+    Intersect a shape with a (list of) topo shape(s).
+
+    Parameters
+    ----------
+    shape:
+        the reference object
+    tools:
+        List of BluemiraGeo shape objects to intersect with
+
+    Returns
+    -------
+    :
+        The shared parts, empty when the operands only touch: a hollow body and
+        its own cavity share faces but no volume.
+
+    Notes
+    -----
+    Prefer small, local operands. On a large spline-bounded solid OCC can report
+    no intersection for shapes that demonstrably overlap.
+    """
+    apishape = shape.shape
+    if not isinstance(tools, Iterable):
+        tools = [tools]
+    apitools = [t.shape for t in tools]
+    return [
+        convert(obj, shape.label) for obj in cadapi.boolean_common(apishape, apitools)
+    ]
+
+
 def boolean_fragments(
     shapes: Iterable[BluemiraSolid], tolerance: float = 0.0
 ) -> tuple[BluemiraCompound, list[list[BluemiraSolid]]]:
