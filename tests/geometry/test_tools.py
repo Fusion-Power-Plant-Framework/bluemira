@@ -1136,3 +1136,56 @@ class TestBooleanCutShell:
         assert len(result) >= 1
         for piece in result:
             assert isinstance(piece, BluemiraShell)
+
+
+class TestBooleanFuseSplitterRemoval:
+    """``remove_splitter`` reaches the backend, and neither setting resizes."""
+
+    @staticmethod
+    def _cube(x_origin):
+        face = BluemiraFace(
+            make_polygon(
+                [
+                    [x_origin, 0, 0],
+                    [x_origin + 1, 0, 0],
+                    [x_origin + 1, 1, 0],
+                    [x_origin, 1, 0],
+                ],
+                closed=True,
+            )
+        )
+        return extrude_shape(face, (0, 0, 1))
+
+    def test_the_splitter_faces_are_dropped_by_default(self):
+        fused = boolean_fuse([self._cube(0.0), self._cube(1.0)])
+
+        assert fused.volume == pytest.approx(2.0, rel=1e-9)
+        assert len(fused.faces) == 6
+
+    def test_faces_are_merged_either_way(self):
+        """The flag is about solids.
+
+        For faces the merge is what yields the single face the caller expects,
+        so both backends run it regardless -- they used to disagree, one
+        returning the merged face and the other raising.
+        """
+        face_a = BluemiraFace(
+            make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True)
+        )
+        face_b = BluemiraFace(
+            make_polygon([[1, 0, 0], [2, 0, 0], [2, 1, 0], [1, 1, 0]], closed=True)
+        )
+
+        for flag in (True, False):
+            fused = boolean_fuse([face_a, face_b], remove_splitter=flag)
+
+            assert isinstance(fused, BluemiraFace)
+            assert fused.area == pytest.approx(2.0, rel=1e-9)
+            assert len(fused.boundary[0].edges) == 4
+
+    def test_they_are_kept_when_asked(self):
+        """The seam between the two cubes survives, and costs only faces."""
+        fused = boolean_fuse([self._cube(0.0), self._cube(1.0)], remove_splitter=False)
+
+        assert fused.volume == pytest.approx(2.0, rel=1e-9)
+        assert len(fused.faces) > 6

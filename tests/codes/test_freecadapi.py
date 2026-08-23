@@ -460,3 +460,50 @@ class TestCADFiletype:
                     assert isinstance(objs[0].Shape, cadapi.apiCompound)
                 else:
                     assert isinstance(objs[0].Shape, cadapi.apiShell)
+
+
+class TestRemoveSplitterGuard:
+    """``_remove_splitter`` drops a refinement that resized the solid.
+
+    On spline-bounded solids the refinement can merge patches whose support
+    surfaces are only nearly identical and re-project the shared boundary,
+    which moves the wall while every validity check still passes. The geometry
+    that provokes it for real is a whole reactor, so the refinement is faked.
+    """
+
+    class _Shape:
+        def __init__(self, volume, faces, edges=None, refined=None):
+            self.Volume = volume
+            self.Faces = ["f"] * faces
+            self.Edges = ["e"] * (faces if edges is None else edges)
+            self.Solids = ["s"]
+            self._refined = refined
+
+        def removeSplitter(self):
+            return self._refined
+
+    def test_a_resized_refinement_is_refused(self):
+        refined = self._Shape(90.0, 8)
+        shape = self._Shape(100.0, 12, refined=refined)
+
+        assert cadapi._remove_splitter(shape) is shape
+
+    def test_a_size_preserving_refinement_is_kept(self):
+        refined = self._Shape(100.0, 8)
+        shape = self._Shape(100.0, 12, refined=refined)
+
+        assert cadapi._remove_splitter(shape) is refined
+
+    def test_nothing_merged_skips_the_volume_check(self):
+        """The volumes cost more to evaluate than the refinement itself."""
+        refined = self._Shape(90.0, 12)
+        shape = self._Shape(100.0, 12, refined=refined)
+
+        assert cadapi._remove_splitter(shape) is refined
+
+    def test_merged_edges_alone_are_still_checked(self):
+        """Refitting the boundary curves can move the wall on its own."""
+        refined = self._Shape(90.0, 12, edges=20)
+        shape = self._Shape(100.0, 12, edges=24, refined=refined)
+
+        assert cadapi._remove_splitter(shape) is shape
