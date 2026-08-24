@@ -1256,7 +1256,7 @@ def plot_toroidal_harmonic_approximation(
 
     ax.plot(approx_fs.x, approx_fs.z, color="blue", label="TH FS", lw=5)
     ax.plot(original_fs.x, original_fs.z, color="red", label="BM FS", lw=5)
-    ax.legend(loc="upper right")
+    ax.legend(loc="lower right")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
     ax.set_aspect("equal")
