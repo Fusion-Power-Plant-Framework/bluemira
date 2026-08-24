@@ -18,12 +18,15 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    boolean_common,
+    boolean_cut,
     boolean_fragments,
     boolean_fuse,
     extrude_shape,
@@ -559,6 +562,8 @@ def make_equatorial_port_yz_face(
     return BluemiraFace([outer, inner])
 
 
+# TODO @s-oli: no production caller left -- decide whether to delete this and
+# its test, or keep it around as the fast-but-lossy option.
 def pipe_pipe_join(
     target_shape: BluemiraSolid,
     target_void: BluemiraSolid,
@@ -596,6 +601,11 @@ def pipe_pipe_join(
     This approach is more brittle than a classic fuse, fuse, cut operation, but is
     substantially faster. If the parts do not fully intersect, undesired results
     are to be expected.
+
+    It is also lossy: the returned pieces are interior-disjoint, so fusing them
+    should reproduce their combined volume, but it does not -- on the EU-DEMO
+    vessel the union comes out smaller than its largest operand. Prefer
+    :func:`join_ports`, which is exact and agrees across CAD backends.
     """
     _, (target_fragments, tool_fragments) = boolean_fragments([target_shape, tool_shape])
 
@@ -631,3 +641,71 @@ def pipe_pipe_join(
             ])
 
     return new_shape_pieces
+
+
+def join_ports(
+    target_shape: BluemiraSolid,
+    target_void: BluemiraSolid,
+    tool_shapes: list[BluemiraSolid],
+    tool_voids: list[BluemiraSolid],
+) -> BluemiraSolid:
+    """
+    Join hollow port ducts onto a hollow target in one boolean pass.
+
+    Parameters
+    ----------
+    target_shape:
+        Solid of the target shape, e.g. the vacuum vessel wall
+    target_void:
+        Solid of the target void, e.g. the plasma chamber
+    tool_shapes:
+        Solids of the port duct walls
+    tool_voids:
+        Solids of the port duct voids
+
+    Returns
+    -------
+    :
+        Solid of the joined shape: the wall left once every opening is cut.
+
+    Raises
+    ------
+    GeometryError
+        If cutting the voids leaves nothing behind.
+
+    Notes
+    -----
+    Fuses the target with every duct at once and removes the duct voids
+    afterwards, rather than fragmenting and reassembling one duct at a time, so
+    no intermediate result feeds the next boolean.
+
+    ``target_void`` never cuts the body; only the duct parts reaching into it
+    do. See the comment there.
+    """
+    # The wall is built around its void, so the two only share faces, and OCC
+    # does not survive cutting one by the other: 4 m^3 where 96 m^3 is right, or
+    # nothing at all, reported as valid either way. Cut with the duct intrusions
+    # instead -- small local solids, and per duct, because on the fused body OCC
+    # reports no intersection at all.
+    intrusions = [
+        piece for shape in tool_shapes for piece in boolean_common(shape, [target_void])
+    ]
+
+    # ``boolean_fuse`` wants two shapes; no ports is a no-op, not an error.
+    fused = boolean_fuse([target_shape, *tool_shapes]) if tool_shapes else target_shape
+
+    cutters = [*tool_voids, *intrusions]
+    pieces = boolean_cut(fused, cutters) if cutters else [fused]
+
+    if not pieces:
+        raise GeometryError("join_ports: cutting the voids left nothing behind.")
+
+    pieces.sort(key=lambda solid: -solid.volume)
+    if len(pieces) > 1:
+        dropped = sum(piece.volume for piece in pieces[1:])
+        bluemira_warn(
+            f"join_ports: the cut left {len(pieces)} disconnected solids. Keeping "
+            f"the largest and discarding {dropped:.4f} m³ -- check that no port "
+            f"pierces the far side of the target."
+        )
+    return pieces[0]

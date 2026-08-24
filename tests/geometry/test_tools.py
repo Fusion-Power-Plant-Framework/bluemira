@@ -32,6 +32,7 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    boolean_common,
     boolean_cut,
     boolean_fragments,
     boolean_fuse,
@@ -1136,3 +1137,63 @@ class TestBooleanCutShell:
         assert len(result) >= 1
         for piece in result:
             assert isinstance(piece, BluemiraShell)
+
+
+class TestBooleanCommon:
+    """``boolean_common`` separates overlap from mere contact.
+
+    The distinction matters because cutting by a tool that only touches the body
+    removes nothing, yet OCC does not reliably return the body unchanged -- it
+    can hand back a negative-volume solid that reports itself valid.
+    """
+
+    @staticmethod
+    def _box(origin, lengths=(1.0, 1.0, 1.0)):
+        x, y, z = origin
+        dx, dy, dz = lengths
+        face = BluemiraFace(
+            make_polygon(
+                [[x, y, z], [x + dx, y, z], [x + dx, y + dy, z], [x, y + dy, z]],
+                closed=True,
+            )
+        )
+        return extrude_shape(face, (0, 0, dz))
+
+    def test_overlapping_solids_share_volume(self):
+        common = boolean_common(self._box((0, 0, 0)), [self._box((0.5, 0, 0))])
+        assert len(common) == 1
+        assert common[0].volume == pytest.approx(0.5, rel=1e-9)
+
+    def test_a_contained_solid_shares_volume(self):
+        outer = self._box((0, 0, 0))
+        inner = self._box((0.2, 0.2, 0.2), (0.6, 0.6, 0.6))
+        assert boolean_common(outer, [inner])[0].volume == pytest.approx(
+            inner.volume, rel=1e-9
+        )
+        assert boolean_common(inner, [outer])[0].volume == pytest.approx(
+            inner.volume, rel=1e-9
+        )
+
+    def test_solids_meeting_on_a_face_do_not(self):
+        assert boolean_common(self._box((0, 0, 0)), [self._box((1.0, 0, 0))]) == []
+
+    def test_solids_meeting_on_an_edge_do_not(self):
+        assert boolean_common(self._box((0, 0, 0)), [self._box((1.0, 1.0, 0.0))]) == []
+
+    def test_disjoint_solids_do_not(self):
+        assert boolean_common(self._box((0, 0, 0)), [self._box((5.0, 0, 0))]) == []
+
+    def test_a_hollow_body_and_its_own_cavity_do_not(self):
+        """A wall built around its void is interior-disjoint from it, however
+        intricate the shared surface.
+        """
+        outer = make_circle(radius=2.2, center=(5, -5, 0), axis=(0, 1, 0))
+        inner = make_circle(radius=2.0, center=(5, -5, 0), axis=(0, 1, 0))
+        wall = extrude_shape(BluemiraFace([outer, inner]), (0, 10, 0))
+        cavity = extrude_shape(BluemiraFace(inner), (0, 10, 0))
+
+        assert boolean_common(wall, [cavity]) == []
+        # ... and the cut it would drive is therefore a no-op on the volume.
+        assert boolean_cut(wall, [cavity])[0].volume == pytest.approx(
+            wall.volume, rel=1e-9
+        )
