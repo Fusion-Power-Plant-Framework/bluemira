@@ -268,7 +268,7 @@ class LowerPortKOZDesigner(Designer):
         # main body
         angle = np.deg2rad(self.params.lower_port_angle.value)
         direction = np.array([np.cos(angle), 0, np.sin(angle)])
-        duct_inner_xy.translate(-1 * direction)
+        duct_inner_xy.translate(-0.1 * direction)
         return duct_inner_xy
 
     def _duct_xz_shapes(self, ib_div_pt_padded: tuple, ob_div_pt_padded: tuple):
