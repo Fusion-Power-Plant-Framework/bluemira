@@ -338,7 +338,7 @@ def _make_flux_surfaces(
     yz_plane,
     closed_perimiter,
     dl: float | None = None,
-    *, 
+    *,
     outboard: bool,
 ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface] | None:
     """
@@ -413,7 +413,14 @@ def _make_flux_surfaces_ibob(
         )
         if (
             fs := _make_flux_surfaces(
-                x, o_point.z, equilibrium, o_point, yz_plane, lcfs_perimter, dl, outboard=outboard
+                x,
+                o_point.z,
+                equilibrium,
+                o_point,
+                yz_plane,
+                lcfs_perimter,
+                dl,
+                outboard=outboard,
             )
         )
         is not None
