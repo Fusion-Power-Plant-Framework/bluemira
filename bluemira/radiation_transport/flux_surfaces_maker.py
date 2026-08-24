@@ -337,8 +337,9 @@ def _make_flux_surfaces(
     o_point,
     yz_plane,
     closed_perimiter,
-    outboard: bool | None = None,  # noqa: FBT001
     dl: float | None = None,
+    *, 
+    outboard: bool,
 ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface] | None:
     """
     Make individual PartialOpenFluxSurface through a point.
@@ -371,7 +372,7 @@ def _make_flux_surfaces(
         coords = split(coords, NumNull.DN if equilibrium.is_double_null else NumNull.SN)
         # Sort IB then OB
         if isinstance(coords, list):
-            coords.sort(key=lambda coords: coords.x[0])
+            coords.sort(key=lambda coords: coords.x.min())
             coords = coords[1] if outboard else coords[0]
         return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
     return None
@@ -412,7 +413,7 @@ def _make_flux_surfaces_ibob(
         )
         if (
             fs := _make_flux_surfaces(
-                x, o_point.z, equilibrium, o_point, yz_plane, lcfs_perimter, outboard, dl
+                x, o_point.z, equilibrium, o_point, yz_plane, lcfs_perimter, dl, outboard=outboard
             )
         )
         is not None
