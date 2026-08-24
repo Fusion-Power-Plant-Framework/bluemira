@@ -17,7 +17,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
-from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit, split
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface, PartialOpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
@@ -315,7 +315,7 @@ def _get_sep_out_intersection(
     else:
         # separatrix list is sorted by loop length when found,
         # so separatrix[0] will have the intersection
-        sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
+        sep_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
         if isinstance(sep_intersections, Coordinates):
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
@@ -331,7 +331,15 @@ def _get_sep_out_intersection(
 
 
 def _make_flux_surfaces(
-    x, z, equilibrium, o_point, yz_plane, closed_perimiter, dl: float | None = None
+    x,
+    z,
+    equilibrium,
+    o_point,
+    yz_plane,
+    closed_perimiter,
+    dl: float | None = None,
+    *,
+    outboard: bool,
 ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface] | None:
     """
     Make individual PartialOpenFluxSurface through a point.
@@ -360,8 +368,12 @@ def _make_flux_surfaces(
         coords = coords.interpolate(dl=dl, preserve_points=True)
     if not coords.closed:
         return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
-    coords.open()
     if coords.length > 1.05 * closed_perimiter:
+        coords = split(coords, NumNull.DN if equilibrium.is_double_null else NumNull.SN)
+        # Sort IB then OB
+        if isinstance(coords, list):
+            coords.sort(key=lambda coords: coords.x.min())
+            coords = coords[1] if outboard else coords[0]
         return OpenFluxSurface(coords).split(o_point, plane=yz_plane)
     return None
 
@@ -401,7 +413,14 @@ def _make_flux_surfaces_ibob(
         )
         if (
             fs := _make_flux_surfaces(
-                x, o_point.z, equilibrium, o_point, yz_plane, lcfs_perimter, dl
+                x,
+                o_point.z,
+                equilibrium,
+                o_point,
+                yz_plane,
+                lcfs_perimter,
+                dl,
+                outboard=outboard,
             )
         )
         is not None
