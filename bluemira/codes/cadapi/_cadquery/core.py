@@ -64,6 +64,7 @@ from OCP.GeomAbs import (
 )
 from OCP.ShapeAnalysis import ShapeAnalysis_FreeBounds, ShapeAnalysis_Surface
 from OCP.ShapeFix import ShapeFix_Shape, ShapeFix_Wire
+from OCP.ShapeUpgrade import ShapeUpgrade_UnifySameDomain
 from OCP.TopAbs import (
     TopAbs_FACE,
     TopAbs_IN,
@@ -101,6 +102,7 @@ from bluemira.codes.cadapi._cadquery.aliases import (
     apiWire,
 )
 from bluemira.codes.error import CADError, CadQueryError, InvalidCADInputsError
+from bluemira.geometry.constants import SPLITTER_VOLUME_TOL
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
@@ -1725,35 +1727,120 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
 def _remove_splitter(shape: apiShape) -> apiShape:
     """Drop the splitter faces and edges a boolean leaves behind.
 
-    Tidying up is optional; a correct shape is not. On solids bounded by spline
-    faces the underlying ``UnifySameDomain`` can merge faces it should not and
-    return a shape that fails ``BRepCheck`` and reports a nonsense volume, which
-    downstream is worse than the splitters it removed: the next boolean either
-    yields garbage or dies on a null shape. So refuse a result that is invalid
-    when the input was not.
+    Tidying up is optional; a correct shape is not. Splitter removal is
+    topological -- merge coplanar faces, merge collinear edges -- so it must
+    leave the volume alone. ``UnifySameDomain`` does not always manage that on
+    solids bounded by spline faces, in two distinct ways: it can return a shape
+    that fails ``BRepCheck``, and it can return a perfectly valid shape of a
+    different size. Both are refused here.
 
-    The guard covers solids only. On faces this same tidy-up doubles as a repair
+    The guards cover solids only. On faces this same tidy-up doubles as a repair
     step -- a fused compound of coplanar faces can fail ``isValid`` both before
     and after while still merging into the one face the caller needs -- so there
-    validity is not a signal that anything went wrong.
+    neither validity nor size is a signal that anything went wrong.
 
     Returns
     -------
     :
-        The tidied shape, or the original if tidying failed or broke it.
+        The tidied shape, or the closest tidy-up that preserved it.
     """
     try:
         cleaned = shape.clean()
     except Exception as exc:  # noqa: BLE001
         bluemira_warn(f"Splitter removal failed: {exc}")
         return shape
-    has_solids = TopExp_Explorer(shape.wrapped, TopAbs_SOLID).More()
-    if has_solids and shape.isValid() and not cleaned.isValid():
+
+    if not TopExp_Explorer(shape.wrapped, TopAbs_SOLID).More():
+        return cleaned
+
+    if shape.isValid() and not cleaned.isValid():
         bluemira_warn(
             "Splitter removal turned a valid solid invalid; keeping the split one."
         )
         return shape
-    return cleaned
+
+    # Nothing merged, nothing to check. Edges count too: unifying them refits the
+    # boundary curves, which can move the wall while the face count stands still.
+    if len(cleaned.Faces()) == len(shape.Faces()) and len(cleaned.Edges()) == len(
+        shape.Edges()
+    ):
+        return cleaned
+
+    objection = _volume_objection(shape, cleaned)
+    if objection is None:
+        return cleaned
+
+    # Face unification is the culprit: it merges two spline patches whose
+    # support surfaces are only nearly identical, keeps one of them, and
+    # re-projects the shared boundary onto it, so the wall moves. Merging
+    # collinear edges touches no surface and is safe.
+    # The fallback runs the same upgrade, so it earns no more trust than the
+    # full one: it has to clear both guards too.
+    edges_only = _unify_edges(shape)
+    if (
+        edges_only is not None
+        and not (shape.isValid() and not edges_only.isValid())
+        and _volume_objection(shape, edges_only) is None
+    ):
+        bluemira_warn(
+            f"Splitter removal moved the volume by {objection:.4e} m³; merging "
+            "edges only, which leaves the faces split."
+        )
+        return edges_only
+
+    bluemira_warn(
+        f"Splitter removal moved the volume by {objection:.4e} m³; keeping the "
+        "split shape."
+    )
+    return shape
+
+
+def _volume_objection(before: apiShape, after: apiShape) -> float | None:
+    """The reason not to keep a tidy-up, if there is one.
+
+    Returns
+    -------
+    :
+        The signed volume difference when it exceeds
+        :data:`~bluemira.geometry.constants.SPLITTER_VOLUME_TOL` of the larger
+        operand, else None. An unmeasurable *input* yields None -- a check that
+        cannot run must not veto the tidy-up, it simply cannot vouch for it --
+        but an unmeasurable *result* is evidence against itself and objects.
+    """
+    try:
+        v_before = before.Volume()
+    except Exception as exc:  # noqa: BLE001
+        bluemira_warn(f"Could not measure the shape before splitter removal: {exc}")
+        return None
+    try:
+        v_after = after.Volume()
+    except Exception as exc:  # noqa: BLE001
+        # A tidied shape that cannot be measured is evidence against itself.
+        bluemira_warn(f"Could not measure the shape after splitter removal: {exc}")
+        return math.inf
+    delta = v_after - v_before
+    scale = max(abs(v_before), abs(v_after))
+    if abs(delta) <= SPLITTER_VOLUME_TOL * scale:
+        return None
+    return delta
+
+
+def _unify_edges(shape: apiShape) -> apiShape | None:
+    """Merge collinear edges, leaving every face as it is.
+
+    Returns
+    -------
+    :
+        The tidied shape, or None if the upgrade failed.
+    """
+    try:
+        upgrader = ShapeUpgrade_UnifySameDomain(shape.wrapped, True, False, False)
+        upgrader.AllowInternalEdges(False)
+        upgrader.Build()
+        return cq.Shape.cast(upgrader.Shape())
+    except Exception as exc:  # noqa: BLE001
+        bluemira_warn(f"Edge unification failed: {exc}")
+        return None
 
 
 def _assemble_wires_from_edges(edges: list) -> list:

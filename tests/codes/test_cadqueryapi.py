@@ -28,11 +28,17 @@ from OCP.BRep import BRep_Builder  # noqa: E402
 from OCP.TopoDS import TopoDS_Wire  # noqa: E402
 from OCP.gp import gp_Ax2, gp_Dir, gp_Pnt, gp_Trsf  # noqa: E402
 
+from bluemira.codes.cadapi._cadquery import core as cq_core  # noqa: E402
 from bluemira.codes.error import CadQueryError  # noqa: E402
 from bluemira.geometry.coordinates import Coordinates  # noqa: E402
 from bluemira.geometry.error import GeometryError  # noqa: E402
+from bluemira.geometry.face import BluemiraFace  # noqa: E402
 from bluemira.geometry.parameterisations import TripleArc  # noqa: E402
-from bluemira.geometry.tools import convert  # noqa: E402
+from bluemira.geometry.tools import (  # noqa: E402
+    convert,
+    extrude_shape,
+    make_polygon,
+)
 from tests.codes._shared.backend_api_tests import BackendApiTestsBase  # noqa: E402
 
 E1, E2, E3, E4 = "e1", "e2", "e3", "e4"
@@ -1845,3 +1851,76 @@ class TestPropertyAccuracy:
         # A circle's length equals its closed-form circumference 2*pi*r.
         circle = cadapi.make_circle(radius=3.0, axis=(0, 1, 0))
         assert cadapi.length(circle) == pytest.approx(2 * np.pi * 3.0, rel=1e-12)
+
+
+class TestRemoveSplitterGuard:
+    """``_remove_splitter`` drops a tidy-up that resized the solid.
+
+    Face unification can merge spline patches whose support surfaces are only
+    nearly identical and re-project the shared boundary, which moves the wall
+    while ``isValid`` still passes. The geometry that provokes it for real is a
+    whole reactor, so ``clean`` is made to misbehave instead.
+    """
+
+    @staticmethod
+    def _cube(x_origin=0.0):
+        face = BluemiraFace(
+            make_polygon(
+                [
+                    [x_origin, 0, 0],
+                    [x_origin + 1, 0, 0],
+                    [x_origin + 1, 1, 0],
+                    [x_origin, 1, 0],
+                ],
+                closed=True,
+            )
+        )
+        return extrude_shape(face, (0, 0, 1)).shape
+
+    @staticmethod
+    def _two_cubes_fused():
+        """The raw fuse, splitter face and all."""
+        return cadapi.boolean_fuse(
+            [
+                TestRemoveSplitterGuard._cube(0.0),
+                TestRemoveSplitterGuard._cube(1.0),
+            ],
+            remove_splitter=False,
+        )
+
+    def test_a_size_preserving_tidy_up_is_kept(self):
+        fused = self._two_cubes_fused()
+
+        tidied = cq_core._remove_splitter(fused)
+
+        assert tidied is not fused
+        assert tidied.Volume() == pytest.approx(2.0, rel=1e-9)
+        assert len(tidied.Faces()) < len(fused.Faces())
+
+    def test_a_resized_tidy_up_falls_back_to_merging_edges(self, monkeypatch):
+        fused = self._two_cubes_fused()
+        monkeypatch.setattr(cq.Shape, "clean", lambda _self: self._cube())
+
+        tidied = cq_core._remove_splitter(fused)
+
+        assert tidied is not fused
+        assert tidied.Volume() == pytest.approx(2.0, rel=1e-9)
+        # The faces are left split -- only the edges were merged.
+        assert len(tidied.Faces()) == len(fused.Faces())
+
+    def test_the_split_shape_survives_when_the_fallback_fails_too(self, monkeypatch):
+        fused = self._two_cubes_fused()
+        monkeypatch.setattr(cq.Shape, "clean", lambda _self: self._cube())
+        monkeypatch.setattr(cq_core, "_unify_edges", lambda _shape: None)
+
+        assert cq_core._remove_splitter(fused) is fused
+
+    def test_an_unmeasurable_result_is_refused(self):
+        """A tidied shape that cannot be measured is evidence against itself."""
+        fused = self._two_cubes_fused()
+
+        class _Unmeasurable:
+            def Volume(self):
+                raise RuntimeError("no volume here")
+
+        assert cq_core._volume_objection(fused, _Unmeasurable()) == math.inf

@@ -625,3 +625,24 @@ class BackendApiTestsBase:
 
         tan2 = self.cadapi.wire_tangent_at(wire, 0.75)
         assert np.allclose(tan2, (0.0, 1.0, 0.0))
+
+    def _unit_cube(self, x_origin: float = 0.0):
+        face = BluemiraFace(
+            make_polygon(
+                [
+                    [x_origin, 0, 0],
+                    [x_origin + 1, 0, 0],
+                    [x_origin + 1, 1, 0],
+                    [x_origin, 1, 0],
+                ],
+                closed=True,
+            )
+        )
+        return extrude_shape(face, (0, 0, 1)).shape
+
+    def test_splitter_removal_keeps_the_volume(self):
+        """Merging the faces a boolean left behind must not resize the solid."""
+        fused = self.cadapi.boolean_fuse([self._unit_cube(), self._unit_cube(1.0)])
+
+        volume = fused.Volume() if callable(fused.Volume) else fused.Volume
+        assert volume == pytest.approx(2.0, rel=1e-9)

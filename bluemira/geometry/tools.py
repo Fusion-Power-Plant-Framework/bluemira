@@ -2051,7 +2051,12 @@ def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraCom
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
+def boolean_fuse(
+    shapes: Iterable[BluemiraGeo],
+    label: str = "",
+    *,
+    remove_splitter: bool = True,
+) -> BluemiraGeo:
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -2061,6 +2066,12 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
         List of shape objects to be saved
     label:
         Label for the resulting shape
+    remove_splitter:
+        Whether to drop the splitter faces and edges the fuse leaves behind.
+        Applies to solids: there the tidy-up is refused, or reduced to merging
+        edges, when it would move the volume. Faces are merged either way, since
+        for them it is the step that yields the single face expected. Turn it
+        off to keep the topology the fuse produced, at the cost of extra faces.
 
     Returns
     -------
@@ -2085,7 +2096,7 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
     api_shapes = [s.shape for s in shapes]
     try:
-        merged_shape = cadapi.boolean_fuse(api_shapes)
+        merged_shape = cadapi.boolean_fuse(api_shapes, remove_splitter=remove_splitter)
         return convert(merged_shape, label)
     except Exception as e:
         raise GeometryError(f"Boolean fuse operation failed: {e}") from e

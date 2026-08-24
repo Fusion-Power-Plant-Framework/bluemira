@@ -44,7 +44,11 @@ from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.cadapi._freecad.config import _freecad_save_config
 from bluemira.codes.error import CADError, FreeCADError, InvalidCADInputsError
-from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
+from bluemira.geometry.constants import (
+    EPS_FREECAD,
+    MINIMUM_LENGTH,
+    SPLITTER_VOLUME_TOL,
+)
 from bluemira.utilities.tools import ColourDescriptor, floatify, qtapp_instance
 
 if TYPE_CHECKING:
@@ -2436,6 +2440,44 @@ def join_connect(shapes: Iterable[apiShape], dist_tolerance: float) -> apiShape:
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
+def _remove_splitter(shape: apiShape) -> apiShape:
+    """
+    Drop the splitter faces and edges a boolean leaves behind.
+
+    Returns
+    -------
+    Result of the refinement, or the original shape when refining a solid moved
+    its volume.
+
+    Notes
+    -----
+    Splitter removal is topological -- merge coplanar faces, merge collinear
+    edges -- so it must leave the volume alone. On solids bounded by spline
+    faces it does not always manage that: adjacent patches whose support
+    surfaces are only nearly identical get merged onto one of them, the shared
+    boundary is re-projected, and the wall moves. The result stays valid and
+    says nothing, which is worse than the splitters it removed.
+
+    Solids only. On faces this same call doubles as a repair step, so there a
+    change in size is not a signal that anything went wrong.
+    """
+    refined = shape.removeSplitter()
+    if not shape.Solids:
+        return refined
+    # Nothing merged, nothing to check. Edges count too: refining them refits the
+    # boundary curves, which can move the wall while the face count stands still.
+    if len(refined.Faces) == len(shape.Faces) and len(refined.Edges) == len(shape.Edges):
+        return refined
+    delta = refined.Volume - shape.Volume
+    scale = max(abs(shape.Volume), abs(refined.Volume))
+    if abs(delta) <= SPLITTER_VOLUME_TOL * scale:
+        return refined
+    bluemira_warn(
+        f"Splitter removal moved the volume by {delta:.4e} m³; keeping the split shape."
+    )
+    return shape
+
+
 def boolean_fuse(
     shapes: Iterable[apiShape], *, remove_splitter: bool = True
 ) -> apiShape:
@@ -2448,8 +2490,10 @@ def boolean_fuse(
         List of FreeCAD shape objects to be fused together. All the objects in the
         list must be of the same type.
     remove_splitter:
-        if True, shape is refined removing extra edges.
+        if True, solids are refined removing extra edges.
         See(https://wiki.freecadweb.org/Part_RefineShape)
+        Faces are always refined -- there it is the step that yields the single
+        face the caller expects.
 
 
     Returns
@@ -2497,8 +2541,11 @@ def boolean_fuse(
 
         if _type == apiFace:
             merged_shape = shapes[0].fuse(shapes[1:])
-            if remove_splitter:
-                merged_shape = merged_shape.removeSplitter()
+            # Not gated on ``remove_splitter``: on faces the refinement is what
+            # turns the fused compound into the single face the caller asked
+            # for, and the check below rejects anything else. The CadQuery
+            # backend merges faces unconditionally for the same reason.
+            merged_shape = merged_shape.removeSplitter()
             if len(merged_shape.Faces) > 1:
                 raise FreeCADError(  # noqa: TRY301
                     f"Boolean fuse operation on {shapes} gives more than one face."
@@ -2508,7 +2555,7 @@ def boolean_fuse(
         if _type == apiSolid:
             merged_shape = shapes[0].fuse(shapes[1:])
             if remove_splitter:
-                merged_shape = merged_shape.removeSplitter()
+                merged_shape = _remove_splitter(merged_shape)
             if len(merged_shape.Solids) > 1:
                 raise FreeCADError(  # noqa: TRY301
                     f"Boolean fuse operation on {shapes} gives more than one solid."
