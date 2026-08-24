@@ -63,7 +63,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.16.3",
+    "ruff==0.16.4",
     "sphinx<8.2",
     "sphinx-autoapi",
     "sphinx_copybutton",
