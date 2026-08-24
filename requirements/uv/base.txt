@@ -6,7 +6,7 @@ anyio==4.14.2
     # via httpx
 anytree==2.13.0
     # via bluemira (pyproject.toml)
-asteval==1.0.9
+asteval==1.0.10
     # via bluemira (pyproject.toml)
 asttokens==3.0.2
     # via matproplib
@@ -25,7 +25,7 @@ certifi==2026.7.22
     #   requests
 charset-normalizer==3.5.1
     # via requests
-citeproc-py==0.10.7
+citeproc-py==0.11.0
     # via csl-reference
 click==8.4.2
     # via
@@ -43,7 +43,7 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.5
+cyclopts==4.23.2
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -73,7 +73,7 @@ httpx==0.28.1
     # via blosc2
 hyperframe==6.1.0
     # via h2
-idna==3.18
+idna==3.19
     # via
     #   anyio
     #   httpx
@@ -86,7 +86,7 @@ kiwisolver==1.5.0
     # via matplotlib
 llvmlite==0.49.0
     # via numba
-lxml==6.1.1
+lxml==6.1.2
     # via citeproc-py
 markdown-it-py==4.2.0
     # via rich
@@ -105,7 +105,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.2.1
     # via blosc2
-narwhals==2.24.0
+narwhals==2.25.0
     # via scikit-learn
 ndindex==1.10.1
     # via blosc2
@@ -180,7 +180,7 @@ pydantic==2.13.4
     #   numpydantic
 pydantic-core==2.46.4
     # via pydantic
-pygments==2.20.0
+pygments==2.21.0
     # via
     #   rich
     #   rich-rst
