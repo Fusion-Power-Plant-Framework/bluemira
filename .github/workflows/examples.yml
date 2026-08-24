@@ -42,7 +42,7 @@ jobs:
           version: ${{ matrix.process-version }}
 
       - name: Setup headless graphics
-        uses: pyvista/setup-headless-display-action@21b8901fc5a6282b1afec303acf1efccf9b78eaa # v4.3
+        uses: pyvista/setup-headless-display-action@b0bf9f57d62d2b3fee9f1c0e0c7e390f05e97a4e # v4.3
 
       - name: Run examples
         shell: bash -l {0}
