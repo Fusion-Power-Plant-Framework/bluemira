@@ -10,8 +10,6 @@ asteval==1.0.9
     # via bluemira (pyproject.toml)
 asttokens==3.0.2
     # via matproplib
-attrs==26.1.0
-    # via cyclopts
 babel==2.18.0
     # via
     #   bluemira (pyproject.toml)
@@ -43,10 +41,6 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.5
-    # via pyvista
-docstring-parser==0.18.0
-    # via cyclopts
 eqdsk==0.9.0
     # via bluemira (pyproject.toml)
 flexcache==0.3
@@ -181,9 +175,7 @@ pydantic==2.13.4
 pydantic-core==2.46.4
     # via pydantic
 pygments==2.20.0
-    # via
-    #   rich
-    #   rich-rst
+    # via rich
 pyparsing==3.3.2
     # via
     #   matplotlib
@@ -192,7 +184,7 @@ python-dateutil==2.9.0.post0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.48.4
+pyvista==0.44.1
     # via bluemira (pyproject.toml)
 requests==2.34.2
     # via pooch
@@ -200,11 +192,7 @@ rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
-    #   cyclopts
     #   meshio
-    #   rich-rst
-rich-rst==2.1.0
-    # via cyclopts
 scikit-learn==1.9.0
     # via bluemira (pyproject.toml)
 scipy==1.17.1
@@ -243,7 +231,7 @@ typing-inspection==0.4.4
     # via pydantic
 urllib3==2.7.0
     # via requests
-vtk==9.3.1
+vtk==9.7.0
     # via
     #   bluemira (pyproject.toml)
     #   pyvista

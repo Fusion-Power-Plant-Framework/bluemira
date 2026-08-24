@@ -20,7 +20,6 @@ asttokens==3.0.2
     #   stack-data
 attrs==26.1.0
     # via
-    #   cyclopts
     #   jsonschema
     #   jupyter-cache
     #   referencing
@@ -63,14 +62,10 @@ csl-reference==0.1.1
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==4.22.5
-    # via pyvista
 debugpy==1.8.21
     # via ipykernel
 distlib==0.4.3
     # via virtualenv
-docstring-parser==0.18.0
-    # via cyclopts
 docutils==0.21.2
     # via
     #   myst-parser
@@ -335,7 +330,6 @@ pygments==2.20.0
     #   ipython-pygments-lexers
     #   pytest
     #   rich
-    #   rich-rst
     #   sphinx
 pyparsing==3.3.2
     # via
@@ -366,7 +360,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.5.2
     # via virtualenv
-pyvista==0.48.4
+pyvista==0.44.1
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
     # via
@@ -392,11 +386,7 @@ rich==15.0.0
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
-    #   cyclopts
     #   meshio
-    #   rich-rst
-rich-rst==2.1.0
-    # via cyclopts
 rpds-py==2026.6.3
     # via
     #   jsonschema
@@ -503,7 +493,7 @@ urllib3==2.7.0
     # via requests
 virtualenv==21.7.4
     # via pre-commit
-vtk==9.3.1
+vtk==9.7.0
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
