@@ -25,17 +25,7 @@ class CircleOptVariables(OptVariablesFrame):
 
 
 class Circle(GeometryParameterisation):
-    def __init__(self, radius: float, centre: tuple[float, float]):
-        opt_vars = CircleOptVariables()
-        opt_vars.adjust_variables(
-            {
-                "radius": {"value": radius},
-                "centre_x": {"value": centre[0]},
-                "centre_z": {"value": centre[1]},
-            },
-            strict_bounds=False,
-        )
-        super().__init__(opt_vars)
+    optvar_cls: type[CircleOptVariables] = CircleOptVariables
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         return make_circle(
@@ -59,7 +49,11 @@ class TestGeomOptimisationProblem:
     @pytest.mark.parametrize("alg", ["SLSQP", "SLSQP_SCIPY"])
     def test_maximise_circle_len_with_kozs(self, alg):
         op = MaxCircleLenOptProblem()
-        circle = Circle(1, (1, 1))
+        circle = Circle({
+            "radius": {"value": 1},
+            "centre_x": {"value": 1},
+            "centre_z": {"value": 1},
+        })
 
         result = op.optimise(circle, algorithm=alg, opt_conditions={"xtol_rel": 1e-12})
 
