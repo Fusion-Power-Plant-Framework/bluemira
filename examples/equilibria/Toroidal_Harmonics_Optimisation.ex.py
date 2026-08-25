@@ -155,7 +155,7 @@ lcfs = ref_eq.get_LCFS()
 x_bdry, z_bdry = lcfs.x, lcfs.z
 arg_inner = np.argmin(x_bdry)
 
-legs = LegFlux(ref_eq).get_legs()
+legs = LegFlux(ref_eq).legs
 
 # Get isoflux points along the outer leg to hold
 # this fixed
