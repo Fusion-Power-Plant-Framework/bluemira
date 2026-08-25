@@ -80,6 +80,8 @@ ref_eq = Equilibrium.from_eqdsk(file_path, from_cocos=3, qpsi_positive=False)
 f, ax = plt.subplots()
 ref_eq.plot(ax)
 ref_eq.coilset.plot(ax)
+plt.show()
+
 # %% [markdown]
 # Find the TH approximation of the coilset contribution to the
 # core plasma region using the toroidal_harmonic_approximation function.
@@ -141,7 +143,7 @@ th_constraint.plot(ax=ax)
 ref_eq.coilset.plot(ax=ax)
 ref_eq.plot(ax=ax)
 ax.set_title("TH approximation region")
-
+plt.show()
 
 # %% [markdown]
 # Now we can set up constraints for the new leg positions.
@@ -181,12 +183,24 @@ ref_eq.plot(ax)
 inner_leg.plot(ax)
 outer_leg.plot(ax)
 ax.set_title("Isoflux points used for leg shaping")
+plt.show()
+
+# %% [markdown]
+# Now we can perform the optimisation. We use the leg positions as
+# magnetic targets, and the TH amplitudes as constraints.
+#
 
 
 # %%
 # Perform the optimisation
 # Use leg positions as magnetic targets, and
 # TH amplitudes as constraint
+
+# NOTE: If you are experimenting with changes to the optimisation
+# problem, you may need to modify some of the optimiser
+# or iterator settings. Our diagnostic plotting options can help
+# you choose appropriate values.
+
 th_move_legs_eq = deepcopy(ref_eq)
 
 th_move_legs = TikhonovCurrentCOP(
@@ -204,7 +218,7 @@ th_move_legs = TikhonovCurrentCOP(
 program = PicardIterator(
     th_move_legs,
     fixed_coils=True,
-    convergence=DudsonConvergence(limit=5e-3),
+    convergence=DudsonConvergence(limit=1e-3),
     relaxation=0.2,
     maxiter=30,
     check_constraints=True,
@@ -226,7 +240,7 @@ outer_leg.plot(axs[1])
 axs[1].set_title("Equilibrium after optimisation")
 
 f.suptitle("Comparison of equilibrium before and after optimisation", y=0.85)
-
+plt.show()
 # %% [markdown]
 # We can compare the plasma and coilset psi before and after the
 # leg movement. Our aim was to hold fixed the coilset contribution
@@ -241,3 +255,4 @@ eq_analysis = EqAnalysis(
     input_eq=th_move_legs_eq, diag_ops=diag_ops, reference_eq=ref_eq
 )
 eq_analysis.plot_compare_psi()
+plt.show()
