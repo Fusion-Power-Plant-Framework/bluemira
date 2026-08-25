@@ -1155,9 +1155,9 @@ def _parse_array(xyz_array: npt.ArrayLike):
 
 
 def _parse_dict(xyz_dict):
-    x = np.atleast_1d(xyz_dict.get("x", 0))
-    y = np.atleast_1d(xyz_dict.get("y", 0))
-    z = np.atleast_1d(xyz_dict.get("z", 0))
+    x = np.atleast_1d(xyz_dict.get("x", 0)).flatten()
+    y = np.atleast_1d(xyz_dict.get("y", 0)).flatten()
+    z = np.atleast_1d(xyz_dict.get("z", 0)).flatten()
 
     shape_lengths = np.array([len(c.shape) for c in [x, y, z]])
 

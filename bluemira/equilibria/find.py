@@ -62,6 +62,12 @@ class PsiPoint:
     __slots__ = ("psi", "x", "z")
 
     def __init__(self, x: float, z: float, psi: float):
+        if isinstance(x, np.ndarray):
+            x = x.item()
+        if isinstance(z, np.ndarray):
+            z = z.item()
+        if isinstance(psi, np.ndarray):
+            psi = psi.item()
         self.x, self.z = x, z
         self.psi = psi
 

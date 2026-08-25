@@ -17,27 +17,27 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-import gmsh
-import matplotlib.pyplot as plt
-import matplotlib.tri as tr
-import numpy as np
-import ufl
-from dolfinx import cpp, geometry, plot
-from dolfinx.fem import (
-    Constant,
-    Expression,
-    Function,
-    assemble_scalar,
-    create_interpolation_data,
-    form,
-    functionspace,
-    locate_dofs_topological,
-)
-from dolfinx.io import gmshio
-from dolfinx.mesh import entities_to_geometry
-from dolfinx.plot import vtk_mesh
-from mpi4py import MPI
-from petsc4py import PETSc
+# import gmsh
+# import matplotlib.pyplot as plt
+# import matplotlib.tri as tr
+# import numpy as np
+# import ufl
+# from dolfinx import cpp, geometry, plot
+# from dolfinx.fem import (
+#     Constant,
+#     Expression,
+#     Function,
+#     assemble_scalar,
+#     create_interpolation_data,
+#     form,
+#     functionspace,
+#     locate_dofs_topological,
+# )
+# from dolfinx.io import gmshio
+# from dolfinx.mesh import entities_to_geometry
+# from dolfinx.plot import vtk_mesh
+# from mpi4py import MPI
+# from petsc4py import PETSc
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from dolfinx.mesh import Mesh
 
-old_m_to_m = gmshio.model_to_mesh
+# old_m_to_m = gmshio.model_to_mesh
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
@@ -67,47 +67,47 @@ def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
     return x
 
 
-def model_to_mesh(
-    model: type[gmsh.model] | None = None,
-    comm=MPI.COMM_WORLD,
-    rank: int = 0,
-    gdim: int | Sequence[int] = 3,
-    **kwargs,
-):
-    """
-    Convert gmsh model to dolfinx mesh.
+# def model_to_mesh(
+#     model: type[gmsh.model] | None = None,
+#     comm=MPI.COMM_WORLD,
+#     rank: int = 0,
+#     gdim: int | Sequence[int] = 3,
+#     **kwargs,
+# ):
+#     """
+#     Convert gmsh model to dolfinx mesh.
 
-    Returns
-    -------
-    result:
-        Dolfinx mesh.
-    labels:
-        Associated names.
+#     Returns
+#     -------
+#     result:
+#         Dolfinx mesh.
+#     labels:
+#         Associated names.
 
-    Notes
-    -----
-    Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
-    """
-    if isinstance(gdim, Sequence):
-        dimensions = gdim
-        gdim = len(dimensions)
-    else:
-        dimensions = np.arange(2)[:gdim]
+#     Notes
+#     -----
+#     Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
+#     """
+#     if isinstance(gdim, Sequence):
+#         dimensions = gdim
+#         gdim = len(dimensions)
+#     else:
+#         dimensions = np.arange(2)[:gdim]
 
-    if model is None:
-        model = gmsh.model
+#     if model is None:
+#         model = gmsh.model
 
-    labels = {
-        model.getPhysicalName(dim, tag): (dim, tag)
-        for dim, tag in model.getPhysicalGroups()
-    }
+#     labels = {
+#         model.getPhysicalName(dim, tag): (dim, tag)
+#         for dim, tag in model.getPhysicalGroups()
+#     }
 
-    extr_geometry = functools.partial(
-        extract_geometry, gmshio.extract_geometry, dimensions
-    )
-    with patch("dolfinx.io.gmshio.extract_geometry", new=extr_geometry):
-        result = old_m_to_m(model, comm, rank, gdim, **kwargs)
-    return result, labels
+#     extr_geometry = functools.partial(
+#         extract_geometry, gmshio.extract_geometry, dimensions
+#     )
+#     with patch("dolfinx.io.gmshio.extract_geometry", new=extr_geometry):
+#         result = old_m_to_m(model, comm, rank, gdim, **kwargs)
+#     return result, labels
 
 
 def extract_geometry(
@@ -144,7 +144,7 @@ def calc_bb_tree(mesh: Mesh, padding: float = 0.0) -> geometry.BoundingBoxTree:
     return geometry.bb_tree(mesh, mesh.topology.dim, padding=padding)
 
 
-class BluemiraFemFunction(Function):
+class BluemiraFemFunction:
     """A supporting class that extends the BluemiraFemFunction implementing
     the __call__ function to return the interpolated function value on the specified
     points.
@@ -594,7 +594,7 @@ def plot_scalar_field(
 
 def read_from_msh(
     filename: str,
-    comm=MPI.COMM_WORLD,
+    # comm=MPI.COMM_WORLD,
     rank: int = 0,
     gdim: int | tuple = 3,
     partitioner=None,

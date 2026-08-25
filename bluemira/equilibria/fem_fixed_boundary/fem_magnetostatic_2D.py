@@ -15,12 +15,13 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-import dolfinx
+# import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
-from dolfinx.fem import Expression
+
+# from dolfinx.fem import Expression
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ufl import as_vector
+# from ufl import as_vector
 
 from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import try_get_bluemira_path

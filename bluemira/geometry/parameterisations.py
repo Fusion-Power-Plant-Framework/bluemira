@@ -2405,14 +2405,17 @@ class PictureFrameTools:
         return make_polygon([p1, p2], label="outer_limb")
 
 
+import enum
+
+
 class PFrameSection(Enum):
     """
     Picture Frame sections
     """
 
-    CURVED = partial(PictureFrameTools._make_domed_leg)
-    FLAT = partial(PictureFrameTools._make_flat_leg)
-    TAPERED_INNER = partial(PictureFrameTools._make_tapered_inner_leg)
+    CURVED = enum.member(partial(PictureFrameTools._make_domed_leg))
+    FLAT = enum.member(partial(PictureFrameTools._make_flat_leg))
+    TAPERED_INNER = enum.member(partial(PictureFrameTools._make_tapered_inner_leg))
 
     def __call__(self, *args, **kwargs):
         """

@@ -8,16 +8,17 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
+from __future__ import annotations
 from collections.abc import Iterable
 
-import dolfinx.fem
+# import dolfinx.fem
 import numpy as np
-from basix.ufl import element
-from dolfinx.fem import Expression, dirichletbc, functionspace, locate_dofs_topological
-from dolfinx.fem.petsc import LinearProblem
-from dolfinx.mesh import locate_entities_boundary
-from petsc4py.PETSc import ScalarType
-from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
+# from basix.ufl import element
+# from dolfinx.fem import Expression, dirichletbc, functionspace, locate_dofs_topological
+# from dolfinx.fem.petsc import LinearProblem
+# from dolfinx.mesh import locate_entities_boundary
+# from petsc4py.PETSc import ScalarType
+# from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
 
 from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction

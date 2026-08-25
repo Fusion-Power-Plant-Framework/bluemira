@@ -17,7 +17,7 @@ from enum import Enum, IntEnum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import gmsh
+# import gmsh
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError

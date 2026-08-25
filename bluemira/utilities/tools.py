@@ -29,7 +29,6 @@ import nlopt
 import numpy as np
 import numpy.typing as npt
 import vtk
-from PySide6.QtWidgets import QApplication
 from matplotlib import colors
 from vtkmodules.util import numpy_support
 
@@ -1307,8 +1306,24 @@ def qtapp_instance() -> QApplication:
         QApplication instance
     """
     try:
+        from PySide6.QtWidgets import QApplication
+
         app = QApplication([])
     except RuntimeError:
         bluemira_debug("QApplication instance already exists")
         app = QApplication.instance()
+    except ImportError:
+
+        class PrimaryScreen:
+            availableGeometry = lambda x: Rect()
+
+        class Rect:
+            width = lambda x: None
+            height = lambda x: None
+
+        class Wrap:
+            primaryScreen = PrimaryScreen
+
+        return Wrap()
+
     return app

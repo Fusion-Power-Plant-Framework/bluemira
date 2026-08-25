@@ -103,6 +103,9 @@ class Parameter(Generic[ParameterValueType]):
         name: str, value: ParameterValueType, value_types: tuple[type, ...] | None
     ) -> ParameterValueType:
         if value_types and value is not None:
+            if isinstance(value, np.ndarray) and value.size == 1:
+                value = value.item()
+
             if float in value_types and isinstance(value, int):
                 value = float(value)
             elif (

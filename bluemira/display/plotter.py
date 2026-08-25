@@ -17,7 +17,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 
-import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import cm
@@ -1280,6 +1279,8 @@ def plot_dolfinx_2d_mesh_plt(
     ValueError
         If the mesh is not a triangular mesh.
     """
+    import dolfinx
+
     # Extract node coordinates
     nodes = mesh.geometry.x[:, :2]  # Use only x and y
 
