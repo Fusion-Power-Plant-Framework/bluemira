@@ -155,10 +155,13 @@ def create_desplined_component_360(
         for i, wire in enumerate(face.boundary):
             # check if the discretisation is enough
             if len(wire.vertexes.T) > discretisation:
+                # current discretisation {len(wire.vertexes.T)-2
+                # excluding endpoints
                 bluemira_warn(
                     f"{inp_component.name}, xz boundary wire {i}:"
                     f"The discretisation specified {discretisation}"
-                    "is lower than the wire's current discretisation."
+                    "is lower than the wire's current discretisation"
+                    "{len(wire.vertexes.T)-2}"
                 )
 
         boundaries = [
