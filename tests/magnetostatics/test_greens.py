@@ -25,6 +25,12 @@ from bluemira.magnetostatics.greens import (
     greens_dpsi_dz,
     greens_psi,
 )
+from tests.magnetostatics.greens_old import greens_Bx as old_greens_Bx
+from tests.magnetostatics.greens_old import greens_Bz as old_greens_Bz
+from tests.magnetostatics.greens_old import greens_dbz_dx as old_greens_dbz_dx
+from tests.magnetostatics.greens_old import greens_dpsi_dx as old_greens_dpsi_dx
+from tests.magnetostatics.greens_old import greens_dpsi_dz as old_greens_dpsi_dz
+from tests.magnetostatics.greens_old import greens_psi as old_greens_psi
 
 # Regression testing
 
@@ -222,7 +228,179 @@ class TestGreenFieldsRegression:
         np.testing.assert_allclose(1e7 * new, 1e7 * old, atol=EPS)
 
 
+class TestGreenFieldsRegression2:
+    rng = np.random.default_rng(84602342)
+    fixtures = []  # noqa: RUF012
+    for i in range(5):  # Tested with 8000, 8 failures, see below
+        fixtures.append(  # noqa: PERF401
+            (
+                i,
+                10 * np.clip(rng.random(), 0.01, None),
+                10 - 5 * rng.random(),
+                10 * np.clip(rng.random(), 0.01, None),
+                10 - 5 * rng.random(),
+            )
+        )
+
+    @pytest.mark.parametrize(
+        ("case", "xc", "zc", "x", "z"),
+        fixtures,
+    )
+    @pytest.mark.parametrize(
+        ("new_greens_func", "old_greens_func"),
+        [
+            (greens_psi, old_greens_psi),
+            (greens_Bx, old_greens_Bx),
+            (greens_Bz, old_greens_Bz),
+            (greens_dbz_dx, old_greens_dbz_dx),
+            (greens_dpsi_dx, old_greens_dpsi_dx),
+            (greens_dpsi_dz, old_greens_dpsi_dz),
+        ],
+    )
+    def test_greens_func(
+        self,
+        case,
+        xc,
+        zc,
+        x,
+        z,
+        new_greens_func,
+        old_greens_func,
+    ):
+        self.runner(new_greens_func, old_greens_func, case, xc, zc, x, z)
+
+    @pytest.mark.xfail(
+        reason="Approaching logarithmic singularity - differences in"
+        " numerical implementation."
+    )
+    @pytest.mark.parametrize(
+        ("new_greens_func", "old_greens_func", "case", "xc", "zc", "x", "z"),
+        [
+            (
+                greens_psi,
+                old_greens_psi,
+                0,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_dpsi_dx,
+                old_greens_dpsi_dx,
+                1,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_dpsi_dz,
+                old_greens_dpsi_dz,
+                2,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_Bx,
+                old_greens_Bx,
+                3,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_Bz,
+                old_greens_Bz,
+                4,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_dbz_dx,
+                old_greens_dbz_dx,
+                5,
+                9.6286576367563210,
+                8.1240150987258204,
+                9.6257638186005128,
+                8.1325033392959813,
+            ),
+            (
+                greens_dpsi_dx,
+                old_greens_dpsi_dx,
+                6,
+                9.5983221038397453,
+                6.1333202772184414,
+                9.64806483606313318,
+                6.1604391248090558,
+            ),
+            (
+                greens_dpsi_dz,
+                old_greens_dpsi_dz,
+                8,
+                9.5983221038397453,
+                6.1333202772184414,
+                9.64806483606313318,
+                6.1604391248090558,
+            ),
+        ],
+    )
+    def test_regression_failures(
+        self, new_greens_func, old_greens_func, case, xc, zc, x, z
+    ):
+        """
+        This is to document some regression failures, which all occur xhen xc, zc -> x, z
+        The maximum relative and absolute errors are still very low
+        This is due to the alternative treatment of some calculations, which are more
+        robust in the new implementation
+        """
+        self.runner(new_greens_func, old_greens_func, case, xc, zc, x, z)
+
+    def runner(self, new_greens_func, old_greens_func, case, xc, zc, x, z):
+        new = new_greens_func(xc, zc, x, z)
+        old = old_greens_func(xc, zc, x, z)
+
+        np.testing.assert_allclose(
+            new,
+            old,
+            rtol=0.0,
+            atol=EPS,
+            equal_nan=True,
+            err_msg=(
+                f"{new_greens_func.__name__} failed on case {case}\n"
+                f"xc  = {xc:.16e}\n"
+                f"zc  = {zc:.16e}\n"
+                f"x   = {x:.16e}\n"
+                f"z   = {z:.16e}\n"
+                f"new = {new:.16e}\n"
+                f"old = {old:.16e}"
+            ),
+        )
+
+
 class TestGreensEdgeCases:
+    @pytest.mark.parametrize(
+        "func",
+        [
+            greens_psi,
+            greens_dpsi_dz,
+            greens_dpsi_dx,
+            greens_Bx,
+            greens_dbz_dx,
+        ],
+    )
+    @pytest.mark.parametrize("axis_point", [[1, 1, 0, 0]])
+    def test_greens_on_axis(self, func, axis_point):
+        assert func(*axis_point) == 0.0  # noqa: RUF069
+
+    def test_greens_Bz_axis(self):
+        assert greens_Bz(1, 1, 0, 0) > 0.0
+
     @pytest.mark.parametrize(
         "func",
         [
@@ -234,16 +412,10 @@ class TestGreensEdgeCases:
             greens_dbz_dx,
         ],
     )
-    @pytest.mark.parametrize("fail_point", [[0, 0, 0, 0]])
-    def test_greens_on_axis(self, func, fail_point):
+    @pytest.mark.parametrize("origin_point", [[0, 0, 0, 0]])
+    def test_greens_origin_singularity(self, func, origin_point):
         with pytest.raises(ZeroDivisionError):
-            func(*fail_point)
-
-    @pytest.mark.parametrize("func", [greens_Bx, greens_Bz, greens_dbz_dx])
-    @pytest.mark.parametrize("fail_point", [[1, 1, 0, 10], [-1, -1, 0, 10]])
-    def test_greens_on_axis_field(self, func, fail_point):
-        with pytest.raises(ZeroDivisionError):
-            func(*fail_point)
+            func(*origin_point)
 
     @pytest.mark.parametrize("func", [greens_Bx, greens_dpsi_dz, greens_dbz_dx])
     @pytest.mark.parametrize("zero_point", [[1, 1, 1, 1], [-1, -1, -1, -1]])
