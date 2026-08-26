@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import ComponentError
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon, revolve_shape
 
@@ -148,6 +149,17 @@ def create_desplined_component_360(
             desplined_xz.add_child(xz_child.copy())
             desplined_xyz.add_child(xyz_child.copy())
             continue
+
+        boundaries = []
+
+        for i, wire in enumerate(face.boundary):
+            # check if the discretisation is enough
+            if len(wire.vertexes.T) > discretisation:
+                bluemira_warn(
+                    f"{inp_component.name}, xz boundary wire {i}:"
+                    f"The discretisation specified {discretisation}"
+                    "is lower than the wire's current discretisation."
+                )
 
         boundaries = [
             make_polygon(
