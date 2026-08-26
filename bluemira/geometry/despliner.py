@@ -145,8 +145,8 @@ def create_desplined_component_360(
         face = xz_faces[0].shape
 
         if not has_splines(xyz_child.get_component_properties("shape")):
-            desplined_xz.add_child(xz_child)
-            desplined_xyz.add_child(xyz_child)
+            desplined_xz.add_child(xz_child.copy())
+            desplined_xyz.add_child(xyz_child.copy())
             continue
 
         boundaries = [
