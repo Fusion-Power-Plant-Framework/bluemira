@@ -159,9 +159,9 @@ def create_desplined_component_360(
                 # excluding endpoints
                 bluemira_warn(
                     f"{inp_component.name}, xz boundary wire {i}:"
-                    f"The discretisation specified {discretisation}"
-                    "is lower than the wire's current discretisation"
-                    "{len(wire.vertexes.T)-2}"
+                    f" The discretisation specified {discretisation}"
+                    " is lower than the wire's current discretisation"
+                    f" {len(wire.vertexes.T) - 2}"
                 )
 
         boundaries = [
