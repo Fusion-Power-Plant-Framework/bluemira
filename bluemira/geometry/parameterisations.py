@@ -3294,8 +3294,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
         p1 = [x1, 0.0, z1]
         t1 = [0, 0, -1.0]
         p2 = arc.start_point().xyz.T[0]
-        t2 = arc._shape.Edges[0].tangentAt(arc._shape.Edges[0].FirstParameter)
-        t2 = -np.array([t2.x, t2.y, t2.z])
+        t2 = -arc.tangent_at(0)
 
         center, start, end, p4, p3 = solve_fillet(
             p1[0:3:2], t1[0:3:2], p2[0:3:2], t2[0:3:2], r3
