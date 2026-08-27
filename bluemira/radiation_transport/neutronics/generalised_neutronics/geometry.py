@@ -9,6 +9,7 @@ Geometry for generalised neutronics
 
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import TypeAlias
@@ -123,7 +124,7 @@ def despline_reactor_geometry(geometry: ReactorGeometry) -> ReactorGeometry:
             discretisation=discretisation,
         )
 
-        desplined_manager = manager.copy()
+        desplined_manager = deepcopy(manager)
         desplined_manager._component = desplined_comp
 
         desplined_components[comp_name] = (
