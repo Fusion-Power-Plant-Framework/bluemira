@@ -11,8 +11,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import TypeAlias
 
 from bluemira.base.reactor import ComponentManager
+
+ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
+"""Type alias for a tuple containing a ComponentManager and
+its desplining discretisation."""
 
 
 class GeometryModel(Enum):
@@ -48,31 +53,82 @@ class ReactorGeometry:
 
     """
 
-    comp_managers: dict[str, ComponentManager] = field(default_factory=dict)
+    comp_managers: dict[str, ComponentManagerConfig] = field(default_factory=dict)
 
-    def __init__(self, _objects: dict[str, ComponentManager]) -> None:
-        raise TypeError("Components must be initialised using Components.from_dict()")
+    def __init__(self, _objects: dict[str, ComponentManagerConfig]) -> None:
+        raise TypeError(
+            "ReactorGeometry must be initialised using ReactorGeometry.from_dict()"
+        )
 
     @classmethod
-    def from_dict(cls, objects: dict[str, ComponentManager]) -> ReactorGeometry:
-        """
-        Create a ReactorGeometry instance from a dictionary.
+    def from_dict(
+        cls,
+        objects: dict[str, ComponentManagerConfig],
+    ) -> ReactorGeometry:
+        """Create a ReactorGeometry instance from a dictionary.
+
+        Parameters
+        ----------
+        objects
+            Dictionary mapping component names to ComponentManager and
+            discretisation pairs.
 
         Returns
         -------
         ReactorGeometry
+            A ReactorGeometry instance containing the provided component
+            managers and discretisations.
 
         Raises
         ------
         TypeError
-            If any value in ``objects`` is not a ``ComponentManager`` instance.
+            If any value in ``objects`` is not a valid
+            ComponentManagerConfig.
         """
-        for name, obj in objects.items():
-            if not isinstance(obj, ComponentManager):
+        tuple_length = 2
+        for name, config in objects.items():
+            if (
+                not isinstance(config, tuple)
+                or len(config) != tuple_length
+                or not isinstance(config[0], ComponentManager)
+                or not isinstance(config[1], int)
+            ):
                 raise TypeError(
-                    f"{name!r} must be a ComponentManager, got {type(obj).__name__}"
+                    f"{name!r} must be a tuple of "
+                    f"(ComponentManager, int), got {type(config).__name__}"
                 )
 
         instance = object.__new__(cls)
-        instance.objects = dict(objects)
+        instance.comp_managers = dict(objects)
         return instance
+
+
+def despline_reactor_geometry(geometry: ReactorGeometry) -> ReactorGeometry:
+    """Despline all relevant components in the reactor geometry.
+
+    Parameters
+    ----------
+    geometry
+        Reactor geometry containing the components to despline.
+
+    Returns
+    -------
+    ReactorGeometry
+        Desplined ReactorGeometry.
+    """
+    desplined_components: dict[str, ComponentManagerConfig] = {}
+
+    for comp_name, (manager, discretisation) in geometry.comp_managers.items():
+        desplined_comp = manager.get_desplined_component_tree(
+            discretisation=discretisation,
+        )
+
+        desplined_manager = manager.copy()
+        desplined_manager._component = desplined_comp
+
+        desplined_components[comp_name] = (
+            desplined_manager,
+            discretisation,
+        )
+
+    return ReactorGeometry.from_dict(desplined_components)
