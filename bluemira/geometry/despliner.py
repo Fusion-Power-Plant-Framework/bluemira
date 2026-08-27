@@ -150,8 +150,6 @@ def create_desplined_component_360(
             desplined_xyz.add_child(xyz_child.copy())
             continue
 
-        boundaries = []
-
         for i, wire in enumerate(face.boundary):
             # check if the discretisation is enough
             if len(wire.vertexes.T) > discretisation:
