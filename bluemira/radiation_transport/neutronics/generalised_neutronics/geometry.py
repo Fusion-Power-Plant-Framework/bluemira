@@ -17,8 +17,8 @@ from typing import TypeAlias
 
 import cadquery as cq
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
-from bluemira.geometry.error import GeometryError
 
 ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
 """Type alias for a tuple containing a ComponentManager and
@@ -214,7 +214,8 @@ def despline_reactor_geometry(
     if overlap:
         overlap_details = "\n".join(f"- {item}" for item in error)
 
-        raise GeometryError(
+        # just warn for now
+        bluemira_warn(
             "Overlapping solids found:\n"
             f"{overlap_details}\n"
             "We advise increasing the "
