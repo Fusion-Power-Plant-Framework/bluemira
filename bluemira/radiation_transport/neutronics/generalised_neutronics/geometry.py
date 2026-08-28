@@ -212,10 +212,12 @@ def despline_reactor_geometry(
     overlap, error = inspect_overlaps(geometry, overlap_tolerance)
 
     if overlap:
+        overlap_details = "\n".join(f"- {item}" for item in error)
+
         raise GeometryError(
-            f"Overlapping solids found: \n"
-            f"{error} \n"
-            f" We advise increasing the"
-            f" desplining discretisations."
+            "Overlapping solids found:\n"
+            f"{overlap_details}\n"
+            "We advise increasing the "
+            "desplining discretisations."
         )
     return geometry
