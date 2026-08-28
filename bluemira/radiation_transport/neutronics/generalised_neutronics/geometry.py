@@ -13,12 +13,15 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import combinations
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 import cadquery as cq
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
 """Type alias for a tuple containing a ComponentManager and
@@ -108,6 +111,19 @@ class ReactorGeometry:
         instance = object.__new__(cls)
         instance.comp_managers = dict(objects)
         return instance
+
+    def plot_xz(self, ax: Axes | None = None, **kwargs) -> Axes:
+        """
+        Plot xz cross-sections of the whole geometry
+
+        Returns
+        -------
+        Axes
+        """
+        for comp, _ in self.comp_managers.values():
+            for comp_xz in comp.component().get_component("xz", first=False):
+                ax = comp_xz.plot_2d(ax=ax, show=False, **kwargs)
+        return ax
 
 
 def inspect_overlaps(
