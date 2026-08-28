@@ -9,19 +9,16 @@ Geometry for generalised neutronics
 
 from __future__ import annotations
 
-from copy import deepcopy
-from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import combinations
-from typing import TYPE_CHECKING, TypeAlias
+from typing import TypeAlias
 
 import cadquery as cq
 
+from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.reactor import ComponentManager
-
-if TYPE_CHECKING:
-    from matplotlib.axes import Axes
+from bluemira.base.reactor import ComponentManager, Reactor
+from bluemira.materials.error import MaterialsError
 
 ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
 """Type alias for a tuple containing a ComponentManager and
@@ -50,10 +47,9 @@ class GeometryModel(Enum):
             ) from None
 
 
-@dataclass
-class ReactorGeometry:
+class NeutronicsGeometryManagers(ComponentManager):
     """
-    Data storage stage
+    Class containing all the Component Managers for neutronics
 
     Parameters
     ----------
@@ -61,180 +57,135 @@ class ReactorGeometry:
 
     """
 
-    # Instead of individual compoennt names, keep the below format
-    # to make it usable for any number of components with any name
-    comp_managers: dict[str, ComponentManagerConfig] = field(default_factory=dict)
-
-    def __init__(self, _objects: dict[str, ComponentManagerConfig]) -> None:
-        raise TypeError(
-            "ReactorGeometry must be initialised using ReactorGeometry.from_dict()"
-        )
-
     @classmethod
-    def from_dict(
+    def from_reactor(
         cls,
-        objects: dict[str, ComponentManagerConfig],
-    ) -> ReactorGeometry:
-        """Create a ReactorGeometry instance from a dictionary.
+        reactor: Reactor,
+        discretisations: list[int],
+        with_components: list[ComponentManager] | None = None,
+    ) -> NeutronicsGeometryManagers:
+        """Create a NeutronicsGeometryManagers instance from a reactor.
 
         Parameters
         ----------
-        objects
-            Dictionary mapping component names to ComponentManager and
-            discretisation pairs.
+        reactor
+            the original reactor
+
+        with_components:
+            components to include in the neutronics simulations
 
         Returns
         -------
-        ReactorGeometry
-            A ReactorGeometry instance containing the provided component
+        NeutronicsGeometryManagers
+            A NeutronicsGeometryManagers instance containing the provided component
             managers and discretisations.
 
         Raises
         ------
-        TypeError
-            If any value in ``objects`` is not a valid
-            ComponentManagerConfig.
+        ValueError
+            if the length of discretisations and component managers mismatch
         """
-        tuple_length = 2
-        for name, config in objects.items():
-            if (
-                not isinstance(config, tuple)
-                or len(config) != tuple_length
-                or not isinstance(config[0], ComponentManager)
-                or not isinstance(config[1], int)
-            ):
-                raise TypeError(
-                    f"{name!r} must be a tuple of "
-                    f"(ComponentManager, int), got {type(config).__name__}"
+        # Filter Managers
+        filtered_managers = reactor._component_managers(with_components=with_components)
+
+        # Sanity check: discretisations
+        if len(discretisations) != len(filtered_managers):
+            raise ValueError(
+                f"number of components {len(filtered_managers)}"
+                f"differs from provided number of discritations:"
+                f"{len(filtered_managers)}"
+            )
+
+        # Despline and Build component tree
+        component_tree = Component("Neutronics Geometry")
+
+        for manager, discretisation in zip(
+            filtered_managers,
+            discretisations,
+            strict=True,
+        ):
+            component_tree.add_child(
+                manager.get_desplined_component_tree(
+                    discretisation=discretisation,
                 )
+            )
 
-        instance = object.__new__(cls)
-        instance.comp_managers = dict(objects)
-        return instance
+        geom_managers = cls(component_tree)
+        geom_managers.inspect_overlaps()
+        geom_managers.inspect_overlaps()
 
-    def plot_xz(self, ax: Axes | None = None, **kwargs) -> Axes:
+        return geom_managers
+
+    def get_all_managers(self) -> list[ComponentManager]:
         """
-        Plot xz cross-sections of the whole geometry
+        Return all component managers.
 
         Returns
         -------
-        Axes
+        list[ComponentManager]
         """
-        for comp, _ in self.comp_managers.values():
-            for comp_xz in comp.component().get_component("xz", first=False):
-                ax = comp_xz.plot_2d(ax=ax, show=False, **kwargs)
-        return ax
+        return self.component().children
 
+    def inspect_overlaps(self, tolerance: float = 1e-10):
+        """
+        Inspect all managers to ensure that there is no overlap
+        between any two CadQuery solids. Touching is allowed.
 
-def inspect_overlaps(
-    geometry: ReactorGeometry, tolerance: float = 1e-10
-) -> tuple[bool, list[str]]:
-    """
-    Inspect ReactorGeometry to ensure that there is no overlap
-    between any two CadQuery solids. Touching is allowed.
+        Parameters
+        ----------
+        tolerance
+            Minimum intersection volume considered to be an overlap.
 
-    Returns
-    -------
-    tuple[bool, list[str] | None]
+        Raises
+        ------
+        TypeError
+            If a component does not contain a CadQuery Solid.
+        """
+        all_solids = []
 
-    Raises
-    ------
-    TypeError
-        If a component does not contain a CadQuery Solid.
-    """
-    all_xyzs = {
-        name: manager.component().get_component("xyz", first=False)
-        for name, (manager, _) in geometry.comp_managers.items()
-    }
+        for manager in self.get_all_managers():
+            component_name = manager.name
+            xyzs = manager.component().get_component("xyz", first=False)
 
-    all_solids = {}
+            for xyz in xyzs:
+                for child in xyz.children:
+                    if not isinstance(child.shape.shape, cq.Solid):
+                        raise TypeError(
+                            "inspect_overlaps is only available for "
+                            f"CadQuery Solid objects. "
+                            f"{component_name} contains "
+                            f"{type(child.shape).__name__}."
+                        )
 
-    for component_name, xyzs in all_xyzs.items():
-        solids = []
-        for xyz in xyzs:
-            for child in xyz.children:
-                if not isinstance(child.shape.shape, cq.Solid):
-                    raise TypeError(
-                        "inspect_overlaps is only available for "
-                        f"CadQuery Solid objects. "
-                        f"{component_name} contains "
-                        f"{type(child.shape).__name__}."
+                    all_solids.append((component_name, child.name, child.shape))
+
+        for (
+            (component_a, name_a, solid_a),
+            (component_b, name_b, solid_b),
+        ) in combinations(all_solids, 2):
+            intersection = solid_a.shape.intersect(solid_b.shape)
+            volume = intersection.Volume()
+
+            if volume > tolerance:
+                bluemira_warn(
+                    f"({component_a}) {name_a} overlaps "
+                    f"({component_b}) {name_b} by {volume}."
+                )
+
+    def inspect_materials(self):
+        """
+        Inspect all managers to ensure that they are assigned
+        a material
+
+        Raises
+        ------
+        MaterialsError
+            If a component does not have a material assigned
+        """
+        for manager in self.get_all_managers():
+            for xyz in manager.component().get_component("xyz", first=False):
+                if xyz.get_component_properties("material") is None:
+                    raise MaterialsError(
+                        f"Component manager '{manager.name}' does not have"
+                        " a material assigned."
                     )
-
-                solids.append((child.name, child.shape))
-
-        all_solids[component_name] = solids
-
-    solids = [
-        (component, name, solid)
-        for component, component_solids in all_solids.items()
-        for name, solid in component_solids
-    ]
-    overlaps = []
-
-    for (
-        (component_a, name_a, solid_a),
-        (component_b, name_b, solid_b),
-    ) in combinations(solids, 2):
-        intersection = solid_a.shape.intersect(solid_b.shape)
-
-        if intersection.Volume() > tolerance:
-            overlaps.append(
-                f"({component_a}) {name_a} overlaps "
-                f"({component_b}) {name_b} by {intersection.Volume()}."
-            )
-
-    if overlaps:
-        return True, overlaps
-    return False, [""]
-
-
-def despline_reactor_geometry(
-    geometry: ReactorGeometry, overlap_tolerance: float = 1e-10
-) -> ReactorGeometry:
-    """Despline all relevant components in the reactor geometry.
-
-    Parameters
-    ----------
-    geometry
-        Reactor geometry containing the components to despline.
-
-    Returns
-    -------
-    ReactorGeometry
-        Desplined ReactorGeometry.
-
-    Raises
-    ------
-    GeometryError
-        if independent desplining of components causes clashes
-    """
-    desplined_components: dict[str, ComponentManagerConfig] = {}
-
-    for comp_name, (manager, discretisation) in geometry.comp_managers.items():
-        desplined_comp = manager.get_desplined_component_tree(
-            discretisation=discretisation,
-        )
-
-        desplined_manager = deepcopy(manager)
-        desplined_manager._component = desplined_comp
-
-        desplined_components[comp_name] = (
-            desplined_manager,
-            discretisation,
-        )
-
-    geometry = ReactorGeometry.from_dict(desplined_components)
-    overlap, error = inspect_overlaps(geometry, overlap_tolerance)
-
-    if overlap:
-        overlap_details = "\n".join(f"- {item}" for item in error)
-
-        # just warn for now
-        bluemira_warn(
-            "Overlapping solids found:\n"
-            f"{overlap_details}\n"
-            "We advise increasing the "
-            "desplining discretisations."
-        )
-    return geometry
