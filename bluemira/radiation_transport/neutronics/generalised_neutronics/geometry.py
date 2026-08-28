@@ -110,7 +110,7 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         return geom_managers
 
-    def get_all_managers(self) -> list[ComponentManager]:
+    def get_all_components(self) -> list[ComponentManager]:
         """
         Return all component managers.
 
@@ -137,9 +137,9 @@ class NeutronicsGeometryManagers(ComponentManager):
         """
         all_solids = []
 
-        for manager in self.get_all_managers():
-            component_name = manager.name
-            xyzs = manager.component().get_component("xyz", first=False)
+        for comp in self.get_all_components():
+            component_name = comp.name
+            xyzs = comp.get_component("xyz", first=False)
 
             for xyz in xyzs:
                 for child in xyz.children:
@@ -176,10 +176,10 @@ class NeutronicsGeometryManagers(ComponentManager):
         MaterialsError
             If a component does not have a material assigned
         """
-        for manager in self.get_all_managers():
-            for xyz in manager.component().get_component("xyz", first=False):
+        for comp in self.get_all_components():
+            for xyz in comp.get_component("xyz", first=False):
                 if xyz.get_component_properties("material") is None:
                     raise MaterialsError(
-                        f"Component manager '{manager.name}' does not have"
+                        f"Component manager '{comp.name}' does not have"
                         " a material assigned."
                     )
