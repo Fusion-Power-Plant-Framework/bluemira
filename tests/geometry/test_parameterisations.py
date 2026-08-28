@@ -28,6 +28,7 @@ from bluemira.geometry.parameterisations import (
     PrincetonDDiscrete,
     ProcessD,
     SextupleArc,
+    SimpleCarabiner,
     TripleArc,
     _calculate_discrete_constant_tension_shape,
     _princeton_d,
@@ -819,3 +820,46 @@ class TestProcessD:
         x_max = result.variables.x3.value - abs(result.variables.offset.value)
         assert np.isclose(x_min, 10 - 5, atol=1e-3, rtol=0.0)
         assert np.isclose(x_max, 10 + 5, atol=1e-3, rtol=0.0)
+
+
+class TestSimpleCarabiner:
+    def test_segments(self):
+        p = SimpleCarabiner()
+        wire = p.create_shape()
+        assert len(wire.boundary) == 5
+        assert wire.is_closed()
+        assert BluemiraFace(wire).is_valid()
+
+    def test_fillet_too_big_errors(self):
+        with pytest.raises(GeometryParameterisationError):
+            p = SimpleCarabiner({
+                "r1": {"value": 1.0},
+                "r2": {"value": 2},
+                "r3": {"value": 3},
+            })
+
+    def test_optimisation(self):
+        """
+        Use the parameterisation in anger in a constrained optimisation problem
+        Useful for detecting if there is anything wrong with the parameterisation
+        or constraints.
+        """
+        p = SimpleCarabiner()
+        koz = make_circle(2, center=(5, 0, 0), axis=(0, 1, 0))
+        problem = MinimumLengthGOP(
+            p,
+            "SLSQP",
+            {"max_eval": 2000, "ftol_rel": 1e-12},
+            {},
+            keep_out_zone=koz,
+            n_koz_points=20,
+        )
+        result = problem.optimise()
+        solution = result.create_shape()
+        assert len(solution.boundary) == 5
+        assert solution.is_closed()
+        assert BluemiraFace(solution).is_valid()
+        x_min = result.variables.x1.value
+        assert np.isclose(x_min, 5 - 2, atol=1e-3, rtol=0.0)
+        perfect_length = 2 * np.pi * 2
+        assert np.isclose(solution.length, perfect_length, atol=1e-3, rtol=0.0)
