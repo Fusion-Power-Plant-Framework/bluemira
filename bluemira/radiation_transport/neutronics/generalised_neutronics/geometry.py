@@ -12,9 +12,13 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from itertools import combinations
 from typing import TypeAlias
 
+import cadquery as cq
+
 from bluemira.base.reactor import ComponentManager
+from bluemira.geometry.error import GeometryError
 
 ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
 """Type alias for a tuple containing a ComponentManager and
@@ -54,6 +58,8 @@ class ReactorGeometry:
 
     """
 
+    # Instead of individual compoennt names, keep the below format
+    # to make it usable for any number of components with any name
     comp_managers: dict[str, ComponentManagerConfig] = field(default_factory=dict)
 
     def __init__(self, _objects: dict[str, ComponentManagerConfig]) -> None:
@@ -104,7 +110,74 @@ class ReactorGeometry:
         return instance
 
 
-def despline_reactor_geometry(geometry: ReactorGeometry) -> ReactorGeometry:
+def inspect_overlaps(
+    geometry: ReactorGeometry, tolerance: float = 1e-10
+) -> tuple[bool, list[str] | None]:
+    """
+    Inspect ReactorGeometry to ensure that there is no overlap
+    between any two CadQuery solids. Touching is allowed.
+
+    Returns
+    -------
+    tuple[bool, list[str] | None]
+
+    Raises
+    ------
+    TypeError
+        If a component does not contain a CadQuery Solid.
+    """
+    all_xyzs = {
+        name: manager.component().get_component("xyz", first=False)
+        for name, (manager, _) in geometry.comp_managers.items()
+    }
+
+    all_solids = {}
+
+    for component_name, xyzs in all_xyzs.items():
+        solids = []
+
+        for xyz in xyzs:
+            for child in xyz.children:
+                if not isinstance(child.shape.shape, cq.Solid):
+                    raise TypeError(
+                        "inspect_overlaps is only available for "
+                        f"CadQuery Solid objects. "
+                        f"{component_name} contains "
+                        f"{type(child.shape).__name__}."
+                    )
+
+                solids.append(child.shape)
+
+        all_solids[component_name] = solids
+
+    solids = [
+        (component, index, solid)
+        for component, component_solids in all_solids.items()
+        for index, solid in enumerate(component_solids)
+    ]
+
+    overlaps = []
+
+    for (
+        (component_a, index_a, solid_a),
+        (component_b, index_b, solid_b),
+    ) in combinations(solids, 2):
+        intersection = solid_a.shape.intersect(solid_b.shape)
+
+        if intersection.Volume() > tolerance:
+            overlaps.append(
+                f"{component_a}[{index_a}] overlaps "
+                f"{component_b}[{index_b}] by {intersection.Volume()}"
+            )
+
+    if overlaps:
+        return True, overlaps
+    return False, None
+
+
+def despline_reactor_geometry(
+    geometry: ReactorGeometry, overlap_tolerance: float = 1e-10
+) -> ReactorGeometry:
     """Despline all relevant components in the reactor geometry.
 
     Parameters
@@ -116,6 +189,11 @@ def despline_reactor_geometry(geometry: ReactorGeometry) -> ReactorGeometry:
     -------
     ReactorGeometry
         Desplined ReactorGeometry.
+
+    Raises
+    ------
+    GeometryError
+        if independent desplining of components causes clashes
     """
     desplined_components: dict[str, ComponentManagerConfig] = {}
 
@@ -132,4 +210,14 @@ def despline_reactor_geometry(geometry: ReactorGeometry) -> ReactorGeometry:
             discretisation,
         )
 
-    return ReactorGeometry.from_dict(desplined_components)
+    geometry = ReactorGeometry.from_dict(desplined_components)
+    overlap, error = inspect_overlaps(geometry, overlap_tolerance)
+
+    if overlap:
+        raise GeometryError(
+            "Overlapping solids found:\n"
+            + "\n".join(error)
+            + "\n"
+            + "We advise increasing the desplining discretisations."
+        )
+    return geometry
