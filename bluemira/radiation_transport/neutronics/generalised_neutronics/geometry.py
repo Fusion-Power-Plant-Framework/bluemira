@@ -112,7 +112,7 @@ class ReactorGeometry:
 
 def inspect_overlaps(
     geometry: ReactorGeometry, tolerance: float = 1e-10
-) -> tuple[bool, list[str] | None]:
+) -> tuple[bool, list[str]]:
     """
     Inspect ReactorGeometry to ensure that there is no overlap
     between any two CadQuery solids. Touching is allowed.
@@ -135,7 +135,6 @@ def inspect_overlaps(
 
     for component_name, xyzs in all_xyzs.items():
         solids = []
-
         for xyz in xyzs:
             for child in xyz.children:
                 if not isinstance(child.shape.shape, cq.Solid):
@@ -146,33 +145,32 @@ def inspect_overlaps(
                         f"{type(child.shape).__name__}."
                     )
 
-                solids.append(child.shape)
+                solids.append((child.name, child.shape))
 
         all_solids[component_name] = solids
 
     solids = [
-        (component, index, solid)
+        (component, name, solid)
         for component, component_solids in all_solids.items()
-        for index, solid in enumerate(component_solids)
+        for name, solid in component_solids
     ]
-
     overlaps = []
 
     for (
-        (component_a, index_a, solid_a),
-        (component_b, index_b, solid_b),
+        (component_a, name_a, solid_a),
+        (component_b, name_b, solid_b),
     ) in combinations(solids, 2):
         intersection = solid_a.shape.intersect(solid_b.shape)
 
         if intersection.Volume() > tolerance:
             overlaps.append(
-                f"{component_a}[{index_a}] overlaps "
-                f"{component_b}[{index_b}] by {intersection.Volume()}"
+                f"({component_a}) {name_a} overlaps "
+                f"({component_b}) {name_b} by {intersection.Volume()}."
             )
 
     if overlaps:
         return True, overlaps
-    return False, None
+    return False, [""]
 
 
 def despline_reactor_geometry(
@@ -215,9 +213,9 @@ def despline_reactor_geometry(
 
     if overlap:
         raise GeometryError(
-            "Overlapping solids found:\n"
-            + "\n".join(error)
-            + "\n"
-            + "We advise increasing the desplining discretisations."
+            f"Overlapping solids found: \n"
+            f"{error} \n"
+            f" We advise increasing the"
+            f" desplining discretisations."
         )
     return geometry
