@@ -17,7 +17,7 @@ import cadquery as cq
 
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.reactor import ComponentManager, Reactor
+from bluemira.base.reactor import ComponentManager
 from bluemira.materials.error import MaterialsError
 
 ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
@@ -58,49 +58,43 @@ class NeutronicsGeometryManagers(ComponentManager):
     """
 
     @classmethod
-    def from_reactor(
+    def from_component_managers(
         cls,
-        reactor: Reactor,
+        component_managers: list[ComponentManager],
         discretisations: list[int],
-        with_components: list[ComponentManager] | None = None,
     ) -> NeutronicsGeometryManagers:
-        """Create a NeutronicsGeometryManagers instance from a reactor.
+        """Create a NeutronicsGeometryManagers instance from component managers.
 
         Parameters
         ----------
-        reactor
-            the original reactor
-
-        with_components:
-            components to include in the neutronics simulations
+        component_managers
+            Component managers to include in the neutronics geometry.
+        discretisations
+            Discretisation for each component manager.
 
         Returns
         -------
         NeutronicsGeometryManagers
-            A NeutronicsGeometryManagers instance containing the provided component
-            managers and discretisations.
+            A NeutronicsGeometryManagers instance containing the
+            desplined component managers.
 
         Raises
         ------
         ValueError
-            if the length of discretisations and component managers mismatch
+            If the number of discretisations does not match the number
+            of component managers.
         """
-        # Filter Managers
-        filtered_managers = reactor._component_managers(with_components=with_components)
-
-        # Sanity check: discretisations
-        if len(discretisations) != len(filtered_managers):
+        if len(discretisations) != len(component_managers):
             raise ValueError(
-                f"number of components {len(filtered_managers)}"
-                f"differs from provided number of discritations:"
-                f"{len(filtered_managers)}"
+                f"number of components {len(component_managers)} "
+                f"differs from provided number of discretisations "
+                f"{len(discretisations)}"
             )
 
-        # Despline and Build component tree
         component_tree = Component("Neutronics Geometry")
 
         for manager, discretisation in zip(
-            filtered_managers,
+            component_managers,
             discretisations,
             strict=True,
         ):
@@ -112,7 +106,7 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         geom_managers = cls(component_tree)
         geom_managers.inspect_overlaps()
-        geom_managers.inspect_overlaps()
+        geom_managers.inspect_materials()
 
         return geom_managers
 
