@@ -222,7 +222,8 @@ def IPB98y2(
 
     Returns
     -------
-    Energy confinement time [s]
+    :
+        Energy confinement time [s]
 
     Notes
     -----
