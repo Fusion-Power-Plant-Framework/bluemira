@@ -10,8 +10,6 @@ Geometry for generalised neutronics
 from __future__ import annotations
 
 from enum import Enum, auto
-from itertools import combinations
-from typing import TypeAlias
 
 import cadquery as cq
 
@@ -19,10 +17,6 @@ from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
 from bluemira.materials.error import MaterialsError
-
-ComponentManagerConfig: TypeAlias = tuple[ComponentManager, int]
-"""Type alias for a tuple containing a ComponentManager and
-its desplining discretisation."""
 
 
 class GeometryModel(Enum):
@@ -105,7 +99,7 @@ class NeutronicsGeometryManagers(ComponentManager):
             )
 
         geom_managers = cls(component_tree)
-        geom_managers.inspect_overlaps()
+        # geom_managers.inspect_overlaps()
         geom_managers.inspect_materials()
 
         return geom_managers
@@ -120,7 +114,7 @@ class NeutronicsGeometryManagers(ComponentManager):
         """
         return self.component().children
 
-    def inspect_overlaps(self, tolerance: float = 1e-10):
+    def find_overlaps(self, tolerance: float = 1e-10) -> dict:
         """
         Inspect all managers to ensure that there is no overlap
         between any two CadQuery solids. Touching is allowed.
@@ -129,6 +123,13 @@ class NeutronicsGeometryManagers(ComponentManager):
         ----------
         tolerance
             Minimum intersection volume considered to be an overlap.
+
+        Returns
+        -------
+        dict
+            Mapping from ``(component_name, solid_name)`` to a list of
+            ``(component_name, solid_name, solid)`` tuples for all solids
+            that overlap it.
 
         Raises
         ------
@@ -153,18 +154,25 @@ class NeutronicsGeometryManagers(ComponentManager):
 
                     all_solids.append((component_name, child.name, child.shape))
 
-        for (
-            (component_a, name_a, solid_a),
-            (component_b, name_b, solid_b),
-        ) in combinations(all_solids, 2):
-            intersection = solid_a.shape.intersect(solid_b.shape)
-            volume = intersection.Volume()
+        overlaps = {}
 
-            if volume > tolerance:
-                bluemira_warn(
-                    f"({component_a}) {name_a} overlaps "
-                    f"({component_b}) {name_b} by {volume}."
-                )
+        for i, (component_a, name_a, solid_a) in enumerate(all_solids):
+            overlapping_solids = []
+
+            for component_b, name_b, solid_b in all_solids[i + 1 :]:
+                intersection = solid_a.shape.intersect(solid_b.shape)
+
+                if intersection.Volume() > tolerance:
+                    overlapping_solids.append((component_b, name_b, solid_b))
+
+                    bluemira_warn(
+                        f"({component_a}) {name_a} overlaps ({component_b}) {name_b}."
+                    )
+
+            if overlapping_solids:
+                overlaps[component_a, name_a] = overlapping_solids
+
+        return overlaps
 
     def inspect_materials(self):
         """
