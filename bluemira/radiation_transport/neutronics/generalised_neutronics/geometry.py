@@ -163,7 +163,7 @@ class NeutronicsGeometryManagers(ComponentManager):
                 intersection = solid_a.shape.intersect(solid_b.shape)
 
                 if intersection.Volume() > tolerance:
-                    overlapping_solids.append((component_b, name_b, solid_b))
+                    overlapping_solids.append((component_b, name_b))
 
                     bluemira_warn(
                         f"({component_a}) {name_a} overlaps ({component_b}) {name_b}."
