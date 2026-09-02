@@ -191,3 +191,31 @@ class NeutronicsGeometryManagers(ComponentManager):
                         f"Component manager '{comp.name}' does not have"
                         " a material assigned."
                     )
+
+    # def imprint_and_replace(self, tolerance: float = 1e-10):
+    #     """
+
+    #     """
+    #     overlaps = self.find_overlaps(tolerance)
+
+    #     def _find_physical_component(component, name):
+    #         """Find the PhysicalComponent with ``name`` under an ``xyz`` component."""
+    #         xyzs = component.get_component("xyz", first=False)
+
+    #         for xyz in xyzs:
+    #             for child in xyz.children:
+    #                 if isinstance(child, PhysicalComponent) and child.name == name:
+    #                     return child
+
+    #     for (component_name_1, name_1), overlapping_components in overlaps.items():
+
+    #         parent_1 = self.component().get_component(component_name_1)
+    #         component_1 = _find_physical_component(parent_1, name_1)
+
+    #         for component_name_2, name_2 in overlapping_components:
+    #             parent_2 = self.component().get_component(component_name_2)
+    #             component_2 = _find_physical_component(parent_2, name_2)
+
+    #             print(component_1)
+    #             print(component_2)
+    #             print("")
