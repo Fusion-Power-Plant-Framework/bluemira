@@ -110,10 +110,7 @@ class EqPlotMask(Flag):
     """Mask out values inside reference LCFS."""
     OUTSIDE_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
-    INSIDE_COMBO_LCFS = auto()
-    """Mask out values inside chosen and reference LCFS."""
-    OUTSIDE_COMBO_LCFS = auto()
-    """Mask out values outside chosen and reference LCFS."""
+
     DIV_AREA = (
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
@@ -129,23 +126,18 @@ class EqPlotMask(Flag):
     """Mask plot logic option"""
     _REF = INSIDE_REF_LCFS | OUTSIDE_REF_LCFS
     """Mask plot logic option"""
-    _COMBO = INSIDE_COMBO_LCFS | OUTSIDE_COMBO_LCFS
-    """Mask plot logic option"""
+
     _LCFS = (
         INSIDE_REF_LCFS
         | OUTSIDE_REF_LCFS
         | INSIDE_CHOSEN_LCFS
         | OUTSIDE_CHOSEN_LCFS
-        | INSIDE_COMBO_LCFS
-        | OUTSIDE_COMBO_LCFS
         | NONE
     )
     """Mask plot logic option"""
-    _INSIDE = INSIDE_CHOSEN_LCFS | INSIDE_REF_LCFS | INSIDE_COMBO_LCFS
+    _INSIDE = INSIDE_CHOSEN_LCFS | INSIDE_REF_LCFS
     """Mask plot logic option"""
-    _OUTSIDE = (
-        OUTSIDE_CHOSEN_LCFS | OUTSIDE_REF_LCFS | OUTSIDE_COMBO_LCFS | DIV_AREA | POLYGON
-    )
+    _OUTSIDE = OUTSIDE_CHOSEN_LCFS | OUTSIDE_REF_LCFS | DIV_AREA | POLYGON
     """Mask plot logic option"""
 
 
