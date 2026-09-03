@@ -119,26 +119,6 @@ class EqPlotMask(Flag):
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
     """Mask out the values outside a chosen polygon area."""
-    # NOTE: The following subset of mask options are used
-    # in internal plotting logic, and not to be used as inputs
-    # for diagnostic plotting classes.
-    _INPUT = INSIDE_CHOSEN_LCFS | OUTSIDE_CHOSEN_LCFS
-    """Mask plot logic option"""
-    _REF = INSIDE_REF_LCFS | OUTSIDE_REF_LCFS
-    """Mask plot logic option"""
-
-    _LCFS = (
-        INSIDE_REF_LCFS
-        | OUTSIDE_REF_LCFS
-        | INSIDE_CHOSEN_LCFS
-        | OUTSIDE_CHOSEN_LCFS
-        | NONE
-    )
-    """Mask plot logic option"""
-    _INSIDE = INSIDE_CHOSEN_LCFS | INSIDE_REF_LCFS
-    """Mask plot logic option"""
-    _OUTSIDE = OUTSIDE_CHOSEN_LCFS | OUTSIDE_REF_LCFS | DIV_AREA | POLYGON
-    """Mask plot logic option"""
 
 
 class InterpGrid(Enum):
