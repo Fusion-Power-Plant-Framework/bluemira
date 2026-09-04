@@ -513,6 +513,9 @@ A list of available equilibrium constraints are:
    - RelativeMagneticConstraint - a MagneticConstraint where the target value is prescribed with respect to a reference point.
    
    
+
+A user can create their own constraint from the above base classes, however, Bluemira also has a number of useful coil or equilibrium constraints that can be applied during a coilset optimisation. They are as follows:
+
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
