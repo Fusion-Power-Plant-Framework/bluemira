@@ -529,7 +529,7 @@ A list of available equilibrium constraints are:
    AutoConstraints
 
 
-A ``MagneticConstraintSet`` can be sub-classed or initialised with ``MagneticConstraints``.
+Note: A ``MagneticConstraintSet`` is a set of magnetic constraints to be applied to an equilibrium as an optimisation problem using the "TikhonovCurrentCOP" or "UnconstrainedTikhonovCurrentGradientCOP" current optimisation classes. It  can be sub-classed or initialised with ``MagneticConstraints``. 
 
 Two categories of magnetic constraints are supported: absolute and relative magnetic
 constraints.
