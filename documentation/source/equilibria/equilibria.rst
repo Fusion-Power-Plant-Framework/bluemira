@@ -506,7 +506,13 @@ A list of available equilibrium constraints are:
 .. autosummary::
    :nosignatures:
 
-   UpdateableConstraint
+   The base constraint classes available in bluemira are:
+   - UpdateableConstraint - a mixin class for a constraint that updates during coilset optimisation.
+   - MagneticConstraint - base class for any magnetic constraint, or that can be used as an optimisation target when part of a "MagneticConstraintSet".
+   - AbsoluteMagneticConstraint - a MagneticConstraint where the target value is prescribed in absolute terms.
+   - RelativeMagneticConstraint - a MagneticConstraint where the target value is prescribed with respect to a reference point.
+   
+   
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
