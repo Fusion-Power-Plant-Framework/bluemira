@@ -59,10 +59,8 @@ def _get_dummy_equilibrium(equilibrium: Equilibrium):
 
 class UpdateableConstraint(ABC):
     """
-    Abstract base mixin class for an equilibrium optimisation constraint that is
-    updateable.
-
-    It is a mixin class for a constraint that updates during coilset optimisation.
+    Abstract base mixin class for an equilibrium optimisation constraint that
+    updates during coilset optimisation.
     """
 
     def __init_subclass__(cls, **kwargs):
