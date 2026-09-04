@@ -510,7 +510,6 @@ A list of available equilibrium constraints are:
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
-   MagneticConstraint
    AbsoluteMagneticConstraint
    RelativeMagneticConstraint
    FieldNullConstraint
