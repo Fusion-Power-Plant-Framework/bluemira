@@ -505,16 +505,7 @@ to meet.
 .. autosummary::
    :nosignatures:
 
-   The base constraint classes available in bluemira are:
-   - UpdateableConstraint - a mixin class for a constraint that updates during coilset optimisation.
-   - MagneticConstraint - base class for any magnetic constraint, or that can be used as an optimisation target when part of a "MagneticConstraintSet".
-   - AbsoluteMagneticConstraint - a MagneticConstraint where the target value is prescribed in absolute terms.
-   - RelativeMagneticConstraint - a MagneticConstraint where the target value is prescribed with respect to a reference point.
-   
-   
-
-A user can create their own constraint from the above base classes, however, Bluemira also has a number of useful coil or equilibrium constraints that can be applied during a coilset optimisation. They are as follows:
-
+   UpdateableConstraint
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
@@ -529,7 +520,7 @@ A user can create their own constraint from the above base classes, however, Blu
    AutoConstraints
 
 
-Note: A ``MagneticConstraintSet`` is a set of magnetic constraints to be applied to an equilibrium as an optimisation problem using the "TikhonovCurrentCOP" or "UnconstrainedTikhonovCurrentGradientCOP" current optimisation classes. It  can be sub-classed or initialised with ``MagneticConstraints``. 
+Note: A ``MagneticConstraintSet`` is a set of magnetic constraints to be applied to an equilibrium as an optimisation problem using the "TikhonovCurrentCOP" or "UnconstrainedTikhonovCurrentGradientCOP" current optimisation classes. It  can be sub-classed or initialised with ``MagneticConstraints``.
 
 Two categories of magnetic constraints are supported: absolute and relative magnetic
 constraints.
