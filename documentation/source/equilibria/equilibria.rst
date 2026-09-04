@@ -519,6 +519,7 @@ coilset optimisation. They are as follows:
 
 .. autosummary::
    :nosignatures:
+
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
