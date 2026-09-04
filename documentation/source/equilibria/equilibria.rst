@@ -499,6 +499,7 @@ common to apply a set of magnetic constraints to the equilibrium problem. These 
 based on measurements from experiments or based on some design criteria the user wishes
 to meet.
 
+The base constraint classes available in bluemira are:
 
 .. currentmodule:: bluemira.equilibria.optimisation.constraints
 
@@ -506,6 +507,18 @@ to meet.
    :nosignatures:
 
    UpdateableConstraint
+   MagneticConstraint
+   AbsoluteMagneticConstraint
+   RelativeMagneticConstraint
+
+A user can create their own constraint from the above base classes, however, Bluemira also
+has a number of useful coil or equilibrium constraints that can be applied during a
+coilset optimisation. They are as follows:
+
+.. currentmodule:: bluemira.equilibria.optimisation.constraints
+
+.. autosummary::
+   :nosignatures:
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
@@ -519,8 +532,10 @@ to meet.
    PsiBoundaryConstraint
    AutoConstraints
 
-
-Note: A ``MagneticConstraintSet`` is a set of magnetic constraints to be applied to an equilibrium as an optimisation problem using the "TikhonovCurrentCOP" or "UnconstrainedTikhonovCurrentGradientCOP" current optimisation classes. It  can be sub-classed or initialised with ``MagneticConstraints``.
+Note: A ``MagneticConstraintSet`` is a set of magnetic constraints to be applied to an equilibrium
+as an optimisation problem using the "TikhonovCurrentCOP" or
+"UnconstrainedTikhonovCurrentGradientCOP" current optimisation classes. It  can be sub-classed or
+initialised with ``MagneticConstraints``.
 
 Two categories of magnetic constraints are supported: absolute and relative magnetic
 constraints.
