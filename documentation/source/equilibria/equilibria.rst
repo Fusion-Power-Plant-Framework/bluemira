@@ -518,7 +518,6 @@ A user can create their own constraint from the above base classes, however, Blu
    FieldConstraints
    CoilFieldConstraints
    CoilForceConstraints
-   RelativeMagneticConstraint
    FieldNullConstraint
    VerticalFieldConstraint
    RadialFieldConstraint
