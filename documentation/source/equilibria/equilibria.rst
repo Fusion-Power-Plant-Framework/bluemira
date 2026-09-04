@@ -526,7 +526,6 @@ A list of available equilibrium constraints are:
    DPsiDzConstraint
    IsofluxConstraint
    PsiBoundaryConstraint
-   MagneticConstraintSet
    AutoConstraints
 
 
