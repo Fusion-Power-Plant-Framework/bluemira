@@ -27,7 +27,11 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator
     from types import GenericAlias
 
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
+    from bluemira.base.parameter_frame.typed import (
+        ParameterFrameLike,
+        ParameterFrameOrNoneT,
+        ParameterFrameT,
+    )
     from bluemira.base.reactor_config import ConfigParams
 
 
@@ -269,9 +273,7 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_frame(
-        cls: type[ParameterFrameT], frame: ParameterFrameT
-    ) -> ParameterFrameT:
+    def from_frame(cls: type[ParameterFrameT], frame: ParameterFrame) -> ParameterFrameT:
         """Initialise an instance from another ParameterFrame.
 
         Returns
@@ -582,10 +584,10 @@ class EmptyFrame(ParameterFrame):
 
 def make_parameter_frame(
     params: ParameterFrameLike,
-    param_cls: type[ParameterFrameT] | None,
+    param_cls: type[ParameterFrameOrNoneT],
     *,
     allow_unknown: bool = False,
-) -> ParameterFrameT | None:
+) -> ParameterFrameOrNoneT:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 

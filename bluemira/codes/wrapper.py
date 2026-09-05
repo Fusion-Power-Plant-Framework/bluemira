@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame import Parameter as ParameterFrame
+    from bluemira.base.parameter_frame.typed import ParameterFrameT
     from bluemira.codes._typing import TransportSolver
     from bluemira.codes.interface import CodesSolver
     from bluemira.codes.openmc.solver import NeutronSourceCreator
@@ -66,7 +67,7 @@ def systems_code_solver(
 
 
 def transport_code_solver(
-    params: ParameterFrame, build_config: BuildConfig, module: str = "PLASMOD"
+    params: ParameterFrameT, build_config: BuildConfig, module: str = "PLASMOD"
 ) -> TransportSolver:
     """
     Transport solver
@@ -90,7 +91,7 @@ def transport_code_solver(
 
 
 def neutronics_code_solver(
-    params: ParameterFrame,
+    params: ParameterFrameT,
     build_config: BuildConfig,
     neutronics_model,
     eq: Equilibrium,

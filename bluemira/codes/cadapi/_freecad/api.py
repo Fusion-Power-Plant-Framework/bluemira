@@ -14,7 +14,7 @@ import enum
 import math
 import os
 import sys
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
@@ -1094,7 +1094,7 @@ def wire_from_edges(edge_list: list) -> apiWire:
     return Part.Wire(edge_list)
 
 
-def wire_from_wires(wire_list: list) -> apiWire:
+def wire_from_wires(wire_list: Sequence[apiWire]) -> apiWire:
     """Create a single wire from a list of wires.
 
     Returns

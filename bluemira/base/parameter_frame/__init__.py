@@ -11,10 +11,11 @@ from bluemira.base.parameter_frame._frame import (
     make_parameter_frame,
     tabulate_values_from_multiple_frames,
 )
-from bluemira.base.parameter_frame._parameter import Parameter
+from bluemira.base.parameter_frame._parameter import ParamDictT, Parameter
 
 __all__ = [
     "EmptyFrame",
+    "ParamDictT",
     "Parameter",
     "ParameterFrame",
     "make_parameter_frame",

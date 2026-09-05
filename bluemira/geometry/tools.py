@@ -2051,7 +2051,7 @@ def make_compound(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraCom
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
+def boolean_fuse(shapes: Iterable[BluemiraGeoT], label: str = "") -> BluemiraGeoT:
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
