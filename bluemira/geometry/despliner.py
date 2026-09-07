@@ -90,6 +90,8 @@ def has_splines(bm_solid: BluemiraSolid) -> bool:
 def create_desplined_component_360(
     inp_component: Component,
     discretisation: int = 100,
+    *,
+    fallback_to_existing_discretisation: bool = False,
 ) -> Component:
     """
     Despline relevant splined edges and create a fully revolved 360° solid.
@@ -159,8 +161,14 @@ def create_desplined_component_360(
                     f"{inp_component.name}, xz boundary wire {i}:"
                     f" The discretisation specified {discretisation}"
                     " is lower than the wire's current discretisation"
-                    f" {len(wire.vertexes.T) - 1}"
+                    f" {len(wire.vertexes.T) - 1}."
                 )
+                if fallback_to_existing_discretisation:
+                    bluemira_warn(
+                        f"falling back to the wire's current discretisation: "
+                        f"{len(wire.vertexes.T) - 1}"
+                    )
+                    discretisation = len(wire.vertexes.T) - 1
 
         boundaries = [
             make_polygon(
@@ -228,6 +236,7 @@ def despline_component_tree(
         return create_desplined_component_360(
             inp_component=component,
             discretisation=discretisation,
+            fallback_to_existing_discretisation=True,
         )
 
     return Component(
