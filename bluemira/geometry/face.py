@@ -20,6 +20,8 @@ from bluemira.geometry.error import DisjointedFaceError, NotClosedWireError
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy as np
 
 __all__ = ["BluemiraFace"]
@@ -37,7 +39,7 @@ class BluemiraFace(BluemiraGeo):
         Label to assign to the BluemiraFace
     """
 
-    def __init__(self, boundary: BluemiraWire | list[BluemiraWire], label: str = ""):
+    def __init__(self, boundary: BluemiraWire | Sequence[BluemiraWire], label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
 

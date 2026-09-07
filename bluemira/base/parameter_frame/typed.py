@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, TypeAlias, TypeVar, Union
 
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.base.reactor_config import ConfigParams
@@ -19,4 +19,8 @@ if TYPE_CHECKING:
 ParameterFrameT = TypeVar("ParameterFrameT", bound="ParameterFrame")
 ParameterFrameLike: TypeAlias = (
     dict[str, ParamDictT] | ParameterFrameT | ConfigParams | str | None
+)
+
+ParameterFrameOrNoneT = TypeVar(
+    "ParameterFrameOrNoneT", bound=Union["ParameterFrame", None]
 )

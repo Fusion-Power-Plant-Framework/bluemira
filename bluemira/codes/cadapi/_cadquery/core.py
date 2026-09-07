@@ -105,7 +105,7 @@ from bluemira.codes.error import CADError, CadQueryError, InvalidCADInputsError
 from bluemira.geometry.error import GeometryError
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
 
 class _apiFaceMeta(type):
@@ -971,7 +971,7 @@ def wire_from_edges(edge_list: list[apiEdge]) -> apiWire:
     return cq.Wire.assembleEdges(edge_list)
 
 
-def wire_from_wires(wire_list: list[apiWire]) -> apiWire:
+def wire_from_wires(wire_list: Sequence[apiWire]) -> apiWire:
     """Create a single wire from a list of connected wires.
 
     Uses BRepBuilderAPI_MakeWire builder to preserve the exact memory order

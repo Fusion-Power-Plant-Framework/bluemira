@@ -25,7 +25,7 @@ from bluemira.geometry.error import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     import numpy as np
 
@@ -51,7 +51,9 @@ class BluemiraWire(BluemiraGeo):
     correct order in the :code:`boundary` argument, but it is best not to test your luck.
     """
 
-    def __init__(self, boundary: list[cadapi.apiWire | BluemiraWire], label: str = ""):
+    def __init__(
+        self, boundary: Sequence[cadapi.apiWire | BluemiraWire], label: str = ""
+    ):
         boundary_classes = [type(self), cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
