@@ -114,7 +114,7 @@ class NeutronicsGeometryManagers(ComponentManager):
         """
         return self.component().children
 
-    def find_overlaps(self, tolerance: float = 1e-10) -> dict:
+    def inspect_overlaps(self, tolerance: float = 1e-10) -> dict:
         """
         Inspect all managers to ensure that there is no overlap
         between any two CadQuery solids. Touching is allowed.
@@ -166,7 +166,9 @@ class NeutronicsGeometryManagers(ComponentManager):
                     overlapping_solids.append((component_b, name_b))
 
                     bluemira_warn(
-                        f"({component_a}) {name_a} overlaps ({component_b}) {name_b}."
+                        f"({component_a}) {name_a} overlaps ({component_b}) {name_b}"
+                        f"by a volume {intersection.Volume()} m^3. Please increase"
+                        f"the discretisations to avoid overlaps in rebuilt solids."
                     )
 
             if overlapping_solids:
