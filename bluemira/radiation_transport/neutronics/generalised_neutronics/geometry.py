@@ -99,7 +99,7 @@ class NeutronicsGeometryManagers(ComponentManager):
             )
 
         geom_managers = cls(component_tree)
-        geom_managers.inspect_overlaps()
+        # geom_managers.inspect_overlaps()
         geom_managers.inspect_materials()
 
         return geom_managers
@@ -148,14 +148,10 @@ class NeutronicsGeometryManagers(ComponentManager):
                     all_solids.append((component_name, child.name, child.shape))
 
         for i, (component_a, name_a, solid_a) in enumerate(all_solids):
-            overlapping_solids = []
-
             for component_b, name_b, solid_b in all_solids[i + 1 :]:
                 intersection = solid_a.shape.intersect(solid_b.shape)
 
                 if intersection.Volume() > tolerance:
-                    overlapping_solids.append((component_b, name_b))
-
                     bluemira_warn(
                         f"({component_a}) {name_a} overlaps ({component_b}) {name_b} "
                         f"by a volume {intersection.Volume()} m^3. Please increase "
