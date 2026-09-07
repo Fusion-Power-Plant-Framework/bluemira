@@ -53,6 +53,15 @@ jobs:
           ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
           path: "./bluemira-private-data"
 
+      - name: Move bluemira-private-data
+        working-directory: "/home/runner/work/"
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        shell: bash -l {0}
+        run: |
+          if [ -d "bluemira/bluemira/bluemira-private-data" ]; then
+            mv bluemira/bluemira/bluemira-private-data bluemira/bluemira-private-data
+          fi
+
       - name: Build
         uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
@@ -99,6 +108,14 @@ jobs:
           ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
           path: "./bluemira-private-data"
 
+      - name: Move bluemira-private-data
+        working-directory: "/home/runner/work/"
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        shell: bash -l {0}
+        run: |
+          if [ -d "bluemira/bluemira/bluemira-private-data" ]; then
+            mv bluemira/bluemira/bluemira-private-data bluemira/bluemira-private-data
+          fi
       - name: Build
         uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
