@@ -528,6 +528,7 @@ class PlasmaCoilPlotter(Plotter):
                 self.plasma_coil._j_tor,
                 cmap=cmap,
                 levels=levels,
+                zorder=Zorder.PLASMACURRENT.value,
             )
             self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
 
@@ -609,6 +610,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         self,
         equilibrium: FixedPlasmaEquilibrium,
         ax=None,
+        plasma=True,  # noqa: FBT002
         *,
         field: EqBPlotParam = EqBPlotParam.PSI,
     ):
@@ -617,7 +619,6 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         self.psi = self.eq.psi(self.eq.x, self.eq.z)
 
         if field not in EqBPlotParam.FIELD:
-            self.plot_plasma_current()
             self.plot_psi()
         elif field is EqBPlotParam.BP:
             self.plot_B_component()
@@ -626,6 +627,8 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
                 "Toroidal field plot not available for fixed plasma."
                 "Plotting poloidal field."
             )
+        if plasma:
+            self.plot_plasma_current()
         self.plot_LCFS()
 
     def plot_LCFS(self):
@@ -662,7 +665,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         equilibrium: Equilibrium,
         ax=None,
         *,
-        plasma=False,
+        plasma=True,
         show_ox=True,
         field: EqBPlotParam = EqBPlotParam.PSI,
     ):
@@ -697,7 +700,6 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.op_psi = np.amin(self.psi)
 
         if field not in EqBPlotParam.FIELD:
-            self.plot_plasma_current()
             self.plot_psi()
         elif field is EqBPlotParam.BP:
             self.plot_B_component()
@@ -714,7 +716,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.plot_O_points()
 
         if plasma:
-            self.plot_plasma_coil()
+            self.plot_plasma_current()
 
     def plot_flux_surface(self, psi_norm, color="k"):
         """
