@@ -54,7 +54,7 @@ jobs:
           path: "./bluemira-private-data"
 
       - name: Build
-        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@main
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
           python-version: "3.12"
           clone-bluemira: "false"
@@ -100,7 +100,7 @@ jobs:
           path: "./bluemira-private-data"
 
       - name: Build
-        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@main
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
           python-version: ${{ matrix.python-version }}
           clone-bluemira: "false"
