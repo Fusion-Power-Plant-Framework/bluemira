@@ -114,7 +114,7 @@ class NeutronicsGeometryManagers(ComponentManager):
         """
         return self.component().children
 
-    def inspect_overlaps(self, tolerance: float = 1e-10) -> dict:
+    def inspect_overlaps(self, tolerance: float = 1e-10):
         """
         Inspect all managers to ensure that there is no overlap
         between any two CadQuery solids. Touching is allowed.
@@ -123,13 +123,6 @@ class NeutronicsGeometryManagers(ComponentManager):
         ----------
         tolerance
             Minimum intersection volume considered to be an overlap.
-
-        Returns
-        -------
-        dict
-            Mapping from ``(component_name, solid_name)`` to a list of
-            ``(component_name, solid_name, solid)`` tuples for all solids
-            that overlap it.
 
         Raises
         ------
@@ -154,8 +147,6 @@ class NeutronicsGeometryManagers(ComponentManager):
 
                     all_solids.append((component_name, child.name, child.shape))
 
-        overlaps = {}
-
         for i, (component_a, name_a, solid_a) in enumerate(all_solids):
             overlapping_solids = []
 
@@ -170,11 +161,6 @@ class NeutronicsGeometryManagers(ComponentManager):
                         f"by a volume {intersection.Volume()} m^3. Please increase "
                         f"the discretisations to avoid overlaps in rebuilt solids."
                     )
-
-            if overlapping_solids:
-                overlaps[component_a, name_a] = overlapping_solids
-
-        return overlaps
 
     def inspect_materials(self):
         """
