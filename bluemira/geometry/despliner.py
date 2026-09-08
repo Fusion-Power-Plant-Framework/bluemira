@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
@@ -179,6 +180,8 @@ def create_desplined_component_360(
 
             continue
 
+        start_time = time.perf_counter()
+
         for i, wire in enumerate(face.boundary):
             # check if the discretisation is enough
             if len(wire.vertexes.T) - 1 > discretisation:
@@ -232,6 +235,7 @@ def create_desplined_component_360(
         # re-apply component display options
         re_apply_component_display_options(xyz_child, desplined_xyz_body)
 
+        elapsed_time = time.perf_counter() - start_time
         # print desplining error, if any
         bluemira_print(
             f"Desplining Stats: ({inp_component.name})\n"
@@ -239,6 +243,7 @@ def create_desplined_component_360(
             f"Original Volume: {xyz_child.shape.volume:.4f} m^3\n"
             f"Desplined and 360 degree revolved solid's Volume: "
             f"{desplined_xyz_body.shape.volume:.4f} m^3\n"
+            f"Time taken: {elapsed_time:.4f} s\n"
         )
 
         desplined_xyz.add_child(desplined_xyz_body)
