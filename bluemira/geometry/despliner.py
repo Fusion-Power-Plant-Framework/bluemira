@@ -90,12 +90,18 @@ def has_splines(bm_solid: BluemiraSolid) -> bool:
 
 def re_apply_component_display_options(
     orig_comp: PhysicalComponent, other_comp: PhysicalComponent
-):
+) -> PhysicalComponent:
     """
     Make component_display_options consistent
+
+    Returns
+    -------
+    PhysicalComponent
     """
     other_comp.plot_options = orig_comp.plot_options
     other_comp.display_cad_options = orig_comp.display_cad_options
+
+    return other_comp
 
 
 def create_desplined_component_360(
@@ -175,7 +181,9 @@ def create_desplined_component_360(
             )
 
             # re-apply component display options
-            re_apply_component_display_options(xyz_child, revolved_xyz_body)
+            revolved_xyz_body = re_apply_component_display_options(
+                xyz_child, revolved_xyz_body
+            )
             desplined_xyz.add_child(revolved_xyz_body)
 
             continue
@@ -233,17 +241,25 @@ def create_desplined_component_360(
             material=xyz_child.get_component_properties("material"),
         )
         # re-apply component display options
-        re_apply_component_display_options(xyz_child, desplined_xyz_body)
+        desplined_xyz_body = re_apply_component_display_options(
+            xyz_child, desplined_xyz_body
+        )
 
         elapsed_time = time.perf_counter() - start_time
+
         # print desplining error, if any
+        original_volume = xyz_child.shape.volume
+        desplined_volume = desplined_xyz_body.shape.volume
+        volume_change = ((desplined_volume - original_volume) / original_volume) * 100
+
         bluemira_print(
             f"Desplining Stats: ({inp_component.name})\n"
             f"Boundaries of xz face were discretised by {discretisation}\n"
-            f"Original Volume: {xyz_child.shape.volume:.4f} m^3\n"
+            f"Original Volume: {original_volume:.4f} m^3\n"
             f"Desplined and 360 degree revolved solid's Volume: "
-            f"{desplined_xyz_body.shape.volume:.4f} m^3\n"
-            f"Time taken: {elapsed_time:.4f} s\n"
+            f"{desplined_volume:.4f} m^3\n"
+            f"Volume Change: {volume_change:+.2f}%\n"
+            f"Time taken: {elapsed_time:.3f} s\n"
         )
 
         desplined_xyz.add_child(desplined_xyz_body)
