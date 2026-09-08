@@ -99,7 +99,7 @@ class NeutronicsGeometryManagers(ComponentManager):
             )
 
         geom_managers = cls(component_tree)
-        # geom_managers.inspect_overlaps()
+        geom_managers.inspect_overlaps()
         geom_managers.inspect_materials()
 
         return geom_managers
