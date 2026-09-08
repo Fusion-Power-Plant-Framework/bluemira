@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import ComponentError
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon, revolve_shape
 
@@ -87,6 +87,16 @@ def has_splines(bm_solid: BluemiraSolid) -> bool:
     return bool(planar_faces or revolution_faces)
 
 
+def re_apply_component_display_options(
+    orig_comp: PhysicalComponent, other_comp: PhysicalComponent
+):
+    """
+    Make component_display_options consistent
+    """
+    other_comp.plot_options = orig_comp.plot_options
+    other_comp.display_cad_options = orig_comp.display_cad_options
+
+
 def create_desplined_component_360(
     inp_component: Component,
     discretisation: int = 100,
@@ -152,18 +162,20 @@ def create_desplined_component_360(
 
             # Force 360 Rotation as we will have all other
             # desplined components rotated by 360
-            desplined_xyz.add_child(
-                PhysicalComponent(
-                    name=xyz_child.name,
-                    shape=revolve_shape(
-                        xz_child.leaves[0].shape,
-                        base=(0, 0, 0),
-                        direction=(0, 0, 1),
-                        degree=360.0,
-                    ),
-                    material=xyz_child.get_component_properties("material"),
-                )
+            revolved_xyz_body = PhysicalComponent(
+                name=xyz_child.name,
+                shape=revolve_shape(
+                    xz_child.leaves[0].shape,
+                    base=(0, 0, 0),
+                    direction=(0, 0, 1),
+                    degree=360.0,
+                ),
+                material=xyz_child.get_component_properties("material"),
             )
+
+            # re-apply component display options
+            re_apply_component_display_options(xyz_child, revolved_xyz_body)
+            desplined_xyz.add_child(revolved_xyz_body)
 
             continue
 
@@ -207,19 +219,29 @@ def create_desplined_component_360(
                 shape=rebuilt_face,
             )
         )
-
-        desplined_xyz.add_child(
-            PhysicalComponent(
-                name=xyz_child.name,
-                shape=revolve_shape(
-                    rebuilt_face,
-                    base=(0, 0, 0),
-                    direction=(0, 0, 1),
-                    degree=360.0,
-                ),
-                material=xyz_child.get_component_properties("material"),
-            )
+        desplined_xyz_body = PhysicalComponent(
+            name=xyz_child.name,
+            shape=revolve_shape(
+                rebuilt_face,
+                base=(0, 0, 0),
+                direction=(0, 0, 1),
+                degree=360.0,
+            ),
+            material=xyz_child.get_component_properties("material"),
         )
+        # re-apply component display options
+        re_apply_component_display_options(xyz_child, desplined_xyz_body)
+
+        # print desplining error, if any
+        bluemira_print(
+            f"Desplining Stats: ({inp_component.name})\n"
+            f"Boundaries of xz face were discretised by {discretisation}\n"
+            f"Original Volume: {xyz_child.shape.volume:.4f} m^3\n"
+            f"Desplined and 360 degree revolved solid's Volume: "
+            f"{desplined_xyz_body.shape.volume:.4f} m^3\n"
+        )
+
+        desplined_xyz.add_child(desplined_xyz_body)
 
     return Component(
         inp_component.name,
