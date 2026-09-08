@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 from bluemira.base.look_and_feel import bluemira_warn
