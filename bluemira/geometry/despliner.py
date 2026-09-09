@@ -88,22 +88,6 @@ def has_splines(bm_solid: BluemiraSolid) -> bool:
     return bool(planar_faces or revolution_faces)
 
 
-def re_apply_component_display_options(
-    orig_comp: PhysicalComponent, other_comp: PhysicalComponent
-) -> PhysicalComponent:
-    """
-    Make component_display_options consistent
-
-    Returns
-    -------
-    PhysicalComponent
-    """
-    other_comp.plot_options = orig_comp.plot_options
-    other_comp.display_cad_options = orig_comp.display_cad_options
-
-    return other_comp
-
-
 def create_desplined_component_360(
     inp_component: Component,
     discretisation: int = 100,
@@ -220,10 +204,6 @@ def create_desplined_component_360(
                 degree=360.0,
             ),
             material=xyz_child.get_component_properties("material"),
-        )
-        # re-apply component display options
-        desplined_xyz_body = re_apply_component_display_options(
-            xyz_child, desplined_xyz_body
         )
 
         elapsed_time = time.perf_counter() - start_time
