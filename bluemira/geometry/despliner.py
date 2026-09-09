@@ -166,26 +166,7 @@ def create_desplined_component_360(
 
         if not has_splines(xyz_child.get_component_properties("shape")):
             desplined_xz.add_child(xz_child.copy())
-
-            # Force 360 Rotation as we will have all other
-            # desplined components rotated by 360
-            revolved_xyz_body = PhysicalComponent(
-                name=xyz_child.name,
-                shape=revolve_shape(
-                    xz_child.leaves[0].shape,
-                    base=(0, 0, 0),
-                    direction=(0, 0, 1),
-                    degree=360.0,
-                ),
-                material=xyz_child.get_component_properties("material"),
-            )
-
-            # re-apply component display options
-            revolved_xyz_body = re_apply_component_display_options(
-                xyz_child, revolved_xyz_body
-            )
-            desplined_xyz.add_child(revolved_xyz_body)
-
+            desplined_xyz.add_child(xyz_child.copy())
             continue
 
         start_time = time.perf_counter()
