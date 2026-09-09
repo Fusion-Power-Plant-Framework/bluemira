@@ -44,15 +44,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Checkout bluemira-private-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
+          ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          path: "./bluemira-private-data"
+
+      - name: Move bluemira-private-data
+        working-directory: "/home/runner/work/"
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        shell: bash -l {0}
+        run: |
+          if [ -d "bluemira/bluemira/bluemira-private-data" ]; then
+            mv bluemira/bluemira/bluemira-private-data bluemira/bluemira-private-data
+          fi
+
       - name: Build
-        uses: ./.github/workflows/actions/build
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
           python-version: "3.12"
-          bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          clone-bluemira: "false"
 
       - name: Test Documentation code snippets
         shell: bash -l {0}
-        run: pytest bluemira documentation eudemo/eudemo
+        run: pytest bluemira documentation
 
       - name: Build Documentation bluemira
         shell: bash -l {0}
@@ -82,11 +100,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Checkout bluemira-private-data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        with:
+          repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
+          ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          path: "./bluemira-private-data"
+
+      - name: Move bluemira-private-data
+        working-directory: "/home/runner/work/"
+        if: ${{ !github.event.pull_request.head.repo.fork }}
+        shell: bash -l {0}
+        run: |
+          if [ -d "bluemira/bluemira/bluemira-private-data" ]; then
+            mv bluemira/bluemira/bluemira-private-data bluemira/bluemira-private-data
+          fi
       - name: Build
-        uses: ./.github/workflows/actions/build
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
           python-version: ${{ matrix.python-version }}
-          bm-private-data-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
+          clone-bluemira: "false"
           with-artifact: ${{ matrix.with-process == 'process_disabled' && 'true' || 'false' }}
 
       - name: Install PROCESS
@@ -112,7 +146,7 @@ jobs:
                  --json-report-indent=2 \
                  --reactor \
                  ${PYTEST_PRIVATE} \
-                 tests eudemo/eudemo_tests
+                 tests
 
       - name: Upload test report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

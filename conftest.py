@@ -21,7 +21,11 @@ from sybil import Sybil
 from sybil.parsers.rest import DocTestParser, PythonCodeBlockParser
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
+from bluemira.base.file import (
+    get_bluemira_path,
+    get_bluemira_root,
+    try_get_bluemira_private_data_root,
+)
 from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.tools import make_circle
 
@@ -143,7 +147,10 @@ def pytest_configure(config):
     if try_get_bluemira_private_data_root() is None and (
         options["private"] or "private" in config.getoption("markexpr", "")
     ):
-        raise ValueError("You cannot run private tests. Data directory not found")
+        code_root = os.path.split(get_bluemira_root())[0]
+        raise ValueError(
+            f"You cannot run private tests. Data directory not found in '{code_root}'"
+        )
 
     config.option.markexpr = config.getoption(
         "markexpr",

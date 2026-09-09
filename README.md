@@ -13,6 +13,13 @@ typical conceptual fusion reactor design activities.
 ``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
 [publications](#publications)).
 
+## Indepth Examples
+
+We have created some indepth examples using ``bluemira``.
+
+* [**EU-DEMO**](https://github.com/Fusion-Power-Plant-Framework/bluemira-eudemo) - This is a parameterised version of a EU-DEMO like device (single null, conventional aspect ratio)
+* [**Spherical Tokamak**](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak) - This is a parameterised version of a double null, spherical tokamak based on [OpenSTEP](https://github.com/ukaea/OpenSTEP) data
+
 ## Development and Timeline
 
 The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon a significant refactor of both code bases, delivering improved functionality, code quality, and hopefully maintainability.
