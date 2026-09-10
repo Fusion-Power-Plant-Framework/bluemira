@@ -2410,3 +2410,33 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     angle = np.array(np.arctan2(det, dot))
     angle[angle < 0] += 2 * np.pi
     return np.degrees(angle)
+
+
+# ======================================================================================
+# Check if two solids are Touching
+# ======================================================================================
+def check_touching_solids(
+    solid_1: BluemiraSolid, solid_2: BluemiraSolid, rtol: float = 1e-10
+) -> bool:
+    """
+    Check if two solids touch each other.
+
+    Returns
+    -------
+    bool
+        if solids touch at any point (and no overlap), returns true
+        else false
+    """
+    dist, _ = distance_to(solid_1, solid_2)
+    mututal_distance = bool(np.isclose(dist, 0, rtol=rtol))
+
+    # Mutual Distance can be 0 if there is an overlap or
+    # they are touching. hence also check the intesection
+    # volume
+
+    intersection = solid_1.shape.intersect(solid_2.shape)
+    int_volume = bool(np.isclose(intersection.Volume(), 0, rtol=rtol))
+
+    # If both the distance and intersection volume are zero,
+    # they are definitely touching (no overlap)
+    return bool(mututal_distance and int_volume)
