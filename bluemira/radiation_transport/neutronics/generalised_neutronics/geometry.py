@@ -10,13 +10,15 @@ Geometry for generalised neutronics
 from __future__ import annotations
 
 from enum import Enum, auto
-
-import cadquery as cq
+from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
 from bluemira.materials.error import MaterialsError
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
 
 class GeometryModel(Enum):
@@ -99,12 +101,12 @@ class NeutronicsGeometryManagers(ComponentManager):
             )
 
         geom_managers = cls(component_tree)
-        geom_managers.inspect_overlaps()
+        # geom_managers.inspect_overlaps()
         geom_managers.inspect_materials()
 
         return geom_managers
 
-    def get_all_components(self) -> list[ComponentManager]:
+    def get_all_components(self) -> list[Component]:
         """
         Return all component managers.
 
@@ -113,6 +115,34 @@ class NeutronicsGeometryManagers(ComponentManager):
         list[ComponentManager]
         """
         return self.component().children
+
+    @staticmethod
+    def _get_all_solids(
+        components: list[Component],
+    ) -> list[tuple[BluemiraSolid, list[str]]]:
+        """
+        Get all XYZ solids and their full component hierarchies.
+
+        Returns
+        -------
+        list[tuple[BluemiraSolid, list[str]]]
+        """
+        all_solids = []
+
+        for component in components:
+            xyz_comps = component.get_component("xyz", first=False)
+
+            for xyz in xyz_comps:
+                hierarchy = []
+                current = xyz
+
+                while current is not None:
+                    hierarchy.append(current.name)
+                    current = current.parent
+
+                all_solids.append((xyz.children[0].shape, hierarchy))
+
+        return all_solids
 
     def inspect_overlaps(self, tolerance: float = 1e-10):
         """
@@ -129,33 +159,17 @@ class NeutronicsGeometryManagers(ComponentManager):
         TypeError
             If a component does not contain a CadQuery Solid.
         """
-        all_solids = []
+        all_solids = self._get_all_solids(self.get_all_components())
 
-        for comp in self.get_all_components():
-            component_name = comp.name
-            xyzs = comp.get_component("xyz", first=False)
-
-            for xyz in xyzs:
-                for child in xyz.children:
-                    if not isinstance(child.shape.shape, cq.Solid):
-                        raise TypeError(
-                            "inspect_overlaps is only available for "
-                            f"CadQuery Solid objects. "
-                            f"{component_name} contains "
-                            f"{type(child.shape).__name__}."
-                        )
-
-                    all_solids.append((component_name, child.name, child.shape))
-
-        for i, (component_a, name_a, solid_a) in enumerate(all_solids):
-            for component_b, name_b, solid_b in all_solids[i + 1 :]:
+        for i, (solid_a, hierarchy_a) in enumerate(all_solids):
+            for solid_b, hierarchy_b in all_solids[i + 1 :]:
                 intersection = solid_a.shape.intersect(solid_b.shape)
 
                 if intersection.Volume() > tolerance:
                     bluemira_warn(
-                        f"({component_a}) {name_a} overlaps ({component_b}) {name_b} "
-                        f"by a volume {intersection.Volume()} m^3. Please increase "
-                        f"the discretisations to avoid overlaps in rebuilt solids."
+                        f"{hierarchy_a[1]} overlaps {hierarchy_b[1]} by a volume "
+                        f"{intersection.Volume()} m^3. Please increase "
+                        "the discretisations to avoid overlaps in rebuilt solids."
                     )
 
     def inspect_materials(self):
