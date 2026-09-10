@@ -715,7 +715,7 @@ def _separate_psi_contributions(
 
 
 def _set_n_degrees_of_freedom(
-    n_dof: int | None, max_harmonic_mode: int, max_n_dof: int
+    n_dof: int | None, n_mode_values: int, max_n_dof: int
 ) -> int:
     """
     Determine the number of degrees of freedom to use. This is limited by the number
@@ -728,8 +728,10 @@ def _set_n_degrees_of_freedom(
         The number of harmonic functions (and amplitudes) to choose.
         If this is None, then n_dof is calculated as the minimum of max_n_dof and
         2 * max_harmonic_mode
-    max_harmonic_mode:
-        The maximum poloidal mode number of the harmonic functions to use
+    n_mode_values:
+        The number of poloidal modes to use.
+        This should be equal to 2 * max_harmonic_mode - 1,
+        where max_harmonic_mode is input by the user
     max_n_dof:
         The maximum number of degrees of freedom that could be used.
         This is equal to the number of coils used in the approximation
@@ -743,7 +745,7 @@ def _set_n_degrees_of_freedom(
         appropriate n_dof to return
     """
     if n_dof is None:
-        n_dof = min(max_n_dof, 2 * max_harmonic_mode)
+        n_dof = min(max_n_dof, n_mode_values)
     elif not (1 < n_dof <= max_n_dof):
         bluemira_warn(
             "Number of DOFs must be between 1 and the number of control coils"
@@ -752,11 +754,14 @@ def _set_n_degrees_of_freedom(
         )
         n_dof = np.clip(n_dof, 1, max_n_dof)
 
-    if n_dof > 2 * max_harmonic_mode:
+    if n_dof > n_mode_values:
         bluemira_warn(
-            "n_degrees_of_freedom cannot be greater than 2 * max_harmonic_mode"
+            "n_degrees_of_freedom cannot be greater than the total number of modes for a"
+            "given max_harmonic_mode i.e., 2 * max_harmonic_mode - 1"
+            "(we -1 as no sin 0 mode is included)."
+            "Setting n_degrees_of_freedom to total number of modes."
         )
-        n_dof = 2 * max_harmonic_mode
+        n_dof = n_mode_values
 
     return n_dof
 
@@ -839,7 +844,7 @@ def toroidal_harmonics_to_positions(
     x = th_params.R if collocation is None else collocation.x
     z = th_params.Z if collocation is None else collocation.z
 
-    if n_allowed > len(x):
+    if n_allowed > np.size(x):
         raise EquilibriaError(
             "You must have more x-z points than chosen poloidal modes when sampling psi."
         )
@@ -1005,10 +1010,9 @@ def toroidal_harmonic_approximation(
         R_0, Z_0 = eq.effective_centre()
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
-    n_degrees_of_freedom = _set_n_degrees_of_freedom(
-        n_degrees_of_freedom, max_harmonic_mode, len(th_params.th_coil_names)
+    collocation = collocation_points(
+        eq.get_LCFS(), PointType.GRID_POINTS, n_points=5, use_mask=True
     )
-    collocation = collocation_points(eq.get_LCFS(), PointType.GRID_POINTS)
 
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
         eq, th_params, collocation
@@ -1018,32 +1022,44 @@ def toroidal_harmonic_approximation(
         eq=eq, th_params=th_params, psi_norm=psi_norm, plasma_mask=plasma_mask
     )
 
-    dof_id = np.arange(0, 2 * max_harmonic_mode)
-    mode_values = np.tile(np.arange(max_harmonic_mode), 2)
+    # Create list of cos then sin mode numbers with corresponding id
+    # Discarding sin mode 0 as this is always 0s
+    # Cos modes always listed before sin modes
+    dof_id = np.arange(0, 2 * (max_harmonic_mode + 1) - 1)
+    mode_values = np.r_[
+        np.arange(0, max_harmonic_mode + 1), np.arange(1, max_harmonic_mode + 1)
+    ]
+
+    n_degrees_of_freedom = _set_n_degrees_of_freedom(
+        n_degrees_of_freedom,
+        len(mode_values),
+        len(th_params.th_coil_names),
+    )
 
     error = np.inf
 
     for c in combinations(dof_id, n_degrees_of_freedom):
         mode_id = np.array(c)
-        cos_m_chosen = mode_values[mode_id[mode_id < max_harmonic_mode]]
-        sin_m_chosen = mode_values[mode_id[mode_id >= max_harmonic_mode]]
+        cos_m_chosen = mode_values[mode_id[mode_id <= max_harmonic_mode]]
+        sin_m_chosen = mode_values[mode_id[mode_id > max_harmonic_mode]]
 
-        # Calculate psi using the combination of poloidal mode numbers (m) selected in
-        # this iteration at the collocation points
+        # Calculate psi using the combination of poloidal mode numbers (m)
+        # selected in this iteration at the collocation points
         error_new, approximate_coilset_psi, cos_amps, sin_amps = (
             _approximation_from_psi_fitting(
                 th_params,
                 n_degrees_of_freedom,
                 collocation,
-                mode_id,
-                max_harmonic_mode,
+                cos_m_chosen,
+                sin_m_chosen,
                 collocation_psi,
                 mask,
                 true_coilset_psi,
             )
         )
-        # If the new error is less than the previously lowest error, then select the
-        # current combination of poloidal mode numbers (m), amplitudes and associated psi
+        # If the new error is less than the previously lowest error,
+        # then select the current combination of poloidal mode
+        # numbers (m), amplitudes and associated psi
         if error_new < error:
             error = error_new
             cos_m = cos_m_chosen
@@ -1066,7 +1082,12 @@ def toroidal_harmonic_approximation(
 
 
 def _approximation_direct_from_currents(
-    eq, th_params, cos_m_chosen, sin_m_chosen, true_coilset_psi, mask
+    eq: Equilibrium,
+    th_params: ToroidalHarmonicsParams,
+    cos_m_chosen: np.ndarray[int],
+    sin_m_chosen: np.ndarray[int],
+    true_coilset_psi: np.ndarray,
+    mask: np.ndarray,
 ):
     """
     Approximate psi using the equation for toroidal harmonic amplitudes that
@@ -1094,14 +1115,14 @@ def _approximation_direct_from_currents(
 
 
 def _approximation_from_psi_fitting(
-    th_params,
-    n_degrees_of_freedom,
-    collocation,
-    mode_id,
-    max_harmonic_mode,
-    collocation_psi,
-    mask,
-    true_coilset_psi,
+    th_params: ToroidalHarmonicsParams,
+    n_deg_of_freedom: int,
+    collocation: Collocation,
+    cos_m_chosen: np.ndarray[int],
+    sin_m_chosen: np.ndarray[int],
+    collocation_psi: np.ndarray[float],
+    mask: np.ndarray,
+    true_coilset_psi: np.ndarray[float],
 ):
     """
     Approximate psi by fitting for psi at collocation points using
@@ -1121,17 +1142,20 @@ def _approximation_from_psi_fitting(
 
     Notes
     -----
-    The length of mode_id must be equal to n_degrees_of_freedom
+    The number of cos_m_chosen and sin_m_chosen must be equal to n_deg_of_freedom
     """
+    # Calculate 1 more set of modes to account for the fact that we never select
+    # the sin 0 mode. This should not change the degrees of freedom used in the
+    # approximation as we have already selected cos_m_chosen and sin_m_chosen
+    n_deg_of_freedom += 1
     harmonics2collocation_cos, harmonics2collocation_sin = (
         toroidal_harmonics_to_positions(
-            th_params=th_params, n_allowed=n_degrees_of_freedom, collocation=collocation
+            th_params=th_params, n_allowed=n_deg_of_freedom, collocation=collocation
         )
     )
-    harmonics2collocation_cos = harmonics2collocation_cos[mode_id < max_harmonic_mode, :]
-    harmonics2collocation_sin = harmonics2collocation_sin[
-        mode_id >= max_harmonic_mode, :
-    ]
+
+    harmonics2collocation_cos = harmonics2collocation_cos[np.array(cos_m_chosen), :]
+    harmonics2collocation_sin = harmonics2collocation_sin[np.array(sin_m_chosen), :]
 
     harmonics2collocation = np.append(
         harmonics2collocation_cos, harmonics2collocation_sin, axis=0
@@ -1142,22 +1166,22 @@ def _approximation_from_psi_fitting(
     )
 
     harmonics2grid_cos, harmonics2grid_sin = toroidal_harmonics_to_positions(
-        th_params=th_params, n_allowed=n_degrees_of_freedom
+        th_params=th_params, n_allowed=n_deg_of_freedom
     )
-    harmonics2grid_cos = harmonics2grid_cos[mode_id < max_harmonic_mode, :]
-    harmonics2grid_sin = harmonics2grid_sin[mode_id >= max_harmonic_mode, :]
+    harmonics2grid_cos = harmonics2grid_cos[np.array(cos_m_chosen), :]
+    harmonics2grid_sin = harmonics2grid_sin[np.array(sin_m_chosen), :]
 
     psi_from_fit_to_collocation_points = (
-        harmonics2grid_cos.T @ psi_harmonic_amplitudes[mode_id < max_harmonic_mode]
-        + harmonics2grid_sin.T @ psi_harmonic_amplitudes[mode_id >= max_harmonic_mode]
+        harmonics2grid_cos.T @ psi_harmonic_amplitudes[: len(cos_m_chosen)]
+        + harmonics2grid_sin.T @ psi_harmonic_amplitudes[len(cos_m_chosen) :]
     )
     # Calculate L2 norm of the error between the approximated coilset psi and the
     # true coilset psi
     error_new = np.linalg.norm(
         mask * (psi_from_fit_to_collocation_points.T - true_coilset_psi)
     )
-    cos_amps = psi_harmonic_amplitudes[mode_id < max_harmonic_mode]
-    sin_amps = psi_harmonic_amplitudes[mode_id >= max_harmonic_mode]
+    cos_amps = psi_harmonic_amplitudes[: len(cos_m_chosen)]
+    sin_amps = psi_harmonic_amplitudes[len(cos_m_chosen) :]
     return error_new, psi_from_fit_to_collocation_points.T, cos_amps, sin_amps
 
 
@@ -1232,7 +1256,7 @@ def plot_toroidal_harmonic_approximation(
 
     ax.plot(approx_fs.x, approx_fs.z, color="blue", label="TH FS", lw=5)
     ax.plot(original_fs.x, original_fs.z, color="red", label="BM FS", lw=5)
-    ax.legend(loc="upper right")
+    ax.legend(loc="lower right")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
     ax.set_aspect("equal")

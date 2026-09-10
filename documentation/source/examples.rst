@@ -28,7 +28,7 @@ Equilibria Examples
     examples/equilibria/freegsnke_mastu_comparison
     examples/equilibria/anaylsis_toolbox_examples
     examples/equilibria/quick_look_at_example_coilsets
-    examples/equilibria/Toroidal_Harmonics_Optimisation_Set_Up
+    examples/equilibria/Toroidal_Harmonics_Optimisation
 
 
 Geometry Examples
