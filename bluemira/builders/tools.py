@@ -47,6 +47,7 @@ from bluemira.geometry.tools import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from matplotlib.typing import ColorType
     from matproplib.material import Material
 
     from bluemira.base.components import ComponentT
@@ -71,7 +72,7 @@ __all__ = [
 
 def apply_component_display_options(
     phys_component: PhysicalComponent,
-    color: Iterable | ColorPalette,
+    color: ColorType | ColorPalette,
     transparency: float | None = None,
 ):
     """
@@ -171,7 +172,7 @@ def circular_pattern_component(
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-) -> list[ComponentT]:
+) -> list[Component]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 
@@ -475,7 +476,9 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 
 def build_sectioned_xy(
-    face: BluemiraFace, plot_colour: tuple[float], material: Material | None = None
+    face: BluemiraFace,
+    plot_colour: ColorPalette | ColorType,
+    material: Material | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -516,7 +519,7 @@ def build_sectioned_xyz(
     face: BluemiraFace | list[BluemiraFace],
     name: str | list[str],
     n_TF: int,
-    plot_colour: tuple[float] | list[tuple[float]],
+    plot_colour: list[ColorPalette | ColorType] | ColorPalette | ColorType,
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
@@ -534,7 +537,7 @@ def build_sectioned_xyz(
     n_TF:
         number of TF coils
     plot_colour:
-        colour tuple for component
+        colours for component
     degree:
         angle to sweep through
     enable_sectioning:
@@ -568,7 +571,7 @@ def build_sectioned_xyz(
         face = [face]
     if isinstance(name, str):
         name = [name]
-    if isinstance(plot_colour, tuple):
+    if isinstance(plot_colour, ColorPalette | tuple | str):
         plot_colour = [plot_colour]
     if not isinstance(material, list):
         material = [material]

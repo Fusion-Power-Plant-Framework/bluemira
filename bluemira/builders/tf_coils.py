@@ -195,18 +195,16 @@ class RipplePointSelector:
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
-    def _constrain_ripple(
-        self, parameterisation: GeometryParameterisation
-    ) -> np.ndarray:
+    def _constrain_ripple(self, geom: GeometryParameterisation) -> np.ndarray:
         """
         Ripple constraint function
 
         Parameters
         ----------
-        parameterisation:
+        geom:
             Geometry parameterisation
         """  # noqa: DOC201
-        wire = parameterisation.create_shape()
+        wire = geom.create_shape()
         self.solver.update_cage(wire)
         ripple = self.solver.ripple(*self.points)
         # TODO @hsaunders1904: This print will call every time now,
@@ -344,20 +342,20 @@ class MaximiseSelector(RipplePointSelector):
             "tolerance": np.full(2, rip_con_tol),
         }
 
-    def _constrain_max_ripple(self, parameterisation: GeometryParameterisation) -> float:
+    def _constrain_max_ripple(self, geom: GeometryParameterisation) -> float:
         """
         Ripple constraint function
 
         Parameters
         ----------
-        parameterisation:
+        geom:
             Geometry parameterisation
         """  # noqa: DOC201
-        tf_wire = parameterisation.create_shape()
+        tf_wire = geom.create_shape()
         self.solver.update_cage(tf_wire)
 
-        def f_max_ripple(alpha):
-            point = self._wire.value_at(alpha)
+        def f_max_ripple(vector):
+            point = self._wire.value_at(vector)
             return -self.solver.ripple(*point)
 
         result = optimise(
@@ -441,6 +439,8 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
     The geometry parameterisation is updated in place
     """
 
+    params: RippleConstrainedLengthGOPParams
+
     def __init__(
         self,
         parameterisation: GeometryParameterisation,
@@ -450,7 +450,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         params: ParameterFrameLike,
         wp_cross_section: BluemiraWire,
         ripple_wire: BluemiraWire,
-        ripple_selector: RipplePointSelector | None = None,
+        ripple_selector: RipplePointSelector,
         keep_out_zone: BluemiraWire | None = None,
         rip_con_tol: float = 1e-3,
         koz_con_tol: float = 1e-3,
@@ -485,22 +485,22 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             wp_cross_section,
             nx,
             ny,
-            params.n_TF.value,
-            params.R_0.value,
-            params.z_0.value,
-            params.B_0.value,
+            self.params.n_TF.value,
+            self.params.R_0.value,
+            self.params.z_0.value,
+            self.params.B_0.value,
         )
         self._ripple_constraint = ripple_selector.make_ripple_constraint(
-            parameterisation, self.solver, params.TF_ripple_limit.value, rip_con_tol
+            parameterisation, self.solver, self.params.TF_ripple_limit.value, rip_con_tol
         )
         self.ripple_selector = ripple_selector
 
     @staticmethod
-    def objective(parameterisation: GeometryParameterisation) -> float:
+    def objective(geom: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
         """  # noqa: DOC201
-        return parameterisation.create_shape().length
+        return geom.create_shape().length
 
     def keep_out_zones(self) -> list[KeepOutZone]:
         """
@@ -508,7 +508,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """  # noqa: DOC201
         return self._keep_out_zone
 
-    def ineq_constraints(self) -> GeomConstraintT:
+    def ineq_constraints(self) -> list[GeomConstraintT]:
         """
         Inequality constraints
         """  # noqa: DOC201
