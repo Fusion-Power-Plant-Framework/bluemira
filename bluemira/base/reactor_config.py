@@ -11,21 +11,21 @@ import json
 import pprint
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Generic
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.base.parameter_frame.typed import ParameterFrameT
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from bluemira.base.parameter_frame._parameter import ParamDictT
-    from bluemira.base.parameter_frame.typed import ParameterFrameT
 
 
 @dataclass
-class ConfigParams:
+class ConfigParams(Generic[ParameterFrameT]):
     """Container for the global and local parameters of a `ReactorConfig`."""
 
     global_params: ParameterFrameT

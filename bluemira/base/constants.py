@@ -35,7 +35,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: str | CoilType) -> CoilType:
+    def _missing_(cls, value) -> CoilType:
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:

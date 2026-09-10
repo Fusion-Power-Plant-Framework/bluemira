@@ -48,6 +48,7 @@ from bluemira.utilities.tools import floatify
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.geometry.solid import BluemiraSolid
     from bluemira.optimisation import ConstraintT
 
 
@@ -192,7 +193,7 @@ class ITERGravitySupportBuilder(Builder):
         face.translate(vector=(0, -0.5 * width, 0))
         return extrude_shape(face, vec=(0, width, 0))
 
-    def _make_plates(self, width, v1x, v4x, z_block_lower) -> list[BluemiraWire]:
+    def _make_plates(self, width, v1x, v4x, z_block_lower) -> list[BluemiraSolid]:
         """
         Make the gravity support vertical plates
 
@@ -397,7 +398,7 @@ class PFCoilSupportBuilder(Builder):
         return BluemiraFace([box_outer, box_inner])
 
     @staticmethod
-    def _get_first_intersection(point, angle, wire):
+    def _get_first_intersection(point, angle, wire: BluemiraWire):
         """
         Returns
         -------
@@ -659,13 +660,13 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         p2 = self.f_L_to_xz(self.wire, x_norm[1])
         return -np.hypot(*(p2 - p1))
 
-    def constrain_koz(self, x_norm: np.ndarray) -> np.ndarray:
+    def constrain_koz(self, vector: np.ndarray) -> np.ndarray:
         """
         Constrain the straight OIS to be outside a keep-out-zone
 
         Parameters
         ----------
-        x_norm:
+        vector:
             Normalised solution vector
 
         Returns
@@ -673,10 +674,10 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         :
             KOZ constraint array
         """
-        if np.isnan(x_norm).any():
-            bluemira_warn(f"NaN in x_norm {x_norm}")
-            x_norm = np.array([0, D_TOLERANCE])
-        straight_line = self.f_L_to_wire(self.wire, x_norm)
+        if np.isnan(vector).any():
+            bluemira_warn(f"NaN in xnorm {vector}")
+            vector = np.array([0, D_TOLERANCE])
+        straight_line = self.f_L_to_wire(self.wire, vector)
         straight_points = straight_line.discretise(ndiscr=self.n_koz_discr).xz.T
         # Stay outside every (possibly disjoint) keep-out zone. signed distance
         # is positive inside a zone, concatenating means we avoid all of them
@@ -687,14 +688,14 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         ])
 
     @staticmethod
-    def constrain_x(x_norm: np.ndarray) -> np.ndarray:
+    def constrain_x(vector: np.ndarray) -> np.ndarray:
         """
         Constrain the second normalised value to be always greater than the first.
         """  # noqa: DOC201
-        return x_norm[0] - x_norm[1]
+        return vector[0] - vector[1]
 
     @staticmethod
-    def df_constrain_x(x_norm: np.ndarray) -> np.ndarray:  # noqa: ARG004
+    def df_constrain_x(vector: np.ndarray) -> np.ndarray:  # noqa: ARG004
         """
         Gradient of the constraint on  the solution vector
         """  # noqa: DOC201

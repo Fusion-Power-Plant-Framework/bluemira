@@ -129,7 +129,7 @@ def count_slocs(
     branch: str,
     exts: list[str] | None = None,
     ignore: list[str] | None = None,
-) -> dict[str, int | list[int]]:
+) -> dict[str, int]:
     """
     Counts lines of code within a given directory for a given git branch
 
@@ -156,7 +156,7 @@ def count_slocs(
     if exts is None:
         exts = [".py"]
 
-    lines = {}
+    lines: dict[str, int] = {}
     for k in exts:
         lines[k] = 0
     files = get_git_files(directory, branch)

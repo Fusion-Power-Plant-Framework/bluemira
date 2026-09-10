@@ -39,6 +39,7 @@ class GeomClsOptimiserCallable(Protocol):
 class GeomConstraintT(TypedDict):
     """Typing for definition of a constraint."""
 
+    name: NotRequired[str]
     f_constraint: GeomOptimiserCallable
     tolerance: np.ndarray
     df_constraint: NotRequired[GeomOptimiserCallable | None]

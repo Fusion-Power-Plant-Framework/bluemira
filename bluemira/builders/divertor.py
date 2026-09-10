@@ -470,13 +470,13 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             The baffle shape
         """
-        wire = make_bezier(
+        return make_bezier(
             points=[
                 np.insert(wall_join_point, 1, 0.0),
                 np.insert(target_join_point, 1, 0.0),
-            ]
+            ],
+            label=label,
         )
-        return BluemiraWire(wire, label=label)
 
     def _make_fluxline_baffle(
         self,
@@ -721,7 +721,7 @@ class DivertorBuilder(Builder):
 
         return body
 
-    def build_xyz(self, degree: float = 360.0) -> list[PhysicalComponent]:
+    def build_xyz(self, degree: float = 360.0) -> list[Component]:
         """
         Build the x-y-z components of the divertor.
         """  # noqa: DOC201

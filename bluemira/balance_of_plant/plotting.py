@@ -11,7 +11,7 @@ Plotting for balance of plant
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,19 +42,20 @@ class SuperSankey(Sankey):
         patchlabel: str = "",
         flows: Iterable[float] | None = None,
         orientations: Iterable[float] | None = None,
-        labels: str | list[str | None] | None = "",
+        labels: Iterable[str | None] = "",
         trunklength: float = 1.0,
-        pathlengths: float | list[float] = 0.25,
+        pathlengths: float | Iterable[float] = 0.25,
         prior: int | None = None,
-        future: int | None = None,
         connect: tuple[int, int] | list[tuple[int, int]] = (0, 0),
         rotation: float = 0,
+        future: int | None = None,
         **kwargs,
     ):
         __doc__ = super().__doc__  # noqa: F841
         # Here we first check if the "add" method has received arguments that
         # the Sankey class can't handle.
         if future is None:
+            connect: tuple[int, int]
             # There is only one connection, Sankey knows how to do this
             super().add(
                 patchlabel,
@@ -89,7 +90,7 @@ class SuperSankey(Sankey):
         patchlabel: str,
         flows: Iterable[float] | None,
         orientations: Iterable[float] | None,
-        labels: str | list[str | None] | None,
+        labels: Iterable[str | None],
         trunklength: float,
         pathlengths: list[float],
         prior: int | None,
@@ -171,14 +172,14 @@ class SuperSankey(Sankey):
         # modifications during optimisation
         extent = deepcopy(self.extent)
 
-        def minimise_dxdy(x_opt):
+        def minimise_dxdy(vector):
             """
             Minimisation function for the spatial difference between the target
             tip and the actual tip.
 
             Parameters
             ----------
-            x_opt: array_like
+            vector:
                 The vector of d_x, d_y delta-vectors to match tip positions
 
             Returns
@@ -187,8 +188,8 @@ class SuperSankey(Sankey):
                 The sum of the absolute differences
             """
             tip2 = self.diagrams[future].tips[future_index]
-            pathlengths[0] = x_opt[0]
-            pathlengths[-1] = x_opt[1]
+            pathlengths[0] = vector[0]
+            pathlengths[-1] = vector[1]
             self.add(
                 trunklength=trunklength,
                 pathlengths=pathlengths,
@@ -234,6 +235,30 @@ BALANCE_PLOT_DEFAULTS = {
 }
 
 
+class BOPPlotOpts(TypedDict):
+    """BOP plotting options"""
+
+    # Matplotlib figure
+    facecolor: str
+    figsize: tuple[int, int]
+    # Sankey scalings
+    scale: float
+    gap: float
+    radius: float
+    shoulder: float
+    head_angle: float
+    trunk_length: float
+    standard_length: float
+    medium_length: float
+    # Text font, colour and size
+    unit: str
+    format: str
+    font_weight: str
+    font_color: str
+    font_size: float
+    flow_font_size: float
+
+
 class BalanceOfPlantPlotter:
     """
     The plotting object for the BalanceOfPlant system. Builds a relatively
@@ -241,10 +266,10 @@ class BalanceOfPlantPlotter:
     reactor.
     """
 
-    plot_options = deepcopy(BALANCE_PLOT_DEFAULTS)
+    plot_options: BOPPlotOpts = BOPPlotOpts(**BALANCE_PLOT_DEFAULTS)
 
     def __init__(self, **kwargs):
-        self.plot_options = {**self.plot_options, **kwargs}
+        self.plot_options = BOPPlotOpts({**self.plot_options, **kwargs})
 
     def _scale_flows(self, flow_dict: dict[str, list[float]]) -> dict[str, list[float]]:
         plot_unit = self.plot_options.get("unit", "MW")
@@ -309,9 +334,9 @@ class BalanceOfPlantPlotter:
         :
             The Sankey diagram object
         """
-        trunk_length = self.plot_options["trunk_length"]
-        l_s = self.plot_options["standard_length"]
-        l_m = self.plot_options["medium_length"]
+        trunk_length: float = self.plot_options["trunk_length"]
+        l_s: float = self.plot_options["standard_length"]
+        l_m: float = self.plot_options["medium_length"]
 
         # 0: Plasma
         sankey.add(
@@ -320,7 +345,6 @@ class BalanceOfPlantPlotter:
             flows=flow_dict["Plasma"],
             orientations=[0, -1, 0, -1],
             prior=None,
-            connect=None,
             trunklength=trunk_length,
             pathlengths=[l_m, l_s / 1.5, l_s, l_s],
             facecolor=BLUEMIRA_PALETTE["blue"].as_hex(),
