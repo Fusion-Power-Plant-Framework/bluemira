@@ -19,7 +19,7 @@ import contextlib
 import enum
 import math
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import cadquery as cq
 from OCP.APIHeaderSection import APIHeaderSection_MakeHeader
@@ -85,7 +85,7 @@ class CADFileType(enum.Enum):
         return self.value
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | str) -> CADFileType:
         # Allow "step" → STEP, "stp" → STEP, etc.
         _aliases = {
             "step": cls.STEP,
@@ -97,7 +97,10 @@ class CADFileType(enum.Enum):
             "gltf": cls.GLTRANSMISSION,
             "glb": cls.GLTRANSMISSION,
         }
-        return _aliases.get(str(value).lower())
+        cft = _aliases.get(str(value).lower())
+        if cft is None:
+            return super()._missing_(value)
+        return cft
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:

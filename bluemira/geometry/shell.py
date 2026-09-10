@@ -40,9 +40,7 @@ class BluemiraShell(BluemiraGeo):
     """
 
     def __init__(
-        self,
-        boundary: Sequence[BluemiraFace] | BluemiraFace | None,
-        label: str = "",
+        self, boundary: Sequence[BluemiraFace] | BluemiraFace | None, label: str = ""
     ):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)

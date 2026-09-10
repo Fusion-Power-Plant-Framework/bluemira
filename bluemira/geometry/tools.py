@@ -87,7 +87,7 @@ class HullPlane(Enum):
     YZ = auto()
 
     @classmethod
-    def _missing_(cls, value: object):
+    def _missing_(cls, value: object | str) -> HullPlane:
         if not isinstance(value, str):
             raise TypeError(f"Invalid hull plane: {value}. Expected str.")
         try:
@@ -1553,10 +1553,8 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire,
-    plane: BluemiraPlane,
-    cut_direction: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray
+) -> npt.NDArray:
     """
     Cut a wire using a plane.
 

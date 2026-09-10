@@ -85,10 +85,8 @@ class ColorPalette:
 
     @overload
     def __getitem__(self, idx_or_key: int) -> ColorType: ...
-
     @overload
     def __getitem__(self, idx_or_key: str) -> ColorPalette: ...
-
     def __getitem__(self, idx_or_key: int | str) -> ColorType | ColorPalette | None:
         """
         Get an item in the ColorPalette by index or key

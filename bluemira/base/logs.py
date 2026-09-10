@@ -61,7 +61,7 @@ class LogLevel(Enum):
         self.colour = colour
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | int | str) -> LogLevel:
         if isinstance(value, int):
             if cls.CRITICAL.value < value < 10:  # noqa: PLR2004
                 return cls.CRITICAL

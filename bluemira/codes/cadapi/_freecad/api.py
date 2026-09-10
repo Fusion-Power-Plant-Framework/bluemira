@@ -1127,7 +1127,7 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
 # ======================================================================================
 # Wire manipulation
 # ======================================================================================
-def wire_closure(wire: apiWire) -> apiWire:
+def wire_closure(wire: apiWire) -> apiWire | None:
     """
     Create a line segment wire that closes an open wire
 
