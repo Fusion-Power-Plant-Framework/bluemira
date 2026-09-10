@@ -42,9 +42,7 @@ class BluemiraSolid(BluemiraGeo):
     """
 
     def __init__(
-        self,
-        boundary: Sequence[BluemiraShell] | BluemiraShell | None,
-        label: str = "",
+        self, boundary: Sequence[BluemiraShell] | BluemiraShell | None, label: str = ""
     ):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
@@ -141,7 +139,7 @@ class BluemiraSolid(BluemiraGeo):
         return tuple(BluemiraFace._create(o) for o in cadapi.faces(self.shape))
 
     @property
-    def shells(self) -> tuple[BluemiraShell]:
+    def shells(self) -> tuple[BluemiraShell, ...]:
         """
         The shells of the solid.
         """

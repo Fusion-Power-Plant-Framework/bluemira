@@ -367,7 +367,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         label: str,
         target_baffle_join_point: np.ndarray,
         target_dome_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Divertor designer method for making the baffles.
@@ -441,7 +442,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
                 label,
                 wall_join_point,
                 target_baffle_join_point,
-                target_start,
+                target_start=target_start,
             )
         if baffle_type == self.STRAIGHT_BAFFLE:
             return self._make_straight_baffle(
@@ -477,20 +478,21 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             The baffle shape
         """
-        wire = make_bezier(
+        return make_bezier(
             points=[
                 np.insert(wall_join_point, 1, 0.0),
                 np.insert(target_join_point, 1, 0.0),
-            ]
+            ],
+            label=label,
         )
-        return BluemiraWire([wire], label=label)
 
     def _make_fluxline_baffle(
         self,
         label: str,
         wall_join_point: np.ndarray,
         target_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Make a baffle using the divertor leg flux line shape.
