@@ -78,6 +78,7 @@ class ConvergenceCriterion(ABC):
         self,
         old_val: npt.NDArray[np.float64],
         new_val: npt.NDArray[np.float64],
+        /,
         i: int,
         *,
         print_status: bool = True,

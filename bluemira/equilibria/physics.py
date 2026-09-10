@@ -480,7 +480,7 @@ def calc_p_average(eq: Equilibrium) -> float:
 
 def _calc_p_average(
     pressure_map: npt.NDArray,
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -533,7 +533,7 @@ def calc_beta_t(eq: Equilibrium) -> float:
 
 def _calc_beta_t(
     pressure_map: npt.NDArray[np.float64],
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -653,7 +653,7 @@ def _calc_beta_p(
 
 def _calc_beta_p_approx(
     pressure_map: npt.NDArray[np.float64],
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,

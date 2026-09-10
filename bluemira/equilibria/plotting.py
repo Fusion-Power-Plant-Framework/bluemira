@@ -103,6 +103,8 @@ class Plotter:
     Utility plotter abstract object
     """
 
+    ax: Axes | list[Axes]
+
     def __init__(self, ax=None, *, subplots=EqSubplots.XZ, nrows=1, ncols=2, **kwargs):
         for kwarg in kwargs:
             if kwarg not in PLOT_DEFAULTS:
@@ -178,6 +180,8 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
+    ax: Axes
+
     def __init__(
         self,
         grid: Grid,
@@ -248,6 +252,8 @@ class LimiterPlotter(Plotter):
     """
     Utility class for plotting Limiter objects
     """
+
+    ax: Axes
 
     def __init__(self, limiter, ax=None, **kwargs):
         super().__init__(ax)

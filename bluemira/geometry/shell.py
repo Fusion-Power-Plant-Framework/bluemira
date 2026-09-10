@@ -34,7 +34,9 @@ class BluemiraShell(BluemiraGeo):
         Label to assign to the shell
     """
 
-    def __init__(self, boundary: list[BluemiraFace], label: str = ""):
+    def __init__(
+        self, boundary: BluemiraFace | list[BluemiraFace] | None, label: str = ""
+    ):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
@@ -85,21 +87,21 @@ class BluemiraShell(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the shell.
         """
         return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the shell.
         """
         return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
-    def faces(self) -> tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace, ...]:
         """
         The faces of the shell.
         """

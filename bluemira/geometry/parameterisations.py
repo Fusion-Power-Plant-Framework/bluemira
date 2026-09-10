@@ -46,7 +46,7 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, Var
 from bluemira.utilities.plot_tools import str_to_latex
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Sequence
 
     from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
 
@@ -1374,8 +1374,8 @@ def _reflect(value: float, reflection_point: float):
 
 
 def _get_centres(
-    angles: list[float],
-    radii: list[float],
+    angles: Sequence[float],
+    radii: Sequence[float],
     x_start: float,
     z_start: float,
     *,
@@ -1861,8 +1861,8 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     def _make_control_points(
         p0: list[float],
         p3: list[float],
-        theta0: list[float],
-        theta3: list[float],
+        theta0: float,
+        theta3: float,
         l_start: float,
         l_end: float,
     ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
@@ -2055,7 +2055,7 @@ class PictureFrameTools:
         z_top: float,
         z_mid: float,
         ri: float,
-        axis: Iterable[float] = (0, -1, 0),
+        axis: npt.ArrayLike = (0, -1, 0),
         *,
         flip: bool = False,
     ) -> BluemiraWire:
@@ -2209,7 +2209,7 @@ class PictureFrameTools:
         z: float,
         r_i: float,
         r_o: float,
-        axis: Iterable[float] = (0, 1, 0),
+        axis: npt.ArrayLike = (0, 1, 0),
         *,
         flip: bool = False,
     ) -> BluemiraWire:
@@ -2389,14 +2389,12 @@ class PictureFrameTools:
         )
 
     def _connect_straight_to_inner_limb(
-        self, top: npt.NDArray[np.float64], bottom: npt.NDArray[np.float64]
+        self, top: npt.ArrayLike, bottom: npt.ArrayLike
     ) -> BluemiraWire:
         return self._inner_limb(top, bottom)
 
     @staticmethod
-    def _inner_limb(
-        p1: npt.NDArray[np.float64], p2: npt.NDArray[np.float64]
-    ) -> BluemiraWire:
+    def _inner_limb(p1: npt.ArrayLike, p2: npt.ArrayLike) -> BluemiraWire:
         return make_polygon([p1, p2], label="inner_limb")
 
     @staticmethod
