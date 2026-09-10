@@ -384,9 +384,9 @@ class MaximiseSelector(RipplePointSelector):
         tf_wire = geom.create_shape()
         self.solver.update_cage(tf_wire)
 
-        def f_max_ripple(alpha):
+        def f_max_ripple(vector):
             assert self._wire is not None  # noqa: S101
-            point = self._wire.value_at(alpha)
+            point = self._wire.value_at(vector)
             return -self.solver.ripple(*point)
 
         result = optimise(
@@ -471,6 +471,8 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
     The geometry parameterisation is updated in place
     """
 
+    params: RippleConstrainedLengthGOPParams
+
     def __init__(
         self,
         parameterisation: GeometryParameterisation,
@@ -480,7 +482,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         params: ParameterFrameLike,
         wp_cross_section: BluemiraWire,
         ripple_wire: BluemiraWire,
-        ripple_selector: RipplePointSelector | None = None,
+        ripple_selector: RipplePointSelector,
         keep_out_zone: BluemiraWire | None = None,
         rip_con_tol: float = 1e-3,
         koz_con_tol: float = 1e-3,
