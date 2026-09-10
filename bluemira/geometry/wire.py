@@ -52,7 +52,11 @@ class BluemiraWire(BluemiraGeo):
     """
 
     def __init__(
-        self, boundary: Sequence[cadapi.apiWire | BluemiraWire], label: str = ""
+        self,
+        boundary: cadapi.apiWire
+        | BluemiraWire
+        | Sequence[cadapi.apiWire | BluemiraWire],
+        label: str = "",
     ):
         boundary_classes = [type(self), cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
@@ -313,7 +317,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(vertexes)
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The ordered edges of the wire.
         """
