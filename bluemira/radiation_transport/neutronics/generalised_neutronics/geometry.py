@@ -15,7 +15,8 @@ from typing import TYPE_CHECKING
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
-from bluemira.geometry.tools import check_touching_solids
+from bluemira.geometry.error import GeometryError
+from bluemira.geometry.tools import check_touching_solids, repair_overlapping_solids
 from bluemira.materials.error import MaterialsError
 
 if TYPE_CHECKING:
@@ -100,9 +101,8 @@ class NeutronicsGeometryManagers(ComponentManager):
                     discretisation=discretisation,
                 )
             )
-
         geom_managers = cls(component_tree)
-        # geom_managers.inspect_overlaps()
+        geom_managers.inspect_fix_overlaps(component_managers)
         geom_managers.inspect_materials()
 
         return geom_managers
@@ -120,32 +120,23 @@ class NeutronicsGeometryManagers(ComponentManager):
     @staticmethod
     def _get_all_solids(
         components: list[Component],
-    ) -> list[tuple[BluemiraSolid, list[str]]]:
+    ) -> list[tuple[BluemiraSolid, str]]:
         """
-        Get all XYZ solids and their full component hierarchies.
+        Get all XYZ solids and their parent component names.
 
         Returns
         -------
-        list[tuple[BluemiraSolid, list[str]]]
+        list[tuple[BluemiraSolid, str]]
         """
         all_solids = []
-
         for component in components:
             xyz_comps = component.get_component("xyz", first=False)
-
-            for xyz in xyz_comps:
-                hierarchy = []
-                current = xyz
-
-                while current is not None:
-                    hierarchy.append(current.name)
-                    current = current.parent
-
-                all_solids.append((xyz.children[0].shape, hierarchy))
-
+            all_solids.extend(
+                (xyz.children[0].shape, xyz.parent.name) for xyz in xyz_comps
+            )
         return all_solids
 
-    def inspect_overlaps(
+    def inspect_fix_overlaps(
         self, original_comp_managers: list[ComponentManager], tolerance: float = 1e-10
     ):
         """
@@ -169,40 +160,69 @@ class NeutronicsGeometryManagers(ComponentManager):
             manager.component() for manager in original_comp_managers
         ])
 
-        for i, (solid_a, hierarchy_a) in enumerate(all_solids):
-            for solid_b, hierarchy_b in all_solids[i + 1 :]:
+        for i in range(len(all_solids)):
+            solid_a, name_a = all_solids[i]
+            overlapping = []
+
+            for j, (solid_b, name_b) in enumerate(all_solids[i + 1 :], start=i + 1):
                 intersection = solid_a.shape.intersect(solid_b.shape)
 
                 if intersection.Volume() > tolerance:
                     # check if the original solids were supposed to touch
-                    # Note: rebuilt geometry has "Neutronics Geometry" appended
-                    # to the hierarchy
                     orig_a = next(
-                        solid
-                        for solid, hierarchy in all_orig_solids
-                        if hierarchy == hierarchy_a[:-1]
+                        solid for solid, name in all_orig_solids if name == name_a
                     )
                     orig_b = next(
-                        solid
-                        for solid, hierarchy in all_orig_solids
-                        if hierarchy == hierarchy_b[:-1]
+                        solid for solid, name in all_orig_solids if name == name_b
                     )
                     should_touch = check_touching_solids(orig_a, orig_b, tolerance)
 
                     if not should_touch:
                         raise ValueError(
                             f"Desplining Created Overlapping solids. "
-                            f"{hierarchy_a[1]} overlaps {hierarchy_b[1]} by a volume "
+                            f"{name_a} overlaps {name_b} by a volume "
                             f"{intersection.Volume()} m^3. In original Geometry, "
                             f" they should not even touch. Please increase "
                             "the discretisations to avoid overlaps in rebuilt solids."
                         )
-                    bluemira_warn(
-                        f"{hierarchy_a[1]} overlaps {hierarchy_b[1]} by a volume "
-                        f"{intersection.Volume()} m^3. In original Geometry, "
-                        f" they should touch instead. Running Overlap fixing. "
-                    )
-                    # Running Overlap
+
+                    overlapping.append((j, name_b, intersection.Volume()))
+
+            if overlapping:
+                bluemira_warn(
+                    f"{name_a} overlaps "
+                    f"{', '.join(name for _, name, _ in overlapping)} "
+                    f"by volumes "
+                    f"{', '.join(f'{volume} m^3' for _, _, volume in overlapping)}. "
+                    f"In original Geometry, they should touch instead. "
+                    f"Running Overlap fixing."
+                )
+
+                for j, name_b, _ in overlapping:
+                    solid_b, _ = all_solids[j]
+
+                    try:
+                        solid_a, solid_b = repair_overlapping_solids(solid_a, solid_b)
+                        all_solids[j] = (solid_b, name_b)
+
+                        # Assuming only one xyz, works because of our earlier
+                        #  _get_all_solid() logic
+                        self.component().get_component(name_b).get_component(
+                            "xyz"
+                        ).children[0].shape = solid_b
+
+                    except GeometryError as e:
+                        bluemira_warn(
+                            f"Could not repair overlap between "
+                            f"{name_a} and {name_b}: {e}"
+                        )
+
+                all_solids[i] = (solid_a, name_a)
+
+                # Immediately replace the repaired A
+                self.component().get_component(name_a).get_component("xyz").children[
+                    0
+                ].shape = solid_a
 
     def inspect_materials(self):
         """
@@ -221,31 +241,3 @@ class NeutronicsGeometryManagers(ComponentManager):
                         f"Component manager '{comp.name}' does not have"
                         " a material assigned."
                     )
-
-    # def imprint_and_replace(self, tolerance: float = 1e-10):
-    #     """
-
-    #     """
-    #     overlaps = self.find_overlaps(tolerance)
-
-    #     def _find_physical_component(component, name):
-    #         """Find the PhysicalComponent with ``name`` under an ``xyz`` component."""
-    #         xyzs = component.get_component("xyz", first=False)
-
-    #         for xyz in xyzs:
-    #             for child in xyz.children:
-    #                 if isinstance(child, PhysicalComponent) and child.name == name:
-    #                     return child
-
-    #     for (component_name_1, name_1), overlapping_components in overlaps.items():
-
-    #         parent_1 = self.component().get_component(component_name_1)
-    #         component_1 = _find_physical_component(parent_1, name_1)
-
-    #         for component_name_2, name_2 in overlapping_components:
-    #             parent_2 = self.component().get_component(component_name_2)
-    #             component_2 = _find_physical_component(parent_2, name_2)
-
-    #             print(component_1)
-    #             print(component_2)
-    #             print("")
