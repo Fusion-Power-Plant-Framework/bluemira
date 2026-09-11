@@ -175,15 +175,17 @@ class NeutronicsGeometryManagers(ComponentManager):
 
                 if intersection.Volume() > tolerance:
                     # check if the original solids were supposed to touch
+                    # Note: rebuilt geometry has "Neutronics Geometry" appended
+                    # to the hierarchy
                     orig_a = next(
                         solid
                         for solid, hierarchy in all_orig_solids
-                        if hierarchy == hierarchy_a
+                        if hierarchy == hierarchy_a[:-1]
                     )
                     orig_b = next(
                         solid
                         for solid, hierarchy in all_orig_solids
-                        if hierarchy == hierarchy_b
+                        if hierarchy == hierarchy_b[:-1]
                     )
                     should_touch = check_touching_solids(orig_a, orig_b, tolerance)
 
