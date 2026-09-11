@@ -7,23 +7,62 @@
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.error import ComponentError
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon, revolve_shape
+from bluemira.geometry.tools import (
+    make_polygon,
+)
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
 
 
-def has_splines(bm_solid: BluemiraSolid) -> bool:
+def check_face_has_splines(bm_face: BluemiraFace) -> bool:
     """
-    Inspect if the solid has faces
-    containing spline/Bezier edges.
+    Inspect if the face contains spline/Bezier edges.
+
+    Parameters
+    ----------
+    bm_face:
+        BluemiraFace
+
+    Returns
+    -------
+    bool
+        True if the face has splines, else False.
+    """
+    face = bm_face.shape
+
+    face_type = (
+        face.geomType() if hasattr(face, "geomType") else face.Surface.__class__.__name__
+    )
+
+    if face_type in {"BSPLINE", "BEZIER", "BSplineSurface", "BezierSurface"}:
+        return True
+
+    edges = (
+        face.Edges() if hasattr(face, "Edges") and callable(face.Edges) else face.Edges
+    )
+
+    for edge in edges:
+        edge_type = (
+            edge.geomType()
+            if hasattr(edge, "geomType")
+            else edge.Curve.__class__.__name__
+        )
+
+        if edge_type in {"BSPLINE", "BEZIER", "BSplineCurve", "BezierCurve"}:
+            return True
+
+    return False
+
+
+def check_solid_has_splines(bm_solid: BluemiraSolid) -> bool:
+    """
+    Inspect if the solid has faces containing spline/Bezier edges.
 
     Parameters
     ----------
@@ -33,79 +72,29 @@ def has_splines(bm_solid: BluemiraSolid) -> bool:
     Returns
     -------
     bool
-        True if the solid has splines, else False
+        True if the solid has splines, else False.
     """
-    # access the cadquery/freecad solid shape
-    solid = bm_solid.shape
-    planar_faces = []
-    revolution_faces = []
-
-    faces = (
-        solid.Faces()
-        if hasattr(solid, "Faces") and callable(solid.Faces)
-        else solid.Faces
-    )
-
-    for i, face in enumerate(faces):
-        face_type = (
-            face.geomType()
-            if hasattr(face, "geomType")
-            else face.Surface.__class__.__name__
-        )
-
-        if face_type in {"BSPLINE", "BEZIER", "BSplineSurface", "BezierSurface"}:
-            return True
-
-        edges = (
-            face.Edges()
-            if hasattr(face, "Edges") and callable(face.Edges)
-            else face.Edges
-        )
-
-        spline_edges = [
-            (
-                edge.geomType()
-                if hasattr(edge, "geomType")
-                else edge.Curve.__class__.__name__
-            )
-            for edge in edges
-            if (
-                edge.geomType()
-                if hasattr(edge, "geomType")
-                else edge.Curve.__class__.__name__
-            )
-            in {"BSPLINE", "BEZIER", "BSplineCurve", "BezierCurve"}
-        ]
-
-        if not spline_edges:
-            continue
-
-        if face_type in {"PLANE", "Plane"}:
-            planar_faces.append(i)
-        elif face_type in {"REVOLUTION", "Revolution"}:
-            revolution_faces.append(i)
-
-    return bool(planar_faces or revolution_faces)
+    return any(check_face_has_splines(face) for face in bm_solid.faces)
 
 
-def create_desplined_component_360(
-    inp_component: Component,
+def create_desplined_xz_component(
+    xz_component: Component,
     discretisation: int = 100,
     *,
     fallback_to_existing_discretisation: bool = False,
 ) -> Component:
     """
-    Despline relevant splined edges and create a fully revolved 360° solid.
+    Despline relevant splined edges in xz component.
 
     This is suitable for axisymmetric neutronics, where the geometry is
     assumed to be toroidally symmetric.
 
-    **Does not consider more than one child under xz or xyz components
+    **Does not consider more than one child under xz
 
     Parameters
     ----------
-    inp_component
-        Component containing the original 2D (xz) and 3D (xyz) geometry.
+    xz_component
+        Component containing the original 2D (xz) geometry.
     discretisation
         Discretisation for splined boundary (the total boundary of the
         face that has splined face is discretised).
@@ -113,7 +102,7 @@ def create_desplined_component_360(
     Returns
     -------
     Component
-        Component with desplined xz and fully revolved 360° xyz components.
+        Component with desplined xz boundaries.
 
     Raises
     ------
@@ -122,146 +111,61 @@ def create_desplined_component_360(
         xz component does not contain exactly one face.
     """
     # only consider one sub-component
-    xz_component = inp_component.get_component("xz")
-    xyz_component = inp_component.get_component("xyz")
 
-    if not (xz_component and xyz_component):
-        raise ComponentError(
-            "Input component should have both of xz and xyz"
-            " components to use the create_desplined_component_360()"
-            " function"
+    desplined_comp = Component(xz_component.name)
+
+    if len(xz_component.leaves) > 1:
+        bluemira_warn(
+            "create_desplined_comp_component() only supports "
+            "one child. Considering first child only."
         )
 
-    desplined_xz = Component(xz_component.name)
-    desplined_xyz = Component(xyz_component.name)
+    face = xz_component.children[0].shape
+    if not check_face_has_splines(face):
+        desplined_comp.add_child(xz_component.children[0].copy())
+        return desplined_comp
 
-    for xz_child, xyz_child in zip(
-        xz_component.children, xyz_component.children, strict=False
-    ):
-        xz_faces = xz_child.leaves
-
-        if len(xz_faces) != 1:
-            raise ComponentError(
-                f"{xz_child.name} should contain one face, "
-                f"but {len(xz_faces)} were found."
+    # Else, Despline
+    for i, wire in enumerate(face.boundary):
+        # check if the discretisation is enough
+        if len(wire.vertexes.T) - 1 > discretisation:
+            # current discretisation {len(wire.vertexes.T)-2
+            # excluding endpoints
+            # parent.name is used as in general name of xz components are "xz"
+            bluemira_warn(
+                f"{xz_component.name} for {xz_component.parent.name},"
+                f" xz boundary wire {i}:"
+                f" The discretisation specified {discretisation}"
+                " is lower than the wire's current discretisation"
+                f" {len(wire.vertexes.T) - 1}."
             )
-
-        face = xz_faces[0].shape
-
-        if not has_splines(xyz_child.get_component_properties("shape")):
-            desplined_xz.add_child(xz_child.copy())
-            desplined_xyz.add_child(xyz_child.copy())
-            continue
-
-        start_time = time.perf_counter()
-
-        for i, wire in enumerate(face.boundary):
-            # check if the discretisation is enough
-            if len(wire.vertexes.T) - 1 > discretisation:
-                # current discretisation {len(wire.vertexes.T)-2
-                # excluding endpoints
+            if fallback_to_existing_discretisation:
                 bluemira_warn(
-                    f"{inp_component.name}, xz boundary wire {i}:"
-                    f" The discretisation specified {discretisation}"
-                    " is lower than the wire's current discretisation"
-                    f" {len(wire.vertexes.T) - 1}."
+                    f"falling back to the wire's current discretisation: "
+                    f"{len(wire.vertexes.T) - 1}"
                 )
-                if fallback_to_existing_discretisation:
-                    bluemira_warn(
-                        f"falling back to the wire's current discretisation: "
-                        f"{len(wire.vertexes.T) - 1}"
-                    )
-                    discretisation = len(wire.vertexes.T) - 1
+                discretisation = len(wire.vertexes.T) - 1
 
-        boundaries = [
-            make_polygon(
-                wire.discretise(
-                    ndiscr=discretisation,
-                    byedges=True,
-                ),
-                closed=wire.is_closed(),
-            )
-            for wire in face.boundary
-        ]
-
-        rebuilt_face = BluemiraFace(
-            boundaries,
-            label=face.label,
-        )
-
-        desplined_xz.add_child(
-            PhysicalComponent(
-                name=xz_child.name,
-                shape=rebuilt_face,
-            )
-        )
-        desplined_xyz_body = PhysicalComponent(
-            name=xyz_child.name,
-            shape=revolve_shape(
-                rebuilt_face,
-                base=(0, 0, 0),
-                direction=(0, 0, 1),
-                degree=360.0,
+    boundaries = [
+        make_polygon(
+            wire.discretise(
+                ndiscr=discretisation,
+                byedges=True,
             ),
-            material=xyz_child.get_component_properties("material"),
+            closed=wire.is_closed(),
         )
+        for wire in face.boundary
+    ]
 
-        elapsed_time = time.perf_counter() - start_time
-
-        # print desplining error, if any
-        original_volume = xyz_child.shape.volume
-        desplined_volume = desplined_xyz_body.shape.volume
-        volume_change = ((desplined_volume - original_volume) / original_volume) * 100
-
-        bluemira_print(
-            f"Desplining Stats: ({inp_component.name})\n"
-            f"Boundaries of xz face were discretised by {discretisation}\n"
-            f"Original Volume: {original_volume:.4f} m^3\n"
-            f"Desplined and 360 degree revolved solid's Volume: "
-            f"{desplined_volume:.4f} m^3\n"
-            f"Volume Change: {volume_change:+.2f}%\n"
-            f"Time taken: {elapsed_time:.3f} s\n"
-        )
-
-        desplined_xyz.add_child(desplined_xyz_body)
-
-    return Component(
-        inp_component.name,
-        children=[desplined_xz, desplined_xyz],
+    rebuilt_face = BluemiraFace(
+        boundaries,
+        label=face.label,
     )
 
-
-def despline_component_tree(
-    component: Component,
-    discretisation: int,
-) -> Component:
-    """
-    Despline all components in the tree
-
-    Returns
-    -------
-    :
-        The underlying components, all desplined,
-        with all descendants.
-
-    Notes
-    -----
-    * returned components would have only xz
-    and xyz views
-    """
-    children = {child.name: child for child in component.children}
-
-    if "xz" in children and "xyz" in children:
-        return create_desplined_component_360(
-            inp_component=component,
-            discretisation=discretisation,
-            fallback_to_existing_discretisation=True,
+    desplined_comp.add_child(
+        PhysicalComponent(
+            name=xz_component.name,
+            shape=rebuilt_face,
         )
-
-    return Component(
-        component.name,
-        children=[
-            despline_component_tree(child, discretisation)
-            for child in component.children
-        ],
     )
+    return desplined_comp

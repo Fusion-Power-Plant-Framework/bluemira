@@ -2413,30 +2413,101 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
 
 
 # ======================================================================================
-# Check if two solids are Touching
+# Check if two geos are touching
 # ======================================================================================
-def check_touching_solids(
-    solid_1: BluemiraSolid, solid_2: BluemiraSolid, rtol: float = 1e-10
+
+
+def check_touching_geos(
+    geo_1: BluemiraSolid | BluemiraFace,
+    geo_2: BluemiraSolid | BluemiraFace,
+    rtol: float = 1e-10,
 ) -> bool:
     """
-    Check if two solids touch each other.
+    Check if two geos of the same type touch each other.
 
     Returns
     -------
     bool
-        if solids touch at any point (and no overlap), returns true
-        else false
+        True if the geos touch at any point and do not overlap,
+        else False.
+
+    Raises
+    ------
+    TypeError
+        if geo_1 and geo_2 are not of the same type
     """
-    dist, _ = distance_to(solid_1, solid_2)
-    mututal_distance = bool(np.isclose(dist, 0, rtol=rtol))
+    if type(geo_1) is not type(geo_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
 
-    # Mutual Distance can be 0 if there is an overlap or
-    # they are touching. hence also check the intesection
-    # volume
+    dist, _ = distance_to(geo_1, geo_2)
+    mutual_distance = bool(np.isclose(dist, 0, rtol=rtol))
 
-    intersection = solid_1.shape.intersect(solid_2.shape)
-    int_volume = bool(np.isclose(intersection.Volume(), 0, rtol=rtol))
+    # Mutual distance can be 0 if there is an overlap or they are touching.
+    # Hence also check the intersection area/volume.
+    intersection = geo_1.shape.intersect(geo_2.shape)
 
-    # If both the distance and intersection volume are zero,
-    # they are definitely touching (no overlap)
-    return bool(mututal_distance and int_volume)
+    intersection_size = (
+        intersection.Area() if isinstance(geo_1, BluemiraFace) else intersection.Volume()
+    )
+
+    intersection_is_zero = bool(np.isclose(intersection_size, 0, rtol=rtol))
+
+    # If both the distance and intersection size are zero,
+    # they are touching without overlap.
+    return bool(mutual_distance and intersection_is_zero)
+
+
+# ======================================================================================
+# Approximately fix the overlap of two overlapping geos
+# ======================================================================================
+
+
+def repair_overlapping_geos(
+    geo_1: BluemiraSolid | BluemiraFace,
+    geo_2: BluemiraSolid | BluemiraFace,
+    rtol: float = 1e-10,
+) -> tuple[BluemiraSolid | BluemiraFace, BluemiraSolid | BluemiraFace]:
+    """
+    Approximately fix the overlap of two overlapping geos of the same type.
+
+    Returns
+    -------
+    tuple[BluemiraSolid | BluemiraFace, BluemiraSolid | BluemiraFace]
+
+    Raises
+    ------
+    TypeError
+        if geo_1 and geo_2 are not of the same type
+    GeometryError
+        if boolean cut creates multiple geometries
+    ValueError
+        if provided geos do not overlap
+    """
+    if type(geo_1) is not type(geo_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
+
+    measure_1 = geo_1.volume if isinstance(geo_1, BluemiraSolid) else geo_1.area
+    measure_2 = geo_2.volume if isinstance(geo_2, BluemiraSolid) else geo_2.area
+
+    if measure_1 <= measure_2:
+        repaired = boolean_cut(geo_1, geo_2)
+        original_measure = measure_1
+        unchanged = geo_2
+    else:
+        repaired = boolean_cut(geo_2, geo_1)
+        original_measure = measure_2
+        unchanged = geo_1
+
+    if isinstance(repaired, list) and len(repaired) > 1:
+        raise GeometryError("boolean cut created multiple geometries")
+
+    repaired = repaired[0] if isinstance(repaired, list) else repaired
+
+    repaired_measure = (
+        repaired.volume if isinstance(repaired, BluemiraSolid) else repaired.area
+    )
+
+    if np.isclose(repaired_measure, original_measure, rtol=rtol):
+        raise ValueError("provided geos do not really overlap!")
+
+    return (repaired, unchanged) if measure_1 <= measure_2 else (unchanged, repaired)
