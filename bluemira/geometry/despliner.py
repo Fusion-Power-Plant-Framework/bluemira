@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -126,7 +125,7 @@ def despline_xz_face(
     This is suitable for axisymmetric neutronics, where the geometry is
     assumed to be toroidally symmetric.
 
-    **Does not consider more than one child under xz or xyz components
+    **Does not consider more than one child under xz
 
     Parameters
     ----------

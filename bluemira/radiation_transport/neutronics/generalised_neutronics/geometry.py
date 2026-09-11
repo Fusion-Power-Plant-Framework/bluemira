@@ -10,17 +10,17 @@ Geometry for generalised neutronics
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
+from bluemira.geometry.despliner import create_desplined_xz_component
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import check_touching_solids, repair_overlapping_solids
-from bluemira.materials.error import MaterialsError
-
-if TYPE_CHECKING:
-    from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.tools import (
+    check_touching_geos,
+    repair_overlapping_geos,
+    revolve_shape,
+)
 
 
 class GeometryModel(Enum):
@@ -29,9 +29,10 @@ class GeometryModel(Enum):
     considered for neutronics simulations
     """
 
-    # In-house axissymmetric neutronics CSG maker
+    # In-house axisymmetric neutronics CSG maker
     BLUEMRIA_CSG = auto()
-    # USER Specificd / NOT IMPLEMENTED YET
+
+    # USER Specified / NOT IMPLEMENTED YET
     CUSTOM = auto()
 
     @classmethod
@@ -45,14 +46,39 @@ class GeometryModel(Enum):
             ) from None
 
 
-class NeutronicsGeometryManagers(ComponentManager):
+def get_all_geo(
+    components: list[Component],
+    dims: str = "xyz",
+) -> list[tuple[Component, str]]:
     """
-    Class containing all the Component Managers for neutronics
+    Get all XYZ solids / XZ faces and their parent component names.
 
     Parameters
     ----------
-    All managers to be considered in the neutronics model
+    components
+        Components to inspect.
+    dims
+        Geometry dimension to retrieve, e.g. ``"xyz"`` or ``"xz"``.
 
+    Returns
+    -------
+    list[tuple[Component, str]]
+        Geometry component and the name of its parent component.
+    """
+    all_geo = []
+    for component in components:
+        comps = component.get_component(dims, first=False)
+        all_geo.extend((comp, comp.parent.name) for comp in comps)
+    return all_geo
+
+
+class NeutronicsGeometryManagers(ComponentManager):
+    """
+    Class containing all the Component Managers for neutronics.
+
+    Parameters
+    ----------
+    All managers to be considered in the neutronics model.
     """
 
     @classmethod
@@ -89,21 +115,71 @@ class NeutronicsGeometryManagers(ComponentManager):
                 f"{len(discretisations)}"
             )
 
-        component_tree = Component("Neutronics Geometry")
+        # Retrieve all original XZ and XYZ components.
+        all_orig_components = [manager.component() for manager in component_managers]
+        all_orig_xzs = get_all_geo(all_orig_components, "xz")
+        all_orig_xyzs = get_all_geo(all_orig_components, "xyz")
 
-        for manager, discretisation in zip(
-            component_managers,
+        # Assign the discretisation of each parent component to each XZ.
+        all_dscrt = []
+        for component, dscrt in zip(
+            all_orig_components,
             discretisations,
             strict=True,
         ):
-            component_tree.add_child(
-                manager.get_desplined_component_tree(
-                    discretisation=discretisation,
+            all_dscrt.extend(dscrt for _ in component.get_component("xz", first=False))
+
+        # First perform desplining.
+        all_desplined_comps = [
+            (
+                create_desplined_xz_component(
+                    xz,
+                    dscrt,
+                    fallback_to_existing_discretisation=True,
+                ),
+                parent_name,
+            )
+            for (xz, parent_name), dscrt in zip(
+                all_orig_xzs,
+                all_dscrt,
+                strict=True,
+            )
+        ]
+
+        # Check and fix overlaps.
+        updated_desplined_xzs = cls.inspect_fix_xz_overlaps(
+            all_orig_xzs,
+            all_desplined_comps,
+        )
+
+        # Create XYZ components by revolution and add them as children.
+        component_tree = Component("Neutronics Geometry")
+
+        for i, (desp_comp, _) in enumerate(updated_desplined_xzs):
+            xyz_shape = revolve_shape(
+                desp_comp.get_component("xz").shape,
+                base=(0, 0, 0),
+                direction=(0, 0, 1),
+                degree=360.0,
+            )
+
+            material = all_orig_xyzs[i][0].get_component_properties("material")
+
+            desp_comp.add_child(
+                PhysicalComponent(
+                    name="xyz",
+                    shape=xyz_shape,
+                    material=material,
                 )
             )
+
+            component_tree.add_child(desp_comp)
+
+        # Initiate a new instance. Each component should have one XZ and
+        # one XYZ component for simplicity. No need to keep the extensive
+        # component hierarchy from the original reactor.
         geom_managers = cls(component_tree)
-        geom_managers.inspect_fix_overlaps(component_managers)
-        geom_managers.inspect_materials()
+        geom_managers.component().add_children()
 
         return geom_managers
 
@@ -113,103 +189,97 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         Returns
         -------
-        list[ComponentManager]
+        list[Component]
         """
         return self.component().children
 
     @staticmethod
-    def _get_all_solids(
-        components: list[Component],
-    ) -> list[tuple[BluemiraSolid, str]]:
+    def inspect_fix_xz_overlaps(
+        original_xz_comps: list[tuple[Component, str]],
+        desplined_xz_comps: list[tuple[Component, str]],
+        tolerance: float = 1e-10,
+    ) -> list[tuple[Component, str]]:
         """
-        Get all XYZ solids and their parent component names.
+        Inspect all XZ faces to ensure that there is no overlap
+        between any two faces. Touching is allowed.
 
-        Returns
-        -------
-        list[tuple[BluemiraSolid, str]]
-        """
-        all_solids = []
-        for component in components:
-            xyz_comps = component.get_component("xyz", first=False)
-            all_solids.extend(
-                (xyz.children[0].shape, xyz.parent.name) for xyz in xyz_comps
-            )
-        return all_solids
-
-    def inspect_fix_overlaps(
-        self, original_comp_managers: list[ComponentManager], tolerance: float = 1e-10
-    ):
-        """
-        Inspect all managers to ensure that there is no overlap
-        between any two CadQuery solids. Touching is allowed.
+        Not running on solids as that takes longer.
 
         Parameters
         ----------
         tolerance
-            Minimum intersection volume considered to be an overlap.
+            Minimum intersection area considered to be an overlap.
+
+        Returns
+        -------
+        list[tuple[Component, str]]
+            Fixed XZ components.
 
         Raises
         ------
         ValueError
-            If desplining Created Overlapping solids which
-            are not supposed to even touch in the original
-            geometry
+            If desplining creates overlapping faces which were not
+            supposed to even touch in the original geometry.
         """
-        all_solids = self._get_all_solids(self.get_all_components())
-        all_orig_solids = self._get_all_solids([
-            manager.component() for manager in original_comp_managers
-        ])
-
-        for i in range(len(all_solids)):
-            solid_a, name_a = all_solids[i]
+        for i in range(len(desplined_xz_comps)):
+            xz_a, name_a = desplined_xz_comps[i]
             overlapping = []
 
-            for j, (solid_b, name_b) in enumerate(all_solids[i + 1 :], start=i + 1):
-                intersection = solid_a.shape.intersect(solid_b.shape)
+            for j, (xz_b, name_b) in enumerate(
+                desplined_xz_comps[i + 1 :],
+                start=i + 1,
+            ):
+                # assumes only one xz child
+                intersection = xz_a.children[0].shape.intersect(xz_b.shape)
+                intersection_area = intersection.Area()
 
-                if intersection.Volume() > tolerance:
-                    # check if the original solids were supposed to touch
+                if intersection_area > tolerance:
+                    # Check if the original XZ faces were supposed to touch.
                     orig_a = next(
-                        solid for solid, name in all_orig_solids if name == name_a
+                        geo for geo, name in original_xz_comps if name == name_a
                     )
                     orig_b = next(
-                        solid for solid, name in all_orig_solids if name == name_b
+                        geo for geo, name in original_xz_comps if name == name_b
                     )
-                    should_touch = check_touching_solids(orig_a, orig_b, tolerance)
+
+                    should_touch = check_touching_geos(
+                        orig_a.shape,
+                        orig_b.shape,
+                        tolerance,
+                    )
 
                     if not should_touch:
                         raise ValueError(
-                            f"Desplining Created Overlapping solids. "
-                            f"{name_a} overlaps {name_b} by a volume "
-                            f"{intersection.Volume()} m^3. In original Geometry, "
-                            f" they should not even touch. Please increase "
-                            "the discretisations to avoid overlaps in rebuilt solids."
+                            f"Desplining created overlapping faces. "
+                            f"{name_a} overlaps {name_b} by an area of "
+                            f"{intersection_area} m^2. In original geometry, "
+                            f"they should not even touch. Please increase "
+                            f"the discretisations to avoid overlaps in "
+                            f"rebuilt geometry."
                         )
 
-                    overlapping.append((j, name_b, intersection.Volume()))
+                    overlapping.append((j, name_b, intersection_area))
 
             if overlapping:
                 bluemira_warn(
                     f"{name_a} overlaps "
                     f"{', '.join(name for _, name, _ in overlapping)} "
-                    f"by volumes "
-                    f"{', '.join(f'{volume} m^3' for _, _, volume in overlapping)}. "
-                    f"In original Geometry, they should touch instead. "
-                    f"Running Overlap fixing."
+                    f"by areas "
+                    f"{', '.join(f'{area} m^2' for _, _, area in overlapping)}. "
+                    f"In original geometry, they should touch instead. "
+                    f"Running overlap fixing."
                 )
 
                 for j, name_b, _ in overlapping:
-                    solid_b, _ = all_solids[j]
+                    xz_b, _ = desplined_xz_comps[j]
 
                     try:
-                        solid_a, solid_b = repair_overlapping_solids(solid_a, solid_b)
-                        all_solids[j] = (solid_b, name_b)
+                        xz_a, xz_b = repair_overlapping_geos(
+                            xz_a,
+                            xz_b,
+                        )
 
-                        # Assuming only one xyz, works because of our earlier
-                        #  _get_all_solid() logic
-                        self.component().get_component(name_b).get_component(
-                            "xyz"
-                        ).children[0].shape = solid_b
+                        desplined_xz_comps[j] = (xz_b, name_b)
 
                     except GeometryError as e:
                         bluemira_warn(
@@ -217,27 +287,6 @@ class NeutronicsGeometryManagers(ComponentManager):
                             f"{name_a} and {name_b}: {e}"
                         )
 
-                all_solids[i] = (solid_a, name_a)
+                desplined_xz_comps[i] = (xz_a, name_a)
 
-                # Immediately replace the repaired A
-                self.component().get_component(name_a).get_component("xyz").children[
-                    0
-                ].shape = solid_a
-
-    def inspect_materials(self):
-        """
-        Inspect all managers to ensure that they are assigned
-        a material
-
-        Raises
-        ------
-        MaterialsError
-            If a component does not have a material assigned
-        """
-        for comp in self.get_all_components():
-            for xyz in comp.get_component("xyz", first=False):
-                if xyz.get_component_properties("material") is None:
-                    raise MaterialsError(
-                        f"Component manager '{comp.name}' does not have"
-                        " a material assigned."
-                    )
+        return desplined_xz_comps
