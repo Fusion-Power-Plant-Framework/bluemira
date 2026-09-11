@@ -7,7 +7,10 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.geometry.despliner import create_desplined_component_360, has_splines
+from bluemira.geometry.despliner import (
+    check_solid_has_splines,
+    create_desplined_component_360,
+)
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     extrude_shape,
@@ -101,12 +104,12 @@ def bezier_yz_extruded():
         ("bezier_yz_extruded", True),
     ],
 )
-def test_has_splines(request, fixture, expected):
+def test_check_solid_has_splines(request, fixture, expected):
     """
-    Test has_splines() is correctly identifying
+    Test check_solid_has_splines() is correctly identifying
     solids with and without splines
     """
-    assert has_splines(request.getfixturevalue(fixture)) is expected
+    assert check_solid_has_splines(request.getfixturevalue(fixture)) is expected
 
 
 @pytest.fixture
@@ -179,7 +182,7 @@ def test_create_desplined_component(splined_d_shape_component, discretisation):
     )
 
     assert (
-        has_splines(
+        check_solid_has_splines(
             desplined_component.get_component("xyz").get_component_properties("shape")
         )
         is False
