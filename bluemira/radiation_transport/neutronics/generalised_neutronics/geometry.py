@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.reactor import ComponentManager
+from bluemira.geometry.tools import check_touching_solids
 from bluemira.materials.error import MaterialsError
 
 if TYPE_CHECKING:
@@ -144,7 +145,9 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         return all_solids
 
-    def inspect_overlaps(self, tolerance: float = 1e-10):
+    def inspect_overlaps(
+        self, original_comp_managers: list[ComponentManager], tolerance: float = 1e-10
+    ):
         """
         Inspect all managers to ensure that there is no overlap
         between any two CadQuery solids. Touching is allowed.
@@ -156,21 +159,48 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         Raises
         ------
-        TypeError
-            If a component does not contain a CadQuery Solid.
+        ValueError
+            If desplining Created Overlapping solids which
+            are not supposed to even touch in the original
+            geometry
         """
         all_solids = self._get_all_solids(self.get_all_components())
+        all_orig_solids = self._get_all_solids([
+            manager.component() for manager in original_comp_managers
+        ])
 
         for i, (solid_a, hierarchy_a) in enumerate(all_solids):
             for solid_b, hierarchy_b in all_solids[i + 1 :]:
                 intersection = solid_a.shape.intersect(solid_b.shape)
 
                 if intersection.Volume() > tolerance:
+                    # check if the original solids were supposed to touch
+                    orig_a = next(
+                        solid
+                        for solid, hierarchy in all_orig_solids
+                        if hierarchy == hierarchy_a
+                    )
+                    orig_b = next(
+                        solid
+                        for solid, hierarchy in all_orig_solids
+                        if hierarchy == hierarchy_b
+                    )
+                    should_touch = check_touching_solids(orig_a, orig_b, tolerance)
+
+                    if not should_touch:
+                        raise ValueError(
+                            f"Desplining Created Overlapping solids. "
+                            f"{hierarchy_a[1]} overlaps {hierarchy_b[1]} by a volume "
+                            f"{intersection.Volume()} m^3. In original Geometry, "
+                            f" they should not even touch. Please increase "
+                            "the discretisations to avoid overlaps in rebuilt solids."
+                        )
                     bluemira_warn(
                         f"{hierarchy_a[1]} overlaps {hierarchy_b[1]} by a volume "
-                        f"{intersection.Volume()} m^3. Please increase "
-                        "the discretisations to avoid overlaps in rebuilt solids."
+                        f"{intersection.Volume()} m^3. In original Geometry, "
+                        f" they should touch instead. Running Overlap fixing. "
                     )
+                    # Running Overlap
 
     def inspect_materials(self):
         """
