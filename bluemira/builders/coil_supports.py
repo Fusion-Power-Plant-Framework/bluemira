@@ -675,7 +675,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
             KOZ constraint array
         """
         if np.isnan(vector).any():
-            bluemira_warn(f"NaN in xnorm {vector}")
+            bluemira_warn(f"NaN in x_norm {vector}")
             vector = np.array([0, D_TOLERANCE])
         straight_line = self.f_L_to_wire(self.wire, vector)
         straight_points = straight_line.discretise(ndiscr=self.n_koz_discr).xz.T
