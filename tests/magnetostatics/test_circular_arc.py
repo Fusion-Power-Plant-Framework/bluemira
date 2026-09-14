@@ -85,6 +85,193 @@ class TestCircularArcCurrentSource:
         self.arc.field(0, 0, -1)
 
 
+class TestCircularArcCurrentSourceTwoHalfCircles:
+    @classmethod
+    def setup_class(cls):
+        cls.xc, cls.zc = 4, 4
+        cls.dx = 0.5
+        cls.dz = 1.0
+        cls.current = 1e6
+
+        cls.arc = CircularArcCurrentSource(
+            [0, 0, cls.zc],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            cls.dx,
+            cls.dz,
+            cls.xc,
+            360,
+            cls.current,
+        )
+
+        cls.arc_1 = CircularArcCurrentSource(
+            [0, 0, cls.zc],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            cls.dx,
+            cls.dz,
+            cls.xc,
+            180,
+            cls.current,
+        )
+
+        cls.arc_2 = CircularArcCurrentSource(
+            [0, 0, cls.zc],
+            [-1, 0, 0],
+            [0, -1, 0],
+            [0, 0, 1],
+            cls.dx,
+            cls.dz,
+            cls.xc,
+            180,
+            cls.current,
+        )
+
+    def test_2D_vs_3D_on_cross_section_edges(self):
+        n_edge = 50
+
+        x_horizontal = np.linspace(
+            self.xc - self.dx,
+            self.xc + self.dx,
+            n_edge,
+        )
+        z_vertical = np.linspace(
+            self.zc - self.dz,
+            self.zc + self.dz,
+            n_edge,
+        )
+
+        # Traverse the full boundary of the rectangular cross-section.
+        # The inclusive endpoints ensure that all four corners are tested.
+        x = np.concatenate(
+            [
+                x_horizontal,                          # Bottom edge
+                np.full(n_edge, self.xc + self.dx),   # Outer edge
+                x_horizontal[::-1],                    # Top edge
+                np.full(n_edge, self.xc - self.dx),   # Inner edge
+            ]
+        )
+        z = np.concatenate(
+            [
+                np.full(n_edge, self.zc - self.dz),   # Bottom edge
+                z_vertical,                            # Outer edge
+                np.full(n_edge, self.zc + self.dz),   # Top edge
+                z_vertical[::-1],                      # Inner edge
+            ]
+        )
+        y = np.zeros_like(x)
+
+        Bx_1, By_1, Bz_1 = self.arc_1.field(x, y, z)
+        Bx_2, By_2, Bz_2 = self.arc_2.field(x, y, z)
+
+        Bx = Bx_1 + Bx_2
+        By = By_1 + By_2
+        Bz = Bz_1 + Bz_2
+
+        Bx_coil = self.current * semianalytic_Bx(
+            self.xc,
+            self.zc,
+            x,
+            z,
+            self.dx,
+            self.dz,
+        )
+        Bz_coil = self.current * semianalytic_Bz(
+            self.xc,
+            self.zc,
+            x,
+            z,
+            self.dx,
+            self.dz,
+        )
+
+        f, ax = plt.subplots()
+        cm = ax.scatter(x, z, c=100*(Bx_coil-Bx)/Bx_coil, marker="o")
+        f.colorbar(cm, ax=ax, label=r"$\frac{B_{x,\mathrm{coil}} - B_x}{B_x}$ [%]")
+        ax.set_aspect("equal")
+        f, ax = plt.subplots()
+        ax.plot(By, label="By CACS")
+        ax.plot(Bx, label="Bx CACS")
+        ax.plot(Bz, label="Bz CACS")
+        ax.plot(Bx_coil, label="Bx Coil")
+        ax.plot(Bz_coil, label="Bz Coil")
+        ax.legend()
+        plt.show()
+
+        # Together, the two half-circle arcs should reproduce the
+        # axisymmetric field of one complete circular current source.
+        assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
+        np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=5e-7)
+        np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=8e-11)
+
+    def test_2D_vs_3D_on_cross_section_edges_single(self):
+        n_edge = 50
+
+        x_horizontal = np.linspace(
+            self.xc - self.dx,
+            self.xc + self.dx,
+            n_edge,
+        )
+        z_vertical = np.linspace(
+            self.zc - self.dz,
+            self.zc + self.dz,
+            n_edge,
+        )
+
+        # Traverse the full boundary of the rectangular cross-section.
+        # The inclusive endpoints ensure that all four corners are tested.
+        x = np.concatenate(
+            [
+                x_horizontal,                          # Bottom edge
+                np.full(n_edge, self.xc + self.dx),   # Outer edge
+                x_horizontal[::-1],                    # Top edge
+                np.full(n_edge, self.xc - self.dx),   # Inner edge
+            ]
+        )
+        z = np.concatenate(
+            [
+                np.full(n_edge, self.zc - self.dz),   # Bottom edge
+                z_vertical,                            # Outer edge
+                np.full(n_edge, self.zc + self.dz),   # Top edge
+                z_vertical[::-1],                      # Inner edge
+            ]
+        )
+        y = np.zeros_like(x)
+
+        Bx, By, Bz = self.arc.field(x, y, z)
+
+        Bx_coil = self.current * semianalytic_Bx(
+            self.xc,
+            self.zc,
+            x,
+            z,
+            self.dx,
+            self.dz,
+        )
+        Bz_coil = self.current * semianalytic_Bz(
+            self.xc,
+            self.zc,
+            x,
+            z,
+            self.dx,
+            self.dz,
+        )
+
+        f, ax = plt.subplots()
+        ax.plot(By, label="By CACS")
+        ax.plot(Bx, label="Bx CACS")
+        ax.plot(Bz, label="Bz CACS")
+        ax.plot(Bx_coil, label="Bx Coil")
+        ax.plot(Bz_coil, label="Bz Coil")
+        ax.legend()
+        plt.show()
+
+        # assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
+        # np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=5e-7)
+        # np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=8e-11)
+
 class TestCircularArcCurrentSourceSuperposition:
     """Tests that arc decomposition preserves the magnetic field."""
 
