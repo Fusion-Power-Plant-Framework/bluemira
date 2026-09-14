@@ -15,13 +15,13 @@ import enum
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, TypeVar
 
+import numpy as np
+
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
 if TYPE_CHECKING:
-    import numpy as np
-
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.placement import BluemiraPlacement
 
@@ -121,7 +121,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
             if check:
                 return objs
         raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}, "
+            f"got {np.unique([type(o) for o in objs], sorted=False)}"
         )
 
     @property
