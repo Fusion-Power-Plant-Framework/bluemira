@@ -164,7 +164,7 @@ def create_desplined_xz_component(
 
     desplined_comp.add_child(
         PhysicalComponent(
-            name=xz_component.name,
+            name=xz_component.children[0].name,
             shape=rebuilt_face,
         )
     )
