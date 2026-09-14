@@ -304,7 +304,7 @@ packaging==26.3
     #   nbconvert
     #   pooch
     #   tables
-pandas==3.0.5
+pandas==2.3.3
     # via seaborn
 pandocfilters==1.5.1
     # via nbconvert

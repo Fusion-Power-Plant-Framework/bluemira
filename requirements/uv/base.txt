@@ -146,7 +146,7 @@ packaging==26.3
     #   matplotlib
     #   pooch
     #   tables
-pandas==3.0.5
+pandas==2.3.3
     # via seaborn
 periodictable==2.1.0
     # via
