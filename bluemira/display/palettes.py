@@ -11,7 +11,7 @@ Colour palettes
 from __future__ import annotations
 
 from itertools import cycle, zip_longest
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import seaborn as sns
@@ -83,6 +83,10 @@ class ColorPalette:
             idx = list(self._dict).index(idx_or_key)
             self._palette[idx] = type(self)({idx_or_key: value})
 
+    @overload
+    def __getitem__(self, idx_or_key: int) -> ColorType: ...
+    @overload
+    def __getitem__(self, idx_or_key: str) -> ColorPalette: ...
     def __getitem__(self, idx_or_key: int | str) -> ColorType | ColorPalette | None:
         """
         Get an item in the ColorPalette by index or key

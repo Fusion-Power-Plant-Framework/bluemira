@@ -52,7 +52,7 @@ class RotationAxis(Enum):
     Z = auto()
 
     @classmethod
-    def _missing_(cls, value: str | RotationAxis) -> RotationAxis:
+    def _missing_(cls, value: object | str | RotationAxis) -> RotationAxis:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -1044,11 +1044,8 @@ def vector_intersect(
 
 
 def get_bisection_line(
-    p1: npt.NDArray[float],
-    p2: npt.NDArray[float],
-    p3: npt.NDArray[float],
-    p4: npt.NDArray[float],
-) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    p1: npt.NDArray, p2: npt.NDArray, p3: npt.NDArray, p4: npt.NDArray
+) -> tuple[npt.NDArray, npt.NDArray]:
     """
     Find the bisection line between two lines.
 
@@ -1209,9 +1206,6 @@ class Coordinates:
     """
 
     __slots__ = ("_array", "_is_planar", "_normal_vector")
-    # =============================================================================
-    # Instantiation
-    # =============================================================================
 
     def __init__(self, xyz_array: npt.ArrayLike | dict[str, npt.ArrayLike]):
         self._array = _parse_to_xyz_array(xyz_array)
@@ -1502,7 +1496,7 @@ class Coordinates:
         """
         return {"x": self.x, "y": self.y, "z": self.z}
 
-    def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str:
+    def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str | None:
         """
         Save the Coordinates as a JSON file.
 
@@ -1653,11 +1647,11 @@ class Coordinates:
         if degree == 0.0:  # noqa: RUF069
             return
 
-        base = np.array(base, dtype=float)
+        base: npt.NDArray = np.array(base, dtype=float)
         if base.size != DIM:
             raise CoordinatesError("Base vector must be of size 3.")
 
-        direction = np.array(direction, dtype=float)
+        direction: npt.NDArray = np.array(direction, dtype=float)
         if direction.size != DIM:
             raise CoordinatesError("Direction vector must be of size 3.")
         direction /= np.linalg.norm(direction)
@@ -1680,7 +1674,7 @@ class Coordinates:
         CoordinatesError
             vector must be of size 3
         """
-        vector = np.array(vector)
+        vector: npt.NDArray = np.array(vector)
         if vector.size != DIM:
             raise CoordinatesError("Translation vector must be of size 3.")
 
@@ -1774,7 +1768,7 @@ class Coordinates:
     # Dunders (with different behaviour to array)
     # =============================================================================
 
-    def __eq__(self, other: Coordinates) -> bool:
+    def __eq__(self, other: object | Coordinates) -> bool:
         """
         Check the Coordinates for equality with other Coordinates.
 
@@ -1971,9 +1965,7 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(
-    xy1: np.ndarray, xy2: np.ndarray
-) -> np.ndarray[np.ndarray[np.float64], np.ndarray[np.float64]]:
+def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> npt.NDArray:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).
@@ -2161,11 +2153,7 @@ def convex_2d_hull_coordinates(coordinates: Coordinates) -> Coordinates:
     return Coordinates(filtered_points)
 
 
-def choose_direction(
-    vector: npt.NDArray[float],
-    lower_pt: npt.NDArray[float],
-    higher_pt: npt.NDArray[float],
-):
+def choose_direction(vector: npt.NDArray, lower_pt: npt.NDArray, higher_pt: npt.NDArray):
     """
     Flip the vector to the correct side (multiply by +1 or -1) so that
     when lower_pt is projected onto the vector, it has a smaller value than
