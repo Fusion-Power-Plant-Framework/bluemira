@@ -31,9 +31,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Build
-        uses: ./.github/workflows/actions/build
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@8a508cd57eca0d50972257c74ea92b35e66e0f55
         with:
           python-version: ${{ matrix.python-version }}
+          clone-bluemira: "false"
 
       - name: Install PROCESS
         if: ${{ matrix.process-version!= 'process_disabled' }}
