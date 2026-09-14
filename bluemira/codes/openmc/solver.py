@@ -146,8 +146,8 @@ class NeutronSourceCreator(Protocol):
     def __call__(
         self,
         equilibrium: Equilibrium,
-        parameters: PlasmaSourceParameters,
-    ) -> tuple[openmc.IndependentSource, float, float]:
+        source_parameters: PlasmaSourceParameters,
+    ) -> tuple[openmc.IndependentSource | Sequence[openmc.Source], float, float]:
         """Create an OpenMC source and its associated source rates."""
         ...
 
@@ -635,11 +635,10 @@ class OpenMCDAGTeardown(CodesTeardown):
         raise NotImplementedError
 
 
+TALLY_RETURN_TYPE = tuple[str, str, Sequence[openmc.Filter] | None]
 TALLY_FUNCTION_TYPE = Callable[
     [list[openmc.Material], CellStage | openmc.Geometry],
-    tuple[
-        str, str, list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter]
-    ],
+    list[TALLY_RETURN_TYPE],
 ]
 
 
