@@ -58,14 +58,14 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
         Radial Shafranov shift
     """
 
-    """Major Radius"""
     R_0: Parameter[float]
+    """Major Radius"""
 
-    """Pedestal location in normalized (minor) radius"""
     profile_rho_ped: Parameter[float]
+    """Pedestal location in normalized (minor) radius"""
 
-    """Reactor power"""
     P_fus: Parameter[float]
+    """Reactor power"""
 
     """Electron density profile descriptors"""
     n_profile_alpha: Parameter[float]
@@ -80,15 +80,15 @@ class OpenMCNeutronicsSolverParams(ParameterFrame):
     T_e_ped: Parameter[float]
     T_e_sep: Parameter[float]
 
-    """Ion to electron temperature ratio (volume-averaged)."""
     T_ie_ratio: Parameter[float]
-    """Volume-averaged fuel ion density [1/metre^3]."""
+    """Ion to electron temperature ratio (volume-averaged)."""
     n_i_fuel: Parameter[float]
-    """Volumed-averaged plasma electron density [1/metre^3]."""
+    """Volume-averaged fuel ion density [1/metre^3]."""
     n_e: Parameter[float]
+    """Volumed-averaged plasma electron density [1/metre^3]."""
 
-    """Shafranov shift"""
     shaf_shift: Parameter[float]
+    """Shafranov shift"""
 
 
 @dataclass(frozen=True)
@@ -113,12 +113,12 @@ class PlasmaSourceParameters:
     electron_temperature_ped: float  # [keV]
     electron_temperature_sep: float  # [keV]
 
+    ie_temperature_ratio: Parameter[float]
     """Ion to electron temperature ratio (volume-averaged)."""
-    ie_temperature_ratio: float
+    va_fuel_ion_density: Parameter[float]
     """Volume-averaged fuel ion density [1/metre^3]."""
-    va_fuel_ion_density: float
+    va_electron_density: Parameter[float]
     """Volumed-averaged plasma electron density [1/metre^3]."""
-    va_electron_density: float
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.
