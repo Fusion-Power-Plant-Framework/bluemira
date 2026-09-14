@@ -577,7 +577,14 @@ class Profile(ABC):
         """f*df/dpsi as a function of normalised psi"""
 
 
-class BetaIpProfile(Profile):
+class IpProfile(Profile):
+    """Profile that includes I_p and B_0"""
+
+    I_p: float
+    _B_0: float
+
+
+class BetaIpProfile(IpProfile):
     """
     Constrain poloidal Beta and plasma current following logic as laid out in
     :doi:`Jeon, 2015 <10.3938/jkps.67.843>` and
@@ -787,7 +794,7 @@ class BetaLiIpProfile(BetaIpProfile):
         self._l_i_min_iter = li_min_iter
 
 
-class CustomProfile(Profile):
+class CustomProfile(IpProfile):
     """
     User-specified profile functions p'(psi), ff'(psi)
     jtor = R*p' + ff'/(R*MU_0)

@@ -1213,9 +1213,6 @@ class Coordinates:
     """
 
     __slots__ = ("_array", "_is_planar", "_normal_vector")
-    # =============================================================================
-    # Instantiation
-    # =============================================================================
 
     def __init__(self, xyz_array: npt.ArrayLike | dict[str, npt.ArrayLike]):
         self._array = _parse_to_xyz_array(xyz_array)

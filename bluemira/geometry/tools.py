@@ -2347,7 +2347,6 @@ def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
                     temp_list.append(shape)
             else:
                 temp_list.append(deserialise_shape(item))
-
         mesh_options = _extract_mesh_options(shape_dict)
 
         shape = shape_type(label=label, boundary=temp_list)
