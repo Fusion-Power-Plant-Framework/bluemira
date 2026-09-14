@@ -189,7 +189,7 @@ class ConstructionParamValues:
         :
             The ConstructionParamValues object
         """
-        construction_params = construction_params or {}
+        construction_params: ConstructionParams = construction_params or {}
         comp_filter = (
             construction_params["component_filter"]
             if "component_filter" in construction_params

@@ -134,7 +134,8 @@ class OpenMCSimulationRuntimeParameters:
 
 # Signature for a function that creates an OpenMC neutron source
 NeutronSourceCreator: TypeAlias = Callable[
-    [Equilibrium, PlasmaSourceParameters], tuple[openmc.SourceBase, float, float]
+    [Equilibrium, PlasmaSourceParameters],
+    tuple[openmc.SourceBase | Sequence[openmc.SourceBase], float, float],
 ]
 CSGRunResult: TypeAlias = tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]
 DAGMCRunResult: TypeAlias = tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
@@ -643,9 +644,10 @@ class OpenMCDAGTeardown(CodesTeardown):
         raise NotImplementedError
 
 
+TALLY_RETURN_TYPE = tuple[str, str, Sequence[openmc.Filter] | None]
 TALLY_FUNCTION_TYPE = Callable[
-    [list[openmc.Material], Any],
-    Any,
+    [list[openmc.Material], CellStage | openmc.Geometry],
+    list[TALLY_RETURN_TYPE],
 ]
 
 
