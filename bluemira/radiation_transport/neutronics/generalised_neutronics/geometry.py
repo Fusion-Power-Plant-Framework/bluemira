@@ -164,15 +164,21 @@ class NeutronicsGeometryManagers(ComponentManager):
                 degree=360.0,
             )
 
+            name = all_orig_xyzs[i][0].get_component_properties("name")
             material = all_orig_xyzs[i][0].get_component_properties("material")
 
             desp_parent_component = Component(parent_name)
             desp_parent_component.add_child(desp_comp)
             desp_parent_component.add_child(
-                PhysicalComponent(
-                    name="xyz",
-                    shape=xyz_shape,
-                    material=material,
+                Component(
+                    "xyz",
+                    children=[
+                        PhysicalComponent(
+                            name=name,
+                            shape=xyz_shape,
+                            material=material,
+                        )
+                    ],
                 )
             )
 
