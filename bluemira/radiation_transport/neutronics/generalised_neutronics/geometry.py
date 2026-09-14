@@ -164,7 +164,7 @@ class NeutronicsGeometryManagers(ComponentManager):
                 degree=360.0,
             )
 
-            name = all_orig_xyzs[i][0].get_component_properties("name")
+            name = all_orig_xyzs[i][0].children[0].name
             material = all_orig_xyzs[i][0].get_component_properties("material")
 
             desp_parent_component = Component(parent_name)
