@@ -10,6 +10,7 @@ Just-in-time compilation and LowLevelCallable speed-up tools.
 
 import warnings
 from collections.abc import Callable, Iterable
+from itertools import pairwise
 
 import numba as nb
 import numpy as np
@@ -229,50 +230,139 @@ def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
     return LowLevelCallable(wrapped.ctypes)
 
 
+def _quad_helper(
+    func: Callable,
+    lower: float,
+    upper: float,
+    args: tuple[float, ...],
+    sign: float,
+    *,
+    points=None,
+    limit: int = 50,
+) -> float:
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", category=IntegrationWarning)
+
+        result = quad(
+            func,
+            lower,
+            upper,
+            args=args,
+            points=points,
+            limit=limit,
+        )[0]
+
+    if not np.isfinite(result):
+        raise MagnetostaticsIntegrationError("Infinite integral result!")
+
+    return sign * result
+
+
+def _shift_if_singular_angle(value: float, eps: float, *, plus: bool) -> float:
+    nearest_pi_multiple = np.round(value / np.pi) * np.pi
+    if np.isclose(value, nearest_pi_multiple, atol=eps, rtol=0.0):
+        if plus:
+            return value + eps
+        return value - eps
+    return value
+
+
 def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> float:
     """
-    Utility for integration of a function between bounds. Easier to refactor
-    integration methods.
+    Utility for integration of a function between bounds.
 
     Parameters
     ----------
     func:
-        The function to integrate. The integration variable should be the last
-        argument of this function.
+        The function to integrate. The integration variable should be the first
+        argument of this function, as expected by scipy.integrate.quad.
     args:
         The iterable of static arguments to the function.
     bound1:
-        The lower integration bound
+        The first integration bound.
     bound2:
-        The upper integration bound
+        The second integration bound.
 
     Returns
     -------
     :
-        The value of the integral of the function between the bounds
+        The value of the integral of the function between the bounds.
 
     Raises
     ------
     MagnetostaticsIntegrationError
-        Integration failed
+        Integration failed.
     """
-    warnings.filterwarnings("error", category=IntegrationWarning)
-    try:
-        result = quad(func, bound1, bound2, args=args)[0]
-    except IntegrationWarning:
-        # First attempt at fixing the integration problem
-        points = [
-            0.25 * (bound2 - bound1),
-            0.5 * (bound2 - bound1),
-            0.75 * (bound2 - bound1),
-        ]
-        try:
-            result = quad(func, bound1, bound2, args=args, points=points, limit=200)[0]
-        except IntegrationWarning as error:
-            raise MagnetostaticsIntegrationError from error
+    lower, upper = min(bound1, bound2), max(bound1, bound2)
+    sign = np.sign(bound2 - bound1)
+    if sign == 0:
+        return 0.0
 
-    warnings.filterwarnings("default", category=IntegrationWarning)
-    return result
+    # 1. Cheap path: try normal quad first.
+    try:
+        return _quad_helper(func, lower, upper, args, sign)
+    except (IntegrationWarning, ValueError, FloatingPointError):
+        pass
+
+    # 2. Medium path: use simple absolute breakpoints.
+    width = upper - lower
+    points = [
+        lower + 0.25 * width,
+        lower + 0.50 * width,
+        lower + 0.75 * width,
+    ]
+    points.extend(
+        np.pi
+        * np.arange(
+            int(np.floor(lower / np.pi)) - 1,
+            int(np.ceil(upper / np.pi)) + 2,
+        )
+    )
+
+    points = sorted({p for p in points if np.isfinite(p) and lower < p < upper})
+    try:
+        return _quad_helper(
+            func,
+            lower,
+            upper,
+            args,
+            sign,
+            points=points,
+            limit=200,
+        )
+    except (IntegrationWarning, ValueError, FloatingPointError):
+        pass
+
+    # 3. Expensive path: split and nudge endpoints around likely singularities.
+    eps = 1e-12 * max(1.0, abs(lower), abs(upper), width)
+
+    split_points = [lower, *points, upper]
+
+    result = 0.0
+
+    try:  # noqa: PLW0717
+        for a, b in pairwise(split_points):
+            aa = _shift_if_singular_angle(a, eps, plus=True)
+            bb = _shift_if_singular_angle(b, eps, plus=False)
+            if bb <= aa:
+                continue
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("error", category=IntegrationWarning)
+
+                result += _quad_helper(
+                    func,
+                    aa,
+                    bb,
+                    args,
+                    sign=1.0,
+                    limit=200,
+                )
+
+    except (IntegrationWarning, ValueError, FloatingPointError) as error:
+        raise MagnetostaticsIntegrationError from error
+
+    return sign * result
 
 
 def n_integrate(
