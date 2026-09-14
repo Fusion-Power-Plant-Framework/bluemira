@@ -82,17 +82,17 @@ class NeutronicsGeometryManagers(ComponentManager):
     """
 
     @classmethod
-    def from_component_managers(
+    def from_list_of_components(
         cls,
-        component_managers: list[ComponentManager],
+        components: list[Component],
         discretisations: list[int],
     ) -> NeutronicsGeometryManagers:
         """Create a NeutronicsGeometryManagers instance from component managers.
 
         Parameters
         ----------
-        component_managers
-            Component managers to include in the neutronics geometry.
+        components
+            All components to include in the neutronics geometry.
         discretisations
             Discretisation for each component manager.
 
@@ -108,22 +108,21 @@ class NeutronicsGeometryManagers(ComponentManager):
             If the number of discretisations does not match the number
             of component managers.
         """
-        if len(discretisations) != len(component_managers):
+        if len(discretisations) != len(components):
             raise ValueError(
-                f"number of components {len(component_managers)} "
+                f"number of components {len(components)} "
                 f"differs from provided number of discretisations "
                 f"{len(discretisations)}"
             )
 
         # Retrieve all original XZ and XYZ components.
-        all_orig_components = [manager.component() for manager in component_managers]
-        all_orig_xzs = get_all_geo(all_orig_components, "xz")
-        all_orig_xyzs = get_all_geo(all_orig_components, "xyz")
+        all_orig_xzs = get_all_geo(components, "xz")
+        all_orig_xyzs = get_all_geo(components, "xyz")
 
         # Assign the discretisation of each parent component to each XZ.
         all_dscrt = []
         for component, dscrt in zip(
-            all_orig_components,
+            components,
             discretisations,
             strict=True,
         ):
