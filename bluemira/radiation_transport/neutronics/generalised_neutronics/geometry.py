@@ -15,7 +15,6 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.despliner import despline_xz_component
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import (
     check_touching_geos,
     repair_overlapping_geos,
@@ -164,6 +163,48 @@ class NeutronicsGeometryManagers(ComponentManager):
         """
         return self.component().children
 
+    def inspect_xyz_overlaps(
+        self,
+        tolerance: float = 1e-10,
+    ):
+        """
+        Inspect all xyz solids to ensure that there is no overlap
+        Touching is allowed.
+
+        Running on solids takes longer. Just use it for sanity
+        checks.
+
+        Parameters
+        ----------
+        tolerance
+            Minimum intersection area considered to be an overlap.
+
+        """
+        all_comps = self.get_all_components()
+
+        for i, comp_a in enumerate(all_comps):
+            xyz_a = comp_a.get_component("xyz")
+            name_a = comp_a.name
+            xyz_a_solid = xyz_a.children[0].shape
+
+            for _, comp_b in enumerate(
+                all_comps[i + 1 :],
+                start=i + 1,
+            ):
+                # assumes only one xz child
+                name_b = comp_b.name
+                xyz_b = comp_b.get_component("xyz")
+                xyz_b_solid = xyz_b.children[0].shape
+                intersection = xyz_a_solid.shape.intersect(xyz_b_solid.shape)
+                intersection_vol = intersection.Volume()
+
+                if intersection_vol > tolerance:
+                    bluemira_warn(
+                        f"Desplining created overlapping solids. "
+                        f"{name_a} overlaps {name_b} by an volume of "
+                        f"{intersection_vol} m^3"
+                    )
+
     @staticmethod
     def inspect_fix_xz_overlaps(
         original_comps: list[Component],
@@ -191,6 +232,12 @@ class NeutronicsGeometryManagers(ComponentManager):
         ValueError
             If desplining creates overlapping faces which were not
             supposed to even touch in the original geometry.
+
+        Note
+        ------
+        overlap is corrected w.r.t the order of the component in the list.
+        i.e. if first wall comes first in the list, it will be cut by
+        the overlapping solids etc.
         """
         for i, comp_a in enumerate(desplined_comps):
             xz_a = comp_a.get_component("xz")
@@ -246,25 +293,14 @@ class NeutronicsGeometryManagers(ComponentManager):
                     f"Running overlap fixing."
                 )
 
-                for j, name_b, _ in overlapping:
-                    xz_b = desplined_comps[j].get_component("xz")
-                    xz_b_face = xz_b.children[0].shape
-                    try:
-                        xz_a, xz_b = repair_overlapping_geos(
-                            xz_a_face,
-                            xz_b_face,
-                        )
+                xz_b_faces = [
+                    desplined_comps[j].get_component("xz").children[0].shape
+                    for j, _, _ in overlapping
+                ]
 
-                        desplined_comps[j].get_component("xz").children[
-                            0
-                        ].shape = xz_b_face
-
-                    except GeometryError as e:
-                        bluemira_warn(
-                            f"Could not repair overlap between "
-                            f"{name_a} and {name_b}: {e}"
-                        )
-
-                desplined_comps[i].get_component("xz").children[0].shape = xz_a
+                # perform boolean cut of geo_1 by geos 2
+                desplined_comps[i].get_component("xz").children[
+                    0
+                ].shape = repair_overlapping_geos(xz_a_face, xz_b_faces)
 
         return desplined_comps
