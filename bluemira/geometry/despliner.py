@@ -77,8 +77,8 @@ def check_solid_has_splines(bm_solid: BluemiraSolid) -> bool:
     return any(check_face_has_splines(face) for face in bm_solid.faces)
 
 
-def create_desplined_xz_component(
-    xz_component: Component,
+def despline_xz_component(
+    component: Component,
     discretisation: int = 100,
     *,
     fallback_to_existing_discretisation: bool = False,
@@ -93,7 +93,7 @@ def create_desplined_xz_component(
 
     Parameters
     ----------
-    xz_component
+    component
         Component containing the original 2D (xz) geometry.
     discretisation
         Discretisation for splined boundary (the total boundary of the
@@ -102,7 +102,7 @@ def create_desplined_xz_component(
     Returns
     -------
     Component
-        Component with desplined xz boundaries.
+        Component with xz component with desplined boundaries.
 
     Raises
     ------
@@ -110,11 +110,12 @@ def create_desplined_xz_component(
         If the component does not have both xz and xyz geometry, or if the
         xz component does not contain exactly one face.
     """
+    desplined_comp = Component(component.name)
+
+    # only consider one xz component
+    xz_component = component.get_component("xz")
     # only consider one sub-component
-
-    desplined_comp = Component(xz_component.name)
-
-    if len(xz_component.leaves) > 1:
+    if len(xz_component.children) > 1:
         bluemira_warn(
             "create_desplined_comp_component() only supports "
             "one child. Considering first child only."
@@ -122,7 +123,9 @@ def create_desplined_xz_component(
 
     face = xz_component.children[0].shape
     if not check_face_has_splines(face):
-        desplined_comp.add_child(xz_component.children[0].copy())
+        desplined_comp.add_child(
+            Component("xz", children=[xz_component.children[0].copy()])
+        )
         return desplined_comp
 
     # Else, Despline
@@ -163,9 +166,14 @@ def create_desplined_xz_component(
     )
 
     desplined_comp.add_child(
-        PhysicalComponent(
-            name=xz_component.children[0].name,
-            shape=rebuilt_face,
+        Component(
+            "xz",
+            children=[
+                PhysicalComponent(
+                    name=xz_component.children[0].name,
+                    shape=rebuilt_face,
+                )
+            ],
         )
     )
     return desplined_comp
