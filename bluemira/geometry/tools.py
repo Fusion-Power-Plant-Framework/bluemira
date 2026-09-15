@@ -2581,7 +2581,7 @@ def check_touching_geos(
     respectively. These may be too strict for the geometry kernel's numerical
     precision.
     """
-    if type(geo_1) is not type(geo_2):
+    if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
         raise TypeError("geo_1 and geo_2 must be of the same type")
 
     if not np.isfinite(atol) or atol < 0:
