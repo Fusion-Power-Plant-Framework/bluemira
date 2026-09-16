@@ -673,7 +673,7 @@ def test_coil_toroidal_harmonic_amplitude_matrix_unit(
 
 @pytest.mark.parametrize(
     (
-        "n_allowed",
+        "max_harmonic_mode",
         "expected_cos",
         "expected_sin",
         "expected_cos_collocation",
@@ -688,7 +688,7 @@ def test_coil_toroidal_harmonic_amplitude_matrix_unit(
     ],
 )
 def test_toroidal_harmonics_to_positions(
-    n_allowed,
+    max_harmonic_mode,
     expected_cos,
     expected_sin,
     expected_cos_collocation,
@@ -733,25 +733,31 @@ def test_toroidal_harmonics_to_positions(
     colloc = collocation_points(plasma_boundary, point_type)
 
     # Test without collocation points
-    cos, sin = toroidal_harmonics_to_positions(th_params=th_params, n_allowed=n_allowed)
-    assert len(cos) == n_allowed
-    assert len(sin) == n_allowed
-    np.testing.assert_array_almost_equal(cos[n_allowed - 1][0][0], expected_cos)
-    np.testing.assert_array_almost_equal(sin[n_allowed - 1][0][0], expected_sin)
+    cos, sin = toroidal_harmonics_to_positions(
+        th_params=th_params, max_harmonic_mode=max_harmonic_mode
+    )
+    assert len(cos) == max_harmonic_mode
+    assert len(sin) == max_harmonic_mode
+    np.testing.assert_array_almost_equal(cos[max_harmonic_mode - 1][0][0], expected_cos)
+    np.testing.assert_array_almost_equal(sin[max_harmonic_mode - 1][0][0], expected_sin)
 
     # Test with collocation points
     cos, sin = toroidal_harmonics_to_positions(
-        th_params=th_params, n_allowed=n_allowed, collocation=colloc
+        th_params=th_params, max_harmonic_mode=max_harmonic_mode, collocation=colloc
     )
-    assert len(cos) == n_allowed
-    assert len(sin) == n_allowed
-    np.testing.assert_almost_equal(cos[n_allowed - 1][0], expected_cos_collocation)
-    np.testing.assert_almost_equal(sin[n_allowed - 1][0], expected_sin_collocation)
+    assert len(cos) == max_harmonic_mode
+    assert len(sin) == max_harmonic_mode
+    np.testing.assert_almost_equal(
+        cos[max_harmonic_mode - 1][0], expected_cos_collocation
+    )
+    np.testing.assert_almost_equal(
+        sin[max_harmonic_mode - 1][0], expected_sin_collocation
+    )
 
 
 @pytest.mark.parametrize(
     (
-        "n_degrees_of_freedom",
+        "max_harmonic_mode",
         "cos_m_chosen",
         "sin_m_chosen",
         "expected_error_mask_true",
@@ -826,7 +832,7 @@ def test_toroidal_harmonics_to_positions(
     ],
 )
 def test_approximation_from_psi_fitting(
-    n_degrees_of_freedom,
+    max_harmonic_mode,
     cos_m_chosen,
     sin_m_chosen,
     expected_error_mask_true,
@@ -880,7 +886,7 @@ def test_approximation_from_psi_fitting(
     mask_false = 1
     error, psi, cos, sin = _approximation_from_psi_fitting(
         th_params=th_params,
-        n_deg_of_freedom=n_degrees_of_freedom,
+        max_harmonic_mode=max_harmonic_mode,
         collocation=colloc,
         cos_m_chosen=cos_m_chosen,
         sin_m_chosen=sin_m_chosen,
@@ -895,7 +901,7 @@ def test_approximation_from_psi_fitting(
 
     error, psi, cos, sin = _approximation_from_psi_fitting(
         th_params=th_params,
-        n_deg_of_freedom=n_degrees_of_freedom,
+        max_harmonic_mode=max_harmonic_mode,
         collocation=colloc,
         cos_m_chosen=cos_m_chosen,
         sin_m_chosen=sin_m_chosen,
