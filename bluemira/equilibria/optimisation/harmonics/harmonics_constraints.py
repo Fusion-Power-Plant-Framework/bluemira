@@ -169,7 +169,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 class ToroidalHarmonicConstraint(UpdateableConstraint):
     """
     Toroidal harmonic constraints for the desired core plasma
-    of a conventional aspect ratio stokamak equilibria.
+    of a conventional aspect ratio tokamak equilibrium.
 
     Parameters
     ----------
