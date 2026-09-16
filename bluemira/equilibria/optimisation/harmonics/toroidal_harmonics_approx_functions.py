@@ -813,7 +813,7 @@ def _get_plasma_mask(
 
 def toroidal_harmonics_to_positions(
     th_params: ToroidalHarmonicsParams,
-    n_allowed: int,
+    max_harmonic_mode: int,
     collocation: Collocation | None = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -824,8 +824,8 @@ def toroidal_harmonics_to_positions(
     ----------
     th_params:
         Dataclass holding necessary parameters for the TH approximation
-    n_allowed:
-        The number of harmonic functions (and amplitudes) to use
+    max_harmonic_mode:
+        The number of harmonic modes to calculate for
     collocation:
         Collocation points at which to calculate psi
 
@@ -844,7 +844,7 @@ def toroidal_harmonics_to_positions(
     x = th_params.R if collocation is None else collocation.x
     z = th_params.Z if collocation is None else collocation.z
 
-    if n_allowed > np.size(x):
+    if max_harmonic_mode > np.size(x):
         raise EquilibriaError(
             "You must have more x-z points than chosen poloidal modes when sampling psi."
         )
@@ -855,14 +855,14 @@ def toroidal_harmonics_to_positions(
 
     Delta = np.cosh(collocation_tau) - np.cos(collocation_sigma)  # noqa: N806
     # Get sigma values for the grid
-    sigma_mult_mode = [m * collocation_sigma for m in range(n_allowed)]
+    sigma_mult_mode = [m * collocation_sigma for m in range(max_harmonic_mode)]
 
-    epsilon = 2 * np.ones(n_allowed)
+    epsilon = 2 * np.ones(max_harmonic_mode)
     epsilon[0] = 1
-    factorial_m = np.array([factorial(m) for m in range(n_allowed)])
+    factorial_m = np.array([factorial(m) for m in range(max_harmonic_mode)])
 
     if collocation is not None:
-        modes = np.arange(0, n_allowed)[:, None]
+        modes = np.arange(0, max_harmonic_mode)[:, None]
 
         # Need term to calculate psi from A
         # \psi = A * R_0 * sinh(\tau) / Delta
@@ -888,7 +888,7 @@ def toroidal_harmonics_to_positions(
         )
         return harmonics2collocation_cos, harmonics2collocation_sin
 
-    modes = np.arange(0, n_allowed)[:, None, None]
+    modes = np.arange(0, max_harmonic_mode)[:, None, None]
 
     # Need term to calculate psi from A
     # \psi = A * R_0 * sinh(\tau) / Delta
@@ -1036,6 +1036,7 @@ def toroidal_harmonic_approximation(
         len(th_params.th_coil_names),
     )
 
+    # Starting error for comparison
     error = np.inf
 
     for c in combinations(dof_id, n_degrees_of_freedom):
@@ -1048,7 +1049,7 @@ def toroidal_harmonic_approximation(
         error_new, approximate_coilset_psi, cos_amps, sin_amps = (
             _approximation_from_psi_fitting(
                 th_params,
-                n_degrees_of_freedom,
+                max_harmonic_mode,
                 collocation,
                 cos_m_chosen,
                 sin_m_chosen,
@@ -1116,7 +1117,7 @@ def _approximation_direct_from_currents(
 
 def _approximation_from_psi_fitting(
     th_params: ToroidalHarmonicsParams,
-    n_deg_of_freedom: int,
+    max_harmonic_mode: int,
     collocation: Collocation,
     cos_m_chosen: np.ndarray[int],
     sin_m_chosen: np.ndarray[int],
@@ -1145,12 +1146,13 @@ def _approximation_from_psi_fitting(
     The number of cos_m_chosen and sin_m_chosen must be equal to n_deg_of_freedom
     """
     # Calculate 1 more set of modes to account for the fact that we never select
-    # the sin 0 mode. This should not change the degrees of freedom used in the
+    # the sin 0 mode. This does not change the maximum harmonic mode used in the
     # approximation as we have already selected cos_m_chosen and sin_m_chosen
-    n_deg_of_freedom += 1
+    max_harmonic_mode += 1
+
     harmonics2collocation_cos, harmonics2collocation_sin = (
         toroidal_harmonics_to_positions(
-            th_params=th_params, n_allowed=n_deg_of_freedom, collocation=collocation
+            th_params=th_params, n_allowed=max_harmonic_mode, collocation=collocation
         )
     )
 
@@ -1166,7 +1168,7 @@ def _approximation_from_psi_fitting(
     )
 
     harmonics2grid_cos, harmonics2grid_sin = toroidal_harmonics_to_positions(
-        th_params=th_params, n_allowed=n_deg_of_freedom
+        th_params=th_params, n_allowed=max_harmonic_mode
     )
     harmonics2grid_cos = harmonics2grid_cos[np.array(cos_m_chosen), :]
     harmonics2grid_sin = harmonics2grid_sin[np.array(sin_m_chosen), :]
