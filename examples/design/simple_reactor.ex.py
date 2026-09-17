@@ -167,7 +167,7 @@ class PlasmaDesigner(Designer[GeometryParameterisation]):
     @staticmethod
     def _build_wire(params: PlasmaDesignerParams) -> GeometryParameterisation:
         return JohnerLCFS(
-            var_dict={
+            variables={
                 "r_0": {"value": params.R_0.value},
                 "z_0": {"value": params.z_0.value},
                 "a": {"value": params.R_0.value / params.A.value},
@@ -267,7 +267,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     def run(self) -> GeometryParameterisation:
         """Run the design of the TF coil."""
         parameterisation = self.parameterisation_cls(
-            var_dict=self.build_config["var_dict"]
+            variables=self.build_config["variables"]
         )
         min_dist_to_plasma = 1  # meter
         return self.minimise_tf_coil_size(parameterisation, min_dist_to_plasma)
@@ -420,7 +420,7 @@ build_config = {
         "designer": {
             "runmode": "run",
             "param_class": "PrincetonD",
-            "var_dict": {
+            "variables": {
                 "x1": {"value": 3.0, "fixed": True},
                 "x2": {"value": 15, "lower_bound": 12},
             },
