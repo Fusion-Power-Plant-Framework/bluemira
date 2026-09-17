@@ -253,7 +253,9 @@ def _quad_helper(
         )[0]
 
     if not np.isfinite(result):
-        raise MagnetostaticsIntegrationError("Infinite integral result!")
+        raise MagnetostaticsIntegrationError(
+            f"Infinite integral result! args={[float(a) for a in args]}"
+        )
 
     return sign * result
 
@@ -301,7 +303,12 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
     # 1. Cheap path: try normal quad first.
     try:
         return _quad_helper(func, lower, upper, args, sign)
-    except (IntegrationWarning, ValueError, FloatingPointError):
+    except (
+        IntegrationWarning,
+        ValueError,
+        FloatingPointError,
+        MagnetostaticsIntegrationError,
+    ):
         pass
 
     # 2. Medium path: use simple absolute breakpoints.
@@ -330,7 +337,12 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
             points=points,
             limit=200,
         )
-    except (IntegrationWarning, ValueError, FloatingPointError):
+    except (
+        IntegrationWarning,
+        ValueError,
+        FloatingPointError,
+        MagnetostaticsIntegrationError,
+    ):
         pass
 
     # 3. Expensive path: split and nudge endpoints around likely singularities.
@@ -360,7 +372,7 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
                 )
 
     except (IntegrationWarning, ValueError, FloatingPointError) as error:
-        raise MagnetostaticsIntegrationError from error
+        raise MagnetostaticsIntegrationError(f"{error} with args={args}") from error
 
     return sign * result
 

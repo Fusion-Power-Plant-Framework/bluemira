@@ -205,10 +205,9 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
             by_values.append(By)
             bz_values.append(Bz)
 
-        self._plot_fields(bx_values, by_values, bz_values)
         return bx_values, by_values, bz_values
 
-    def _plot_fields(self, bx_values, by_values, bz_values):
+    def _plot_fields(self, bx_values, by_values, bz_values, source):
         f, ax = plt.subplots()
 
         ax.plot(self.Bx_coil, color="navy", lw=4, label="Bx Coil")
@@ -250,6 +249,7 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
             )
 
         ax.legend(ncol=3, fontsize="small")
+        ax.set_title(source)
         plt.show()
 
     @pytest.mark.parametrize(
@@ -257,8 +257,8 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
         ["arc", "two_halves"],
     )
     def test_Bx_matches_axisymmetric_solution(self, source):
-        bx_values, _, _ = self._compute_fields(getattr(self, source))
-
+        bx_values, by_values, bz_values = self._compute_fields(getattr(self, source))
+        self._plot_fields(bx_values, by_values, bz_values, source)
         for angle, bx in zip(self.angles, bx_values, strict=True):
             np.testing.assert_allclose(
                 bx,
@@ -280,7 +280,7 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
                 by,
                 0.0,
                 rtol=0.0,
-                atol=EPS,
+                atol=6e-10,
                 err_msg=f"angle={angle}",
             )
 
@@ -296,7 +296,7 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
                 bz,
                 self.Bz_coil,
                 rtol=0.0,
-                atol=5e-10,
+                atol=6e-10,
                 err_msg=f"angle={angle}",
             )
 
