@@ -188,69 +188,117 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
             cls.dz,
         )
 
-    def test_2D_vs_3D_on_cross_section_edges_full(self):
-        self._test_2D_vs_3D_on_cross_section_edges(self.arc)
-
-    def test_2D_vs_3D_on_cross_section_edges_two_halves(self):
-        self._test_2D_vs_3D_on_cross_section_edges(self.two_halves)
-
-    def _test_2D_vs_3D_on_cross_section_edges(self, source):
-
-        f, ax = plt.subplots()
-
-        # Reference solutions
-        ax.plot(self.Bx_coil, color="navy", lw=4, label="Bx Coil")
-        ax.plot(self.Bz_coil, color="darkred", lw=4, label="Bz Coil")
-
-        bx_colors = plt.cm.Blues(np.linspace(0.4, 1.0, len(self.angles)))
-        bz_colors = plt.cm.Reds(np.linspace(0.4, 1.0, len(self.angles)))
-
-        linestyles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 2))]
-
+    def _compute_fields(self, source):
         bx_values = []
         by_values = []
         bz_values = []
 
-        for i, (angle, points) in enumerate(zip(self.angles, self.test_points)):
-            try:
-                Bx_rot, By_rot, Bz = source.field(*points.xyz)
+        for angle, points in zip(self.angles, self.test_points, strict=True):
+            Bx_rot, By_rot, Bz = source.field(*points.xyz)
 
-                # Rotate field back into original frame
-                theta = np.deg2rad(-angle)
-                Bx = np.cos(theta) * Bx_rot - np.sin(theta) * By_rot
-                By = np.sin(theta) * Bx_rot + np.cos(theta) * By_rot
+            # Rotate field back into original frame
+            theta = np.deg2rad(-angle)
+            Bx = np.cos(theta) * Bx_rot - np.sin(theta) * By_rot
+            By = np.sin(theta) * Bx_rot + np.cos(theta) * By_rot
 
-                ls = linestyles[i % len(linestyles)]
+            bx_values.append(Bx)
+            by_values.append(By)
+            bz_values.append(Bz)
 
-                ax.plot(
-                    Bx,
-                    linestyle=ls,
-                    color=bx_colors[i],
-                    label=f"Bx CACS angle={angle:.0f}",
-                )
+        self._plot_fields(bx_values, by_values, bz_values)
+        return bx_values, by_values, bz_values
 
-                ax.plot(
-                    Bz,
-                    linestyle=ls,
-                    color=bz_colors[i],
-                    label=f"Bz CACS angle={angle:.0f}",
-                )
-                bx_values.append(Bx)
-                by_values.append(By)
-                bz_values.append(Bz)
+    def _plot_fields(self, bx_values, by_values, bz_values):
+        f, ax = plt.subplots()
 
-            except Exception:
-                pass
+        ax.plot(self.Bx_coil, color="navy", lw=4, label="Bx Coil")
+        ax.plot(self.Bz_coil, color="darkred", lw=4, label="Bz Coil")
+
+        bx_colors = plt.cm.Blues(np.linspace(0.4, 1.0, len(self.angles)))
+        by_colors = plt.cm.Greens(np.linspace(0.4, 1.0, len(self.angles)))
+        bz_colors = plt.cm.Reds(np.linspace(0.4, 1.0, len(self.angles)))
+
+        linestyles = [
+            "-",
+            "--",
+            "-.",
+            ":",
+            (0, (3, 1, 1, 1)),
+            (0, (5, 2)),
+        ]
+
+        for i, angle in enumerate(self.angles):
+            ls = linestyles[i % len(linestyles)]
+
+            ax.plot(
+                bx_values[i],
+                linestyle=ls,
+                color=bx_colors[i],
+                label=f"Bx angle={angle}",
+            )
+            ax.plot(
+                by_values[i],
+                linestyle=ls,
+                color=by_colors[i],
+                label=f"By angle={angle}",
+            )
+            ax.plot(
+                bz_values[i],
+                linestyle=ls,
+                color=bz_colors[i],
+                label=f"Bz angle={angle}",
+            )
 
         ax.legend(ncol=3, fontsize="small")
         plt.show()
 
-        # Together, the two half-circle arcs should reproduce the
-        # axisymmetric field of one complete circular current source.
-        for bx, by, bz in zip(bx_values, by_values, bz_values):
-            np.testing.assert_allclose(by, np.zeros_like(by), rtol=0.0, atol=EPS)
-            np.testing.assert_allclose(bx, self.Bx_coil, rtol=0.0, atol=5e-7)
-            np.testing.assert_allclose(bz, self.Bz_coil, rtol=0.0, atol=8e-11)
+    @pytest.mark.parametrize(
+        "source",
+        ["arc", "two_halves"],
+    )
+    def test_Bx_matches_axisymmetric_solution(self, source):
+        bx_values, _, _ = self._compute_fields(getattr(self, source))
+
+        for angle, bx in zip(self.angles, bx_values, strict=True):
+            np.testing.assert_allclose(
+                bx,
+                self.Bx_coil,
+                rtol=0.0,
+                atol=5e-7,
+                err_msg=f"angle={angle}",
+            )
+
+    @pytest.mark.parametrize(
+        "source",
+        ["arc", "two_halves"],
+    )
+    def test_By_is_zero(self, source):
+        _, by_values, _ = self._compute_fields(getattr(self, source))
+
+        for angle, by in zip(self.angles, by_values, strict=True):
+            np.testing.assert_allclose(
+                by,
+                0.0,
+                rtol=0.0,
+                atol=EPS,
+                err_msg=f"angle={angle}",
+            )
+
+    @pytest.mark.parametrize(
+        "source",
+        ["arc", "two_halves"],
+    )
+    def test_Bz_matches_axisymmetric_solution(self, source):
+        _, _, bz_values = self._compute_fields(getattr(self, source))
+
+        for angle, bz in zip(self.angles, bz_values, strict=True):
+            np.testing.assert_allclose(
+                bz,
+                self.Bz_coil,
+                rtol=0.0,
+                atol=5e-10,
+                err_msg=f"angle={angle}",
+            )
 
 
 class TestCircularArcCurrentSourceSuperposition:

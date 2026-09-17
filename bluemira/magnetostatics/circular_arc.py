@@ -673,7 +673,7 @@ def primitive_btc(
     """
     args = (r_pc, r_j, z_k)
     # Sub-set of paper singularities that don't perform well in integration
-    is_singular_corner = z_k == 0 and r_j <= r_pc and 0 <= phi_pc <= theta
+    is_singular_corner = False  # z_k == 0 and r_j <= r_pc and 0 <= phi_pc <= theta
 
     if not is_singular_corner:
         return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
