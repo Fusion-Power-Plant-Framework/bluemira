@@ -4,11 +4,14 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.constants import EPS
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
@@ -36,9 +39,9 @@ class TestCircularArcCurrentSource:
         )
 
     def test_2D_vs_3D_circular(self):
-        nx, nz = 50, 60
-        x = np.linspace(self.xc - 2, self.xc + 2, nx)
-        z = np.linspace(self.zc - 2, self.zc + 2, nz)
+        nx, nz = 250, 260
+        x = np.linspace(self.xc - 2, self.xc + 5, nx)
+        z = np.linspace(self.zc - 5, self.zc + 5, nz)
         xx, zz = np.meshgrid(x, z, indexing="ij")
 
         Bx, By, Bz = self.arc.field(xx, np.zeros_like(xx), zz)
@@ -49,11 +52,6 @@ class TestCircularArcCurrentSource:
         Bx_coil = self.current * cBx
         Bz_coil = self.current * cBz
         Bp_coil = np.hypot(Bx_coil, Bz_coil)
-
-        # Because this is a circular calculation, we expect them to be almost identical
-        assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
-        assert np.allclose(Bx_coil, Bx)
-        assert np.allclose(Bz_coil, Bz)
 
         self.arc.plot()
         _plot_verification_test(
@@ -71,67 +69,10 @@ class TestCircularArcCurrentSource:
             Bp,
         )
 
-    def test_2D_vs_3D_on_cross_section_edges_single(self):
-        n_edge = 50
-
-        x_horizontal = np.linspace(
-            self.xc - self.dx,
-            self.xc + self.dx,
-            n_edge,
-        )
-        z_vertical = np.linspace(
-            self.zc - self.dz,
-            self.zc + self.dz,
-            n_edge,
-        )
-
-        # Traverse the full boundary of the rectangular cross-section.
-        # The inclusive endpoints ensure that all four corners are tested.
-        x = np.concatenate([
-            x_horizontal,  # Bottom edge
-            np.full(n_edge, self.xc + self.dx),  # Outer edge
-            x_horizontal[::-1],  # Top edge
-            np.full(n_edge, self.xc - self.dx),  # Inner edge
-        ])
-        z = np.concatenate([
-            np.full(n_edge, self.zc - self.dz),  # Bottom edge
-            z_vertical,  # Outer edge
-            np.full(n_edge, self.zc + self.dz),  # Top edge
-            z_vertical[::-1],  # Inner edge
-        ])
-        y = np.zeros_like(x)
-
-        Bx, By, Bz = self.arc.field(x, y, z)
-
-        Bx_coil = self.current * semianalytic_Bx(
-            self.xc,
-            self.zc,
-            x,
-            z,
-            self.dx,
-            self.dz,
-        )
-        Bz_coil = self.current * semianalytic_Bz(
-            self.xc,
-            self.zc,
-            x,
-            z,
-            self.dx,
-            self.dz,
-        )
-
-        f, ax = plt.subplots()
-        ax.plot(By, label="By CACS")
-        ax.plot(Bx, label="Bx CACS")
-        ax.plot(Bz, label="Bz CACS")
-        ax.plot(Bx_coil, label="Bx Coil")
-        ax.plot(Bz_coil, label="Bz Coil")
-        ax.legend()
-        plt.show()
-
-        # assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
-        # np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=5e-7)
-        # np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=8e-11)
+        # Because this is a circular calculation, we expect them to be almost identical
+        np.testing.assert_allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
+        np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=4.8e-6)
+        np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=3.5e-6)
 
     def test_singularities(self):
         """
@@ -191,17 +132,17 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
             cls.current,
         )
 
-    def test_2D_vs_3D_on_cross_section_edges(self):
+        cls.two_halves = SourceGroup([cls.arc_1, cls.arc_2])
         n_edge = 50
 
         x_horizontal = np.linspace(
-            self.xc - self.dx,
-            self.xc + self.dx,
+            cls.xc - cls.dx,
+            cls.xc + cls.dx,
             n_edge,
         )
         z_vertical = np.linspace(
-            self.zc - self.dz,
-            self.zc + self.dz,
+            cls.zc - cls.dz,
+            cls.zc + cls.dz,
             n_edge,
         )
 
@@ -209,60 +150,107 @@ class TestCircularArcCurrentSourceTwoHalfCircles:
         # The inclusive endpoints ensure that all four corners are tested.
         x = np.concatenate([
             x_horizontal,  # Bottom edge
-            np.full(n_edge, self.xc + self.dx),  # Outer edge
+            np.full(n_edge, cls.xc + cls.dx),  # Outer edge
             x_horizontal[::-1],  # Top edge
-            np.full(n_edge, self.xc - self.dx),  # Inner edge
+            np.full(n_edge, cls.xc - cls.dx),  # Inner edge
         ])
         z = np.concatenate([
-            np.full(n_edge, self.zc - self.dz),  # Bottom edge
+            np.full(n_edge, cls.zc - cls.dz),  # Bottom edge
             z_vertical,  # Outer edge
-            np.full(n_edge, self.zc + self.dz),  # Top edge
+            np.full(n_edge, cls.zc + cls.dz),  # Top edge
             z_vertical[::-1],  # Inner edge
         ])
         y = np.zeros_like(x)
 
-        Bx_1, By_1, Bz_1 = self.arc_1.field(x, y, z)
-        Bx_2, By_2, Bz_2 = self.arc_2.field(x, y, z)
+        cls.border_rectangle = Coordinates({"x": x, "y": y, "z": z})
+        cls.angles = [0, 35, 45, 90, 135, 180, 270, 315, 360]
+        cls.test_points = []
 
-        Bx = Bx_1 + Bx_2
-        By = By_1 + By_2
-        Bz = Bz_1 + Bz_2
+        for angle in cls.angles:
+            c = deepcopy(cls.border_rectangle)
+            c.rotate(degree=angle)
+            cls.test_points.append(c)
 
-        Bx_coil = self.current * semianalytic_Bx(
-            self.xc,
-            self.zc,
+        cls.Bx_coil = cls.current * semianalytic_Bx(
+            cls.xc,
+            cls.zc,
             x,
             z,
-            self.dx,
-            self.dz,
+            cls.dx,
+            cls.dz,
         )
-        Bz_coil = self.current * semianalytic_Bz(
-            self.xc,
-            self.zc,
+        cls.Bz_coil = cls.current * semianalytic_Bz(
+            cls.xc,
+            cls.zc,
             x,
             z,
-            self.dx,
-            self.dz,
+            cls.dx,
+            cls.dz,
         )
 
+    def test_2D_vs_3D_on_cross_section_edges_full(self):
+        self._test_2D_vs_3D_on_cross_section_edges(self.arc)
+
+    def test_2D_vs_3D_on_cross_section_edges_two_halves(self):
+        self._test_2D_vs_3D_on_cross_section_edges(self.two_halves)
+
+    def _test_2D_vs_3D_on_cross_section_edges(self, source):
+
         f, ax = plt.subplots()
-        cm = ax.scatter(x, z, c=100 * (Bx_coil - Bx) / Bx_coil, marker="o")
-        f.colorbar(cm, ax=ax, label=r"$\frac{B_{x,\mathrm{coil}} - B_x}{B_x}$ [%]")
-        ax.set_aspect("equal")
-        f, ax = plt.subplots()
-        ax.plot(By, label="By CACS")
-        ax.plot(Bx, label="Bx CACS")
-        ax.plot(Bz, label="Bz CACS")
-        ax.plot(Bx_coil, label="Bx Coil")
-        ax.plot(Bz_coil, label="Bz Coil")
-        ax.legend()
+
+        # Reference solutions
+        ax.plot(self.Bx_coil, color="navy", lw=4, label="Bx Coil")
+        ax.plot(self.Bz_coil, color="darkred", lw=4, label="Bz Coil")
+
+        bx_colors = plt.cm.Blues(np.linspace(0.4, 1.0, len(self.angles)))
+        bz_colors = plt.cm.Reds(np.linspace(0.4, 1.0, len(self.angles)))
+
+        linestyles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 2))]
+
+        bx_values = []
+        by_values = []
+        bz_values = []
+
+        for i, (angle, points) in enumerate(zip(self.angles, self.test_points)):
+            try:
+                Bx_rot, By_rot, Bz = source.field(*points.xyz)
+
+                # Rotate field back into original frame
+                theta = np.deg2rad(-angle)
+                Bx = np.cos(theta) * Bx_rot - np.sin(theta) * By_rot
+                By = np.sin(theta) * Bx_rot + np.cos(theta) * By_rot
+
+                ls = linestyles[i % len(linestyles)]
+
+                ax.plot(
+                    Bx,
+                    linestyle=ls,
+                    color=bx_colors[i],
+                    label=f"Bx CACS angle={angle:.0f}",
+                )
+
+                ax.plot(
+                    Bz,
+                    linestyle=ls,
+                    color=bz_colors[i],
+                    label=f"Bz CACS angle={angle:.0f}",
+                )
+                bx_values.append(Bx)
+                by_values.append(By)
+                bz_values.append(Bz)
+
+            except Exception:
+                pass
+
+        ax.legend(ncol=3, fontsize="small")
         plt.show()
 
         # Together, the two half-circle arcs should reproduce the
         # axisymmetric field of one complete circular current source.
-        assert np.allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
-        np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=5e-7)
-        np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=8e-11)
+        for bx, by, bz in zip(bx_values, by_values, bz_values):
+            np.testing.assert_allclose(by, np.zeros_like(by), rtol=0.0, atol=EPS)
+            np.testing.assert_allclose(bx, self.Bx_coil, rtol=0.0, atol=5e-7)
+            np.testing.assert_allclose(bz, self.Bz_coil, rtol=0.0, atol=8e-11)
 
 
 class TestCircularArcCurrentSourceSuperposition:

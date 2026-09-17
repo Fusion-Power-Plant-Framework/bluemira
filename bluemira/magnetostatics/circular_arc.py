@@ -610,7 +610,7 @@ def primitive_brc(
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
     # Sub-set of paper singularities that don't perform well in integration
-    is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
+    is_singular_corner = False  # z_k == 0 and r_j <= r_pc and 0 <= phi_pc <= theta
 
     if not is_singular_corner:
         # No singularities
@@ -625,7 +625,7 @@ def primitive_brc(
         if theta == np.pi:
             result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
 
-        if theta == TWO_PI:
+        elif theta == TWO_PI:
             # cos(-psi)^2 == cos(psi)^2
             result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
         else:
@@ -673,7 +673,7 @@ def primitive_btc(
     """
     args = (r_pc, r_j, z_k)
     # Sub-set of paper singularities that don't perform well in integration
-    is_singular_corner = z_k == 0 and r_j == r_pc and 0 <= phi_pc <= theta
+    is_singular_corner = z_k == 0 and r_j <= r_pc and 0 <= phi_pc <= theta
 
     if not is_singular_corner:
         return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
@@ -752,9 +752,9 @@ def primitive_bzc(
     The result of the Bzc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
-    bf1_singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
-    bf2_singularities = (r_j == r_pc) and (z_k >= 0) and (0 <= phi_pc <= theta)
-    bf3_singularities = r_pc == 0
+    bf1_singularities = False  # (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
+    bf2_singularities = False  # (z_k >= 0) and (r_j == r_pc) and (0 <= phi_pc <= theta)
+    bf3_singularities = False  # r_pc == 0
     if not bf1_singularities and not bf2_singularities and not bf3_singularities:
         # No singularities (almost)
         return integrate(
@@ -771,7 +771,7 @@ def primitive_bzc(
             # result += 0 (the first part of BF1 is 0)
             result -= integrate(bf1_zk_integrand, args, -theta, np.pi - theta)
 
-        if phi_pc == theta:
+        elif phi_pc == theta:
             # result += 0 (the first part of BF1 is 0)
             result -= integrate(bf1_zk_integrand, args, np.pi, np.pi - theta)
 
@@ -789,7 +789,7 @@ def primitive_bzc(
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, -theta, np.pi - theta)
 
-        if phi_pc == theta:
+        elif phi_pc == theta:
             result += bf2_rj_rpc_0_pi(r_pc, z_k)
             result -= integrate(bf2_integrand, args, np.pi, np.pi - theta)
 
@@ -1037,6 +1037,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         x, y, z = point
         rho = np.sqrt(x**2 + y**2)
+        theta = np.arctan(y / x) if x != 0 else np.pi / 2
         theta = np.arctan2(y, x)
         return np.array([rho, theta, z])
 
