@@ -3235,10 +3235,9 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 4
+    optvar_cls: type[SimpleCarabinerOptVariables] = SimpleCarabinerOptVariables
 
-    def __init__(self, var_dict: VarDictT | None = None):
-        variables = SimpleCarabinerOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
+    def __init__(self, variables: SimpleCarabinerOptVariables | VarDictT | None = None):
         super().__init__(variables)
         _, _, _, _, p1, p2, p3, p4, t2 = self._preamble()
         a1 = self.variables.a1.value
