@@ -2463,41 +2463,39 @@ def check_touching_geos(
 def repair_overlapping_geos(
     geo_1: BluemiraSolid | BluemiraFace,
     geos_2: list[BluemiraSolid | BluemiraFace],
-    rtol: float = 1e-10,
 ) -> BluemiraSolid | BluemiraFace:
     """
-    Approximately fix the overlap of geo_1 and a list of other geometries
-    (geos_2) by cutting geo_1 by geos_2
+    Fix the overlap of geo_1 with a list of geometries in geos_2 by fusing
+    all geos_2 and then cutting the fused geometry from geo_1.
+
+    Parameters
+    ----------
+    geo_1:
+        Geometry to be repaired.
+    geos_2:
+        Geometries that remain unchanged and take priority over geo_1.
 
     Returns
     -------
     BluemiraSolid | BluemiraFace
-        repaired geo_1
+        Repaired geo_1.
 
     Raises
     ------
     TypeError
-        if geo_1 and geos_2 are not of the same type
+        If geo_1 and geos_2 are not of the same type.
+
     GeometryError
-        if boolean cut creates multiple geometries
-    ValueError
-        if provided geos do not overlap
+        If boolean cut creates multiple geometries.
     """
     if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
         raise TypeError("geo_1 and geo_2 must be of the same type")
 
-    repaired = boolean_cut(geo_1, geos_2)
+    fused_geos_2 = boolean_fuse(geos_2)
+    fused = boolean_fuse([geo_1, fused_geos_2])
+    repaired = boolean_cut(fused, fused_geos_2)
 
     if isinstance(repaired, list) and len(repaired) > 1:
         raise GeometryError("boolean cut created multiple geometries")
 
-    repaired = repaired[0] if isinstance(repaired, list) else repaired
-
-    repaired_measure = (
-        repaired.volume if isinstance(repaired, BluemiraSolid) else repaired.area
-    )
-    original_measure = geo_1.volume if isinstance(geo_1, BluemiraSolid) else geo_1.area
-    if np.isclose(repaired_measure, original_measure, rtol=rtol):
-        raise ValueError("provided geos do not really overlap!")
-
-    return repaired
+    return repaired[0] if isinstance(repaired, list) else repaired
