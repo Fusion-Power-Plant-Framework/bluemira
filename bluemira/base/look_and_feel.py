@@ -51,13 +51,18 @@ def get_git_version(directory: str) -> str:
 
     Returns
     -------
-    str
+    :
         The git version bytestring
     """
-    return subprocess.check_output(
-        ["git", "describe", "--tags", "--always"],  # noqa: S607
-        cwd=directory,
-    ).strip()
+    return (
+        subprocess
+        .check_output(
+            ["git", "describe", "--tags", "--always"],  # noqa: S607
+            cwd=directory,
+        )
+        .strip()
+        .decode("utf-8")
+    )
 
 
 def get_git_branch(directory: str) -> str:

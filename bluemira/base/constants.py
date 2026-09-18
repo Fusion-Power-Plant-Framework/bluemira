@@ -21,7 +21,7 @@ from pint.errors import PintError
 from pint.util import UnitsContainer
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from pint.facets.context import objects as pint_obj
 
 
 class CoilType(Enum):
@@ -79,7 +79,7 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    def _add_contexts(self, contexts: list[Context] | None = None):
+    def _add_contexts(self, contexts: list[pint_obj.Context] | None = None):
         """
         Add new contexts to registry
         """
@@ -99,7 +99,7 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts: Context, **kwargs):
+    def enable_contexts(self, *contexts: pint_obj.Context, **kwargs):
         """
         Enable contexts
         """
@@ -218,12 +218,12 @@ class BMUnitRegistry(UnitRegistry):
 
     @staticmethod
     def _transform(
-        context: Context,
+        context: pint_obj.Context,
         units_from: str,
         units_to: str,
-        forward_transform: Callable[[UnitRegistry, complex | Quantity], float],
-        reverse_transform: Callable[[UnitRegistry, complex | Quantity], float],
-    ) -> Context:
+        forward_transform: pint_obj.Transformation,
+        reverse_transform: pint_obj.Transformation,
+    ) -> pint_obj.Context:
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:
@@ -422,9 +422,7 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
 ArrayLike = TypeVar("ArrayLike")
 
 
-def raw_uc(
-    value: ArrayLike, unit_from: str | ureg.Unit, unit_to: str | ureg.Unit
-) -> ArrayLike:
+def raw_uc(value: ArrayLike, unit_from: str | Unit, unit_to: str | Unit) -> ArrayLike:
     """
     Raw unit converter
 
@@ -459,10 +457,10 @@ def raw_uc(
 
 def gas_flow_uc(
     value: npt.ArrayLike,
-    unit_from: str | ureg.Unit,
-    unit_to: str | ureg.Unit,
+    unit_from: str | Unit,
+    unit_to: str | Unit,
     gas_flow_temperature: float | Quantity | None = None,
-) -> int | float | np.ndarray:
+) -> npt.ArrayLike:
     """
     Converts around Standard temperature and pressure for gas unit conversion.
     Accurate for Ideal gases.
@@ -493,9 +491,7 @@ def gas_flow_uc(
         ureg.gas_flow_temperature = None
 
 
-def to_celsius(
-    temp: npt.ArrayLike, unit: str | Unit = ureg.kelvin
-) -> float | np.ndarray:
+def to_celsius(temp: npt.ArrayLike, unit: str | Unit = ureg.kelvin) -> npt.ArrayLike:
     """
     Convert a temperature in Kelvin to Celsius.
 
@@ -515,9 +511,7 @@ def to_celsius(
     return converted_val
 
 
-def to_kelvin(
-    temp: npt.ArrayLike, unit: str | Unit = ureg.celsius
-) -> float | np.ndarray:
+def to_kelvin(temp: npt.ArrayLike, unit: str | Unit = ureg.celsius) -> npt.ArrayLike:
     """
     Convert a temperature in Celsius to Kelvin.
 
@@ -538,7 +532,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: complex | Quantity):
+def _temp_check(unit: Unit, val: npt.ArrayLike):
     """
     Check temperature is above absolute zero
 
@@ -562,7 +556,7 @@ def _temp_check(unit: Unit, val: complex | Quantity):
         raise ValueError("Negative temperature in K specified.")
 
 
-def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
+def kgm3_to_gcm3(density: npt.ArrayLike) -> npt.ArrayLike:
     """
     Convert a density in kg/m3 to g/cm3
 
@@ -578,7 +572,7 @@ def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
     return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
 
-def gcm3_to_kgm3(density: npt.ArrayLike) -> float | np.ndarray:
+def gcm3_to_kgm3(density: npt.ArrayLike) -> npt.ArrayLike:
     """
     Convert a density in g/cm3 to kg/m3
 
