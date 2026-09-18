@@ -102,18 +102,15 @@ class EqPlotMask(Flag):
 
     NONE = auto()
     "No mask."
-    IN_LCFS = auto()
+    INSIDE_CHOSEN_LCFS = auto()
     """Mask out values inside chosen LCFS."""
-    OUT_LCFS = auto()
+    OUTSIDE_CHOSEN_LCFS = auto()
     """Mask out values outside chosen LCFS."""
-    IN_REF_LCFS = auto()
+    INSIDE_REF_LCFS = auto()
     """Mask out values inside reference LCFS."""
-    OUT_REF_LCFS = auto()
+    OUTSIDE_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
-    IN_COMBO_LCFS = auto()
-    """Mask out values inside chosen and reference LCFS."""
-    OUT_COMBO_LCFS = auto()
-    """Mask out values outside chosen and reference LCFS."""
+
     DIV_AREA = (
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
@@ -122,20 +119,6 @@ class EqPlotMask(Flag):
         auto()
     )  # NOTE: add new mask types, this currently raises a not implemented error
     """Mask out the values outside a chosen polygon area."""
-    INPUT = IN_LCFS | OUT_LCFS
-    REF = IN_REF_LCFS | OUT_REF_LCFS
-    COMBO = IN_COMBO_LCFS | OUT_COMBO_LCFS
-    LCFS = (
-        IN_REF_LCFS
-        | OUT_REF_LCFS
-        | IN_LCFS
-        | OUT_LCFS
-        | IN_COMBO_LCFS
-        | OUT_COMBO_LCFS
-        | NONE
-    )
-    IN = IN_LCFS | IN_REF_LCFS | IN_COMBO_LCFS
-    OUT = OUT_LCFS | OUT_REF_LCFS | OUT_COMBO_LCFS | DIV_AREA | POLYGON
 
 
 class InterpGrid(Enum):
