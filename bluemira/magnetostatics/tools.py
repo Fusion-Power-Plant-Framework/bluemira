@@ -307,71 +307,55 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
         IntegrationWarning,
         ValueError,
         FloatingPointError,
+        ZeroDivisionError,
         MagnetostaticsIntegrationError,
     ):
         pass
 
     # 2. Medium path: use simple absolute breakpoints.
     width = upper - lower
-    points = [
-        lower + 0.25 * width,
-        lower + 0.50 * width,
-        lower + 0.75 * width,
-    ]
-    points.extend(
-        np.pi
-        * np.arange(
-            int(np.floor(lower / np.pi)) - 1,
-            int(np.ceil(upper / np.pi)) + 2,
-        )
-    )
 
-    points = sorted({p for p in points if np.isfinite(p) and lower < p < upper})
-    try:
-        return _quad_helper(
-            func,
-            lower,
-            upper,
-            args,
-            sign,
-            points=points,
-            limit=200,
-        )
-    except (
-        IntegrationWarning,
-        ValueError,
-        FloatingPointError,
-        MagnetostaticsIntegrationError,
-    ):
-        pass
+    split_points = sorted({
+        lower,
+        upper,
+        *(lower + f * width for f in (0.25, 0.5, 0.75)),
+        *(
+            np.pi * n
+            for n in range(
+                int(np.floor(lower / np.pi)) - 1,
+                int(np.ceil(upper / np.pi)) + 1,
+            )
+        ),
+    })
 
-    # 3. Expensive path: split and nudge endpoints around likely singularities.
+    split_points = [p for p in split_points if lower <= p <= upper]
+
     eps = 1e-12 * max(1.0, abs(lower), abs(upper), width)
-
-    split_points = [lower, *points, upper]
 
     result = 0.0
 
-    try:  # noqa: PLW0717
+    try:
         for a, b in pairwise(split_points):
             aa = _shift_if_singular_angle(a, eps, plus=True)
             bb = _shift_if_singular_angle(b, eps, plus=False)
             if bb <= aa:
                 continue
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings("error", category=IntegrationWarning)
+            result += _quad_helper(
+                func,
+                aa,
+                bb,
+                args,
+                sign=1.0,
+                limit=200,
+            )
 
-                result += _quad_helper(
-                    func,
-                    aa,
-                    bb,
-                    args,
-                    sign=1.0,
-                    limit=200,
-                )
-
-    except (IntegrationWarning, ValueError, FloatingPointError) as error:
+    except (
+        IntegrationWarning,
+        ValueError,
+        FloatingPointError,
+        ZeroDivisionError,
+    ) as error:
         raise MagnetostaticsIntegrationError(f"{error} with args={args}") from error
 
     return sign * result

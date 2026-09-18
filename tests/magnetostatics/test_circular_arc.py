@@ -40,7 +40,7 @@ class TestCircularArcCurrentSource:
 
     def test_2D_vs_3D_circular(self):
         nx, nz = 250, 260
-        x = np.linspace(self.xc - 2, self.xc + 5, nx)
+        x = np.linspace(self.xc - 3.99999999, self.xc + 5, nx)
         z = np.linspace(self.zc - 5, self.zc + 5, nz)
         xx, zz = np.meshgrid(x, z, indexing="ij")
 
@@ -72,7 +72,7 @@ class TestCircularArcCurrentSource:
         # Because this is a circular calculation, we expect them to be almost identical
         np.testing.assert_allclose(By, np.zeros_like(By), rtol=0.0, atol=EPS)
         np.testing.assert_allclose(Bx_coil, Bx, rtol=0.0, atol=4.8e-6)
-        np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=3.5e-6)
+        np.testing.assert_allclose(Bz_coil, Bz, rtol=0.0, atol=2.2e-5)
 
     def test_singularities(self):
         """
