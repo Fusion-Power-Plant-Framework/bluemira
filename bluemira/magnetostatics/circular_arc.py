@@ -486,7 +486,6 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         x, y, z = point
         rho = np.sqrt(x**2 + y**2)
-        theta = np.arctan(y / x) if x != 0 else np.pi / 2
         theta = np.arctan2(y, x)
         return np.array([rho, theta, z])
 
