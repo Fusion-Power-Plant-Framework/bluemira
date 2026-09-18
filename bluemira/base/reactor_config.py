@@ -322,7 +322,7 @@ class ReactorConfig:
         f_data = self._read_json_file(f_path)
         return f_data, f_path.parent
 
-    def _extract(self, arg_keys: tuple[str], *, is_config: bool = True) -> dict:
+    def _extract(self, arg_keys: tuple[str, ...], *, is_config: bool = True) -> dict:
         extracted = {}
 
         # this routine is designed not to copy any dict's while parsing
