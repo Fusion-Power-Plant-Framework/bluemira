@@ -1014,7 +1014,7 @@ def toroidal_harmonic_approximation(
     collocation = collocation_points(
         eq.get_LCFS(),
         PointType.GRID_POINTS,
-        n_points=max_harmonic_mode,
+        n_points=5,
         use_mask=True,
     )
 
