@@ -2465,8 +2465,9 @@ def repair_overlapping_geos(
     geos_2: list[BluemiraSolid | BluemiraFace],
 ) -> BluemiraSolid | BluemiraFace:
     """
-    Fix the overlap of geo_1 with a list of geometries in geos_2 by fusing
-    all geos_2 and then cutting the fused geometry from geo_1.
+    Fix the overlap of geo_1 with a list of geometries in geos_2 by first
+    fusing geo_1 with all geometries in geos_2 and then subtracting the
+    union of geos_2 from the fused geometry.
 
     Parameters
     ----------
@@ -2487,6 +2488,21 @@ def repair_overlapping_geos(
 
     GeometryError
         If boolean cut creates multiple geometries.
+
+    Note
+    ------
+    The overlapping boundaries of BluemiraFace objects, or the corresponding
+    overlapping faces of BluemiraSolid objects, may form either a single
+    continuous overlap region or multiple spatially discontinuous overlap
+    regions. Applying the boolean cut directly in the latter case may
+    introduce unnecessary internal boundaries, resulting in fragmented
+    surfaces that meet like puzzle pieces rather than forming a smooth,
+    continuous interface.
+
+    Fusing geo_1 with geos_2 first combines these overlap regions into a
+    single topological representation before the subtraction, reducing
+    such fragmentation and preserving a smoother interface in the repaired
+    geo_1.
     """
     if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
         raise TypeError("geo_1 and geo_2 must be of the same type")
