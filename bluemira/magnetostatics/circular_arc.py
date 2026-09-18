@@ -250,6 +250,8 @@ def primitive_bzc(
     result = integrate(bzc_integrand_full_p1, args, -phi_pc, theta - phi_pc)
     if z_k != 0 and r_pc != 0:
         # The only singularities we now bother to catch (and they all = 0 if hit)
+        # z_k == 0 -> 0
+        # r_pc == 0 -> 0
         # This gets rid of zero division errors in the integration
         result += integrate(bf3_integrand, args, -phi_pc, theta - phi_pc)
     return result
