@@ -11,11 +11,11 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, TypeAlias, Union, cast
+from typing import TYPE_CHECKING, Generic, TypeAlias, Union, cast
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, ComponentT
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.tools import _timing
 from bluemira.materials.cache import get_cached_material
 from bluemira.materials.error import MaterialsError
@@ -26,7 +26,10 @@ if TYPE_CHECKING:
 
     from matproplib.material import Material
 
-    from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.base.parameter_frame.typed import (
+        ParameterFrameLike,
+        ParameterFrameOrNoneT,
+    )
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
 """
@@ -34,7 +37,7 @@ Type alias for representing nested build configuration information.
 """
 
 
-class Builder(abc.ABC):
+class Builder(abc.ABC, Generic[ComponentT]):
     """
     Base class for component builders.
 
@@ -75,11 +78,11 @@ class Builder(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def param_cls(self) -> type[ParameterFrame] | None:
+    def param_cls(self) -> type[ParameterFrameOrNoneT]:
         """The class to hold this Builders's parameters."""
 
     @abc.abstractmethod
-    def build(self) -> Component:
+    def build(self) -> ComponentT:
         """Build the component."""
 
     def get_material(self, component_name: str | None = None) -> Material | None:
