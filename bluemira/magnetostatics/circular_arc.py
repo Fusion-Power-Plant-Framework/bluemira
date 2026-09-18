@@ -14,18 +14,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.base.constants import MU_0_4PI
+from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.tools import (
     integrate,
-    jit_llc3,
     jit_llc4,
     process_xyz_array,
 )
 
 __all__ = ["CircularArcCurrentSource"]
 
+
+LOG_EPS = np.finfo(float).tiny
+TWO_PI = 2.0 * np.pi
 
 # Full integrands free of singularities
 
@@ -53,9 +55,10 @@ def brc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(
-        r_j - r_pc * cos_psi + sqrt_term
-    )
+    log_arg = r_j - r_pc * cos_psi + sqrt_term
+    if log_arg <= 0:
+        log_arg = LOG_EPS
+    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(log_arg)
 
 
 @jit_llc4
@@ -80,202 +83,18 @@ def bzc_integrand_full_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> fl
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term) - r_pc * cos_psi * np.log(
-        -z_k + sqrt_term
-    )
+    term_1 = 0.0
+    if z_k != 0:
+        log_arg_1 = r_j - r_pc * cos_psi + sqrt_term
+        if log_arg_1 <= 0:
+            log_arg_1 = LOG_EPS
 
+        term_1 = -z_k * np.log(log_arg_1)
 
-# Integrands to treat singularities
-
-
-@jit_llc4
-def brc_integrand_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the first part of the Brc integrand (no singularities)
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-    """
-    cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return cos_psi * sqrt_term
-
-
-@jit_llc4
-def bf1_r_pccos2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the BF1(r_pc*cos(psi)^2) integrand
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-    """
-    cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return r_pc * cos_psi**2 * np.log(r_j - r_pc * cos_psi + sqrt_term)
-
-
-@jit_llc3
-def bf1_r_pccos2_0_pi_integrand_p1(psi: float, r_pc: float, r_j: float) -> float:
-    """
-    Calculate the BF1(r_pc*cos(psi)^2) integrand for a 0 to pi integral
-
-    From 0 to pi for r_j < r_pc and z_k == 0. Part 1
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point for 0 to pi integral
-    """
-    cos_psi = np.cos(psi)
-    return (
-        r_pc
-        * cos_psi**2
-        * np.log(
-            (r_pc * cos_psi - r_j)
-            + np.sqrt((r_pc * cos_psi - r_j) ** 2 + r_pc**2 * np.sin(psi) ** 2)
-        )
-    )
-
-
-@jit_llc3
-def bf1_r_pccos2_0_pi_integrand_p2(psi: float, r_pc: float, r_j: float) -> float:
-    """
-    Calculate the BF1(r_pc*cos(psi)^2) integrand for a 0 to pi integral
-
-    From 0 to pi for r_j < r_pc and z_k == 0. Part 2
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point for 0 to pi integral
-    """
-    cos_psi = np.cos(psi)
-    return (
-        r_pc
-        * cos_psi**2
-        * np.log(
-            (r_j - r_pc * cos_psi)
-            + np.sqrt((r_j - r_pc * cos_psi) ** 2 + r_pc**2 * np.sin(psi) ** 2)
-        )
-    )
-
-
-@jit_llc4
-def bf1_zk_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the BF1(-z_k) integrand for a 0 to pi integral
-
-    From 0 to pi for r_j < r_pc and z_k == 0.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-    """
-    cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -z_k * np.log(r_j - r_pc * cos_psi + sqrt_term)
-
-
-@jit_llc4
-def bf2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the BF2 integrand.
-
-    For r_j == r_pc and z_k >= 0.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-    """
-    cos_psi = np.cos(psi)
-    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
-    return -r_pc * cos_psi * np.log(-z_k + sqrt_term)
-
-
-@jit_llc3
-def bf2_0_pi_integrand(psi: float, r_pc: float, z_k: float) -> float:
-    """
-    Calculate the BF2 integrand for a 0 to pi integral
-
-    From 0 to pi for r_j == r_pc and z_k >= 0.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point for 0 to pi integral
-    """
-    cos_psi = np.cos(psi)
-    return r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2))
+    log_arg_2 = -z_k + sqrt_term
+    if log_arg_2 <= 0:
+        log_arg_2 = LOG_EPS
+    return term_1 - r_pc * cos_psi * np.log(log_arg_2)
 
 
 @jit_llc4
@@ -306,6 +125,7 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     sin_psi = np.sin(psi)
     if sin_psi != 0:
         sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
+        # NOTE: Arctan2 not a viable option here
         return (
             r_pc
             * sin_psi
@@ -314,56 +134,37 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     return 0
 
 
-# More singularity treatments...
+# Primitive functions
+# BTC integrands
 
 
-def bf1_r_pccos2_zk0_0_pi(r_pc: float, r_j: float) -> float:
+@jit_llc4
+def btc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
-    Calculate the BF1(r_pc*cos(psi)^2) integral for 0 to pi.
-
-    From 0 to pi for r_j <= r_pc and z_k == 0
+    Calculate the Btc integrand without singularities.
 
     Parameters
     ----------
+    psi:
+        Angle [rad]
     r_pc:
         The radius of the point at which to evaluate field [m]
     r_j:
-        The radius (inner or outer) of the coil [m]
-
-    Returns
-    -------
-    The result of the integral at a single point for 0 to pi integral
-    """
-    if r_pc == r_j:
-        return r_pc * (0.5 * np.pi * np.log(r_pc) + 0.2910733)
-    # r_j < r_pc
-    result = 0.5 * np.pi * r_pc * (np.log(r_pc) - np.log(2) - 0.5)
-    result -= integrate(bf1_r_pccos2_0_pi_integrand_p1, (r_pc, r_j), 0, 0.5 * np.pi)
-    result += integrate(bf1_r_pccos2_0_pi_integrand_p2, (r_pc, r_j), 0.5 * np.pi, np.pi)
-    return result
-
-
-def bf2_rj_rpc_0_pi(r_pc: float, z_k: float) -> float:
-    """
-    Calculate the BF2 integrand for a 0 to pi integral
-
-    From 0 to pi for r_j < r_pc and z_k == 0.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
+        The radius, inner or outer, of the coil [m]
     z_k:
-        The z coordinate (upper or lower) of the coil [m]
+        The z coordinate, upper or lower, of the coil [m]
 
     Returns
     -------
-    The result of the integral for 0 to pi
+    :
+        The result of the integrand at a single point
     """
-    return np.pi * r_pc + integrate(bf2_0_pi_integrand, (r_pc, z_k), 0, np.pi)
-
-
-# Primitive functions
+    sin_psi = np.sin(psi)
+    cos_psi = np.cos(psi)
+    sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
+    return sin_psi * sqrt_term + r_pc * sin_psi * cos_psi * np.log(
+        r_j - r_pc * cos_psi + sqrt_term
+    )
 
 
 def primitive_brc(
@@ -390,42 +191,35 @@ def primitive_brc(
     The result of the Brc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
-    singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
-    if not singularities:
-        # No singularities
-        return integrate(brc_integrand_full, args, -phi_pc, theta - phi_pc)
+    return integrate(brc_integrand_full, args, -phi_pc, theta - phi_pc)
 
-    # Treat singularities
-    # Singularity free treatment of first term
-    result = integrate(brc_integrand_p1, args, -phi_pc, theta - phi_pc)
 
-    # Dodge singularities in second term
-    if phi_pc == 0:
-        if theta == np.pi:
-            result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
+def primitive_btc(
+    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
+) -> float:
+    """
+    Calculate the Btc primitives and treat singularities.
 
-        if theta == 2 * np.pi:
-            # cos(-psi)^2 == cos(psi)^2
-            result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-        else:
-            result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-            result -= integrate(bf1_r_pccos2_integrand, args, -theta, np.pi - theta)
+    Parameters
+    ----------
+    r_pc:
+        The radius of the point at which to evaluate field [m]
+    r_j:
+        The radius, inner or outer, of the coil [m]
+    z_k:
+        The z coordinate, upper or lower, of the coil [m]
+    phi_pc:
+        Angle of the point at which to evaluate field [rad]
+    theta:
+        Azimuthal angle of the circular arc [rad]
 
-    elif phi_pc == theta:
-        if phi_pc == np.pi:
-            result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-        else:
-            # cos(-psi)^2 == cos(psi)^2
-            result += bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-            result -= integrate(bf1_r_pccos2_integrand, args, np.pi, np.pi - theta)
-    else:
-        # cos(-psi)^2 == cos(psi)^2
-        result += 2 * bf1_r_pccos2_zk0_0_pi(r_pc, r_j)
-        result -= integrate(
-            bf1_r_pccos2_integrand, args, phi_pc - theta, 2 * np.pi - theta
-        )
-
-    return result
+    Returns
+    -------
+    :
+        The result of the Btc primitive.
+    """
+    args = (r_pc, r_j, z_k)
+    return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
 
 
 def primitive_bzc(
@@ -452,61 +246,13 @@ def primitive_bzc(
     The result of the Bzc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
-    bf1_singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
-    bf2_singularities = (r_j == r_pc) and (z_k >= 0) and (0 <= phi_pc <= theta)
-    bf3_singularities = r_pc == 0
-    if not bf1_singularities and not bf2_singularities and not bf3_singularities:
-        # No singularities (almost)
-        return integrate(
-            bzc_integrand_full_p1, args, -phi_pc, theta - phi_pc
-        ) + integrate(bf3_integrand, args, -phi_pc, theta - phi_pc)
-
-    # Treat singularities
-    result = 0
-    if bf1_singularities:
-        # Treat BF1(-z_k)
-        if phi_pc == 0 and theta != np.pi and theta != 2 * np.pi:
-            # At pi and 2 * pi the BF1 integral is 0
-            # Elsewhere:
-            # result += 0 (the first part of BF1 is 0)
-            result -= integrate(bf1_zk_integrand, args, -theta, np.pi - theta)
-
-        if phi_pc == theta:
-            # result += 0 (the first part of BF1 is 0)
-            result -= integrate(bf1_zk_integrand, args, np.pi, np.pi - theta)
-
-        else:
-            # result += 0 (the first part of BF1 is 0)
-            result -= integrate(
-                bf1_zk_integrand, args, phi_pc - theta, 2 * np.pi - theta
-            )
-
-    else:
-        # BF1 is normal
-        result += integrate(bf1_zk_integrand, args, -phi_pc, theta - phi_pc)
-
-    if bf2_singularities:
-        # Treat BF2
-        if phi_pc == 0:
-            result += bf2_rj_rpc_0_pi(r_pc, z_k)
-            result -= integrate(bf2_integrand, args, -theta, np.pi - theta)
-
-        if phi_pc == theta:
-            result += bf2_rj_rpc_0_pi(r_pc, z_k)
-            result -= integrate(bf2_integrand, args, np.pi, np.pi - theta)
-
-        else:
-            result += 2 * bf2_rj_rpc_0_pi(r_pc, z_k)
-            result -= integrate(bf2_integrand, args, phi_pc - theta, 2 * np.pi - theta)
-
-    else:
-        # BF2 is normal
-        result += integrate(bf2_integrand, args, -phi_pc, theta - phi_pc)
-
-    if r_pc != 0:
-        # r_pc = 0, BF3 evaluates to 0
+    result = integrate(bzc_integrand_full_p1, args, -phi_pc, theta - phi_pc)
+    if z_k != 0 and r_pc != 0:
+        # The only singularities we now bother to catch (and they all = 0 if hit)
+        # z_k == 0 -> 0
+        # r_pc == 0 -> 0
+        # This gets rid of zero division errors in the integration
         result += integrate(bf3_integrand, args, -phi_pc, theta - phi_pc)
-
     return result
 
 
@@ -546,6 +292,43 @@ def Bx_analytical_circular(
         - primitive_brc(r_p, r1, z2, theta_p, theta)
         - primitive_brc(r_p, r2, z1, theta_p, theta)
         + primitive_brc(r_p, r2, z2, theta_p, theta)
+    )
+
+
+def Bt_analytical_circular(
+    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
+) -> float:
+    """
+    Calculate magnetic field in the local tangential coordinate direction due
+    to a circular arc current source.
+
+    Parameters
+    ----------
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+    theta:
+        Azimuthal angle of the circular arc [rad]
+    r_p:
+        The radius of the point at which to evaluate the field [m]
+    theta_p:
+        The angle of the point at which to evaluate the field [rad]
+
+    Returns
+    -------
+    :
+        The magnetic field response in the local tangential direction.
+    """
+    return (
+        primitive_btc(r_p, r1, z1, theta_p, theta)
+        - primitive_btc(r_p, r1, z2, theta_p, theta)
+        - primitive_btc(r_p, r2, z1, theta_p, theta)
+        + primitive_btc(r_p, r2, z2, theta_p, theta)
     )
 
 
@@ -726,15 +509,20 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         -------
         :
             (Bx, By, Bz) at a point
-
-        Note
-        ----
-            By set to 0.
         """
         r1, r2, z1, z2 = self._cylindrical_to_working(zp)
-        bx = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+
+        br = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
         bz = Bz_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
-        return np.array([bx, 0, bz])
+        if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
+            bt = 0.0
+        else:
+            bt = Bt_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+
+        bx = br * np.cos(tp) - bt * np.sin(tp)
+        by = br * np.sin(tp) + bt * np.cos(tp)
+
+        return np.array([bx, by, bz])
 
     @process_xyz_array
     def field(
