@@ -177,7 +177,7 @@ class EQConfig:
         max_currents: npt.NDArray[np.float64],
         current_constraints: list[UpdateableConstraint] | None,
         eq_constraints: list[MagneticConstraint],
-    ) -> CoilsetOptimisationProblem:
+    ) -> EqCoilsetOptimisationProblem:
         """Make equilibria optimisation problem
 
         Returns

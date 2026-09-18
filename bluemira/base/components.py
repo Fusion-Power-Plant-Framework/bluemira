@@ -11,7 +11,7 @@ Module containing the base Component class.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -137,7 +137,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return str(RenderTree(self))
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: ComponentT | None = None) -> Component:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
@@ -187,6 +187,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return [] if len(self.children) == 0 else [c.copy(parent) for c in self.children]
 
+    @overload
+    def get_component(
+        self, name: str, *, first: Literal[True] = True, full_tree: bool = False
+    ) -> ComponentT | None: ...
+    @overload
+    def get_component(
+        self, name: str, *, first: Literal[False] = False, full_tree: bool = False
+    ) -> ComponentT | tuple[ComponentT] | None: ...
     def get_component(
         self, name: str, *, first: bool = True, full_tree: bool = False
     ) -> ComponentT | tuple[ComponentT] | None:
@@ -399,7 +407,7 @@ class PhysicalComponent(Component):
         self._shape = shape
         self._material = material
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: ComponentT | None = None) -> PhysicalComponent:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
@@ -472,7 +480,7 @@ class MagneticComponent(PhysicalComponent):
         super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: ComponentT | None = None) -> MagneticComponent:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.

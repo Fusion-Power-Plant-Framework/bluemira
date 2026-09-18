@@ -57,7 +57,7 @@ class CodesTask(abc.ABC):
     Base class for a task used by a solver for an external code.
     """
 
-    def __init__(self, params: MappedParameterFrame, codes_name: str) -> None:
+    def __init__(self, params: MappedParameterFrame | None, codes_name: str) -> None:
         super().__init__()
         self.params = params
         self._name = codes_name

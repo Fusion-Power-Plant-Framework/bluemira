@@ -76,7 +76,7 @@ class PFCoilBuilder(Builder):
             xyz=self.build_xyz(self.xz_cross_section, degree=0),
         )
 
-    def build_xy(self, shape: BluemiraWire) -> list[PhysicalComponent]:
+    def build_xy(self, shape: BluemiraWire) -> list[PhysicalComponent, ...]:
         """
         Build the xy cross-section of the PF coil.
 

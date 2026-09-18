@@ -189,7 +189,7 @@ class LegFlux:
                 "flux surface to extractcfor each divertor leg (n_layers > 1)."
             )
 
-        self._legs = self.get_leg_offsets(self._legs, eq)
+        self._legs = self._get_leg_offsets(self._legs, eq)
         return self._legs
 
     def _print_warning_set_flag(self):
@@ -680,7 +680,7 @@ def calculate_connection_length(
     rtol: float = 1e-1,
     n_turns_max: int = 50,
     n_points: int = 1000,
-    calculation_method: str = "flux_surface_geometry",
+    calculation_method: str | CalcMethod = "flux_surface_geometry",
 ):
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -708,7 +708,8 @@ def calculate_connection_length(
         distinguish between open and closed flux).
 
     """
-    calculation_method = CalcMethod[calculation_method.upper()]
+    if isinstance(calculation_method, str):
+        calculation_method = CalcMethod[calculation_method.upper()]
 
     if first_wall is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
