@@ -219,7 +219,6 @@ def primitive_btc(
         The result of the Btc primitive.
     """
     args = (r_pc, r_j, z_k)
-    # Sub-set of paper singularities that don't perform well in integration
     return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
 
 
