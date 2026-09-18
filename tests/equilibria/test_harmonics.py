@@ -1511,3 +1511,17 @@ class TestRegressionTH:
         plot_toroidal_harmonic_approximation(
             self.eq, self.test_th_params, self.test_approx_result
         )
+
+    def test_max_mode_greater_than_dof(self):
+        # Test that the approximation can work if
+        # max_harmonic_mode > n_degrees_of_freedom
+        th_result = toroidal_harmonic_approximation(
+            eq=self.eq,
+            th_params=self.test_th_params,
+            psi_norm=self.psi_norm,
+            n_degrees_of_freedom=2,
+            max_harmonic_mode=5,
+        )
+        # test that the error value is as expected
+        exp_error = 774.9182948
+        np.testing.assert_almost_equal(th_result.error, exp_error)

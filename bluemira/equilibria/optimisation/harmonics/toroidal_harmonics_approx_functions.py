@@ -1010,8 +1010,12 @@ def toroidal_harmonic_approximation(
         R_0, Z_0 = eq.effective_centre()
         th_params = toroidal_harmonic_grid_and_coil_setup(eq=eq, R_0=R_0, Z_0=Z_0)
 
+    # TODO @clmould: this will be updated in #4471
     collocation = collocation_points(
-        eq.get_LCFS(), PointType.GRID_POINTS, n_points=5, use_mask=True
+        eq.get_LCFS(),
+        PointType.GRID_POINTS,
+        n_points=max_harmonic_mode,
+        use_mask=True,
     )
 
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
@@ -1152,7 +1156,9 @@ def _approximation_from_psi_fitting(
 
     harmonics2collocation_cos, harmonics2collocation_sin = (
         toroidal_harmonics_to_positions(
-            th_params=th_params, n_allowed=max_harmonic_mode, collocation=collocation
+            th_params=th_params,
+            max_harmonic_mode=max_harmonic_mode,
+            collocation=collocation,
         )
     )
 
@@ -1168,7 +1174,7 @@ def _approximation_from_psi_fitting(
     )
 
     harmonics2grid_cos, harmonics2grid_sin = toroidal_harmonics_to_positions(
-        th_params=th_params, n_allowed=max_harmonic_mode
+        th_params=th_params, max_harmonic_mode=max_harmonic_mode
     )
     harmonics2grid_cos = harmonics2grid_cos[np.array(cos_m_chosen), :]
     harmonics2grid_sin = harmonics2grid_sin[np.array(sin_m_chosen), :]
