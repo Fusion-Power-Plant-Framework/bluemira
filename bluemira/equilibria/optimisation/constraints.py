@@ -59,8 +59,8 @@ def _get_dummy_equilibrium(equilibrium: Equilibrium):
 
 class UpdateableConstraint(ABC):
     """
-    Abstract base mixin class for an equilibrium optimisation constraint that is
-    updateable.
+    Abstract base mixin class for an equilibrium optimisation constraint that
+    updates during coilset optimisation.
     """
 
     def __init_subclass__(cls, **kwargs):
@@ -410,7 +410,8 @@ class CoilForceConstraints(UpdateableConstraint):
 
 class MagneticConstraint(UpdateableConstraint):
     """
-    Abstract base class for a magnetic optimisation constraint.
+    Abstract base class for any magnetic constraint, or that can be used as an
+    optimisation target when part of a "MagneticConstraintSet".
 
     Can be used as a standalone constraint for use in an optimisation problem. In which
     case the constraint is of the form: ||(Ax - b)||² < target_value
