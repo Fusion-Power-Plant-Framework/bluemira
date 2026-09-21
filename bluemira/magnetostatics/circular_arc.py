@@ -17,7 +17,7 @@ still ran into numerical singularities, and the values returned did not
 correspond well to results found with a 2-D semi-analytical methods.
 Instead, a brute-force integration takes places in the vast majority of
 singular cases (as described by Feng). This is remarkably accurate when
-comparing results to other fields obtained by other methods; of the
+comparing results to fields obtained by other methods; of the
 order of 10 µT/MA discrepancy at singular points. MC 2026
 """  # noqa: RUF002, yes I meant micro
 
