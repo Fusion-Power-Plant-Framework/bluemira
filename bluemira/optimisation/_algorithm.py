@@ -21,6 +21,7 @@ class Algorithm(Enum):
     """Enumeration of available optimisation algorithms."""
 
     # NLOpt algorithms
+    DEBUG: bool
     SLSQP = auto()
     COBYLA = auto()
     SBPLX = auto()
@@ -48,6 +49,7 @@ class Algorithm(Enum):
         """Create Enum and debug attribute"""
         obj = object.__new__(cls)
         obj._value_ = value
+        obj.DEBUG = False
         return obj
 
     @classmethod
@@ -76,6 +78,10 @@ class Algorithm(Enum):
                 return cls.DIRECT_L
             return cls[value]
         except (KeyError, AttributeError):
+            if value.startswith("DEBUG_"):
+                self = cls(value.strip("DEBUG_"))
+                self.DEBUG = True
+                return self
             raise ValueError(f"No such Algorithm value '{value}'.") from None
 
 
