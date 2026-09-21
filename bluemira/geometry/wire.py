@@ -240,7 +240,7 @@ class BluemiraWire(BluemiraGeo):
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
                 )
                 alpha = 1.0
-            distance = alpha * self.length
+            distance: float = alpha * self.length
 
         return cadapi.wire_value_at(self.shape, distance)
 

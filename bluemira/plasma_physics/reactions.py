@@ -493,20 +493,22 @@ def _reactivity_johner(
         bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
     if np.min(temp_arr) < 5.3:  # noqa: PLR2004
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
+    if t_isfloat := isinstance(temp_kev, float | int):
+        temp_kev = np.atleast_1d(temp_kev)
 
-    sigma_v = np.zeros_like(temp_arr, dtype=float)
-    idx_1 = np.nonzero((temp_arr >= 5.3) & (temp_arr <= 10.3))[0]  # noqa: PLR2004
-    idx_2 = np.nonzero((temp_arr >= 10.3) & (temp_arr <= 18.5))[0]  # noqa: PLR2004
-    idx_3 = np.nonzero((temp_arr >= 18.5) & (temp_arr <= 39.9))[0]  # noqa: PLR2004
-    idx_4 = np.nonzero((temp_arr >= 39.9) & (temp_arr <= 100.0))[0]  # noqa: PLR2004
-    t1 = temp_arr[idx_1]
-    t2 = temp_arr[idx_2]
-    t3 = temp_arr[idx_3]
+    sigma_v = np.zeros_like(temp_kev)
+    idx_1 = np.flatnonzero((temp_kev >= 5.3) & (temp_kev <= 10.3))  # noqa: PLR2004
+    idx_2 = np.flatnonzero((temp_kev >= 10.3) & (temp_kev <= 18.5))  # noqa: PLR2004
+    idx_3 = np.flatnonzero((temp_kev >= 18.5) & (temp_kev <= 39.9))  # noqa: PLR2004
+    idx_4 = np.flatnonzero((temp_kev >= 39.9) & (temp_kev <= 100.0))  # noqa: PLR2004
+    t1 = temp_kev[idx_1]
+    t2 = temp_kev[idx_2]
+    t3 = temp_kev[idx_3]
 
     sigma_v[idx_1] = 1.15e-25 * t1**3
     sigma_v[idx_2] = 1.18e-24 * t2**2
     sigma_v[idx_3] = 2.18e-23 * t3
     sigma_v[idx_4] = 8.69e-22
-    if isinstance(temp_kev, float | int):
+    if t_isfloat:
         return float(sigma_v[0])
     return sigma_v
