@@ -280,7 +280,7 @@ markupsafe==3.0.3
     #   nbconvert
 marshmallow==3.26.2
     # via dataclasses-json
-matplotlib==3.11.1
+matplotlib==3.11.2
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
