@@ -111,7 +111,7 @@ class PowerLawScaling:
         min_terms = np.zeros(len(self))
         max_terms = np.zeros(len(self))
         for i, (arg, exp, err) in enumerate(
-            zip(args, self.exponents, self.errors, strict=False)
+            zip(args, self.exponents, self.errors or (), strict=False)
         ):
             term_values = [arg ** (exp - err), arg ** (exp + err)]
             min_terms[i] = min(term_values)

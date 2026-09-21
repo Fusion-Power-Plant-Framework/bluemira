@@ -500,7 +500,7 @@ def check_ccw_3d(
 @xyz_process
 def get_centroid(
     x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
-) -> np.ndarray:
+) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
 
@@ -619,7 +619,9 @@ def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
     return list(starmap(get_rational, enumerate([cx, cy, cz])))
 
 
-def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> float:
+def get_angle_between_points(
+    p0: npt.ArrayLike, p1: npt.ArrayLike, p2: npt.ArrayLike
+) -> float:
     """
     Angle between points. P1 is vertex of angle. ONly tested in 2d
 
@@ -731,7 +733,7 @@ def rotation_matrix(
     return r_matrix
 
 
-def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+def rotation_matrix_v1v2(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     """
     Get a rotation matrix based off two vectors.
 
@@ -1284,7 +1286,7 @@ class Coordinates:
         self._set_plane_props()
         return self._normal_vector
 
-    def check_ccw(self, axis: np.ndarray | None = None) -> bool:
+    def check_ccw(self, axis: npt.ArrayLike | None = None) -> bool:
         """
         Whether or not the Coordinates are ordered in the counter-clockwise direction
         about a specified axis. If None is specified, the Coordinates normal vector will
@@ -1314,7 +1316,7 @@ class Coordinates:
 
         return check_ccw_3d(self.x, self.y, self.z, axis)
 
-    def set_ccw(self, axis: np.ndarray | None = None):
+    def set_ccw(self, axis: npt.ArrayLike | None = None):
         """
         Set the Coordinates to be counter-clockwise about a specified axis. If None is
         specified, the Coordinates normal vector will be used.
