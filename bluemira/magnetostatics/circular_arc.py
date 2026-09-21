@@ -8,7 +8,18 @@ Analytical expressions for the field due to a circular current arc of
 rectangular cross-section, following equations as described in:
 
 .. doi:: 10.1109/TMAG.1985.1064259
-"""
+
+The analytical treatment of singularities in Feng's 1988 paper proved,
+despite my best efforts, to be impractical, at the very least. Whilst I
+cannot claim the analytical treatments of the singularities are wrong
+or incomplete, I can say that after many attempts my implementations
+still ran into numerical singularities, and the values returned did not
+correspond well to results found with a 2-D semi-analytical methods.
+Instead, a brute-force integration takes places in the vast majority of
+singular cases (as described by Feng). This is remarkably accurate when
+comparing results to other fields obtained by other methods; of the
+order of 10 µT/MA discrepancy at singular points. MC 2026
+"""  # noqa: RUF002, yes I meant micro
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -136,10 +147,6 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     return 0
 
 
-# Primitive functions
-# BTC integrands
-
-
 @jit_llc4
 def btc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
@@ -167,6 +174,9 @@ def btc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float
     return sin_psi * sqrt_term + r_pc * sin_psi * cos_psi * np.log(
         r_j - r_pc * cos_psi + sqrt_term
     )
+
+
+# Primitive functions
 
 
 def primitive_brc(
