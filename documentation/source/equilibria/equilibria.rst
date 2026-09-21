@@ -534,8 +534,8 @@ coilset optimisation. They are as follows:
    AutoConstraints
 
 Note: A :py:class:`~bluemira.equilibria.optimisation.constraints.MagneticConstraintSet` is a set of magnetic constraints to be applied to an equilibrium
-as an optimisation problem using the :py:class:`~bluemira.equilibria.optimisation.problem.TikhonovCurrentCOP` or
-:py:class:`~bluemira.equilibria.optimisation.problem.UnconstrainedTikhonovCurrentGradientCOP` current optimisation classes. It  can be sub-classed or
+as an optimisation problem using the :py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.TikhonovCurrentCOP` or
+:py:class:`~bluemira.equilibria.optimisation.problem._tikhonov.UnconstrainedTikhonovCurrentGradientCOP` current optimisation classes. It  can be sub-classed or
 initialised with :py:class:`~bluemira.equilibria.optimisation.constraints.MagneticConstraint`.
 
 Two categories of magnetic constraints are supported: absolute and relative magnetic
