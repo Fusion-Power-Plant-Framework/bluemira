@@ -324,7 +324,9 @@ class OpenMCCSGResult(OpenMCResultBase):
         # so we don't need to show them to the user.
         # TODO @CoronelBuendia: do we want total power or total power in known materials
         # 4353
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "total power")
+        heating_df = cls._load_dataframe_from_statepoint(
+            statepoint, "total power in known materials"
+        )
         heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["mean(W)"] = raw_uc(
             heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
