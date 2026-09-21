@@ -15,6 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0_4PI
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
@@ -557,11 +558,15 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         try:
             b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
 
-        except MagnetostaticsIntegrationError:
+        except MagnetostaticsIntegrationError as e:
             # If all else fails, perform an 8-point Gauss-Legendre volume-averaged
             # calculation.
             # So far, these have only been triggered on "surprising" singularities
             # not located on the surface or inside of the source.
+            bluemira_warn(
+                f"{e!s} \nFallback triggered: 8-point Gauss-Legendre volume-averaged"
+                f" field being return for point at {x=:.6f}, {y=:.6f}, {z=:.6f}"
+            )
             offset = 1e-6 / np.sqrt(3)
             quadrature_points = (
                 np.array([x + dx, y + dy, z + dz])
