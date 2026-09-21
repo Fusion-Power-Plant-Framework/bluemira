@@ -40,7 +40,7 @@ except FileNotFoundError:
 # =============================================================================
 
 
-def get_git_version(directory: str) -> str:
+def get_git_version(directory: str) -> bytes:
     """
     Get the version string of the current git branch, e.g.: '0.0.3-74-g70d48be'.
 
@@ -54,15 +54,10 @@ def get_git_version(directory: str) -> str:
     :
         The git version bytestring
     """
-    return (
-        subprocess
-        .check_output(
-            ["git", "describe", "--tags", "--always"],  # noqa: S607
-            cwd=directory,
-        )
-        .strip()
-        .decode("utf-8")
-    )
+    return subprocess.check_output(
+        ["git", "describe", "--tags", "--always"],  # noqa: S607
+        cwd=directory,
+    ).strip()
 
 
 def get_git_branch(directory: str) -> str:
