@@ -17,6 +17,7 @@ import numpy.typing as npt
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
+from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
 from bluemira.magnetostatics.tools import (
     integrate,
     jit_llc4,
@@ -553,8 +554,30 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         point = self._global_to_local([point])[0]
         rp, tp, zp = self._local_to_cylindrical(point)
         # Calculate field in local coordinates
-        b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
-        # Convert field to global coordinates
+        try:
+            b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
+
+        except MagnetostaticsIntegrationError:
+            # If all else fails, perform an 8-point Gauss-Legendre volume-averaged
+            # calculation.
+            # So far, these have only been triggered on "surprising" singularities
+            # not located on the surface or inside of the source.
+            offset = 1e-6 / np.sqrt(3)
+            quadrature_points = (
+                np.array([x + dx, y + dy, z + dz])
+                for dx in (-offset, offset)
+                for dy in (-offset, offset)
+                for dz in (-offset, offset)
+            )
+
+            b = np.zeros(3)
+            for p in quadrature_points:
+                point = self._global_to_local([p])[0]
+                rp, tp, zp = self._local_to_cylindrical(point)
+                b += self._BxByBz(rp, tp, zp)
+
+            b_local = MU_0_4PI * self._rho * b / 8
+
         return self._dcm.T @ b_local
 
     def _calculate_points(self) -> npt.NDArray[np.float64]:

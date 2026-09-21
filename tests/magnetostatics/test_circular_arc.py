@@ -15,6 +15,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
 
 
@@ -329,6 +330,17 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
             err_msg=f"{source=}, {angle=}",
         )
 
+    def test_mirror_singularity(self):
+        """
+        Somewhat counterintuitively, the remaining singularities occur
+        with R_j << R_pc and z_k =0.0, phi = 0.0
+
+        No assertions on values here; just check for errors.
+        """
+        c = deepcopy(self.border_rectangle)
+        c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
+        self.two_halves.field(*c.xyz)
+
     def test_debug_plot(self):
         _debug_plot(self, "arc")
         _debug_plot(self, "two_halves")
@@ -410,6 +422,10 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
         cls.border_rectangle.rotate(
             base=(cls.r_0, 0, cls.zc), direction=(0, 1, 0), degree=-90
         )
+        ax = Plot3D()
+        cls.two_halves.sources[0].plot(ax=ax)
+        ax.scatter(*cls.border_rectangle.xyz)
+        plt.show()
 
     @classmethod
     def _make_boundary_points(cls, n_edge=50):
@@ -505,6 +521,17 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
             atol=4e-9,
             err_msg=f"{source=}, {angle=}",
         )
+
+    def test_mirror_singularity(self):
+        """
+        Somewhat counterintuitively, the remaining singularities occur
+        with R_j << R_pc and z_k =0.0, phi = 0.0
+
+        No assertions on values here; just check for errors.
+        """
+        c = deepcopy(self.border_rectangle)
+        c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
+        self.two_halves.field(*c.xyz)
 
     def test_debug_plot(self):
         _debug_plot(self, "arc")
