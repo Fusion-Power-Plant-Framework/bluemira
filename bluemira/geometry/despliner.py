@@ -75,12 +75,28 @@ def check_face_has_revolution(bm_face: BluemiraFace) -> bool:
         True if the face is of a revolution type, else False.
     """
     face = bm_face.shape
-
     face_type = (
         face.geomType() if hasattr(face, "geomType") else face.Surface.__class__.__name__
     )
 
-    return bool(face_type == "SurfaceOfRevolution")
+    return bool(face_type == "REVOLUTION")
+
+
+def check_solid_has_revolution(bm_solid: BluemiraSolid) -> bool:
+    """
+    Inspect if the solid has faces of revolution type.
+
+    Parameters
+    ----------
+    bm_solid:
+        BluemiraSolid
+
+    Returns
+    -------
+    bool
+        True if the solid has REVOLUTION faces, else False.
+    """
+    return any(check_face_has_revolution(face) for face in bm_solid.faces)
 
 
 def check_solid_has_splines(bm_solid: BluemiraSolid) -> bool:
@@ -135,8 +151,9 @@ def despline_xz_component(
     """
     desplined_comp = Component(component.name)
 
-    # only consider one xz component
     xz_component = component.get_component("xz")
+    xyz_component = component.get_component("xyz")
+
     # only consider one sub-component
     if len(xz_component.children) > 1:
         bluemira_warn(
@@ -145,9 +162,11 @@ def despline_xz_component(
         )
 
     face = xz_component.children[0].shape
+    solid = xyz_component.children[0].shape
 
-    # Despline if the face has splines, or if the face is of revolution type
-    if not check_face_has_splines(face) and not check_face_has_revolution(face):
+    # Despline if the face has splines, or if the solid has any
+    # face is of revolution type
+    if not check_face_has_splines(face) and not check_solid_has_revolution(solid):
         desplined_comp.add_child(
             Component("xz", children=[xz_component.children[0].copy()])
         )
