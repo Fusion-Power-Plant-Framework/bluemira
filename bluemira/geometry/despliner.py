@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     make_polygon,
@@ -58,6 +58,29 @@ def check_face_has_splines(bm_face: BluemiraFace) -> bool:
             return True
 
     return False
+
+
+def check_face_has_revolution(bm_face: BluemiraFace) -> bool:
+    """
+    Inspect if the face is of a revolution type.
+
+    Parameters
+    ----------
+    bm_face:
+        BluemiraFace
+
+    Returns
+    -------
+    bool
+        True if the face is of a revolution type, else False.
+    """
+    face = bm_face.shape
+
+    face_type = (
+        face.geomType() if hasattr(face, "geomType") else face.Surface.__class__.__name__
+    )
+
+    return bool(face_type == "SurfaceOfRevolution")
 
 
 def check_solid_has_splines(bm_solid: BluemiraSolid) -> bool:
@@ -122,13 +145,16 @@ def despline_xz_component(
         )
 
     face = xz_component.children[0].shape
-    if not check_face_has_splines(face):
+
+    # Despline if the face has splines, or if the face is of revolution type
+    if not check_face_has_splines(face) and not check_face_has_revolution(face):
         desplined_comp.add_child(
             Component("xz", children=[xz_component.children[0].copy()])
         )
         return desplined_comp
 
     # Else, Despline
+    bluemira_print(f"Desplining {component.name}")
     for i, wire in enumerate(face.boundary):
         # check if the discretisation is enough
         if len(wire.vertexes.T) - 1 > discretisation:
