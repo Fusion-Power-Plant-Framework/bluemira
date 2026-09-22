@@ -1402,6 +1402,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             # Note use 'or' as we want any area in ref or input LCFS.
             return np.multiply(np.logical_or(ref_mask, input_mask), 1)
 
+        if mask_type is EqPlotMask.NONE:
+            return np.ones_like(mask_matx)
+
         raise NotImplementedError("Chosen mask combination is not implemented.")
 
     def apply_mask(self, mask_type):
@@ -1462,18 +1465,17 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
     def plot_compare_psi(self):
         """Plot flux differences"""
         # Apply mask
-        if self.diag_ops.plot_mask is not None:
-            if not self.diag_ops.plot_mask & (
-                EqPlotMask.INSIDE_REF_LCFS
-                | EqPlotMask.OUTSIDE_REF_LCFS
-                | EqPlotMask.INSIDE_CHOSEN_LCFS
-                | EqPlotMask.OUTSIDE_CHOSEN_LCFS
-                | EqPlotMask.NONE
-            ):
-                raise NotImplementedError(
-                    "Chosen mask is not yet available please choose a LCFS mask type."
-                )
-            self.apply_mask(self.diag_ops.plot_mask)
+        if not self.diag_ops.plot_mask & (
+            EqPlotMask.INSIDE_REF_LCFS
+            | EqPlotMask.OUTSIDE_REF_LCFS
+            | EqPlotMask.INSIDE_CHOSEN_LCFS
+            | EqPlotMask.OUTSIDE_CHOSEN_LCFS
+            | EqPlotMask.NONE
+        ):
+            raise NotImplementedError(
+                "Chosen mask is not yet available please choose a LCFS mask type."
+            )
+        self.apply_mask(self.diag_ops.plot_mask)
 
         if self.diag_ops.split_psi_plots is EqSubplots.XZ_COMPONENT_PSI:
             self.plot_psi_coilset(self.grid)
