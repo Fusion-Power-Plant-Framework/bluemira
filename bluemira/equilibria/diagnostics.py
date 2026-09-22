@@ -110,14 +110,11 @@ class EqPlotMask(Flag):
     """Mask out values inside reference LCFS."""
     OUTSIDE_REF_LCFS = auto()
     """Mask out values outside reference LCFS."""
-
-    DIV_AREA = (
-        auto()
-    )  # NOTE: add new mask types, this currently raises a not implemented error
+    # TODO @geograham: #4504 add new mask types, this currently raises a not implemented
+    # error
+    DIV_AREA = auto()
     """Mask out the values outside divertor area."""
-    POLYGON = (
-        auto()
-    )  # NOTE: add new mask types, this currently raises a not implemented error
+    POLYGON = auto()
     """Mask out the values outside a chosen polygon area."""
 
 
