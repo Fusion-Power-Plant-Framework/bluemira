@@ -912,7 +912,6 @@ xz_desplined_4_repaired = repair_overlapping_geos(
 # %% [markdown]
 # Now, sew, and plot comparisons
 # %%
-# %%
 
 xz_repaired_3, xz_repaired_4 = repair_gaps_between_faces(
     [
@@ -928,68 +927,64 @@ plot_face(
     xz_desplined_3,
     ax[0],
     "cornflowerblue",
-    show_vertices=False,
+    show_vertices=True,
 )
 plot_face(
     xz_desplined_4_repaired,
     ax[0],
     "salmon",
-    show_vertices=False,
+    show_vertices=True,
 )
 ax[0].set_title("Before repairing")
-
 
 # Before repairing - zoomed in
 plot_face(
     xz_desplined_3,
     ax[1],
     "cornflowerblue",
-    show_vertices=False,
+    show_vertices=True,
 )
 plot_face(
     xz_desplined_4_repaired,
     ax[1],
     "salmon",
-    show_vertices=False,
+    show_vertices=True,
 )
 ax[1].set_title("Before repairing (zoomed in)")
 ax[1].set_xlim(0.9, 1.2)
 ax[1].set_ylim(0.75, 1.2)
-
 
 # After repairing
 plot_face(
     xz_repaired_3,
     ax[2],
     "cornflowerblue",
-    show_vertices=False,
+    show_vertices=True,
 )
 plot_face(
     xz_repaired_4,
     ax[2],
     "salmon",
-    show_vertices=False,
+    show_vertices=True,
 )
 ax[2].set_title("After repairing")
-
 
 # After repairing - zoomed in
 plot_face(
     xz_repaired_3,
     ax[3],
     "cornflowerblue",
-    show_vertices=False,
+    show_vertices=True,
 )
 plot_face(
     xz_repaired_4,
     ax[3],
     "salmon",
-    show_vertices=False,
+    show_vertices=True,
 )
 ax[3].set_title("After repairing (zoomed in)")
 ax[3].set_xlim(0.9, 1.2)
 ax[3].set_ylim(0.75, 1.2)
-
 
 for a in ax:
     a.set_aspect("equal")
@@ -998,3 +993,8 @@ for a in ax:
 
 plt.tight_layout()
 plt.show()
+
+# %% [markdown]
+# We also see that the desplining features are retained after sewing, while
+# the gap between the neighbouring faces is removed.
+# %%
