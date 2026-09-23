@@ -21,8 +21,10 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, overload
 
+import cadquery as cq
 import numba as nb
 import numpy as np
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
 from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
