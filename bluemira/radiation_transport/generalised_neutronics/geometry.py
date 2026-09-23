@@ -35,8 +35,6 @@ if TYPE_CHECKING:
 class NeutronicsComponent:
     """
     Store component data used during neutronics pre-processing.
-
-    Only used
     """
 
     name: str
