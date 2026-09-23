@@ -21,10 +21,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, overload
 
-import cadquery as cq
 import numba as nb
 import numpy as np
-from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
 from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
@@ -2532,6 +2530,14 @@ def repair_gaps_between_faces(
     TypeError
         If geo_1 and geos_2 are not BluemiraFace Objects.
     """
+    try:
+        import cadquery as cq  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing  # noqa: PLC0415
+
+    except ImportError:
+        bluemira_warn("Gap repair requires CadQuery. Skipping gap repair.")
+        return geos
+
     if not all(isinstance(geo, BluemiraFace) for geo in geos):
         raise TypeError("All geometries must be BluemiraFace objects")
 
