@@ -298,6 +298,27 @@ class BluemiraWire(BluemiraGeo):
         """
         return Coordinates(cadapi.end_point(self.shape))
 
+    def edge_type(
+        self, ind: int | None = None
+    ) -> cadapi.CurveType | tuple[cadapi.CurveType, ...]:
+        """Get the type of edge(s) the wire is made from
+
+        Parameters
+        ----------
+        ind:
+            edge index
+
+        Returns
+        -------
+        :
+            edge type(s)
+        """
+        edges = self.edges
+        if ind is None:
+            et = tuple(cadapi.get_edge_type(e.shape) for e in edges)
+            return et[0] if len(et) == 1 else et
+        return cadapi.get_edge_type(edges[ind].shape)
+
     @property
     def vertexes(self) -> Coordinates:
         """

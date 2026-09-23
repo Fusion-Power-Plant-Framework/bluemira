@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -29,7 +28,7 @@ from bluemira.geometry.plane import (
     xz_plane_from_2_points,
     z_plane,
 )
-from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.geometry.tools import CurveType, get_wire_plane_intersect, make_polygon
 from bluemira.radiation_transport.neutronics.constants import (
     DISCRETISATION_LEVEL,
     TOLERANCE_DEGREES,
@@ -145,10 +144,10 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     wire_container = []
 
     def add_line(
-        edge: cadapi.apiEdge,
+        edge: BluemiraWire,
         wire: BluemiraWire,
-        start_vec: cadapi.apiVector | npt.NDArray,
-        end_vec: cadapi.apiVector | npt.NDArray,
+        start_vec: npt.NDArray,
+        end_vec: npt.NDArray,
     ) -> WireInfo:
         """
         Function to record a line as a WireInfo, with the appropriate tangents and
@@ -156,15 +155,15 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         """  # noqa: DOC201
         return WireInfo(
             StraightLineInfo(np.array(start_vec), np.array(end_vec)),
-            [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
+            [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
 
     def add_circle(
-        edge: cadapi.apiEdge,
+        edge: BluemiraWire,
         wire: BluemiraWire,
-        start_vec: cadapi.apiVector | npt.NDArray,
-        end_vec: cadapi.apiVector | npt.NDArray,
+        start_vec: npt.NDArray,
+        end_vec: npt.NDArray,
     ) -> WireInfo:
         """
         Function to record the arc of a circle as a WireInfo, with the appropriate
@@ -177,40 +176,43 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
                 np.array(edge.Curve.Center),
                 edge.Curve.Radius,
             ),
-            [edge.tangentAt(edge.FirstParameter), edge.tangentAt(edge.LastParameter)],
+            [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
 
     for w_edge in wire.edges:
-        if len(w_edge.boundary) != 1 or len(w_edge.boundary[0].OrderedEdges) != 1:
+        if len(w_edge.boundary) != 1 or len(w_edge.edges) != 1:
             raise GeometryError("Expected each boundary to contain only 1 curve!")
-        edge = w_edge.boundary[0].OrderedEdges[0]
+        edge = w_edge.edges[0]
 
         # Create aliases for easier referring to variables.
         # The following line may become `edge.start_point(), edge.end_point()`
         # when PR # 3095 is merged
-        current_start, current_end = edge.firstVertex().Point, edge.lastVertex().Point
+        current_start, current_end = edge.start_point(), edge.end_point()
 
-        # Get the info about this segment of wire
-        if isinstance(edge.Curve, cadapi.Part.BSplineCurve | cadapi.Part.BezierCurve):
-            wire_container.extend(
-                check_and_breakdown_wire(
-                    make_polygon(w_edge.discretise(DISCRETISATION_LEVEL), closed=False)
-                ).info_list
-            )
-            continue
-
-        if isinstance(edge.Curve, cadapi.Part.Line | cadapi.Part.LineSegment):
-            wire_info = add_line(edge, w_edge, current_start, current_end)
-
-        elif isinstance(edge.Curve, cadapi.Part.ArcOfCircle | cadapi.Part.Circle):
-            wire_info = add_circle(edge, w_edge, current_start, current_end)
-        elif isinstance(edge.Curve, cadapi.Part.ArcOfEllipse | cadapi.Part.Ellipse):
-            raise NotImplementedError("Conversion for ellipses are not available yet.")
-            # TODO @OceanNuclear: implement this feature
-            # 3660
-        else:
-            raise NotImplementedError(f"Conversion for {edge.Curve} not available yet.")
+        # Get the info about this segment of uwire
+        match value := edge.edge_type():
+            case CurveType.BSPLINE | CurveType.BEZIER:
+                wire_container.extend(
+                    check_and_breakdown_wire(
+                        make_polygon(
+                            w_edge.discretise(DISCRETISATION_LEVEL), closed=False
+                        )
+                    ).info_list
+                )
+                continue
+            case CurveType.LINE:
+                wire_info = add_line(edge, w_edge, current_start, current_end)
+            case CurveType.CIRCLE:
+                wire_info = add_circle(edge, w_edge, current_start, current_end)
+            case CurveType.ELLIPSE:
+                raise NotImplementedError(
+                    "Conversion for ellipses are not available yet."
+                )
+                # TODO @OceanNuclear: implement this feature
+                # 3660
+            case value:
+                raise NotImplementedError(f"Conversion for {value} not available yet.")
 
         # horrible hack to work around issue #3037, which is still an open issue:
         # wire segments are sometimes reversed for no apparent reason.
