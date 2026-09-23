@@ -48,7 +48,7 @@ class GeometryModel(Enum):
 
 class NeutronicsGeometryManager(ComponentManager):
     """
-    Class containing all the Component Managers for neutronics.
+    Class containing all the Components for neutronics.
 
     Parameters
     ----------
