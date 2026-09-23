@@ -16,8 +16,6 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.despliner import (
-    check_solid_has_revolution,
-    check_solid_has_splines,
     despline_xz_component,
 )
 from bluemira.geometry.tools import (
@@ -39,8 +37,6 @@ class NeutronicsComponent:
 
     name: str
     original_volume: float
-    has_splines: bool
-    has_surface_of_revolution: bool
     material: Material | None = None
     touching_components: list[str] | None = None
     desplined_xz_component: Component | None = None
@@ -160,8 +156,6 @@ class NeutronicsGeometryManager(ComponentManager):
                 NeutronicsComponent(
                     name=comp.name,
                     original_volume=xyz_shape.volume,
-                    has_splines=check_solid_has_splines(xyz_shape),
-                    has_surface_of_revolution=(check_solid_has_revolution(xyz_shape)),
                     touching_components=cls.check_touching(
                         comp,
                         components,
