@@ -376,9 +376,13 @@ class NeutronicsGeometryManager(ComponentManager):
         # Sew every pair that should touch according to the
         # original geometry. Each pair is processed only once.
         # ---------------------------------------------------------
+
+        # Track processed pairs to prevent repairing the same touching pair twice.
         repaired_pairs: set[frozenset[str]] = set()
 
         for neutronics_comp in neutronics_comps:
+            # Note: The list iteration order determines which
+            # comp gets processed first
             comp_a = neutronics_comp.desplined_xz_component
 
             for touching_name in neutronics_comp.touching_components:
