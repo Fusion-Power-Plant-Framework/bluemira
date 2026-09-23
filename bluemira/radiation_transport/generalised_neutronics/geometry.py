@@ -9,12 +9,17 @@ Geometry for generalised neutronics
 
 from __future__ import annotations
 
-from enum import Enum, auto
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.reactor import ComponentManager
-from bluemira.geometry.despliner import despline_xz_component
+from bluemira.geometry.despliner import (
+    check_solid_has_revolution,
+    check_solid_has_splines,
+    despline_xz_component,
+)
 from bluemira.geometry.tools import (
     check_touching_geos,
     repair_gaps_between_faces,
@@ -22,38 +27,85 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 
+if TYPE_CHECKING:
+    from matproplib.material import Material
 
-class GeometryModel(Enum):
+
+@dataclass
+class NeutronicsComponent:
     """
-    Enumeration of different geometry model to be
-    considered for neutronics simulations
+    Store component data used during neutronics pre-processing.
+
+    Only used
     """
 
-    # In-house axisymmetric neutronics CSG maker
-    BLUEMRIA_CSG = auto()
-
-    # USER Specified / NOT IMPLEMENTED YET
-    CUSTOM = auto()
-
-    @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"{cls.__name__} has no type {value}. "
-                f"Please select from {(*cls._member_names_,)}"
-            ) from None
+    name: str
+    original_volume: float
+    has_splines: bool
+    has_surface_of_revolution: bool
+    material: Material | None = None
+    touching_components: list[str] | None = None
+    desplined_xz_component: Component | None = None
+    desplined_xyz_component: Component | None = None
+    relative_volume_difference: float | None = None
 
 
 class NeutronicsGeometryManager(ComponentManager):
-    """
-    Class containing all the Components for neutronics.
+    """Manage components used to construct the neutronics geometry."""
 
-    Parameters
-    ----------
-    All managers to be considered in the neutronics model.
-    """
+    def __init__(
+        self,
+        component: Component,
+        volume_differences: dict[str, float],
+    ):
+        super().__init__(component)
+        self.volume_differences = volume_differences
+
+    @staticmethod
+    def check_touching(
+        comp: Component,
+        components: list[Component],
+        overlap_tolerance: float,
+    ) -> list[str]:
+        """Return the names of components whose XZ faces touch ``comp``.
+
+        ``comp`` is compared against the XZ face of each
+        component in ``components``. Components with the same name as
+        ``comp`` are excluded from the comparison.
+
+        Parameters
+        ----------
+        comp
+            Component whose XZ face is checked for touching.
+        components
+            Components whose XZ faces are checked against ``comp``.
+        overlap_tolerance
+            Tolerance used to determine whether two XZ face geometries
+            are touching.
+
+        Returns
+        -------
+        list[str]
+            Names of components whose XZ faces touch the XZ face of ``comp``.
+        """
+        comp_xz_face = comp.get_component("xz").children[0].shape
+
+        touching_components = []
+
+        for other_comp in components:
+            if other_comp.name == comp.name:
+                continue
+
+            other_xz_face = other_comp.get_component("xz").children[0].shape
+
+            if check_touching_geos(
+                comp_xz_face,
+                other_xz_face,
+                overlap_tolerance,
+            ):
+                touching_components.append(other_comp.name)
+
+        return touching_components
 
     @classmethod
     def from_list_of_components(
@@ -63,26 +115,29 @@ class NeutronicsGeometryManager(ComponentManager):
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
     ) -> NeutronicsGeometryManager:
-        """Create a NeutronicsGeometryManager instance from component managers.
+        """Create a neutronics geometry manager from components.
 
         Parameters
         ----------
         components
-            All components to include in the neutronics geometry.
+            Components to include in the neutronics geometry.
         discretisations
-            Discretisation for each component manager.
+            Discretisation to use for each component.
+        overlap_tolerance
+            Tolerance used when checking whether XZ faces are touching.
+        gap_tolerance
+            Tolerance used when checking for gaps between components.
 
         Returns
         -------
         NeutronicsGeometryManager
-            A NeutronicsGeometryManager instance containing the
-            desplined component managers.
+            Manager containing the processed neutronics components.
 
         Raises
         ------
         ValueError
             If the number of discretisations does not match the number
-            of component managers.
+            of components.
         """
         if len(discretisations) != len(components):
             raise ValueError(
@@ -90,26 +145,39 @@ class NeutronicsGeometryManager(ComponentManager):
                 f"differs from provided number of discretisations "
                 f"{len(discretisations)}"
             )
-        all_orig_xyzs = [comp.get_component("xyz") for comp in components]
+
         # ---------------------------------------------------------
         # Desplining xz boundaries
         # * Assuming one child per component
         # If you have multiple children, unpack them before
         # running this
         # ---------------------------------------------------------
+        all_neutronics_comps = []
         bluemira_print("Desplining xz components.")
-        all_desplined_comps = [
-            despline_xz_component(
-                comp,
-                dscrt,
-                fallback_to_existing_discretisation=True,
+        for comp, dscrt in zip(components, discretisations, strict=True):
+            xyz_component = comp.get_component("xyz")
+            xyz_shape = xyz_component.children[0].shape
+
+            all_neutronics_comps.append(
+                NeutronicsComponent(
+                    name=comp.name,
+                    original_volume=xyz_shape.volume,
+                    has_splines=check_solid_has_splines(xyz_shape),
+                    has_surface_of_revolution=(check_solid_has_revolution(xyz_shape)),
+                    touching_components=cls.check_touching(
+                        comp,
+                        components,
+                        overlap_tolerance,
+                    ),
+                    desplined_xz_component=despline_xz_component(
+                        comp,
+                        dscrt,
+                        fallback_to_existing_discretisation=True,
+                    ),
+                    material=xyz_component.children[0].material,
+                )
             )
-            for comp, dscrt in zip(
-                components,
-                discretisations,
-                strict=True,
-            )
-        ]
+
         # ---------------------------------------------------------
         # Check and fix overlaps.
         # * Assuming one child per component
@@ -117,17 +185,20 @@ class NeutronicsGeometryManager(ComponentManager):
         # running this
         # ---------------------------------------------------------
         bluemira_print("Checking for possible overlaps and fixing them.")
-        updated_desplined_xzs = cls.fix_xz_overlaps_and_gaps(
-            components,
-            all_desplined_comps,
+        cls.fix_xz_overlaps_and_gaps(
+            all_neutronics_comps,
             overlap_tolerance=overlap_tolerance,
             gap_tolerance=gap_tolerance,
         )
-
-        # Create XYZ components by revolution and add them as children.
+        # ---------------------------------------------------------
+        # Finally, create XYZ components by revolution and add
+        # them as children.
+        # ---------------------------------------------------------
         component_tree = Component("Neutronics Geometry")
+        volume_differences = {}
+        for neutronics_comp in all_neutronics_comps:
+            desp_comp = neutronics_comp.desplined_xz_component
 
-        for i, desp_comp in enumerate(updated_desplined_xzs):
             xyz_shape = revolve_shape(
                 desp_comp.get_component("xz").children[0].shape,
                 base=(0, 0, 0),
@@ -135,28 +206,39 @@ class NeutronicsGeometryManager(ComponentManager):
                 degree=360.0,
             )
 
-            name = all_orig_xyzs[i].children[0].name
-            material = all_orig_xyzs[i].get_component_properties("material")
-
-            desp_comp.add_child(
-                Component(
-                    "xyz",
-                    children=[
-                        PhysicalComponent(
-                            name=name,
-                            shape=xyz_shape,
-                            material=material,
-                        )
-                    ],
-                )
+            xyz_component = Component(
+                "xyz",
+                children=[
+                    PhysicalComponent(
+                        name=neutronics_comp.name,
+                        shape=xyz_shape,
+                        material=neutronics_comp.material,
+                    )
+                ],
             )
+
+            neutronics_comp.desplined_xyz_component = xyz_component
+
+            desp_comp.add_child(xyz_component)
             component_tree.add_child(desp_comp)
 
-        # Initiate and return a new instance of this class.
-        # Each component should have one XZ and
-        # one XYZ component for simplicity. No need to keep the extensive
-        # component hierarchy from the original reactor.
-        return cls(component_tree)
+            # Calculate and store the relative volume difference.
+            relative_volume_difference = (
+                abs(xyz_shape.volume - neutronics_comp.original_volume)
+                / neutronics_comp.original_volume
+            )
+
+            volume_differences[neutronics_comp.name] = relative_volume_difference
+
+            bluemira_print(
+                f"{neutronics_comp.name}: volume difference after pre-processing = "
+                f"{relative_volume_difference:.4%}"
+            )
+
+        return cls(
+            component_tree,
+            volume_differences,
+        )
 
     def get_all_components(self) -> list[Component]:
         """
@@ -212,66 +294,43 @@ class NeutronicsGeometryManager(ComponentManager):
 
     @staticmethod
     def fix_xz_overlaps_and_gaps(
-        original_comps: list[Component],
-        desplined_comps: list[Component],
+        neutronics_comps: list[NeutronicsComponent],
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
-    ) -> list[Component]:
-        """
-        Fix overlaps and gaps between XZ faces introduced by desplining,
-        if any.
+    ) -> None:
+        """Fix overlaps and gaps between desplined XZ faces.
 
-        Pairs that should touch are identified from the original geometry.
-        Overlaps are then fixed one component at a time, with all overlapping
-        neighbours repaired in a single operation. Finally, all pairs that
-        should touch are sewn to repair any remaining gaps.
+        Components that should touch are identified from the
+        ``touching_components`` stored on each ``NeutronicsComponent``.
+
+        Overlaps introduced during desplining are repaired first. For each
+        component, all overlapping neighbours that should touch it are repaired
+        in a single operation. Finally, gaps between touching components are
+        repaired by sewing their XZ faces.
 
         Parameters
         ----------
-        original_comps:
-            Components containing the original geometries.
-        desplined_comps:
-            Components containing the desplined geometries.
-        overlap_tolerance:
+        neutronics_comps
+            Neutronics components containing the desplined XZ geometries and
+            names of components they should touch.
+        overlap_tolerance
             Minimum intersection area considered to be an overlap.
-        gap_tolerance:
-            Maximum sewing tolerance for neighbouring faces that should touch.
-
-        Returnslist[Component]
-            Components with repaired XZ faces.
-
-        Returns
-        -------
-        list[Component]
+        gap_tolerance
+            Maximum sewing tolerance for neighbouring XZ faces that should touch.
 
         Notes
         -----
         Assumes one child per XZ component.
 
         Overlaps are corrected with respect to the order of the components in
-        the list. For each component, all overlapping faces are used in a
-        single repair operation.
+        ``neutronics_comps``. Each touching pair is processed once when repairing
+        gaps.
+
+        The ``desplined_xz_component`` geometries are updated in place.
         """
-        # ---------------------------------------------------------
-        # Find pairs that should touch from the original geometry.
-        # ---------------------------------------------------------
-        touching_pairs = []
-
-        for i, comp_a in enumerate(original_comps):
-            xz_a_face = comp_a.get_component("xz").children[0].shape
-
-            for j, comp_b in enumerate(
-                original_comps[i + 1 :],
-                start=i + 1,
-            ):
-                xz_b_face = comp_b.get_component("xz").children[0].shape
-
-                if check_touching_geos(
-                    xz_a_face,
-                    xz_b_face,
-                    overlap_tolerance,
-                ):
-                    touching_pairs.append((i, j))
+        comps_by_name = {
+            neutronics_comp.name: neutronics_comp for neutronics_comp in neutronics_comps
+        }
 
         # ---------------------------------------------------------
         # Fix overlaps.
@@ -279,64 +338,69 @@ class NeutronicsGeometryManager(ComponentManager):
         # For each component, collect all overlapping neighbours
         # that should touch it and fix them in one operation.
         # ---------------------------------------------------------
-        for i, comp_a in enumerate(desplined_comps):
+        for neutronics_comp in neutronics_comps:
+            comp_a = neutronics_comp.desplined_xz_component
             xz_a = comp_a.get_component("xz")
             xz_a_face = xz_a.children[0].shape
 
             overlapping = []
 
-            touching_indices = [j for pair_i, j in touching_pairs if pair_i == i]
-
-            for j in touching_indices:
-                comp_b = desplined_comps[j]
+            for touching_name in neutronics_comp.touching_components or []:
+                comp_b = comps_by_name[touching_name].desplined_xz_component
                 xz_b_face = comp_b.get_component("xz").children[0].shape
 
                 intersection = xz_a_face.shape.intersect(xz_b_face.shape)
                 intersection_area = intersection.Area()
 
                 if intersection_area > overlap_tolerance:
-                    overlapping.append((j, comp_b.name, intersection_area))
+                    overlapping.append((touching_name, xz_b_face, intersection_area))
 
             if overlapping:
                 bluemira_warn(
-                    f"{comp_a.name} overlaps "
-                    f"{', '.join(name for _, name, _ in overlapping)} "
+                    f"{neutronics_comp.name} overlaps "
+                    f"{', '.join(name for name, _, _ in overlapping)} "
                     f"by areas "
                     f"{', '.join(f'{area} m^2' for _, _, area in overlapping)}. "
                     f"In the original geometry, they should touch instead. "
                     f"Running overlap fixing."
                 )
 
-                overlapping_faces = [
-                    desplined_comps[j].get_component("xz").children[0].shape
-                    for j, _, _ in overlapping
-                ]
-
                 xz_a.children[0].shape = repair_overlapping_geos(
                     xz_a_face,
-                    overlapping_faces,
+                    [face for _, face, _ in overlapping],
                 )
 
         # ---------------------------------------------------------
         # Repair gaps.
         #
         # Sew every pair that should touch according to the
-        # original geometry. Sewing is also safe when the pair
-        # already has a matching boundary.
+        # original geometry. Each pair is processed only once.
         # ---------------------------------------------------------
-        for i, j in touching_pairs:
-            xz_a = desplined_comps[i].get_component("xz")
-            xz_b = desplined_comps[j].get_component("xz")
+        repaired_pairs: set[frozenset[str]] = set()
 
-            repaired_a, repaired_b = repair_gaps_between_faces(
-                [
-                    xz_a.children[0].shape,
-                    xz_b.children[0].shape,
-                ],
-                tolerance=gap_tolerance,
-            )
+        for neutronics_comp in neutronics_comps:
+            comp_a = neutronics_comp.desplined_xz_component
 
-            xz_a.children[0].shape = repaired_a
-            xz_b.children[0].shape = repaired_b
+            for touching_name in neutronics_comp.touching_components:
+                pair = frozenset((neutronics_comp.name, touching_name))
 
-        return desplined_comps
+                if pair in repaired_pairs:
+                    continue
+
+                comp_b = comps_by_name[touching_name].desplined_xz_component
+
+                xz_a = comp_a.get_component("xz")
+                xz_b = comp_b.get_component("xz")
+
+                repaired_a, repaired_b = repair_gaps_between_faces(
+                    [
+                        xz_a.children[0].shape,
+                        xz_b.children[0].shape,
+                    ],
+                    tolerance=gap_tolerance,
+                )
+
+                xz_a.children[0].shape = repaired_a
+                xz_b.children[0].shape = repaired_b
+
+                repaired_pairs.add(pair)
