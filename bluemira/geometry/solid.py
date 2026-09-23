@@ -36,7 +36,9 @@ class BluemiraSolid(BluemiraGeo):
         Label to assign to the solid
     """
 
-    def __init__(self, boundary: list[BluemiraShell], label: str = ""):
+    def __init__(
+        self, boundary: BluemiraShell | list[BluemiraShell] | None, label: str = ""
+    ):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
@@ -109,28 +111,28 @@ class BluemiraSolid(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the solid.
         """
         return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the solid.
         """
         return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
-    def faces(self) -> tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace, ...]:
         """
         The faces of the solid.
         """
         return tuple(BluemiraFace._create(o) for o in cadapi.faces(self.shape))
 
     @property
-    def shells(self) -> tuple[BluemiraShell]:
+    def shells(self) -> tuple[BluemiraShell, ...]:
         """
         The shells of the solid.
         """

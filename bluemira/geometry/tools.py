@@ -87,7 +87,7 @@ class HullPlane(Enum):
     YZ = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: object | str) -> HullPlane:
         if not isinstance(value, str):
             raise TypeError(f"Invalid hull plane: {value}. Expected str.")
         try:
@@ -288,7 +288,7 @@ class GeometryCreationIn(Protocol):
 
     def __call__(
         self, points: Coordinates, label: str = "", *, closed: bool = False
-    ) -> BluemiraWire:
+    ) -> cadapi.apiWire:
         """Typing for coordinates wrapping"""
         ...
 
@@ -354,7 +354,7 @@ def make_polygon(
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001
-) -> BluemiraWire:
+) -> cadapi.apiWire:
     """
     Make a polygon from a set of points.
 
@@ -387,7 +387,7 @@ def make_bezier(
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001
-) -> BluemiraWire:
+) -> cadapi.apiWire:
     """Make a bspline from a set of points.
 
     Parameters
@@ -1369,7 +1369,7 @@ def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
 def distance_to(
     geo1: npt.ArrayLike | BluemiraGeo, geo2: npt.ArrayLike | BluemiraGeo
-) -> tuple[float, list[tuple[float, float, float]]]:
+) -> tuple[float, list[tuple[np.ndarray, np.ndarray]]]:
     """
     Calculate the distance between two BluemiraGeos.
 
@@ -1540,8 +1540,8 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
-) -> npt.NDArray[float]:
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray
+) -> npt.NDArray:
     """
     Cut a wire using a plane.
 
@@ -2322,7 +2322,6 @@ def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
                     temp_list.append(shape)
             else:
                 temp_list.append(deserialise_shape(item))
-
         mesh_options = _extract_mesh_options(shape_dict)
 
         shape = shape_type(label=label, boundary=temp_list)

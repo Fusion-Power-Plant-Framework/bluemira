@@ -769,7 +769,7 @@ def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64:
     return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
 
 
-def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
+def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray | float:
     """
     Cross products of pairs of 2d or 3d vectors,
     since numpy >= v2 deprecated support for 2d vector inputs in np.cross.

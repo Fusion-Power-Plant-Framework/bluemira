@@ -9,9 +9,11 @@ A collection of private geometry tools for discretised geometry. Do not use thes
 use primitive operations in geometry/tools.py instead.
 """
 
+from __future__ import annotations
+
 from functools import partial
 from itertools import zip_longest
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -28,6 +30,9 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # =============================================================================
 # Errors
@@ -228,18 +233,18 @@ def convert_coordinates_to_wire(
     label:
         The label for the resulting BluemiraWire object
     kwargs:
-        Any other arguments for the conversion method, see e.g. make_mixed_face
+        Any other arguments for the conversion method, see make_mixed_face
 
     Returns
     -------
     The resulting BluemiraWire from the conversion
     """
     method_map = {
-        "mixed": make_mixed_wire,
+        "mixed": partial(make_mixed_wire, **kwargs),
         "polygon": partial(make_wire, spline=False),
         "spline": partial(make_wire, spline=True),
     }
-    return method_map[method](x, y, z, label=label, **kwargs)
+    return method_map[method](x, y, z, label=label)
 
 
 def convert_coordinates_to_face(
@@ -278,11 +283,11 @@ def convert_coordinates_to_face(
     The resulting BluemiraFace from the conversion
     """
     method_map = {
-        "mixed": make_mixed_face,
+        "mixed": partial(make_mixed_face, **kwargs),
         "polygon": partial(make_face, spline=False),
         "spline": partial(make_face, spline=True),
     }
-    return method_map[method](x, y, z, label=label, **kwargs)
+    return method_map[method](x, y, z, label=label)
 
 
 def make_mixed_wire(
@@ -783,7 +788,9 @@ class MixedFaceMaker:
 
         return sequences
 
-    def _get_spline_sequences(self, polygon_sequences: np.ndarray) -> list[list[float]]:
+    def _get_spline_sequences(
+        self, polygon_sequences: Sequence[Sequence[float]]
+    ) -> list[list[float]]:
         """
         Gets the sequences of spline segments
 
@@ -862,7 +869,9 @@ class MixedFaceMaker:
         return coords[:, mask]
 
     def _make_subcoordinates(
-        self, polygon_sequences: np.ndarray, spline_sequences: np.ndarray
+        self,
+        polygon_sequences: Sequence[Sequence[float]],
+        spline_sequences: Sequence[Sequence[float]],
     ):
         polygon_coords = []
         spline_coords = []
