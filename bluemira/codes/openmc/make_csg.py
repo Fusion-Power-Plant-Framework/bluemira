@@ -24,6 +24,7 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    CurveType,
     is_convex,
     make_circle_arc_3P,
     make_polygon,
@@ -1422,12 +1423,10 @@ class BlanketCellStack:
             Incorrect number of edges on external wire
         """
         # check exterior wire is correct
-        ext_curve_comp = cast(
-            "cadapi.apiWire", pre_cell.exterior_wire.shape
-        ).OrderedEdges  # type: ignore [ty:unresolved-attribute]
+        ext_curve_comp = cast("cadapi.apiWire", pre_cell.exterior_wire.shape)
         if len(ext_curve_comp) != 1:
             raise TypeError("Incorrect type of BluemiraWire parsed in.")
-        if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
+        if ext_curve_comp[0].edge_type() is not CurveType.LINE:
             raise NotImplementedError("Not ready to make curved-line cross-section yet!")
 
         # 1. Calculate cut points required to make the surface stack, without actually
