@@ -17,6 +17,7 @@ from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.despliner import despline_xz_component
 from bluemira.geometry.tools import (
     check_touching_geos,
+    repair_gaps_between_faces,
     repair_overlapping_geos,
     revolve_shape,
 )
@@ -59,6 +60,8 @@ class NeutronicsGeometryManagers(ComponentManager):
         cls,
         components: list[Component],
         discretisations: list[int],
+        overlap_tolerance: float = 1e-10,
+        gap_tolerance: float = 1e-2,
     ) -> NeutronicsGeometryManagers:
         """Create a NeutronicsGeometryManagers instance from component managers.
 
@@ -114,9 +117,11 @@ class NeutronicsGeometryManagers(ComponentManager):
         # running this
         # ---------------------------------------------------------
         bluemira_print("Checking for possible overlaps and fixing them.")
-        updated_desplined_xzs = cls.inspect_fix_xz_overlaps(
+        updated_desplined_xzs = cls.fix_xz_overlaps_and_gaps(
             components,
             all_desplined_comps,
+            overlap_tolerance=overlap_tolerance,
+            gap_tolerance=gap_tolerance,
         )
 
         # Create XYZ components by revolution and add them as children.
@@ -206,101 +211,132 @@ class NeutronicsGeometryManagers(ComponentManager):
                     )
 
     @staticmethod
-    def inspect_fix_xz_overlaps(
+    def fix_xz_overlaps_and_gaps(
         original_comps: list[Component],
         desplined_comps: list[Component],
-        tolerance: float = 1e-10,
+        overlap_tolerance: float = 1e-10,
+        gap_tolerance: float = 1e-2,
     ) -> list[Component]:
         """
-        Inspect all XZ faces to ensure that there is no overlap
-        between any two faces. Touching is allowed.
+        Fix overlaps and gaps between XZ faces introduced by desplining,
+        if any.
 
-        Not running on solids as that takes longer.
+        Pairs that should touch are identified from the original geometry.
+        Overlaps are then fixed one component at a time, with all overlapping
+        neighbours repaired in a single operation. Finally, all pairs that
+        should touch are sewn to repair any remaining gaps.
 
         Parameters
         ----------
-        tolerance
+        original_comps:
+            Components containing the original geometries.
+        desplined_comps:
+            Components containing the desplined geometries.
+        overlap_tolerance:
             Minimum intersection area considered to be an overlap.
+        gap_tolerance:
+            Maximum sewing tolerance for neighbouring faces that should touch.
+
+        Returnslist[Component]
+            Components with repaired XZ faces.
 
         Returns
         -------
         list[Component]
-            Fixed XZ components.
 
-        Raises
-        ------
-        ValueError
-            If desplining creates overlapping faces which were not
-            supposed to even touch in the original geometry.
+        Notes
+        -----
+        Assumes one child per XZ component.
 
-        Note
-        ------
-        overlap is corrected w.r.t the order of the component in the list.
-        i.e. if first wall comes first in the list, it will be cut by
-        the overlapping solids etc.
+        Overlaps are corrected with respect to the order of the components in
+        the list. For each component, all overlapping faces are used in a
+        single repair operation.
         """
-        for i, comp_a in enumerate(desplined_comps):
-            xz_a = comp_a.get_component("xz")
-            name_a = comp_a.name
-            xz_a_face = xz_a.children[0].shape
-            overlapping = []
+        # ---------------------------------------------------------
+        # Find pairs that should touch from the original geometry.
+        # ---------------------------------------------------------
+        touching_pairs = []
+
+        for i, comp_a in enumerate(original_comps):
+            xz_a_face = comp_a.get_component("xz").children[0].shape
 
             for j, comp_b in enumerate(
-                desplined_comps[i + 1 :],
+                original_comps[i + 1 :],
                 start=i + 1,
             ):
-                # assumes only one xz child
-                name_b = comp_b.name
-                xz_b = comp_b.get_component("xz")
-                xz_b_face = xz_b.children[0].shape
+                xz_b_face = comp_b.get_component("xz").children[0].shape
+
+                if check_touching_geos(
+                    xz_a_face,
+                    xz_b_face,
+                    overlap_tolerance,
+                ):
+                    touching_pairs.append((i, j))
+
+        # ---------------------------------------------------------
+        # Fix overlaps.
+        #
+        # For each component, collect all overlapping neighbours
+        # that should touch it and fix them in one operation.
+        # ---------------------------------------------------------
+        for i, comp_a in enumerate(desplined_comps):
+            xz_a = comp_a.get_component("xz")
+            xz_a_face = xz_a.children[0].shape
+
+            overlapping = []
+
+            touching_indices = [j for pair_i, j in touching_pairs if pair_i == i]
+
+            for j in touching_indices:
+                comp_b = desplined_comps[j]
+                xz_b_face = comp_b.get_component("xz").children[0].shape
+
                 intersection = xz_a_face.shape.intersect(xz_b_face.shape)
                 intersection_area = intersection.Area()
 
-                if intersection_area > tolerance:
-                    # Check if the original XZ faces were supposed to touch.
-                    orig_a = next(
-                        geo for geo in original_comps if geo.name == name_a
-                    ).children[0]
-                    orig_b = next(
-                        geo for geo in original_comps if geo.name == name_b
-                    ).children[0]
-
-                    should_touch = check_touching_geos(
-                        orig_a.children[0].shape,
-                        orig_b.children[0].shape,
-                        tolerance,
-                    )
-
-                    if not should_touch:
-                        raise ValueError(
-                            f"Desplining created overlapping faces. "
-                            f"{name_a} overlaps {name_b} by an area of "
-                            f"{intersection_area} m^2. In original geometry, "
-                            f"they should not even touch. Please increase "
-                            f"the discretisations to avoid overlaps in "
-                            f"rebuilt geometry."
-                        )
-
-                    overlapping.append((j, name_b, intersection_area))
+                if intersection_area > overlap_tolerance:
+                    overlapping.append((j, comp_b.name, intersection_area))
 
             if overlapping:
                 bluemira_warn(
-                    f"{name_a} overlaps "
+                    f"{comp_a.name} overlaps "
                     f"{', '.join(name for _, name, _ in overlapping)} "
                     f"by areas "
                     f"{', '.join(f'{area} m^2' for _, _, area in overlapping)}. "
-                    f"In original geometry, they should touch instead. "
+                    f"In the original geometry, they should touch instead. "
                     f"Running overlap fixing."
                 )
 
-                xz_b_faces = [
+                overlapping_faces = [
                     desplined_comps[j].get_component("xz").children[0].shape
                     for j, _, _ in overlapping
                 ]
 
-                # perform boolean cut of geo_1 by geos 2
-                desplined_comps[i].get_component("xz").children[
-                    0
-                ].shape = repair_overlapping_geos(xz_a_face, xz_b_faces)
+                xz_a.children[0].shape = repair_overlapping_geos(
+                    xz_a_face,
+                    overlapping_faces,
+                )
+
+        # ---------------------------------------------------------
+        # Repair gaps.
+        #
+        # Sew every pair that should touch according to the
+        # original geometry. Sewing is also safe when the pair
+        # already has a matching boundary.
+        # ---------------------------------------------------------
+        for i, j in touching_pairs:
+            xz_a = desplined_comps[i].get_component("xz")
+            xz_b = desplined_comps[j].get_component("xz")
+
+            repaired_a, repaired_b = repair_gaps_between_faces(
+                [
+                    xz_a.children[0].shape,
+                    xz_b.children[0].shape,
+                ],
+                tolerance=gap_tolerance,
+            )
+
+            xz_a.children[0].shape = repaired_a
+            xz_b.children[0].shape = repaired_b
 
         return desplined_comps
