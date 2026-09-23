@@ -46,7 +46,7 @@ class GeometryModel(Enum):
             ) from None
 
 
-class NeutronicsGeometryManagers(ComponentManager):
+class NeutronicsGeometryManager(ComponentManager):
     """
     Class containing all the Component Managers for neutronics.
 
@@ -62,8 +62,8 @@ class NeutronicsGeometryManagers(ComponentManager):
         discretisations: list[int],
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
-    ) -> NeutronicsGeometryManagers:
-        """Create a NeutronicsGeometryManagers instance from component managers.
+    ) -> NeutronicsGeometryManager:
+        """Create a NeutronicsGeometryManager instance from component managers.
 
         Parameters
         ----------
@@ -74,8 +74,8 @@ class NeutronicsGeometryManagers(ComponentManager):
 
         Returns
         -------
-        NeutronicsGeometryManagers
-            A NeutronicsGeometryManagers instance containing the
+        NeutronicsGeometryManager
+            A NeutronicsGeometryManager instance containing the
             desplined component managers.
 
         Raises
