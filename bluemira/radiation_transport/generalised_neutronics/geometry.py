@@ -42,6 +42,33 @@ class NeutronicsComponent:
     desplined_xz_component: Component | None = None
     desplined_xyz_component: Component | None = None
 
+    def revolve_and_create_xyz(self) -> Component:
+        """
+        Revolve the desplined xz geometry and create the corresponding xyz
+        component.
+
+        Returns
+        -------
+        Component
+        """
+        xyz_shape = revolve_shape(
+            self.desplined_xz_component.children[0].shape,
+            base=(0, 0, 0),
+            direction=(0, 0, 1),
+            degree=360.0,
+        )
+
+        return Component(
+            "xyz",
+            children=[
+                PhysicalComponent(
+                    name=self.name,
+                    shape=xyz_shape,
+                    material=self.material,
+                )
+            ],
+        )
+
 
 class NeutronicsGeometryManager(ComponentManager):
     """Manage components used to construct the neutronics geometry."""
@@ -164,7 +191,7 @@ class NeutronicsGeometryManager(ComponentManager):
                         comp,
                         dscrt,
                         fallback_to_existing_discretisation=True,
-                    ),
+                    ).get_component("xz"),
                     material=xyz_component.children[0].material,
                 )
             )
@@ -181,41 +208,33 @@ class NeutronicsGeometryManager(ComponentManager):
             overlap_tolerance=overlap_tolerance,
             gap_tolerance=gap_tolerance,
         )
+
         # ---------------------------------------------------------
-        # Finally, create XYZ components by revolution and add
-        # them as children.
+        # Create XYZ components by revolution and assemble the
+        # final component tree.
         # ---------------------------------------------------------
         component_tree = Component("Neutronics Geometry")
         volume_differences = {}
+
         for neutronics_comp in all_neutronics_comps:
-            desp_comp = neutronics_comp.desplined_xz_component
+            xyz_component = neutronics_comp.revolve_and_create_xyz()
 
-            xyz_shape = revolve_shape(
-                desp_comp.get_component("xz").children[0].shape,
-                base=(0, 0, 0),
-                direction=(0, 0, 1),
-                degree=360.0,
+            component_tree.add_child(
+                Component(
+                    neutronics_comp.name,
+                    children=[
+                        neutronics_comp.desplined_xz_component,
+                        xyz_component,
+                    ],
+                )
             )
-
-            xyz_component = Component(
-                "xyz",
-                children=[
-                    PhysicalComponent(
-                        name=neutronics_comp.name,
-                        shape=xyz_shape,
-                        material=neutronics_comp.material,
-                    )
-                ],
-            )
-
-            neutronics_comp.desplined_xyz_component = xyz_component
-
-            desp_comp.add_child(xyz_component)
-            component_tree.add_child(desp_comp)
 
             # Calculate and store the relative volume difference.
             relative_volume_difference = (
-                abs(xyz_shape.volume - neutronics_comp.original_volume)
+                abs(
+                    xyz_component.children[0].shape.volume
+                    - neutronics_comp.original_volume
+                )
                 / neutronics_comp.original_volume
             )
 
