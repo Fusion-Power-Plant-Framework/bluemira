@@ -41,7 +41,6 @@ class NeutronicsComponent:
     touching_components: list[str] | None = None
     desplined_xz_component: Component | None = None
     desplined_xyz_component: Component | None = None
-    relative_volume_difference: float | None = None
 
 
 class NeutronicsGeometryManager(ComponentManager):
