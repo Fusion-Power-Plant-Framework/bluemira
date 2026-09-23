@@ -66,6 +66,7 @@ from bluemira.geometry.tools import (
     boolean_common,
     interpolate_bspline,
     make_polygon,
+    repair_gaps_between_faces,
     repair_overlapping_geos,
     revolve_shape,
 )
@@ -654,3 +655,346 @@ plt.show()
 # give priority to. In the neutronics module examples, we will discuss this in
 # more detail and look at how to decide which component should be repaired.
 # %%
+
+# %% [markdown]
+# ## Toy Model - 3 (Two solids touching each other, and desplining creates a gap)
+#
+# So far, we have seen how different discretisations of a shared boundary can
+# create an overlap between two components. But overlap is not the only problem
+# we can get.
+#
+# Depending on the geometry and how the shared boundary is discretised, the
+# opposite can also happen: the two desplined boundaries can move away from
+# each other and create a gap.
+#
+# Let's create another simple toy model to look at such a case. As before, the
+# two components initially touch each other exactly. We will then despline them
+# differently and see how a gap can appear between them.
+#
+# ### Components 3 and 4
+# %%
+# Shared boundary
+p_shared_3 = [
+    (1.00, 0.50),
+    (1.06, 0.75),
+    (1.10, 1.00),
+    (1.06, 1.25),
+    (1.00, 1.50),
+]
+
+# Left boundary of XZ face 3
+p_left_3 = [
+    (0.15, 0.00),
+    (0.09, 0.50),
+    (0.05, 1.00),
+    (0.09, 1.50),
+    (0.15, 2.00),
+]
+
+# Right boundary of XZ face 4
+p_right_4 = [
+    (1.60, 0.50),
+    (1.66, 0.75),
+    (1.70, 1.00),
+    (1.66, 1.25),
+    (1.60, 1.50),
+]
+
+
+# XZ face 3
+xz_face_3 = BluemiraFace(
+    BluemiraWire([
+        line((0.15, 0.00), (1.00, 0.00)),
+        line((1.00, 0.00), (1.00, 0.50)),
+        spline(p_shared_3),
+        line((1.00, 1.50), (1.00, 2.00)),
+        line((1.00, 2.00), (0.15, 2.00)),
+        spline(p_left_3[::-1]),
+    ]),
+    label="Solid 3",
+)
+
+
+# XZ face 4
+xz_face_4 = BluemiraFace(
+    BluemiraWire([
+        line((1.00, 0.50), (1.60, 0.50)),
+        spline(p_right_4),
+        line((1.60, 1.50), (1.00, 1.50)),
+        spline(p_shared_3[::-1]),
+    ]),
+    label="Solid 4",
+)
+
+# Revolve XZ faces to create XYZ solids
+xyz_solid_3 = revolve_shape(
+    xz_face_3,
+    degree=360,
+)
+
+xyz_solid_4 = revolve_shape(
+    xz_face_4,
+    degree=360,
+)
+
+
+# Component 3
+component_3 = Component(
+    "Component 3",
+    children=[
+        Component(
+            "xz",
+            children=[
+                PhysicalComponent(
+                    "Component 3 xz",
+                    shape=xz_face_3,
+                ),
+            ],
+        ),
+        Component(
+            "xyz",
+            children=[
+                PhysicalComponent(
+                    "Component 3 xyz",
+                    shape=xyz_solid_3,
+                ),
+            ],
+        ),
+    ],
+)
+
+
+# Component 4
+component_4 = Component(
+    "Component 4",
+    children=[
+        Component(
+            "xz",
+            children=[
+                PhysicalComponent(
+                    "Component 4 xz",
+                    shape=xz_face_4,
+                ),
+            ],
+        ),
+        Component(
+            "xyz",
+            children=[
+                PhysicalComponent(
+                    "Component 4 xyz",
+                    shape=xyz_solid_4,
+                ),
+            ],
+        ),
+    ],
+)
+
+# %% [markdown]
+# Despline, and plot comparisons
+# %%
+component_3_desplined = despline_xz_component(
+    component_3,
+    20,
+)
+
+component_4_desplined = despline_xz_component(
+    component_4,
+    60,
+)
+
+xz_desplined_3 = component_3_desplined.get_component("xz").children[0].shape
+
+xz_desplined_4 = component_4_desplined.get_component("xz").children[0].shape
+
+overlap_3_4 = boolean_common(
+    xz_desplined_3,
+    xz_desplined_4,
+)
+
+fig, ax = plt.subplots(1, 3, figsize=(12, 5))
+
+
+# Original: touching exactly
+plot_face(
+    xz_face_3,
+    ax[0],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_face_4,
+    ax[0],
+    "salmon",
+    show_vertices=False,
+)
+
+ax[0].set_title("Original")
+
+
+# After different desplining
+plot_face(
+    xz_desplined_3,
+    ax[1],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_desplined_4,
+    ax[1],
+    "salmon",
+    show_vertices=False,
+)
+# Highlight overlap in gold
+if overlap_3_4:
+    for region in overlap_3_4:
+        plot_face(
+            region,
+            ax[1],
+            "gold",
+            alpha=1.0,
+            show_vertices=False,
+        )
+ax[1].set_title("Gaps and overlaps after desplining")
+
+# Zoomed-in gap
+plot_face(
+    xz_desplined_3,
+    ax[2],
+    "cornflowerblue",
+    alpha=1.0,
+    show_vertices=False,
+)
+plot_face(
+    xz_desplined_4,
+    ax[2],
+    "salmon",
+    alpha=1.0,
+    show_vertices=False,
+)
+
+ax[2].set_title("Gap (zoomed in)")
+
+
+# Main views
+for a in ax[:2]:
+    a.set_xlim(-0.1, 1.8)
+    a.set_ylim(-0.1, 2.1)
+
+# Zoom around shared boundary
+ax[2].set_xlim(0.95, 1.13)
+ax[2].set_ylim(0.65, 1.35)
+
+
+for a in ax:
+    a.set_aspect("equal")
+    a.set_xlabel("X")
+    a.set_ylabel("Z")
+
+plt.tight_layout()
+plt.show()
+
+# %% [markdown]
+# ### Sewing as a solution for gaps
+#
+# So, what do we do when desplining creates a gap as well as an overlap?
+#
+# In this case, after fixing overlaps, we can use sewing. The idea is to sew
+# neighbouring boundaries that lie within a specified tolerance, so that the
+# two desplined XZ faces recover a matching boundary where the gap was introduced.
+#
+# Let's see how this works for our two desplined components. First, run the
+# overlap fixer as before.
+# %%
+xz_desplined_4_repaired = repair_overlapping_geos(
+    xz_desplined_4,
+    [xz_desplined_3],
+)
+# %% [markdown]
+# Now, sew, and plot comparisons
+# %%
+# %%
+
+xz_repaired_3, xz_repaired_4 = repair_gaps_between_faces(
+    [
+        xz_desplined_3,
+        xz_desplined_4_repaired,
+    ],
+    tolerance=1e-2,
+)
+_, ax = plt.subplots(1, 4, figsize=(20, 5))
+
+# Before repairing
+plot_face(
+    xz_desplined_3,
+    ax[0],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_desplined_4_repaired,
+    ax[0],
+    "salmon",
+    show_vertices=False,
+)
+ax[0].set_title("Before repairing")
+
+
+# Before repairing - zoomed in
+plot_face(
+    xz_desplined_3,
+    ax[1],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_desplined_4_repaired,
+    ax[1],
+    "salmon",
+    show_vertices=False,
+)
+ax[1].set_title("Before repairing (zoomed in)")
+ax[1].set_xlim(0.9, 1.2)
+ax[1].set_ylim(0.75, 1.2)
+
+
+# After repairing
+plot_face(
+    xz_repaired_3,
+    ax[2],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_repaired_4,
+    ax[2],
+    "salmon",
+    show_vertices=False,
+)
+ax[2].set_title("After repairing")
+
+
+# After repairing - zoomed in
+plot_face(
+    xz_repaired_3,
+    ax[3],
+    "cornflowerblue",
+    show_vertices=False,
+)
+plot_face(
+    xz_repaired_4,
+    ax[3],
+    "salmon",
+    show_vertices=False,
+)
+ax[3].set_title("After repairing (zoomed in)")
+ax[3].set_xlim(0.9, 1.2)
+ax[3].set_ylim(0.75, 1.2)
+
+
+for a in ax:
+    a.set_aspect("equal")
+    a.set_xlabel("X")
+    a.set_ylabel("Z")
+
+plt.tight_layout()
+plt.show()

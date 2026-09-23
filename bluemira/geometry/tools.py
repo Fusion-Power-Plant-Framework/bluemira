@@ -21,8 +21,10 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol
 
+import cadquery as cq
 import numba as nb
 import numpy as np
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing
 from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
@@ -2413,51 +2415,6 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
 
 
 # ======================================================================================
-# Check if two geos are touching
-# ======================================================================================
-
-
-def check_touching_geos(
-    geo_1: BluemiraSolid | BluemiraFace,
-    geo_2: BluemiraSolid | BluemiraFace,
-    rtol: float = 1e-10,
-) -> bool:
-    """
-    Check if two geos of the same type touch each other.
-
-    Returns
-    -------
-    bool
-        True if the geos touch at any point and do not overlap,
-        else False.
-
-    Raises
-    ------
-    TypeError
-        if geo_1 and geo_2 are not of the same type
-    """
-    if type(geo_1) is not type(geo_2):
-        raise TypeError("geo_1 and geo_2 must be of the same type")
-
-    dist, _ = distance_to(geo_1, geo_2)
-    mutual_distance = bool(np.isclose(dist, 0, rtol=rtol))
-
-    # Mutual distance can be 0 if there is an overlap or they are touching.
-    # Hence also check the intersection area/volume.
-    intersection = geo_1.shape.intersect(geo_2.shape)
-
-    intersection_size = (
-        intersection.Area() if isinstance(geo_1, BluemiraFace) else intersection.Volume()
-    )
-
-    intersection_is_zero = bool(np.isclose(intersection_size, 0, rtol=rtol))
-
-    # If both the distance and intersection size are zero,
-    # they are touching without overlap.
-    return bool(mutual_distance and intersection_is_zero)
-
-
-# ======================================================================================
 # Approximately fix the overlap of two overlapping geos
 # ======================================================================================
 def repair_overlapping_geos(
@@ -2515,3 +2472,95 @@ def repair_overlapping_geos(
         raise GeometryError("boolean cut created multiple geometries")
 
     return repaired[0] if isinstance(repaired, list) else repaired
+
+
+# ======================================================================================
+# Approximately fix the gap between two geos which are supposed to be touching
+# ======================================================================================
+def repair_gaps_between_faces(
+    geos: list[BluemiraFace],
+    tolerance: float = 1e-2,
+) -> list[BluemiraFace]:
+    """
+    Repair small gaps between neighbouring BluemiraFaces which should touch.
+
+    Parameters
+    ----------
+    geos:
+        Faces whose neighbouring boundaries should coincide.
+    tolerance:
+        maximum distance between boundaries that OpenCascade is
+        allowed to treat as coincident and sew together.
+
+    Returns
+    -------
+    list[BluemiraFace]
+        Faces with neighbouring boundaries sewn together.
+
+    Raises
+    ------
+    TypeError
+        If geo_1 and geos_2 are not BluemiraFace Objects.
+    ValueError
+        if only one geo is given
+    """
+    if not all(isinstance(geo, BluemiraFace) for geo in geos):
+        raise TypeError("All geometries must be BluemiraFace objects")
+
+    n_geo_min = 2
+    if len(geos) < n_geo_min:
+        raise ValueError("At least two faces are required")
+
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+
+    for geo in geos:
+        sewing.Add(geo.shape.wrapped)
+
+    sewing.Perform()
+
+    sewed = cq.Shape.cast(sewing.SewedShape())
+
+    return [convert(face) for face in sewed.Faces()]
+
+
+# ======================================================================================
+# Check if two geos are touching
+# ======================================================================================
+def check_touching_geos(
+    geo_1: BluemiraSolid | BluemiraFace,
+    geo_2: BluemiraSolid | BluemiraFace,
+    rtol: float = 1e-10,
+) -> bool:
+    """
+    Check if two geos of the same type touch each other.
+
+    Returns
+    -------
+    bool
+        True if the geos touch at any point and do not overlap,
+        else False.
+
+    Raises
+    ------
+    TypeError
+        if geo_1 and geo_2 are not of the same type
+    """
+    if type(geo_1) is not type(geo_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
+
+    dist, _ = distance_to(geo_1, geo_2)
+    mutual_distance = bool(np.isclose(dist, 0, rtol=rtol))
+
+    # Mutual distance can be 0 if there is an overlap or they are touching.
+    # Hence also check the intersection area/volume.
+    intersection = geo_1.shape.intersect(geo_2.shape)
+
+    intersection_size = (
+        intersection.Area() if isinstance(geo_1, BluemiraFace) else intersection.Volume()
+    )
+
+    intersection_is_zero = bool(np.isclose(intersection_size, 0, rtol=rtol))
+
+    # If both the distance and intersection size are zero,
+    # they are touching without overlap.
+    return bool(mutual_distance and intersection_is_zero)
