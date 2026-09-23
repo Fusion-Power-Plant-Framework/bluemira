@@ -40,7 +40,6 @@ class NeutronicsComponent:
     material: Material | None = None
     touching_components: list[str] | None = None
     desplined_xz_component: Component | None = None
-    desplined_xyz_component: Component | None = None
 
     def revolve_and_create_xyz(self) -> Component:
         """
