@@ -7,9 +7,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.geometry.despliner import (
-    check_solid_has_splines,
-)
+from bluemira.geometry.despliner import check_solid_has_splines, despline_xz_component
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     extrude_shape,
@@ -165,3 +163,27 @@ def splined_d_shape_component():
         "test_component",
         children=[xz_component, xyz_component],
     )
+
+
+@pytest.mark.parametrize(
+    "discretisation",
+    [20, 25, 50],
+)
+def test_despline_xz_component(splined_d_shape_component, discretisation):
+    """
+    Test create_desplined_component() is correctly desplining
+    solids with splines
+    """
+    desplined_component = despline_xz_component(
+        component=splined_d_shape_component, discretisation=discretisation
+    )
+
+    desplined_xz_face = desplined_component.get_component("xz").get_component_properties(
+        "shape"
+    )
+    assert check_solid_has_splines(desplined_xz_face) is False
+
+    xz_boundaries = desplined_xz_face.boundary
+
+    for wire in xz_boundaries:
+        assert len(wire.vertexes.T) == discretisation + 1
