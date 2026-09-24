@@ -171,8 +171,8 @@ def splined_d_shape_component():
 )
 def test_despline_xz_component(splined_d_shape_component, discretisation):
     """
-    Test create_desplined_component() is correctly desplining
-    solids with splines
+    Test despline_xz_component() is correctly desplining
+    xz face with splines
     """
     desplined_component = despline_xz_component(
         component=splined_d_shape_component, discretisation=discretisation
