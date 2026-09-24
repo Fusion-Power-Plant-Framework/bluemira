@@ -217,19 +217,3 @@ def _plot_show_and_close_class(request):
         plt.close()
     else:
         yield
-
-
-def pytest_runtest_setup(item):
-    """
-    Test run setup. Only runs the test
-    if cadquery backend is used.
-    """
-    marker = item.get_closest_marker("requires_backend")
-    if marker:
-        required = marker.args[0].lower()
-        current_backend = os.getenv("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").lower()
-        if required != current_backend:
-            pytest.skip(
-                f"Skipped because backend '{current_backend}' is active, "
-                f"requires '{required}'"
-            )

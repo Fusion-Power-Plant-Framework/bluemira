@@ -142,7 +142,6 @@ markers = [
     "reactor: Whole reactor tests",
     "private: Tests using private data",
     "classplot: Show and close figures after running all tests in class",
-    "requires_backend(name): skip test unless the given geometry backend is active"
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning',
