@@ -6,7 +6,6 @@
 import numpy as np
 import pytest
 
-from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.despliner import (
     check_solid_has_splines,
 )
@@ -17,9 +16,7 @@ from bluemira.geometry.tools import (
     make_bezier,
     make_bsplinesurface,
     make_polygon,
-    revolve_shape,
 )
-from bluemira.geometry.wire import BluemiraWire
 
 
 @pytest.fixture
@@ -103,65 +100,10 @@ def bezier_yz_extruded():
         ("bezier_yz_extruded", True),
     ],
 )
+@pytest.mark.requires_backend("cadquery")
 def test_check_solid_has_splines(request, fixture, expected):
     """
     Test check_solid_has_splines() is correctly identifying
     solids with and without splines
     """
     assert check_solid_has_splines(request.getfixturevalue(fixture)) is expected
-
-
-@pytest.fixture
-def splined_d_shape_component():
-    """Create a component containing a D-shaped face with a spline edge."""
-    straight = make_polygon(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [1, 0, 1],
-            [0, 0, 1],
-        ],
-        closed=False,
-    )
-
-    spline = interpolate_bspline([
-        [0, 0, 1],
-        [-0.2, 0, 0.75],
-        [-0.3, 0, 0.5],
-        [-0.2, 0, 0.25],
-        [0, 0, 0],
-    ])
-
-    boundary = BluemiraWire([*straight.edges, spline])
-    boundary.close()
-    face = BluemiraFace(boundary)
-
-    xz_component = Component(
-        "xz",
-        children=[
-            PhysicalComponent(
-                name="d_shape",
-                shape=face,
-            )
-        ],
-    )
-
-    xyz_component = Component(
-        "xyz",
-        children=[
-            PhysicalComponent(
-                name="d_shape",
-                shape=revolve_shape(
-                    face,
-                    base=(0, 0, 0),
-                    direction=(0, 0, 1),
-                    degree=360.0,
-                ),
-            )
-        ],
-    )
-
-    return Component(
-        "test_component",
-        children=[xz_component, xyz_component],
-    )
