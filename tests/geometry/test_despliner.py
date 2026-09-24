@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+import os
+
 import numpy as np
 import pytest
 
@@ -22,6 +24,11 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") != "cadquery",
+    reason="Despliner geometry tests are specific to the CadQuery backend",
+)
 
 
 @pytest.fixture
