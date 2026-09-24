@@ -54,6 +54,9 @@ A desplining tutorial for users.
 #
 # Let's start out by importing all the basic objects, and some typical tools
 # %%
+import os
+import sys
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -71,6 +74,15 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+
+# %% [markdown]
+# Do not run this example for freecad backend
+# %%
+current_backend = os.getenv("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").lower()
+
+if current_backend != "cadquery":
+    print(f"Skipping example: requires cadquery, current backend is {current_backend}")
+    sys.exit(0)  # Exit gracefully
 
 # %% [markdown]
 # ## Helper Functions
