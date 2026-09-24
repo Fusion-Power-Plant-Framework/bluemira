@@ -146,15 +146,15 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     def add_line(
         edge: BluemiraWire,
         wire: BluemiraWire,
-        start_vec: npt.NDArray,
-        end_vec: npt.NDArray,
+        start_vec: Coordinates,
+        end_vec: Coordinates,
     ) -> WireInfo:
         """
         Function to record a line as a WireInfo, with the appropriate tangents and
         BluemiraWire.
         """  # noqa: DOC201
         return WireInfo(
-            StraightLineInfo(np.array(start_vec), np.array(end_vec)),
+            StraightLineInfo(start_vec, end_vec),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
@@ -162,8 +162,8 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     def add_circle(
         edge: BluemiraWire,
         wire: BluemiraWire,
-        start_vec: npt.NDArray,
-        end_vec: npt.NDArray,
+        start_vec: Coordinates,
+        end_vec: Coordinates,
     ) -> WireInfo:
         """
         Function to record the arc of a circle as a WireInfo, with the appropriate
@@ -171,8 +171,8 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         """  # noqa: DOC201
         return WireInfo(
             CircleInfo(
-                np.array(start_vec),
-                np.array(end_vec),
+                start_vec,
+                end_vec,
                 np.array(edge.Curve.Center),
                 edge.Curve.Radius,
             ),
@@ -220,10 +220,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
             wire_container.append(wire_info)
             continue
         distance_to_start = np.linalg.norm(
-            wire_container[-1].key_points.end_point - wire_info.key_points.start_point
+            wire_container[-1].key_points.end_point.xyz
+            - wire_info.key_points.start_point.xyz
         )
         distance_to_end = np.linalg.norm(
-            wire_container[-1].key_points.end_point - wire_info.key_points.end_point
+            wire_container[-1].key_points.end_point.xyz
+            - wire_info.key_points.end_point.xyz
         )
         if distance_to_end < distance_to_start:
             wire_info = wire_info.reverse()

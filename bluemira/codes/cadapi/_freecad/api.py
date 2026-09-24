@@ -1126,7 +1126,7 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
 
 EDGE_TYPE_TO_ENUM = {
     Part.Line: CurveType.LINE,
-    Part.LineSegement: CurveType.LINE,
+    Part.LineSegment: CurveType.LINE,
     Part.Circle: CurveType.CIRCLE,
     Part.ArcOfCircle: CurveType.CIRCLE,
     Part.Ellipse: CurveType.ELLIPSE,
