@@ -1216,6 +1216,7 @@ def _revolve(face):
     )
 
 
+@pytest.mark.cadquery_only
 class TestCheckTouchingGeos:
     """Tests for check_touching_geos()."""
 
@@ -1258,6 +1259,7 @@ class TestCheckTouchingGeos:
         assert check_touching_geos(*geos) is expected
 
 
+@pytest.mark.cadquery_only
 class TestRepairOverlappingGeos:
     """Tests for repair_overlapping_geos()."""
 
@@ -1352,6 +1354,7 @@ class TestRepairOverlappingGeos:
             repair_overlapping_geos(geo, [])
 
 
+@pytest.mark.cadquery_only
 class TestRepairGapsBetweenFaces:
     """Tests for repair_gaps_between_faces()."""
 
