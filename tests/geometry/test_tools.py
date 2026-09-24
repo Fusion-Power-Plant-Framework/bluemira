@@ -37,6 +37,7 @@ from bluemira.geometry.tools import (
     boolean_fragments,
     boolean_fuse,
     chamfer_wire_2D,
+    check_touching_geos,
     connect_shapes,
     convex_hull_wires_2d,
     deserialise_shape,
@@ -1197,3 +1198,49 @@ class TestBooleanCommon:
         assert boolean_cut(wall, [cavity])[0].volume == pytest.approx(
             wall.volume, rel=1e-9
         )
+
+
+class TestCheckTouchingGeos:
+    """Tests for check_touching_geos()."""
+
+    @pytest.fixture(
+        params=[
+            # (second face vertices, expected)
+            ([[1, 0, 0.25], [2, 0, 0.25], [2, 0, 0.5], [1, 0, 0.5]], True),
+            ([[1, 0, 0], [2, 0, 0], [2, 0, 1], [1, 0, 1]], True),
+            ([[2, 0, 0], [3, 0, 0], [3, 0, 1], [2, 0, 1]], False),
+        ],
+        ids=["partially-touching", "fully-touching", "non-touching"],
+    )
+    def face_pair(self, request):
+        vertices_2, expected = request.param
+
+        face_1 = BluemiraFace(
+            make_polygon(
+                [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+                closed=True,
+            )
+        )
+        face_2 = BluemiraFace(make_polygon(vertices_2, closed=True))
+
+        return (face_1, face_2), expected
+
+    @staticmethod
+    def _revolve(face):
+        return revolve_shape(
+            face,
+            base=(0, 0, 0),
+            direction=(0, 0, 1),
+            degree=360.0,
+        )
+
+    def test_touching_faces(self, face_pair):
+        faces, expected = face_pair
+
+        assert check_touching_geos(*faces) is expected
+
+    def test_touching_solids(self, face_pair):
+        faces, expected = face_pair
+        solids = [self._revolve(face) for face in faces]
+
+        assert check_touching_geos(*solids) is expected
