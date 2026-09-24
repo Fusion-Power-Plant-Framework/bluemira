@@ -25,6 +25,11 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 
+pytestmark = pytest.mark.skipif(
+    os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") != "cadquery",
+    reason="Despliner geometry tests are specific to the CadQuery backend",
+)
+
 
 @pytest.fixture
 def unit_box():
