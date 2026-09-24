@@ -25,12 +25,14 @@ from bluemira.geometry.wire import BluemiraWire
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
 
+    from bluemira.geometry.coordinates import Coordinates
+
 
 class StraightLineInfo(NamedTuple):
     """Key information about a straight line"""
 
-    start_point: Iterable[float]  # 3D coordinates
-    end_point: Iterable[float]  # 3D coordinates
+    start_point: Coordinates
+    end_point: Coordinates
 
     def reverse(self) -> StraightLineInfo:
         """Flip the wire's direction"""  # noqa: DOC201
@@ -40,9 +42,9 @@ class StraightLineInfo(NamedTuple):
 class CircleInfo(NamedTuple):
     """Arc of a Circle, LESS THAN 180°"""
 
-    start_point: npt.NDArray  # 3D coordinates
-    end_point: npt.NDArray  # 3D coordinates
-    center: npt.NDArray  # 3D coordinates
+    start_point: Coordinates
+    end_point: Coordinates
+    center: Iterable[float]  # 3D coordinates
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:

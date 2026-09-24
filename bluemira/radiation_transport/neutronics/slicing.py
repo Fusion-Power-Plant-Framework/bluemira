@@ -147,34 +147,26 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     wire_container = []
 
     def add_line(
-<<<<<<< HEAD
-        edge: Any,
-=======
         edge: BluemiraWire,
->>>>>>> 5e84ffa28 (✨ First pass at edge type function)
         wire: BluemiraWire,
-        start_vec: npt.NDArray,
-        end_vec: npt.NDArray,
+        start_vec: Coordinates,
+        end_vec: Coordinates,
     ) -> WireInfo:
         """
         Function to record a line as a WireInfo, with the appropriate tangents and
         BluemiraWire.
         """  # noqa: DOC201
         return WireInfo(
-            StraightLineInfo(np.array(start_vec), np.array(end_vec)),
+            StraightLineInfo(start_vec, end_vec),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
 
     def add_circle(
-<<<<<<< HEAD
-        edge: Any,
-=======
         edge: BluemiraWire,
->>>>>>> 5e84ffa28 (✨ First pass at edge type function)
         wire: BluemiraWire,
-        start_vec: npt.NDArray,
-        end_vec: npt.NDArray,
+        start_vec: Coordinates,
+        end_vec: Coordinates,
     ) -> WireInfo:
         """
         Function to record the arc of a circle as a WireInfo, with the appropriate
@@ -182,8 +174,8 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         """  # noqa: DOC201
         return WireInfo(
             CircleInfo(
-                np.array(start_vec),
-                np.array(end_vec),
+                start_vec,
+                end_vec,
                 np.array(edge.Curve.Center),
                 edge.Curve.Radius,
             ),
@@ -232,14 +224,14 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
             continue
         distance_to_start = float(
             np.linalg.norm(
-                np.asarray(wire_container[-1].key_points.end_point, dtype=float)
-                - np.asarray(wire_info.key_points.start_point, dtype=float)
+                np.asarray(wire_container[-1].key_points.end_point.xyz, dtype=float)
+                - np.asarray(wire_info.key_points.start_point.xyz, dtype=float)
             )
         )
         distance_to_end = float(
             np.linalg.norm(
-                np.asarray(wire_container[-1].key_points.end_point, dtype=float)
-                - np.asarray(wire_info.key_points.end_point, dtype=float)
+                np.asarray(wire_container[-1].key_points.end_point.xyz, dtype=float)
+                - np.asarray(wire_info.key_points.end_point.xyz, dtype=float)
             )
         )
         if distance_to_end < distance_to_start:
