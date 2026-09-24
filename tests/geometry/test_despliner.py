@@ -7,6 +7,7 @@
 import numpy as np
 import pytest
 
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.despliner import (
     check_face_has_splines,
     check_solid_has_revolution,
@@ -20,7 +21,9 @@ from bluemira.geometry.tools import (
     make_bezier,
     make_bsplinesurface,
     make_polygon,
+    revolve_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 
 
 @pytest.fixture
@@ -85,7 +88,6 @@ def bezier_yz_extruded():
         ("bezier_yz_extruded", True),
     ],
 )
-@pytest.mark.requires_backend("cadquery")
 def test_check_solid_has_splines(request, fixture, expected):
     """
     Test check_solid_has_splines() is correctly identifying
