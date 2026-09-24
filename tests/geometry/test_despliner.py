@@ -7,7 +7,11 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.geometry.despliner import check_solid_has_splines, despline_xz_component
+from bluemira.geometry.despliner import (
+    check_solid_has_revolution,
+    check_solid_has_splines,
+    despline_xz_component,
+)
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     extrude_shape,
@@ -107,6 +111,48 @@ def test_check_solid_has_splines(request, fixture, expected):
     solids with and without splines
     """
     assert check_solid_has_splines(request.getfixturevalue(fixture)) is expected
+
+
+@pytest.fixture
+def solid_with_surfaces_of_revolution():
+    curve = make_bezier({
+        "x": [1.0, 1.5, 2.0],
+        "y": 0,
+        "z": [-1.0, 0.0, 1.0],
+    })
+
+    closure = make_polygon({
+        "x": [2.0, 0.0, 0.0, 1.0],
+        "y": 0,
+        "z": [1.0, 1.0, -1.0, -1.0],
+    })
+
+    face = BluemiraFace(BluemiraWire([curve, closure]))
+
+    return revolve_shape(
+        face,
+        base=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=360,
+    )
+
+
+@pytest.mark.parametrize(
+    ("fixture", "expected"),
+    [
+        ("solid_with_surfaces_of_revolution", True),
+        ("bspline_surface_extruded", False),
+        ("bspline_xz_extruded", False),
+        ("bspline_xy_extruded", False),
+        ("bezier_yz_extruded", False),
+    ],
+)
+def test_check_solid_has_revolution(request, fixture, expected):
+    """
+    Test check_solid_has_splines() is correctly identifying
+    solids with and without splines
+    """
+    assert check_solid_has_revolution(request.getfixturevalue(fixture)) is expected
 
 
 @pytest.fixture
