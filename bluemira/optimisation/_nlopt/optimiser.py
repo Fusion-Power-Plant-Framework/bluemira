@@ -375,9 +375,7 @@ class NloptOptimiser(Optimiser):
         else:
             self._opt.set_min_objective(self._objective.call)
 
-    def _set_termination_conditions(
-        self, opt_conditions: Mapping[str, Any]
-    ) -> None:
+    def _set_termination_conditions(self, opt_conditions: Mapping[str, Any]) -> None:
         """Validate and set the termination conditions."""
         self._opt_conditions = NLOptConditions(**opt_conditions)
         if self._opt_conditions.ftol_abs:

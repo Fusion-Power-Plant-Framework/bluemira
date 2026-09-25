@@ -118,12 +118,7 @@ class FemMagnetostatic2d:
         self.v = TestFunction(self.V)
 
         sc = cast("Any", SpatialCoordinate(self.mesh))
-        self.a = (
-            1
-            / (2.0 * np.pi * MU_0)
-            * (1 / sc[0] * dot(grad(u), grad(self.v)))
-            * dx
-        )
+        self.a = 1 / (2.0 * np.pi * MU_0) * (1 / sc[0] * dot(grad(u), grad(self.v))) * dx
 
         # initialise solution
         self.psi = BluemiraFemFunction(self.V)
@@ -135,9 +130,7 @@ class FemMagnetostatic2d:
     def define_g(
         self,
         g: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
-        dirichlet_bc_function: (
-            DirichletBC | Iterable[DirichletBC] | None
-        ) = None,
+        dirichlet_bc_function: (DirichletBC | Iterable[DirichletBC] | None) = None,
         dirichlet_marker: int | None = None,  # noqa: ARG002
         neumann_bc_function: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
     ):
@@ -252,9 +245,7 @@ class FemMagnetostatic2d:
                 "Mesh and function space must be set before calculating B."
             )
         if self.psi is None:
-            raise MagnetostaticsError(
-                "Problem must be solved before calculating B."
-            )
+            raise MagnetostaticsError("Problem must be solved before calculating B.")
 
         degree = self.V.ufl_element().degree
         if degree == 1:

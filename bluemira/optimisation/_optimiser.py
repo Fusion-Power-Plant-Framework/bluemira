@@ -27,9 +27,7 @@ class OptimiserResult:
     """The optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
-    history: list[tuple[np.ndarray, float]] | None = field(
-        default=None, repr=False
-    )
+    history: list[tuple[np.ndarray, float]] | None = field(default=None, repr=False)
     """
     The history of the parameterisation at each iteration.
 

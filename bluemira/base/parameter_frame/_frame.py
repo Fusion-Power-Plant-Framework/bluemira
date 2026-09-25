@@ -138,9 +138,7 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
-    def update(
-        self, new_values: dict[str, Any] | ParameterFrame
-    ):
+    def update(self, new_values: dict[str, Any] | ParameterFrame):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
             self.update_from_frame(new_values)

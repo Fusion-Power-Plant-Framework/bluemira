@@ -99,9 +99,7 @@ class Parameter(Generic[ParameterValueType]):
         self._add_history_record()
 
     @staticmethod
-    def _type_check(
-        name: str, value: Any, value_types: tuple[type, ...] | None
-    ) -> Any:
+    def _type_check(name: str, value: Any, value_types: tuple[type, ...] | None) -> Any:
         if value_types and value is not None:
             if float in value_types and isinstance(value, int):
                 value = float(value)

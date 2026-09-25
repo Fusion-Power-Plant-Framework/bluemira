@@ -10,11 +10,9 @@ PROCESS's parameter definitions.
 
 from __future__ import annotations
 
-from typing import Any
-
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.parameter_frame import Parameter  # noqa: TC001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
@@ -464,7 +462,9 @@ class ProcessSolverParams(MappedParameterFrame):
         else:
             self = super().from_defaults(
                 data if data is not None else template.to_dict(),
-                source=f"{NAME} user input template" if source == "bluemira codes default" else source,
+                source=f"{NAME} user input template"
+                if source == "bluemira codes default"
+                else source,
                 **_kwargs,
             )
         self.__defaults = template
