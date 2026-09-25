@@ -1116,6 +1116,7 @@ def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
         if not coords.is_planar:
             bluemira_warn("Cannot fill plot of non-planar Coordinates.")
             return
+        assert coords.normal_vector is not None  # noqa: S101
         dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0])).T
 
         xyz = dcm @ coords.xyz
