@@ -14,12 +14,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from bluemira.structural.error import StructuralError
 from bluemira.structural.geometry import DeformedGeometry
 from bluemira.structural.transformation import cyclic_pattern
 from bluemira.utilities.plot_tools import Plot3D
 
 if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
+    from mpl_toolkits.mplot3d.axes3d import Axes3D
 
     from bluemira.structural.geometry import Geometry
     from bluemira.structural.loads import LoadCase
@@ -107,9 +108,17 @@ class Result:
 
     def _make_cyclic_geometry(
         self, geometry: Geometry | None = None
-    ) -> list[Geometry | DeformedGeometry]:
+    ) -> Geometry | DeformedGeometry:
         if geometry is None:
             geometry = self.geometry
+
+        if (
+            self._cycle_sym is None
+            or self._cycle_sym.n is None
+            or self._cycle_sym.theta is None
+            or self._cycle_sym.axis is None
+        ):
+            raise StructuralError("No cyclic symmetry defined for this result.")
 
         n = self._cycle_sym.n
         theta = self._cycle_sym.theta
@@ -120,7 +129,7 @@ class Result:
     def plot(
         self,
         deformation_scale: float = 10.0,
-        ax: Axes | None = None,
+        ax: Axes3D | None = None,
         *,
         stress: bool = False,
         deflection: bool = False,
