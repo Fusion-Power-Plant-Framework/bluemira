@@ -1,4 +1,3 @@
-from typing import Any, cast
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short

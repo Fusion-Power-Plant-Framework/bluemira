@@ -12,9 +12,8 @@ from __future__ import annotations
 
 import functools
 import operator
-from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -48,6 +47,8 @@ from bluemira.radiation_transport.radiation_tools import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
+
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
@@ -295,16 +296,22 @@ class Radiation:
             return ne
 
         if rad_i is not None:
-            assert n_rad_in is not None
-            assert n_rad_out is not None
+            n_rad_in = _raise_if_none(
+                n_rad_in, "'n_rad_in' cannot be 'None' if 'rad_i' is not"
+            )
+            n_rad_out = _raise_if_none(
+                n_rad_out, "'n_rad_out' cannot be 'None' if 'rad_i' is not"
+            )
             if len(rad_i) == 1:
                 ne[rad_i] = n_rad_in
             elif len(rad_i) > 1:
                 ne[rad_i] = gaussian_decay(n_rad_out, n_rad_in, len(rad_i), decay=False)
 
         if rec_i is not None:
-            assert n_tar is not None
-            assert n_rad_out is not None
+            n_tar = _raise_if_none(n_tar, "'n_tar' cannot be 'None' if 'rec_i' is not")
+            n_rad_out = _raise_if_none(
+                n_rad_out, "'n_rad_out' cannot be 'None' if 'rec_i' is not"
+            )
             if len(rec_i) == 1:
                 ne[rec_i] = n_tar
             elif len(rec_i) > 0:
@@ -318,9 +325,15 @@ class Radiation:
                     ne[rec_i] = gaussian_decay(n_rad_out - gap, n_tar, len(rec_i))
 
         if main_chamber_rad:
-            assert rad_i is not None
-            assert rec_i is not None
-            assert n_rad_in is not None
+            rad_i = _raise_if_none(
+                rad_i, "'rad_i' cannot be 'None' if 'main_chamber_rad' is not"
+            )
+            rec_i = _raise_if_none(
+                rec_i, "'rec_i' cannot be 'None' if 'main_chamber_rad' is not"
+            )
+            n_rad_in = _raise_if_none(
+                n_rad_in, "'n_rad_in' cannot be 'None' if 'main_chamber_rad' is not"
+            )
             mask = np.ones_like(ne, dtype=bool)
             main_rad = np.concatenate((rad_i, rec_i))
             mask[main_rad] = False
@@ -707,7 +720,8 @@ class ScrapeOffLayerRadiation(Radiation):
         self.z_mp = float(self.points["o_point"]["z"])
         if self.eq.is_double_null:
             # The two halves
-            assert isinstance(self.separatrix, list)
+            if not isinstance(self.separatrix, list):
+                raise ValueError("Expected a list of separatrix for double-null")
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
         else:
@@ -728,7 +742,7 @@ class ScrapeOffLayerRadiation(Radiation):
             })
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        assert self.x_sep_omp is not None
+        self.x_sep_omp = _raise_if_none(self.x_sep_omp, "'x_sep_omp' cannot be None")
         self.r_sep_omp = float(self.x_sep_omp + self.params.sep_corrector_omp.value)
         # magnetic field components at the midplane
         self.b_pol_sep_omp = float(self.eq.Bp(self.x_sep_omp, self.z_mp))
@@ -736,7 +750,9 @@ class ScrapeOffLayerRadiation(Radiation):
         self.b_tot_sep_omp = float(np.hypot(self.b_pol_sep_omp, b_tor_sep_omp))
 
         if self.eq.is_double_null:
-            assert self.x_sep_imp is not None
+            self.x_sep_imp = _raise_if_none(
+                self.x_sep_imp, "'x_sep_imp' cannot be None for double-null"
+            )
             self.r_sep_imp = float(self.x_sep_imp - self.params.sep_corrector_imp.value)
             self.b_pol_sep_imp = float(self.eq.Bp(self.x_sep_imp, self.z_mp))
             b_tor_sep_imp = float(self.eq.Bt(self.x_sep_imp))
@@ -897,11 +913,11 @@ class ScrapeOffLayerRadiation(Radiation):
         if omp or not self.eq.is_double_null:
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
             fw_lambda_q_far = self.params.fw_lambda_q_far_omp.value
-            dx = self.dx_omp
+            dx = _raise_if_none(self.dx_omp, "'dx_omp' cannot be None")
         else:
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
             fw_lambda_q_far = self.params.fw_lambda_q_far_imp.value
-            dx = self.dx_imp
+            dx = _raise_if_none(self.dx_imp, "'dx_imp' cannot be None")
 
         if te_sep is None:
             te_val = self.params.T_e_sep.value_as("eV")
@@ -910,7 +926,6 @@ class ScrapeOffLayerRadiation(Radiation):
             te_sep = te_val
         ne_sep = self.params.n_e_sep.value
 
-        assert dx is not None
         te_sol, ne_sol = electron_density_and_temperature_sol_decay(
             te_sep, ne_sep, fw_lambda_q_near, fw_lambda_q_far, dx
         )
@@ -953,13 +968,13 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_sep_mp = self.b_pol_sep_omp
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
             fw_lambda_q_far = self.params.fw_lambda_q_far_omp.value
-            dx = self.dx_omp
+            dx = _raise_if_none(self.dx_omp, "'dx_omp' cannot be None")
         else:
             r_sep_mp = self.r_sep_imp
             b_pol_sep_mp = self.b_pol_sep_imp
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
             fw_lambda_q_far = self.params.fw_lambda_q_far_imp.value
-            dx = self.dx_imp
+            dx = _raise_if_none(self.dx_imp, "'dx_imp' cannot be None")
 
         # magnetic field components at the local point
         b_pol_p = self.eq.Bp(x_p, z_p)
@@ -974,7 +989,6 @@ class ScrapeOffLayerRadiation(Radiation):
         n_p = self.params.n_e_sep.value * f_t
 
         # Temperature and density profiles across the SoL
-        assert dx is not None
         te_prof, ne_prof = electron_density_and_temperature_sol_decay(
             t_p,
             n_p,
@@ -1149,7 +1163,7 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_tar = self.b_pol_out_tar
             b_pol_u = self.b_pol_sep_omp
             r_sep_mp = self.r_sep_omp
-            alpha = self.alpha_lfs
+            alpha = _raise_if_none(self.alpha_lfs, "'alpha_lfs' cannot be None")
             b_tot_tar = self.b_tot_out_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp.value
             sep_corrector = self.params.sep_corrector_omp.value
@@ -1158,7 +1172,7 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_tar = self.b_pol_inn_tar
             b_pol_u = self.b_pol_sep_imp
             r_sep_mp = self.r_sep_imp
-            alpha = self.alpha_hfs
+            alpha = _raise_if_none(self.alpha_hfs, "'alpha_hfs' cannot be None")
             b_tot_tar = self.b_tot_inn_tar
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp.value
             sep_corrector = self.params.sep_corrector_imp.value
@@ -1194,7 +1208,6 @@ class ScrapeOffLayerRadiation(Radiation):
         )
 
         # exit of radiation region
-        assert alpha is not None
         t_rad_out = (
             f_ion_t_eV
             if (x_point_rad and pfr_ext is not None) or detachment
@@ -1219,7 +1232,6 @@ class ScrapeOffLayerRadiation(Radiation):
         if t_rad_out is not None and t_rad_out <= f_ion_t_eV:
             x_point_rad = detachment = True
 
-        assert t_rad_out is not None
         # profiles through the SoL
         t_in_prof, n_in_prof = self.any_point_density_temperature_profiles(
             in_x, in_z, t_rad_in, t_u_ev, lfs=lfs
@@ -2237,9 +2249,9 @@ class RadiationSource:
         list
             Local radiation source values associated to the given psi_n
         """
-        assert self.x_tot is not None
-        assert self.z_tot is not None
-        assert self.rad_tot is not None
+        self.x_tot = _raise_if_none(self.x_tot, "'self.x_tot' cannot be 'None'")
+        self.z_tot = _raise_if_none(self.z_tot, "'self.z_tot' cannot be 'None'")
+        self.rad_tot = _raise_if_none(self.rad_tot, "'self.rad_tot' cannot be 'None'")
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         fs = self.eq.get_flux_surface(float(np.asarray(psi_n).flat[0]))
         return np.concatenate([
@@ -2265,9 +2277,9 @@ class RadiationSource:
         list
             Local radiation source value(s) associated to the point(s)
         """
-        assert self.x_tot is not None
-        assert self.z_tot is not None
-        assert self.rad_tot is not None
+        self.x_tot = _raise_if_none(self.x_tot, "'x_tot' cannot be 'None'")
+        self.z_tot = _raise_if_none(self.z_tot, "'z_tot' cannot be 'None'")
+        self.rad_tot = _raise_if_none(self.rad_tot, "'rad_tot' cannot be 'None'")
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return np.concatenate([
             interpolated_field_values(x, z, f_sol)
@@ -2332,8 +2344,8 @@ class RadiationSource:
         self.rad_tot:
             total radiated power density [MW/m^3]
         """
-        assert self.core_rad is not None
-        assert self.sol_rad is not None
+        self.core_rad = _raise_if_none(self.core_rad, "'core_rad' cannot be 'None'")
+        self.sol_rad = _raise_if_none(self.sol_rad, "'sol_rad' cannot be 'None'")
         self.core_rad.calculate_core_radiation_map()
 
         if isinstance(self.sol_rad, DNScrapeOffLayerRadiation):
@@ -2380,9 +2392,9 @@ class RadiationSource:
         for sep in separatrix:
             plot_coordinates(sep, ax=ax, linewidth=0.2)
 
-        assert self.x_tot is not None
-        assert self.z_tot is not None
-        assert self.rad_tot is not None
+        self.x_tot = _raise_if_none(self.x_tot, "'x_tot' cannot be 'None'")
+        self.z_tot = _raise_if_none(self.z_tot, "'z_tot' cannot be 'None'")
+        self.rad_tot = _raise_if_none(self.rad_tot, "'rad_tot' cannot be 'None'")
         cm = ax.scatter(
             self.x_tot,
             self.z_tot,
@@ -2398,8 +2410,12 @@ class RadiationSource:
             fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
 
         if plot_flux_tubes:
-            assert self.core_rad is not None
-            assert self.sol_rad is not None
+            self.core_rad = _raise_if_none(
+                self.core_rad, "'core_rad' cannot be 'None' if plotting flux tubes"
+            )
+            self.sol_rad = _raise_if_none(
+                self.sol_rad, "'sol_rad' cannot be 'None' if plotting flux tubes"
+            )
             core_rad_flux_tube_contours = [
                 make_polygon(flux_tube, closed=True)
                 for flux_tube in self.core_rad.flux_tubes
@@ -2424,3 +2440,20 @@ class RadiationSource:
             plot_2d(sol_rad_flux_tube_contours, ax=ax, show=False)
 
         return ax
+
+
+_T = TypeVar("_T")
+
+
+def _raise_if_none(arg: _T | None, msg: str) -> _T:
+    """
+    Raise a ValueError if the given argument is None.
+
+    Raises
+    ------
+    ValueError:
+        If ``arg`` is None.
+    """
+    if arg is None:
+        raise ValueError(msg)
+    return arg

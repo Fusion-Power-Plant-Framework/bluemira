@@ -1,15 +1,13 @@
-from typing import Any
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-
 import copy
 from collections.abc import Mapping
 from enum import auto
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -218,6 +216,11 @@ class Solver(CodesSolver):
         Returns
         -------
         The plot Axes object.
+
+        Raises
+        ------
+        CodesError
+            If the solver has not previously been executed.
         """
         if self._teardown is None:
             raise CodesError("Solver must be executed before plotting radial build.")

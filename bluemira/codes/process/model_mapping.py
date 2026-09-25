@@ -1,4 +1,8 @@
+from dataclasses import dataclass, field
+from itertools import cycle
 from typing import Any
+
+from bluemira.codes.utilities import Model
 
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
@@ -9,11 +13,6 @@ from typing import Any
 """
 PROCESS model mappings
 """
-
-from dataclasses import dataclass, field
-from itertools import cycle
-
-from bluemira.codes.utilities import Model
 
 
 class classproperty:  # noqa: N801

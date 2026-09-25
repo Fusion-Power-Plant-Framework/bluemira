@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from itertools import pairwise
 from typing import TYPE_CHECKING, cast, overload
 
@@ -39,6 +38,8 @@ from bluemira.radiation_transport.neutronics.wires import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from matplotlib.axes import Axes
 
     from bluemira.geometry.shell import BluemiraShell
