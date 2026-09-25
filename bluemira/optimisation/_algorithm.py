@@ -51,7 +51,7 @@ class Algorithm(Enum):
         return obj
 
     @classmethod
-    def _missing_(cls, value: str) -> Algorithm:
+    def _missing_(cls, value: object) -> Algorithm:
         """
         Handle cases where the algorithm type provided is not a valid algorithm.
 
@@ -71,10 +71,10 @@ class Algorithm(Enum):
             If the algorithm type is not a valid algorithm.
         """
         try:
-            value = value.upper()
-            if value == "DIRECT-L":
+            val_str = str(value).upper()
+            if val_str == "DIRECT-L":
                 return cls.DIRECT_L
-            return cls[value]
+            return cls[val_str]
         except (KeyError, AttributeError):
             raise ValueError(f"No such Algorithm value '{value}'.") from None
 

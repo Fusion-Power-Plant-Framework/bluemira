@@ -5,12 +5,16 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Defines the interface for an Optimiser."""
 
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-import numpy as np
+if TYPE_CHECKING:
+    import numpy as np
 
-from bluemira.optimisation.typed import OptimiserCallable
+    from bluemira.optimisation.typed import OptimiserCallable
 
 
 @dataclass
@@ -23,14 +27,18 @@ class OptimiserResult:
     """The optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
-    history: list[tuple[np.ndarray, float]] = field(repr=False)
+    history: list[tuple[np.ndarray, float]] | None = field(
+        default=None, repr=False
+    )
     """
     The history of the parameterisation at each iteration.
 
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).
     """
-    constraint_history: list[tuple[np.ndarray, ...]] = field(repr=False)
+    constraint_history: list[tuple[np.ndarray, ...]] | None = field(
+        default=None, repr=False
+    )
     """
     Constraint history
     """

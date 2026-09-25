@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass
 
 from bluemira.base.constants import EPS
@@ -18,7 +20,7 @@ class NLOptConditions:
     ftol_rel: float | None = None
     xtol_abs: float | None = None
     xtol_rel: float | None = None
-    max_eval: int | None = None
+    max_eval: int | float | None = None
     max_time: float | None = None
     stop_val: float | None = None
 
