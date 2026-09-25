@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import pairwise
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple, overload
 
 import numpy as np
 from numpy import typing as npt
@@ -23,7 +23,7 @@ from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
 
 class StraightLineInfo(NamedTuple):
@@ -65,13 +65,15 @@ class WireInfo:
     # 3662
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[Iterable[float]]  # 2 normalised directional vectors xyz
+    tangents: Sequence[npt.NDArray[np.float64]]  # 2 normalised directional vectors xyz
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
         """Flip the wire's direction"""  # noqa: DOC201
         return type(self)(
-            self.key_points.reverse(), [-t for t in self.tangents[::-1]], None
+            self.key_points.reverse(),
+            [-np.asarray(t) for t in self.tangents[::-1]],
+            None,
         )
 
     @classmethod
@@ -111,7 +113,15 @@ class WireInfoList:
         """Number of wire infos"""  # noqa: DOC201
         return len(self.info_list)
 
-    def __getitem__(self, index_or_slice) -> list[WireInfo] | WireInfo:
+    def __iter__(self) -> Iterator[WireInfo]:
+        """Iterate over wire infos."""  # noqa: DOC201
+        return iter(self.info_list)
+
+    @overload
+    def __getitem__(self, index_or_slice: int) -> WireInfo: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[WireInfo]: ...
+    def __getitem__(self, index_or_slice: int | slice) -> list[WireInfo] | WireInfo:
         """Get a WireInfo"""  # noqa: DOC201
         return self.info_list[index_or_slice]
 
@@ -161,7 +171,7 @@ class WireInfoList:
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
         old_kp = self.info_list[0].key_points
-        self.info_list[0].key_points = type(old_kp)(new_start_point, *old_kp[1:])
+        self.info_list[0].key_points = old_kp._replace(start_point=new_start_point)
 
     @property
     def end_point(self):
@@ -172,9 +182,7 @@ class WireInfoList:
     def end_point(self, new_end_point):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
         old_kp = self.info_list[-1].key_points
-        self.info_list[0].key_points = type(old_kp)(
-            old_kp[0], new_end_point, *old_kp[2:]
-        )
+        self.info_list[-1].key_points = old_kp._replace(end_point=new_end_point)
 
     def reverse(self) -> WireInfoList:
         """Flip this list of wires"""  # noqa: DOC201
