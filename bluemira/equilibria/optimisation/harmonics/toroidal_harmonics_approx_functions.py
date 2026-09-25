@@ -396,7 +396,7 @@ def coil_toroidal_harmonic_amplitude_matrix(
     cos_m_chosen: np.ndarray | None = None,
     sin_m_chosen: np.ndarray | None = None,
     sig_figures: int = 15,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray | None, np.ndarray | None]:
     """
     Construct coefficient matrices from toroidal harmonic amplitudes at given coil
     locations, for the specified cos and sin poloidal mode numbers (m).
@@ -471,22 +471,25 @@ def coil_toroidal_harmonic_amplitude_matrix(
     # Useful combination
     Deltac = np.cosh(tau_c) - np.cos(sigma_c)  # noqa: N806
 
+    cos_m = np.array([]) if cos_m_chosen is None else np.asarray(cos_m_chosen)
+    sin_m = np.array([]) if sin_m_chosen is None else np.asarray(sin_m_chosen)
+
     # [number of poloidal modes, number of coils]
-    currents2harmonics_cos = np.zeros([len(cos_m_chosen), np.size(tau_c)])
-    currents2harmonics_sin = np.zeros([len(sin_m_chosen), np.size(tau_c)])
+    currents2harmonics_cos = np.zeros([len(cos_m), np.size(tau_c)])
+    currents2harmonics_sin = np.zeros([len(sin_m), np.size(tau_c)])
 
     # TH coefficients from function of the current distribution
     # outside of the region containing the core plasma
     # TH coefficients = currents2harmonics @ coil currents
     factorial_term_cos = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in cos_m_chosen
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in cos_m
     ])
     factorial_term_sin = np.array([
-        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in sin_m_chosen
+        np.prod(1 + 0.5 / np.arange(1, m + 1)) for m in sin_m
     ])
 
-    cos_empty = len(cos_m_chosen) == 0
-    sin_empty = len(sin_m_chosen) == 0
+    cos_empty = len(cos_m) == 0
+    sin_empty = len(sin_m) == 0
 
     if cos_empty:
         # cos_m_chosen is None
@@ -496,11 +499,9 @@ def coil_toroidal_harmonic_amplitude_matrix(
             (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
             * factorial_term_cos[:, None]
             * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
-            * legendre_p(
-                cos_m_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
-            )
+            * legendre_p(cos_m[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
         )
-        sigma_c_mult_mode_cos = [m * th_params.sigma_c for m in cos_m_chosen]
+        sigma_c_mult_mode_cos = [m * th_params.sigma_c for m in cos_m]
         Am_cos = currents2harmonics_cos * np.cos(sigma_c_mult_mode_cos)  # noqa: N806
         Am_cos = sig_fig_round(Am_cos, sig_figures)  # noqa: N806
 
@@ -512,11 +513,9 @@ def coil_toroidal_harmonic_amplitude_matrix(
             (MU_0 * 1.0 / 2.0 ** (5.0 / 2.0))
             * factorial_term_sin[:, None]
             * (np.sinh(tau_c)[None, :] / np.sqrt(Deltac)[None, :])
-            * legendre_p(
-                sin_m_chosen[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30
-            )
+            * legendre_p(sin_m[:, None] - 1 / 2, 1, np.cosh(tau_c)[None, :], n_max=30)
         )
-        sigma_c_mult_mode_sin = [m * th_params.sigma_c for m in sin_m_chosen]
+        sigma_c_mult_mode_sin = [m * th_params.sigma_c for m in sin_m]
         Am_sin = currents2harmonics_sin * np.sin(sigma_c_mult_mode_sin)  # noqa: N806
         Am_sin = sig_fig_round(Am_sin, sig_figures)  # noqa: N806
     return Am_cos, Am_sin
@@ -572,20 +571,23 @@ def toroidal_harmonic_approximate_psi(
     # Get coil positions and currents from equilibrium
     currents = np.array([eq.coilset[name].current for name in th_params.th_coil_names])
 
+    cos_m = np.array([]) if cos_m_chosen is None else np.asarray(cos_m_chosen)
+    sin_m = np.array([]) if sin_m_chosen is None else np.asarray(sin_m_chosen)
+
     # Check if cos or sin modes are not used in approximation
-    cos_empty = len(cos_m_chosen) == 0
-    sin_empty = len(sin_m_chosen) == 0
+    cos_empty = len(cos_m) == 0
+    sin_empty = len(sin_m) == 0
 
     # Delta term
     Delta = np.cosh(th_params.tau) - np.cos(th_params.sigma)  # noqa: N806
 
     # Sigma term
-    sigma_cos = np.cos([m * th_params.sigma for m in cos_m_chosen])
-    sigma_sin = np.sin([m * th_params.sigma for m in sin_m_chosen])
+    sigma_cos = np.cos([m * th_params.sigma for m in cos_m])
+    sigma_sin = np.sin([m * th_params.sigma for m in sin_m])
 
     # Factorial term
-    factorial_m_cos = np.array([factorial(m) for m in cos_m_chosen])
-    factorial_m_sin = np.array([factorial(m) for m in sin_m_chosen])
+    factorial_m_cos = np.array([factorial(m) for m in cos_m])
+    factorial_m_sin = np.array([factorial(m) for m in sin_m])
 
     # TH coefficient matrix
     Am_cos_current_function, Am_sin_current_function = (  # noqa: N806
@@ -632,7 +634,7 @@ def toroidal_harmonic_approximate_psi(
             current_func=Am_cos_current_function,
             sigma_term=sigma_cos,
             factoral_term=factorial_m_cos,
-            m=cos_m_chosen,
+            m=cos_m,
         )
     )
     A_sin = (  # noqa: N806
@@ -642,14 +644,14 @@ def toroidal_harmonic_approximate_psi(
             current_func=Am_sin_current_function,
             sigma_term=sigma_sin,
             factoral_term=factorial_m_sin,
-            m=sin_m_chosen,
+            m=sin_m,
         )
     )
 
     # Calc approx coilset psi using \psi = A * R
     approx_coilset_psi = (A_cos + A_sin) * th_params.R
-    Am_cos = [] if cos_empty else Am_cos_current_function @ currents  # noqa: N806
-    Am_sin = [] if sin_empty else Am_sin_current_function @ currents  # noqa: N806
+    Am_cos = np.array([]) if cos_empty else Am_cos_current_function @ currents  # noqa: N806
+    Am_sin = np.array([]) if sin_empty else Am_sin_current_function @ currents  # noqa: N806
     return approx_coilset_psi, Am_cos, Am_sin
 
 
@@ -657,7 +659,7 @@ def _separate_psi_contributions(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
     collocation: Collocation | None = None,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray | None]:
     """
     Separate the psi contributions from fixed sources (plasma + excluded coils) and from
     potentially variable sources (coilset).
@@ -688,6 +690,7 @@ def _separate_psi_contributions(
     """
     excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
+    assert eq.plasma is not None  # noqa: S101
     if collocation is not None:
         plasma_psi_cl = eq.plasma.psi(collocation.x, collocation.z)
         coilset_psi_cl = eq.coilset.psi(collocation.x, collocation.z)
@@ -1021,6 +1024,7 @@ def toroidal_harmonic_approximation(
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
         eq, th_params, collocation
     )
+    assert collocation_psi is not None  # noqa: S101
 
     mask = _get_plasma_mask(
         eq=eq, th_params=th_params, psi_norm=psi_norm, plasma_mask=plasma_mask
@@ -1089,8 +1093,8 @@ def toroidal_harmonic_approximation(
 def _approximation_direct_from_currents(
     eq: Equilibrium,
     th_params: ToroidalHarmonicsParams,
-    cos_m_chosen: np.ndarray[int],
-    sin_m_chosen: np.ndarray[int],
+    cos_m_chosen: np.ndarray,
+    sin_m_chosen: np.ndarray,
     true_coilset_psi: np.ndarray,
     mask: np.ndarray,
 ):
@@ -1123,11 +1127,11 @@ def _approximation_from_psi_fitting(
     th_params: ToroidalHarmonicsParams,
     max_harmonic_mode: int,
     collocation: Collocation,
-    cos_m_chosen: np.ndarray[int],
-    sin_m_chosen: np.ndarray[int],
-    collocation_psi: np.ndarray[float],
-    mask: np.ndarray,
-    true_coilset_psi: np.ndarray[float],
+    cos_m_chosen: np.ndarray,
+    sin_m_chosen: np.ndarray,
+    collocation_psi: np.ndarray,
+    mask: int | np.ndarray,
+    true_coilset_psi: np.ndarray,
 ):
     """
     Approximate psi by fitting for psi at collocation points using

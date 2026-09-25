@@ -23,7 +23,7 @@ the method used to map the coilset object to the state vector
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -125,7 +125,8 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
         *,
         keep_history: bool = False,
         check_constraints: bool = False,
-    ):
+        **kwargs,
+    ) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 
@@ -231,7 +232,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             self.initial_currents = initial_currents / self.sub_opt_problems[0].scale
         else:
             self.initial_currents = np.zeros(coilset.get_control_coils().n_coils())
-        self.debug = {0: debug}
+        self.debug: dict[int, Any] = {0: debug}
         self.iter = {0: 0.0}
         opt_dimension = self.position_mapper.dimension
         self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
@@ -356,6 +357,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         verbose: bool = False,
         keep_history: bool = False,
         check_constraints: bool = False,
+        **kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP

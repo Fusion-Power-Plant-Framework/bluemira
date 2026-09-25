@@ -4,6 +4,10 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 import abc
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
 import numpy.typing as npt
@@ -214,7 +218,7 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
             else [*constraints, stray_field_cons]
         )
         super().__init__(
-            breakdown,
+            cast("Equilibrium", breakdown),
             opt_algorithm,
             max_currents=max_currents,
             opt_conditions=opt_conditions,
@@ -222,12 +226,11 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
             opt_parameters=None,
             targets=None,
         )
+        self._c_psi_mat: npt.NDArray[np.float64] = np.array(
+            self.coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
+        )
         self._args = {
-            "c_psi_mat": np.array(
-                self.coilset.psi_response(
-                    *breakdown_strategy.breakdown_point, control=True
-                )
-            ),
+            "c_psi_mat": self._c_psi_mat,
             "scale": self.scale,
         }
 
@@ -239,7 +242,8 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
         keep_history: bool = False,
         check_constraints: bool = False,
         verbose: bool = False,
-    ):
+        **kwargs,
+    ) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem.
         """  # noqa: DOC201
@@ -251,7 +255,7 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
         else:
             x0 = np.clip(x0 / self.scale, *self.bounds)
 
-        objective = MaximiseFluxObjective(**self._args)
+        objective = MaximiseFluxObjective(c_psi_mat=self._c_psi_mat, scale=self.scale)
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,

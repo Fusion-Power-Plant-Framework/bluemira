@@ -23,14 +23,20 @@ from bluemira.equilibria.optimisation.problem._tikhonov import (
     TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
+from bluemira.equilibria.optimisation.problem.base import (
+    CoilsetOptimisationProblem,
+    CoilsetOptimiserResult,
+    EqCoilsetOptimisationProblem,
+)
 
 __all__ = [
     "BreakdownCOP",
     "BreakdownZoneStrategy",
     "CircularZoneStrategy",
     "CoilsetOptimisationProblem",
+    "CoilsetOptimiserResult",
     "CoilsetPositionCOP",
+    "EqCoilsetOptimisationProblem",
     "InboardBreakdownZoneStrategy",
     "InputBreakdownZoneStrategy",
     "MinimalCurrentCOP",

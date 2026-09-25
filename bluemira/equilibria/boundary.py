@@ -38,8 +38,10 @@ class FreeBoundary:
 
         values = np.zeros((len(self.edges), grid.nx, grid.nz))
         for i, (j, k) in enumerate(self.edges):
-            g = greens_psi(x, z, x[j, k], z[j, k])
-            g[j, k] = 0  # Drop NaNs
+            g: npt.NDArray[np.float64] = np.array(
+                greens_psi(x, z, x[j, k], z[j, k]), dtype=np.float64
+            )
+            g[j, k] = 0.0  # Drop NaNs
             values[i] = g
         self.f_greens = values
 
@@ -86,7 +88,8 @@ def apply_boundary(rhs: npt.NDArray[np.float64], lhs: npt.ArrayLike):
         rhs[-1, :] = lhs
         rhs[:, -1] = lhs
     else:
-        rhs[0, :] = lhs[0, :]
-        rhs[:, 0] = lhs[:, 0]
-        rhs[-1, :] = lhs[-1, :]
-        rhs[:, -1] = lhs[:, -1]
+        lhs_arr = np.asarray(lhs)
+        rhs[0, :] = lhs_arr[0, :]
+        rhs[:, 0] = lhs_arr[:, 0]
+        rhs[-1, :] = lhs_arr[-1, :]
+        rhs[:, -1] = lhs_arr[:, -1]

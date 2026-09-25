@@ -88,6 +88,7 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
         keep_history: bool = False,
         check_constraints: bool = False,
         verbose: bool = False,
+        **kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem

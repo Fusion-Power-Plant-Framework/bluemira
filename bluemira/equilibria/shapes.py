@@ -749,7 +749,7 @@ class _InOut(Enum):
 
 def _johner_quadrant(
     delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
-) -> tuple[float, float]:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
     t = calc_t(delta, kappa, psi)
     conditional_point = 0.5
@@ -801,7 +801,7 @@ def _johner_quadrant(
         z = beta * np.sinh(phi)
     else:
         raise ValueError("Something is wrong with the Johner parameterisation.")
-    return x, z
+    return np.asarray(x, dtype=float), np.asarray(z, dtype=float)
 
 
 def flux_surface_johner_quadrants(

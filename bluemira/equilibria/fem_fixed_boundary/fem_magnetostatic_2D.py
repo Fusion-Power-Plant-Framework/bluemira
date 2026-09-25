@@ -13,7 +13,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from dolfinx.fem.bcs import DirichletBC
 
 import dolfinx
 import matplotlib.pyplot as plt
@@ -48,13 +51,13 @@ class FixedBoundaryEquilibrium:
 
     # Solver information
     mesh: dolfinx.mesh.Mesh
-    psi: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]
+    psi: Callable[..., Any]
 
     # Profile information
     p_prime: np.ndarray
     ff_prime: np.ndarray
-    R_0: float
-    B_0: float
+    R_0: float | None
+    B_0: float | None
     I_p: float
 
     def plot(self, ax=None, *, show: bool = False, show_mesh: bool = False) -> plt.Axes:
@@ -79,9 +82,9 @@ class FixedBoundaryEquilibrium:
         _plot_array(
             ax,
             self.mesh.geometry.x,
-            self.psi(self.mesh.geometry.x),
+            np.asarray(self.psi(self.mesh.geometry.x)),
             "",
-            cmap=PLOT_DEFAULTS["psi"]["cmap"],
+            cmap=str(PLOT_DEFAULTS["psi"]["cmap"]),
         )
 
         if show_mesh:
@@ -171,7 +174,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     def psi_ax(self) -> float:
         """Poloidal flux on the magnetic axis"""
         if self._psi_ax is None:
-            self._psi_ax = self.psi(find_magnetic_axis(self.psi, self.mesh))
+            assert self.mesh is not None  # noqa: S101
+            assert self.psi is not None  # noqa: S101
+            self._psi_ax = float(self.psi(find_magnetic_axis(self.psi, self.mesh)))
         return self._psi_ax
 
     @property
@@ -186,6 +191,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """  # noqa: DOC201
         if self._grad_psi is None:
+            assert self.mesh is not None  # noqa: S101
+            assert self.psi is not None  # noqa: S101
             w = dolfinx.fem.functionspace(self.mesh, ("P", 1, (self.mesh.geometry.dim,)))
 
             self._grad_psi = BluemiraFemFunction(w)
@@ -204,11 +211,16 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         def func(x):
             if (denom := self.psi_b - self.psi_ax) == 0:
                 denom = EPS
+            assert self.psi is not None  # noqa: S101
             return np.sqrt(np.abs((self.psi(x) - self.psi_ax) / denom))
 
         return func
 
-    def set_mesh(self, mesh: dolfinx.mesh.Mesh | str):
+    def set_mesh(
+        self,
+        mesh: dolfinx.mesh.Mesh | str,
+        boundaries: dolfinx.mesh.Mesh | str | None = None,
+    ):
         """
         Set the mesh for the solver
 
@@ -216,11 +228,14 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ----------
         mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
+        boundaries:
+            The boundaries
         """
         from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
 
-        super().set_mesh(mesh=mesh)
+        super().set_mesh(mesh=mesh, boundaries=boundaries)
         self._reset_psi_cache()
+        assert self.mesh is not None  # noqa: S101
         self._mesh_area = calculate_area(self.mesh, None, None)
 
     def _create_g_func(
@@ -246,6 +261,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
+        assert self._mesh_area is not None  # noqa: S101
         j_target = curr_target / self._mesh_area if curr_target else 1.0
 
         if not isinstance(pprime, Callable):
@@ -277,26 +293,33 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return g
 
-    def define_g(self):
+    def define_g(
+        self,
+        g: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
+        dirichlet_bc_function: (DirichletBC | Iterable[DirichletBC] | None) = None,
+        dirichlet_marker: int | None = None,
+        neumann_bc_function: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
+    ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
         """
+        assert self._pprime is not None  # noqa: S101
+        assert self._ffprime is not None  # noqa: S101
         self._g_func = self._create_g_func(
             self._pprime, self._ffprime, self._curr_target
         )
 
-        # # This instruction seems to slow the calculation
-        # super().define_g(ScalarSubFunc(self._g_func))
-        super().define_g()
+        super().define_g(g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
 
-        # it has been replaced by this code
+        assert self.V is not None  # noqa: S101
+        assert isinstance(self.g, BluemiraFemFunction)  # noqa: S101
         dof_points = self.V.tabulate_dof_coordinates()
         self.g.x.array[:] = self._g_func(dof_points)
 
     def set_profiles(
         self,
-        p_prime: Callable[[float], float],
-        ff_prime: Callable[[float], float],
+        p_prime: Callable[..., Any],
+        ff_prime: Callable[..., Any],
         I_p: float | None = None,
         B_0: float | None = None,
         R_0: float | None = None,
@@ -329,12 +352,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         # to which they refer.
         if callable(p_prime):
             self._pprime = p_prime
-            self._pprime_data = p_prime(np.linspace(0, 1, 50))
+            self._pprime_data = np.asarray(p_prime(np.linspace(0, 1, 50)))
         else:
             raise TypeError("p_prime must be a function")
         if callable(ff_prime):
             self._ffprime = ff_prime
-            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
+            self._ffprime_data = np.asarray(ff_prime(np.linspace(0, 1, 50)))
         else:
             raise TypeError("ff_prime must be a function")
         if I_p is not None:
@@ -346,6 +369,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""  # noqa: DOC201
+        assert isinstance(self.g, BluemiraFemFunction)  # noqa: S101
+        assert self.mesh is not None  # noqa: S101
         return integrate_f(self.g, self.mesh)
 
     def _update_curr(self):
@@ -378,7 +403,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 " first, using set_profiles(p_prime, ff_prime)."
             )
 
-    def solve(
+    def solve(  # ty: ignore[invalid-method-override]
         self,
         *,
         plot: bool = False,
@@ -409,6 +434,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.define_g()
         # TODO @oliverfunk: Use of genereated_data folder to be reviewed.
         # 3806
+        assert self.mesh is not None  # noqa: S101
         points = self.mesh.geometry.x
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(
@@ -426,6 +452,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             f, ax, cax = self._setup_plot(debug=debug)
 
         diff = np.zeros(len(points))
+        assert self.psi is not None  # noqa: S101
         for i in range(1, self.maxiter + 1):
             prev_psi = self.psi.x.array[:]
             prev = self.psi_norm_2d(points)
@@ -462,6 +489,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if plot and autoclose_plot:
             plt.close(f)
         if gif:
+            assert folder is not None  # noqa: S101
+            assert figname is not None  # noqa: S101
             make_gif(folder, figname, clean=not debug)
 
         return self._equilibrium()
@@ -473,9 +502,15 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         :
             Equilibrium data object
         """
+        assert self.mesh is not None  # noqa: S101
+        assert self.psi is not None  # noqa: S101
+        assert isinstance(self._pprime_data, np.ndarray)  # noqa: S101
+        assert isinstance(self._ffprime_data, np.ndarray)  # noqa: S101
+        assert self._R_0 is not None  # noqa: S101
+        assert self._B_0 is not None  # noqa: S101
         return FixedBoundaryEquilibrium(
             self.mesh,
-            self.psi,
+            cast("Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]", self.psi),
             self._pprime_data,
             self._ffprime_data,
             self._R_0,
@@ -501,7 +536,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ax,
         cax,
         i_iter: int,
-        points: Iterable,
+        points: np.ndarray,
         prev: np.ndarray,
         diff: np.ndarray,
         *,
@@ -513,12 +548,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             axis.set_ylabel("z")
             axis.set_aspect("equal")
 
+        assert self._g_func is not None  # noqa: S101
         cm = _plot_array(
             ax[0],
             points,
-            self._g_func(points),
+            np.asarray(self._g_func(points)),
             f"({i_iter}) " + "$J_{tor}$",
-            PLOT_DEFAULTS["current"]["cmap"],
+            str(PLOT_DEFAULTS["current"]["cmap"]),
         )
         _add_colorbar(cm, cax[0], "A/m$^{2}$\n")
 
@@ -528,13 +564,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             points,
             prev,
             f"({i_iter}) " + "$\\Psi_{n}$",
-            PLOT_DEFAULTS["psi"]["cmap"],
+            str(PLOT_DEFAULTS["psi"]["cmap"]),
             levels,
         )
         _add_colorbar(cm, cax[1], "")
 
         if debug:
-            cm = self._plot_array(
+            cm = _plot_array(
                 ax[2],
                 points,
                 100 * diff,
@@ -554,6 +590,7 @@ def _plot_array(
     cmap: str,
     levels: np.ndarray | None = None,
 ):
+    array = np.asarray(array)
     cm = ax.tricontourf(points[:, 0], points[:, 1], array, cmap=cmap, levels=levels)
     ax.tricontour(
         points[:, 0], points[:, 1], array, colors="k", linewidths=0.5, levels=levels

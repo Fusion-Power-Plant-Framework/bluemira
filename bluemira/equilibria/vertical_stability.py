@@ -120,6 +120,10 @@ class RZIp:
             # this constraint is pretty irrelevant for breakdown
             return 0
 
+        if eq.x is None or eq.z is None or eq._jtor is None:
+            return 0
+        eq_x = eq.x
+        eq_z = eq.z
         return stab_destab(
             cc_current=self.coilset.get_control_coils().current,
             ind_mat=self.ind_mat,
@@ -127,10 +131,12 @@ class RZIp:
             uncontrolled_ind=list(
                 set(self.coilset._get_type_index()) - set(self.coilset._control_ind)
             ),
-            r_struct=np.tile(eq.x.reshape(-1), (len(self.coilset._get_type_index()), 1)),
+            r_struct=np.tile(eq_x.reshape(-1), (len(self.coilset._get_type_index()), 1)),
             i_plasma=eq._jtor * eq.grid.step,
             br_struct_grid=np.rollaxis(eq._bx_green, 2, 0),
-            dbrdz_struct_grid=np.rollaxis(eq.coilset.dB_d_response(eq.x, eq.z), 2, 0),
+            dbrdz_struct_grid=np.rollaxis(
+                np.asarray(eq.coilset.dB_d_response(eq_x, eq_z)), 2, 0
+            ),
         )
 
 
@@ -253,7 +259,7 @@ def _get_coil_points_along_wire(wire: BluemiraWire, thickness: float) -> np.ndar
             current_length += g_val
         else:
             continue
-    return points
+    return np.asarray(points)
 
 
 def make_coils_along_wire(
