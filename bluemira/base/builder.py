@@ -11,9 +11,9 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Generic, TypeAlias, Union, cast
+from typing import TYPE_CHECKING, TypeAlias, Union, cast
 
-from bluemira.base.components import Component, ComponentT
+from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.tools import _timing
@@ -37,7 +37,7 @@ Type alias for representing nested build configuration information.
 """
 
 
-class Builder(abc.ABC, Generic[ComponentT]):
+class Builder(abc.ABC):
     """
     Base class for component builders.
 
@@ -82,7 +82,7 @@ class Builder(abc.ABC, Generic[ComponentT]):
         """The class to hold this Builders's parameters."""
 
     @abc.abstractmethod
-    def build(self) -> ComponentT:
+    def build(self) -> Component:
         """Build the component."""
 
     def get_material(self, component_name: str | None = None) -> Material | None:
