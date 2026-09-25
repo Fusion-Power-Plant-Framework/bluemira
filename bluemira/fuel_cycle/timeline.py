@@ -10,7 +10,7 @@ Partially randomised fusion reactor load signal object and tools
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +22,9 @@ from bluemira.fuel_cycle.timeline_tools import (
 )
 
 if TYPE_CHECKING:
-    from numpy.random import BitGenerator
+    from collections.abc import Sequence
+
+    from numpy.random import Generator
 
 __all__ = ["Timeline"]
 
@@ -40,22 +42,35 @@ class Phase:
     DT_rate: D-T fusion rate [1/s]
     """
 
+    t: np.ndarray | None
+    ft: np.ndarray | None
+    inventory: np.ndarray | None
+    DD_rate: np.ndarray | None
+    DT_rate: np.ndarray | None
+    t_unplanned_down: float
+
     def __init__(self):
         self.t = None
         self.ft = None
         self.inventory = None
         self.DD_rate = None
         self.DT_rate = None
+        self.t_unplanned_down = 0.0
 
     def plot(self):
         """
         Plot the Phase.
         """
+        if self.t is None:
+            return
         _, ax = plt.subplots()
-        ax.plot(self.t, self.inventory)
+        if self.inventory is not None:
+            ax.plot(self.t, self.inventory)
         ax2 = ax.twinx()
-        ax2.plot(self.t, self.DT_rate, label="D-T")
-        ax2.plot(self.t, self.DD_rate, label="D-D")
+        if self.DT_rate is not None:
+            ax2.plot(self.t, self.DT_rate, label="D-T")
+        if self.DD_rate is not None:
+            ax2.plot(self.t, self.DD_rate, label="D-D")
         ax2.set_xlabel("$t$ [s]")
         ax2.legend()
 
@@ -107,7 +122,7 @@ class OperationPhase(Phase):
         n_DT_reactions: float,
         n_DD_reactions: float,
         plasma_current: float,
-        rng: BitGenerator,
+        rng: Generator,
         t_start: float = 0.0,
         availability_strategy: OperationalAvailabilityStrategy | None = None,
     ):
@@ -192,10 +207,12 @@ class OperationPhase(Phase):
         Plots the distribution of the outages
         """
         dist = self._dist
-        t_down_check = np.sum(dist) / (60 * 60 * 24 * 365)  # [years] down-time
-        max_down = round(max(dist) / (60 * 60 * 24))  # days
+        if dist is None:
+            return
+        t_down_check = float(np.sum(dist)) / (60 * 60 * 24 * 365)  # [years] down-time
+        max_down = round(float(np.max(dist)) / (60 * 60 * 24))  # days
         _, ax = plt.subplots()
-        ax.hist(dist, bins=np.arange(0, 10000, 500))
+        ax.hist(dist, bins=list(np.arange(0, 10000, 500)))
         ax.set_xlabel("$t_{interpulse}$ [s]")
         ax.set_ylabel(r"$n_{outages}$")
         ax.annotate(
@@ -205,7 +222,7 @@ class OperationPhase(Phase):
             xy=(0.5, 0.5),
             xycoords="figure fraction",
         )
-        ax.set_xlim([0, 10000])
+        ax.set_xlim((0.0, 10000.0))
 
 
 class MaintenancePhase(Phase):
@@ -306,15 +323,15 @@ class Timeline:
         self,
         phase_names: list[str],
         phase_durations: list[float],
-        load_factors: list[float],
-        n_pulses: list[int],
-        t_rampups: list[float],
-        t_flattops: list[float],
-        t_rampdowns: list[float],
-        t_min_downs: list[float],
-        n_DTs: list[int],
-        n_DDs: list[int],
-        plasma_currents: list[float],
+        load_factors: Sequence[float] | np.ndarray,
+        n_pulses: Sequence[int] | np.ndarray,
+        t_rampups: Sequence[float] | np.ndarray,
+        t_flattops: Sequence[float] | np.ndarray,
+        t_rampdowns: Sequence[float] | np.ndarray,
+        t_min_downs: Sequence[float] | np.ndarray,
+        n_DTs: Sequence[int] | np.ndarray,
+        n_DDs: Sequence[int] | np.ndarray,
+        plasma_currents: Sequence[float] | np.ndarray,
         load_factor: float,
         blk_dmg: float,
         blk_1_dpa: float,
@@ -326,7 +343,7 @@ class Timeline:
         vv_dmg: float,
         vv_dpa: float,
         availability_strategy: OperationalAvailabilityStrategy,
-        rng: BitGenerator,
+        rng: Generator,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -340,18 +357,20 @@ class Timeline:
         self.vv_dmg = vv_dmg
         self.vv_dpa = vv_dpa
         # Output class attributes
-        self.t = None
-        self.ft = None
-        self.DD_rate = None
-        self.DT_rate = None
-        self.bci = None
-        self.mci = None
+        self.t: np.ndarray | None = None
+        self.ft: np.ndarray | None = None
+        self.DD_rate: np.ndarray | None = None
+        self.DT_rate: np.ndarray | None = None
+        self.inventory: np.ndarray | None = None
+        self.bci: int | None = None
+        self.mci: Any = None
         phases = []
         j = 0  # Indexing for different length lists
         for i, (name, duration) in enumerate(
             zip(phase_names, phase_durations, strict=False)
         ):
-            t_start = 0 if i == 0 else phases[i - 1].t[-1]
+            prev_t = phases[i - 1].t
+            t_start = 0.0 if i == 0 or prev_t is None else float(prev_t[-1])
             if "Phase P" in name:
                 p = OperationPhase(
                     name,
@@ -376,7 +395,7 @@ class Timeline:
         self.build_arrays(phases)
         self.component_damage()
 
-    def build_arrays(self, phases: list[Phase]):
+    def build_arrays(self, phases: Sequence[Phase]):
         """
         Build the time arrays based on phases.
 
@@ -389,12 +408,14 @@ class Timeline:
         def concatenate(p_phases, k_key):
             return np.concatenate([getattr(p, k_key) for p in p_phases])
 
-        for key in ["t", "inventory", "DT_rate", "DD_rate"]:
-            setattr(self, key, concatenate(phases, key))
+        self.t: np.ndarray = concatenate(phases, "t")
+        self.inventory: np.ndarray = concatenate(phases, "inventory")
+        self.DT_rate: np.ndarray = concatenate(phases, "DT_rate")
+        self.DD_rate: np.ndarray = concatenate(phases, "DD_rate")
         self.t_unplanned_m = sum(p.t_unplanned_down for p in phases)
-        t = [p.t for p in phases]
+        t = [p.t for p in phases if p.t is not None]
         lens = np.array([len(i) for i in t])
-        self.mci = np.cumsum(lens)
+        self.mci: Any = np.cumsum(lens)
 
         # TODO: fix how rt is calculated for varying pulse lengths
         fuse_indices = np.nonzero(self.DT_rate)[0]
@@ -405,7 +426,7 @@ class Timeline:
         self.t *= S_TO_YR
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 
-    def to_dict(self) -> dict[str, np.ndarray | int]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert the timeline to a dictionary object for use in FuelCycle.
 
@@ -423,32 +444,45 @@ class Timeline:
             "A_global": self.A_global,
         }
 
+    def __getitem__(self, key: str) -> Any:
+        """
+        Dictionary-like access to timeline arrays and properties.
+
+        Returns
+        -------
+        :
+            The timeline array or property corresponding to the key.
+        """
+        return self.to_dict()[key]
+
     def component_damage(self):
         """
         Calculates the blanket change index and creates largely superficial
         damage timelines
         """
+        assert self.ft is not None  # noqa: S101
+        assert self.mci is not None  # noqa: S101
         tf_n = self.ft * self.tf_ins_nflux
-        self.tf_nfrac = tf_n / self.tf_fluence
+        self.tf_nfrac: np.ndarray = tf_n / self.tf_fluence
         # Blanket damage
-        blk_dmg_t = self.blk_dmg * self.ft
-        bci = np.argmax(blk_dmg_t >= self.blk_1_dpa)
+        blk_dmg_t: np.ndarray = self.blk_dmg * self.ft
+        bci = int(np.argmax(blk_dmg_t >= self.blk_1_dpa))
         self.bci = bci
         blk_dmg_t[bci:] = -self.blk_1_dpa + self.ft[bci:] * self.blk_dmg
-        self.blk_dmg_t = blk_dmg_t
-        blk_nfrac = np.zeros(len(self.blk_dmg_t))
+        self.blk_dmg_t: np.ndarray = blk_dmg_t
+        blk_nfrac: np.ndarray = np.zeros(len(self.blk_dmg_t))
         blk_nfrac[:bci] = self.blk_dmg_t[:bci] / self.blk_1_dpa
         blk_nfrac[bci:] = self.blk_dmg_t[bci:] / self.blk_2_dpa
-        self.blk_nfrac = blk_nfrac
+        self.blk_nfrac: np.ndarray = blk_nfrac
         # Divertor damage
-        div_dmg_t = self.div_dmg * self.ft
+        div_dmg_t: np.ndarray = self.div_dmg * self.ft
         self.mci = [x + 2 for x in self.mci[::2]]
         divdpa = [div_dmg_t[x - 2] for x in self.mci[:-1]]
         for j, i in enumerate(self.mci[:-1]):
             div_dmg_t[i:] = np.array([-divdpa[j] + self.ft[i:] * self.div_dmg])
-        self.div_nfrac = div_dmg_t / self.div_dpa
-        vv_dmg_t = self.vv_dmg * self.ft
-        self.vv_nfrac = vv_dmg_t / self.vv_dpa
+        self.div_nfrac: np.ndarray = div_dmg_t / self.div_dpa
+        vv_dmg_t: np.ndarray = self.vv_dmg * self.ft
+        self.vv_nfrac: np.ndarray = vv_dmg_t / self.vv_dpa
 
     def plot_damage(self):
         """
@@ -460,6 +494,8 @@ class Timeline:
         :
             The plot axis
         """
+        if self.t is None or self.ft is None:
+            return None
         f, (ax3, ax31) = plt.subplots(
             2, 1, sharex=True, gridspec_kw={"height_ratios": [1, 2]}
         )
@@ -473,7 +509,7 @@ class Timeline:
         ax31.plot(self.t[0:n], self.blk_nfrac[0:n], label="Blanket")
         ax31.plot(self.t[0:n], self.div_nfrac[0:n], label="Divertor")
         ax3.set_xlim(left=0)
-        ax31.set_ylim([0, 1.25])
+        ax31.set_ylim((0.0, 1.25))
         # ax31.axhline(1, linestyle='--', color='r', linewidth=1)
         ax3.legend(loc="upper left")
         ax31.legend(loc="upper left")

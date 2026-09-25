@@ -21,10 +21,12 @@ from matplotlib.lines import Line2D
 from bluemira.base.constants import S_TO_YR, YR_TO_S, RNGSeeds, raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.fuel_cycle.timeline import Timeline
-from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
+from bluemira.utilities.tools import abs_rel_difference, json_writer
 
 if TYPE_CHECKING:
-    from numpy.random import BitGenerator, SeedSequence
+    from collections.abc import Sequence
+
+    from numpy.random import Generator, SeedSequence
 
     from bluemira.fuel_cycle.timeline_tools import (
         LearningStrategy,
@@ -41,14 +43,16 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value: str | PlotType) -> PlotType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"{cls.__name__} has no type {value}."
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> PlotType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise ValueError(
+            f"{cls.__name__} has no type {value}."
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 class LifeCycle:
@@ -84,7 +88,7 @@ class LifeCycle:
         inputs: dict,
         rng_seed: int | SeedSequence = RNGSeeds.timeline_outages.value,
         *,
-        _rng: BitGenerator | None = None,
+        _rng: Generator | None = None,
     ):
         self.learning_strategy = learning_strategy
         self.availability_strategy = availability_strategy
@@ -102,33 +106,37 @@ class LifeCycle:
             )
 
         # Constructors
-        self.total_planned_maintenance = None
-        self.total_ramptime = None
-        self.t_unplanned_m = None
-        self.t_on_total = None
-        self.t_interdown = None
-        self.cs_down = None
-        self.unplanned = None
-        self.min_downtime = None
-        self.T = None
-        self.a_ops = None
-        self.phase_names = None
-        self.phase_durations = None
-        self.n_blk_replace = None
-        self.n_div_replace = None
-        self.fpy = None
-        self.tf_lifeend = None
-        self.vv_lifeend = None
-        self.A_global = None
-        self.n_cycles = None  # Total number of D-T pulses
+        self.total_planned_maintenance: float = 0.0
+        self.total_ramptime: float = 0.0
+        self.t_unplanned_m: float = 0.0
+        self.t_on_total: float = 0.0
+        self.t_interdown: float = 0.0
+        self.cs_down: float | None = None
+        self.unplanned: float = 0.0
+        self.min_downtime: float = 0.0
+        self.T: Timeline | None = None
+        self.a_ops: np.ndarray = np.array([])
+        self.phase_names: list[str] = []
+        self.phase_durations: list[float] = []
+        self.n_blk_replace: int = 0
+        self.n_div_replace: int = 0
+        self.fpy: float = 0.0
+        self.tf_lifeend: float | None = None
+        self.vv_lifeend: float | None = None
+        self.A_global: float | None = None
+        self.n_cycles: float = 0.0
 
         # Derive/convert inputs
-        self.maintenance_l = self.params.bmd  # [s]
-        self.maintenance_s = self.params.dmd  # [s]
-        self.t_rampup = self.params.I_p / self.params.s_ramp_up  # [s]
-        self.t_rampdown = self.params.I_p / self.params.s_ramp_down  # [s]
-        self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
-        self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
+        self.maintenance_l: float = float(self.params.bmd)  # [s]
+        self.maintenance_s: float = float(self.params.dmd)  # [s]
+        self.t_rampup: float = float(self.params.I_p / self.params.s_ramp_up)  # [s]
+        self.t_rampdown: float = float(self.params.I_p / self.params.s_ramp_down)  # [s]
+        self.t_flattop: float = float(
+            self.params.t_pulse - self.t_rampup - self.t_rampdown
+        )  # [s]
+        self.t_min_down: float = float(
+            max(self.params.t_cs_recharge, self.params.t_pumpdown)
+        )
 
         # Build timeline
         self.life_neutronics()
@@ -153,31 +161,33 @@ class LifeCycle:
         self.n_div_replace = ndivch_in1blk + ndivch_in2blk
         m_short = self.maintenance_s * S_TO_YR
         m_long = self.maintenance_l * S_TO_YR
-        phases = []
+        phases: list[tuple[float, str]] = []
+        count = 0
         for i in range(ndivch_in1blk):
             p_str = "Phase P1." + str(i + 1)
             m_str = "Phase M1." + str(i + 1)
-            phases.extend(([divl, p_str], [m_short, m_str]))
+            phases.extend(((divl, p_str), (m_short, m_str)))
             count = i
         if ndivch_in1blk == 0:
             count = 0
         phases.extend((
-            [blk1l % divl, "Phase P1." + str(count + 2)],
-            [m_long, "Phase M1." + str(count + 2)],
+            (blk1l % divl, "Phase P1." + str(count + 2)),
+            (m_long, "Phase M1." + str(count + 2)),
         ))
+        count2 = 0
         for i in range(ndivch_in2blk):
             p_str = "Phase P2." + str(i + 1)
             m_str = "Phase M2." + str(i + 1)
-            phases.extend(([divl, p_str], [m_short, m_str]))
+            phases.extend(((divl, p_str), (m_short, m_str)))
             count2 = i
-        phases.append([blk2l % divl, "Phase P2." + str(count2 + 1)])
+        phases.append((blk2l % divl, "Phase P2." + str(count2 + 1)))
         self.phase_durations = [p[0] for p in phases]
         self.phase_names = [p[1] for p in phases]
         self.calc_n_pulses(phases)
-        fpy = 0
-        for i in range(len(phases)):
-            if phases[i][1].startswith("Phase P"):
-                fpy += phases[i][0]
+        fpy = 0.0
+        for dur, name in phases:
+            if name.startswith("Phase P"):
+                fpy += dur
         self.fpy = fpy
         # Irreplaceable components life checks
         self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
@@ -229,18 +239,20 @@ class LifeCycle:
 
         # TODO: Treat global load factor vs lifetime operational availability properly..!
         op_durations = self.get_op_phases()
-        self.a_ops = self.learning_strategy.generate_phase_availabilities(
-            self.params.A_global, op_durations
+        self.a_ops = np.asarray(
+            self.learning_strategy.generate_phase_availabilities(
+                self.params.A_global, op_durations
+            )
         )
 
-    def calc_n_pulses(self, phases: list[list[float]]):
+    def calc_n_pulses(self, phases: Sequence[tuple[float, str]]):
         """
         Calculate the number of pulses per phase.
         """
         self.n_pulse_p = [
-            int((phases[i][0] * YR_TO_S) // self.t_flattop)
-            for i in range(len(phases))
-            if phases[i][1].startswith("Phase P")
+            int((dur * YR_TO_S) // self.t_flattop)
+            for dur, name in phases
+            if name.startswith("Phase P")
         ]
 
     def get_op_phases(self) -> list[float]:
@@ -265,10 +277,10 @@ class LifeCycle:
         """
         n = len(self.n_pulse_p)
 
-        for k in ["t_rampup", "t_flattop", "t_rampdown", "t_min_down"]:
-            v = getattr(self, k)
-            if is_num(v):
-                setattr(self, k, v * np.ones(n))
+        t_rampup = self.t_rampup * np.ones(n)
+        t_flattop = self.t_flattop * np.ones(n)
+        t_rampdown = self.t_rampdown * np.ones(n)
+        t_min_down = self.t_min_down * np.ones(n)
 
         n_DT_reactions = self.params.n_DT_reactions * np.ones(n)
         n_DD_reactions = self.params.n_DD_reactions * np.ones(n)
@@ -279,10 +291,10 @@ class LifeCycle:
             self.phase_durations,
             self.a_ops,
             self.n_pulse_p,
-            self.t_rampup,
-            self.t_flattop,
-            self.t_rampdown,
-            self.t_min_down,
+            t_rampup,
+            t_flattop,
+            t_rampdown,
+            t_min_down,
             n_DT_reactions,
             n_DD_reactions,
             Ip,
@@ -361,22 +373,25 @@ class LifeCycle:
 
     def summary(self):
         """
-        Plot the load factor breakdown and learning curve
+        Plot the load factor breakdown and lifecycle timeline.
         """
         _f, ax = plt.subplots(1, 2)
-        self.plot_learning(ax=ax[0])
+        self.plot_life(ax=ax[0])
         self.plot_load_factor(ax=ax[1])
 
-    def plot_life(self):
+    def plot_life(self, ax: plt.Axes | None = None):
         """
         Plot the different maintenance events in the Lifecycle, and the slope
         of each operational phase
         """
-        _f, ax = plt.subplots(1, 1)
+        if ax is None:
+            _f, ax = plt.subplots(1, 1)
         # Plotting crutches
-        fs, s, h = 0, 0, 0.95 * self.fpy
-        ft, rt = [0], [0]
+        fs, s, h = 0.0, 0.0, 0.95 * self.fpy
+        ft: list[float] = [0.0]
+        rt: list[float] = [0.0]
         j = 0
+        length = 0.0
         for p_n, p_d in zip(self.phase_names, self.phase_durations, strict=False):
             if p_n.startswith("Phase P"):
                 c = "b"
@@ -420,7 +435,7 @@ class LifeCycle:
         ax.plot(rt, ft, color="#0072bd")
         ax.set_xlabel("Elapsed plant lifetime [years]")
         ax.set_ylabel("Full power years [fpy]")
-        ax.set_xlim([0, self.fpy / self.params.A_global])
+        ax.set_xlim((0.0, self.fpy / self.params.A_global))
         ax.set_ylim(bottom=0)
 
     def plot_load_factor(self, typ: str = "pie", ax: plt.Axes | None = None):
@@ -442,12 +457,16 @@ class LifeCycle:
             "Planned\nmaintenance",
             "Unallocated\ndowntime",
         ]
-        sizes = [
-            self.t_on_total,
-            self.total_ramptime,
-            self.t_interdown,
-            self.total_planned_maintenance,
-            self.t_unplanned_m,
+        if self.T is None:
+            bluemira_warn("Need to run make_timeline first.")
+            self.make_timeline()
+        assert self.T is not None  # noqa: S101
+        sizes: list[float] = [
+            float(self.t_on_total),
+            float(self.total_ramptime),
+            float(self.t_interdown),
+            float(self.total_planned_maintenance),
+            float(self.t_unplanned_m),
         ]
         plt_typ = PlotType(typ)
         if plt_typ is PlotType.PIE:
@@ -461,12 +480,13 @@ class LifeCycle:
             )
             plt.axis("equal")
         elif plt_typ is PlotType.BAR:
-            bottom = 0
+            bottom = 0.0
+            sum_sizes = sum(sizes)
             for i, s in enumerate(sizes):
-                ax.bar(1, s / sum(sizes) * 100, bottom=bottom, label=labels[i])
-                bottom += s / sum(sizes) * 100
+                ax.bar(1, s / sum_sizes * 100, bottom=bottom, label=labels[i])
+                bottom += s / sum_sizes * 100
             ax.set_xticklabels([""])
-            ax.set_xlim([0, 6])
+            ax.set_xlim((0.0, 6.0))
             ax.legend()
         plt.title(
             f"Breakdown of DEMO reactor lifetime\n A = {self.params.A_global:.2f},"
@@ -482,6 +502,10 @@ class LifeCycle:
         :
             The json output
         """
+        if self.T is None:
+            bluemira_warn("Need to run make_timeline first.")
+            self.make_timeline()
+        assert self.T is not None  # noqa: S101
         bluemira_print(f"Writing {filename}")
         data = self.T.to_dict()
         return json_writer(data, filename, **kwargs)
