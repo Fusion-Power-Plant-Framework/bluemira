@@ -12,12 +12,13 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
@@ -156,7 +157,16 @@ class ParameterisedRippleSolver:
         -------
         :
             The value of the TF ripple at the point(s) [%]
+
+        Raises
+        ------
+        BuilderError
+            If HelmholtzCage has not been initialized
         """
+        if self.cage is None:
+            raise BuilderError(
+                "HelmholtzCage has not been initialized. Call update_cage first."
+            )
         return self.cage.ripple(x, y, z)
 
 
@@ -166,8 +176,8 @@ class RipplePointSelector:
     """
 
     def __init__(self):
-        self._wire: BluemiraWire = None
-        self.points: Coordinates = None
+        self._wire: BluemiraWire | None = None
+        self.points: Coordinates | None = None
 
     def set_wire(self, wire: BluemiraWire):
         """
@@ -185,29 +195,46 @@ class RipplePointSelector:
     ) -> GeomConstraintT:
         """
         Make the ripple OptimisationConstraint
+
+        Raises
+        ------
+        BuilderError
+            If ripple points have not been selected
         """  # noqa: DOC201
         self.parameterisation = parameterisation
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
+        if self.points is None:
+            raise BuilderError(
+                "Ripple points have not been selected. Call set_wire first."
+            )
         return {
-            "name": type(self).__name__,
             "f_constraint": self._constrain_ripple,
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
     def _constrain_ripple(
-        self, parameterisation: GeometryParameterisation
+        self, geom: GeometryParameterisation
     ) -> np.ndarray:
         """
         Ripple constraint function
 
         Parameters
         ----------
-        parameterisation:
+        geom:
             Geometry parameterisation
+
+        Raises
+        ------
+        BuilderError
+            If ripple points have not been selected
         """  # noqa: DOC201
-        wire = parameterisation.create_shape()
+        wire = geom.create_shape()
         self.solver.update_cage(wire)
+        if self.points is None:
+            raise BuilderError(
+                "Ripple points have not been selected. Call set_wire first."
+            )
         ripple = self.solver.ripple(*self.points)
         # TODO @hsaunders1904: This print will call every time now,
         # Might be a case of explicitly
@@ -262,7 +289,11 @@ class EquispacedSelector(RipplePointSelector):
                     closed=True,
                 )
             )
-            wire = boolean_cut(wire, cut_face)[0]
+            cut_wire = cast(
+                "list[BluemiraWire] | BluemiraWire",
+                boolean_cut(wire, cut_face),
+            )
+            wire = cut_wire[0] if isinstance(cut_wire, list) else cut_wire
         self.points = wire.discretise(byedges=True, ndiscr=self.n_rip_points)
 
 
@@ -312,7 +343,7 @@ class MaximiseSelector(RipplePointSelector):
     """
 
     def __init__(self):
-        self.points = None
+        self.points: Coordinates | None = None
 
     def set_wire(self, wire: BluemiraWire):
         """
@@ -327,7 +358,7 @@ class MaximiseSelector(RipplePointSelector):
         points = wire.discretise(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
         x_max_point = points[:, arg_x_max]
-        self._alpha_0 = wire.parameter_at(x_max_point, tolerance=EPS_FREECAD)
+        self._alpha_0 = wire.parameter_at(x_max_point, tolerance=float(EPS_FREECAD))
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
@@ -339,24 +370,24 @@ class MaximiseSelector(RipplePointSelector):
         self.solver = solver
         self.TF_ripple_limit = TF_ripple_limit
         return {
-            "name": type(self).__name__,
             "f_constraint": self._constrain_max_ripple,
             "tolerance": np.full(2, rip_con_tol),
         }
 
-    def _constrain_max_ripple(self, parameterisation: GeometryParameterisation) -> float:
+    def _constrain_max_ripple(self, geom: GeometryParameterisation) -> float:
         """
         Ripple constraint function
 
         Parameters
         ----------
-        parameterisation:
+        geom:
             Geometry parameterisation
         """  # noqa: DOC201
-        tf_wire = parameterisation.create_shape()
+        tf_wire = geom.create_shape()
         self.solver.update_cage(tf_wire)
 
         def f_max_ripple(alpha):
+            assert self._wire is not None  # noqa: S101
             point = self._wire.value_at(alpha)
             return -self.solver.ripple(*point)
 
@@ -364,12 +395,13 @@ class MaximiseSelector(RipplePointSelector):
             f_max_ripple,
             x0=np.array([self._alpha_0]),
             dimensions=1,
-            bounds=[(0), (1)],
+            bounds=([0.0], [1.0]),
             algorithm="SLSQP",
             opt_conditions={"ftol_rel": 1e-6, "max_eval": 2000},
         )
 
-        max_ripple_point = self._wire.value_at(result.x)
+        assert self._wire is not None  # noqa: S101
+        max_ripple_point = self._wire.value_at(float(result.x[0]))
 
         self.points = Coordinates(max_ripple_point.reshape(3, -1))
         ripple = self.solver.ripple(*self.points)
@@ -478,29 +510,30 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         else:
             self._keep_out_zone = []
 
+        if ripple_selector is None:
+            ripple_selector = ExtremaSelector()
         ripple_selector.set_wire(self.ripple_wire)
-        self.ripple_values = None
+        self.ripple_values: np.ndarray | None = None
 
         self.solver = ParameterisedRippleSolver(
             wp_cross_section,
             nx,
             ny,
-            params.n_TF.value,
-            params.R_0.value,
-            params.z_0.value,
-            params.B_0.value,
+            self.params.n_TF.value,
+            self.params.R_0.value,
+            self.params.z_0.value,
+            self.params.B_0.value,
         )
         self._ripple_constraint = ripple_selector.make_ripple_constraint(
-            parameterisation, self.solver, params.TF_ripple_limit.value, rip_con_tol
+            parameterisation, self.solver, self.params.TF_ripple_limit.value, rip_con_tol
         )
         self.ripple_selector = ripple_selector
 
-    @staticmethod
-    def objective(parameterisation: GeometryParameterisation) -> float:
+    def objective(self, geom: GeometryParameterisation) -> float:  # noqa: PLR6301
         """
         Objective function (minimise length)
         """  # noqa: DOC201
-        return parameterisation.create_shape().length
+        return geom.create_shape().length
 
     def keep_out_zones(self) -> list[KeepOutZone]:
         """
@@ -508,15 +541,20 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """  # noqa: DOC201
         return self._keep_out_zone
 
-    def ineq_constraints(self) -> GeomConstraintT:
+    def ineq_constraints(self) -> list[GeomConstraintT]:
         """
         Inequality constraints
         """  # noqa: DOC201
         return [self._ripple_constraint]
 
-    def optimise(self) -> GeometryParameterisation:
+    def optimise(self) -> GeometryParameterisation:  # ty: ignore[invalid-method-override]
         """
         Solve the GeometryOptimisationProblem.
+
+        Raises
+        ------
+        BuilderError
+            If ripple points have not been generated
         """  # noqa: DOC201
         self.parameterisation = (
             super()
@@ -530,9 +568,10 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
 
         self.solver.update_cage(self.parameterisation.create_shape())
-        self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
-        if isinstance(self.ripple_values, float):
-            self.ripple_values = np.array([self.ripple_values])
+        if self.ripple_selector.points is None:
+            raise BuilderError("Ripple selector points have not been generated.")
+        ripple_vals = self.solver.ripple(*self.ripple_selector.points)
+        self.ripple_values = np.atleast_1d(ripple_vals)
         return self.parameterisation
 
     def plot(self, ax: plt.Axes | None = None):
@@ -544,6 +583,11 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         ax:
             The optional Axes to plot onto, by default None.
             If None then the current Axes will be used.
+
+        Raises
+        ------
+        BuilderError
+            If ripple values or points are not generated
         """
         if ax is None:
             _f, ax = plt.subplots()
@@ -569,12 +613,17 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
                 wire_options={"color": "k", "linewidth": 0.5},
             )
 
-        rv = self.ripple_values
+        if self.ripple_values is None or self.ripple_selector.points is None:
+            raise BuilderError(
+                "Cannot plot ripple values before running optimise()"
+            )
+
+        rv = np.asarray(self.ripple_values, dtype=float)
         norm = mpl.colors.Normalize()
         norm.autoscale(rv)
-        cm = mpl.cm.viridis
+        cm = mpl.colormaps.get_cmap("viridis")
         sm = mpl.cm.ScalarMappable(cmap=cm, norm=norm)
-        vmin, vmax = np.min(rv) - 1e-6, np.max(rv) + 1e-6
+        vmin, vmax = float(np.min(rv)) - 1e-6, float(np.max(rv)) + 1e-6
         sm.set_clim(vmin, vmax)
         ax.scatter(
             self.ripple_selector.points.x,
