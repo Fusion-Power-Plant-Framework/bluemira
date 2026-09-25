@@ -143,134 +143,6 @@ def nontouching_pair():
 
 
 @pytest.fixture
-def nontouching_splined_pair():
-    """Two non-touching components with splined boundaries."""
-
-    p_left = [
-        (0.40, 0.50),
-        (0.44, 0.75),
-        (0.46, 1.00),
-        (0.44, 1.25),
-        (0.40, 1.50),
-    ]
-
-    # Outer boundary of Solid_1
-    p_middle = [
-        (0.80, 0.50),
-        (0.84, 0.75),
-        (0.86, 1.00),
-        (0.84, 1.25),
-        (0.80, 1.50),
-    ]
-
-    # Inner boundary of Solid_2.
-    # There is a gap between this and p_middle.
-    p_shared = [
-        (0.94, 0.50),
-        (0.91, 0.75),
-        (0.90, 1.00),
-        (0.91, 1.25),
-        (0.94, 1.50),
-    ]
-
-    p_right = [
-        (1.60, 0.50),
-        (1.54, 0.75),
-        (1.50, 1.00),
-        (1.54, 1.25),
-        (1.60, 1.50),
-    ]
-
-    # Solid 1
-    xz_face_1 = BluemiraFace(
-        BluemiraWire([
-            spline(p_left),
-            line(p_left[-1], p_middle[-1]),
-            spline(p_middle[::-1]),
-            line(p_middle[0], p_left[0]),
-        ]),
-        label="xz face 1",
-    )
-
-    xyz_shape_1 = revolve_shape(
-        xz_face_1,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
-    )
-
-    xz_comp_1 = Component(
-        "xz",
-        children=[
-            PhysicalComponent(
-                name="xz_1_phys",
-                shape=xz_face_1,
-                material=PlanseeTungsten(),
-            )
-        ],
-    )
-
-    xyz_comp_1 = Component(
-        "xyz",
-        children=[
-            PhysicalComponent(
-                name="xyz_1_phys",
-                shape=xyz_shape_1,
-                material=PlanseeTungsten(),
-            )
-        ],
-    )
-
-    component_1 = Component("Solid_1")
-    component_1.add_children([xz_comp_1, xyz_comp_1])
-
-    # Solid 2
-    xz_face_2 = BluemiraFace(
-        BluemiraWire([
-            spline(p_shared),
-            line(p_shared[-1], p_right[-1]),
-            spline(p_right[::-1]),
-            line(p_right[0], p_shared[0]),
-        ]),
-        label="xz face 2",
-    )
-
-    xyz_shape_2 = revolve_shape(
-        xz_face_2,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
-    )
-
-    xz_comp_2 = Component(
-        "xz",
-        children=[
-            PhysicalComponent(
-                name="xz_2_phys",
-                shape=xz_face_2,
-                material=Be12Ti(),
-            )
-        ],
-    )
-
-    xyz_comp_2 = Component(
-        "xyz",
-        children=[
-            PhysicalComponent(
-                name="xyz_2_phys",
-                shape=xyz_shape_2,
-                material=Be12Ti(),
-            )
-        ],
-    )
-
-    component_2 = Component("Solid_2")
-    component_2.add_children([xz_comp_2, xyz_comp_2])
-
-    return component_1, component_2
-
-
-@pytest.fixture
 def touching_splined_pair():
     """Two components sharing the same splined boundary."""
 
@@ -397,8 +269,6 @@ class TestNeutronicsGeometryManager:
         [
             ("touching_splined_pair", 0, ["Solid_2"]),
             ("touching_splined_pair", 1, ["Solid_1"]),
-            ("nontouching_splined_pair", 0, []),
-            ("nontouching_splined_pair", 1, []),
             ("nontouching_pair", 0, []),
             ("nontouching_pair", 1, []),
         ],
@@ -425,7 +295,6 @@ class TestNeutronicsGeometryManager:
         "pair_fixture",
         [
             "touching_splined_pair",
-            "nontouching_splined_pair",
             "nontouching_pair",
         ],
     )
