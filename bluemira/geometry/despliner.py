@@ -125,7 +125,7 @@ def despline_xz_face(
     This is suitable for axisymmetric neutronics, where the geometry is
     assumed to be toroidally symmetric.
 
-    **Does not consider more than one child under xz
+    Does not consider more than one child under ``xz``.
 
     Parameters
     ----------
