@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from typing import TYPE_CHECKING
+
 import numba as nb
 import numpy as np
 
@@ -67,8 +69,18 @@ def _ellipe(m: float) -> float:
     return eval_polynomial(x, _P) - np.log(x) * (x * eval_polynomial(x, _Q))
 
 
+if TYPE_CHECKING:
+    from typing import overload
+
+    @overload
+    def ellipe_nb(m: float) -> float: ...
+    @overload
+    def ellipe_nb(m: np.ndarray) -> np.ndarray: ...
+    def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray: ...
+
+
 @nb.vectorize([nb.float64(nb.float64)], nopython=True, cache=True)
-def ellipe_nb(m: _FloatOrArray) -> _FloatOrArray:
+def ellipe_nb(m: float) -> float:
     """
     Complete elliptic integral of the second kind, E(m).
 
