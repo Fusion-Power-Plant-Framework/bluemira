@@ -23,7 +23,6 @@ from bluemira.codes.process.model_mapping import (
 )
 
 if TYPE_CHECKING:
-    from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.codes.process.params import ProcessSolverParams
 
 

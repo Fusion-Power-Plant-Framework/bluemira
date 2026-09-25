@@ -13,7 +13,6 @@ from __future__ import annotations
 import argparse
 import inspect
 import sys
-from collections.abc import Sequence
 from copy import deepcopy
 from itertools import takewhile
 from pathlib import Path
@@ -29,12 +28,14 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
     print_banner,
 )
-from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
 
 if TYPE_CHECKING:
     import types
+    from collections.abc import Sequence
+
+    from bluemira.base.parameter_frame._frame import ParameterFrame
 
 
 def def_param() -> dict[str, str]:
