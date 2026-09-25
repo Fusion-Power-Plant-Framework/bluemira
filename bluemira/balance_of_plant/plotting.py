@@ -55,7 +55,6 @@ class SuperSankey(Sankey):
         # Here we first check if the "add" method has received arguments that
         # the Sankey class can't handle.
         if future is None:
-            connect: tuple[int, int]
             # There is only one connection, Sankey knows how to do this
             c: tuple[int, int]
             if isinstance(connect, list):
