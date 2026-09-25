@@ -933,7 +933,7 @@ class OISBuilder(Builder):
             ois_profile_1 = cast("BluemiraWire", ois_profile.deepcopy())
             ois_profile_1.translate(vector=(0, 0.5 * width, 0))
 
-            ois_profile_2 = cast("BluemiraWire", ois_profile_1.deepcopy())
+            ois_profile_2 = ois_profile_1.deepcopy()
             ois_profile_2.rotate(
                 base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
             )
