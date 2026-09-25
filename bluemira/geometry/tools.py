@@ -2276,12 +2276,7 @@ def point_on_plane(
     -------
     Whether or not the point is on the plane
     """
-    return (
-        abs(
-            float(np.dot(np.asarray(point) - plane.base, plane.axis))
-        )
-        < tolerance
-    )
+    return abs(float(np.dot(np.asarray(point) - plane.base, plane.axis))) < tolerance
 
 
 # # =============================================================================

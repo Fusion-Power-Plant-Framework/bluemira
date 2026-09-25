@@ -196,6 +196,7 @@ def _face_from_wires_tolerant(outer: cq.Wire, inner: list) -> cq.Face:
 if TYPE_CHECKING:
     apiFace = cq.Face
 else:
+
     class apiFace(metaclass=_apiFaceMeta):
         """Drop-in for ``cq.Face``.
 

@@ -376,10 +376,7 @@ def _reactivity_bosch_hale(
     """
     mapping: dict[
         Reactions,
-        BoschHale_DT_4Hen
-        | BoschHale_DD_3Hen
-        | BoschHale_DD_Tp
-        | BoschHale_DHe3_4Hep,
+        BoschHale_DT_4Hen | BoschHale_DD_3Hen | BoschHale_DD_Tp | BoschHale_DHe3_4Hep,
     ] = {
         Reactions.D_T: BoschHale_DT_4Hen(),
         Reactions.D_D1: BoschHale_DD_3Hen(),
