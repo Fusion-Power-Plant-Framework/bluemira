@@ -27,6 +27,8 @@ from bluemira.structural.result import Result
 from bluemira.structural.symmetry import CyclicSymmetry
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy.typing as npt
     from matproplib.conditions import OperationalConditions
     from matproplib.material import Material
@@ -42,14 +44,16 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value: str | BoundaryConditionMethod) -> BoundaryConditionMethod:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no method {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> BoundaryConditionMethod:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise StructuralError(
+            f"{cls.__name__} has no method {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 def check_matrix_condition(matrix: np.ndarray, digits: int):
@@ -259,10 +263,10 @@ class FiniteElementModel:
 
     def apply_cyclic_symmetry(
         self,
-        left_node_ids: list[int],
-        right_node_ids: list[int],
-        p1: npt.NDArray[np.float64] | None = None,
-        p2: npt.NDArray[np.float64] | None = None,
+        left_node_ids: int | Sequence[int],
+        right_node_ids: int | Sequence[int],
+        p1: Sequence[float] | npt.NDArray[np.float64] | None = None,
+        p2: Sequence[float] | npt.NDArray[np.float64] | None = None,
     ):
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
@@ -278,13 +282,17 @@ class FiniteElementModel:
         p1:
             The second point of the symmetry rotation axis
         """
-        if p1 is None:
-            p1 = [0, 0, 0]
-        if p2 is None:
-            p2 = [0, 0, 1]
+        p1 = np.array([0.0, 0.0, 0.0]) if p1 is None else np.asarray(p1, dtype=float)
+        p2 = np.array([0.0, 0.0, 1.0]) if p2 is None else np.asarray(p2, dtype=float)
 
         # Apply symmetry flag at node level for plotting
-        for id_number in [left_node_ids, right_node_ids]:
+        node_ids: list[int] = []
+        for ids in (left_node_ids, right_node_ids):
+            if isinstance(ids, int):
+                node_ids.append(ids)
+            else:
+                node_ids.extend(ids)
+        for id_number in node_ids:
             self.geometry.nodes[id_number].symmetry = True
 
         self.cycle_sym_ids.append([left_node_ids, right_node_ids, p1, p2])
@@ -394,14 +402,14 @@ class FiniteElementModel:
             The list of loads to apply to the model
         """
         for load in load_case:
-            if load.kind is LoadKind.NODE_LOAD:
+            if load.kind is LoadKind.NODE_LOAD and load.node_id is not None:
                 node = self.geometry.nodes[load.node_id]
                 node.add_load(load)
 
             elif (
                 load.kind is LoadKind.ELEMENT_LOAD
                 or load.kind is LoadKind.DISTRIBUTED_LOAD
-            ):
+            ) and load.element_id is not None:
                 element = self.geometry.elements[load.element_id]
                 element.add_load(load)
 

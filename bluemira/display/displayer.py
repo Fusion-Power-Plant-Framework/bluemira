@@ -33,7 +33,7 @@ class ViewerBackend(Enum):
     POLYSCOPE = "bluemira.codes._polyscope"
     CADQUERY = "bluemira.codes.cadapi._cadquery"
 
-    @classmethod
+    @classmethod  # ty: ignore[invalid-argument-type]
     @property
     def DEFAULT(cls):  # noqa: N802
         """Default viewer based on backend availability"""
@@ -307,21 +307,18 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
-    @staticmethod
-    def show_cad(comps, **kwargs):
+    def show_cad(self, objs, **kwargs):  # noqa: PLR6301  # noqa: PLR6301
         """
         Display the CAD of a component or iterable of components
 
         Parameters
         ----------
-        comp: Union[Iterable[Component], Component]
+        objs:
             Component, or iterable of Components, to be displayed
         """
         import bluemira.base.components as bm_comp  # noqa: PLC0415
 
-        show_cad(
-            *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options", "name")
-            ),
-            **kwargs,
+        shapes, opts, names = bm_comp.get_properties_from_components(
+            objs, ("shape", "display_cad_options", "name")
         )
+        show_cad(shapes, opts, names, **kwargs)

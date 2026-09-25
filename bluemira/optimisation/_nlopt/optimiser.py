@@ -375,9 +375,7 @@ class NloptOptimiser(Optimiser):
         else:
             self._opt.set_min_objective(self._objective.call)
 
-    def _set_termination_conditions(
-        self, opt_conditions: Mapping[str, int | float]
-    ) -> None:
+    def _set_termination_conditions(self, opt_conditions: Mapping[str, Any]) -> None:
         """Validate and set the termination conditions."""
         self._opt_conditions = NLOptConditions(**opt_conditions)
         if self._opt_conditions.ftol_abs:
@@ -391,7 +389,7 @@ class NloptOptimiser(Optimiser):
         if self._opt_conditions.max_time:
             self._opt.set_maxtime(self._opt_conditions.max_time)
         if self._opt_conditions.max_eval:
-            self._opt.set_maxeval(self._opt_conditions.max_eval)
+            self._opt.set_maxeval(int(self._opt_conditions.max_eval))
         if self._opt_conditions.stop_val:
             self._opt.set_stopval(self._opt_conditions.stop_val)
 
@@ -435,9 +433,10 @@ def _check_bounds_vals(algorithm: AlgorithmType, bounds: npt.ArrayLike) -> None:
     OptimisationParametersError
         Invalid bounds for the specified algorithm.
     """
-    if algorithm in NLOPT_GLOBAL and np.inf in bounds:
+    alg = Algorithm(algorithm)
+    if alg in NLOPT_GLOBAL and np.isinf(np.asarray(bounds)).any():
         raise OptimisationParametersError(
-            f"Global optimisation algorithms, such as {algorithm.name}, "
+            f"Global optimisation algorithms, such as {alg.name}, "
             "do not support infinite bounds. Please specify finite bounds."
         )
 

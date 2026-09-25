@@ -5,21 +5,24 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Types for the optimisation module."""
 
-from typing import NotRequired, Protocol, TypedDict
+from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING, NotRequired, Protocol, TypedDict
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 class ObjectiveCallable(Protocol):
     """Form for an optimiser objective function."""
 
-    def __call__(self, vector: np.ndarray) -> float:
+    def __call__(self, vector: np.ndarray, /) -> float:
         """
         Call the objective function.
 
         Parameters
         ----------
-        x:
+        vector:
             The optimisation parameters.
         """
         ...
@@ -32,13 +35,13 @@ class OptimiserCallable(Protocol):
     This is the form for a gradient, constraint, or constraint gradient.
     """
 
-    def __call__(self, vector: np.ndarray) -> np.ndarray:
+    def __call__(self, vector: np.ndarray, /) -> np.ndarray:
         """
         Call the optimiser function.
 
         Parameters
         ----------
-        x:
+        vector:
             The optimisation parameters.
         """
         ...

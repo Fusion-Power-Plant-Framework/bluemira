@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
-from itertools import chain
+from typing import Any, cast
 
 import openmc
 
@@ -39,10 +39,8 @@ def csg_filter_cells(material_list, csg_model: CellStage):
 
     """
     blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
-    blanket_excl_vv = [
-        *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
-    ]
-    div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
+    blanket_excl_vv = [cell for stack in blanket_cell_array for cell in list(stack)[:-1]]
+    div_excl_vv = [cell for stack in divertor_cell_array for cell in list(stack)[:-1]]
     cells = list(csg_model.cells[:-1])  # exclude the external void
     cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [
@@ -97,11 +95,11 @@ def csg_filter_cells(material_list, csg_model: CellStage):
 def dagmc_tallys(
     material_list,
     model: openmc.Geometry,
-    mesh_shape: tuple[float, ...] = (100, 100, 100),
+    mesh_shape: tuple[int, int, int] = (100, 100, 100),
 ):
     """DAGMC default mesh tallys"""  # noqa: DOC201
     # mesh that covers the geometry
-    mesh = openmc.RegularMesh.from_domain(model, dimension=mesh_shape)
+    mesh = openmc.RegularMesh.from_domain(cast("Any", model), dimension=mesh_shape)
     mesh_filter = openmc.MeshFilter(mesh)
 
     mat_filter = openmc.MaterialFilter(material_list)  # noqa: F841

@@ -11,7 +11,7 @@ Thermal shield builders
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -81,8 +81,10 @@ class VVTSBuilder(Builder):
         Build the vacuum vessel thermal shield component.
         """  # noqa: DOC201
         xz_vvts, xz_vvts_void = self.build_xz(self.keep_out_zone)
-        vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
-        vvts_void_face: BluemiraFace = xz_vvts_void.get_component_properties("shape")
+        vvts_face = cast("BluemiraFace", xz_vvts.get_component_properties("shape"))
+        vvts_void_face = cast(
+            "BluemiraFace", xz_vvts_void.get_component_properties("shape")
+        )
 
         return self.component_tree(
             xz=[xz_vvts, xz_vvts_void],
@@ -110,12 +112,19 @@ class VVTSBuilder(Builder):
         # _offset_wire_discretised used because
         # the cad offset regularly doesn't work properly here.
         # due to topology but unknown why here particularly
-        ex_args = {"join": "intersect", "open_wire": False, "ndiscr": 600}
         vvts_inner_wire = _offset_wire_discretised(
-            koz, self.params.g_vv_ts.value, **ex_args
+            koz,
+            self.params.g_vv_ts.value,
+            join="intersect",
+            open_wire=False,
+            ndiscr=600,
         )
         vvts_outer_wire = _offset_wire_discretised(
-            koz, self.params.tk_ts.value + self.params.g_vv_ts.value, **ex_args
+            koz,
+            self.params.tk_ts.value + self.params.g_vv_ts.value,
+            join="intersect",
+            open_wire=False,
+            ndiscr=600,
         )
         vvts_inner_wire = force_wire_to_spline(vvts_inner_wire, n_edges_max=100)
         vvts_outer_wire = force_wire_to_spline(vvts_outer_wire, n_edges_max=100)
@@ -145,7 +154,7 @@ class VVTSBuilder(Builder):
 
     def build_xyz(
         self, vvts_face: BluemiraFace, vvts_void_face: BluemiraFace, degree: float = 360
-    ) -> list[PhysicalComponent]:
+    ) -> list[Component]:
         """
         Build the x-y-z components of the vacuum vessel thermal shield
 
@@ -207,8 +216,10 @@ class CryostatTSBuilder(Builder):
         xz_cts, xz_cts_void = self.build_xz(
             self.pf_keep_out_zones, self.tf_keep_out_zone
         )
-        cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
-        cts_void_face: BluemiraFace = xz_cts_void.get_component_properties("shape")
+        cts_face = cast("BluemiraFace", xz_cts.get_component_properties("shape"))
+        cts_void_face = cast(
+            "BluemiraFace", xz_cts_void.get_component_properties("shape")
+        )
 
         return self.component_tree(
             xz=[xz_cts, xz_cts_void],
@@ -279,8 +290,13 @@ class CryostatTSBuilder(Builder):
             )
         )
 
-        cts = boolean_cut(cts_face, cutter)[0]
-        cts_void_wire = boolean_cut(cts_inner, cutter)[0]
+        cts_cut = boolean_cut(cts_face, cutter)
+        cts = cts_cut[0] if isinstance(cts_cut, list) else cts_cut
+        cts_void_cut = boolean_cut(cts_inner, cutter)
+        cts_void_wire = cast(
+            "BluemiraWire",
+            cts_void_cut[0] if isinstance(cts_void_cut, list) else cts_void_cut,
+        )
         cts_void_wire.close()
         cts_void_face = BluemiraFace(cts_void_wire)
 
@@ -307,7 +323,7 @@ class CryostatTSBuilder(Builder):
 
     def build_xyz(
         self, cts_face: BluemiraFace, cts_void_face: BluemiraFace, degree: float = 360
-    ) -> list[PhysicalComponent]:
+    ) -> list[Component]:
         """
         Build the x-y-z components of the thermal shield.
         """  # noqa: DOC201

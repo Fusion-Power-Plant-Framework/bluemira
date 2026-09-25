@@ -57,15 +57,13 @@ class BiotSavartFilament(CurrentSource):
         radius: float,
         current: float = 1.0,
     ):
-        if not isinstance(arrays, list):
-            # Handle single Coordinates/array
-            arrays = [arrays]
-        arrays = [process_coords_array(array) for array in arrays]
+        arr_list = [arrays] if not isinstance(arrays, list) else arrays
+        arrays_processed = [process_coords_array(array) for array in arr_list]
 
         # Handle list of Coordinates/arrays (potentially of different sizes)
         d_ls, mids_points = [], []
         points = []
-        for i, xyz in enumerate(arrays):
+        for i, xyz in enumerate(arrays_processed):
             d_l = np.diff(xyz, axis=0)
             self._check_discretisation(d_l)
 
@@ -87,7 +85,7 @@ class BiotSavartFilament(CurrentSource):
         self._d_l_hat = np.linalg.norm(self._d_l, axis=1)
         self._mid_points = np.vstack(mids_points)
         self._points = np.vstack(points)
-        self._arrays = arrays
+        self._arrays = arrays_processed
         self._radius = radius
         self.current = current
 
@@ -250,7 +248,13 @@ class BiotSavartFilament(CurrentSource):
         self.ref_mid_points @= r
         self._arrays = [array @ r for array in self._arrays]
 
-    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
+    def plot(
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
+    ):
         """
         Plot the CurrentSource.
 
@@ -276,7 +280,7 @@ class BiotSavartFilament(CurrentSource):
         if show_coord_sys:
             origin = [0, 0, 0]
             dcm = np.eye(3)
-            ax.scatter([0, 0, 0], color="k")
+            ax.scatter([0], [0], [0], color="k")
             ax.quiver(*origin, *dcm[0], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[1], length=self.length_scale, color="r")
             ax.quiver(*origin, *dcm[2], length=self.length_scale, color="r")

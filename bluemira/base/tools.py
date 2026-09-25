@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict, cast
 
 from matplotlib import colors
 from matproplib.library.fluids import Void
@@ -34,7 +34,7 @@ from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
 from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Mapping
     from pathlib import Path
 
     from matproplib.material import Material
@@ -102,7 +102,7 @@ class FilterMaterial:
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
-    def _apply_filters(self, material: Material | tuple[Material]) -> bool:
+    def _apply_filters(self, material: Any) -> bool:
         bool_store = True
 
         if self.keep_material is not None:
@@ -173,7 +173,9 @@ class ConstructionParamValues:
         )
 
     @classmethod
-    def from_construction_params(cls, construction_params: ConstructionParams | None):
+    def from_construction_params(
+        cls, construction_params: ConstructionParams | Mapping[str, Any] | None
+    ):
         """
         Create the ConstructionParamValues from the ConstructionParams.
 
@@ -194,8 +196,8 @@ class ConstructionParamValues:
             else FilterMaterial()
         )
 
-        tot_secs = int(construction_params.get("total_sectors", 1))
-        n_secs = int(construction_params.get("n_sectors", tot_secs))
+        tot_secs = int(construction_params.get("total_sectors") or 1)
+        n_secs = int(construction_params.get("n_sectors") or tot_secs)
 
         return cls(
             with_components=construction_params.get("with_components"),
@@ -276,8 +278,8 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
         The BluemiraCompound component
 
     """
-    shapes = get_properties_from_components(comp, ("shape"))
-    return BluemiraCompound(shapes, comp.name)
+    shapes = get_properties_from_components(comp, ("shape",))
+    return BluemiraCompound(cast("Any", list(shapes)), comp.name)
 
 
 def circular_pattern_xyz_components(

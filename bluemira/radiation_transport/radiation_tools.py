@@ -28,7 +28,7 @@ from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     import numpy.typing as npt
 
@@ -39,9 +39,11 @@ try:  # noqa: PLW0717
     from cherab.tools.emitters import RadiationFunction
     from raysect.core import Point3D, Vector3D, rotate_basis, translate
     from raysect.optical import World
-    from raysect.optical.material import VolumeTransform
+    from raysect.optical.material import VolumeTransform  # ty: ignore[unresolved-import]
     from raysect.optical.observer import PowerPipeline0D
-    from raysect.optical.observer.nonimaging.pixel import Pixel
+    from raysect.optical.observer.nonimaging.pixel import (  # ty: ignore[unresolved-import]
+        Pixel,
+    )
     from raysect.primitive import Cylinder
 except ImportError:
     bluemira_error("Cherab not installed")
@@ -312,7 +314,7 @@ def specific_point_temperature(
 
     # Distance between the chosen point and the the target
     l_p = calculate_connection_length_flt(
-        eq, x_p + (d * f_exp), z_p, forward=forward, first_wall=firstwall_geom
+        eq, float(x_p + (d * f_exp)), z_p, forward=forward, first_wall=firstwall_geom
     )
     # connection length from the midplane to the target
     l_tot = (
@@ -336,7 +338,7 @@ def electron_density_and_temperature_sol_decay(
     n_sep: float,
     lambda_q_near: float,
     lambda_q_far: float,
-    dx_mp: float,
+    dx_mp: float | np.ndarray,
     f_exp: float = 1,
     t_factor_det: float | None = None,
     n_factor_det: float | None = None,
@@ -375,6 +377,11 @@ def electron_density_and_temperature_sol_decay(
     ne_sol:
         radial decayed densities through the SoL. unit [1/m^3]
 
+    Raises
+    ------
+    ValueError
+        If t_factor or n_factor is None
+
     Notes
     -----
         Temperature and density radially decay different than power.
@@ -389,7 +396,7 @@ def electron_density_and_temperature_sol_decay(
         [2] Loarte, A., et al. (2007). "Chapter 4: Power and particle control."
             Nuclear Fusion, 47(6), S203.
     """
-    if dx_mp.any() > (10 * max(lambda_q_near, lambda_q_far)):
+    if np.any(np.asarray(dx_mp) > (10 * max(lambda_q_near, lambda_q_far))):
         # warn if dx_mp >> lambda_q
         bluemira_warn(
             "dx_mp is much larger than lambda_q. This may"
@@ -404,6 +411,8 @@ def electron_density_and_temperature_sol_decay(
     else:
         t_factor = t_factor_det
         n_factor = n_factor_det
+    if t_factor is None or n_factor is None:
+        raise ValueError("t_factor and n_factor must not be None.")
 
     # radial distance of flux tubes from the separatrix
     dr = dx_mp * f_exp
@@ -423,7 +432,7 @@ def electron_density_and_temperature_sol_decay(
 
 
 def gaussian_decay(
-    max_value: float, min_value: float, no_points: float, *, decay: bool = True
+    max_value: float, min_value: float, no_points: int, *, decay: bool = True
 ) -> np.ndarray:
     """
     Generic gaussian decay to be applied between two extreme values and for a
@@ -443,10 +452,10 @@ def gaussian_decay(
     dec_param:
         decayed parameter
     """
-    no_points = max(no_points, 1)
+    n_pts = int(max(no_points, 1))
 
     # setting values on the horizontal axis
-    x = np.linspace(no_points, 0, no_points)
+    x = np.linspace(float(n_pts), 0.0, n_pts)
 
     # centring the gaussian on its highest value
     mu = max(x)
@@ -469,7 +478,7 @@ def gaussian_decay(
 
 
 def exponential_decay(
-    max_value: float, min_value: float, no_points: float, *, decay: bool = False
+    max_value: float, min_value: float, no_points: int, *, decay: bool = False
 ) -> np.ndarray:
     """
     Generic exponential decay to be applied between two extreme values and for a
@@ -549,6 +558,11 @@ def ion_front_distance(
     -------
     z_front:
         z coordinate of the ionization front
+
+    Raises
+    ------
+    ValueError
+        If rec_ext is None and required parameters are missing
     """
     # Speed of light to convert kg to eV/c^2
     # deuterium ion mass
@@ -562,6 +576,16 @@ def ion_front_distance(
     # From total length to poloidal length
     pitch_angle = b_tot / b_pol
     if rec_ext is None:
+        if (
+            t_tar is None
+            or avg_ion_rate is None
+            or avg_momentum_rate is None
+            or n_r is None
+        ):
+            raise ValueError(
+                "When rec_ext is None, t_tar, avg_ion_rate, avg_momentum_rate, "
+                "and n_r must be provided."
+            )
         den_lambda = 3 * np.pi * m_i * avg_ion_rate * avg_momentum_rate
         z_ext = np.sqrt((8 * t_tar) / den_lambda) ** (1 / n_r)
     else:
@@ -836,8 +860,8 @@ def linear_interpolator(
 
 
 def interpolated_field_values(
-    x: np.ndarray,
-    z: np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
     linear_interpolator: Callable[[np.ndarray, np.ndarray], np.ndarray],
 ) -> np.ndarray:
     """
@@ -863,7 +887,7 @@ def interpolated_field_values(
 
 def grid_interpolator(
     x: np.ndarray, z: np.ndarray, field_grid: np.ndarray
-) -> Callable[[np.ndarray], np.ndarray]:
+) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
     """
     Interpolated field function obtained for a given grid.
     Needed: length(xx) = m, length(zz) = n, field_grid.shape = n x m.
@@ -941,7 +965,7 @@ def pfr_filter(
 
 def filtering_in_or_out(
     domain_x: list[float], domain_z: list[float], *, include_points: bool = True
-) -> Callable[[Iterable[float]], bool]:
+) -> Callable[[Sequence[float]], bool]:
     """
     To exclude from the calculation a specific region which is
     either contained or not contained within a given domain
@@ -971,7 +995,7 @@ def filtering_in_or_out(
 
 def get_impurity_data(
     impurities_list: Iterable[str] = ("H", "He"), confinement_time_ms: float = 0.1
-) -> dict[str, dict[str, tuple[np.ndarray, np.ndarray, np.ndarray]]]:
+) -> dict[str, dict[str, np.ndarray]]:
     """
     Function getting the PROCESS impurity data
 

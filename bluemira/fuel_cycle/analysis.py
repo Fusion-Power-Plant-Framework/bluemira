@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum, auto
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,15 +36,17 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: str | QueryType) -> QueryType:
-        try:
-            if value.upper() == "95TH":
-                return cls.P95TH
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> Any:
+        if isinstance(value, str):
+            try:
+                if value.upper() == "95TH":
+                    return cls.P95TH
+                return cls[value.upper()]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
+                ) from None
+        return super()._missing_(value)
 
 
 class FuelCycleAnalysis:

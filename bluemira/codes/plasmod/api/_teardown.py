@@ -104,7 +104,8 @@ class Teardown(CodesTeardown):
             raise CodesError(
                 f"Could not read plasmod output file: {os_error}."
             ) from os_error
-        self._raise_on_plasmod_error_code(self.outputs.i_flag)
+        if self.outputs.i_flag is not None:
+            self._raise_on_plasmod_error_code(self.outputs.i_flag)
         self._update_params_with_outputs(vars(self.outputs))
 
     @staticmethod

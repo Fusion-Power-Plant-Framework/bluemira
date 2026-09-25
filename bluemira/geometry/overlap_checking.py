@@ -24,10 +24,10 @@ if TYPE_CHECKING:
 
 
 def two_set_mutually_exclusive(
-    min_a: np.ndarray[float],
-    max_a: np.ndarray[float],
-    min_b: np.ndarray[float],
-    max_b: np.ndarray[float],
+    min_a: np.ndarray,
+    max_a: np.ndarray,
+    min_b: np.ndarray,
+    max_b: np.ndarray,
 ) -> np.ndarray:
     """
     Given TWO lists of bounds, (e.g. x-bounds, i.e. x-min and x-max for each cell),
@@ -88,11 +88,13 @@ def check_two_sets_bb_non_interference(
     x_bounds_a, y_bounds_a, z_bounds_a = set_a_3d_tensor.transpose([1, 2, 0])
     x_bounds_b, y_bounds_b, z_bounds_b = set_b_3d_tensor.transpose([1, 2, 0])
 
-    return np.array([
-        two_set_mutually_exclusive(*x_bounds_a, *x_bounds_b),
-        two_set_mutually_exclusive(*y_bounds_a, *y_bounds_b),
-        two_set_mutually_exclusive(*z_bounds_a, *z_bounds_b),
-    ]).any(axis=0)
+    return np.asarray(
+        np.array([
+            two_set_mutually_exclusive(*x_bounds_a, *x_bounds_b),
+            two_set_mutually_exclusive(*y_bounds_a, *y_bounds_b),
+            two_set_mutually_exclusive(*z_bounds_a, *z_bounds_b),
+        ]).any(axis=0)
+    )
 
 
 def get_overlaps_asymmetric(exclusivity_matrix) -> np.ndarray:
@@ -116,9 +118,7 @@ def get_overlaps_asymmetric(exclusivity_matrix) -> np.ndarray:
     return np.array([i, j]).T
 
 
-def is_mutually_exclusive(
-    min_: np.ndarray[float], max_: np.ndarray[float]
-) -> np.ndarray:
+def is_mutually_exclusive(min_: np.ndarray, max_: np.ndarray) -> np.ndarray:
     """
     Given a list of bounds, (e.g. x-bounds, showing .xmin() and .xmax() for each cell),
     find whether each cell is mutually exclusive (i.e. does NOT overlap) with other
@@ -165,11 +165,13 @@ def check_bb_non_interference(tensor_3d: np.ndarray) -> np.ndarray:
     """
     x_bounds, y_bounds, z_bounds = tensor_3d.transpose([1, 2, 0])
 
-    return np.array([
-        is_mutually_exclusive(*x_bounds),
-        is_mutually_exclusive(*y_bounds),
-        is_mutually_exclusive(*z_bounds),
-    ]).any(axis=0)
+    return np.asarray(
+        np.array([
+            is_mutually_exclusive(*x_bounds),
+            is_mutually_exclusive(*y_bounds),
+            is_mutually_exclusive(*z_bounds),
+        ]).any(axis=0)
+    )
 
 
 def get_overlaps_arr(exclusivity_matrix) -> np.ndarray:

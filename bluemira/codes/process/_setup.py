@@ -23,7 +23,6 @@ from bluemira.codes.process.model_mapping import (
 )
 
 if TYPE_CHECKING:
-    from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.codes.process.params import ProcessSolverParams
 
 
@@ -50,7 +49,7 @@ class Setup(CodesSetup):
 
     def __init__(
         self,
-        params: dict | ParameterFrame,
+        params: ProcessSolverParams,
         in_dat_path: str,
         problem_settings: dict[str, float | str] | None = None,
     ):

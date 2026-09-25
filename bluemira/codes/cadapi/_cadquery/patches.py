@@ -83,13 +83,13 @@ for _cls in (cq.Wire, cq.Face, cq.Edge, cq.Shell, cq.Solid, cq.Compound):
     if not hasattr(_cls, "Orientation") or not isinstance(
         _cls.__dict__.get("Orientation"), property
     ):
-        _cls.Orientation = property(_cq_orientation)
+        setattr(_cls, "Orientation", property(_cq_orientation))  # noqa: B010
     if not hasattr(_cls, "reverse"):
-        _cls.reverse = _cq_reverse
+        setattr(_cls, "reverse", _cq_reverse)  # noqa: B010
 
 # Area as a property on Face (FreeCAD: face.Area property; CadQuery: face.Area() method)
 if not isinstance(cq.Face.__dict__.get("Area"), property):
-    cq.Face.Area = property(_cq_area_prop)
+    setattr(cq.Face, "Area", property(_cq_area_prop))  # noqa: B010
 
 
 class _CallableList(UserList):

@@ -11,17 +11,20 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 import numpy as np
 import numpy.typing as npt
 from periodictable import elements
-from pint import Context, Quantity, Unit, UnitRegistry, set_application_registry
+from pint import Quantity, UnitRegistry, set_application_registry
 from pint.errors import PintError
+from pint.facets.context.objects import Context
 from pint.util import UnitsContainer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pint.facets.plain.unit import PlainUnit as Unit
 
 
 class CoilType(Enum):
@@ -35,7 +38,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: str | CoilType) -> CoilType:
+    def _missing_(cls, value: object) -> Any:
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:
@@ -79,7 +82,9 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    def _add_contexts(self, contexts: list[Context] | None = None):
+    default_preferred_units: list[Any]
+
+    def _add_contexts(self, contexts: list[Context] | tuple[Context, ...] | None = None):
         """
         Add new contexts to registry
         """
@@ -99,13 +104,13 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts: Context, **kwargs):
+    def enable_contexts(self, *names_or_contexts: str | Context, **kwargs: Any):
         """
         Enable contexts
         """
-        self._add_contexts(contexts)
+        self._add_contexts([c for c in names_or_contexts if not isinstance(c, str)])
 
-        super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
+        super().enable_contexts(*[*self.contexts, *names_or_contexts], **kwargs)
         # Extra units
         self.define("displacements_per_atom  = count = dpa")
         self.define("full_power_year = year = fpy")
@@ -221,17 +226,21 @@ class BMUnitRegistry(UnitRegistry):
         context: Context,
         units_from: str,
         units_to: str,
-        forward_transform: Callable[[UnitRegistry, complex | Quantity], float],
-        reverse_transform: Callable[[UnitRegistry, complex | Quantity], float],
+        forward_transform: Callable[[BMUnitRegistry, Any], Any],
+        reverse_transform: Callable[[BMUnitRegistry, Any], Any],
     ) -> Context:
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:
             context.add_transformation(
-                form.format(units_from), form.format(units_to), forward_transform
+                form.format(units_from),
+                form.format(units_to),
+                cast("Any", forward_transform),
             )
             context.add_transformation(
-                form.format(units_to), form.format(units_from), reverse_transform
+                form.format(units_to),
+                form.format(units_from),
+                cast("Any", reverse_transform),
             )
 
         return context
@@ -422,9 +431,17 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
 ArrayLike = TypeVar("ArrayLike")
 
 
+@overload
+def raw_uc(value: float, unit_from: str | Unit, unit_to: str | Unit) -> float: ...
+@overload
+def raw_uc(value: int, unit_from: str | Unit, unit_to: str | Unit) -> float: ...
+@overload
 def raw_uc(
-    value: ArrayLike, unit_from: str | ureg.Unit, unit_to: str | ureg.Unit
-) -> ArrayLike:
+    value: np.ndarray, unit_from: str | Unit, unit_to: str | Unit
+) -> np.ndarray: ...
+@overload
+def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any: ...
+def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any:
     """
     Raw unit converter
 
@@ -459,8 +476,8 @@ def raw_uc(
 
 def gas_flow_uc(
     value: npt.ArrayLike,
-    unit_from: str | ureg.Unit,
-    unit_to: str | ureg.Unit,
+    unit_from: str | Unit,
+    unit_to: str | Unit,
     gas_flow_temperature: float | Quantity | None = None,
 ) -> int | float | np.ndarray:
     """
@@ -488,7 +505,7 @@ def gas_flow_uc(
     if gas_flow_temperature is not None:
         ureg.gas_flow_temperature = gas_flow_temperature
     try:
-        return raw_uc(value, unit_from, unit_to)
+        return cast("int | float | np.ndarray", raw_uc(value, unit_from, unit_to))
     finally:
         ureg.gas_flow_temperature = None
 
@@ -510,7 +527,7 @@ def to_celsius(
     -------
     The temperature [°C]
     """
-    converted_val = raw_uc(temp, unit, ureg.celsius)
+    converted_val = cast("float | np.ndarray", raw_uc(temp, unit, ureg.celsius))
     _temp_check(ureg.celsius, converted_val)
     return converted_val
 
@@ -533,12 +550,12 @@ def to_kelvin(
     -------
     The temperature [K]
     """
-    converted_val = raw_uc(temp, unit, ureg.kelvin)
+    converted_val = cast("float | np.ndarray", raw_uc(temp, unit, ureg.kelvin))
     _temp_check(ureg.kelvin, converted_val)
     return converted_val
 
 
-def _temp_check(unit: Unit, val: complex | Quantity):
+def _temp_check(unit: Unit, val: Any):
     """
     Check temperature is above absolute zero
 
@@ -575,7 +592,7 @@ def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
     -------
     The density [g/cm3]
     """
-    return raw_uc(density, "kg.m^-3", "g.cm^-3")
+    return cast("float | np.ndarray", raw_uc(density, "kg.m^-3", "g.cm^-3"))
 
 
 def gcm3_to_kgm3(density: npt.ArrayLike) -> float | np.ndarray:
@@ -591,7 +608,7 @@ def gcm3_to_kgm3(density: npt.ArrayLike) -> float | np.ndarray:
     -------
     The density [kg/m3]
     """
-    return raw_uc(density, "g.cm^-3", "kg.m^-3")
+    return cast("float | np.ndarray", raw_uc(density, "g.cm^-3", "kg.m^-3"))
 
 
 # =============================================================================

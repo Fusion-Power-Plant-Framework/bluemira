@@ -8,15 +8,16 @@
 A helper script to generate ParameterFrames as a python file and json file
 """
 
+from __future__ import annotations
+
 import argparse
 import inspect
 import sys
-from collections.abc import Sequence
 from copy import deepcopy
 from itertools import takewhile
 from pathlib import Path
 from pkgutil import iter_modules
-from typing import get_type_hints
+from typing import TYPE_CHECKING, Any, get_type_hints
 
 from setuptools import find_packages
 
@@ -27,9 +28,14 @@ from bluemira.base.look_and_feel import (
     bluemira_warn,
     print_banner,
 )
-from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 from bluemira.utilities.tools import get_module, json_writer
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Sequence
+
+    from bluemira.base.parameter_frame._frame import ParameterFrame
 
 
 def def_param() -> dict[str, str]:
@@ -51,7 +57,11 @@ def def_param() -> dict[str, str]:
 DEFAULT_PARAM = def_param()
 
 
-def add_to_dict(pf: ParameterFrame, json_dict: dict, params: dict):
+def add_to_dict(
+    pf: type[ParameterFrame] | ParameterFrame,
+    json_dict: dict[str, Any],
+    params: dict[str, Any],
+) -> None:
     """
     Add each parameter to the json dict and params dict
     """
@@ -63,7 +73,7 @@ def add_to_dict(pf: ParameterFrame, json_dict: dict, params: dict):
 
 
 def create_parameterframe(
-    params: dict, name: str | None = None, *, header: bool = True
+    params: dict[str, Any], name: str | None = None, *, header: bool = True
 ) -> str:
     """
     Create parameterframe python files as a string
@@ -105,7 +115,7 @@ def create_parameterframe(
     return param_cls
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
     Parse arguments
 
@@ -140,7 +150,7 @@ def parse_args():
     return args
 
 
-def get_param_classes(module) -> dict:
+def get_param_classes(module: types.ModuleType) -> dict[str, type[ParameterFrame]]:
     """
     Get all ParameterFrame classes
 
@@ -149,18 +159,17 @@ def get_param_classes(module) -> dict:
     :
         All found ParameterFrames
     """
-    return {
-        f"{m[0]}: {m[1].param_cls.__name__}": m[1].param_cls
-        for m in inspect.getmembers(module, inspect.isclass)
-        if hasattr(m[1], "param_cls")
-        and not (
-            m[1].param_cls is None
-            or getattr(m[1].param_cls, "__isabstractmethod__", False)
-        )
-    }
+    classes: dict[str, type[ParameterFrame]] = {}
+    for m in inspect.getmembers(module, inspect.isclass):
+        param_cls = getattr(m[1], "param_cls", None)
+        if param_cls is not None and not getattr(
+            param_cls, "__isabstractmethod__", False
+        ):
+            classes[f"{m[0]}: {param_cls.__name__}"] = param_cls
+    return classes
 
 
-def find_modules(path: str) -> set:
+def find_modules(path: str) -> set[str]:
     """Recursively get modules from package
 
     Returns
@@ -168,7 +177,7 @@ def find_modules(path: str) -> set:
     :
         All found modules
     """
-    modules = set()
+    modules: set[str] = set()
     for pkg in find_packages(path):
         if "test" in pkg:
             bluemira_debug(f"Ignoring {pkg}, possible test package")
@@ -199,7 +208,7 @@ def _commonprefix(strings: Sequence[str]) -> str:
     )
 
 
-def main():
+def main() -> None:
     """
     Generate python and json parameterframe files
     """
@@ -223,8 +232,8 @@ def main():
         "Found ParameterFrames:\n" + "\n".join(sorted(k for k in param_classes))
     )
 
-    output = {}
-    params = {}
+    output: dict[str, Any] = {}
+    params: dict[str, Any] = {}
 
     bluemira_print(f"Writing output files to {args.directory}")
     if args.collapse:

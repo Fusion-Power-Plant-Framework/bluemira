@@ -11,7 +11,7 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, TypeAlias, Union
+from typing import TYPE_CHECKING, TypeAlias, Union, cast
 
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
@@ -22,9 +22,10 @@ from bluemira.materials.error import MaterialsError
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from matproplib.material import Material
 
-    from bluemira.base.components import ComponentT
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
@@ -65,8 +66,11 @@ class Builder(abc.ABC):
         self.name = self.build_config.get(
             "name", self.__class__.__name__.removesuffix("Builder")
         )
-        self.build = _timing(
-            self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
+        self.build = _timing(  # ty: ignore[invalid-assignment]
+            self.build,
+            "Built in",
+            f"Building {self.name}",
+            debug_info_str=not verbose,
         )
 
     @property
@@ -131,19 +135,21 @@ class Builder(abc.ABC):
                 )
             mat_name: str = mats.get(component_name)
 
-        mat = get_cached_material(mat_name)
+        mat = cast(
+            "Material | Callable[[], Material] | None", get_cached_material(mat_name)
+        )
         if mat is None:
             bluemira_warn(
                 f"No corresponding material found for {component_name} in {mats}"
             )
 
-        return mat() if callable(mat) else mat
+        return cast("Material | None", mat() if callable(mat) else mat)
 
     def component_tree(
         self,
-        xz: list[ComponentT] | None,
-        xy: list[ComponentT] | None,
-        xyz: list[ComponentT] | None,
+        xz: Sequence[Component] | None,
+        xy: Sequence[Component] | None,
+        xyz: Sequence[Component] | None,
     ) -> Component:
         """
         Adds views of components to an overall component tree.
@@ -163,11 +169,19 @@ class Builder(abc.ABC):
             The component tree
         """
         component = Component(self.name)
-        component.add_child(Component("xz", children=xz))
-        component.add_child(Component("xy", children=xy))
-        component.add_child(Component("xyz", children=xyz))
+        component.add_child(
+            Component("xz", children=list(xz) if xz is not None else None)
+        )
+        component.add_child(
+            Component("xy", children=list(xy) if xy is not None else None)
+        )
+        component.add_child(
+            Component("xyz", children=list(xyz) if xyz is not None else None)
+        )
 
-        set_component_view(component.get_component("xz"), "xz")
-        set_component_view(component.get_component("xy"), "xy")
+        if (xz_comp := component.get_component("xz")) is not None:
+            set_component_view(xz_comp, "xz")
+        if (xy_comp := component.get_component("xy")) is not None:
+            set_component_view(xy_comp, "xy")
 
         return component

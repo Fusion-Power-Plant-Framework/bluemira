@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
 
 @cadapi.catch_caderr(GeometryError)
-def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeoT:
+def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object.
 
     Returns
@@ -87,7 +87,7 @@ class HullPlane(Enum):
     YZ = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: object):
         if not isinstance(value, str):
             raise TypeError(f"Invalid hull plane: {value}. Expected str.")
         try:
@@ -103,7 +103,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: BluemiraGeoT | np.ndarray | Any):
+    def default(self, o: Any) -> Any:
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
 
@@ -112,11 +112,11 @@ class BluemiraGeoEncoder(json.JSONEncoder):
         :
             List from bluemira shape or numpy array.
         """
-        if isinstance(obj, BluemiraGeo):
-            return serialise_shape(obj)
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return super().default(obj)
+        if isinstance(o, BluemiraGeo):
+            return serialise_shape(o)
+        if isinstance(o, np.ndarray):
+            return o.tolist()
+        return super().default(o)
 
 
 def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
@@ -276,19 +276,23 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
             raise GeometryError(
                 "Can only cast the 3D coordinates of a single pointinto a cadapi vertex!"
             )
-        point = point.points[0]
-    if len(point) != 3:  # noqa: PLR2004
+        pt = point.points[0]
+    else:
+        pt = np.asarray(point, dtype=float)
+    if len(pt) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
-    return cadapi.make_vertex(*point)
+    return cadapi.make_vertex(float(pt[0]), float(pt[1]), float(pt[2]))
 
 
 class GeometryCreationIn(Protocol):
     """Typing for closed_wire_wrapper input"""
 
+    __name__: str
+
     def __call__(
         self, points: Coordinates, label: str = "", *, closed: bool = False
-    ) -> BluemiraWire:
+    ) -> cadapi.apiWire:
         """Typing for coordinates wrapping"""
         ...
 
@@ -354,7 +358,7 @@ def make_polygon(
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001
-) -> BluemiraWire:
+) -> cadapi.apiWire:
     """
     Make a polygon from a set of points.
 
@@ -387,7 +391,7 @@ def make_bezier(
     label: str = "",  # noqa: ARG001
     *,
     closed: bool = False,  # noqa: ARG001
-) -> BluemiraWire:
+) -> cadapi.apiWire:
     """Make a bspline from a set of points.
 
     Parameters
@@ -485,12 +489,12 @@ def make_bspline(
     """
     return BluemiraWire(
         cadapi.make_bspline(
-            poles,
-            mults,
-            knots,
+            np.asarray(poles),
+            np.asarray(mults),
+            np.asarray(knots),
             periodic=periodic,
             degree=degree,
-            weights=weights,
+            weights=np.asarray(weights),
             check_rational=check_rational,
         ),
         label=label,
@@ -727,7 +731,11 @@ def make_circle(
     Bluemira wire that contains the arc or circle
     """
     output = cadapi.make_circle(
-        radius, tuple(center), start_angle, end_angle, tuple(axis)
+        radius,
+        tuple(np.asarray(center)),
+        start_angle,
+        end_angle,
+        tuple(np.asarray(axis)),
     )
     return BluemiraWire(output, label=label)
 
@@ -807,11 +815,11 @@ def make_ellipse(
     Bluemira wire that contains the arc or ellipse
     """
     output = cadapi.make_ellipse(
-        tuple(center),
+        tuple(np.asarray(center)),
         major_radius,
         minor_radius,
-        tuple(major_axis),
-        tuple(minor_axis),
+        tuple(np.asarray(major_axis)),
+        tuple(np.asarray(minor_axis)),
         start_angle,
         end_angle,
     )
@@ -1098,19 +1106,19 @@ def partial_diff_of_volume(
     x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
     z_component = (qx + rx + sx) * (sx - qx)
     xz_derivatives = np.array([x_component, z_component]).T
-    return np.pi / 3 * np.dot(normalised_direction_vector, xz_derivatives)
+    return np.pi / 3 * np.dot(np.asarray(normalised_direction_vector), xz_derivatives)
 
 
 # # =============================================================================
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
-    shape: BluemiraGeoT,
+    shape: BluemiraGeo,
     base: npt.ArrayLike = (0.0, 0.0, 0.0),
     direction: npt.ArrayLike = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
-) -> BluemiraGeoT:
+) -> BluemiraGeo:
     """
     Apply the revolve (base, dir, degree) to this shape
 
@@ -1135,8 +1143,8 @@ def revolve_shape(
     CADError
         Cannot revolve shape
     """
-    base = tuple(base)
-    direction = tuple(direction)
+    base = tuple(np.asarray(base))
+    direction = tuple(np.asarray(direction))
 
     if degree > 360:  # noqa: PLR2004
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
@@ -1153,19 +1161,21 @@ def revolve_shape(
             )
 
             if isinstance(shape, BluemiraWire):
-                if shape.is_closed():
-                    shape = BluemiraFace(shape)
+                cad_shape = (
+                    BluemiraFace(shape).shape if shape.is_closed() else shape.shape
+                )
                 flag_shell = True
             else:
+                cad_shape = shape.shape
                 flag_shell = False
 
-            shape_1 = cadapi.revolve_shape(shape.shape, base, direction, degree=180)
+            shape_1 = cadapi.revolve_shape(cad_shape, base, direction, degree=180)
             shape_2 = shape_1.copy()
             shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
             result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
 
             if flag_shell:
-                result = result.Shells[0]
+                result = cadapi.shells(result)[0]
 
             return convert(result, label)
         raise
@@ -1193,7 +1203,7 @@ def extrude_shape(
     if not label:
         label = shape.label
 
-    return convert(cadapi.extrude_shape(shape.shape, tuple(vec)), label)
+    return convert(cadapi.extrude_shape(shape.shape, tuple(np.asarray(vec))), label)
 
 
 class SweepShapeTransition(enum.IntEnum):
@@ -1368,8 +1378,9 @@ def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
 
 def distance_to(
-    geo1: npt.ArrayLike | BluemiraGeo, geo2: npt.ArrayLike | BluemiraGeo
-) -> tuple[float, list[tuple[float, float, float]]]:
+    geo1: npt.ArrayLike | BluemiraGeo | Coordinates,
+    geo2: npt.ArrayLike | BluemiraGeo | Coordinates,
+) -> tuple[float, list[tuple[np.ndarray, np.ndarray]]]:
     """
     Calculate the distance between two BluemiraGeos.
 
@@ -1389,8 +1400,9 @@ def distance_to(
         distance between those points is the minimum distance given by dist.
     """
     # Check geometry for vertices
-    shape1 = _make_vertex(geo1) if isinstance(geo1, Iterable) else geo1.shape
-    shape2 = _make_vertex(geo2) if isinstance(geo2, Iterable) else geo2.shape
+    shape1 = geo1.shape if isinstance(geo1, BluemiraGeo) else _make_vertex(geo1)
+    shape2 = geo2.shape if isinstance(geo2, BluemiraGeo) else _make_vertex(geo2)
+
     return cadapi.dist_to_shape(shape1, shape2)
 
 
@@ -1421,12 +1433,12 @@ def split_wire(
     GeometryError:
         If the vertex is further away to the wire than the specified tolerance
     """
-    wire_1, wire_2 = cadapi.split_wire(wire.shape, tuple(vertex), tolerance=tolerance)
-    if wire_1:
-        wire_1 = BluemiraWire(wire_1)
-    if wire_2:
-        wire_2 = BluemiraWire(wire_2)
-    return wire_1, wire_2
+    wire_1, wire_2 = cadapi.split_wire(
+        wire.shape, tuple(np.asarray(vertex)), tolerance=tolerance
+    )
+    bw1 = BluemiraWire(wire_1) if wire_1 else None
+    bw2 = BluemiraWire(wire_2) if wire_2 else None
+    return bw1, bw2
 
 
 def cut_wire_at_z_value(
@@ -1474,11 +1486,12 @@ def cut_wire_at_z_value(
     ])
     cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion", closed=True)
     pieces = boolean_cut(wire, [cut_zone])
+    pieces_list = pieces if isinstance(pieces, list) else [pieces]
 
     cut_wire = (
-        pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+        pieces_list[np.argmax([p.center_of_mass[2] for p in pieces_list])]
         if location is CutLocation.LOWER
-        else pieces[np.argmin([p.center_of_mass[2] for p in pieces])]
+        else pieces_list[np.argmin([p.center_of_mass[2] for p in pieces_list])]
     )
 
     func = operator.lt if location is CutLocation.LOWER else operator.gt
@@ -1502,7 +1515,7 @@ class CutLocation(Enum):
 
 def slice_shape(
     shape: BluemiraGeo, plane: BluemiraPlane
-) -> list[np.ndarray] | list[BluemiraWire] | None:
+) -> np.ndarray | list[BluemiraWire] | None:
     """
     Calculate the plane intersection points with an object
 
@@ -1540,8 +1553,10 @@ def slice_shape(
 
 
 def get_wire_plane_intersect(
-    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
-) -> npt.NDArray[float]:
+    convex_bm_wire: BluemiraWire,
+    plane: BluemiraPlane,
+    cut_direction: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Cut a wire using a plane.
 
@@ -1558,15 +1573,26 @@ def get_wire_plane_intersect(
     -------
     intersection point:
         np.ndarray with shape==(3,)
+
+    Raises
+    ------
+    GeometryError
+        If no intersection is found between wire and plane
     """
     intersection_points = slice_shape(convex_bm_wire, plane)
+    if (
+        intersection_points is None
+        or not isinstance(intersection_points, np.ndarray)
+        or len(intersection_points) == 0
+    ):
+        raise GeometryError("No intersection found between wire and plane.")
     if len(intersection_points) > 1:
         if len(intersection_points) > 2:  # noqa: PLR2004
             bluemira_warn(
                 "convex_bm_wire expected to be a convex hull, but isn't.\n"
                 "Proceeding by choosing the final intersection point..."
             )
-        final_intersection = np.argmax(np.dot(intersection_points, cut_direction))
+        final_intersection = int(np.argmax(np.dot(intersection_points, cut_direction)))
         return intersection_points[final_intersection]
     return intersection_points[0]
 
@@ -1603,7 +1629,9 @@ def circular_pattern(
     shapes = [shape]
     for i in range(1, n_shapes):
         new_shape = shape.deepcopy()
-        new_shape.rotate(tuple(origin), tuple(direction), i * angle)
+        new_shape.rotate(
+            tuple(np.asarray(origin)), tuple(np.asarray(direction)), i * angle
+        )
         shapes.append(new_shape)
     return shapes
 
@@ -1635,7 +1663,10 @@ def mirror_shape(
     if np.linalg.norm(direction) <= 3 * EPS:
         raise GeometryError("Direction vector cannot have a zero norm.")
     return convert(
-        cadapi.mirror_shape(shape.shape, tuple(base), tuple(direction)), label=label
+        cadapi.mirror_shape(
+            shape.shape, tuple(np.asarray(base)), tuple(np.asarray(direction))
+        ),
+        label=label,
     )
 
 
@@ -1718,10 +1749,13 @@ def save_cad(
     if names is not None and not isinstance(names, list):
         names = [names]
 
+    cad_format_str: str = (
+        str(cad_format.value) if hasattr(cad_format, "value") else str(cad_format)
+    )
     cadapi.save_cad(
         [s.shape for s in shapes],
         Path(filename).as_posix(),
-        cad_format=cad_format,
+        cad_format=cad_format_str,
         labels=names,
         colours=colours,
         **kwargs,
@@ -1730,7 +1764,7 @@ def save_cad(
 
 def import_cad(
     filename: str | Path,
-    cad_format: str | cadapi.CADFileType | None = None,
+    cad_format: Any = None,
     unit_scale: str = "m",
     **kwargs,
 ) -> BluemiraGeo | list[BluemiraGeo]:
@@ -2242,14 +2276,7 @@ def point_on_plane(
     -------
     Whether or not the point is on the plane
     """
-    return (
-        abs(
-            cadapi.apiVector(point).distanceToPlane(
-                plane.shape.Position, plane.shape.Axis
-            )
-        )
-        < tolerance
-    )
+    return abs(float(np.dot(np.asarray(point) - plane.base, plane.axis))) < tolerance
 
 
 # # =============================================================================
@@ -2282,7 +2309,7 @@ def serialise_shape(shape: BluemiraGeoT):
     raise NotImplementedError(f"Serialisation non implemented for {type_}")
 
 
-def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
+def deserialise_shape(buffer: dict) -> BluemiraGeo | None:
     """
     Deserialise a BluemiraGeo object obtained from serialise_shape.
 
@@ -2307,7 +2334,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
-    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeoT]) -> BluemiraGeoT:
+    def _extract_shape(shape_dict: dict, shape_type: type[BluemiraGeo]) -> BluemiraGeo:
         label = shape_dict["label"]
         boundary = shape_dict["boundary"]
 
@@ -2333,7 +2360,7 @@ def deserialise_shape(buffer: dict) -> BluemiraGeoT | None:
     for type_, v in buffer.items():
         for supported_type in supported_types:
             if type_ == supported_type.__name__:
-                return _extract_shape(v, BluemiraWire)
+                return _extract_shape(v, supported_type)
 
         raise NotImplementedError(f"Deserialisation non implemented for {type_}")
     return None

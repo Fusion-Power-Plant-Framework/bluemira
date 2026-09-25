@@ -12,25 +12,29 @@ from __future__ import annotations
 
 from copy import deepcopy
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 import numpy as np
 from pyclipper import (
-    ET_CLOSEDPOLYGON,
-    ET_OPENROUND,
-    ET_OPENSQUARE,
-    JT_MITER,
-    JT_ROUND,
-    JT_SQUARE,
-    PolyTreeToPaths,
-    PyPolyNode,
-    PyclipperOffset,
-    scale_from_clipper,
-    scale_to_clipper,
+    ET_CLOSEDPOLYGON,  # ty: ignore[unresolved-import]
+    ET_OPENROUND,  # ty: ignore[unresolved-import]
+    ET_OPENSQUARE,  # ty: ignore[unresolved-import]
+    JT_MITER,  # ty: ignore[unresolved-import]
+    JT_ROUND,  # ty: ignore[unresolved-import]
+    JT_SQUARE,  # ty: ignore[unresolved-import]
+    PolyTreeToPaths,  # ty: ignore[unresolved-import]
+    PyPolyNode,  # ty: ignore[unresolved-import]
+    PyclipperOffset,  # ty: ignore[unresolved-import]
+    scale_from_clipper,  # ty: ignore[unresolved-import]
+    scale_to_clipper,  # ty: ignore[unresolved-import]
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = ["offset_clipper"]
 
@@ -47,14 +51,16 @@ class OffsetClipperMethodType(Enum):
     MITER = auto()
 
     @classmethod
-    def _missing_(cls, value: str | OffsetClipperMethodType) -> OffsetClipperMethodType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise GeometryError(
-                f"{cls.__name__} has no method {value}."
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> OffsetClipperMethodType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                raise GeometryError(
+                    f"{cls.__name__} has no method {value}."
+                    f"please select from {(*cls._member_names_,)}"
+                ) from None
+        return super()._missing_(value)
 
 
 _CLIPPER_SCALE = 1_000_000
@@ -127,7 +133,7 @@ class PyclipperMixin:
 
     name = NotImplemented
 
-    def perform(self):
+    def perform(self, *args, **kwargs):
         """
         Perform the pyclipper operation
         """
@@ -139,7 +145,9 @@ class PyclipperMixin:
         """
         bluemira_warn(f"{self.name} operation on 2-D polygons returning None.\n")
 
-    def handle_solution(self, solution: tuple[np.ndarray]) -> list[Coordinates]:
+    def handle_solution(
+        self, solution: tuple[np.ndarray, ...]
+    ) -> list[Coordinates] | None:
         """
         Handles the output of the Pyclipper.Execute(*) algorithms, turning them
         into Coordaintes objects. NOTE: These are closed by default.
@@ -197,7 +205,7 @@ class OffsetOperationManager(PyclipperMixin):
 
         self.tool.AddPath(path, self.method, co_method)
 
-    def perform(self, delta: float) -> list[Coordinates]:
+    def perform(self, delta: float) -> list[Coordinates] | None:
         """
         Perform the offset operation.
 
@@ -212,7 +220,8 @@ class OffsetOperationManager(PyclipperMixin):
         :
             List of offset coordinates objects.
         """
-        delta = round(delta * self._scale)  # approximation
+        scale = self._scale or _CLIPPER_SCALE
+        delta = round(delta * scale)  # approximation
         solution = self.tool.Execute(delta)
         return self.handle_solution(solution)
 
@@ -340,11 +349,15 @@ def offset_clipper(
     result = result[0]
 
     # Transform offset coordinates back to original plane
+    if coordinates.normal_vector is None:
+        raise GeometryError("Coordinates must have a normal vector to offset.")
     return transform_coordinates_to_original(result, com, coordinates.normal_vector)
 
 
 def transform_coordinates_to_xz(
-    coordinates: Coordinates, base: np.ndarray, direction: np.ndarray
+    coordinates: Coordinates,
+    base: np.ndarray | tuple[float, float, float] | Sequence[float],
+    direction: np.ndarray | tuple[float, float, float] | Sequence[float],
 ) -> Coordinates:
     """
     Rotate coordinates to the x-z plane.
@@ -355,6 +368,8 @@ def transform_coordinates_to_xz(
         The coordinates in the x-z plane.
     """
     coordinates.translate(base)
+    if coordinates.normal_vector is None:
+        return coordinates
     if abs(coordinates.normal_vector[1]) == 1.0:  # noqa: RUF069
         return coordinates
 
@@ -365,7 +380,9 @@ def transform_coordinates_to_xz(
 
 
 def transform_coordinates_to_original(
-    coordinates: Coordinates, base: np.ndarray, original_normal: np.ndarray
+    coordinates: Coordinates,
+    base: np.ndarray | tuple[float, float, float] | Sequence[float],
+    original_normal: np.ndarray | tuple[float, float, float] | Sequence[float],
 ) -> Coordinates:
     """
     Rotate coordinates back to original plane
@@ -375,6 +392,9 @@ def transform_coordinates_to_original(
     :
         The coordinates fot the original plane.
     """
+    if coordinates.normal_vector is None:
+        coordinates.translate(base)
+        return coordinates
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
     x, y, z = r.T @ coordinates
     coordinates = Coordinates({"x": x, "y": y, "z": z})

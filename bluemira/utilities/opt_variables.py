@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import json
 import operator
-from dataclasses import MISSING, Field, field
+from dataclasses import MISSING, field, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, NotRequired, TextIO, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TextIO, TypedDict, cast
 
 import numpy as np
 from tabulate import tabulate
@@ -99,7 +99,7 @@ class OptVariable:
         self._value = value
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
-        self.fixed = fixed
+        self.fixed: bool = bool(fixed)
         self.description = description
 
         self._validate_bounds()
@@ -378,7 +378,7 @@ def ov(
     *,
     fixed: bool = False,
     description: str | None = None,
-) -> field:
+) -> Any:
     """
     Field factory for OptVariable
 
@@ -418,8 +418,8 @@ class OptVariablesFrame:
             )
         if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
-        for field_name in cls.__dataclass_fields__:  # type: ignore[attr-defined]
-            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore[attr-defined]
+        for dcf in fields(cast("Any", cls)):
+            field_name = dcf.name
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(
@@ -478,8 +478,8 @@ class OptVariablesFrame:
         :
             Each optimisation variable
         """
-        for field_name in self.__dataclass_fields__:  # type: ignore[attr-defined]
-            yield getattr(self, field_name)
+        for dcf in fields(cast("Any", self)):
+            yield getattr(self, dcf.name)
 
     def __getitem__(self, name: str) -> OptVariable:
         """
@@ -504,7 +504,7 @@ class OptVariablesFrame:
         lower_bound: float | None = None,
         upper_bound: float | None = None,
         *,
-        fixed: bool = False,
+        fixed: bool | None = False,
         strict_bounds: bool = True,
     ):
         """

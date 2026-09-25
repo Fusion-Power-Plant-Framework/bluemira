@@ -10,6 +10,8 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 # import from freecad
 import bluemira.codes._geometryapi as cadapi
 
@@ -20,6 +22,9 @@ from bluemira.geometry.error import DisjointedSolidError, GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = ["BluemiraSolid"]
 
@@ -36,7 +41,11 @@ class BluemiraSolid(BluemiraGeo):
         Label to assign to the solid
     """
 
-    def __init__(self, boundary: list[BluemiraShell], label: str = ""):
+    def __init__(
+        self,
+        boundary: Sequence[BluemiraShell] | BluemiraShell | None,
+        label: str = "",
+    ):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
@@ -109,21 +118,23 @@ class BluemiraSolid(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the solid.
         """
-        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
+        return tuple(
+            BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.edges(self.shape)
+        )
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the solid.
         """
         return tuple(BluemiraWire(o) for o in cadapi.wires(self.shape))
 
     @property
-    def faces(self) -> tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace, ...]:
         """
         The faces of the solid.
         """

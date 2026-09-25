@@ -15,6 +15,7 @@ import math
 
 import cadquery as cq
 import numpy as np
+import numpy.typing as npt
 from OCP.BRepAdaptor import BRepAdaptor_Curve
 from OCP.BRepBuilderAPI import (
     BRepBuilderAPI_MakeEdge,
@@ -136,13 +137,13 @@ def make_bspline_g1_blend(
 
 
 def make_bspline(
-    poles: np.ndarray,
-    mults: np.ndarray,
-    knots: np.ndarray,
+    poles: npt.ArrayLike,
+    mults: npt.ArrayLike,
+    knots: npt.ArrayLike,
     *,
     periodic: bool,
     degree: int,
-    weights: np.ndarray,
+    weights: npt.ArrayLike,
     check_rational: bool,
     first_parameter: float | None = None,
     last_parameter: float | None = None,
@@ -188,14 +189,14 @@ def make_bspline(
 
 
 def make_bsplinesurface(
-    poles: np.ndarray,
-    mults_u: np.ndarray,
-    mults_v: np.ndarray,
-    knot_vector_u: np.ndarray,
-    knot_vector_v: np.ndarray,
+    poles: npt.ArrayLike,
+    mults_u: npt.ArrayLike,
+    mults_v: npt.ArrayLike,
+    knot_vector_u: npt.ArrayLike,
+    knot_vector_v: npt.ArrayLike,
     degree_u: int,
     degree_v: int,
-    weights: np.ndarray,
+    weights: npt.ArrayLike,
     *,
     periodic: bool = False,
     check_rational: bool = False,

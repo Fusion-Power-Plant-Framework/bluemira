@@ -9,13 +9,13 @@ Class and Methods for separatrix legs.
 
 import operator
 from enum import Enum, auto
+from typing import Any
 
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.equilibria.equilibrium import Equilibrium, Grid
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     find_LCFS_separatrix,
@@ -94,10 +94,13 @@ class LegFlux:
 
         self.n_null = NumNull.DN if eq.is_double_null else NumNull.SN
         o_points, x_points = eq.get_OX_points()
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        psi_grid = np.asarray(eq.psi())
         lcfs, self.separatrix = find_LCFS_separatrix(
             eq.x,
             eq.z,
-            eq.psi(),
+            psi_grid,
             o_points,
             x_points,
             double_null=eq.is_double_null,
@@ -111,7 +114,9 @@ class LegFlux:
         # so sometimes this can happen if the flux surface wraps around the
         # lower divertor coils rather that extending off the grid.
         if (eq.is_double_null and len(self.separatrix) != 2) or (  # noqa: PLR2004
-            not eq.is_double_null and self.separatrix.closed
+            not eq.is_double_null
+            and isinstance(self.separatrix, Coordinates)
+            and self.separatrix.closed
         ):
             self.separatrix = split(
                 self.separatrix
@@ -189,7 +194,7 @@ class LegFlux:
                 "flux surface to extractcfor each divertor leg (n_layers > 1)."
             )
 
-        self._legs = self.get_leg_offsets(self._legs, eq)
+        self._legs = self._get_leg_offsets(self._legs, eq)
         return self._legs
 
     def _print_warning_set_flag(self):
@@ -378,8 +383,8 @@ def split(septrx: Coordinates, n_null: NumNull):
 
 def get_legs_length_and_angle(
     eq: Equilibrium,
-    leg_dict: dict[str, npt.NDArray[np.float64] | None],
-    plasma_facing_boundary: Grid | Coordinates | None = None,
+    leg_dict: dict[str, Any],
+    plasma_facing_boundary: Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary.
 
@@ -601,6 +606,7 @@ def _extract_leg(
         "z": [z_cut, z_cut],
     })
     new_flux_line, arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
+    assert arg_inters is not None  # noqa: S101
     arg_inters.sort()
     # Lower null vs upper null
     func = operator.lt if z_cut < o_point_z else operator.gt
@@ -618,7 +624,7 @@ def _extract_leg(
             leg = Coordinates(new_flux_line[:, : arg + 1])
 
         # Make the leg flow away from the plasma core
-        if leg.argmin((x_cut, 0, z_cut)) > 3:  # noqa: PLR2004
+        if leg.argmin(np.array([x_cut, 0.0, z_cut])) > 3:  # noqa: PLR2004
             leg.reverse()
 
         flux_legs.append(leg)
@@ -708,7 +714,7 @@ def calculate_connection_length(
         distinguish between open and closed flux).
 
     """
-    calculation_method = CalcMethod[calculation_method.upper()]
+    calc_method = CalcMethod[calculation_method.upper()]
 
     if first_wall is None:
         x1, x2 = eq.grid.x_min, eq.grid.x_max
@@ -722,7 +728,9 @@ def calculate_connection_length(
         if div_norm_psi <= 1:
             raise BluemiraError("div_norm_psi value must be > 1.")
         op, xp = eq.get_OX_points()
-        fs_lst = find_flux_surfs(eq.grid.x, eq.grid.z, eq.psi(), div_norm_psi, op, xp)
+        fs_lst = find_flux_surfs(
+            eq.grid.x, eq.grid.z, np.asarray(eq.psi()), div_norm_psi, op, xp
+        )
         coords = [Coordinates({"x": fs_arr.T[0], "z": fs_arr.T[1]}) for fs_arr in fs_lst]
         coords.sort(key=lambda coords: -coords.length)
         xcrss, zcrss = np.array([]), np.array([])
@@ -743,7 +751,7 @@ def calculate_connection_length(
 
     # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
     if div_target_start_point is None:
-        if calculation_method == CalcMethod.FIELD_LINE_TRACER:
+        if calc_method == CalcMethod.FIELD_LINE_TRACER:
             raise BluemiraError(
                 "Field line tracer method requires input div_target_start_point."
                 "Please use flux surface geometry method or input a target location."
@@ -752,20 +760,28 @@ def calculate_connection_length(
         legflux = LegFlux(eq=eq, psi_n_tol=psi_n_tol, delta_lcfs=delta_start, rtol=rtol)
 
         if legflux.n_null == NumNull.DN:
+            assert isinstance(legflux.separatrix, list)  # noqa: S101
             if legflux.sort_split == SortSplit.X:
                 legflux.separatrix.sort(key=lambda leg: -leg.x[0])
-            f_s = legflux.separatrix[0]
+            f_s: Coordinates = legflux.separatrix[0]
         else:
+            assert isinstance(legflux.separatrix, Coordinates)  # noqa: S101
             f_s = legflux.separatrix
 
     else:
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        psi_grid = np.asarray(eq.psi())
+        target_x = float(np.asarray(div_target_start_point.x).item())
+        target_z = float(np.asarray(div_target_start_point.z).item())
+        psi_val = float(np.asarray(eq.psi(target_x, target_z)).item())
         xfs, zfs = find_flux_surface_through_point(
             eq.x,
             eq.z,
-            eq.psi(),
-            div_target_start_point.x,
-            div_target_start_point.z,
-            eq.psi(div_target_start_point.x, div_target_start_point.z),
+            psi_grid,
+            target_x,
+            target_z,
+            psi_val,
         )
         f_s = Coordinates({"x": xfs, "z": zfs})
 
@@ -783,7 +799,7 @@ def calculate_connection_length(
         return 0.0
     x = np.max(f_s.x[z_abs == np.min(z_abs)])
 
-    if calculation_method == CalcMethod.FIELD_LINE_TRACER:
+    if calc_method == CalcMethod.FIELD_LINE_TRACER:
         return calculate_connection_length_flt(
             eq=eq,
             x=x,
@@ -794,7 +810,7 @@ def calculate_connection_length(
             n_turns_max=n_turns_max,
         )
 
-    if calculation_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
+    if calc_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
         return calculate_connection_length_fs(
             eq=eq, x=x, z=z, forward=forward, first_wall=first_wall, f_s=f_s
         )

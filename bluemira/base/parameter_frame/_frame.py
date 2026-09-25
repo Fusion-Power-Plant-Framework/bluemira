@@ -9,7 +9,7 @@ import copy
 import json
 from dataclasses import dataclass, fields
 from operator import itemgetter
-from typing import TYPE_CHECKING, Any, ClassVar, get_args, get_type_hints
+from typing import TYPE_CHECKING, Any, ClassVar, cast, get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -24,12 +24,11 @@ from bluemira.base.parameter_frame._parameter import (
 from bluemira.base.parameter_frame._units import _validate_units
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Iterable, Iterator, Sequence
     from types import GenericAlias
 
     from bluemira.base.parameter_frame.typed import (
         ParameterFrameLike,
-        ParameterFrameOrNoneT,
         ParameterFrameT,
     )
     from bluemira.base.reactor_config import ConfigParams
@@ -100,7 +99,7 @@ class ParameterFrame:
                 )
             vt = _validate_parameter_field(field, value_type)
 
-            val_unit = {
+            val_unit: ParamDictT = {
                 "value": Parameter._type_check(field.name, field.value, vt),
                 "unit": field.unit,
             }
@@ -139,17 +138,15 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
-    def update(
-        self, new_values: dict[str, ParameterValueType] | ParamDictT | ParameterFrame
-    ):
+    def update(self, new_values: dict[str, Any] | ParameterFrame):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
             self.update_from_frame(new_values)
         else:
             try:
-                self.update_from_dict(new_values)
+                self.update_from_dict(cast("dict[str, ParamDictT]", new_values))
             except TypeError:
-                self.update_values(new_values)
+                self.update_values(cast("dict[str, ParameterValueType]", new_values))
 
     def get_values(self, *names: str) -> tuple[ParameterValueType, ...]:
         """Get values of a set of Parameters.
@@ -186,16 +183,17 @@ class ParameterFrame:
     def update_from_dict(self, new_values: dict[str, ParamDictT], source: str = ""):
         """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
-            if "name" in value:
-                del value["name"]
+            value_copy = dict(value)
+            value_copy.pop("name", None)
             if source:
-                value["source"] = source
+                value_copy["source"] = source
+            val = value_copy.pop("value")
             self._set_param(
                 key,
                 Parameter(
                     name=key,
-                    value=value.pop("value"),
-                    **value,
+                    value=val,
+                    **cast("dict[str, Any]", value_copy),
                     _value_types=_validate_parameter_field(key, self._types[key]),
                 ),
             )
@@ -300,7 +298,7 @@ class ParameterFrame:
     @classmethod
     def from_json(
         cls: type[ParameterFrameT],
-        json_in: str | json.SupportsRead,
+        json_in: str | Any,
         *,
         allow_unknown: bool = False,
     ) -> ParameterFrameT:
@@ -318,7 +316,9 @@ class ParameterFrame:
         """
         if hasattr(json_in, "read"):
             # load from file stream
-            return cls.from_dict(json.load(json_in), allow_unknown=allow_unknown)
+            return cls.from_dict(
+                json.load(cast("Any", json_in)), allow_unknown=allow_unknown
+            )
         if not isinstance(json_in, str):
             raise TypeError(f"Cannot read JSON from type '{type(json_in).__name__}'.")
         if not json_in.startswith("{"):
@@ -394,6 +394,8 @@ class ParameterFrame:
         ------
         ValueError
             Unit conversion failed
+        TypeError
+            Parameter name is not a string
         """
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
@@ -402,7 +404,14 @@ class ParameterFrame:
             raise ValueError(
                 f"Unit conversion failed for {member} from {member_param_data['unit']}"
             ) from pe
-        return Parameter(name=member, **member_param_data, _value_types=value_type)
+        param_dict = dict(member_param_data)
+        if "name" in param_dict:
+            name_val = param_dict.pop("name")
+            if not isinstance(name_val, str):
+                raise TypeError(f"name must be a str, got {type(name_val).__name__}")
+        return Parameter(
+            name=member, **cast("dict[str, Any]", param_dict), _value_types=value_type
+        )
 
     def to_dict(self, *, use_last: bool = False) -> dict[str, dict[str, Any]]:
         """Serialise this ParameterFrame to a dictionary.
@@ -427,7 +436,7 @@ class ParameterFrame:
         self,
         keys: list[str] | None = None,
         floatfmt: str = ".5g",
-        value_label: str | None = "value",
+        value_label: str = "value",
     ) -> tuple[list[str], list[list[str]]]:
         """
         Create the tabulated data for use with tabulate.
@@ -447,21 +456,24 @@ class ParameterFrame:
         :
             The tabulated data as column headers and a list of rows
         """
+        keys_list = (
+            list(ParamDictT.__annotations__.keys()) if keys is None else list(keys)
+        )
         try:
-            pkey = keys.index("Parameter")
-        except (ValueError, AttributeError):
+            pkey = keys_list.index("Parameter")
+        except ValueError:
             pkey = None
 
         if pkey is not None:
-            keys.pop(pkey)
-            if "name" in keys:
-                keys.pop(keys.index("name"))
-            if "unit" in keys:
-                keys.pop(keys.index("unit"))
-            keys.insert(pkey, "unit")
-            keys.insert(pkey, "name")
+            keys_list.pop(pkey)
+            if "name" in keys_list:
+                keys_list.pop(keys_list.index("name"))
+            if "unit" in keys_list:
+                keys_list.pop(keys_list.index("unit"))
+            keys_list.insert(pkey, "unit")
+            keys_list.insert(pkey, "name")
 
-        columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
+        columns = keys_list
         rec_col = copy.deepcopy(columns)
 
         try:
@@ -507,7 +519,7 @@ class ParameterFrame:
         keys: list[str] | None = None,
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".5g",
-        value_label: str | None = "value",
+        value_label: str = "value",
     ) -> str:
         """
         Tabulate the ParameterFrame
@@ -561,7 +573,7 @@ class ParameterFrame:
         return self.tabulate()
 
 
-def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
+def _validate_parameter_field(field, member_type: Any) -> tuple[type, ...]:
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
@@ -584,10 +596,10 @@ class EmptyFrame(ParameterFrame):
 
 def make_parameter_frame(
     params: ParameterFrameLike,
-    param_cls: type[ParameterFrameOrNoneT],
+    param_cls: type[ParameterFrame] | None,
     *,
     allow_unknown: bool = False,
-) -> ParameterFrameOrNoneT:
+) -> Any:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 
@@ -659,7 +671,7 @@ def make_parameter_frame(
 
 
 def tabulate_values_from_multiple_frames(
-    frames: Iterable[ParameterFrameT],
+    frames: Sequence[ParameterFrameT],
     value_labels: Iterable[str],
     tablefmt: str = "fancy_grid",
     floatfmt: str = ".5g",

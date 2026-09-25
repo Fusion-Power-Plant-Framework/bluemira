@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import chain, pairwise
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast, overload
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -95,10 +95,13 @@ class CellStage:
             self.ext_void,
         )
 
-    def get_all_hollow_merged_cells(self):
+    def get_all_hollow_merged_cells(self, csg: BluemiraNeutronicsCSG):
         """Blanket and divertor cells"""
         return [
-            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.blanket],
+            *[
+                openmc.Cell(region=stack.get_overall_region(csg))
+                for stack in self.blanket
+            ],
             *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
         ]
 
@@ -150,8 +153,8 @@ def plot_surfaces(surfaces_list: list[openmc.Surface], ax=None):
         plot_surface_at_1000cm(ax, surface, color_num=i)
     ax.legend()
     ax.set_aspect("equal")
-    ax.set_ylim([-1000, 1000])
-    ax.set_xlim([-1000, 1000])
+    ax.set_ylim((-1000.0, 1000.0))
+    ax.set_xlim((-1000.0, 1000.0))
     return ax
 
 
@@ -257,11 +260,11 @@ def torus_from_3points(
     surface_id, name:
         See openmc.Surface
     """
-    point1 = point1[0], 0, point1[-1]
-    point2 = point2[0], 0, point2[-1]
-    point3 = point3[0], 0, point3[-1]
-    circle = make_circle_arc_3P(point1, point2, point3)
-    cad_circle = circle.shape.OrderedEdges[0].Curve
+    p1 = (float(point1[0]), 0.0, float(point1[-1]))
+    p2 = (float(point2[0]), 0.0, float(point2[-1]))
+    p3 = (float(point3[0]), 0.0, float(point3[-1]))
+    circle = make_circle_arc_3P(p1, p2, p3)
+    cad_circle = cast("Any", circle.shape).OrderedEdges[0].Curve
     center, radius = cad_circle.Center, cad_circle.Radius
     return torus_from_circle(
         [center[0], center[-1]], radius, surface_id=surface_id, name=name
@@ -293,7 +296,7 @@ def torus_from_circle(
 
 
 def z_torus(
-    center: npt.ArrayLike,
+    center: Sequence[float] | npt.NDArray[np.floating],
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
@@ -310,7 +313,10 @@ def z_torus(
         minor radius of the torus
 
     """
-    major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
+    center_arr = np.asarray(center)
+    major_radius, height, minor_radius = [
+        to_cm(x) for x in (center_arr[0], center_arr[-1], minor_radius)
+    ]
     return openmc.ZTorus(
         z0=height,
         a=major_radius,
@@ -610,7 +616,7 @@ def make_dividing_surface(csg, component):
 
 def blanket_and_divertor_outer_regions(
     csg, blanket, divertor, *, control_id: bool = False
-) -> openmc.Region:
+) -> tuple[openmc.Region, openmc.Region]:
     """
     Get the entire tokamak's poloidal cross-section (everything inside
     self.geom.boundary) as an openmc.Region.
@@ -816,7 +822,7 @@ class BluemiraNeutronicsCSG:
         point2: npt.NDArray[np.float64],
         surface_id: int | None = None,
         name: str = "",
-    ) -> openmc.Surface | openmc.model.ZConeOneSided | None:
+    ) -> openmc.Surface | None:
         """
         Create either a cylinder, a cone, or a surface from 2 points using only the
         rz coordinates of any two points on it.
@@ -855,7 +861,7 @@ class BluemiraNeutronicsCSG:
 
     def surface_from_straight_line(
         self,
-        straight_line_info: StraightLineInfo,
+        straight_line_info: StraightLineInfo | CircleInfo,
         surface_id: int | None = None,
         name: str = "",
     ):
@@ -879,7 +885,7 @@ class BluemiraNeutronicsCSG:
             info = wire.key_points
             plane_cone_cylinder = self.surface_from_straight_line(info, name=name)
             if isinstance(info, CircleInfo):
-                torus = torus_from_circle(info.center, info.radius, name=name)
+                torus = torus_from_circle(list(info.center), info.radius, name=name)
                 # will need the openmc.Union of these two objects later.
                 surface_list.append((plane_cone_cylinder, torus))
             else:
@@ -1054,8 +1060,8 @@ class BluemiraNeutronicsCSG:
     def choose_region(
         self,
         surface: openmc.Surface
-        | tuple[openmc.Surface]
-        | tuple[openmc.Surface | openmc.ZTorus],
+        | tuple[openmc.Surface, ...]
+        | openmc.model.ZConeOneSided,
         vertices_array: npt.NDArray,
         *,
         control_id: bool = False,
@@ -1105,7 +1111,10 @@ class BluemiraNeutronicsCSG:
     def region_from_surface_series(
         self,
         series_of_surfaces: Sequence[
-            openmc.Surface | tuple[openmc.Surface, openmc.ZTorus | None] | None
+            openmc.Surface
+            | tuple[openmc.Surface, ...]
+            | openmc.model.ZConeOneSided
+            | None
         ],
         vertices_array: npt.NDArray,
         *,
@@ -1157,11 +1166,11 @@ class BlanketCell(openmc.Cell):
 
     def __init__(
         self,
-        exterior_surface: openmc.Surface,
-        ccw_surface: openmc.Surface,
-        cw_surface: openmc.Surface,
-        interior_surface: openmc.Surface | None,
-        vertices: Coordinates,
+        exterior_surface: openmc.Surface | openmc.model.ZConeOneSided,
+        ccw_surface: openmc.Surface | openmc.model.ZConeOneSided,
+        cw_surface: openmc.Surface | openmc.model.ZConeOneSided,
+        interior_surface: openmc.Surface | openmc.model.ZConeOneSided | None,
+        vertices: Coordinates | npt.NDArray,
         csg: BluemiraNeutronicsCSG,
         cell_id: int | None = None,
         name: str = "",
@@ -1256,7 +1265,13 @@ class BlanketCellStack:
         """Number of cells in stack"""
         return len(self.cell_stack)
 
-    def __getitem__(self, index_or_slice) -> list[BlanketCell] | BlanketCell:
+    @overload
+    def __getitem__(self, index_or_slice: int) -> BlanketCell: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[BlanketCell]: ...
+    def __getitem__(
+        self, index_or_slice: int | slice
+    ) -> list[BlanketCell] | BlanketCell:
         """Get cell from stack"""
         return self.cell_stack[index_or_slice]
 
@@ -1330,7 +1345,7 @@ class BlanketCellStack:
         return self._interfaces
 
     def get_overall_region(
-        self, csg: BluemiraNeutronicsCSG, *, control_id: bool = False
+        self, csg: BluemiraNeutronicsCSG | None = None, *, control_id: bool = False
     ) -> openmc.Region:
         """
         Calculate the region covering the entire cell stack.
@@ -1346,6 +1361,8 @@ class BlanketCellStack:
         GeometryError
             Vertices must be convex
         """
+        if csg is None:
+            csg = BluemiraNeutronicsCSG()
         vertices = np.vstack((
             self.cell_stack[0].vertex.T[(1, 2),],
             self.cell_stack[-1].vertex.T[(3, 0),],
@@ -1367,8 +1384,8 @@ class BlanketCellStack:
     def from_pre_cell(
         cls,
         pre_cell: PreCell,
-        ccw_surface: openmc.Surface,
-        cw_surface: openmc.Surface,
+        ccw_surface: openmc.Surface | openmc.model.ZConeOneSided,
+        cw_surface: openmc.Surface | openmc.model.ZConeOneSided,
         depth_series: npt.NDArray,
         csg: BluemiraNeutronicsCSG,
         fill_lib: MaterialsLibrary,
@@ -1411,7 +1428,7 @@ class BlanketCellStack:
             Incorrect number of edges on external wire
         """
         # check exterior wire is correct
-        ext_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
+        ext_curve_comp = cast("Any", pre_cell.exterior_wire.shape).OrderedEdges
         if len(ext_curve_comp) != 1:
             raise TypeError("Incorrect type of BluemiraWire parsed in.")
         if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
@@ -1430,7 +1447,7 @@ class BlanketCellStack:
             pre_cell.cell_walls.ends,
         ])
         # 1.1 perform sanity check
-        directions = np.diff(pre_cell.cell_walls, axis=1)  # shape (2, 1, 2)
+        directions = np.diff(pre_cell.cell_walls.cell_walls, axis=1)  # shape (2, 1, 2)
         dirs = directions[:, 0, :]
         i = "(unspecified)" if blanket_stack_num is None else blanket_stack_num
         cls.check_cut_point_ordering(
@@ -1510,7 +1527,7 @@ class BlanketCellStack:
             zip(wall_cut_pts[1:][layer_mask], cell_types, strict=False)
         ):
             j = k + 1  # = range(1, M+1)
-            if j > 1:
+            if j > 1 and isinstance(int_surf, openmc.Surface):
                 int_surf.name = (
                     f"{cell_type}-{cell_type.name} "
                     f"interface boundary of blanket cell stack {i}"
@@ -1519,6 +1536,7 @@ class BlanketCellStack:
                 *points,
                 surface_id=surface_ids[j],  # up to M+1
             )
+            assert ext_surf is not None  # noqa: S101
             cell_stack.append(
                 BlanketCell(
                     exterior_surface=ext_surf,
@@ -1533,7 +1551,8 @@ class BlanketCellStack:
                 )
             )
             int_surf = ext_surf
-        int_surf.name = "vacuum-vessel-facing surface"
+        if isinstance(int_surf, openmc.Surface):
+            int_surf.name = "vacuum-vessel-facing surface"
 
         return cls(cell_stack)
 
@@ -1581,7 +1600,13 @@ class BlanketCellArray:
         """Number of cell stacks"""
         return len(self.blanket_cell_array)
 
-    def __getitem__(self, index_or_slice) -> list[BlanketCellStack] | BlanketCellStack:
+    @overload
+    def __getitem__(self, index_or_slice: int) -> BlanketCellStack: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[BlanketCellStack]: ...
+    def __getitem__(
+        self, index_or_slice: int | slice
+    ) -> list[BlanketCellStack] | BlanketCellStack:
         """Get cell stack"""
         return self.blanket_cell_array[index_or_slice]
 
@@ -1730,6 +1755,8 @@ class BlanketCellArray:
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
 
+            assert ccw_surf is not None  # noqa: S101
+            assert cw_surf is not None  # noqa: S101
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
                 ccw_surf,
@@ -1824,7 +1851,7 @@ class DivertorCell(openmc.Cell):
         GeometryError
             Volume is negative
         """
-        half_solid = BluemiraSolid(revolve_shape(self.outline))
+        half_solid = BluemiraSolid(cast("Any", revolve_shape(self.outline)))
         cm3_volume = to_cm3(half_solid.volume * 2)
         if cm3_volume <= 0:
             raise GeometryError("Volume (as calculated by FreeCAD) is negative!")
@@ -1963,7 +1990,13 @@ class DivertorCellStack:
         """Length of DivertorCellStack"""
         return len(self.cell_stack)
 
-    def __getitem__(self, index_or_slice) -> list[DivertorCell] | DivertorCell:
+    @overload
+    def __getitem__(self, index_or_slice: int) -> DivertorCell: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[DivertorCell]: ...
+    def __getitem__(
+        self, index_or_slice: int | slice
+    ) -> list[DivertorCell] | DivertorCell:
         """Get item for DivertorCellStack"""
         return self.cell_stack[index_or_slice]
 
@@ -2157,7 +2190,13 @@ class DivertorCellArray:
         """Length of DivertorCellArray"""
         return len(self.cell_array)
 
-    def __getitem__(self, index_or_slice) -> list[DivertorCellStack] | DivertorCellStack:
+    @overload
+    def __getitem__(self, index_or_slice: int) -> DivertorCellStack: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[DivertorCellStack]: ...
+    def __getitem__(
+        self, index_or_slice: int | slice
+    ) -> list[DivertorCellStack] | DivertorCellStack:
         """Get item for DivertorCellArray"""
         return self.cell_array[index_or_slice]
 
@@ -2233,7 +2272,7 @@ class DivertorCellArray:
             :func:`~bluemira.radiation_transport.neutronics.make_csg.region_from_surface_series`
         """
         return openmc.Union([
-            stack[0].exclusion_zone(
+            stack.cell_stack[0].exclusion_zone(
                 away_from_plasma=True,
                 control_id=control_id,
                 additional_test_points=stack.exterior_wire.get_3D_coordinates(),
