@@ -8,6 +8,10 @@
 Finite element Node object
 """
 
+from __future__ import annotations
+
+from typing import Any
+
 import numpy as np
 
 from bluemira.structural.constants import D_TOLERANCE, LoadKind
@@ -97,7 +101,7 @@ class Node:
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load: Load | dict[str, float | str]):
+    def add_load(self, load: Load | dict[str, Any]):
         """
         Applies a load to the Node object.
 
