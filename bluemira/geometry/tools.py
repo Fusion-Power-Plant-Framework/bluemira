@@ -1113,12 +1113,12 @@ def partial_diff_of_volume(
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
-    shape: BluemiraGeoT,
+    shape: BluemiraGeo,
     base: npt.ArrayLike = (0.0, 0.0, 0.0),
     direction: npt.ArrayLike = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
-) -> BluemiraGeoT:
+) -> BluemiraGeo:
     """
     Apply the revolve (base, dir, degree) to this shape
 
