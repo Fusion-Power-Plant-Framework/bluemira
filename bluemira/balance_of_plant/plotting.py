@@ -11,7 +11,7 @@ Plotting for balance of plant
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +22,7 @@ from bluemira.display.palettes import BLUEMIRA_PALETTE
 from bluemira.optimisation import optimise
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -41,14 +41,14 @@ class SuperSankey(Sankey):
         self,
         patchlabel: str = "",
         flows: Iterable[float] | None = None,
-        orientations: Iterable[float] | None = None,
-        labels: str | list[str | None] | None = "",
+        orientations: Iterable[int] | None = None,
+        labels: str | Iterable[str | None] = "",
         trunklength: float = 1.0,
-        pathlengths: float | list[float] = 0.25,
+        pathlengths: float | Iterable[float] = 0.25,
         prior: int | None = None,
-        future: int | None = None,
-        connect: tuple[int, int] | list[tuple[int, int]] = (0, 0),
+        connect: tuple[int, int] | list[tuple[int, int]] | None = (0, 0),
         rotation: float = 0,
+        future: int | None = None,
         **kwargs,
     ):
         __doc__ = super().__doc__  # noqa: F841
@@ -56,23 +56,37 @@ class SuperSankey(Sankey):
         # the Sankey class can't handle.
         if future is None:
             # There is only one connection, Sankey knows how to do this
+            c: tuple[int, int]
+            if isinstance(connect, list):
+                c = connect[0]
+            elif connect is None:
+                c = (0, 0)
+            else:
+                c = connect
+            lbls = "" if labels is None else labels
             super().add(
                 patchlabel,
                 flows,
                 orientations,
-                labels,
+                lbls,
                 trunklength,
                 pathlengths,
                 prior,
-                connect,
+                c,
                 rotation,
                 **kwargs,
             )
         else:
             # There are two connections, use new method
+            if not isinstance(connect, list):
+                raise ValueError(
+                    "connect must be a list of tuples when future is specified"
+                )
+            if flows is None:
+                raise ValueError("flows must be provided when future is specified")
             self._double_connect(
                 patchlabel,
-                flows,
+                list(flows),
                 orientations,
                 labels,
                 trunklength,
@@ -87,17 +101,17 @@ class SuperSankey(Sankey):
     def _double_connect(
         self,
         patchlabel: str,
-        flows: Iterable[float] | None,
-        orientations: Iterable[float] | None,
-        labels: str | list[str | None] | None,
+        flows: Sequence[float],
+        orientations: Iterable[int] | None,
+        labels: str | Iterable[str | None],
         trunklength: float,
-        pathlengths: list[float],
+        pathlengths: float | Iterable[float],
         prior: int | None,
-        future: int | None,
+        future: int,
         connect: list[tuple[int, int]],
         rotation: float,
         **kwargs,
-    ):
+    ) -> None:
         """
         Handles two connections in a Sankey diagram.
 
@@ -122,8 +136,13 @@ class SuperSankey(Sankey):
             flows, orientations, prior, future, connect, trunklength=trunklength
         )
         # Replace
-        pathlengths[0] = dx
-        pathlengths[-1] = dy
+        p_lengths: list[float]
+        if isinstance(pathlengths, (int, float)):
+            p_lengths = [float(pathlengths)] * len(flows)
+        else:
+            p_lengths = [float(p) for p in pathlengths]
+        p_lengths[0] = dx
+        p_lengths[-1] = dy
         self.add(
             patchlabel=patchlabel,
             labels=labels,
@@ -132,17 +151,17 @@ class SuperSankey(Sankey):
             prior=prior,
             connect=connect[0],
             trunklength=trunklength,
-            pathlengths=pathlengths,
+            pathlengths=p_lengths,
             rotation=rotation,
             facecolor=kwargs.get("facecolor"),
         )
 
     def _opt_connect(
         self,
-        flows: Iterable[float] | None,
-        orient: Iterable[float] | None,
+        flows: Sequence[float],
+        orient: Iterable[int] | None,
         prior: int | None,
-        future: int | None,
+        future: int,
         connect: list[tuple[int, int]],
         trunklength: float,
     ) -> tuple[float, float]:
@@ -208,10 +227,10 @@ class SuperSankey(Sankey):
         x0 = np.zeros(2)
         result = optimise(minimise_dxdy, x0=x0, algorithm="SLSQP_SCIPY")
         self.extent = extent  # Finish clean-up
-        return result.x
+        return (float(result.x[0]), float(result.x[1]))
 
 
-BALANCE_PLOT_DEFAULTS = {
+BALANCE_PLOT_DEFAULTS: dict[str, Any] = {
     # Matplotlib figure
     "facecolor": "k",
     "figsize": (14, 8),
@@ -241,7 +260,7 @@ class BalanceOfPlantPlotter:
     reactor.
     """
 
-    plot_options = deepcopy(BALANCE_PLOT_DEFAULTS)
+    plot_options: dict[str, Any] = deepcopy(BALANCE_PLOT_DEFAULTS)
 
     def __init__(self, **kwargs):
         self.plot_options = {**self.plot_options, **kwargs}
