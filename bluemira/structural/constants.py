@@ -61,14 +61,16 @@ class LoadKind(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value: str) -> LoadKind:
-        try:
-            return cls[value.replace(" ", "_").upper()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no load type {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> LoadKind:
+        if isinstance(value, str):
+            try:
+                return cls[value.replace(" ", "_").upper()]
+            except KeyError:
+                pass
+        raise StructuralError(
+            f"{cls.__name__} has no load type {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 class SubLoadType(Enum):
@@ -79,14 +81,16 @@ class SubLoadType(Enum):
     ALL = auto()
 
     @classmethod
-    def _missing_(cls, value: str) -> SubLoadType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no load type {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> SubLoadType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise StructuralError(
+            f"{cls.__name__} has no load type {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 class LoadType(IntEnum):
@@ -100,14 +104,16 @@ class LoadType(IntEnum):
     Mz = auto()
 
     @classmethod
-    def _missing_(cls, value: str) -> LoadType:
-        try:
-            return cls[value.capitalize()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no load type {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> LoadType:
+        if isinstance(value, str):
+            try:
+                return cls[value.capitalize()]
+            except KeyError:
+                pass
+        raise StructuralError(
+            f"{cls.__name__} has no load type {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
     @DynamicClassAttribute
     def vector(self):
@@ -127,11 +133,13 @@ class DisplacementType(IntEnum):
     Rz = auto()
 
     @classmethod
-    def _missing_(cls, value: str) -> DisplacementType:
-        try:
-            return cls[value.capitalize()]
-        except KeyError:
-            raise StructuralError(
-                f"{cls.__name__} has no load type {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> DisplacementType:
+        if isinstance(value, str):
+            try:
+                return cls[value.capitalize()]
+            except KeyError:
+                pass
+        raise StructuralError(
+            f"{cls.__name__} has no load type {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
