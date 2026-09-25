@@ -151,9 +151,7 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
     )
 
 
-def _convert_non_commutative(
-    unit_list: list[Quantity], filter_index: list[int]
-) -> Any:
+def _convert_non_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Any:
     """Converts angle units and combines non commutative units
 
     Notes

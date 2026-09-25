@@ -178,7 +178,11 @@ class CrossSectionCurrentSource(CurrentSource):
         return np.array([(self._dcm @ (p - self._origin)) for p in points])
 
     def plot(
-        self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs  # noqa: ARG002
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
     ):
         """
         Plot the CurrentSource.
@@ -359,7 +363,11 @@ class SourceGroup(ABC):
         self._points @= rotation_matrix(angle, axis)
 
     def plot(
-        self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs  # noqa: ARG002
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
     ):
         """
         Plot the MultiCurrentSource.

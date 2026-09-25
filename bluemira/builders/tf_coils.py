@@ -213,9 +213,7 @@ class RipplePointSelector:
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
-    def _constrain_ripple(
-        self, geom: GeometryParameterisation
-    ) -> np.ndarray:
+    def _constrain_ripple(self, geom: GeometryParameterisation) -> np.ndarray:
         """
         Ripple constraint function
 
@@ -614,9 +612,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             )
 
         if self.ripple_values is None or self.ripple_selector.points is None:
-            raise BuilderError(
-                "Cannot plot ripple values before running optimise()"
-            )
+            raise BuilderError("Cannot plot ripple values before running optimise()")
 
         rv = np.asarray(self.ripple_values, dtype=float)
         norm = mpl.colors.Normalize()

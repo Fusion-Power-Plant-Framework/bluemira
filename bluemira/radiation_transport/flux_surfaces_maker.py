@@ -301,9 +301,7 @@ def _get_sep_out_intersection(
 
     if sep.n_null == NumNull.SN:
         sep_coords = (
-            sep.separatrix[0]
-            if isinstance(sep.separatrix, list)
-            else sep.separatrix
+            sep.separatrix[0] if isinstance(sep.separatrix, list) else sep.separatrix
         )
         sep_intersections = coords_plane_intersect(sep_coords, yz_plane)
         if sep_intersections is None:

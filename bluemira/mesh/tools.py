@@ -205,11 +205,7 @@ def import_mesh(
 
 
 def _check_dimensions(dimensions: Sequence[int] | int) -> tuple[int, ...]:
-    dims = (
-        tuple(range(dimensions))
-        if isinstance(dimensions, int)
-        else tuple(dimensions)
-    )
+    dims = tuple(range(dimensions)) if isinstance(dimensions, int) else tuple(dimensions)
 
     if len(dims) not in {2, 3}:
         raise MeshConversionError(
@@ -326,9 +322,7 @@ def _get_data(mesh: Any, cell_type: str) -> list[Any]:
     return [cell.data for cell in mesh.cells if cell.type == cell_type]
 
 
-def _make_cellblocks(
-    data: Sequence[Any], cell_type: str
-) -> list[meshio.CellBlock]:
+def _make_cellblocks(data: Sequence[Any], cell_type: str) -> list[meshio.CellBlock]:
     return [meshio.CellBlock(cell_type, np.concatenate(data))]
 
 
@@ -339,7 +333,9 @@ def _make_mesh(
     cell_data: dict[str, list[np.ndarray]],
 ) -> meshio.Mesh:
     return meshio.Mesh(
-        mesh.points[:, list(dimensions)], cells=cells, cell_data=cell_data  # ty: ignore[invalid-argument-type]
+        mesh.points[:, list(dimensions)],
+        cells=cells,
+        cell_data=cell_data,  # ty: ignore[invalid-argument-type]
     )
 
 

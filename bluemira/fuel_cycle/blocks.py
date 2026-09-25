@@ -177,9 +177,7 @@ class FuelCycleComponent:
         """
         model = cast("Any", self.model)
         args = (
-            self.model_args
-            if isinstance(self.model_args, tuple)
-            else (self.model_args,)
+            self.model_args if isinstance(self.model_args, tuple) else (self.model_args,)
         )
         self.m_out, self.inventory, self.sum_in, self.decayed = model(
             self.flow, self.t, *args

@@ -441,9 +441,7 @@ def raw_uc(
 ) -> np.ndarray: ...
 @overload
 def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any: ...
-def raw_uc(
-    value: Any, unit_from: str | Unit, unit_to: str | Unit
-) -> Any:
+def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any:
     """
     Raw unit converter
 

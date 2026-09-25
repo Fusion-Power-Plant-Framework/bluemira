@@ -17,6 +17,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from typing import Any
+
     CPointer: Any
     float64: Any
     intc: Any

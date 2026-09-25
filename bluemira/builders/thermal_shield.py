@@ -81,9 +81,7 @@ class VVTSBuilder(Builder):
         Build the vacuum vessel thermal shield component.
         """  # noqa: DOC201
         xz_vvts, xz_vvts_void = self.build_xz(self.keep_out_zone)
-        vvts_face = cast(
-            "BluemiraFace", xz_vvts.get_component_properties("shape")
-        )
+        vvts_face = cast("BluemiraFace", xz_vvts.get_component_properties("shape"))
         vvts_void_face = cast(
             "BluemiraFace", xz_vvts_void.get_component_properties("shape")
         )
@@ -218,9 +216,7 @@ class CryostatTSBuilder(Builder):
         xz_cts, xz_cts_void = self.build_xz(
             self.pf_keep_out_zones, self.tf_keep_out_zone
         )
-        cts_face = cast(
-            "BluemiraFace", xz_cts.get_component_properties("shape")
-        )
+        cts_face = cast("BluemiraFace", xz_cts.get_component_properties("shape"))
         cts_void_face = cast(
             "BluemiraFace", xz_cts_void.get_component_properties("shape")
         )

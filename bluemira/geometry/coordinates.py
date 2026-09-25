@@ -1983,9 +1983,7 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(
-    xy1: np.ndarray, xy2: np.ndarray
-) -> npt.NDArray[np.float64]:
+def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> npt.NDArray[np.float64]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).

@@ -1,4 +1,5 @@
 from typing import Any
+
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
@@ -62,7 +63,9 @@ class PROCESSModel(ModelSelection, Model):
         """
         PROCESS switch name
         """
-        raise NotImplementedError(f"{self.__class__.__name__} has no 'switch_name' property.")
+        raise NotImplementedError(
+            f"{self.__class__.__name__} has no 'switch_name' property."
+        )
 
 
 class PROCESSOptimisationAlgorithm(PROCESSModel):

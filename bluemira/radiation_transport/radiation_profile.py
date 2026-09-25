@@ -48,7 +48,6 @@ from bluemira.radiation_transport.radiation_tools import (
 )
 
 if TYPE_CHECKING:
-
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
@@ -712,7 +711,11 @@ class ScrapeOffLayerRadiation(Radiation):
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
         else:
-            sep = self.separatrix[0] if isinstance(self.separatrix, list) else self.separatrix
+            sep = (
+                self.separatrix[0]
+                if isinstance(self.separatrix, list)
+                else self.separatrix
+            )
             ob_ind = np.nonzero(sep.x > self.points["x_point"]["x"])
             ib_ind = np.nonzero(sep.x < self.points["x_point"]["x"])
             self.sep_ob = Coordinates({
@@ -903,7 +906,7 @@ class ScrapeOffLayerRadiation(Radiation):
         if te_sep is None:
             te_val = self.params.T_e_sep.value_as("eV")
             if te_val is None:
-                raise RadiationTransportError("T_e_sep must have a value")  # noqa: DOC501
+                raise RadiationTransportError("T_e_sep must have a value")
             te_sep = te_val
         ne_sep = self.params.n_e_sep.value
 
@@ -1380,7 +1383,9 @@ class ScrapeOffLayerRadiation(Radiation):
         return ax
 
     @staticmethod
-    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None) -> tuple[plt.Axes, plt.Axes]:
+    def plot_t_vs_n(
+        flux_tube, t_distribution, n_distribution, ax1=None
+    ) -> tuple[plt.Axes, plt.Axes]:
         """
         2D plot of temperature and density of a single flux tube within the SoL
 
@@ -2408,8 +2413,7 @@ class RadiationSource:
                 )
             elif isinstance(self.sol_rad, SNScrapeOffLayerRadiation):
                 sol_rad_flux_tubes = (
-                    self.sol_rad.flux_tubes_lfs
-                    + self.sol_rad.flux_tubes_hfs
+                    self.sol_rad.flux_tubes_lfs + self.sol_rad.flux_tubes_hfs
                 )
             else:
                 sol_rad_flux_tubes = []

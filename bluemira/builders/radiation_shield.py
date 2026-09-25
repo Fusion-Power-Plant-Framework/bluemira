@@ -130,9 +130,7 @@ class RadiationShieldBuilder(Builder):
 
         return shield_body
 
-    def build_xyz(
-        self, rs_face: BluemiraFace, degree: float = 360.0
-    ) -> list[Component]:
+    def build_xyz(self, rs_face: BluemiraFace, degree: float = 360.0) -> list[Component]:
         """
         Build the x-y-z components of the radiation shield.
         """  # noqa: DOC201

@@ -254,9 +254,7 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
             )
 
         total_fpy = float(np.sum(op_durs))
-        fraction = (total_fpy / lifetime_op_availability) / (
-            op_durs / op_avails
-        )
+        fraction = (total_fpy / lifetime_op_availability) / (op_durs / op_avails)
         if not np.all(np.isclose(fraction, 1.0)):
             bluemira_warn(
                 "User-specified operational availabilities do not match the specified"

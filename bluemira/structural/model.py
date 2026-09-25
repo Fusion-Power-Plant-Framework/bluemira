@@ -407,12 +407,9 @@ class FiniteElementModel:
                 node.add_load(load)
 
             elif (
-                (
-                    load.kind is LoadKind.ELEMENT_LOAD
-                    or load.kind is LoadKind.DISTRIBUTED_LOAD
-                )
-                and load.element_id is not None
-            ):
+                load.kind is LoadKind.ELEMENT_LOAD
+                or load.kind is LoadKind.DISTRIBUTED_LOAD
+            ) and load.element_id is not None:
                 element = self.geometry.elements[load.element_id]
                 element.add_load(load)
 
