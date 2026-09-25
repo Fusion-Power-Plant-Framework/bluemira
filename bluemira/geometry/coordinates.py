@@ -52,13 +52,15 @@ class RotationAxis(Enum):
     Z = auto()
 
     @classmethod
-    def _missing_(cls, value: str | RotationAxis) -> RotationAxis:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise CoordinatesError(
-                f"Invalid rotation axis: {value}. Choose from: {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> RotationAxis:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise CoordinatesError(
+            f"Invalid rotation axis: {value}. Choose from: {(*cls._member_names_,)}"
+        )
 
 
 def xyz_process(func):
@@ -500,7 +502,7 @@ def check_ccw_3d(
 @xyz_process
 def get_centroid(
     x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
-) -> np.ndarray:
+) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
 
@@ -619,7 +621,9 @@ def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
     return list(starmap(get_rational, enumerate([cx, cy, cz])))
 
 
-def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> float:
+def get_angle_between_points(
+    p0: npt.ArrayLike, p1: npt.ArrayLike, p2: npt.ArrayLike
+) -> float:
     """
     Angle between points. P1 is vertex of angle. ONly tested in 2d
 
@@ -628,15 +632,16 @@ def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> 
     :
         The angle between points.
     """
-    if not all(isinstance(p, np.ndarray) for p in [p0, p1, p2]):
-        p0, p1, p2 = np.array(p0), np.array(p1), np.array(p2)
-    ba = p0 - p1
-    bc = p2 - p1
+    p0_arr = np.asarray(p0)
+    p1_arr = np.asarray(p1)
+    p2_arr = np.asarray(p2)
+    ba = p0_arr - p1_arr
+    bc = p2_arr - p1_arr
     return get_angle_between_vectors(ba, bc)
 
 
 def get_angle_between_vectors(
-    v1: np.ndarray, v2: np.ndarray, *, signed: bool = False
+    v1: npt.ArrayLike, v2: npt.ArrayLike, *, signed: bool = False
 ) -> float:
     """
     Angle between vectors. Will return the signed angle if specified.
@@ -654,10 +659,10 @@ def get_angle_between_vectors(
     -------
     The angle between the vectors [radians]
     """
-    if not all(isinstance(p, np.ndarray) for p in [v1, v2]):
-        v1, v2 = np.array(v1), np.array(v2)
-    v1n = v1 / np.linalg.norm(v1)
-    v2n = v2 / np.linalg.norm(v2)
+    v1_arr = np.asarray(v1, dtype=float)
+    v2_arr = np.asarray(v2, dtype=float)
+    v1n = v1_arr / np.linalg.norm(v1_arr)
+    v2n = v2_arr / np.linalg.norm(v2_arr)
     cos_angle = np.dot(v1n, v2n)
     # clip to dodge a NaN
     angle = np.arccos(np.clip(cos_angle, -1, 1))
@@ -731,7 +736,7 @@ def rotation_matrix(
     return r_matrix
 
 
-def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+def rotation_matrix_v1v2(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     """
     Get a rotation matrix based off two vectors.
 
@@ -740,12 +745,14 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     :
         A roational matrix based off two vectors.
     """
-    v1 /= np.linalg.norm(v1)
-    v2 /= np.linalg.norm(v2)
+    v1_arr = np.array(v1, dtype=float)
+    v2_arr = np.array(v2, dtype=float)
+    v1_arr /= np.linalg.norm(v1_arr)
+    v2_arr /= np.linalg.norm(v2_arr)
 
-    cos_angle = np.dot(v1, v2)
-    d = cross_2d_3d(v1, v2)
-    sin_angle = np.linalg.norm(d)
+    cos_angle = float(np.dot(v1_arr, v2_arr))
+    d = np.cross(v1_arr, v2_arr)
+    sin_angle = float(np.linalg.norm(d))
 
     if sin_angle == 0:
         matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
@@ -945,7 +952,7 @@ def on_polygon(x: float, z: float, poly: npt.NDArray[np.float64]) -> bool:
     -------
     Whether or not the point is on the perimeter of the polygon
     """
-    xz = np.array([x, z], dtype=nb.float64)
+    xz = np.array([x, z], dtype=np.float64)
     for ind in range(poly.shape[0] - 1):
         c = check_linesegment(poly[ind], poly[ind + 1], xz)
 
@@ -1044,11 +1051,11 @@ def vector_intersect(
 
 
 def get_bisection_line(
-    p1: npt.NDArray[float],
-    p2: npt.NDArray[float],
-    p3: npt.NDArray[float],
-    p4: npt.NDArray[float],
-) -> tuple[npt.NDArray[float], npt.NDArray[float]]:
+    p1: npt.NDArray[np.float64],
+    p2: npt.NDArray[np.float64],
+    p3: npt.NDArray[np.float64],
+    p4: npt.NDArray[np.float64],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Find the bisection line between two lines.
 
@@ -1280,17 +1287,17 @@ class Coordinates:
         Whether or not the Coordinates are planar.
         """
         self._set_plane_props()
-        return self._is_planar
+        return bool(self._is_planar)
 
     @property
-    def normal_vector(self) -> np.ndarray:
+    def normal_vector(self) -> np.ndarray | None:
         """
         The normal vector of the best-fit plane of the Coordinates.
         """
         self._set_plane_props()
         return self._normal_vector
 
-    def check_ccw(self, axis: np.ndarray | None = None) -> bool:
+    def check_ccw(self, axis: npt.ArrayLike | None = None) -> bool:
         """
         Whether or not the Coordinates are ordered in the counter-clockwise direction
         about a specified axis. If None is specified, the Coordinates normal vector will
@@ -1311,6 +1318,8 @@ class Coordinates:
             return False
 
         if axis is None:
+            if self.normal_vector is None:
+                return False
             axis = self.normal_vector
         else:
             axis = np.array(axis, dtype=float)
@@ -1320,7 +1329,7 @@ class Coordinates:
 
         return check_ccw_3d(self.x, self.y, self.z, axis)
 
-    def set_ccw(self, axis: np.ndarray | None = None):
+    def set_ccw(self, axis: npt.ArrayLike | None = None):
         """
         Set the Coordinates to be counter-clockwise about a specified axis. If None is
         specified, the Coordinates normal vector will be used.
@@ -1370,7 +1379,7 @@ class Coordinates:
         -------
         The index of the closest point
         """
-        return np.argmin(self.distance_to(point))
+        return int(np.argmin(self.distance_to(point)))
 
     def interpolate(
         self,
@@ -1411,7 +1420,7 @@ class Coordinates:
         if {None} == {ndiscr, dl}:
             raise ValueError("Either dl or ndsicr must be specified")
         if dl is None:
-            if ndiscr < 2:  # noqa: PLR2004
+            if ndiscr is None or ndiscr < 2:  # noqa: PLR2004
                 raise ValueError("ndiscr must be greater than 2.")
         else:
             ndiscr = max(math.ceil(self.length / dl + 1), 2)
@@ -1502,7 +1511,7 @@ class Coordinates:
         """
         return {"x": self.x, "y": self.y, "z": self.z}
 
-    def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str:
+    def to_json(self, filename: str, **kwargs: Any) -> str | None:
         """
         Save the Coordinates as a JSON file.
 
@@ -1543,12 +1552,15 @@ class Coordinates:
         # [sic] coordinates do not have a "mass", but named such for consistency with
         # other geometry objects.
         if len(self) == 1:
-            return self.xyz.T[0]
+            pt = self.xyz.T[0]
+            return (float(pt[0]), float(pt[1]), float(pt[2]))
 
         if len(self) == 2:  # noqa: PLR2004
-            return np.average(self.xyz.T)
+            avg = np.average(self.xyz.T, axis=0)
+            return (float(avg[0]), float(avg[1]), float(avg[2]))
 
-        return tuple(get_centroid_3d(*self._array))
+        c = get_centroid_3d(*self._array)
+        return (c[0], c[1], c[2])
 
     # =============================================================================
     # Array-like behaviour
@@ -1562,7 +1574,7 @@ class Coordinates:
         return self._array.T
 
     @property
-    def shape(self) -> tuple[int, int]:
+    def shape(self) -> tuple[int, ...]:
         """
         Shape of the Coordinates
         """
@@ -1629,8 +1641,8 @@ class Coordinates:
 
     def rotate(
         self,
-        base: tuple[float, float, float] = (0, 0, 0),
-        direction: tuple[float, float, float] = (0, 0, 1),
+        base: npt.ArrayLike = (0, 0, 0),
+        direction: npt.ArrayLike = (0, 0, 1),
         degree: float = 0.0,
     ):
         """
@@ -1653,24 +1665,24 @@ class Coordinates:
         if degree == 0.0:  # noqa: RUF069
             return
 
-        base = np.array(base, dtype=float)
-        if base.size != DIM:
+        base_arr = np.array(base, dtype=float)
+        if base_arr.size != DIM:
             raise CoordinatesError("Base vector must be of size 3.")
 
-        direction = np.array(direction, dtype=float)
-        if direction.size != DIM:
+        dir_arr = np.array(direction, dtype=float)
+        if dir_arr.size != DIM:
             raise CoordinatesError("Direction vector must be of size 3.")
-        direction /= np.linalg.norm(direction)
+        dir_arr /= np.linalg.norm(dir_arr)
 
-        points = self._array - base.reshape(DIM, 1)
+        points = self._array - base_arr.reshape(DIM, 1)
 
-        r_matrix = Rotation.from_rotvec(np.deg2rad(degree) * direction).as_matrix()
-        new_array = points.T @ r_matrix.T + base
+        r_matrix = Rotation.from_rotvec(np.deg2rad(degree) * dir_arr).as_matrix()
+        new_array = points.T @ r_matrix.T + base_arr
         self._array = new_array.T
 
         self._update_plane_props()
 
-    def translate(self, vector: tuple[float, float, float] = (0, 0, 0)):
+    def translate(self, vector: npt.ArrayLike = (0, 0, 0)):
         """
         Translate this shape with the vector. This function modifies the self
         object.
@@ -1774,7 +1786,7 @@ class Coordinates:
     # Dunders (with different behaviour to array)
     # =============================================================================
 
-    def __eq__(self, other: Coordinates) -> bool:
+    def __eq__(self, other: object) -> bool:
         """
         Check the Coordinates for equality with other Coordinates.
 
@@ -1973,7 +1985,7 @@ def _coords_plane_intersect(
 
 def get_intersect(
     xy1: np.ndarray, xy2: np.ndarray
-) -> np.ndarray[np.ndarray[np.float64], np.ndarray[np.float64]]:
+) -> npt.NDArray[np.float64]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).
@@ -2141,13 +2153,15 @@ def convex_2d_hull_coordinates(coordinates: Coordinates) -> Coordinates:
         one of the 3 cardinal axes.
     """
     if coordinates.is_planar:
-        if np.array_equal(abs(coordinates.normal_vector), [1, 0, 0]):
+        norm = coordinates.normal_vector
+        abs_norm = np.abs(norm) if norm is not None else np.zeros(3)
+        if np.array_equal(abs_norm, [1, 0, 0]):
             hull = ConvexHull(coordinates.yz.T)
             filtered_points = np.insert(hull.points[sorted(hull.vertices)], 0, 0, axis=1)
-        elif np.array_equal(abs(coordinates.normal_vector), [0, 1, 0]):
+        elif np.array_equal(abs_norm, [0, 1, 0]):
             hull = ConvexHull(coordinates.xz.T)
             filtered_points = np.insert(hull.points[sorted(hull.vertices)], 1, 0, axis=1)
-        elif np.array_equal(abs(coordinates.normal_vector), [0, 0, 1]):
+        elif np.array_equal(abs_norm, [0, 0, 1]):
             hull = ConvexHull(coordinates.xy.T)
             filtered_points = np.insert(hull.points[sorted(hull.vertices)], 2, 0, axis=1)
         else:
@@ -2162,9 +2176,9 @@ def convex_2d_hull_coordinates(coordinates: Coordinates) -> Coordinates:
 
 
 def choose_direction(
-    vector: npt.NDArray[float],
-    lower_pt: npt.NDArray[float],
-    higher_pt: npt.NDArray[float],
+    vector: npt.NDArray[np.float64],
+    lower_pt: npt.NDArray[np.float64],
+    higher_pt: npt.NDArray[np.float64],
 ):
     """
     Flip the vector to the correct side (multiply by +1 or -1) so that

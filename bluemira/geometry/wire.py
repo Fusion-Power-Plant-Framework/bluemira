@@ -10,7 +10,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import bluemira.codes._geometryapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
@@ -52,7 +52,11 @@ class BluemiraWire(BluemiraGeo):
     """
 
     def __init__(
-        self, boundary: Sequence[cadapi.apiWire | BluemiraWire], label: str = ""
+        self,
+        boundary: (
+            cadapi.apiWire | BluemiraWire | Sequence[cadapi.apiWire | BluemiraWire]
+        ),
+        label: str = "",
     ):
         boundary_classes = [type(self), cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
@@ -85,6 +89,13 @@ class BluemiraWire(BluemiraGeo):
             return output
 
         return wrapper
+
+    @property
+    def shape(self) -> cadapi.apiWire:
+        """
+        CAD shape of the wire.
+        """
+        return cast("cadapi.apiWire", super().shape)
 
     def _create_shape(self) -> cadapi.apiWire:
         """
@@ -149,7 +160,10 @@ class BluemiraWire(BluemiraGeo):
             Wire has not been closed
         """
         if not self.is_closed():
-            closure = BluemiraWire(cadapi.wire_closure(self.shape), label)
+            closing_wire = cadapi.wire_closure(self.shape)
+            if closing_wire is None:
+                raise NotClosedWireError("The open boundary has not been closed.")
+            closure = BluemiraWire(closing_wire, label)
             self._boundary.append(closure)
             self._set_boundary(self.boundary)
 
@@ -214,11 +228,13 @@ class BluemiraWire(BluemiraGeo):
             raise GeometryError("Must specify either alpha or distance, not both.")
 
         if distance is None:
+            if alpha is None:
+                raise GeometryError("Must specify one of alpha or distance.")
             if alpha < 0.0:
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
                 )
-                alpha = 0
+                alpha = 0.0
             elif alpha > 1.0:
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
@@ -313,7 +329,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(vertexes)
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The ordered edges of the wire.
         """

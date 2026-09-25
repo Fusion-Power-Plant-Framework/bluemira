@@ -45,8 +45,8 @@ class BluemiraPlane:
 
     def __init__(
         self,
-        base: tuple[float, float, float] = (0.0, 0.0, 0.0),
-        axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
+        base: Iterable[float] = (0.0, 0.0, 0.0),
+        axis: Iterable[float] = (0.0, 0.0, 1.0),
         label: str = "",
     ):
         if np.allclose(np.array(axis), np.array([0, 0, 0])):
@@ -200,7 +200,7 @@ class BluemiraPlane:
 
 
 def xz_plane_from_2_points(
-    point1: npt.NDArray[float], point2: npt.NDArray[float]
+    point1: npt.NDArray[np.float64], point2: npt.NDArray[np.float64]
 ) -> BluemiraPlane:
     """
     Make a plane that is perpendicular to the RZ plane using only 2 points.
@@ -247,8 +247,8 @@ def z_plane(z: float):
 
 
 def calculate_plane_dir(
-    start_point, end_point
-) -> tuple[BluemiraPlane, npt.NDArray[float]]:
+    start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
+) -> tuple[BluemiraPlane, npt.NDArray[np.float64]]:
     """
     Calculate the cutting plane and the direction of the cut from 2 points.
     Both points must lie on the RZ plane.
