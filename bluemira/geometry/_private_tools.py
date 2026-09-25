@@ -9,11 +9,11 @@ A collection of private geometry tools for discretised geometry. Do not use thes
 use primitive operations in geometry/tools.py instead.
 """
 
-from functools import partial
 from itertools import zip_longest
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes import _geometryapi as cadapi
@@ -205,7 +205,7 @@ def convert_coordinates_to_wire(
     z: np.ndarray,
     label: str = "",
     method: str = "mixed",
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> BluemiraWire:
     """
     Converts the provided coordinates into a BluemiraWire using the specified method.
@@ -233,13 +233,19 @@ def convert_coordinates_to_wire(
     Returns
     -------
     The resulting BluemiraWire from the conversion
+
+    Raises
+    ------
+    ValueError
+        If method is not recognised
     """
-    method_map = {
-        "mixed": make_mixed_wire,
-        "polygon": partial(make_wire, spline=False),
-        "spline": partial(make_wire, spline=True),
-    }
-    return method_map[method](x, y, z, label=label, **kwargs)
+    if method == "mixed":
+        return make_mixed_wire(x, y, z, label=label, **kwargs)
+    if method == "polygon":
+        return make_wire(x, y, z, label=label, spline=False, **kwargs)
+    if method == "spline":
+        return make_wire(x, y, z, label=label, spline=True, **kwargs)
+    raise ValueError(f"Unknown method {method}")
 
 
 def convert_coordinates_to_face(
@@ -248,7 +254,7 @@ def convert_coordinates_to_face(
     z: np.ndarray,
     method: str = "mixed",
     label: str = "",
-    **kwargs: dict[str, Any],
+    **kwargs: Any,
 ) -> BluemiraFace:
     """
     Converts the provided coordinates into a BluemiraFace using the specified method.
@@ -276,13 +282,19 @@ def convert_coordinates_to_face(
     Returns
     -------
     The resulting BluemiraFace from the conversion
+
+    Raises
+    ------
+    ValueError
+        If method is not recognised
     """
-    method_map = {
-        "mixed": make_mixed_face,
-        "polygon": partial(make_face, spline=False),
-        "spline": partial(make_face, spline=True),
-    }
-    return method_map[method](x, y, z, label=label, **kwargs)
+    if method == "mixed":
+        return make_mixed_face(x, y, z, label=label, **kwargs)
+    if method == "polygon":
+        return make_face(x, y, z, label=label, spline=False, **kwargs)
+    if method == "spline":
+        return make_face(x, y, z, label=label, spline=True, **kwargs)
+    raise ValueError(f"Unknown method {method}")
 
 
 def make_mixed_wire(
@@ -364,6 +376,10 @@ def make_mixed_wire(
             return make_wire(x, y, z, label=label)
         raise
 
+    if mfm.wire is None:
+        raise RuntimeError("Failed to build wire")
+    if mfm.wire is None:
+        raise RuntimeError("MixedFaceMaker failed to build wire.")
     return mfm.wire
 
 
@@ -459,6 +475,8 @@ def make_mixed_face(
 
     # Sometimes there won't be a RuntimeError, and you get a free SIGSEGV for your
     # troubles.
+    if mfm.face is None:
+        raise RuntimeError("Failed to build face")
     face_area = mfm.face.area
     coords_area = get_area(x, y, z)
     if np.isclose(coords_area, face_area, rtol=area_rtol):
@@ -699,7 +717,7 @@ class MixedFaceMaker:
                 vertices.extend([index, index + 1])
         return np.unique(np.array(vertices, dtype=int))
 
-    def _get_polygon_sequences(self, vertices: np.ndarray) -> list[list[float]]:
+    def _get_polygon_sequences(self, vertices: npt.NDArray[np.int_]) -> list[list[int]]:
         """
         Gets the sequences of polygon segments
 
@@ -783,7 +801,9 @@ class MixedFaceMaker:
 
         return sequences
 
-    def _get_spline_sequences(self, polygon_sequences: np.ndarray) -> list[list[float]]:
+    def _get_spline_sequences(
+        self, polygon_sequences: list[list[int]]
+    ) -> list[list[int]]:
         """
         Gets the sequences of spline segments
 
@@ -862,15 +882,15 @@ class MixedFaceMaker:
         return coords[:, mask]
 
     def _make_subcoordinates(
-        self, polygon_sequences: np.ndarray, spline_sequences: np.ndarray
+        self, polygon_sequences: list[list[int]], spline_sequences: list[list[int]]
     ):
-        polygon_coords = []
-        spline_coords = []
+        polygon_coords: list[np.ndarray] = []
+        spline_coords: list[np.ndarray] = []
 
-        for sequence, s_coords in [
-            [polygon_sequences, polygon_coords],
-            [spline_sequences, spline_coords],
-        ]:
+        for sequence, s_coords in (
+            (polygon_sequences, polygon_coords),
+            (spline_sequences, spline_coords),
+        ):
             for seg in sequence:
                 if seg[0] > seg[1]:
                     # There is a bridge
