@@ -50,7 +50,7 @@ class Setup(CodesSetup):
 
     def __init__(
         self,
-        params: dict | ParameterFrame,
+        params: ProcessSolverParams,
         in_dat_path: str,
         problem_settings: dict[str, float | str] | None = None,
     ):

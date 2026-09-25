@@ -48,7 +48,7 @@ class Teardown(CodesTeardown):
         super().__init__(params, PROCESS_NAME)
         self.run_directory = run_directory
         self.read_directory = read_directory
-        self._mfile_wrapper: _MFileWrapper = None
+        self._mfile_wrapper: _MFileWrapper | None = None
         self.ordered_radial_build = {}
 
     def run(self):
@@ -143,7 +143,7 @@ class Teardown(CodesTeardown):
             outputs.append(value)
         return outputs
 
-    def _load_mfile(self, path: str, *, recv_all: bool):
+    def _load_mfile(self, path: str | Path, *, recv_all: bool):
         """
         Load the MFile at the given path, and update this object's
         params with the MFile's values.
@@ -157,7 +157,7 @@ class Teardown(CodesTeardown):
         self._update_params_with_outputs(mfile.data, recv_all=recv_all)
         self.ordered_radial_build = mfile.ordered_radial_build
 
-    def _read_mfile(self, path: str):
+    def _read_mfile(self, path: str | Path):
         """
         Read an MFile, applying the given mappings, and performing unit
         conversions.
@@ -238,7 +238,7 @@ class _MFileWrapper:
         Path to an MFile.
     """
 
-    def __init__(self, file_path: str, name: str = "PROCESS"):
+    def __init__(self, file_path: str | Path, name: str = "PROCESS"):
         if not Path(file_path).is_file():
             raise CodesError(f"Path '{file_path}' is not a file.")
         self._name = name
@@ -248,7 +248,7 @@ class _MFileWrapper:
         self.data = {}
         self.ordered_radial_build = {}
 
-    def read(self) -> dict:
+    def read(self) -> None:
         """
         Read the data from the PROCESS MFile.
 

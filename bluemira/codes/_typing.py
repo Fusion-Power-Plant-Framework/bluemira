@@ -19,6 +19,7 @@ class TransportSolver(Protocol):
     Form for a transport solver function
     """
 
+    name: str
     params: MappedParameterFrame
 
     def execute(self, run_mode: str | BaseRunMode) -> MappedParameterFrame:

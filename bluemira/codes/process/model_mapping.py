@@ -1,3 +1,4 @@
+from typing import Any
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
@@ -48,7 +49,7 @@ class ModelSelection:
     _value_: int
     requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
-    _switches: list[str] | None = field(repr=False, default=None)
+    _switches: Any = field(repr=False, default=None)
 
 
 class PROCESSModel(ModelSelection, Model):
@@ -61,7 +62,7 @@ class PROCESSModel(ModelSelection, Model):
         """
         PROCESS switch name
         """
-        raise NotImplementedError(f"{self.__name__} has no 'switch_name' property.")
+        raise NotImplementedError(f"{self.__class__.__name__} has no 'switch_name' property.")
 
 
 class PROCESSOptimisationAlgorithm(PROCESSModel):

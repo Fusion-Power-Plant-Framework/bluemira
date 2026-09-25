@@ -16,7 +16,7 @@ Display helpers for the CadQuery backend.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from OCP.BRepAdaptor import BRepAdaptor_CompCurve
@@ -25,6 +25,8 @@ from OCP.GCPnts import GCPnts_QuasiUniformDeflection
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
+    from OCP.TopoDS import TopoDS_Wire
+
     from bluemira.codes.cadapi._cadquery.aliases import apiShape
     from bluemira.display.palettes import ColorPalette
 
@@ -107,7 +109,7 @@ def _discretise_wire(wire: apiShape, deflection: float) -> np.ndarray:
 
     Curvature-adaptive: straight runs get few points, tight bends get more.
     """
-    adaptor = BRepAdaptor_CompCurve(wire.wrapped)
+    adaptor = BRepAdaptor_CompCurve(cast("TopoDS_Wire", wire.wrapped))
     sampler = GCPnts_QuasiUniformDeflection(adaptor, deflection)
     n = sampler.NbPoints() if sampler.IsDone() else 0
     if n < _MIN_SEGMENT_POINTS:

@@ -10,9 +10,9 @@ from __future__ import annotations
 import abc
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal, Self
 
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import ParamDictT, ParameterFrame
 from bluemira.codes.error import CodesError
 
 
@@ -26,6 +26,8 @@ class MappedParameterFrame(ParameterFrame):
     See :class:`~bluemira.base.parameter_frame.ParameterFrame` for details
     on how to declare parameters.
     """
+
+    _mappings: dict[str, ParameterMapping] = {}
 
     def __post_init__(self):
         """Ensure mappings are as immutable as we can manage"""
@@ -41,8 +43,11 @@ class MappedParameterFrame(ParameterFrame):
 
     @classmethod
     def from_defaults(
-        cls, data: dict, source: str = "bluemira codes default"
-    ) -> MappedParameterFrame:
+        cls,
+        data: dict | None = None,
+        source: str = "bluemira codes default",
+        **_kwargs: Any,
+    ) -> Self:
         """
         Create ParameterFrame with default values for external codes.
 
@@ -56,7 +61,8 @@ class MappedParameterFrame(ParameterFrame):
         :
             The parameter frame
         """
-        new_param_dict = {}
+        data = {} if data is None else data
+        new_param_dict: dict[str, ParamDictT] = {}
         for bm_map_name, param_map in cls._mappings.items():
             new_param_dict[bm_map_name] = {
                 "value": data.get(param_map.name),
@@ -135,7 +141,7 @@ class ParameterMapping:
     recv: bool = True
     unit: str | None = None
 
-    _frozen = ()
+    _frozen: tuple[str, ...] = ()
 
     def __post_init__(self):
         """

@@ -313,7 +313,7 @@ def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> tuple[np.ndarray, np.ndarray]:
 
 def get_flux_surfaces_from_mesh(
     mesh: dolfinx.mesh.Mesh,
-    psi_norm_func: Callable[[float, float], float],
+    psi_norm_func: Callable[[np.ndarray], np.ndarray],
     x_1d: np.ndarray | None = None,
     nx: int | None = None,
     ny_fs_min: int = 40,
@@ -579,7 +579,7 @@ def create_mesh(
     gdim: int | tuple = (0, 2),
     comm=MPI.COMM_WORLD,
     rank: int = 0,
-) -> dolfinx.mesh.Mesh:
+) -> tuple[tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags], dict]:
     """
     Create mesh
 
