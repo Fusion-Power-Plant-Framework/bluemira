@@ -216,8 +216,7 @@ class FitMethod(Enum):
             except KeyError:
                 pass
         raise ValueError(
-            f"No known fitting method {value}"
-            f"please select from {(*cls._member_names_,)}"
+            f"No known fitting method {value}please select from {(*cls._member_names_,)}"
         )
 
 

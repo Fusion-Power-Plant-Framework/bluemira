@@ -39,12 +39,8 @@ def csg_filter_cells(material_list, csg_model: CellStage):
 
     """
     blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
-    blanket_excl_vv = [
-        cell for stack in blanket_cell_array for cell in list(stack)[:-1]
-    ]
-    div_excl_vv = [
-        cell for stack in divertor_cell_array for cell in list(stack)[:-1]
-    ]
+    blanket_excl_vv = [cell for stack in blanket_cell_array for cell in list(stack)[:-1]]
+    div_excl_vv = [cell for stack in divertor_cell_array for cell in list(stack)[:-1]]
     cells = list(csg_model.cells[:-1])  # exclude the external void
     cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [

@@ -94,6 +94,7 @@ def _ellipk(m: float) -> float:
 
 
 if TYPE_CHECKING:
+
     @overload
     def ellipk_nb(m: float) -> float: ...
     @overload

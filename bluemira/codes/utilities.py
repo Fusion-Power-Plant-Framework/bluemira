@@ -57,8 +57,7 @@ class Model(Enum):
             except KeyError:
                 pass
         raise ValueError(
-            f"{cls.__name__} has no type {value}."
-            f" Select from {(*cls._member_names_,)}"
+            f"{cls.__name__} has no type {value}. Select from {(*cls._member_names_,)}"
         )
 
 

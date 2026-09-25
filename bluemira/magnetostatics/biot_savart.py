@@ -249,7 +249,11 @@ class BiotSavartFilament(CurrentSource):
         self._arrays = [array @ r for array in self._arrays]
 
     def plot(
-        self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs  # noqa: ARG002
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
     ):
         """
         Plot the CurrentSource.
