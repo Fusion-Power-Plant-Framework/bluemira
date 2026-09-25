@@ -177,7 +177,7 @@ class EQConfig:
         max_currents: npt.NDArray[np.float64],
         current_constraints: list[UpdateableConstraint] | None,
         eq_constraints: list[MagneticConstraint],
-    ) -> CoilsetOptimisationProblem:
+    ) -> EqCoilsetOptimisationProblem:
         """Make equilibria optimisation problem
 
         Returns
@@ -191,11 +191,11 @@ class EQConfig:
             Unimplemented setup for equilibria problem
         """
         if self.problem == MinimalCurrentCOP:
-            constraints = eq_constraints
+            constraints: list[UpdateableConstraint] = list(eq_constraints)
             if current_constraints:
-                constraints += current_constraints
+                constraints.extend(current_constraints)
 
-            problem = self.problem(
+            problem = MinimalCurrentCOP(
                 eq,
                 max_currents=max_currents,
                 opt_conditions=self.opt_conditions,
@@ -203,7 +203,7 @@ class EQConfig:
                 constraints=constraints,
             )
         elif self.problem == TikhonovCurrentCOP:
-            problem = self.problem(
+            problem = TikhonovCurrentCOP(
                 eq,
                 max_currents=max_currents,
                 opt_conditions=self.opt_conditions,
@@ -530,13 +530,17 @@ class PulsedCoilsetDesign(ABC):
             Start of flat top and end of flat top optimisation problems.
         """
         eq_ref = self.snapshots[self.EQ_REF].eq
-        max_currents_pf = self._get_max_currents(self.coilset.get_coiltype("PF"))
+        pf_coiltype = self.coilset.get_coiltype("PF")
+        assert pf_coiltype is not None  # noqa: S101
+        max_currents_pf = self._get_max_currents(pf_coiltype)
         max_currents = self._get_max_currents(self.coilset)
 
         opt_problems = []
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
-            eq.coilset.get_coiltype("PF").resize(max_currents_pf)
+            pf_eq = eq.coilset.get_coiltype("PF")
+            assert pf_eq is not None  # noqa: S101
+            pf_eq.resize(max_currents_pf)
 
             current_constraints = []
             if self._current_opt_cons:
@@ -547,7 +551,7 @@ class PulsedCoilsetDesign(ABC):
             eq_constraints = deepcopy(self.eq_constraints)
             for constraint in (*eq_constraints, *current_constraints):
                 if isinstance(constraint, PsiBoundaryConstraint | PsiConstraint):
-                    constraint.target_value = psi_boundary / (2 * np.pi)
+                    constraint.target_value = np.array([psi_boundary / (2 * np.pi)])
 
             opt_problems.append(
                 self.eq_config.make_opt_problem(
@@ -812,10 +816,14 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
         """  # noqa: DOC201
-        max_cs_currents = coilset.get_coiltype("CS").get_max_current(0.0)
+        cs_coiltype = coilset.get_coiltype("CS")
+        assert cs_coiltype is not None  # noqa: S101
+        max_cs_currents = cs_coiltype.get_max_current(0.0)
         pf_currents = []
         for problem in sub_opt_problems:
-            pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()
+            pf_coiltype = problem.eq.coilset.get_coiltype("PF")
+            assert pf_coiltype is not None  # noqa: S101
+            pf_coils = pf_coiltype.get_control_coils()
             pf_currents.append(np.abs(pf_coils.current))
 
         max_pf_currents = np.max(pf_currents, axis=0)
@@ -824,7 +832,9 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         max_pf_currents = np.clip(1.1 * max_pf_currents, 0, max_pf_current)
 
         for problem in sub_opt_problems:
-            pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()
+            pf_coiltype = problem.eq.coilset.get_coiltype("PF")
+            assert pf_coiltype is not None  # noqa: S101
+            pf_coils = pf_coiltype.get_control_coils()
             pf_coils.resize(max_pf_currents)
             pf_coils.fix_size = True
             pf_coils.discretisation = self.eq_config.coil_mesh_size

@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import warnings
 from itertools import cycle
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -53,7 +53,6 @@ from bluemira.utilities.plot_tools import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
@@ -72,7 +71,7 @@ __all__ = [
     "XZLPlotter",
 ]
 
-PLOT_DEFAULTS = {
+PLOT_DEFAULTS: dict[str, Any] = {
     "psi": {"nlevels": 15, "cmap": "viridis"},
     "field": {"nlevels": 15, "cmap": "magma"},
     "current": {"nlevels": 30, "cmap": "plasma"},
@@ -102,6 +101,9 @@ class Plotter:
     """
     Utility plotter abstract object
     """
+
+    ax: Any = None
+    f: Any = None
 
     def __init__(self, ax=None, *, subplots=EqSubplots.XZ, nrows=1, ncols=2, **kwargs):
         for kwarg in kwargs:
@@ -538,7 +540,7 @@ class EquilibriumPlotterMixin:
     """
 
     eq: Equilibrium | FixedPlasmaEquilibrium
-    ax: Axes
+    ax: Any = None
     psi: float | npt.NDArray[np.float64]
 
     def plot_B_component(self, poloidal=True, **kwargs):  # noqa: FBT002
@@ -548,7 +550,13 @@ class EquilibriumPlotterMixin:
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
 
-        B_comp = self.eq.Bp() if poloidal else self.eq.Bt(self.eq.x)
+        if not poloidal:
+            if TYPE_CHECKING:
+                assert isinstance(self.eq, Equilibrium)
+            assert self.eq.x is not None  # noqa: S101
+            B_comp = self.eq.Bt(self.eq.x)
+        else:
+            B_comp = self.eq.Bp()
         levels = np.linspace(1e-36, np.amax(B_comp), nlevels)
         c = self.ax.contourf(self.eq.x, self.eq.z, B_comp, levels=levels, cmap=cmap)
         cbar = plt.colorbar(c)
@@ -670,7 +678,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         self.eq = equilibrium
 
         # Do some housework
-        self.psi = self.eq.psi()
+        self.psi = np.asarray(self.eq.psi())
 
         self.o_points, self.x_points = self.eq.get_OX_points(
             self.psi,
@@ -813,18 +821,30 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
 
         super().__init__(ax, subplots=self.diag_ops.split_psi_plots)
 
+        self.cax: Any = None
+        self.cax1: Any = None
+        self.cax2: Any = None
+
         self.total_psi = self.eq.psi()
-        self.plasma_psi = self.eq.plasma.psi()
-        self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
+        eq = self.eq
+        assert eq.plasma is not None  # noqa: S101
+        self.plasma_psi = eq.plasma.psi()
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        assert eq.coilset is not None  # noqa: S101
+        self.coilset_psi = eq.coilset.psi(eq.x, eq.z)
         self.ref_total_psi = self.reference.psi()
-        self.ref_plasma_psi = self.reference.plasma.psi()
+        ref_eq = cast("Equilibrium", self.reference)
+        assert ref_eq.plasma is not None  # noqa: S101
+        self.ref_plasma_psi = ref_eq.plasma.psi()
         if np.allclose(self.ref_total_psi, self.ref_plasma_psi):
             # Fill with zeros if there is no coilset
             self.ref_coilset_psi = 0.0 * self.reference.grid.x
         else:
-            self.ref_coilset_psi = self.reference.coilset.psi(
-                self.reference.x, self.reference.z
-            )
+            assert ref_eq.coilset is not None  # noqa: S101
+            assert ref_eq.x is not None  # noqa: S101
+            assert ref_eq.z is not None  # noqa: S101
+            self.ref_coilset_psi = ref_eq.coilset.psi(ref_eq.x, ref_eq.z)
 
     def plot_reference_LCFS(self, ref_lcfs_label=None):
         """
@@ -896,7 +916,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
                 label=lcfs_label,
             )
 
-    def plot_psi_coilset(self, grid: Grid = None, **kwargs):
+    def plot_psi_coilset(self, grid: Grid | None = None, **kwargs):
         """
         Plot flux surfaces - coilset contribution
         """
@@ -968,7 +988,7 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         self.plot_LCFS()
         self.plot_reference_LCFS()
 
-    def plot_psi_plasma(self, grid: Grid = None, **kwargs):
+    def plot_psi_plasma(self, grid: Grid | None = None, **kwargs):
         """
         Plot flux surfaces - plasma contribution
         """
@@ -1016,12 +1036,12 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
         else:
             self.ax[1].contour(x, z, self.plasma_psi, levels=levels, cmap=cmap, zorder=8)
         # Plot current and reference lcfs
-        self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
+        self.plot_LCFS(lcfs_label=f"{self.eq.label or ''} LCFS")
         self.plot_reference_LCFS(
-            ref_lcfs_label="Reference " + self.reference.label + " LCFS"
+            ref_lcfs_label=f"Reference {self.reference.label or ''} LCFS"
         )
 
-    def plot_psi(self, grid: Grid = None, **kwargs):
+    def plot_psi(self, grid: Grid | None = None, **kwargs):
         """
         Plot flux surfaces
         """
@@ -1080,9 +1100,9 @@ class EquilibriumComparisonBasePlotter(EquilibriumPlotterMixin, Plotter):
             self.ax.contour(x, z, self.total_psi, levels=levels, cmap=cmap, zorder=8)
             plt.title("Total psi for input equilibrium")
         # Plot input and reference lcfs
-        self.plot_LCFS(lcfs_label=self.eq.label + " LCFS")
+        self.plot_LCFS(lcfs_label=f"{self.eq.label or ''} LCFS")
         self.plot_reference_LCFS(
-            ref_lcfs_label="Reference " + self.reference.label + " LCFS"
+            ref_lcfs_label=f"Reference {self.reference.label or ''} LCFS"
         )
 
 
@@ -1146,9 +1166,11 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
         self.i = 0
 
     def _calculate_psi(self):
-        diff_coilset_psi = self.ref_coilset_psi - self.eq.coilset.psi(
-            self.eq.x, self.eq.z
-        )
+        eq = cast("Equilibrium", self.eq)
+        assert eq.coilset is not None  # noqa: S101
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        diff_coilset_psi = self.ref_coilset_psi - eq.coilset.psi(eq.x, eq.z)
         # if all zeros
         if not np.all(diff_coilset_psi):
             self.coilset_psi = None
@@ -1161,6 +1183,9 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
         else:
             self.coilset_psi = diff_coilset_psi
 
+        if TYPE_CHECKING:
+            assert isinstance(self.eq, Equilibrium)
+        assert self.eq.plasma is not None  # noqa: S101
         diff_plasma_psi = self.ref_plasma_psi - self.eq.plasma.psi()
         # if all zeros
         if not np.all(diff_plasma_psi):
@@ -1185,7 +1210,7 @@ class EquilibriumComparisonPlotter(EquilibriumComparisonBasePlotter):
 
     def _clean_plots(self):
         if self.i == 0 and (self.diag_ops.psi_diff in PsiPlotType.DIFF):
-            if self.diag_ops.split_psi_plotsis is EqSubplots.XZ_COMPONENT_PSI:
+            if self.diag_ops.split_psi_plots is EqSubplots.XZ_COMPONENT_PSI:
                 self.cax1 = make_axes_locatable(self.ax[0]).append_axes(
                     "right", size="5%", pad="2%"
                 )
@@ -1427,7 +1452,9 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         """
         Find the difference between the reference and input equilibrium psi values.
         """
-        diff_coilset_psi = self.ref_coilset_psi - self.coilset_psi
+        diff_coilset_psi = np.asarray(self.ref_coilset_psi) - np.asarray(
+            self.coilset_psi
+        )
         # if all zeros
         if not np.all(diff_coilset_psi):
             self.coilset_psi = None
@@ -1451,7 +1478,7 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
         else:
             self.plasma_psi = diff_plasma_psi
 
-        diff_total_psi = self.ref_total_psi - self.total_psi
+        diff_total_psi = np.asarray(self.ref_total_psi) - np.asarray(self.total_psi)
         # if all zeros
         if not np.all(diff_total_psi):
             self.total_psi = None
@@ -1675,6 +1702,9 @@ class CorePlotter2(Plotter):
         """
         Plot the plasma equilibrium cross-core profiles.
         """
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        assert eq._jtor is not None  # noqa: S101
         jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
         p = eq.pressure_map()
         pfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], p)
@@ -1722,15 +1752,22 @@ class ProfilePlotter(Plotter):
             the amount of discretisation in the profiles
         """
         x = np.linspace(0, 1, n)
-        self.ax.plot(x, self.prof.shape(x), label="shape function")
-        self.ax.plot(x, self.prof.fRBpol(x) / max(self.prof.fRBpol(x)), label="fRBpol")
+        if hasattr(self.prof, "shape") and callable(self.prof.shape):
+            self.ax.plot(x, self.prof.shape(x), label="shape function")
         self.ax.plot(
-            x, self.prof.ffprime(x) / max(abs(self.prof.ffprime(x))), label="FFprime"
+            x, self.prof.fRBpol(x) / np.max(self.prof.fRBpol(x)), label="fRBpol"
         )
         self.ax.plot(
-            x, self.prof.pprime(x) / max(abs(self.prof.pprime(x))), label="pprime"
+            x,
+            self.prof.ffprime(x) / np.max(np.abs(self.prof.ffprime(x))),
+            label="FFprime",
         )
         self.ax.plot(
-            x, self.prof.pressure(x) / max(abs(self.prof.pressure(x))), label="pressure"
+            x, self.prof.pprime(x) / np.max(np.abs(self.prof.pprime(x))), label="pprime"
+        )
+        self.ax.plot(
+            x,
+            self.prof.pressure(x) / np.max(np.abs(self.prof.pressure(x))),
+            label="pressure",
         )
         self.ax.legend()

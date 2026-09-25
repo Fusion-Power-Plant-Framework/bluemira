@@ -8,15 +8,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from matplotlib._tri import TriContourGenerator  # noqa: PLC2701
-from matplotlib.tri import Triangulation
+from matplotlib.tri import TriContourSet, Triangulation
 from mpi4py import MPI
 from scipy.interpolate import interp1d
 
@@ -27,10 +28,9 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.fem_utils import read_from_msh
 from bluemira.mesh import meshing
 from bluemira.optimisation import optimise
-from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable
     from os import PathLike
 
     from matplotlib.pyplot import Axes
@@ -48,7 +48,7 @@ def plot_scalar_field(
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> tuple[Axes, Axes | None, Axes | None]:
+) -> tuple[Axes, TriContourSet | None, TriContourSet | None]:
     """
     Plot a scalar field
 
@@ -89,7 +89,8 @@ def plot_scalar_field(
 
     if tofill:
         cntrf = ax.tricontourf(x, y, data, levels=levels, cmap="RdBu_r")
-        fig.colorbar(cntrf, ax=ax)
+        if fig is not None:
+            fig.colorbar(cntrf, ax=ax)
 
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
@@ -121,7 +122,7 @@ def plot_profile(
 
 
 def get_tricontours(
-    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float | Iterable
+    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float | Iterable[float]
 ) -> list[np.ndarray | None]:
     """
     Get the contours of a value in a triangular set of points.
@@ -144,14 +145,13 @@ def get_tricontours(
     """
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
-    if is_num(value):
-        value = [value]
+    values = [float(v) for v in value] if isinstance(value, Iterable) else [float(value)]
 
-    results = []
-    for val in value:
+    results: list[np.ndarray | None] = []
+    for val in values:
         contour = tcg.create_contour(val)[0]
         if len(contour) > 0:
-            results.append(contour[0])
+            results.append(np.asarray(contour[0]))
         else:
             bluemira_warn(f"No tricontour found for {val=}")
             results.append(None)
@@ -159,7 +159,7 @@ def get_tricontours(
 
 
 def find_flux_surface(
-    psi_norm_func: Callable[[np.ndarray], float],
+    psi_norm_func: Callable[..., Any],
     psi_norm: float,
     mesh: dolfinx.mesh.Mesh | None = None,
     n_points: int = 100,
@@ -205,9 +205,12 @@ def find_flux_surface(
 
         psi_norm_array = psi_norm_func(mpoints)
         contour = get_tricontours(
-            mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
+            mpoints[:, 0], mpoints[:, 1], np.asarray(psi_norm_array), psi_norm
         )[0]
-        d_guess = np.array([abs(np.max(contour[0, :]) - x_axis) - search_range])
+        if contour is not None:
+            d_guess = np.array([abs(np.max(contour[0, :]) - x_axis) - search_range])
+        else:
+            d_guess = np.array([0.5])
 
         def lower_bound(x):
             return max(0.1, x - search_range)
@@ -471,7 +474,7 @@ def calculate_plasma_shape_params(
 
 
 def find_magnetic_axis(
-    psi_func: Callable[[np.ndarray], float], mesh: dolfinx.mesh.Mesh | None = None
+    psi_func: Callable[..., Any], mesh: dolfinx.mesh.Mesh | None = None
 ) -> np.ndarray:
     """
     Find the magnetic axis in the poloidal flux map.
@@ -561,7 +564,8 @@ def refine_mesh(
     """
 
     def inside_delta(xs):
-        return np.linalg.norm(xs[:2, :].T - refine_point[:2], axis=1) < distance
+        refine_pt = np.asarray(refine_point)[:2]
+        return np.linalg.norm(xs[:2, :].T - refine_pt, axis=1) < distance
 
     for _ in range(num_levels):
         dim = mesh.topology.dim
