@@ -32,7 +32,6 @@ if TYPE_CHECKING:
     from os import PathLike
 
     import bluemira.codes._geometryapi as cadapi
-    from bluemira.base.components import ComponentT
 
 
 DIM_2D = Literal["xy", "xz"]
@@ -51,7 +50,7 @@ class BaseManager(abc.ABC):
     """
 
     @abc.abstractmethod
-    def component(self) -> ComponentT:
+    def component(self) -> Component:
         """
         Return the component tree wrapped by this manager.
         """
@@ -194,16 +193,18 @@ class ComponentManager(BaseManager):
         The component tree this manager should wrap.
     """
 
-    def __init__(self, component: ComponentT) -> None:
+    def __init__(self, component: Component) -> None:
         self._component = component
 
     def _init_construction_param_values(  # noqa: PLR6301
         self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
     ) -> ConstructionParamValues:
-        c_params = c_params or {}
+        c_params_dict = dict(c_params) if c_params else {}
         possible_keys = ConstructionParams.__annotations__.keys()
         if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
+
+        return ConstructionParamValues.from_construction_params(c_params_dict)
 
         return ConstructionParamValues.from_construction_params(c_params)
 
@@ -214,7 +215,7 @@ class ComponentManager(BaseManager):
         """  # noqa: DOC201
         return CADConstructionType.PATTERN_RADIAL
 
-    def component(self) -> ComponentT:
+    def component(self) -> Component:
         """
         Return the component tree wrapped by this manager.
 
@@ -390,12 +391,14 @@ class Reactor(BaseManager):
     def _init_construction_param_values(
         self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
     ) -> ConstructionParamValues:
-        c_params = c_params or {}
-        c_params["total_sectors"] = self.n_sectors
+        c_params_dict = dict(c_params) if c_params else {}
+        c_params_dict["total_sectors"] = self.n_sectors
 
         possible_keys = ConstructionParams.__annotations__.keys()
         if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
+
+        return ConstructionParamValues.from_construction_params(c_params_dict)
 
         return ConstructionParamValues.from_construction_params(c_params)
 
