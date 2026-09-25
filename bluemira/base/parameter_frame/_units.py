@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pint
 
@@ -61,7 +61,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
                 raise ValueError("Unit conversion failed") from pe
         else:
             param_data["value"] = quantity.magnitude
-        param_data["unit"] = quantity.units
+        param_data["unit"] = str(quantity.units)
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
     except TypeError:
@@ -81,7 +81,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
 
 
 def _ensure_SI_unit_system(
-    quantity: Quantity, param_data: ParamDictT, value_type: Iterable[type]
+    quantity: Any, param_data: ParamDictT, value_type: Iterable[type]
 ) -> ParamDictT:
     """
     Enforces our SI unit system and updates the value accordingly
@@ -153,7 +153,7 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
 
 def _convert_non_commutative(
     unit_list: list[Quantity], filter_index: list[int]
-) -> Quantity:
+) -> Any:
     """Converts angle units and combines non commutative units
 
     Notes
@@ -165,8 +165,8 @@ def _convert_non_commutative(
     def get_key(i: Quantity) -> str:
         return next(iter(i._units.keys()))
 
-    def get_exp(i: Quantity) -> str:
-        return next(iter(i._units.values()))
+    def get_exp(i: Any) -> str:
+        return str(next(iter(i._units.values())))
 
     filtered_list = [unit_list[i] for i in filter_index]
     for no, i in enumerate(filtered_list):
@@ -180,10 +180,12 @@ def _convert_non_commutative(
             filtered_list[no] = i.to(ureg.Unit(f"{ANGLE}**{get_exp(i)}"))
 
     # multiplies all quantities together
-    return math.prod(filtered_list)
+    if not filtered_list:
+        return ureg.Quantity(1)
+    return cast("pint.Quantity", math.prod(filtered_list))
 
 
-def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Quantity:
+def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Any:
     """
     Combine commutative units
 
@@ -198,7 +200,7 @@ def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> 
     filtered_list = [unit_list[i] for i in filter_index]
 
     quantity = math.prod(filtered_list)
-    if not isinstance(quantity, ureg.Quantity):
+    if isinstance(quantity, int | float) or not hasattr(quantity, "to_preferred"):
         # is quantity now a number
         return quantity
 

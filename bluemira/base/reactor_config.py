@@ -20,6 +20,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.base.parameter_frame._parameter import ParamDictT
     from bluemira.base.parameter_frame.typed import ParameterFrameT
 
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 class ConfigParams:
     """Container for the global and local parameters of a `ReactorConfig`."""
 
-    global_params: ParameterFrameT
+    global_params: ParameterFrame
     local_params: dict[str, ParamDictT]
 
 
@@ -322,7 +323,7 @@ class ReactorConfig:
         f_data = self._read_json_file(f_path)
         return f_data, f_path.parent
 
-    def _extract(self, arg_keys: tuple[str], *, is_config: bool = True) -> dict:
+    def _extract(self, arg_keys: tuple[str, ...], *, is_config: bool = True) -> dict:
         extracted = {}
 
         # this routine is designed not to copy any dict's while parsing
