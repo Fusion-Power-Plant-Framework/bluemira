@@ -23,7 +23,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import PsiPoint, find_flux_surface_through_point
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -43,7 +43,6 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.find import PsiPoint
 
 
 @nb.jit(nopython=True, cache=True)
@@ -415,6 +414,7 @@ class OpenFluxSurface(FluxSurface):
 
         ref_coords = self.coords.copy()
         intersections = coords_plane_intersect(ref_coords, plane)
+        assert intersections is not None  # noqa: S101
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
@@ -431,6 +431,7 @@ class OpenFluxSurface(FluxSurface):
         ref_coords, insertion_loc = join_intersect(ref_coords, radial_line, get_arg=True)
 
         # Split the flux surface geometry
+        assert insertion_loc is not None  # noqa: S101
         first_intersection = insertion_loc[0]
         coords1 = Coordinates(ref_coords[:, : first_intersection + 1])
         coords2 = Coordinates(ref_coords[:, first_intersection:])
@@ -483,7 +484,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         # is at the smallest argument
         self.coords = Coordinates(coords_union_inters[:, : min(args) + 1])
 
-        fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
+        fw_arg = int(first_wall.argmin(np.array([self.x_end, 0.0, self.z_end])))
 
         if fw_arg + 1 == len(first_wall):
             pass
@@ -512,7 +513,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         -------
         Target flux expansion
         """
-        return (
+        return float(
             self.x_start
             * eq.Bp(self.x_start, self.z_start)
             / (self.x_end * eq.Bp(self.x_end, self.z_end))
@@ -547,19 +548,25 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             Divertor Index
         """
         # Get the x-point location for the legs
+        assert eq._x_points is not None  # noqa: S101
         if eq.is_double_null:
-            xpts = eq._x_points[:2]
-            xpts = xpts[np.argmin(np.abs(self.z_end - [x.z for x in xpts]))]
+            xpts_list = eq._x_points[:2]
+            xpts = xpts_list[
+                np.argmin(np.abs(self.z_end - np.array([x.z for x in xpts_list])))
+            ]
         else:
             xpts = eq._x_points[0]
 
         # Calculate distances along fs to x-point
-        distances = self.coords.distance_to([xpts.x, 0, xpts.z]).flatten(order="C")
+        distances = self.coords.distance_to(np.array([xpts.x, 0.0, xpts.z])).flatten(
+            order="C"
+        )
         argmin = np.argmin(distances)
 
         # Calculate and return the DI
-        return (distances[-1] * eq.Bp(self.x_start, self.z_start)) / (
-            distances[argmin] * eq.Bp(self.x_end, self.z_end)
+        return float(
+            (distances[-1] * eq.Bp(self.x_start, self.z_start))
+            / (distances[argmin] * eq.Bp(self.x_end, self.z_end))
         )
 
 
@@ -641,9 +648,23 @@ def analyse_plasma_core(eq: Equilibrium, n_points: int = 50) -> CoreResults:
         for end in ["", "_upper", "_lower"]
         for v in ["kappa", "delta", "zeta"]
     ]
+    vars_values = [[getattr(fs, var) for fs in flux_surfaces] for var in _vars]
     return CoreResults(
         psi_n,
-        *[[getattr(fs, var) for fs in flux_surfaces] for var in _vars],
+        vars_values[0],
+        vars_values[1],
+        vars_values[2],
+        vars_values[3],
+        vars_values[4],
+        vars_values[5],
+        vars_values[6],
+        vars_values[7],
+        vars_values[8],
+        vars_values[9],
+        vars_values[10],
+        vars_values[11],
+        vars_values[12],
+        vars_values[13],
         [fs.safety_factor(eq) for fs in flux_surfaces],
         [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
     )
@@ -689,7 +710,9 @@ class FieldLine:
             _f, ax = plt.subplots()
 
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
-        xi, _, zi = coords_plane_intersect(self.coords, xz_plane).T
+        inter = coords_plane_intersect(self.coords, xz_plane)
+        assert inter is not None  # noqa: S101
+        xi, _, zi = inter.T
         idx = np.nonzero(xi >= 0)
         xi = xi[idx]
         zi = zi[idx]
@@ -757,6 +780,7 @@ class FieldLineTracer:
             :
                 the minimal distance to the grid
             """
+            assert isinstance(self.boundary, Grid)  # noqa: S101
             if self.boundary.point_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
             return -np.min(self.boundary.distance_to(xz[:2]))
@@ -770,6 +794,7 @@ class FieldLineTracer:
             :
                 the minimal distance to the grid
             """
+            assert isinstance(self.boundary, Coordinates)  # noqa: S101
             return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
     def __init__(self, eq: Equilibrium, first_wall: Grid | Coordinates | None = None):
@@ -964,25 +989,22 @@ def calculate_connection_length_fs(
     passing through Coils, but really they should be intercepted beforehand!
     """
     if f_s is None:
-        xfs, zfs = find_flux_surface_through_point(
-            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
-        )
+        assert eq.x is not None  # noqa: S101
+        assert eq.z is not None  # noqa: S101
+        psi_grid = np.asarray(eq.psi())
+        psi_point = float(np.asarray(eq.psi(x, z)).item())
+        xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, psi_grid, x, z, psi_point)
         f_s = Coordinates({"x": xfs, "z": zfs})
     if f_s.closed:
         bluemira_print("Flux surface is closed. No connection length calculated.")
         return 0.0
-    f_s: OpenFluxSurface = OpenFluxSurface(f_s)
+    open_f_s = OpenFluxSurface(f_s)
 
-    class Point:
-        def __init__(self, x, z):
-            self.x = x
-            self.z = z
-
-    lfs, hfs = f_s.split(Point(x=x, z=z))
+    lfs, hfs = open_f_s.split(PsiPoint(x, z, 0.0))
     fs = lfs if forward else hfs
 
     fs.clip(first_wall)
-    return fs.connection_length(eq)
+    return float(fs.connection_length(eq))
 
 
 def poloidal_angle(Bp_strike: float, Bt_strike: float, gamma: float) -> float:

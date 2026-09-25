@@ -10,7 +10,7 @@ Tools for Coilgroups
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -132,7 +132,7 @@ def _get_symmetric_coils(
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
-    sym_stack = [[coil_matrix[0], 1, [0]]]
+    sym_stack: list[list[Any]] = [[coil_matrix[0], 1, [0]]]
     for i in range(1, len(x)):
         coil = coil_matrix[i]
 
