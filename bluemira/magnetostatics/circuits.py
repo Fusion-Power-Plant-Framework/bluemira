@@ -9,6 +9,7 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -43,8 +44,8 @@ class PlanarCircuit(SourceGroup):
         current: float,
         source_class: type[TrapezoidalPrismCurrentSource]
         | type[PolyhedralPrismCurrentSource],
-        xs_args: npt.NDArray[np.float64],
-    ) -> list[TrapezoidalPrismCurrentSource | PolyhedralPrismCurrentSource]:
+        xs_args: tuple[Any, ...],
+    ) -> list[Any]:
         """
         Generate the sources of a given class along the discretised shape
 
@@ -141,7 +142,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._transform_to_xz(deepcopy(shape))
         self._t_shape = shape
         closed = shape.closed
-        self._clockwise = shape.check_ccw((0, 1, 0))
+        self._clockwise = shape.check_ccw(np.array([0, 1, 0]))
         d_l = np.diff(shape.T, axis=0)
         midpoints = shape.T[:-1, :] + 0.5 * d_l
         betas = (
@@ -176,13 +177,15 @@ class PlanarCircuit(SourceGroup):
         :
             Tranformed coordinates.
         """
-        normal_vector = shape.normal_vector
+        coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
+        normal_vector = coords.normal_vector
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
-            return shape
-        shape.translate(-np.array(shape.center_of_mass))
+            return coords
+        com = coords.center_of_mass
+        coords.translate((-float(com[0]), -float(com[1]), -float(com[2])))
 
         rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
-        return Coordinates(rot_mat @ shape._array)
+        return Coordinates(rot_mat @ coords._array)
 
     def _get_half_angle(
         self,
