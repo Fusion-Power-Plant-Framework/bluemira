@@ -162,7 +162,7 @@ class PowerCycleEfficiencyCalc(abc.ABC):
     """
 
     @abc.abstractmethod
-    def calculate(self, *args) -> float:
+    def calculate(self, p_blanket: float, p_divertor: float) -> float:
         """
         Calculate the efficiency of the power cycle
         """
@@ -247,7 +247,9 @@ class FractionSplitStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def split(self, *args):
+    def split(
+        self, p_radiation: float, p_separatrix: float
+    ) -> tuple[float, float, float]:
         """
         Split flows somehow.
         """
@@ -471,15 +473,15 @@ class BalanceOfPlantModel:
         p_hcd_el = self.params.P_hcd_ss_el.value
         p_separatrix = p_charged - p_radiation + p_hcd
 
-        p_n_blk = self.params.P_n_blanket.last
-        p_n_div = self.params.P_n_divertor.last
-        p_n_vv = self.params.P_n_vessel.last
-        p_n_aux = self.params.P_n_aux.last
-        p_nrgm = self.params.P_n_e_mult.last
+        p_n_blk = float(self.params.P_n_blanket.last.value)
+        p_n_div = float(self.params.P_n_divertor.last.value)
+        p_n_vv = float(self.params.P_n_vessel.last.value)
+        p_n_aux = float(self.params.P_n_aux.last.value)
+        p_nrgm = float(self.params.P_n_e_mult.last.value)
         # "Lost" neutron power that doesn't go into any of the defined components
         p_n_other = p_neutron + p_nrgm - p_n_blk - p_n_div - p_n_vv - p_n_aux
 
-        p_blk_decay = self.params.P_n_decay.last
+        p_blk_decay = float(self.params.P_n_decay.last.value)
 
         p_rad_sep_blk, p_rad_sep_div, p_rad_sep_aux = self.rad_sep_strat.split(
             p_radiation, p_separatrix
