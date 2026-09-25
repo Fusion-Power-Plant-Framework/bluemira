@@ -11,7 +11,7 @@ A collection of tools used in the EU-DEMO design.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from anytree import PreOrderIter
@@ -45,13 +45,13 @@ from bluemira.geometry.tools import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from matproplib.material import Material
 
     from bluemira.base.components import ComponentT
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.geometry.base import BluemiraGeo, BluemiraGeoT
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
 
@@ -130,7 +130,9 @@ def compound_from_components(
     :
         The compounded component
     """
-    shapes = get_properties_from_components(components, ("shape"))
+    shapes = cast(
+        "list[BluemiraGeo]", get_properties_from_components(components, "shape")
+    )
     comp = make_compound(shapes, name)
     return PhysicalComponent(name, comp, material=material)
 
@@ -156,22 +158,24 @@ def fuse_components(
     :
         The single PhysicalComponent
     """
-    shapes = get_properties_from_components(components, ("shape"))
-    fused = shapes[0]
+    shapes = cast(
+        "list[BluemiraGeo]", get_properties_from_components(components, "shape")
+    )
+    fused: BluemiraGeo = shapes[0]
     for shape in shapes[1:]:
         fused = boolean_fuse([fused, shape], name)
     return PhysicalComponent(name, fused, material=material)
 
 
 def circular_pattern_component(
-    component: ComponentT | list[ComponentT],
+    component: Component | Sequence[Component],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
     origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-) -> list[ComponentT]:
+) -> list[Component]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 
@@ -207,10 +211,12 @@ def circular_pattern_component(
     ComponentError
         Could not find PhysicalComponent for a given sector
     """
-    component = [component] if isinstance(component, Component) else component
+    components: list[Component] = (
+        [component] if isinstance(component, Component) else list(component)
+    )
     sectors = [Component(f"{parent_prefix}") for _ in range(n_children)]
     # build sector trees by assigning copies of each component to sec. parents
-    for c in component:
+    for c in components:
         for parent_sc in sectors:
             c.copy(parent_sc)
 
@@ -222,7 +228,7 @@ def circular_pattern_component(
             comp.name = f"{comp.name} {sec_i + 1}"
 
     faux_sec_comp = Component(f"{parent_prefix} X")
-    faux_sec_comp.children = component
+    faux_sec_comp.children = components
 
     for search_index_i, comp in enumerate(PreOrderIter(faux_sec_comp)):
         if isinstance(comp, PhysicalComponent):
@@ -290,7 +296,8 @@ def pattern_revolved_silhouette(
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
 
         try:
-            shapes = boolean_cut(volume, gaps)
+            cut_res = boolean_cut(volume, gaps)
+            shapes = cut_res if isinstance(cut_res, list) else [cut_res]
         except ValueError:
             # TODO @CoronelBuendia: Unknown cause of failure in valid FreeCAD
             # geometries... likely related to precision
@@ -304,7 +311,8 @@ def pattern_revolved_silhouette(
             for gap_ in gaps:
                 gap_.scale(1000)
             try:
-                shapes = boolean_cut(volume, gaps)
+                cut_res = boolean_cut(volume, gaps)
+                shapes = cut_res if isinstance(cut_res, list) else [cut_res]
                 for shape in shapes:
                     shape.scale(0.001)
             except ValueError:
@@ -312,7 +320,7 @@ def pattern_revolved_silhouette(
                 volume.scale(0.001)
                 shapes = [volume]
 
-    return _order_shapes_anticlockwise(shapes)
+    return _order_shapes_anticlockwise(cast("list[BluemiraSolid]", shapes))
 
 
 def pattern_lofted_silhouette(
@@ -364,9 +372,10 @@ def pattern_lofted_silhouette(
         full_volume = boolean_fuse(shapes) if len(shapes) > 1 else shapes[0]
 
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)
-        shapes = boolean_cut(full_volume, gaps)
+        cut_result = boolean_cut(full_volume, gaps)
+        shapes = cut_result if isinstance(cut_result, list) else [cut_result]
 
-    return _order_shapes_anticlockwise(shapes)
+    return _order_shapes_anticlockwise(cast("list[BluemiraSolid]", shapes))
 
 
 def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
@@ -399,7 +408,7 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
     return circular_pattern(gap_volume, degree=degree, n_shapes=n_seg_p_sector + 1)
 
 
-def _order_shapes_anticlockwise(shapes: Iterable[BluemiraGeoT]) -> list[BluemiraGeoT]:
+def _order_shapes_anticlockwise(shapes: Sequence[BluemiraGeoT]) -> list[BluemiraGeoT]:
     """
     Order shapes anti-clockwise about (0, 0, 1) by center of mass
 
@@ -418,7 +427,7 @@ def _order_shapes_anticlockwise(shapes: Iterable[BluemiraGeoT]) -> list[Bluemira
     r = np.hypot(x, y)
     angles = np.where(y > 0, np.arccos(x / r), 2 * np.pi - np.arccos(x / r))
     indices = np.argsort(angles)
-    return list(np.array(shapes)[indices])
+    return [shapes[int(idx)] for idx in indices]
 
 
 def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]:
@@ -438,7 +447,10 @@ def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]
         The radii of intersections, sorted from smallest to largest
     """
     intersections = slice_shape(wire, plane)
-    return sorted(intersections[:, 0])
+    if intersections is None or len(intersections) == 0:
+        return []
+    pts = np.asarray(intersections)
+    return sorted(float(x) for x in pts[:, 0])
 
 
 def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
@@ -475,7 +487,7 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 
 def build_sectioned_xy(
-    face: BluemiraFace, plot_colour: tuple[float], material: Material | None = None
+    face: BluemiraFace, plot_colour: Any, material: Material | None = None
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -500,12 +512,12 @@ def build_sectioned_xy(
     r_ib_in, r_ob_in = find_xy_plane_radii(face.boundary[1], xy_plane)
 
     sections = []
-    for name, r_in, r_out in [
-        ["inboard", r_ib_in, r_ib_out],
-        ["outboard", r_ob_in, r_ob_out],
-    ]:
-        board = make_circular_xy_ring(r_in, r_out)
-        section = PhysicalComponent(name, board, material=material)
+    for ring_name, r_in, r_out in (
+        ("inboard", r_ib_in, r_ib_out),
+        ("outboard", r_ob_in, r_ob_out),
+    ):
+        board = make_circular_xy_ring(float(r_in), float(r_out))
+        section = PhysicalComponent(str(ring_name), board, material=material)
         apply_component_display_options(section, color=plot_colour)
         sections.append(section)
 
@@ -516,12 +528,12 @@ def build_sectioned_xyz(
     face: BluemiraFace | list[BluemiraFace],
     name: str | list[str],
     n_TF: int,
-    plot_colour: tuple[float] | list[tuple[float]],
+    plot_colour: Any,
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
     material: Material | list[Material | None] | None = None,
-) -> list[PhysicalComponent]:
+) -> list[Component]:
     """
     Build the x-y-z components of sectioned component
 
@@ -595,7 +607,7 @@ def build_sectioned_xyz(
     return (
         circular_pattern_component(bodies, n_sectors, degree=sector_degree * n_sectors)
         if enable_sectioning
-        else bodies
+        else cast("list[Component]", bodies)
     )
 
 
@@ -607,8 +619,20 @@ def clip_wall_silhouette_at_xpoint(eq: Equilibrium, wall: BluemiraWire):
     -------
     wall_piece:
         The section of the wall above the x point
+
+    Raises
+    ------
+    ValueError
+        If equilibrium grid coordinates are None
+    TypeError
+        If equilibrium psi is not an ndarray
     """
-    _, x_points = find_OX_points(eq.x, eq.z, eq.psi())
+    if eq.x is None or eq.z is None:
+        raise ValueError("Equilibrium grid coordinates x and z must not be None")
+    psi = eq.psi()
+    if not isinstance(psi, np.ndarray):
+        raise TypeError("Equilibrium psi must be an ndarray")
+    _, x_points = find_OX_points(eq.x, eq.z, psi)
     if x_points[0].z < x_points[1].z:
         lower_x_point_z, upper_x_point_z = x_points[0].z, x_points[1].z
     else:

@@ -2566,7 +2566,7 @@ class PictureFrame(
 
     def __init__(
         self,
-        variables: PictureFrameOptVariables | None = None,
+        variables: PictureFrameOptVariables | VarDictT | None = None,
         *,
         upper: str | PFrameSection = PFrameSection.FLAT,
         lower: str | PFrameSection = PFrameSection.FLAT,
