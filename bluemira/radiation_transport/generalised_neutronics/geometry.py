@@ -394,7 +394,7 @@ class NeutronicsGeometryManager(ComponentManager):
             # comp gets processed first
             comp_a = neutronics_comp.desplined_xz_component
 
-            for touching_name in neutronics_comp.touching_components:
+            for touching_name in neutronics_comp.touching_components or []:
                 pair = frozenset((neutronics_comp.name, touching_name))
 
                 if pair in repaired_pairs:
