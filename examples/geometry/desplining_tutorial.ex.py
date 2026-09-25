@@ -478,14 +478,14 @@ plt.show()
 # repaired XZ face for Component 2 whose boundary now follows that of
 # Component 1 along the overlapping region.
 # %%
-xz_desplined_2_repaired = repair_overlapping_geos(
-    xz_desplined_2,
-    [xz_desplined_1],
-)
-
 overlap = boolean_common(
     xz_desplined_1,
     xz_desplined_2,
+)
+
+xz_desplined_2_repaired = repair_overlapping_geos(
+    xz_desplined_2,
+    [xz_desplined_1],
 )
 
 fig = plt.figure(figsize=(16, 6))
@@ -509,7 +509,7 @@ plot_face(xz_face_2, ax0, "salmon")
 ax0.set_title("Original")
 
 
-# Overlap after desplining
+# Plot the original Overlap after desplining
 plot_face(xz_desplined_1, ax1, "cornflowerblue")
 plot_face(xz_desplined_2, ax1, "salmon")
 
