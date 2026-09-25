@@ -8,11 +8,16 @@
 A collection of common 0-D plasma physics scaling laws.
 """
 
-from collections.abc import Iterable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.base.constants import raw_uc
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Sequence
 
 
 class PowerLawScaling:
@@ -38,17 +43,18 @@ class PowerLawScaling:
         constant: float,
         constant_err: float,
         exponents: Iterable[float],
-        exp_errs: np.ndarray | list | None = None,
+        exp_errs: np.ndarray | list[float] | None = None,
     ):
-        self.c = constant
-        self.constant_err = constant_err
-        self.exponents = np.array(exponents)
+        self.c: float = constant
+        self.constant_err: float = constant_err
+        self.exponents: np.ndarray = np.array(exponents)
+        self.errors: np.ndarray | None
         if exp_errs is None:
             self.errors = None
         else:
             self.errors = np.array(exp_errs)
 
-    def __call__(self, *args):
+    def __call__(self, *args: float) -> float:
         """
         Call the PowerLawScaling object for a set of arguments.
 
@@ -69,7 +75,12 @@ class PowerLawScaling:
             )
         return self.calculate(*args)
 
-    def calculate(self, *args, constant=None, exponents=None):
+    def calculate(
+        self,
+        *args: float,
+        constant: float | None = None,
+        exponents: Sequence[float] | np.ndarray | None = None,
+    ) -> float:
         """
         Call the PowerLawScaling object for a set of arguments.
 
@@ -82,9 +93,9 @@ class PowerLawScaling:
             constant = self.c
         if exponents is None:
             exponents = self.exponents
-        return constant * np.prod(np.power(args, exponents))
+        return float(constant * np.prod(np.power(args, exponents)))
 
-    def calculate_range(self, *args) -> tuple[float, float]:
+    def calculate_range(self, *args: float) -> tuple[float, float]:
         """
         Calculate the range of the PowerLawScaling within the specified errors for a set
         of arguments
@@ -107,18 +118,21 @@ class PowerLawScaling:
             )
 
         constant_range = [self.c - self.constant_err, self.c + self.constant_err]
+        errors = (
+            self.errors if self.errors is not None else np.zeros_like(self.exponents)
+        )
 
         min_terms = np.zeros(len(self))
         max_terms = np.zeros(len(self))
         for i, (arg, exp, err) in enumerate(
-            zip(args, self.exponents, self.errors, strict=False)
+            zip(args, self.exponents, errors, strict=False)
         ):
             term_values = [arg ** (exp - err), arg ** (exp + err)]
             min_terms[i] = min(term_values)
             max_terms[i] = max(term_values)
 
-        return min(constant_range) * np.prod(min_terms), max(constant_range) * np.prod(
-            max_terms
+        return float(min(constant_range) * np.prod(min_terms)), float(
+            max(constant_range) * np.prod(max_terms)
         )
 
     def __len__(self) -> int:

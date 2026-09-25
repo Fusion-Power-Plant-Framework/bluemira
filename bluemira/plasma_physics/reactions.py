@@ -8,8 +8,11 @@
 Fusion reactions
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -25,6 +28,9 @@ from bluemira.base.constants import (
     raw_uc,
 )
 from bluemira.base.look_and_feel import bluemira_warn
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 __all__ = [
     "E_DD_fusion",
@@ -222,7 +228,10 @@ def reactivity(
         reaction = Reactions[reaction.replace("-", "_")]
     if not isinstance(method, ReactivityMethod):
         method = ReactivityMethod[method.replace("-", "_").upper()]
-    mapping = {
+    mapping: dict[
+        ReactivityMethod,
+        Callable[[float | np.ndarray, Reactions], float | np.ndarray],
+    ] = {
         ReactivityMethod.BOSCH_HALE: _reactivity_bosch_hale,
         ReactivityMethod.PLASMOD: _reactivity_plasmod,
         ReactivityMethod.JOHNER: _reactivity_johner,
@@ -365,7 +374,13 @@ def _reactivity_bosch_hale(
     .. doi:: 10.1088/0029-5515/32/4/I07
         :title: H.-S. Bosch and G.M. Hale 1992 Nucl. Fusion 32 611
     """
-    mapping = {
+    mapping: dict[
+        Reactions,
+        BoschHale_DT_4Hen
+        | BoschHale_DD_3Hen
+        | BoschHale_DD_Tp
+        | BoschHale_DHe3_4Hep,
+    ] = {
         Reactions.D_T: BoschHale_DT_4Hen(),
         Reactions.D_D1: BoschHale_DD_3Hen(),
         Reactions.D_D2: BoschHale_DD_Tp(),
@@ -476,24 +491,25 @@ def _reactivity_johner(
             f"This function only supports D-T, not {reaction.name.replace('_', '-')}"
         )
 
-    if np.max(temp_kev) > 100:  # noqa: PLR2004
+    temp_arr = np.atleast_1d(temp_kev)
+    if np.max(temp_arr) > 100:  # noqa: PLR2004
         bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
-    if np.min(temp_kev) < 5.3:  # noqa: PLR2004
+    if np.min(temp_arr) < 5.3:  # noqa: PLR2004
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
 
-    sigma_v = np.zeros_like(temp_kev)
-    idx_1 = np.nonzero((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
-    idx_2 = np.nonzero((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
-    idx_3 = np.nonzero((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
-    idx_4 = np.nonzero((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
-    t1 = temp_kev[idx_1]
-    t2 = temp_kev[idx_2]
-    t3 = temp_kev[idx_3]
+    sigma_v = np.zeros_like(temp_arr, dtype=float)
+    idx_1 = np.nonzero((temp_arr >= 5.3) & (temp_arr <= 10.3))[0]  # noqa: PLR2004
+    idx_2 = np.nonzero((temp_arr >= 10.3) & (temp_arr <= 18.5))[0]  # noqa: PLR2004
+    idx_3 = np.nonzero((temp_arr >= 18.5) & (temp_arr <= 39.9))[0]  # noqa: PLR2004
+    idx_4 = np.nonzero((temp_arr >= 39.9) & (temp_arr <= 100.0))[0]  # noqa: PLR2004
+    t1 = temp_arr[idx_1]
+    t2 = temp_arr[idx_2]
+    t3 = temp_arr[idx_3]
 
     sigma_v[idx_1] = 1.15e-25 * t1**3
     sigma_v[idx_2] = 1.18e-24 * t2**2
     sigma_v[idx_3] = 2.18e-23 * t3
     sigma_v[idx_4] = 8.69e-22
     if isinstance(temp_kev, float | int):
-        return float(sigma_v)
+        return float(sigma_v[0])
     return sigma_v
