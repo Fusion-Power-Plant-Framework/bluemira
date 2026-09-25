@@ -11,7 +11,7 @@ Equilibrium optimisation constraint classes
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 
@@ -53,7 +53,8 @@ def _get_dummy_equilibrium(equilibrium: Equilibrium):
     # TODO @hsaunders1904: Add passive coil contributions here
     # 3579
     dummy = equilibrium.plasma
-    dummy.coilset = equilibrium.coilset
+    if dummy is not None:
+        setattr(dummy, "coilset", equilibrium.coilset)  # noqa: B010
     return dummy
 
 
@@ -126,24 +127,30 @@ class FieldConstraints(UpdateableConstraint):
         tolerance: float | np.ndarray | None = None,
         constraint_type: str = "inequality",
     ):
-        if is_num(x):
-            x = np.array([x])
-        if is_num(z):
-            z = np.array([z])
+        x_arr = np.atleast_1d(x)
+        z_arr = np.atleast_1d(z)
 
-        if is_num(B_max):
-            B_max *= np.ones(len(x))
-        if len(B_max) != len(x):
+        b_max_arr = np.atleast_1d(B_max)
+        if len(b_max_arr) == 1 and len(x_arr) > 1:
+            b_max_arr = np.full(len(x_arr), b_max_arr[0])
+        if len(b_max_arr) != len(x_arr):
             raise ValueError(
                 "Maximum field vector length not equal to the number of points."
             )
 
         if tolerance is None:
-            tolerance = 1e-3 * B_max
-        if is_num(tolerance):
-            tolerance *= np.ones(len(x))
-        if len(tolerance) != len(x):
+            tol_arr = 1e-3 * b_max_arr
+        else:
+            tol_arr = np.atleast_1d(tolerance)
+            if len(tol_arr) == 1 and len(x_arr) > 1:
+                tol_arr = np.full(len(x_arr), tol_arr[0])
+        if len(tol_arr) != len(x_arr):
             raise ValueError("Tolerance vector length not equal to the number of coils.")
+
+        x = x_arr
+        z = z_arr
+        B_max = b_max_arr
+        tolerance = tol_arr
 
         self.x = x
         self.z = z
@@ -193,8 +200,8 @@ class FieldConstraints(UpdateableConstraint):
             Bz response
         """
         return (
-            coilset.Bx_response(self.x, self.z, control=True),
-            coilset.Bz_response(self.x, self.z, control=True),
+            np.asarray(coilset.Bx_response(self.x, self.z, control=True)),
+            np.asarray(coilset.Bz_response(self.x, self.z, control=True)),
         )
 
     def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
@@ -214,8 +221,12 @@ class FieldConstraints(UpdateableConstraint):
 
     def f_constraint(self) -> FieldConstraintFunction:
         """Calculate the constraint function"""  # noqa: DOC201
-        f_constraint = FieldConstraintFunction(name=self.name, **self._args)
-        f_constraint.constraint_type = self.f_constraint_type
+        f_constraint = FieldConstraintFunction(
+            name=self.name, **cast("dict[str, Any]", self._args)
+        )
+        f_constraint.constraint_type = cast(
+            'Literal["inequality", "equality"]', self.f_constraint_type
+        )
         return f_constraint
 
     def __len__(self) -> int:
@@ -258,7 +269,8 @@ class CoilFieldConstraints(FieldConstraints):
         n_coils = coilset.n_control
         if is_num(B_max):
             B_max *= np.ones(n_coils)
-        if len(B_max) != n_coils:
+        b_max_arr = np.atleast_1d(B_max)
+        if len(b_max_arr) != n_coils:
             raise ValueError(
                 "Maximum field vector length not equal to the number of coils."
             )
@@ -344,10 +356,10 @@ class CoilForceConstraints(UpdateableConstraint):
                 )
         if is_num(tolerance):
             tolerance *= np.ones(n_f_constraints)
-        elif len(tolerance) != n_f_constraints:
+        elif len(np.atleast_1d(tolerance)) != n_f_constraints:
             raise ValueError(f"Tolerance vector not of length {n_f_constraints}")
 
-        self._args = {
+        self._args: dict[str, Any] = {
             "a_mat": None,
             "b_vec": None,
             "scale": 1.0,
@@ -436,8 +448,13 @@ class MagneticConstraint(UpdateableConstraint):
             else:
                 tolerance *= np.ones(len(self))
         self.weights = weights
-        self._f_constraint = f_constraint
-        self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1.0}
+        self._f_constraint: Any = f_constraint
+        self._args: dict[str, Any] = {
+            "a_mat": None,
+            "b_vec": None,
+            "value": 0.0,
+            "scale": 1.0,
+        }
         self.tolerance = tolerance
         self.constraint_type = constraint_type
 
@@ -480,7 +497,8 @@ class MagneticConstraint(UpdateableConstraint):
         -----
         Length of the array if an array is specified, otherwise 1 for a float.
         """  # noqa: DOC201
-        return len(self.x) if hasattr(self.x, "__len__") else 1
+        x = getattr(self, "x", None)
+        return len(x) if hasattr(x, "__len__") else 1
 
     def f_constraint(self) -> ConstraintFunction:
         """
@@ -490,7 +508,9 @@ class MagneticConstraint(UpdateableConstraint):
             The non-linear, numerical, part of the constraint.
         """
         f_constraint = self._f_constraint(name=self.name, **self._args)
-        f_constraint.constraint_type = self.constraint_type
+        f_constraint.constraint_type = cast(
+            'Literal["inequality", "equality"]', self.constraint_type
+        )
         return f_constraint
 
 
@@ -596,7 +616,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             coilset.Bz_response(self.x, self.z, control=True),
         ])
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -605,7 +625,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         :
             Bx and Bz response of the equilibrium
         """
-        return np.array([eq.Bx(self.x, self.z), eq.Bz(self.x, self.z)])
+        return np.array([equilibrium.Bx(self.x, self.z), equilibrium.Bz(self.x, self.z)])
 
     def plot(self, ax):
         """
@@ -661,9 +681,9 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
         :
             Bz response of the coilset
         """
-        return coilset.Bz_response(self.x, self.z, control=True)
+        return np.asarray(coilset.Bz_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -672,7 +692,7 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
         :
             Bz value of the equilibrium
         """
-        return eq.Bz(self.x, self.z)
+        return np.asarray(equilibrium.Bz(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -720,9 +740,9 @@ class RadialFieldConstraint(AbsoluteMagneticConstraint):
         :
             Bx response of the coilset
         """
-        return coilset.Bx_response(self.x, self.z, control=True)
+        return np.asarray(coilset.Bx_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -731,7 +751,7 @@ class RadialFieldConstraint(AbsoluteMagneticConstraint):
         :
             Bx value of the equilibrium
         """
-        return eq.Bx(self.x, self.z)
+        return np.asarray(equilibrium.Bx(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -779,9 +799,9 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         :
             The coilset psi response
         """
-        return coilset.psi_response(self.x, self.z, control=True)
+        return np.asarray(coilset.psi_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -790,7 +810,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         :
             The equilibrium psi
         """
-        return eq.psi(self.x, self.z)
+        return np.asarray(equilibrium.psi(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -839,9 +859,9 @@ class DPsiDxConstraint(AbsoluteMagneticConstraint):
         :
             The coilset dpsi/dz response
         """
-        return coilset.dpsi_dx_response(self.x, self.z, control=True)
+        return np.asarray(coilset.dpsi_dx_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -850,7 +870,7 @@ class DPsiDxConstraint(AbsoluteMagneticConstraint):
         :
             The equilibrium dpsi/dx
         """
-        return eq.dpsi_dx(self.x, self.z)
+        return np.asarray(equilibrium.dpsi_dx(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -899,9 +919,9 @@ class DPsiDzConstraint(AbsoluteMagneticConstraint):
         :
             The coilset dpsi/dz response
         """
-        return coilset.dpsi_dz_response(self.x, self.z, control=True)
+        return np.asarray(coilset.dpsi_dz_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -910,7 +930,7 @@ class DPsiDzConstraint(AbsoluteMagneticConstraint):
         :
             The equilibrium dpsi/dz
         """
-        return eq.dpsi_dz(self.x, self.z)
+        return np.asarray(equilibrium.dpsi_dz(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -963,11 +983,12 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         :
             The difference in coilset psi response with the reference
         """
-        return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
-            self.ref_x, self.ref_z, control=True
+        return np.asarray(
+            coilset.psi_response(self.x, self.z, control=True)
+            - coilset.psi_response(self.ref_x, self.ref_z, control=True)
         )
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -976,13 +997,13 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         :
             The equilibrium psi
         """
-        return eq.psi(self.x, self.z)
+        return np.asarray(equilibrium.psi(self.x, self.z))
 
-    def update_target(self, eq: Equilibrium):
+    def update_target(self, equilibrium: Equilibrium):
         """
         We need to update the target value, as it is a relative constraint.
         """
-        self.target_value = float(eq.psi(self.ref_x, self.ref_z))
+        self.target_value = np.array([float(equilibrium.psi(self.ref_x, self.ref_z))])
 
     def plot(self, ax):
         """
@@ -1034,9 +1055,9 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         :
             The coilset psi response
         """
-        return coilset.psi_response(self.x, self.z, control=True)
+        return np.asarray(coilset.psi_response(self.x, self.z, control=True))
 
-    def evaluate(self, eq: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -1045,7 +1066,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         :
             The equilibrium psi
         """
-        return eq.psi(self.x, self.z)
+        return np.asarray(equilibrium.psi(self.x, self.z))
 
     def plot(self, ax):
         """
@@ -1143,6 +1164,7 @@ class MagneticConstraintSet:
         weighted_b:
             b scaled by the weight matrix
         """
+        assert self.A is not None  # noqa: S101
         weights = self.w
         weighted_a = weights[:, np.newaxis] * self.A
         weighted_b = weights * self.b
@@ -1194,6 +1216,7 @@ class MagneticConstraintSet:
         self.background = np.zeros(len(self))
 
         i = 0
+        assert self.eq is not None  # noqa: S101
         for constraint in self.constraints:
             n = len(constraint)
             self.background[i : i + n] = np.squeeze(constraint.evaluate(self.eq))
@@ -1204,6 +1227,8 @@ class MagneticConstraintSet:
         """
         The b vector of target - background values.
         """
+        assert self.target is not None  # noqa: S101
+        assert self.background is not None  # noqa: S101
         return self.target - self.background
 
     def update_psi_boundary(self, psi_bndry: float):
@@ -1217,7 +1242,7 @@ class MagneticConstraintSet:
         """
         for constraint in self.constraints:
             if isinstance(constraint, PsiBoundaryConstraint):
-                constraint.target_value = psi_bndry
+                constraint.target_value = np.atleast_1d(psi_bndry)
         self.build_target()
 
     def plot(self, ax=None):
@@ -1267,6 +1292,7 @@ class AutoConstraints(MagneticConstraintSet):
         # Determine if we are dealing with SN or DN
         single_null = abs_rel_difference(abs(z_min), z_max) > 0.05  # noqa: PLR2004
 
+        constraints: list[MagneticConstraint]
         if single_null:
             # Determine if it is an upper or lower SN
             lower = abs(z_min) > z_max

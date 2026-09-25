@@ -12,7 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum, Flag, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -282,7 +282,7 @@ class PicardDiagnosticOptions:
         bluemira root folder, if that path is available.
     """
 
-    plot: PicardDiagnostic = _PicardDiagnosticDescriptor()
+    plot: PicardDiagnostic = cast("PicardDiagnostic", _PicardDiagnosticDescriptor())  # noqa: RUF009
     gif: bool = False
     plot_name: str = "default_0"
     figure_folder: str | PathLike | None = None
@@ -306,7 +306,9 @@ class PicardDiagnosticOptions:
             def noop(*args, **kwargs):  # noqa: ARG001
                 return
 
-            self.update_figure = self.make_gif = self.finalise_plots = noop
+            setattr(self, "update_figure", noop)  # noqa: B010
+            setattr(self, "make_gif", noop)  # noqa: B010
+            setattr(self, "finalise_plots", noop)  # noqa: B010
         else:
             self.f, ax = plt.subplots(
                 ncols=2 if self.plot is PicardDiagnostic.EQ_AND_CONVERGENCE else 1
@@ -322,8 +324,10 @@ class PicardDiagnosticOptions:
 
     def make_gif(self):
         """Make gif of iterator plot"""
-        if self.gif:
-            make_gif(self.figure_folder, self.plot_name, file_format=self.file_format)
+        if self.gif and self.figure_folder is not None:
+            make_gif(
+                str(self.figure_folder), self.plot_name, file_format=self.file_format
+            )
 
     def update_figure(self, eq: Equilibrium, convergence: ConvergenceCriterion, i: int):
         """
