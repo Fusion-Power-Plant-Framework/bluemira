@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
     from bluemira.codes.process.equation_variable_mapping import (
         Constraint,
-        ConstraintSelection,
         Objective,
     )
     from bluemira.codes.process.model_mapping import (
