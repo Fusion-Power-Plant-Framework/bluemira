@@ -11,10 +11,19 @@ Just-in-time compilation and LowLevelCallable speed-up tools.
 import warnings
 from collections.abc import Callable, Iterable
 from itertools import pairwise
+from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
-from numba.types import CPointer, float64, intc
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    CPointer: Any
+    float64: Any
+    intc: Any
+else:
+    from numba.types import CPointer, float64, intc  # ty: ignore[unresolved-import]
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 
@@ -269,7 +278,9 @@ def _shift_if_singular_angle(value: float, eps: float, *, plus: bool) -> float:
     return value
 
 
-def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> float:
+def integrate(
+    func: Callable | LowLevelCallable, args: Iterable, bound1: float, bound2: float
+) -> float:
     """
     Utility for integration of a function between bounds.
 
@@ -362,7 +373,9 @@ def integrate(func: Callable, args: Iterable, bound1: float, bound2: float) -> f
 
 
 def n_integrate(
-    func: Callable, args: Iterable, bounds: list[Iterable[int | float]]
+    func: Callable | LowLevelCallable,
+    args: Iterable,
+    bounds: list[Iterable[int | float]] | Iterable[Iterable[int | float]],
 ) -> float:
     """
     Utility for n-dimensional integration of a function between bounds. Easier
