@@ -11,7 +11,7 @@ Cryostat builder
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -124,7 +124,9 @@ class CryostatBuilder(Builder):
         Build the cryostat component.
         """  # noqa: DOC201
         xz_cryostat = self.build_xz(self.x_out, self.z_top)
-        xz_cross_section: BluemiraFace = xz_cryostat.get_component_properties("shape")
+        xz_cross_section = cast(
+            "BluemiraFace", xz_cryostat.get_component_properties("shape")
+        )
         return self.component_tree(
             xz=[xz_cryostat],
             xy=[self.build_xy(self.x_out)],
@@ -196,8 +198,8 @@ class CryostatBuilder(Builder):
         return cryostat_vv
 
     def build_xyz(
-        self, xz_cross_section: BluemiraFace, degree=360
-    ) -> list[PhysicalComponent]:
+        self, xz_cross_section: BluemiraFace, degree: float = 360
+    ) -> list[Component]:
         """
         Build the x-y-z components of the cryostat.
 

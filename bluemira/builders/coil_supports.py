@@ -11,7 +11,7 @@ Coil support builders
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -48,6 +48,7 @@ from bluemira.utilities.tools import floatify
 if TYPE_CHECKING:
     from bluemira.base.builder import BuildConfig
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.geometry.base import BluemiraGeo
     from bluemira.optimisation import ConstraintT
 
 
@@ -120,7 +121,10 @@ class ITERGravitySupportBuilder(Builder):
         slice_result = slice_shape(xyz_component.shape, xz_plane)
 
         # Process UGLY SLICE
-        wires = sorted(slice_result, key=lambda wire: wire.length)
+        assert slice_result is not None  # noqa: S101
+        wires = sorted(
+            cast("list[BluemiraWire]", slice_result), key=lambda wire: wire.length
+        )
         wire_list = [wires.pop()]
         wire_list.extend(wires)
         shape = BluemiraFace(wire_list)
@@ -170,7 +174,9 @@ class ITERGravitySupportBuilder(Builder):
                 "Boolean cutting returned nothing... check your geometry please."
             )
 
-        return min(cut_result, key=lambda wire: wire.length)
+        if not isinstance(cut_result, list):
+            cut_result = [cut_result]
+        return min(cast("list[BluemiraWire]", cut_result), key=lambda wire: wire.length)
 
     def _make_connection_block(self, width, v1, v4, intersection_wire):
         """
@@ -192,7 +198,7 @@ class ITERGravitySupportBuilder(Builder):
         face.translate(vector=(0, -0.5 * width, 0))
         return extrude_shape(face, vec=(0, width, 0))
 
-    def _make_plates(self, width, v1x, v4x, z_block_lower) -> list[BluemiraWire]:
+    def _make_plates(self, width, v1x, v4x, z_block_lower) -> list[BluemiraGeo]:
         """
         Make the gravity support vertical plates
 
@@ -359,8 +365,10 @@ class PFCoilSupportBuilder(Builder):
             The x-z components of the PF coil support.
         """
         result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
-        result.sort(key=lambda wire: -wire.length)
-        face = BluemiraFace(result)
+        assert result is not None  # noqa: S101
+        wire_results = cast("list[BluemiraWire]", result)
+        wire_results.sort(key=lambda wire: -wire.length)
+        face = BluemiraFace(wire_results)
         component = PhysicalComponent(
             self.name, face, material=self.get_material(self.PF_ICS)
         )
@@ -419,7 +427,7 @@ class PFCoilSupportBuilder(Builder):
             return None
 
         directed_intersections = []
-        for inter in intersections:
+        for inter in cast("list[np.ndarray]", intersections):
             direction = inter - point
             direction /= np.linalg.norm(direction)
             if np.dot(correct_direction, direction) >= 0:
@@ -483,9 +491,10 @@ class PFCoilSupportBuilder(Builder):
 
         cut_box = make_polygon([v1, v2, v3, v4], closed=True)
 
-        return min(
-            boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
-        )
+        cut_wires = boolean_cut(self.tf_xz_keep_out_zone, cut_box)
+        if not isinstance(cut_wires, list):
+            cut_wires = [cut_wires]
+        return min(cast("list[BluemiraWire]", cut_wires), key=lambda wire: wire.length)
 
     def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
@@ -557,7 +566,8 @@ class PFCoilSupportBuilder(Builder):
             BluemiraFace(self.tf_xz_keep_out_zone), [0, 1.1 * width, 0]
         )
         tf_coil_cut.translate((0, -0.05 * width, 0))
-        shape = boolean_cut(shape, tf_coil_cut)[0]
+        cut_res = boolean_cut(shape, tf_coil_cut)
+        shape = cut_res[0] if isinstance(cut_res, list) else cut_res
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(
@@ -831,7 +841,9 @@ class StraightOISDesigner(Designer[list[BluemiraWire]]):
 
         # Drop regions that are too short for OIS
         big_ois_regions = []
-        for region in ois_regions:
+        if not isinstance(ois_regions, list):
+            ois_regions = [ois_regions]
+        for region in cast("list[BluemiraWire]", ois_regions):
             length = np.sqrt(
                 np.sum((region.start_point().xyz - region.end_point().xyz) ** 2)
             )
@@ -918,10 +930,10 @@ class OISBuilder(Builder):
 
         components = []
         for i, ois_profile in enumerate(self.ois_xz_profiles):
-            ois_profile_1 = ois_profile.deepcopy()
+            ois_profile_1 = cast("BluemiraWire", ois_profile.deepcopy())
             ois_profile_1.translate(vector=(0, 0.5 * width, 0))
 
-            ois_profile_2 = ois_profile_1.deepcopy()
+            ois_profile_2 = cast("BluemiraWire", ois_profile_1.deepcopy())
             ois_profile_2.rotate(
                 base=(centre_radius, 0.5 * width, 0), degree=np.rad2deg(tf_angle)
             )
@@ -937,7 +949,9 @@ class OISBuilder(Builder):
 
             # Then we "chop" it in half, but without the boolean_cut operation
             # This is because I cba to write a project_shape function...
-            ois_profile_mid = slice_shape(ois_right, half_plane)[0]
+            slice_res = slice_shape(ois_right, half_plane)
+            assert slice_res is not None  # noqa: S101
+            ois_profile_mid = cast("BluemiraWire", slice_res[0])
 
             path = make_polygon([
                 ois_profile_1.center_of_mass,

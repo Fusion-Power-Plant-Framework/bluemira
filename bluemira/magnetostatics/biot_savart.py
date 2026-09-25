@@ -85,7 +85,7 @@ class BiotSavartFilament(CurrentSource):
         self._d_l_hat = np.linalg.norm(self._d_l, axis=1)
         self._mid_points = np.vstack(mids_points)
         self._points = np.vstack(points)
-        self._arrays = arrays
+        self._arrays = arrays_processed
         self._radius = radius
         self.current = current
 

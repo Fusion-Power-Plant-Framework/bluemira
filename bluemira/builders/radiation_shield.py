@@ -11,7 +11,7 @@ Radiation shield builder
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -69,7 +69,7 @@ class RadiationShieldBuilder(Builder):
         Build the radiation shield component.
         """  # noqa: DOC201
         rs_xz = self.build_xz()
-        rs_face = rs_xz.get_component_properties("shape")
+        rs_face = cast("BluemiraFace", rs_xz.get_component_properties("shape"))
 
         return self.component_tree(
             xz=[rs_xz], xy=[self.build_xy()], xyz=self.build_xyz(rs_face, degree=0)
@@ -112,9 +112,9 @@ class RadiationShieldBuilder(Builder):
 
         cutter = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
 
-        shield_body = PhysicalComponent(
-            self.BODY, boolean_cut(BluemiraFace([rs_outer, rs_inner]), cutter)[0]
-        )
+        cut = boolean_cut(BluemiraFace([rs_outer, rs_inner]), cutter)
+        cut_face = cut[0] if isinstance(cut, list) else cut
+        shield_body = PhysicalComponent(self.BODY, cut_face)
         apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
         return shield_body
 
@@ -132,7 +132,7 @@ class RadiationShieldBuilder(Builder):
 
     def build_xyz(
         self, rs_face: BluemiraFace, degree: float = 360.0
-    ) -> list[PhysicalComponent]:
+    ) -> list[Component]:
         """
         Build the x-y-z components of the radiation shield.
         """  # noqa: DOC201
