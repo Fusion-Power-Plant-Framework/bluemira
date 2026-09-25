@@ -41,7 +41,7 @@ class ParamDictT(TypedDict, total=False):
     """Typed dictionary for a Parameter."""
 
     name: str
-    value: Required[ParameterValueType]
+    value: Required[Any]
     unit: Required[str]
     source: str
     description: str
@@ -100,8 +100,8 @@ class Parameter(Generic[ParameterValueType]):
 
     @staticmethod
     def _type_check(
-        name: str, value: ParameterValueType, value_types: tuple[type, ...] | None
-    ) -> ParameterValueType:
+        name: str, value: Any, value_types: tuple[type, ...] | None
+    ) -> Any:
         if value_types and value is not None:
             if float in value_types and isinstance(value, int):
                 value = float(value)
@@ -235,7 +235,7 @@ class Parameter(Generic[ParameterValueType]):
             raise ValueError("Unit conversion failed") from pe
         except TypeError as te:
             if self.value is None:
-                if units_compatible(self.unit, unit):
+                if units_compatible(self.unit, str(unit)):
                     return None
                 raise ValueError("Unit conversion failed") from te
             raise

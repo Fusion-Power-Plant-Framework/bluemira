@@ -20,9 +20,9 @@ from rich.panel import Panel
 
 from bluemira import __version__
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
-from bluemira.base.logs import LogLevel, logger_setup
+from bluemira.base.logs import LogLevel, LoggerAdapter, logger_setup
 
-LOGGER = logger_setup()
+LOGGER: LoggerAdapter = logger_setup()
 
 # Calculate the number of lines in this file
 try:
@@ -40,7 +40,7 @@ except FileNotFoundError:
 # =============================================================================
 
 
-def get_git_version(directory: str) -> str:
+def get_git_version(directory: str) -> bytes:
     """
     Get the version string of the current git branch, e.g.: '0.0.3-74-g70d48be'.
 
@@ -51,7 +51,7 @@ def get_git_version(directory: str) -> str:
 
     Returns
     -------
-    str
+    bytes
         The git version bytestring
     """
     return subprocess.check_output(
@@ -129,7 +129,7 @@ def count_slocs(
     branch: str,
     exts: list[str] | None = None,
     ignore: list[str] | None = None,
-) -> dict[str, int | list[int]]:
+) -> dict[str, int]:
     """
     Counts lines of code within a given directory for a given git branch
 
@@ -156,9 +156,7 @@ def count_slocs(
     if exts is None:
         exts = [".py"]
 
-    lines = {}
-    for k in exts:
-        lines[k] = 0
+    lines: dict[str, int] = dict.fromkeys(exts, 0)
     files = get_git_files(directory, branch)
     for name in files:
         if Path(name).parts[-1] not in ignore and name not in ignore:
