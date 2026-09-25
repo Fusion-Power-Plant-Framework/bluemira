@@ -299,10 +299,10 @@ class SourceGroup(ABC):
     Abstract base class for multiple current sources.
     """
 
-    sources: list[CurrentSource]
+    sources: list[CurrentSource | SourceGroup]
     _points: Any
 
-    def __init__(self, sources: Sequence[CurrentSource]):
+    def __init__(self, sources: Sequence[CurrentSource | SourceGroup]):
         self.sources = list(sources)
         self._points = np.vstack([np.vstack(s._points) for s in self.sources])
 

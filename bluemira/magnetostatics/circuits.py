@@ -58,6 +58,7 @@ class PlanarCircuit(SourceGroup):
         betas, alphas = self._get_betas_alphas(shape)
 
         normal = shape.normal_vector
+        assert normal is not None
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
@@ -179,6 +180,7 @@ class PlanarCircuit(SourceGroup):
         """
         coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
         normal_vector = coords.normal_vector
+        assert normal_vector is not None
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
             return coords
         com = coords.center_of_mass
@@ -338,13 +340,15 @@ class HelmholtzCage(SourceGroup):
     The plane at 0 degrees is set to be between two circuits.
     """
 
-    def __init__(self, circuit: CurrentSource, n_TF: int):
+    def __init__(self, circuit: CurrentSource | SourceGroup, n_TF: int):
         self.n_TF = n_TF
         sources = self._pattern(circuit)
 
         super().__init__(sources)
 
-    def _pattern(self, circuit: CurrentSource) -> list[CurrentSource]:
+    def _pattern(
+        self, circuit: CurrentSource | SourceGroup
+    ) -> list[CurrentSource | SourceGroup]:
         """
         Pattern the CurrentSource axisymmetrically.
 
