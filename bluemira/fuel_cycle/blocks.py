@@ -8,6 +8,13 @@
 Fuel cycle model fundamental building blocks
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -125,8 +132,8 @@ class FuelCycleComponent:
         self.summing = summing
         # Set 0 flow default
         self.flow = np.zeros(len(t))
-        self.m_out = None
-        self.inventory = None
+        self.m_out: np.ndarray | None = None
+        self.inventory: np.ndarray | None = None
         self.sum_in = 0
         self.decayed = 0
 
@@ -138,15 +145,19 @@ class FuelCycleComponent:
         }
         args_map = {
             "fountaintub": (self.eta, self.max_inventory, self.min_inventory),
-            "fountain": self.min_inventory,
+            "fountain": (self.min_inventory,),
             "bathtub": (self.eta, self.bci, self.max_inventory),
             "sqrt_bathtub": (self.eta, self.bci, self.max_inventory, _testing),
         }
         if retention_model not in model_map:
             raise FuelCycleError(f"Model type '{retention_model}' not recognised.")
 
-        self.model = model_map[retention_model]
-        self.model_args = args_map[retention_model]
+        self.model: Callable[..., Any] = model_map[retention_model]
+        self.model_args: tuple[Any, ...] = (
+            args_map[retention_model]
+            if isinstance(args_map[retention_model], tuple)
+            else (args_map[retention_model],)
+        )
 
     def add_in_flow(self, flow: np.ndarray):
         """
@@ -164,8 +175,14 @@ class FuelCycleComponent:
         Run the tritium retention model on the fuel cycle component tritium
         flow.
         """
-        self.m_out, self.inventory, self.sum_in, self.decayed = self.model(
-            self.flow, self.t, *self.model_args
+        model = cast("Any", self.model)
+        args = (
+            self.model_args
+            if isinstance(self.model_args, tuple)
+            else (self.model_args,)
+        )
+        self.m_out, self.inventory, self.sum_in, self.decayed = model(
+            self.flow, self.t, *args
         )
 
     def get_out_flow(self) -> np.ndarray:
@@ -180,4 +197,5 @@ class FuelCycleComponent:
         if self.m_out is None:
             bluemira_warn("Need to run component first.")
             self.run()
+        assert self.m_out is not None  # noqa: S101
         return self.m_out

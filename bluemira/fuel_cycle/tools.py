@@ -35,14 +35,16 @@ class NoiseModeType(Enum):
     MAX = auto()
 
     @classmethod
-    def _missing_(cls, value: str | NoiseModeType) -> NoiseModeType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise FuelCycleError(
-                f"{cls.__name__} has no mode {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> NoiseModeType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise FuelCycleError(
+            f"{cls.__name__} has no mode {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 def find_noisy_locals(
@@ -116,7 +118,7 @@ def discretise_1d(
     y = np.array(y)
     x_1d = np.linspace(x[0], x[-1], n)
     y_1d = griddata(x, y, xi=x_1d, method=method)
-    return [x_1d, y_1d]
+    return x_1d, y_1d
 
 
 def convert_flux_to_flow(flux: float, area: float) -> float:
@@ -207,14 +209,16 @@ class FitMethod(Enum):
     SQRT = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"No known fitting method {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> FitMethod:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise ValueError(
+            f"No known fitting method {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 def fit_sink_data(
@@ -411,7 +415,7 @@ def _speed_recycle(
     return m_tritium
 
 
-def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
+def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float | None:
     """
     Finds peak slope in fpy as a function of calendar years
     Divides implicitly by slightly less than a year
@@ -496,6 +500,8 @@ def legal_limit(
         mb = None
 
     if mb is None:
+        if p_fus is None:
+            raise FuelCycleError("Fusion power must be specified.")
         mb = r_T_burn(p_fus)  # [kg/s]
 
     m_plasma = (
@@ -867,8 +873,7 @@ def _sqrt_thresh_sink(
     max_inventory: float,
     sum_in: float,
     decayed: float,
-    *,
-    _testing: bool,
+    _testing: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[float, float, float, float]:
     """
     A simple sqrt tritium retention sink model. Used over a time-step.
@@ -1031,8 +1036,7 @@ def sqrt_bathtub(
     factor: float,
     bci: int,
     max_inventory: float,
-    *,
-    _testing: bool = False,
+    _testing: bool = False,  # noqa: FBT001, FBT002
 ) -> tuple[np.ndarray, np.ndarray, float, float]:
     """
     Bathtub sink model with a sqrt inventory retention law.
