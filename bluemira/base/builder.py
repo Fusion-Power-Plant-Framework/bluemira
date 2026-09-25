@@ -22,11 +22,9 @@ from bluemira.materials.error import MaterialsError
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from matproplib.material import Material
-
-    from bluemira.base.components import ComponentT
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
 
 BuildConfig: TypeAlias = dict[str, Union[int, float, str, "BuildConfig"]]
@@ -148,9 +146,9 @@ class Builder(abc.ABC):
 
     def component_tree(
         self,
-        xz: list[ComponentT] | None,
-        xy: list[ComponentT] | None,
-        xyz: list[ComponentT] | None,
+        xz: Sequence[Component] | None,
+        xy: Sequence[Component] | None,
+        xyz: Sequence[Component] | None,
     ) -> Component:
         """
         Adds views of components to an overall component tree.
@@ -170,9 +168,9 @@ class Builder(abc.ABC):
             The component tree
         """
         component = Component(self.name)
-        component.add_child(Component("xz", children=xz))
-        component.add_child(Component("xy", children=xy))
-        component.add_child(Component("xyz", children=xyz))
+        component.add_child(Component("xz", children=list(xz) if xz is not None else None))
+        component.add_child(Component("xy", children=list(xy) if xy is not None else None))
+        component.add_child(Component("xyz", children=list(xyz) if xyz is not None else None))
 
         if (xz_comp := component.get_component("xz")) is not None:
             set_component_view(xz_comp, "xz")
