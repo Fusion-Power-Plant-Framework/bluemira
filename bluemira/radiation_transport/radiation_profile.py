@@ -541,7 +541,10 @@ class CoreRadiation(Radiation):
         return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
     def radiation_distribution_plot(
-        self, flux_tubes: Sequence[Coordinates], power_density: Sequence[np.ndarray], ax: plt.Axes | None = None
+        self,
+        flux_tubes: Sequence[Coordinates],
+        power_density: Sequence[np.ndarray],
+        ax: plt.Axes | None = None,
     ) -> plt.Axes:
         """
         2D plot of the core radiation power distribution.
@@ -900,7 +903,7 @@ class ScrapeOffLayerRadiation(Radiation):
         if te_sep is None:
             te_val = self.params.T_e_sep.value_as("eV")
             if te_val is None:
-                raise RadiationTransportError("T_e_sep must have a value")
+                raise RadiationTransportError("T_e_sep must have a value")  # noqa: DOC501
             te_sep = te_val
         ne_sep = self.params.n_e_sep.value
 
@@ -1593,9 +1596,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         hfs_up=None,
         **_kwargs: Any,
     ):
-        """Calculate SOL radiation distribution."""
-        if lfs_low is None or lfs_up is None or hfs_low is None or hfs_up is None:
-            raise ValueError("All sector profiles must be provided.")
         """
         Radiation profiles calculation.
         For each scrape-off layer sector, it gives the
@@ -1630,7 +1630,14 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         rad["hfs_up"]:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
+
+        Raises
+        ------
+        ValueError
+            If sector profiles are not provided
         """
+        if lfs_low is None or lfs_up is None or hfs_low is None or hfs_up is None:
+            raise ValueError("All sector profiles must be provided.")
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
         # Values along the open flux tubes
@@ -1681,9 +1688,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         hfs_up: Sequence[np.ndarray] | None = None,
         **_kwargs: Any,
     ):
-        """Calculate SOL radiation map."""
-        if lfs_low is None or lfs_up is None or hfs_low is None or hfs_up is None:
-            raise ValueError("All sector profiles must be provided.")
         """
         Scrape off layer radiation map calculation.
 
@@ -1908,9 +1912,6 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         hfs: tuple[list[np.ndarray], list[np.ndarray]] | None = None,
         **_kwargs: Any,
     ) -> dict[str, list[list[np.ndarray]]]:
-        """Calculate SOL radiation distribution."""
-        if lfs is None or hfs is None:
-            raise ValueError("lfs and hfs must be provided.")
         """
         Radiation profiles calculation.
         For each scrape-off layer sector, it gives the
@@ -1933,7 +1934,14 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         rad["hfs"]:
             radiation poloidal profile along each
             flux tube within the hfs divertor set
+
+        Raises
+        ------
+        ValueError
+            If sector profiles are not provided
         """
+        if lfs is None or hfs is None:
+            raise ValueError("lfs and hfs must be provided.")
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
         # Values along the open flux tubes
