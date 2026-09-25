@@ -1,3 +1,4 @@
+from typing import Any
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
@@ -110,6 +111,7 @@ class Solver(CodesSolver):
     """
 
     name: str = PROCESS_NAME
+    params: ProcessSolverParams
     setup_cls: type[Setup] = Setup
     run_cls: type[Run] = Run
     teardown_cls: type[Teardown] = Teardown
@@ -127,7 +129,7 @@ class Solver(CodesSolver):
         self._run: Run | None = None
         self._teardown: Teardown | None = None
 
-        _build_config = copy.deepcopy(build_config)
+        _build_config: dict[str, Any] = dict(copy.deepcopy(build_config))
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
@@ -152,7 +154,7 @@ class Solver(CodesSolver):
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
 
-    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
+    def execute(self, run_mode: str | BaseRunMode = RunMode.RUN) -> ParameterFrame:
         """
         Execute the solver in the given run mode.
 
@@ -217,6 +219,8 @@ class Solver(CodesSolver):
         -------
         The plot Axes object.
         """
+        if self._teardown is None:
+            raise CodesError("Solver must be executed before plotting radial build.")
         radial_build = self._teardown.ordered_radial_build
 
         R_0 = radial_build["R_0"]
@@ -261,10 +265,11 @@ class Solver(CodesSolver):
             ]:
                 lpatches.append(patches.Patch(color=colour, label=comp[0]))
 
-        ax.set_xlim([0, np.ceil(radial_build["Radial Build"][-1][-1])])
-        ax.set_ylim([-width * 0.5, width * 0.5])
+        ax.set_xlim((0.0, float(np.ceil(radial_build["Radial Build"][-1][-1]))))
+        ax.set_ylim((-width * 0.5, width * 0.5))
         ax.set_xticks([*list(ax.get_xticks()), R_0])
-        ax.axes.set_axisbelow(b=False)
+        if ax.axes is not None:
+            ax.axes.set_axisbelow(b=False)
 
         def tick_format(value, n):  # noqa: ARG001
             if value == R_0:
@@ -352,8 +357,10 @@ class Solver(CodesSolver):
         t_ref = filter(lambda lz: lz.content == "Te[eV]", lz_ref)
         lz_ref = filter(lambda lz: f"{confinement_time_ms:.1f}" in lz.content, lz_ref)
         z_av_ref = filter(lambda z: f"{confinement_time_ms:.1f}" in z.content, z_ref)
-        return tuple(
-            np.array(next(ref).data, dtype=float) for ref in (t_ref, lz_ref, z_av_ref)
+        return (
+            np.array(next(t_ref).data, dtype=float),
+            np.array(next(lz_ref).data, dtype=float),
+            np.array(next(z_av_ref).data, dtype=float),
         )
 
     def get_species_fraction(self, impurity: str) -> float:

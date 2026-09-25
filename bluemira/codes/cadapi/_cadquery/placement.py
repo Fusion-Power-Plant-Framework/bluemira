@@ -17,6 +17,10 @@ from __future__ import annotations
 
 import math
 from itertools import starmap
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 import cadquery as cq
 import numpy as np
@@ -36,7 +40,7 @@ class _Vector:
 
     def __init__(self, x=0.0, y=0.0, z=0.0):
         # Allow construction from a single iterable (e.g. numpy array, list, tuple)
-        if hasattr(x, "__iter__"):
+        if isinstance(x, (tuple, list, np.ndarray)):
             x, y, z = x
         self.x, self.y, self.z = float(x), float(y), float(z)
 
@@ -93,6 +97,22 @@ class _CQPlacement:
         if _norm > 0:
             _ax /= _norm
         self.Rotation = _Rotation(tuple(_ax), angle_rad)
+
+    @property
+    def Axis(self) -> _Vector:
+        return self.Rotation.Axis
+
+    @Axis.setter
+    def Axis(self, val: _Vector):
+        self.Rotation.Axis = val
+
+    @property
+    def Angle(self) -> float:
+        return self.Rotation.Angle
+
+    @Angle.setter
+    def Angle(self, val: float):
+        self.Rotation.Angle = val
 
     @property
     def Matrix(self) -> _HomogeneousMatrix:
@@ -242,8 +262,8 @@ def move_placement(placement: _CQPlacement, vector) -> None:
 
 
 def make_plane(
-    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: Iterable[float] = (0.0, 0.0, 0.0),
+    axis: Iterable[float] = (0.0, 0.0, 1.0),
 ) -> _CQPlane:
     """Create a plane from a base point and normal axis (axis is normalized)."""
     n = np.asarray(axis, dtype=float)
@@ -254,9 +274,9 @@ def make_plane(
 
 
 def make_plane_from_3_points(
-    point1: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    point2: tuple[float, float, float] = (1.0, 0.0, 0.0),
-    point3: tuple[float, float, float] = (0.0, 1.0, 0.0),
+    point1: Iterable[float] = (0.0, 0.0, 0.0),
+    point2: Iterable[float] = (1.0, 0.0, 0.0),
+    point3: Iterable[float] = (0.0, 1.0, 0.0),
 ) -> _CQPlane:
     """Create a plane defined by three non-collinear points."""
     p1 = np.asarray(point1, dtype=float)

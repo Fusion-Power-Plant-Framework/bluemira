@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,8 +45,9 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from bluemira.codes._typing import TransportSolver
     from bluemira.codes.interface import BaseRunMode
-    from bluemira.codes.typing import TransportSolver
+    from bluemira.codes.plasmod.api._solver import Solver
     from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
         FemGradShafranovFixedBoundary,
         FixedBoundaryEquilibrium,
@@ -109,7 +110,7 @@ class TransportSolverParams(ParameterFrame):
 
 def create_plasma_xz_cross_section(
     parameterisation: GeometryParameterisation,
-    transport_params: ParameterFrame,
+    transport_params: TransportSolverParams,
     params: PlasmaFixedBoundaryParams,
     kappa_95: float,
     delta_95: float,
@@ -149,12 +150,14 @@ def create_plasma_xz_cross_section(
 
 def _run_transport_solver(
     transport_solver: TransportSolver,
-    transport_params: ParameterFrame,
+    transport_params: TransportSolverParams,
     transport_run_mode: str | BaseRunMode,
-) -> tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[TransportSolverParams, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
-    transp_out_params = transport_solver.execute(transport_run_mode)
+    transp_out_params = cast(
+        "TransportSolverParams", transport_solver.execute(transport_run_mode)
+    )
 
     return (
         transp_out_params,
@@ -308,7 +311,8 @@ def solve_transport_fixed_boundary(
     plot = any((plot, debug, gif))
     folder = try_get_bluemira_path("", subfolder="generated_data", allow_missing=False)
     figname = "Transport iteration "
-    f, ax = None, None
+    f: plt.Figure | None = None
+    ax: np.ndarray | None = None
 
     for n_iter in range(maxiter):
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
@@ -330,7 +334,9 @@ def solve_transport_fixed_boundary(
             if ax is not None:
                 for axis in ax.flat:
                     axis.clear()
-            f, ax = plot_default_profiles(transport_solver, show=False, f=f, ax=ax)
+            f, ax = plot_default_profiles(
+                cast("Solver", transport_solver), show=False, f=f, ax=ax
+            )
 
             f.suptitle(figname + str(n_iter))
             plt.pause(PLT_PAUSE)
@@ -355,7 +361,7 @@ def solve_transport_fixed_boundary(
         coarse_mesh = mesh
 
         gs_solver.set_mesh(mesh)
-
+        assert gs_solver.mesh is not None  # noqa: S101
         points = gs_solver.mesh.geometry.x
         psi2d_0 = np.zeros(len(points))
 
@@ -404,6 +410,7 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
+            assert gs_solver.psi is not None  # noqa: S101
             psi2d = gs_solver.psi(points)
 
             eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
@@ -461,7 +468,8 @@ def solve_transport_fixed_boundary(
     )
 
     if gif:
-        make_gif(folder, figname, clean=not debug)
+        assert folder is not None  # noqa: S101
+        make_gif(str(folder), figname, clean=not debug)
     return equilibrium
 
 
