@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from itertools import pairwise
 from typing import TYPE_CHECKING, cast, overload
 
@@ -855,6 +856,10 @@ class DivertorPreCellArray:
     def __len__(self) -> int:
         """Number of pre cells"""  # noqa: DOC201
         return len(self.pre_cells)
+
+    def __iter__(self) -> Iterator[DivertorPreCell]:
+        """Iterator for DivertorPreCellArray"""
+        return iter(self.pre_cells)
 
     @overload
     def __getitem__(self, index_or_slice: int) -> DivertorPreCell: ...
