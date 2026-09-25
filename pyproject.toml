@@ -69,6 +69,7 @@ dev = [
     "sphinx_copybutton",
     "sphinx-rtd-theme>=2.0.0",
     "sybil",
+    "ty",
 ]
 examples = ["notebook", "jupytext", "rich[jupyter]"]
 pinned = [

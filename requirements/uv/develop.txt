@@ -478,6 +478,8 @@ traitlets==5.16.1
     #   matplotlib-inline
     #   nbclient
     #   nbformat
+ty==0.0.84
+    # via bluemira (pyproject.toml)
 typeguard==4.6.0
     # via bluemira (pyproject.toml)
 typing-extensions==4.16.0
