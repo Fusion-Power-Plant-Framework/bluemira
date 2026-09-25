@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from enum import IntEnum, auto
 from importlib import resources
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Literal
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
@@ -31,8 +31,11 @@ class MFile:
     Dummy  MFile Class. Replaced by PROCESS import if PROCESS installed.
     """
 
-    def __init__(self, filename):
+    data: dict[str, Any]
+
+    def __init__(self, filename=None):
         self.filename = filename
+        self.data = {}
 
 
 class InDat:
@@ -40,15 +43,24 @@ class InDat:
     Dummy InDat Class. Replaced by PROCESS import if PROCESS installed.
     """
 
-    def __init__(self, filename):
+    data: dict[str, Any]
+
+    def __init__(self, filename=None):
         self.filename = filename
+        self.data = {}
+
+    def add_parameter(self, key, value):
+        self.data[key] = value
+
+    def write_in_dat(self, output_filename=None):
+        pass
 
 
 OBS_VARS = {}
 
 try:
-    from process.core.io.in_dat import InDat  # noqa: F401
-    from process.core.io.mfile import MFile  # noqa: F401
+    from process.core.io.in_dat import InDat  # type: ignore # noqa: F401
+    from process.core.io.mfile import MFile  # type: ignore # noqa: F401
     from process.core.io.obsolete_vars import OBS_VARS
     from process.models.physics.impurity_radiation import (
         ImpurityDataHeader,
@@ -77,7 +89,7 @@ class _INVariable:
 
     name: str
     _value: float | list | dict
-    v_type: TypeVar("InVarValueType")
+    v_type: Any
     parameter_group: str
     comment: str
 
@@ -141,7 +153,7 @@ class Impurities(IntEnum):
 
         try:
             return {
-                i: Path(data_path, f"{self.name:_<3}{i}_tau.dat")
+                i: Path(str(data_path), f"{self.name:_<3}{i}_tau.dat")
                 for i in ("lz", "z", "z2")
             }
         except NameError:
@@ -202,22 +214,22 @@ def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
     return process_name
 
 
-def _nested_check(process_name):
+def _nested_check(maybe_obsolete: str) -> str | list[str] | None:
     """
     Recursively checks for obsolete variable names
 
     Returns
     -------
     :
-        The newest process name
+        The newest process name or names
     """
-    while process_name in OBS_VARS:
-        process_name = OBS_VARS[process_name]
-        if process_name == "None":
+    while maybe_obsolete in OBS_VARS:
+        new_name = OBS_VARS[maybe_obsolete]
+        if new_name == "None":
             return None
-        if isinstance(process_name, list):
+        if isinstance(new_name, list):
             names = []
-            for p in process_name:
+            for p in new_name:
                 names += [_nested_check(p)]
             return list(flatten_iterable(names))
-    return process_name
+    return maybe_obsolete

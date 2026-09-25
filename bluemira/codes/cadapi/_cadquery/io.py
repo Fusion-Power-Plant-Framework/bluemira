@@ -19,7 +19,7 @@ import contextlib
 import enum
 import math
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import cadquery as cq
 from OCP.APIHeaderSection import APIHeaderSection_MakeHeader
@@ -85,7 +85,7 @@ class CADFileType(enum.Enum):
         return self.value
 
     @classmethod
-    def _missing_(cls, value: str) -> CADFileType:
+    def _missing_(cls, value: object) -> Any:
         # Allow "step" → STEP, "stp" → STEP, etc.
         _aliases = {
             "step": cls.STEP,
