@@ -19,17 +19,19 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 from unittest import mock
 
-import FreeCAD
-import BOPTools.JoinAPI
-import BOPTools.SplitAPI
-import DraftGeomUtils
-import FreeCADGui
-import Part
+import FreeCAD  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import BOPTools.JoinAPI  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import BOPTools.SplitAPI  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import DraftGeomUtils  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import FreeCADGui  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import Part  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
 import numpy as np
-from FreeCAD import Base
+from FreeCAD import (  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+    Base,
+)
 from matplotlib import colors
 
 try:
@@ -1562,17 +1564,21 @@ class Document:
         doc_name: str = "Bluemira_FreeCAD_wrapper",
     ):
         if shapes is not None:
+            shapes_list = list(shapes)
             if labels is None:
-                # Empty string is the default argument for addObject
-                labels = [""] * len(shapes)
-
-            elif len(labels) != len(shapes):
-                raise ValueError(
-                    f"Number of labels ({len(labels)}) "
-                    f"!= number of objects ({len(shapes)})"
-                )
-        self.shapes = shapes
-        self.labels = labels
+                labels_list = [""] * len(shapes_list)
+            else:
+                labels_list = list(labels)
+                if len(labels_list) != len(shapes_list):
+                    raise ValueError(
+                        f"Number of labels ({len(labels_list)}) "
+                        f"!= number of objects ({len(shapes_list)})"
+                    )
+            self.shapes: list[apiShape] | None = shapes_list
+            self.labels: list[str] | None = labels_list
+        else:
+            self.shapes = None
+            self.labels = None
         self.doc_name = doc_name
 
     def __enter__(self):
@@ -1600,7 +1606,7 @@ class Document:
         ValueError
             Number of objects not equal to number of labels
         """
-        if self.shapes is None:
+        if self.shapes is None or self.labels is None:
             raise ValueError("No parts found")
 
         for part, label in zip(self.shapes, self.labels, strict=False):
@@ -1637,7 +1643,7 @@ class _CADType:
     def __contains__(self, value: str) -> bool:
         return value.casefold() in self._casefolded
 
-    def __eq__(self, value: str | _CADType) -> bool:
+    def __eq__(self, value: object) -> bool:
         if isinstance(value, str):
             return value.casefold() in self._casefolded
         if isinstance(value, _CADType):
@@ -1764,7 +1770,7 @@ class CADFileType(enum.Enum):
     Z88_FEM_MESH_2 = _CADType("i1.txt", "feminout.importZ88Mesh")
 
     @classmethod
-    def _missing_(cls, value: str) -> CADFileType:
+    def _missing_(cls, value: object) -> Any:
         if isinstance(value, str):
             if value.upper() in cls.__members__:
                 return cls[value.upper()]
@@ -2087,7 +2093,7 @@ def save_cad(
 
         raise FreeCADError(
             f"{mesg} Not able to save object with format:"
-            f" '{cad_format.value.strip('$')}'"
+            f" '{str(cad_format.value).strip('$')}'"
         )
 
 
@@ -2914,8 +2920,8 @@ def change_placement(geo: apiShape, placement: apiPlacement):
 # Plane creation and manipulations
 # ======================================================================================
 def make_plane(
-    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: Iterable[float] = (0.0, 0.0, 0.0),
+    axis: Iterable[float] = (0.0, 0.0, 1.0),
 ) -> apiPlane:
     """
     Creates a FreeCAD plane with a given location and normal
@@ -2938,9 +2944,9 @@ def make_plane(
 
 
 def make_plane_from_3_points(
-    point1: tuple[float, float, float] = (0.0, 0.0, 0.0),
-    point2: tuple[float, float, float] = (1.0, 0.0, 0.0),
-    point3: tuple[float, float, float] = (0.0, 1.0, 0.0),
+    point1: Iterable[float] = (0.0, 0.0, 0.0),
+    point2: Iterable[float] = (1.0, 0.0, 0.0),
+    point3: Iterable[float] = (0.0, 1.0, 0.0),
 ) -> apiPlane:
     """
     Creates a FreeCAD plane defined by three non-linear points
@@ -3036,7 +3042,9 @@ def placement_from_plane(plane: apiPlane) -> apiPlacement:
 # ======================================================================================
 
 
-def _colourise(node: coin.SoNode, options: dict):
+def _colourise(node: coin.SoNode, options: dict | None):
+    if options is None:
+        return
     if isinstance(node, coin.SoMaterial):
         rgb = colors.to_rgb(options["colour"])
         transparency = options["transparency"]
@@ -3186,7 +3194,8 @@ def show_cad(
     with Document(parts, labels) as doc:
         for obj, option in zip(doc.parts(), options, strict=False):
             subgraph = FreeCADGui.subgraphFromObject(obj)
-            _colourise(subgraph, option)
+            if option is not None:
+                _colourise(subgraph, option)
             root.addChild(subgraph)
 
         viewer = quarter.QuarterWidget()
@@ -3239,7 +3248,9 @@ def rotate_into_position(
         cam.position.setValue(pos.x, pos.y, pos.z)
 
 
-def embedLight(scene, lightdir: tuple[float], intensity: float) -> coin.SoSeparator:
+def embedLight(
+    scene, lightdir: tuple[float, float, float], intensity: float
+) -> coin.SoSeparator:
     """
     Embeds a given coin node
     inside a shadow group with directional light with the

@@ -114,11 +114,11 @@ class PlasmaSourceParameters:
     electron_temperature_sep: float  # [keV]
 
     """Ion to electron temperature ratio (volume-averaged)."""
-    ie_temperature_ratio: Parameter[float]
+    ie_temperature_ratio: float
     """Volume-averaged fuel ion density [1/metre^3]."""
-    va_fuel_ion_density: Parameter[float]
+    va_fuel_ion_density: float
     """Volumed-averaged plasma electron density [1/metre^3]."""
-    va_electron_density: Parameter[float]
+    va_electron_density: float
 
     # mapping from parameter names in params.json (extracted by
     # OpenMCNeutronicsSolverParams) to the fields in this dataclass.

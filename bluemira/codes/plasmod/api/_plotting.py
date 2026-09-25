@@ -28,8 +28,8 @@ def plot_default_profiles(
     *,
     show: bool = True,
     f: plt.Figure | None = None,
-    ax: plt.Axes | None = None,
-) -> tuple[plt.Figure, plt.Axes]:
+    ax: np.ndarray | None = None,
+) -> tuple[plt.Figure, np.ndarray]:
     """
     Plot a default set of profiles from a PLASMOD solver.
 
@@ -52,7 +52,7 @@ def plot_default_profiles(
         Array of matplotlib Axes
     """
     plot_defaults()
-    if f is None and ax is None:
+    if f is None or ax is None:
         f, ax = plt.subplots(2, 3, figsize=(18, 10))
 
     rho = plasmod_solver.get_profile("x")
