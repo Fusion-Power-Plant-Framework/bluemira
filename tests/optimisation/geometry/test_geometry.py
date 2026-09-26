@@ -8,8 +8,10 @@ from unittest import mock
 import numpy as np
 import pytest
 
+from bluemira.geometry.error import OutOfBoundsError
 from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.optimisation._optimise import KeepOutZone
+from bluemira.geometry.optimisation._tools import to_objective, to_optimiser_callable
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,
@@ -270,3 +272,71 @@ class TestGeometry:
         )
 
         assert square_constraint(result.geom)[0] == pytest.approx(0, abs=1e-8)
+
+
+class TestOutOfBoundsPenalty:
+    """The geometry-optimisation wrappers penalise (rather than crash on) a
+    parameterisation that builds invalid geometry, so an optimiser probing an
+    infeasible point recovers. Reproduces the class of EUDEMO demo crashes where
+    ``create_shape`` raised ``OutOfBoundsError`` mid-optimisation.
+    """
+
+    @staticmethod
+    def _fake_geom():
+        # Stand-in geometry whose ``variables.set_values_from_norm`` is a no-op.
+        def _noop(_x):
+            return None
+
+        variables = type("V", (), {"set_values_from_norm": staticmethod(_noop)})
+        return type("G", (), {"variables": variables})()
+
+    @staticmethod
+    def _raises(excess):
+        def objective(_geom):
+            raise OutOfBoundsError("out of bounds", excess=excess)
+
+        return objective
+
+    def test_objective_penalises_out_of_bounds_instead_of_raising(self):
+        feasible = [10.0, 20.0]
+
+        def objective(_geom):
+            if feasible:
+                return feasible.pop(0)
+            raise OutOfBoundsError("out of bounds", excess=0.5)
+
+        f = to_objective(objective, self._fake_geom())
+        assert f([0]) == pytest.approx(10.0)
+        assert f([0]) == pytest.approx(20.0)  # worst feasible value seen is now 20
+        penalty = f([0])  # next call raises -> penalised, not propagated
+        assert np.isfinite(penalty)
+        assert penalty > 20.0  # strictly worse than any feasible value
+
+    def test_objective_penalty_grows_with_excess(self):
+        small = to_objective(self._raises(0.1), self._fake_geom())([0])
+        big = to_objective(self._raises(2.0), self._fake_geom())([0])
+        assert big > small
+
+    def test_constraint_penalises_with_matching_shape(self):
+        outputs = [np.array([1.0, -2.0, 0.5])]
+
+        def constraint(_geom):
+            if outputs:
+                return outputs.pop(0)
+            raise OutOfBoundsError("out of bounds", excess=1.0)
+
+        f = to_optimiser_callable(constraint, self._fake_geom())
+        assert f([0]).shape == (3,)
+        penalty = f([0])  # raises -> violated constraint vector of the same shape
+        assert penalty.shape == (3,)
+        assert np.all(penalty > 0)  # reads as strongly violated
+
+    def test_objective_survives_real_invalid_parameterisation(self):
+        # Faithful path: a real TripleArc whose angles are out of bounds makes
+        # create_shape raise; the wrapped objective penalises instead of crashing.
+        arc = TripleArc()
+        arc.adjust_variable("a1", value=120)
+        arc.adjust_variable("a2", value=120)  # sum 240 -> create_shape raises
+        x = arc.variables.get_normalised_values()
+        f = to_objective(lambda g: g.create_shape().length, arc)
+        assert np.isfinite(f(x))
