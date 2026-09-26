@@ -16,8 +16,8 @@ from bluemira.magnetostatics._ellipe import ellipe_nb
 from bluemira.magnetostatics._ellipk import ellipk_nb
 
 __all__ = [
-    "ellipe_nb",
-    "ellipk_nb",
+    "circular_coil_inductance_elliptic",
+    "circular_coil_inductance_kirchhoff",
     "greens_Bx",
     "greens_Bz",
     "greens_all",
@@ -25,14 +25,14 @@ __all__ = [
     "greens_dpsi_dx",
     "greens_dpsi_dz",
     "greens_psi",
+    "square_coil_inductance_kirchhoff",
 ]
 
-# Offset from 0<x<1
-#     Used in calculating Green's functions to avoid np.nan
+
 GREENS_ZERO = 1e-8
 
 
-@nb.vectorize(nopython=True, cache=True)
+@nb.vectorize(cache=True)
 def clip_nb(
     val: float | np.ndarray, val_min: float, val_max: float
 ) -> float | np.ndarray:
@@ -61,221 +61,153 @@ def clip_nb(
     return val
 
 
-@nb.njit(cache=True)
+@nb.njit(cache=True, inline="always")
+def _common_geometry(xc, zc, x, z):
+    """
+    Calculate the geometry shared by the Green's functions.
+
+    .. math::
+
+        h = z-z_c,
+
+    .. math::
+
+        u^2 = (x+x_c)^2+h^2,
+
+    .. math::
+
+        k^2 = \\frac{4xx_c}{u^2}.
+    """  # noqa: DOC201
+    h = z - zc
+    xp = x + xc
+
+    u2 = xp * xp + h * h
+    u = np.sqrt(u2)
+    k2 = clip_nb(4.0 * x * xc / u2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+
+    return h, u, u2, k2
+
+
+@nb.njit(cache=True, inline="always")
+def _elliptic_integrals(k2):
+    """Evaluate E(k²) and K(k²)."""  # noqa: DOC201
+    return ellipe_nb(k2), ellipk_nb(k2)
+
+
+@nb.njit(cache=True, inline="always")
+def _i1_i2(u, u2, k2, e, k):
+    """
+    Calculate
+
+    .. math::
+
+        I_1 = \\frac{K(k^2)}{u},
+
+    .. math::
+
+        I_2 = \\frac{E(k^2)}{u^3(1-k^2)}.
+    """  # noqa: DOC201
+    inv_u = 1.0 / u
+
+    i1 = k * inv_u
+    i2 = e * inv_u / (u2 * (1.0 - k2))
+
+    return i1, i2
+
+
+@nb.njit(cache=True, inline="always")
+def _radial_term(xc, x, h, i1, i2):
+    """
+    Calculate
+
+    .. math::
+
+        R = I_1+w^2I_2,
+
+    where
+
+    .. math::
+
+        w^2=x_c^2-x^2-h^2.
+    """  # noqa: DOC201
+    w2 = xc * xc - x * x - h * h
+    return i1 + w2 * i2
+
+
+@nb.njit(cache=True, inline="always")
+def _vertical_term(xc, x, h, i1, i2):
+    """
+    Calculate
+
+    .. math::
+
+        Z = I_1-v^2I_2,
+
+    where
+
+    .. math::
+
+        v^2=x^2+x_c^2+h^2.
+    """  # noqa: DOC201
+    v2 = x * x + xc * xc + h * h
+    return i1 - v2 * i2
+
+
+@nb.njit(cache=True, inline="always")
+def _radial_response(xc, zc, x, z):
+    """Calculate the term shared by dpsi/dx and Bz."""  # noqa: DOC201
+    h, u, u2, k2 = _common_geometry(xc, zc, x, z)
+    e, k = _elliptic_integrals(k2)
+    i1, i2 = _i1_i2(u, u2, k2, e, k)
+
+    return _radial_term(xc, x, h, i1, i2)
+
+
+@nb.njit(cache=True, inline="always")
+def _vertical_response(xc, zc, x, z):
+    """Calculate the quantities shared by dpsi/dz and Bx."""  # noqa: DOC201
+    h, u, u2, k2 = _common_geometry(xc, zc, x, z)
+    e, k = _elliptic_integrals(k2)
+    i1, i2 = _i1_i2(u, u2, k2, e, k)
+
+    return h, _vertical_term(xc, x, h, i1, i2)
+
+
+@nb.njit(cache=True, inline="always")
+def _axis_bz(xc, zc, z):
+    """
+    Calculate the analytical vertical field on the symmetry axis.
+
+    .. math::
+
+        B_z(0,z)=
+        \\frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\\right]^{3/2}}.
+    """  # noqa: DOC201
+    h = z - zc
+    u2 = xc * xc + h * h
+
+    return 0.5 * MU_0 * xc * xc / (u2 * np.sqrt(u2))
+
+
+@nb.njit(cache=True, inline="always")
 def _elliptic_derivatives(e, k, k2):
-    r"""Get :math:`\frac{dK}{dk}` and :math:`\frac{dE}{dk}` [dimensionless]
+    """
+    Calculate elliptic-integral derivatives with respect to ``k²``.
 
     .. math::
 
-        \frac{dK}{dk} &= \frac{E}{k}\frac{1}{1-k^2} - \frac{K}{k}
+        \\frac{dE}{d(k^2)}=\\frac{E-K}{2k^2},\\qquad
+        \\frac{dK}{d(k^2)}
+        =\\frac{E-(1-k^2)K}{2k^2(1-k^2)}.
+    """  # noqa: DOC201
+    one_minus_k2 = 1.0 - k2
+    inv_2k2 = 0.5 / k2
 
-        \frac{dE}{dk} &= \frac{E}{k} - \frac{K}{k}
+    dE_dk2 = (e - k) * inv_2k2  # noqa: N806
+    dK_dk2 = (e - one_minus_k2 * k) * inv_2k2 / one_minus_k2  # noqa: N806
 
-    Returns
-    -------
-    :
-        ellipk derivative
-    :
-        ellipe derivative
-    """
-    sqk2 = np.sqrt(k2)
-    e_sqk = e / sqk2
-    k_sqk = k / sqk2
-    dKdk = e_sqk / (1 - k2) - k_sqk  # noqa: N806
-    dEdk = e_sqk - k_sqk  # noqa: N806
-    return dKdk, dEdk
-
-
-@nb.njit(cache=True)
-def _dkdr(g3, xc, x):
-    r"""Get dkdr
-
-    .. math::
-
-        \text{dkdr} &= \frac{-2 x xc \frac{x+xc}{g_3^2} +
-                       \frac{x}{g_3}}{\sqrt{\frac{x xc}{g_3}}}
-
-            &= -2\sqrt{x xc} \sqrt{g_3}(\frac{x+xc}{g_3^2}) +
-                \sqrt{\frac{g_3}{x xc}}\frac{x}{g_3}
-
-            &= -2\sqrt{\frac{x xc}{g_3^3}} (x+xc) + \sqrt{\frac{xc}{g_3x}}
-
-            &= -2 \frac{(x+xc)\sqrt{x xc}}{g_3^{\frac{3}{2}}}  + \sqrt{\frac{xc}{g_3x}}
-
-    unit: [m^(-1)]
-
-    Returns
-    -------
-    :
-        dkdr
-
-    """
-    # old_expression = (-2 * x * xc * (x + xc) / (g3**2) + x / g3) / sqrt(x * xc / g3)
-    term_1 = -2 * (x + xc) * np.sqrt(x * xc) / g3**1.5
-    term_2 = np.sqrt(xc / (g3 * x))
-    return term_1 + term_2
-
-
-@nb.njit(cache=True)
-def _g(xc, zc, x, z):
-    r"""Get the tuple of (:math:`g_1, g_2, g_3, g_4`)
-
-    unit: [m^2]
-
-    .. math::
-
-        g_1 &= xc^2 - x^2 - z^2
-        g_2 &= (xc - x)^2 + z^2
-        g_3 &= (xc + x)^2 + z^2
-        g_4 &= xc^2 + x^2 + z^2
-
-    Returns
-    -------
-    :
-        g1
-    :
-        g2
-    :
-        g3
-    :
-        g4
-    """
-    x2 = x**2
-    xc2 = xc**2
-    z2 = (zc - z) ** 2
-    g1 = xc2 - x2 - z2
-    g2 = (xc - x) ** 2 + z2
-    g3 = (xc + x) ** 2 + z2
-    g4 = xc2 + x2 + z2
-    return g1, g2, g3, g4
-
-
-@nb.njit(cache=True)
-def _g_r(xc, x):
-    r"""Get the tuple of (:math:`g_{1r}, g_{2r}, g_{3r}`)
-
-    unit: [m]
-
-    .. math::
-
-        g_{1r} &= \frac{dg_1}{dxc} = -2xc
-        g_{2r} &= \frac{dg_2}{dxc} = 2xc - 2x
-        g_{3r} &= \frac{dg_3}{dxc} = 2xc + 2x
-
-    :math:`g_{4r}` is not used anywhere so is not computed.
-
-    Returns
-    -------
-    :
-        g1r
-    :
-        g2r
-    :
-        g3r
-    """
-    xc2 = 2 * xc
-    x2 = 2 * x
-    g1r = -xc2
-    g2r = xc2 - x2
-    g3r = xc2 + x2
-    return g1r, g2r, g3r
-
-
-@nb.njit(cache=True)
-def circular_coil_inductance_elliptic(
-    radius: float | np.ndarray, rc: float | np.ndarray
-) -> float | np.ndarray:
-    """
-    Calculate the inductance of a circular coil by elliptic integrals.
-
-    Parameters
-    ----------
-    radius:
-        The radius of the circular coil
-    rc:
-        The radius of the coil cross-section
-
-    Returns
-    -------
-    :
-        The self-inductance of the circular coil [H]
-
-    Notes
-    -----
-    The inductance is given by
-
-    .. math::
-        L = \\mu_{0} (2 r - r_c) \\Biggl((1 - k^2 / 2)~
-        \\int_0^{\\frac{\\pi}{2}} \\frac{d\\theta}{\\sqrt{1 - k~
-        \\sin (\\theta)^2}} - \\int_0^{\\frac{\\pi}{2}}~
-        \\sqrt{1 - k \\sin (\\theta)^2} \\, d\\theta\\Biggr)
-
-    where :math:`r` is the radius, :math:`\\mu_{0}` is the vacuum
-    permeability, and
-
-    .. math::
-        k = \\max\\left(10^{-8}, \\min~
-        \\left(\\frac{4r(r - r_c)}{(2r - r_c)^2}~
-        , 1.0 - 10^{-8}\\right)\\right)
-    """
-    k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
-    k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk_nb(k) - ellipe_nb(k))
-
-
-def circular_coil_inductance_kirchhoff(
-    radius: float | np.ndarray, rc: float | np.ndarray
-) -> float | np.ndarray:
-    """
-    Calculate the inductance of a circular coil by Kirchhoff's approximation.
-
-    radius:
-        The radius of the circular coil
-    rc:
-        The radius of the coil cross-section
-
-    Returns
-    -------
-    :
-        The self-inductance of the circular coil [H]
-
-    Notes
-    -----
-
-    .. math::
-        Inductance = \\mu_{0} * radius * (log(8 * radius / rc) - 2 + 0.25)
-
-    where :math:`\\mu_{0}` is the vacuum permeability
-    """
-    return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
-
-
-def square_coil_inductance_kirchhoff(
-    radius: float | np.ndarray, width: float | np.ndarray, height: float | np.ndarray
-) -> float | np.ndarray:
-    """
-    Calculate the inductance of a square coil by Kirchhoff's approximation.
-
-    radius:
-        The radius of the square coil
-    width:
-        The width of the coil cross-section
-    height
-        The height of the coil cross-section
-
-    Returns
-    -------
-    The self-inductance of the square coil [H]
-
-    Notes
-    -----
-    .. math::
-
-        Inductance = \\mu_0 radius (ln(8\\frac{radius}{width + height}) - 0.5)
-
-    where :math:`\\mu_{0}` is the vacuum permeability
-    """
-    return MU_0 * radius * (np.log(8 * radius / (width + height)) - 0.5)
+    return dK_dk2, dE_dk2
 
 
 @nb.njit(cache=True)
@@ -314,22 +246,26 @@ def greens_psi(
     Raises
     ------
     ZeroDivisionError
-        if xc <= 0
+        if xc == x == 0
 
     Notes
     -----
-    \t:math:`G_{\\psi}(x_{c}, z_{c}; x, z) = \\dfrac{{\\mu}_{0}}{2{\\pi}}`
-    \t:math:`\\dfrac{\\sqrt{xx_{c}}}{k}`
-    \t:math:`[(2-\\mathbf{K}(k^2)-2\\mathbf{E}(k^2)]`\n
-    Where:
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+    .. math::
+
+        G_\\psi= \\frac{\\mu_0}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
-    _, k2 = calc_a_k2(xc, zc, x, z)
-    e = ellipe_nb(k2)
-    k = ellipk_nb(k2)
-    return MU_0_2PI * np.sqrt(x * xc) * ((2 - k2) * k - 2 * e) / np.sqrt(k2)
+    axis = x <= 0.0
+
+    _, u, _, k2 = _common_geometry(xc, zc, x, z)
+    e, k = _elliptic_integrals(k2)
+
+    result = MU_0_4PI * u * ((2.0 - k2) * k - 2.0 * e)
+
+    return np.where(axis, 0.0, result)
 
 
 @nb.njit(cache=True)
@@ -367,90 +303,22 @@ def greens_dpsi_dx(
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}(x_{c}, z_{c}; x, z) =`
-    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
-    \t:math:`\\dfrac{1}{u}`
-    \t:math:`[\\dfrac{w^2}{d^2}\\mathbf{E}(k^2)+\\mathbf{K}(k^2)]`\n
-    Where:
-    \t:math:`h^{2}\\equiv z_{c}-z`\n
-    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
-    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
-    \t:math:`w^{2}\\equiv x^2 -x_{c}^2 - h^2`\n
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
-
-    The implementation used here refactors the above to avoid some zero divisions.
-    """
-    a, k2 = calc_a_k2(xc, zc, x, z)
-    i1, i2 = calc_i1_i2(a, k2)
-    return MU_0_2PI * x * ((xc**2 - (z - zc) ** 2 - x**2) * i2 + i1)
-
-
-@nb.njit(cache=True)
-def greens_dbz_dx(
-    xc: float | np.ndarray,
-    zc: float | np.ndarray,
-    x: float | np.ndarray,
-    z: float | np.ndarray,
-) -> float | np.ndarray:
-    r"""
-    Calculate :math:`\frac{dB_z}{dx}` (= :math:`\frac{dB_x}{dz}` for vacuum)
-
-    Get the radial gradient of the vertical magnetic field due to a circular filament.
-
-    unit: [N/A/m^2]
-
     .. math::
 
-        \frac{dB_z}{dx} = \frac{dB_x}{dz} = \frac{\mu_0 I}{2 \pi}\left(
-            - \frac{(K+E\frac{g_1}{g_2}) g_{3r}}{2 g_3^{\frac{3}{2}}}
-            + \frac{- E \frac{g_{1r}}{g_2} - E \frac{g_1 g_{2r}}{g_2^2}
-                    + \frac{dE}{dk} \frac{g_1}{g_2} \text{dkdr}
-                    + \frac{dK}{dk} \text{dkdr}
-                    }{\sqrt{g_3}}
-        \right)
+        \\frac{\\partial G_\\psi}{\\partial x}
+        =\\frac{\\mu_0}{2\\pi}x
+        \\left(I_1+w^2I_2\\right).
 
-    where :math:`K = K(k^2), E = E(k^2)`.
+    The implementation used here refactors the above to avoid some zero divisions.
 
-    Returns
-    -------
-    :
-        the gradient to the magnetic field
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
-    _, k2 = calc_a_k2(xc, zc, x, z)
-    e = ellipe_nb(k2)
-    k = ellipk_nb(k2)
-    kdk, edk = _elliptic_derivatives(e, k, k2)
-    g1, g2, g3, _ = _g(xc, zc, x, z)
-    g1r, g2r, g3r = _g_r(x, xc)
-    dkdr = _dkdr(g3, xc, x)
+    radial_term = _radial_response(xc, zc, x, z)
 
-    # Avoid divide by 0
-    g2 = np.where(np.isclose(g2, 0), GREENS_ZERO, g2)
-    g3 = np.where(np.isclose(g3, 0), GREENS_ZERO, g3)
-    logic_or = np.logical_or(np.isclose(g2, 0), np.isclose(g3, 0))
-    inv_g2 = g2**-1
-    inv_g2_2 = g2**-2
-
-    p1 = np.where(
-        logic_or,
-        0,
-        -MU_0_4PI * (k + e * g1 * inv_g2) * g3r * g3**-1.5,
-    )
-    p2 = np.where(
-        logic_or,
-        0,
-        MU_0_2PI
-        * (
-            e * g1r * inv_g2
-            - e * g1 * g2r * inv_g2_2
-            + (g1 * edk * dkdr) * inv_g2
-            + kdk * dkdr
-        )
-        * g3**-0.5,
-    )
-    return p1 + p2
+    # The explicit factor of x supplies the exact axis value for mixed arrays.
+    return MU_0_2PI * x * radial_term
 
 
 @nb.njit(cache=True)
@@ -488,96 +356,24 @@ def greens_dpsi_dz(
 
     Notes
     -----
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}(x_{c}, z_{c}; x, z) =`
-    \t:math:`\\dfrac{\\mu_0}{2\\pi}`
-    \t:math:`\\dfrac{h}{u}`
-    \t:math:`[\\mathbf{K}(k^2) - \\dfrac{v^2}{d^2}\\mathbf{E}(k^2)]`\n
-    Where:
-    \t:math:`h^{2}\\equiv z_{c}-z`\n
-    \t:math:`u^2\\equiv(x+x_{c})^2+h^2`\n
-    \t:math:`d^{2}\\equiv (x - x_{c})^2 + h^2`\n
-    \t:math:`v^{2}\\equiv x^2 +x_{c}^2 + h^2`\n
-    \t:math:`k^{2}\\equiv\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    \t:math:`\\mathbf{K} \\equiv` complete elliptic integral of the first kind\n
-    \t:math:`\\mathbf{E} \\equiv` complete elliptic integral of the second kind
+    .. math::
+
+        \\frac{\\partial G_\\psi}{\\partial z}
+        =\\frac{\\mu_0}{2\\pi}h
+        \\left(I_1-v^2I_2\\right).
 
     The implementation used here refactors the above to avoid some zero divisions.
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
-    a, k2 = calc_a_k2(xc, zc, x, z)
-    i1, i2 = calc_i1_i2(a, k2)
-    return MU_0_2PI * ((z - zc) * (i1 - i2 * ((z - zc) ** 2 + x**2 + xc**2)))
+    axis = x <= 0.0
 
+    h, vertical_term = _vertical_response(xc, zc, x, z)
+    result = MU_0_2PI * h * vertical_term
 
-@nb.njit(cache=True)
-def calc_a_k2(
-    xc: float | np.ndarray,
-    zc: float | np.ndarray,
-    x: float | np.ndarray,
-    z: float | np.ndarray,
-):
-    """
-    Find xc, zc, x, z terms which are repeatedly used in greens calculations.
-
-    Parameters
-    ----------
-    xc:
-        Coil x coordinates [m]
-    zc:
-        Coil z coordinates [m]
-    x:
-        Calculation x locations
-    z:
-        Calculation z locations
-
-    Returns
-    -------
-    a:
-        \t:math:`\\sqrt{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    k2:
-        \t:math:`\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    """
-    a = np.hypot((x + xc), (z - zc))
-    k2 = 4 * x * xc / a**2
-    # Avoid NaN when coil on grid point
-    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    return a, k2
-
-
-@nb.njit(cache=True)
-def calc_i1_i2(
-    a: float | np.ndarray,
-    k2: float | np.ndarray,
-    e: float | np.ndarray | None = None,
-    k: float | np.ndarray | None = None,
-):
-    """
-    Find a, k2, e, k terms which are repeatedly used in greens calculations.
-
-    Parameters
-    ----------
-    a:
-        \t:math:`\\sqrt{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    k2:
-        \t:math:`\\dfrac{4xx_{c}}{(x+x_{c})^{2}+(z-z_{c})^{2}}`\n
-    e:
-        elliptic integral of the second kind
-    k:
-        elliptic integral of the first kind
-
-    Returns
-    -------
-    i1:
-        \t:math:`\\dfrac{\\mathbf{K}}/{a}
-    i2:
-        \t:math:`\\dfrac{\\mathbf{E}}/{a^{3} (1-k^{2})}
-
-    """
-    if (e is None) or (k is None):
-        e = ellipe_nb(k2)
-        k = ellipk_nb(k2)
-    i1 = k / a
-    i2 = e / (a**3 * (1 - k2))
-    return i1, i2
+    return np.where(axis, 0.0, result)
 
 
 @nb.njit(cache=True)
@@ -586,12 +382,11 @@ def greens_Bx(
     zc: float | np.ndarray,
     x: float | np.ndarray,
     z: float | np.ndarray,
-    d_xc: float = 0,
-    d_zc: float = 0,
+    d_xc: float = 0,  # noqa: ARG001
+    d_zc: float = 0,  # noqa: ARG001
 ) -> float | np.ndarray:
     """
-    Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
-    using a Greens function.
+    Calculate the radial magnetic-field response.
 
     Parameters
     ----------
@@ -613,18 +408,25 @@ def greens_Bx(
     :
         Radial magnetic field response at (x, z)
 
-    Raises
-    ------
-    ZeroDivisionError
-        if x == 0
-
     Notes
     -----
-    \t:math:`G_{B_{x}}(x_{c}, z_{c}; x, z) = -\\dfrac{1}{x}`
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial z}}`
-    \t:math:`(x_{c}, z_{c}; x, z)`
+    .. math::
+
+        G_{B_x}
+        =-\\frac{\\mu_0}{2\\pi}\\frac{h}{x}
+        \\left(I_1-v^2I_2\\right).
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
-    return -1 / x * greens_dpsi_dz(xc, zc, x, z, d_xc, d_zc)
+    axis = x <= 0.0
+    x_safe = np.where(axis, 1.0, x)
+
+    h, vertical_term = _vertical_response(xc, zc, x, z)
+    result = -MU_0_2PI * h * vertical_term / x_safe
+
+    return np.where(axis, 0.0, result)
 
 
 @nb.njit(cache=True)
@@ -633,12 +435,11 @@ def greens_Bz(
     zc: float | np.ndarray,
     x: float | np.ndarray,
     z: float | np.ndarray,
-    d_xc: float = 0,
-    d_zc: float = 0,
+    d_xc: float = 0,  # noqa: ARG001
+    d_zc: float = 0,  # noqa: ARG001
 ) -> float | np.ndarray:
     """
-    Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
-    using a Greens function.
+    Calculate the vertical magnetic-field response.
 
     Parameters
     ----------
@@ -660,18 +461,137 @@ def greens_Bz(
     :
         Vertical magnetic field response at (x, z)
 
-    Raises
-    ------
-    ZeroDivisionError
-        if x == 0
+    Notes
+    -----
+    .. math::
+
+        G_{B_z}
+        =\\frac{\\mu_0}{2\\pi}
+        \\left(I_1+w^2I_2\\right).
+
+    On the symmetry axis,
+
+    .. math::
+
+        G_{B_z}(0,z)=
+        \\frac{\\mu_0x_c^2}
+        {2\\left[x_c^2+(z-z_c)^2\\right]^{3/2}}.
+
+    The axis value is calculated analytically.
+
+    Negative x or xc values are outside the intended domain.
+    """
+    h, u, u2, k2 = _common_geometry(xc, zc, x, z)
+    e, k = _elliptic_integrals(k2)
+    i1, i2 = _i1_i2(u, u2, k2, e, k)
+
+    xc2 = xc * xc
+    w2 = xc2 - x * x - h * h
+
+    bz = MU_0_2PI * (i1 + w2 * i2)
+    bz_axis = 0.5 * MU_0 * xc2 / (u2 * u)
+
+    return np.where(x <= 0.0, bz_axis, bz)
+
+
+@nb.njit(cache=True)
+def greens_dbz_dx(
+    xc: float | np.ndarray,
+    zc: float | np.ndarray,
+    x: float | np.ndarray,
+    z: float | np.ndarray,
+) -> float | np.ndarray:
+    """
+    Calculate the radial derivative of the vertical magnetic field.
+
+    Parameters
+    ----------
+    xc:
+        Coil x coordinates [m]
+    zc:
+        Coil z coordinates [m]
+    x:
+        Calculation x locations
+    z:
+        Calculation z locations
+
+    Returns
+    -------
+    :
+        The gradient of the vertical magnetic field
 
     Notes
     -----
-    \t:math:`G_{B_{z}}(x_{c}, z_{c}; x, z) = \\dfrac{1}{x}`
-    \t:math:`G_{\\dfrac{\\partial \\psi}{\\partial x}}`
-    \t:math:`(x_{c}, z_{c}; x, z)`
+    .. math::
+
+        \\frac{\\partial B_z}{\\partial x}
+        =\\frac{\\partial B_x}{\\partial z}
+        =\\frac{\\mu_0}{2\\pi}
+        \\left[
+            \\frac{1}{u}\\frac{\\partial F}{\\partial x}
+            -\\frac{x+x_c}{u^3}F
+        \\right],
+
+    where :math:`F=K(k^2)+E(k^2)w^2/d^2` and
+    :math:`d^2=(x-x_c)^2+h^2`.
+
+    The analytical axis value is 0.0. This is checked for as x <= 0.
+
+    Negative x or xc values are outside the intended domain.
     """
-    return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
+    axis = x <= 0.0
+    x_safe = np.where(axis, 1.0, x)
+
+    h, u, u2, k2 = _common_geometry(xc, zc, x, z)
+
+    xm = x - xc
+    h2 = h * h
+
+    # Calculate d² directly to avoid cancellation near the filament.
+    d2 = xm * xm + h2
+    w2 = xc * xc - x * x - h2
+
+    e, k = _elliptic_integrals(k2)
+    dK_dk2, dE_dk2 = _elliptic_derivatives(  # noqa: N806
+        e,
+        k,
+        k2,
+    )
+
+    d2_is_zero = np.isclose(d2, 0.0)
+    u2_is_zero = np.isclose(u2, 0.0)
+
+    singular = np.logical_or(d2_is_zero, u2_is_zero)
+    invalid = np.logical_or(axis, singular)
+
+    d2_safe = np.where(d2_is_zero, GREENS_ZERO, d2)
+    u2_safe = np.where(u2_is_zero, GREENS_ZERO, u2)
+    u_safe = np.where(u2_is_zero, np.sqrt(u2_safe), u)
+
+    inv_d2 = 1.0 / d2_safe
+    inv_d2_2 = inv_d2 * inv_d2
+    inv_u = 1.0 / u_safe
+    inv_u3 = inv_u / u2_safe
+
+    w2_over_d2 = w2 * inv_d2
+    elliptic_term = k + e * w2_over_d2
+
+    # Differentiate the underlying geometric parameter. The elliptic
+    # functions themselves continue to use the clipped parameter.
+    k2_geometric = 4.0 * x * xc / u2_safe
+
+    dk2_dx = k2_geometric * (1.0 / x_safe - 2.0 * (x + xc) / u2_safe)
+
+    d_elliptic_term_dx = (
+        dK_dk2 * dk2_dx
+        + dE_dk2 * dk2_dx * w2_over_d2
+        - 2.0 * e * x * inv_d2
+        - 2.0 * e * w2 * xm * inv_d2_2
+    )
+
+    result = MU_0_2PI * (d_elliptic_term_dx * inv_u - elliptic_term * (x + xc) * inv_u3)
+
+    return np.where(invalid, 0.0, result)
 
 
 @nb.njit(cache=True)
@@ -680,9 +600,15 @@ def greens_all(
     zc: float | np.ndarray,
     x: float | np.ndarray,
     z: float | np.ndarray,
-) -> tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
+) -> tuple[
+    float | np.ndarray,
+    float | np.ndarray,
+    float | np.ndarray,
+]:
     """
-    Speed optimisation of Green's functions for psi, Bx, and Bz
+    Calculate poloidal flux, radial field, and vertical field together.
+
+    Geometry, masks, and elliptic integrals are each evaluated once.
 
     Parameters
     ----------
@@ -698,28 +624,160 @@ def greens_all(
     Returns
     -------
     psi:
-        Poloidal magnetic flux per radian response at (x, z)
+        Poloidal flux response
     Bx:
-        Radial magnetic field response at (x, z)
+        Radial magnetic field response
     Bz:
-        Vertical magnetic field response at (x, z)
-
-    Raises
-    ------
-    ZeroDivisionError
-        if xc <= 0
-        if x <= 0
+        Vertical magnetic field response
     """
-    a, k2 = calc_a_k2(xc, zc, x, z)
-    e = ellipe_nb(k2)
-    k = ellipk_nb(k2)
-    i1, i2 = calc_i1_i2(a, k2, e, k)
-    i1 *= 4
-    i2 *= 4
-    a_part = (z - zc) ** 2 + x**2 + xc**2
-    inv_b_part = 1 / (-2 * x * xc)
-    x_b_part = x * inv_b_part
-    g_bx = MU_0_4PI * xc * (z - zc) * (i1 - i2 * a_part) * inv_b_part
-    g_bz = MU_0_4PI * xc * ((xc + a_part * x_b_part) * i2 - i1 * x_b_part)
-    g_psi = MU_0_4PI * a * ((2 - k2) * k - 2 * e)
-    return g_psi, g_bx, g_bz
+    axis = x <= 0.0
+    x_safe = np.where(axis, 1.0, x)
+
+    h, u, u2, k2 = _common_geometry(xc, zc, x, z)
+    e, k = _elliptic_integrals(k2)
+    i1, i2 = _i1_i2(u, u2, k2, e, k)
+
+    radial_term = _radial_term(xc, x, h, i1, i2)
+    vertical_term = _vertical_term(xc, x, h, i1, i2)
+
+    psi = MU_0_4PI * u * ((2.0 - k2) * k - 2.0 * e)
+
+    bx = -MU_0_2PI * h * vertical_term / x_safe
+
+    bz = MU_0_2PI * radial_term
+
+    axis_bz = _axis_bz(xc, zc, z)
+
+    psi = np.where(axis, 0.0, psi)
+    bx = np.where(axis, 0.0, bx)
+    bz = np.where(axis, axis_bz, bz)
+
+    return psi, bx, bz
+
+
+@nb.njit(cache=True)
+def circular_coil_inductance_elliptic(
+    radius: float | np.ndarray, rc: float | np.ndarray
+) -> float | np.ndarray:
+    """
+    Calculate the inductance of a circular coil by elliptic integrals.
+
+    Parameters
+    ----------
+    radius:
+        The radius of the circular coil
+    rc:
+        The radius of the coil cross-section
+
+    Returns
+    -------
+    :
+        The self-inductance of the circular coil [H]
+
+    Notes
+    -----
+    The inductance is given by
+
+    .. math::
+
+        L = \\mu_{0} (2 r - r_c) \\Biggl((1 - k^2 / 2)~
+        \\int_0^{\\frac{\\pi}{2}} \\frac{d\\theta}{\\sqrt{1 - k~
+        \\sin (\\theta)^2}} - \\int_0^{\\frac{\\pi}{2}}~
+        \\sqrt{1 - k \\sin (\\theta)^2} \\, d\\theta\\Biggr)
+
+    where :math:`r` is the radius, :math:`\\mu_{0}` is the vacuum
+    permeability, and
+
+    .. math::
+
+        k = \\max\\left(10^{-8}, \\min~
+        \\left(\\frac{4r(r - r_c)}{(2r - r_c)^2}~
+        , 1.0 - 10^{-8}\\right)\\right)
+    """
+    k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
+    k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk_nb(k) - ellipe_nb(k))
+
+
+def circular_coil_inductance_kirchhoff(
+    radius: float | np.ndarray, rc: float | np.ndarray
+) -> float | np.ndarray:
+    """
+    Calculate the inductance of a circular coil by Kirchhoff's approximation.
+
+    radius:
+        The radius of the circular coil
+    rc:
+        The radius of the coil cross-section
+
+    Returns
+    -------
+    :
+        The self-inductance of the circular coil [H]
+
+    Notes
+    -----
+
+    .. math::
+
+        Inductance = \\mu_{0} * radius * (log(8 * radius / rc) - 2 + 0.25)
+
+    where :math:`\\mu_{0}` is the vacuum permeability
+    """
+    return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
+
+
+def square_coil_inductance_kirchhoff(
+    radius: float | np.ndarray, width: float | np.ndarray, height: float | np.ndarray
+) -> float | np.ndarray:
+    """
+    Calculate the inductance of a square coil by Kirchhoff's approximation.
+
+    radius:
+        The radius of the square coil
+    width:
+        The width of the coil cross-section
+    height
+        The height of the coil cross-section
+
+    Returns
+    -------
+    The self-inductance of the square coil [H]
+
+    Notes
+    -----
+    .. math::
+
+        Inductance = \\mu_0 radius (ln(8\\frac{radius}{width + height}) - 0.5)
+
+    where :math:`\\mu_{0}` is the vacuum permeability
+    """
+    return MU_0 * radius * (np.log(8 * radius / (width + height)) - 0.5)
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    from bluemira.magnetostatics.greens_old import greens_Bz as old_greens_Bz
+
+    x = np.linspace(0, 0.1, 500)
+    z = np.zeros_like(x)
+    coil_x, coil_z = 4, 4
+
+    psi = greens_psi(coil_x, coil_z, x, z)
+    dpsi_dx = greens_dpsi_dx(coil_x, coil_z, x, z)
+    dpsi_dz = greens_dpsi_dz(coil_x, coil_x, x, z)
+    bx = greens_Bx(coil_x, coil_z, x, z)
+    bz = greens_Bz(coil_x, coil_z, x, z)
+    old_bz = old_greens_Bz(coil_x, coil_z, x, z)
+
+    for r in [psi, dpsi_dx, dpsi_dz, bx]:
+        f, ax = plt.subplots()
+        ax.plot(x, 1e6 * r)
+        plt.show()
+
+    f, ax = plt.subplots()
+    ax.plot(x, bz, label="Bz")
+    ax.plot(x, old_bz, ls="--", label="old Bz")
+    ax.legend()
+    plt.show()
