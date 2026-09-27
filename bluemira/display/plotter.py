@@ -249,11 +249,22 @@ class PlotOptions(Options):
     The options that are available for plotting objects
     """
 
-    __slots__ = ()
+    __slots__ = ("_explicit_ndiscr",)
 
     def __init__(self, **kwargs):
+        self._explicit_ndiscr = False
         self._options = DefaultPlotOptions()
         super().__init__(**kwargs)
+
+    def __setattr__(self, attr: str, val):
+        if attr == "ndiscr" and getattr(self, "_options", None) is not None:
+            object.__setattr__(self, "_explicit_ndiscr", True)
+        Options.__setattr__(self, attr, val)
+
+    @property
+    def ndiscr_is_explicit(self) -> bool:
+        """Whether ``ndiscr`` was assigned, including an explicit default."""
+        return self._explicit_ndiscr
 
 
 def get_default_options() -> PlotOptions:
@@ -709,10 +720,11 @@ class ComponentPlotter(BasePlotter):
     def _create_plotters(
         self, comp: Component, inherited_ndiscr: int | None = None
     ) -> Iterator[BasePlotter]:
-        ndiscr = inherited_ndiscr
-        if comp.plot_options.ndiscr != DefaultPlotOptions.ndiscr:
+        if comp.plot_options.ndiscr_is_explicit:
             ndiscr = comp.plot_options.ndiscr
-        elif ndiscr is None:
+        elif inherited_ndiscr is not None:
+            ndiscr = inherited_ndiscr
+        else:
             ndiscr = self.options.ndiscr
         if comp.is_leaf and getattr(comp, "shape", None) is not None:
             if comp.plot_options.face_options["color"] in flatten_iterable(
@@ -724,10 +736,7 @@ class ComponentPlotter(BasePlotter):
                     options = deepcopy(comp.plot_options)
             else:
                 options = deepcopy(comp.plot_options)
-            if comp.plot_options.ndiscr == DefaultPlotOptions.ndiscr:
-                options.ndiscr = ndiscr
-            else:
-                options.ndiscr = comp.plot_options.ndiscr
+            options.ndiscr = ndiscr
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
         else:
             for child in comp.children:
