@@ -706,21 +706,32 @@ class ComponentPlotter(BasePlotter):
             and not self.options.show_faces
         )
 
-    def _create_plotters(self, comp: Component) -> Iterator[BasePlotter]:
+    def _create_plotters(
+        self, comp: Component, inherited_ndiscr: int | None = None
+    ) -> Iterator[BasePlotter]:
+        ndiscr = inherited_ndiscr
+        if comp.plot_options.ndiscr != DefaultPlotOptions.ndiscr:
+            ndiscr = comp.plot_options.ndiscr
+        elif ndiscr is None:
+            ndiscr = self.options.ndiscr
         if comp.is_leaf and getattr(comp, "shape", None) is not None:
             if comp.plot_options.face_options["color"] in flatten_iterable(
                 BLUE_PALETTE.as_hex()
             ):
                 if self.options._user_options:
-                    options = self.options
+                    options = deepcopy(self.options)
                 else:
-                    options = comp.plot_options
+                    options = deepcopy(comp.plot_options)
             else:
-                options = comp.plot_options
+                options = deepcopy(comp.plot_options)
+            if comp.plot_options.ndiscr == DefaultPlotOptions.ndiscr:
+                options.ndiscr = ndiscr
+            else:
+                options.ndiscr = comp.plot_options.ndiscr
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
         else:
             for child in comp.children:
-                yield from self._create_plotters(child)
+                yield from self._create_plotters(child, ndiscr)
 
     def _populate_data(self, comp: Component):
         self._cplotters = list(self._create_plotters(comp))
