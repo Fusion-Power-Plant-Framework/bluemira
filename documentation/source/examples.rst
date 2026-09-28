@@ -38,6 +38,7 @@ Geometry Examples
     :maxdepth: 1
 
     examples/geometry/plane_placement_tutorial
+    examples/geometry/desplining_tutorial
 
 Magnetostatics Examples
 ^^^^^^^^^^^^^^^^^^^^^^^
