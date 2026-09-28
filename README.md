@@ -71,7 +71,7 @@ Below is an overview of our development roadmap for 2026/27:
 
 The ``bluemira`` code and its modules are described in the following publications:
 
-* TBD
+* [BLUEMIRA: a modular, open-source framework for designing tokamak fusion reactors, Coleman et al., *Nuclear Fusion* v **66** 126025 (2026)](https://iopscience.iop.org/article/10.1088/1741-4326/aea584)
 
 As ``bluemira`` is the result of an integration between two historical codes,
 some previous publications may also be of interest.
