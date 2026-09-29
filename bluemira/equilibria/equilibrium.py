@@ -29,6 +29,7 @@ from bluemira.base.look_and_feel import (
     bluemira_print_flush,
     bluemira_warn,
 )
+from bluemira.equilibria import ForwardSolveResult, run_forward_solve
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
@@ -1683,6 +1684,69 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
         except StopIteration:
             pass
+
+    def forward_solve(
+        self,
+        *,
+        target_relative_tolerance: float = 1e-6,
+        max_iterations: int = 100,
+        order: int = 2,
+        force_up_down_symmetric: bool | None = None,
+        picard_handover: float = 0.11,
+        verbose: bool = False,
+        suppress: bool = True,
+        **kwargs: Any,
+    ) -> ForwardSolveResult:
+        """
+        Execute FreeGSNKE static forward Grad-Shafranov solve on this Equilibrium.
+
+        Parameters
+        ----------
+        target_relative_tolerance:
+            Relative residual convergence threshold. Default is 1e-6.
+        max_iterations:
+            Maximum solver iterations. Default is 100.
+        order:
+            Spatial finite-difference operator order (2 or 4). Default is 2.
+        force_up_down_symmetric:
+            Whether to enforce up-down symmetry. If None, uses self.force_symmetry.
+        picard_handover:
+            Picard to Newton-Krylov handover threshold. Default is 0.11.
+        verbose:
+            Print iteration diagnostics. Default is False.
+        target_relative_tolerance:
+            Relative residual convergence threshold. Default is 1e-6.
+        max_iterations:
+            Maximum solver iterations. Default is 100.
+        order:
+            Spatial finite-difference operator order (2 or 4). Default is 2.
+        force_up_down_symmetric:
+            Whether to enforce up-down symmetry. If None, uses self.force_symmetry.
+        picard_handover:
+            Picard to Newton-Krylov handover threshold. Default is 0.11.
+        verbose:
+            Print iteration diagnostics. Default is False.
+        suppress:
+            Suppress FreeGSNKE console output. Default is True.
+        **kwargs:
+            Additional arguments forwarded to FreeGSNKE solver.
+
+        Returns
+        -------
+        ForwardSolveResult
+            Convergence metrics and diagnostics.
+        """
+        return run_forward_solve(
+            self,
+            target_relative_tolerance=target_relative_tolerance,
+            max_iterations=max_iterations,
+            order=order,
+            force_up_down_symmetric=force_up_down_symmetric,
+            picard_handover=picard_handover,
+            verbose=verbose,
+            suppress=suppress,
+            **kwargs,
+        )
 
     def _update_plasma(
         self, plasma_psi: npt.NDArray[np.float64], j_tor: npt.NDArray[np.float64]
