@@ -13,9 +13,20 @@ Grad-Shafranov equilibrium solves from Bluemira to FreeGSNKE.
 
 from __future__ import annotations
 
+import sys
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+
+# Ensure FreeCAD's bundled 'Ext' directory does not shadow standard lazy_loader
+if any(p.endswith(("/Ext", "/Ext/")) for p in sys.path):
+    sys.path = [p for p in sys.path if not p.endswith(("/Ext", "/Ext/"))]
+if "lazy_loader" in sys.modules and not hasattr(
+    sys.modules["lazy_loader"], "attach_stub"
+):
+    del sys.modules["lazy_loader"]
+    if "lazy_loader.lazy_loader" in sys.modules:
+        del sys.modules["lazy_loader.lazy_loader"]
 
 import numpy as np
 from freegsnke.build_machine import (
@@ -193,8 +204,8 @@ def profile_to_freegsnke(
     """
     Convert a Bluemira Profile to FreeGSNKE GeneralPprimeFFprime profile object.
 
-    Applies exact COCOS-7 flux scaling (multiplication by 2*pi for p' and ff')
-    to account for Bluemira's COCOS-11 (Wb) vs FreeGSNKE's COCOS-7 (Wb/rad).
+    Both Bluemira and FreeGSNKE operate with poloidal flux in Wb/rad (V.s/rad),
+    so p' (dp/dpsi) and ff' (F dF/dpsi) share identical physical definitions.
 
     Parameters
     ----------
@@ -215,11 +226,8 @@ def profile_to_freegsnke(
     pprime_bluemira = profile.pprime(psi_n)
     ffprime_bluemira = profile.ffprime(psi_n)
 
-    # Conversion: psi_f = psi_b / (2*pi)
-    # dp/dpsi_f = (dp/dpsi_b) * (dpsi_b/dpsi_f) = 2*pi * dp/dpsi_b
-    # F dF/dpsi_f = 2*pi * F dF/dpsi_b
-    pprime_freegsnke = 2.0 * np.pi * np.asarray(pprime_bluemira, dtype=np.float64)
-    ffprime_freegsnke = 2.0 * np.pi * np.asarray(ffprime_bluemira, dtype=np.float64)
+    pprime_freegsnke = np.asarray(pprime_bluemira, dtype=np.float64)
+    ffprime_freegsnke = np.asarray(ffprime_bluemira, dtype=np.float64)
 
     ip = float(profile.I_p) if profile.I_p is not None else 0.0
 
@@ -249,9 +257,9 @@ def update_bluemira_from_freegsnke(
     """
     Transfer converged solution state from FreeGSNKE back into Bluemira Equilibrium.
 
-    Converts poloidal flux from COCOS-7 (Wb/rad) to COCOS-11 (Wb) via 2*pi scaling,
-    updates the internal plasma state, updates toroidal current density, and
-    refreshes critical points and boundary topology.
+    Updates the internal plasma state, updates toroidal current density, and
+    refreshes critical points and boundary topology. Both Bluemira and FreeGSNKE
+    represent poloidal flux in Wb/rad.
 
     Parameters
     ----------
@@ -262,8 +270,8 @@ def update_bluemira_from_freegsnke(
     freegsnke_profiles:
         FreeGSNKE Profile instance containing computed toroidal current density.
     """
-    # Convert plasma poloidal flux: FreeGSNKE (Wb/rad) -> Bluemira (Wb)
-    bluemira_plasma_psi = freegsnke_eq.plasma_psi * (2.0 * np.pi)
+    # Plasma poloidal flux is in Wb/rad in both FreeGSNKE and Bluemira
+    bluemira_plasma_psi = np.asarray(freegsnke_eq.plasma_psi, dtype=np.float64).copy()
 
     # Toroidal current density Jtor has identical physical units [A/m^2]
     jtor = np.asarray(freegsnke_profiles.jtor, dtype=np.float64).copy()
@@ -276,10 +284,10 @@ def update_bluemira_from_freegsnke(
         bluemira_eq._I_p = float(freegsnke_eq._current)
 
     if hasattr(freegsnke_eq, "psi_axis") and freegsnke_eq.psi_axis is not None:
-        bluemira_eq.psi_ax = float(freegsnke_eq.psi_axis * (2.0 * np.pi))
+        bluemira_eq.psi_ax = float(freegsnke_eq.psi_axis)
 
     if hasattr(freegsnke_eq, "psi_bndry") and freegsnke_eq.psi_bndry is not None:
-        bluemira_eq.psi_b = float(freegsnke_eq.psi_bndry * (2.0 * np.pi))
+        bluemira_eq.psi_b = float(freegsnke_eq.psi_bndry)
 
     bluemira_eq._plasmacoil = None
     bluemira_eq._clear_OX_points()
@@ -384,7 +392,7 @@ def run_forward_solve(
         try:
             current_psi = bluemira_eq.plasma.psi()
             if current_psi is not None and np.any(np.abs(current_psi) > 1e-12):
-                freegsnke_eq.plasma_psi = current_psi / (2.0 * np.pi)
+                freegsnke_eq.plasma_psi = np.asarray(current_psi, dtype=np.float64).copy()
         except Exception:  # noqa: BLE001
             pass
 

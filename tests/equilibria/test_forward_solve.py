@@ -176,9 +176,9 @@ class TestBridgeConversions:
         )
         f_prof = profile_to_freegsnke(profile, freegsnke_eq, num_points=50)
 
-        # Verify exact 2*pi scaling for COCOS-7
-        np.testing.assert_allclose(f_prof.pprime_data, 2.0 * np.pi * p_bluemira)
-        np.testing.assert_allclose(f_prof.ffprime_data, 2.0 * np.pi * f_bluemira)
+        # Verify direct profile data pass-through in Wb/rad
+        np.testing.assert_allclose(f_prof.pprime_data, p_bluemira)
+        np.testing.assert_allclose(f_prof.ffprime_data, f_bluemira)
         assert np.isclose(f_prof.Ip, 5e5)
         assert np.isclose(f_prof.fvac(), 1.5 * 2.0)
 
