@@ -11,7 +11,7 @@ A collection of tools used in the EU-DEMO design.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from anytree import PreOrderIter
@@ -45,8 +45,9 @@ from bluemira.geometry.tools import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Sequence
+    from collections.abc import Sequence
 
+    from matplotlib.typing import ColorType
     from matproplib.material import Material
 
     from bluemira.base.components import ComponentT
@@ -71,7 +72,7 @@ __all__ = [
 
 def apply_component_display_options(
     phys_component: PhysicalComponent,
-    color: Iterable | ColorPalette,
+    color: ColorType | ColorPalette,
     transparency: float | None = None,
 ):
     """
@@ -487,7 +488,9 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 
 def build_sectioned_xy(
-    face: BluemiraFace, plot_colour: Any, material: Material | None = None
+    face: BluemiraFace,
+    plot_colour: ColorPalette | ColorType,
+    material: Material | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -528,7 +531,7 @@ def build_sectioned_xyz(
     face: BluemiraFace | list[BluemiraFace],
     name: str | list[str],
     n_TF: int,
-    plot_colour: Any,
+    plot_colour: list[ColorPalette | ColorType] | ColorPalette | ColorType,
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
@@ -546,7 +549,7 @@ def build_sectioned_xyz(
     n_TF:
         number of TF coils
     plot_colour:
-        colour tuple for component
+        colours for component
     degree:
         angle to sweep through
     enable_sectioning:
@@ -580,7 +583,7 @@ def build_sectioned_xyz(
         face = [face]
     if isinstance(name, str):
         name = [name]
-    if isinstance(plot_colour, tuple):
+    if isinstance(plot_colour, ColorPalette | tuple | str):
         plot_colour = [plot_colour]
     if not isinstance(material, list):
         material = [material]

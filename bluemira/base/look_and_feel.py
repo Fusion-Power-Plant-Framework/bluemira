@@ -51,7 +51,7 @@ def get_git_version(directory: str) -> bytes:
 
     Returns
     -------
-    bytes
+    :
         The git version bytestring
     """
     return subprocess.check_output(

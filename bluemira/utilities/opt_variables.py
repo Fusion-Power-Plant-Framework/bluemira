@@ -378,7 +378,7 @@ def ov(
     *,
     fixed: bool = False,
     description: str | None = None,
-) -> Any:
+) -> OptVariable:
     """
     Field factory for OptVariable
 

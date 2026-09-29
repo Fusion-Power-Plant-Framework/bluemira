@@ -11,7 +11,7 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload, override
 
 import numpy as np
 import numpy.typing as npt
@@ -22,8 +22,7 @@ from pint.facets.context.objects import Context
 from pint.util import UnitsContainer
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
+    from pint.facets.context import objects as pint_obj
     from pint.facets.plain.unit import PlainUnit as Unit
 
 
@@ -38,7 +37,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | str | CoilType) -> CoilType:
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:
@@ -104,13 +103,14 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *names_or_contexts: str | Context, **kwargs: Any):
+    @override
+    def enable_contexts(self, *contexts: pint_obj.Context, **kwargs):
         """
         Enable contexts
         """
-        self._add_contexts([c for c in names_or_contexts if not isinstance(c, str)])
+        self._add_contexts(contexts)
 
-        super().enable_contexts(*[*self.contexts, *names_or_contexts], **kwargs)
+        super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
         # Extra units
         self.define("displacements_per_atom  = count = dpa")
         self.define("full_power_year = year = fpy")
@@ -223,12 +223,12 @@ class BMUnitRegistry(UnitRegistry):
 
     @staticmethod
     def _transform(
-        context: Context,
+        context: pint_obj.Context,
         units_from: str,
         units_to: str,
-        forward_transform: Callable[[BMUnitRegistry, Any], Any],
-        reverse_transform: Callable[[BMUnitRegistry, Any], Any],
-    ) -> Context:
+        forward_transform: pint_obj.Transformation,
+        reverse_transform: pint_obj.Transformation,
+    ) -> pint_obj.Context:
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:
@@ -440,8 +440,10 @@ def raw_uc(
     value: np.ndarray, unit_from: str | Unit, unit_to: str | Unit
 ) -> np.ndarray: ...
 @overload
-def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any: ...
-def raw_uc(value: Any, unit_from: str | Unit, unit_to: str | Unit) -> Any:
+def raw_uc(
+    value: ArrayLike, unit_from: str | Unit, unit_to: str | Unit
+) -> ArrayLike: ...
+def raw_uc(value: ArrayLike, unit_from: str | Unit, unit_to: str | Unit) -> ArrayLike:
     """
     Raw unit converter
 
@@ -479,7 +481,7 @@ def gas_flow_uc(
     unit_from: str | Unit,
     unit_to: str | Unit,
     gas_flow_temperature: float | Quantity | None = None,
-) -> int | float | np.ndarray:
+) -> npt.ArrayLike:
     """
     Converts around Standard temperature and pressure for gas unit conversion.
     Accurate for Ideal gases.
@@ -510,9 +512,7 @@ def gas_flow_uc(
         ureg.gas_flow_temperature = None
 
 
-def to_celsius(
-    temp: npt.ArrayLike, unit: str | Unit = ureg.kelvin
-) -> float | np.ndarray:
+def to_celsius(temp: npt.ArrayLike, unit: str | Unit = ureg.kelvin) -> npt.ArrayLike:
     """
     Convert a temperature in Kelvin to Celsius.
 
@@ -532,9 +532,7 @@ def to_celsius(
     return converted_val
 
 
-def to_kelvin(
-    temp: npt.ArrayLike, unit: str | Unit = ureg.celsius
-) -> float | np.ndarray:
+def to_kelvin(temp: npt.ArrayLike, unit: str | Unit = ureg.celsius) -> npt.ArrayLike:
     """
     Convert a temperature in Celsius to Kelvin.
 
@@ -555,7 +553,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: Any):
+def _temp_check(unit: Unit, val: npt.ArrayLike):
     """
     Check temperature is above absolute zero
 
@@ -579,7 +577,7 @@ def _temp_check(unit: Unit, val: Any):
         raise ValueError("Negative temperature in K specified.")
 
 
-def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
+def kgm3_to_gcm3(density: npt.ArrayLike) -> npt.ArrayLike:
     """
     Convert a density in kg/m3 to g/cm3
 
@@ -595,7 +593,7 @@ def kgm3_to_gcm3(density: npt.ArrayLike) -> float | np.ndarray:
     return cast("float | np.ndarray", raw_uc(density, "kg.m^-3", "g.cm^-3"))
 
 
-def gcm3_to_kgm3(density: npt.ArrayLike) -> float | np.ndarray:
+def gcm3_to_kgm3(density: npt.ArrayLike) -> npt.ArrayLike:
     """
     Convert a density in g/cm3 to kg/m3
 

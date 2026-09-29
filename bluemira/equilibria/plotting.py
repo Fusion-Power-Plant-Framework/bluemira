@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
@@ -102,8 +103,7 @@ class Plotter:
     Utility plotter abstract object
     """
 
-    ax: Any = None
-    f: Any = None
+    ax: Axes | list[Axes]
 
     def __init__(self, ax=None, *, subplots=EqSubplots.XZ, nrows=1, ncols=2, **kwargs):
         for kwarg in kwargs:
@@ -180,6 +180,8 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
+    ax: Axes
+
     def __init__(
         self,
         grid: Grid,
@@ -250,6 +252,8 @@ class LimiterPlotter(Plotter):
     """
     Utility class for plotting Limiter objects
     """
+
+    ax: Axes
 
     def __init__(self, limiter, ax=None, **kwargs):
         super().__init__(ax)

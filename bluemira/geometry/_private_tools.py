@@ -9,8 +9,11 @@ A collection of private geometry tools for discretised geometry. Do not use thes
 use primitive operations in geometry/tools.py instead.
 """
 
+from __future__ import annotations
+
+from functools import partial
 from itertools import zip_longest
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -28,6 +31,9 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import flatten_iterable
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # =============================================================================
 # Errors
@@ -228,7 +234,7 @@ def convert_coordinates_to_wire(
     label:
         The label for the resulting BluemiraWire object
     kwargs:
-        Any other arguments for the conversion method, see e.g. make_mixed_face
+        Any other arguments for the conversion method, see make_mixed_face
 
     Returns
     -------
@@ -239,13 +245,12 @@ def convert_coordinates_to_wire(
     ValueError
         If method is not recognised
     """
-    if method == "mixed":
-        return make_mixed_wire(x, y, z, label=label, **kwargs)
-    if method == "polygon":
-        return make_wire(x, y, z, label=label, spline=False, **kwargs)
-    if method == "spline":
-        return make_wire(x, y, z, label=label, spline=True, **kwargs)
-    raise ValueError(f"Unknown method {method}")
+    method_map = {
+        "mixed": partial(make_mixed_wire, **kwargs),
+        "polygon": partial(make_wire, spline=False),
+        "spline": partial(make_wire, spline=True),
+    }
+    return method_map[method](x, y, z, label=label)
 
 
 def convert_coordinates_to_face(
@@ -288,13 +293,12 @@ def convert_coordinates_to_face(
     ValueError
         If method is not recognised
     """
-    if method == "mixed":
-        return make_mixed_face(x, y, z, label=label, **kwargs)
-    if method == "polygon":
-        return make_face(x, y, z, label=label, spline=False, **kwargs)
-    if method == "spline":
-        return make_face(x, y, z, label=label, spline=True, **kwargs)
-    raise ValueError(f"Unknown method {method}")
+    method_map = {
+        "mixed": partial(make_mixed_face, **kwargs),
+        "polygon": partial(make_face, spline=False),
+        "spline": partial(make_face, spline=True),
+    }
+    return method_map[method](x, y, z, label=label)
 
 
 def make_mixed_wire(
@@ -802,8 +806,8 @@ class MixedFaceMaker:
         return sequences
 
     def _get_spline_sequences(
-        self, polygon_sequences: list[list[int]]
-    ) -> list[list[int]]:
+        self, polygon_sequences: Sequence[Sequence[float]]
+    ) -> list[list[float]]:
         """
         Gets the sequences of spline segments
 
@@ -882,7 +886,9 @@ class MixedFaceMaker:
         return coords[:, mask]
 
     def _make_subcoordinates(
-        self, polygon_sequences: list[list[int]], spline_sequences: list[list[int]]
+        self,
+        polygon_sequences: Sequence[Sequence[float]],
+        spline_sequences: Sequence[Sequence[float]],
     ):
         polygon_coords: list[np.ndarray] = []
         spline_coords: list[np.ndarray] = []

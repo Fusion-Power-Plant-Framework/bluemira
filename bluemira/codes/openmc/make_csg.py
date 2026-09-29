@@ -22,7 +22,7 @@ import openmc.region
 from bluemira.codes.openmc.material import CellType
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.solid import BluemiraSolid
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     is_convex,
     make_circle_arc_3P,
@@ -1851,7 +1851,8 @@ class DivertorCell(openmc.Cell):
         GeometryError
             Volume is negative
         """
-        half_solid = BluemiraSolid(cast("Any", revolve_shape(self.outline)))
+        half_solid = revolve_shape(BluemiraFace(self.outline))
+
         cm3_volume = to_cm3(half_solid.volume * 2)
         if cm3_volume <= 0:
             raise GeometryError("Volume (as calculated by FreeCAD) is negative!")

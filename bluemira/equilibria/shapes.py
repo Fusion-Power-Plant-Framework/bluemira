@@ -749,7 +749,7 @@ class _InOut(Enum):
 
 def _johner_quadrant(
     delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> tuple[npt.NDArray, npt.NDArray]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
     t = calc_t(delta, kappa, psi)
     conditional_point = 0.5

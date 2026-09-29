@@ -271,7 +271,7 @@ packaging==26.3
     #   pytest
     #   sphinx
     #   tables
-pandas==3.0.5
+pandas==2.3.3
     # via seaborn
 parso==0.8.7
     # via jedi
@@ -366,6 +366,8 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.5.2
     # via virtualenv
+pytz==2026.3.post1
+    # via pandas
 pyvista==0.48.4
     # via bluemira (pyproject.toml)
 pyyaml==6.0.3
@@ -501,6 +503,8 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via pydantic
+tzdata==2026.4
+    # via pandas
 urllib3==2.7.0
     # via requests
 virtualenv==21.7.4

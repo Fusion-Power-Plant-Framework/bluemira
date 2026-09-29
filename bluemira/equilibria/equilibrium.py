@@ -65,6 +65,7 @@ from bluemira.equilibria.plotting import (
 from bluemira.equilibria.profiles import (
     BetaLiIpProfile,
     CustomProfile,
+    IpProfile,
     OPointCalcOptions,
     Profile,
 )
@@ -1217,7 +1218,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         self,
         coilset: CoilSet,
         grid: Grid,
-        profiles: Profile,
+        profiles: IpProfile,
         *,
         force_symmetry: bool = False,
         vcontrol: str | None = None,

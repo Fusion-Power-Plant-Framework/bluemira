@@ -29,6 +29,7 @@ from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.contour import ContourSet
 
@@ -329,7 +330,7 @@ class BluemiraPathPatch3D(PathPatch3D):
         self,
         path: Path_mpl,
         normal: np.ndarray,
-        translation: np.ndarray | None = None,
+        translation: npt.ArrayLike | None = None,
         color: str = "b",
         **kwargs,
     ):

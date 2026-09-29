@@ -199,9 +199,7 @@ class BluemiraPlane:
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
 
 
-def xz_plane_from_2_points(
-    point1: npt.NDArray[np.float64], point2: npt.NDArray[np.float64]
-) -> BluemiraPlane:
+def xz_plane_from_2_points(point1: npt.NDArray, point2: npt.NDArray) -> BluemiraPlane:
     """
     Make a plane that is perpendicular to the RZ plane using only 2 points.
 
@@ -246,9 +244,7 @@ def z_plane(z: float):
     return BluemiraPlane.from_3_points([0, 0, z], [0, 1, z], [1, 0, z])
 
 
-def calculate_plane_dir(
-    start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
-) -> tuple[BluemiraPlane, npt.NDArray[np.float64]]:
+def calculate_plane_dir(start_point, end_point) -> tuple[BluemiraPlane, npt.NDArray]:
     """
     Calculate the cutting plane and the direction of the cut from 2 points.
     Both points must lie on the RZ plane.
