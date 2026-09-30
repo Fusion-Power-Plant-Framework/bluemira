@@ -11,7 +11,7 @@ File saving for fixed boundary equilibrium
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from eqdsk import EQDSKInterface
@@ -50,13 +50,18 @@ def _fpol_profile(ffprime, psi_norm, psi_mag, fvac):
     return fpol
 
 
+FileFormat = Literal[
+    "eqdsk", "geqdsk", "json", "imas", "EQDSK", "GEQDSK", "JSON", "IMAS"
+]
+
+
 def save_fixed_boundary_to_file(
     file_path: str,
     file_header_name: str,
     equilibrium: FixedBoundaryEquilibrium,
     nx: int,
     nz: int,
-    file_format: str = "json",
+    file_format: FileFormat = "json",
     json_kwargs: dict | None = None,
 ) -> EQDSKInterface:
     """
@@ -147,7 +152,7 @@ def save_fixed_boundary_to_file(
         pprime=p_prime,
         psi=psi,
         psibdry=0,
-        psimag=psi_mag,
+        psimag=float(psi_mag),
         xbdry=xbdry,
         xc=np.array([]),
         xcentre=grid.x_mid,

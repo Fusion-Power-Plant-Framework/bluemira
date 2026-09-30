@@ -10,7 +10,7 @@ Finite element class
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -416,7 +416,7 @@ class Element:
             M_y = \\frac{y_1 + y_2}{2}, \\quad
             M_z = \\frac{z_1 + z_2}{2}
         """
-        return get_midpoint(self.node_1, self.node_2)
+        return np.array(get_midpoint(self.node_1, self.node_2))
 
     @property
     def space_vector(self):
@@ -523,7 +523,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Load | dict[str, float | str]):
+    def add_load(self, load: Load | dict[str, Any]):
         """
         Applies a load to the Element object.
 

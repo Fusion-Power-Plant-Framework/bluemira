@@ -15,7 +15,7 @@ from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from operator import attrgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Self, cast
 
 import numpy as np
 
@@ -334,12 +334,12 @@ class CoilGroup(CoilGroupFieldsMixin):
             )
             return cls(*coils)
 
-        def _get_val(lst: npt.ArrayLike | None, idx: int, default=None):
+        def _get_val(lst: Sequence[Any] | npt.NDArray | None, idx: int, default=None):
             if lst is None:
                 return None
             try:
                 return lst[idx]
-            except IndexError:
+            except (IndexError, TypeError):
                 return default
 
         for i in range(eqdsk.ncoil):
@@ -414,7 +414,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def __list_getter(self, attr: str) -> list:
         """Get attributes from coils tuple"""  # noqa: DOC201
-        return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
+        return list(np.frompyfunc(attrgetter(attr), 1, 1)(self._coils))
 
     def __getter(self, attr: str) -> np.ndarray:
         """
@@ -446,7 +446,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         return np.vstack(_quad_list)
 
-    def __setter(
+    def _setter(
         self,
         attr: str,
         values: CoilType | float | Iterable[CoilType | float],
@@ -459,9 +459,9 @@ class CoilGroup(CoilGroupFieldsMixin):
         ValueError
             Number of elements < number of coils
         """
-        values = np.atleast_1d(values)
+        values = np.atleast_1d(np.asarray(values))
         if dtype not in {None, object}:
-            values.dtype = np.dtype(dtype)
+            values = values.astype(dtype)
         no_val = values.size
         no = 0
         for coil in flatten_iterable(self._coils):
@@ -575,7 +575,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         return [self[n] for n in self.name]
 
-    def _get_type_index(self, *ctype: CoilType | str) -> npt.NDArray[int]:
+    def _get_type_index(self, *ctype: CoilType | str) -> npt.NDArray[np.int_]:
         coil_type = tuple(CoilType(ct) for ct in ctype) if ctype else CoilType
 
         return np.asarray(
@@ -596,9 +596,9 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def assign_material(self, ctype, j_max, b_max):
         """Assign material J and B to Coilgroup"""
-        cg = self.get_coiltype(ctype)
-        cg.j_max = j_max
-        cg.b_max = b_max
+        if (cg := self.get_coiltype(ctype)) is not None:
+            cg.j_max = j_max
+            cg.b_max = b_max
 
     def get_max_current(self, max_current: float = np.inf) -> np.ndarray:
         """
@@ -822,69 +822,69 @@ class CoilGroup(CoilGroupFieldsMixin):
     @x.setter
     def x(self, values: float | Iterable[float]):
         """Set coil x positions"""
-        self.__setter("x", values)
+        self._setter("x", values)
 
     @z.setter
     def z(self, values: float | Iterable[float]):
         """Set coil z positions"""
-        self.__setter("z", values)
+        self._setter("z", values)
 
     @position.setter
     def position(self, values: np.ndarray):
         """Set coil positions"""
-        self.__setter("x", values[0])
-        self.__setter("z", values[1])
+        self._setter("x", values[0])
+        self._setter("z", values[1])
 
     @ctype.setter
     def ctype(self, values: CoilType | Iterable[CoilType]):
         """Set coil types"""
-        self.__setter("ctype", values, dtype=object)
+        self._setter("ctype", values, dtype=object)
 
     @dx.setter
     def dx(self, values: float | Iterable[float]):
         """Set coil dx sizes"""
-        self.__setter("dx", values)
+        self._setter("dx", values)
 
     @dz.setter
     def dz(self, values: float | Iterable[float]):
         """Set coil dz sizes"""
-        self.__setter("dz", values)
+        self._setter("dz", values)
 
     @current.setter
     def current(self, values: float | Iterable[float]):
         """Set coil currents"""
-        self.__setter("current", values)
+        self._setter("current", values)
 
     @j_max.setter
     def j_max(self, values: float | Iterable[float]):
         """Set coil max current densities"""
-        self.__setter("j_max", values)
+        self._setter("j_max", values)
 
     @fix_size.setter
     def fix_size(self, values: bool | Iterable[bool]):
         """Get if coil size is fixed (True) or not (False)"""
-        self.__setter("fix_size", values)
+        self._setter("fix_size", values)
 
     @b_max.setter
     def b_max(self, values: float | Iterable[float]):
         """Set coil max fields"""
-        self.__setter("b_max", values)
+        self._setter("b_max", values)
 
     @resistance.setter
     def resistance(self, values: float | Iterable[float]):
         """Set coil resistance"""
-        self.__setter("resistance", values)
+        self._setter("resistance", values)
 
     @discretisation.setter
     def discretisation(self, values: float | Iterable[float]):
         """Set coil discretisations"""
-        self.__setter("discretisation", values)
+        self._setter("discretisation", values)
         self._pad_discretisation(self.__list_getter("_quad_x"))
 
     @n_turns.setter
     def n_turns(self, values: float | Iterable[float]):
         """Set coil number of turns"""
-        self.__setter("n_turns", values)
+        self._setter("n_turns", values)
 
 
 class Circuit(CoilGroup):
@@ -932,7 +932,7 @@ class Circuit(CoilGroup):
         """
         Add coil to circuit forcing the same current
         """
-        super().add_coil(coils)
+        super().add_coil(*coils)
         self.current = self._get_current()
 
     @CoilGroup.current.setter
@@ -943,7 +943,7 @@ class Circuit(CoilGroup):
         if isinstance(values, Sequence):
             # Force the same value of current for all coils
             values = values[0]
-        self._CoilGroup__setter("current", values)
+        self._setter("current", values)
 
 
 class SymmetricCircuit(Circuit):
@@ -991,8 +991,14 @@ class SymmetricCircuit(Circuit):
 
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
-        self.symmetric_group.x -= diff[0]
-        self.symmetric_group.z -= diff[1]
+        diff_0 = float(diff[0])
+        diff_1 = float(diff[1])
+        if isinstance(self.symmetric_group, Coil):
+            self.symmetric_group.x -= diff_0
+            self.symmetric_group.z -= diff_1
+        else:
+            self.symmetric_group.x = self.symmetric_group.x - diff_0  # noqa: PLR6104
+            self.symmetric_group.z = self.symmetric_group.z - diff_1  # noqa: PLR6104
 
     @property
     def symmetric_group(self) -> Coil | CoilGroup:
@@ -1065,8 +1071,16 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_x, np.ndarray):
             new_x = np.mean(new_x[0])
-        self.primary_group.x += new_x - self._get_primary_group_x_centre()
-        self.symmetric_group.x -= self._symmetrise()[0]
+        dx = float(new_x - self._get_primary_group_x_centre())
+        if isinstance(self.primary_group, Coil):
+            self.primary_group.x += dx
+        else:
+            self.primary_group.x = self.primary_group.x + dx  # noqa: PLR6104
+        sym_dx = float(self._symmetrise()[0])
+        if isinstance(self.symmetric_group, Coil):
+            self.symmetric_group.x -= sym_dx
+        else:
+            self.symmetric_group.x = self.symmetric_group.x - sym_dx  # noqa: PLR6104
 
     @Circuit.z.setter
     def z(self, new_z: float | npt.NDArray):
@@ -1075,8 +1089,16 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_z, np.ndarray):
             new_z = np.mean(new_z[0])
-        self.primary_group.z += new_z - self._get_primary_group_z_centre()
-        self.symmetric_group.z -= self._symmetrise()[1]
+        dz = float(new_z - self._get_primary_group_z_centre())
+        if isinstance(self.primary_group, Coil):
+            self.primary_group.z += dz
+        else:
+            self.primary_group.z = self.primary_group.z + dz  # noqa: PLR6104
+        sym_dz = float(self._symmetrise()[1])
+        if isinstance(self.symmetric_group, Coil):
+            self.symmetric_group.z -= sym_dz
+        else:
+            self.symmetric_group.z = self.symmetric_group.z - sym_dz  # noqa: PLR6104
 
     def remove_coil(self, *coil_name: str, _top_level: bool = True) -> list[str] | None:
         """
@@ -1111,7 +1133,7 @@ class SymmetricCircuit(Circuit):
             bluemira_warn(
                 "Removing one coil from a SymmetricCircuit implies removing both"
             )
-            coil_name = self.name
+            coil_name = tuple(self.name)
 
         return super().remove_coil(*coil_name, _top_level=_top_level)
 
@@ -1233,7 +1255,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return removed_coils
 
     @property
-    def n_control(self) -> float:
+    def n_control(self) -> int:
         """Number of coils being actively controlled"""
         return len(self.control)
 
@@ -1311,8 +1333,13 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return np.sum(super().volume)
 
     def _sum(
-        self, output: np.ndarray, *, sum_coils: bool = False, control: bool = False
-    ) -> np.ndarray:
+        self,
+        values: float | np.ndarray,
+        *,
+        sum_coils: bool = False,
+        control: bool = False,
+    ) -> float | np.ndarray:
+        output = values
         """
         Get responses of coils optionally only control and/or sum over the responses
 
@@ -1332,7 +1359,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         inds = self._control_ind if control else slice(None)
 
-        return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
+        if isinstance(output, np.ndarray):
+            return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
+        return output
 
     def get_coiltype(self, *ctype: str | CoilType) -> CoilSet | None:
         """Get coils by coils type"""  # noqa: DOC201
@@ -1343,15 +1372,19 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @classmethod
     def from_group_vecs(
         cls, eqdsk: EQDSKInterface, control_coiltypes=(CoilType.PF, CoilType.CS)
-    ) -> CoilGroup:
+    ) -> Self:
         """Create CoilSet from eqdsk group vectors.
 
         Automatically sets all coils that are not implicitly passive to control coils
         """  # noqa: DOC201
-        self = super().from_group_vecs(eqdsk)
-
-        self.control = [coil.name for coil in self._get_coiltype(*control_coiltypes)]
-        return self
+        instance = super().from_group_vecs(eqdsk)
+        assert isinstance(instance, CoilSet)  # noqa: S101
+        instance.control = [
+            coil.name
+            for coil in instance._get_coiltype(*control_coiltypes)
+            if coil.name is not None
+        ]
+        return cast("Self", instance)
 
     def get_optimisation_state(
         self, position_coil_names: list[str] | None = None, current_scale: float = 1.0

@@ -28,9 +28,9 @@ from bluemira.structural.plotting import (
 )
 
 if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-    from matproblib.conditions import OperationalConditions
+    from matproplib.conditions import OperationalConditions
     from matproplib.material import Material
+    from mpl_toolkits.mplot3d.axes3d import Axes3D
 
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.structural.crosssection import CrossSection
@@ -399,7 +399,7 @@ class Geometry:
         z = [node.z for node in self.nodes]
         return max(x), min(x), max(y), min(y), max(z), min(z)
 
-    def bounding_box(self) -> BoundingBox:
+    def bounding_box(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Calculates a bounding box for the Geometry object
 
@@ -501,7 +501,7 @@ class Geometry:
             added_element.max_stress = element.max_stress
             added_element.safety_factor = element.safety_factor
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax: Axes3D | None = None, **kwargs):
         """
         Plot the Geometry.
 
@@ -542,7 +542,7 @@ class DeformedGeometry(Geometry):
             node.displacements[2] = 0
 
     def plot(
-        self, ax: Axes | None = None, stress: np.ndarray | None = None, **kwargs
+        self, ax: Axes3D | None = None, stress: np.ndarray | None = None, **kwargs
     ) -> DeformedGeometryPlotter | StressDeformedGeometryPlotter:
         """
         Plot the DeformedGeometry.

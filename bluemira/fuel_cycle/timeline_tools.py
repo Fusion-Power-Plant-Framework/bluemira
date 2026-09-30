@@ -10,9 +10,10 @@ Distribution and timeline utilities
 
 import abc
 from collections.abc import Iterable
+from typing import Any, overload
 
 import numpy as np
-from numpy.random import BitGenerator, SeedSequence
+from numpy.random import Generator, SeedSequence
 from scipy.optimize import brentq
 
 from bluemira.base.constants import RNGSeeds
@@ -29,7 +30,11 @@ __all__ = [
 ]
 
 
-def f_gompertz(t: float, a: float, b: float, c: float) -> float:
+@overload
+def f_gompertz(t: float, a: float, b: float, c: float) -> float: ...
+@overload
+def f_gompertz(t: np.ndarray, a: float, b: float, c: float) -> np.ndarray: ...
+def f_gompertz(t: float | np.ndarray, a: float, b: float, c: float) -> Any:
     """
     Gompertz sigmoid function parameterisation.
 
@@ -54,7 +59,7 @@ def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def generate_lognorm_distribution(
-    n: int, integral: float, sigma: float, rng: BitGenerator
+    n: int, integral: float, sigma: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate a log-norm distribution for a given standard deviation of the
@@ -90,7 +95,7 @@ def generate_lognorm_distribution(
 
 
 def generate_truncnorm_distribution(
-    n: int, integral: float, sigma: float, rng: BitGenerator
+    n: int, integral: float, sigma: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate a truncated normal distribution for a given standard deviation.
@@ -121,7 +126,7 @@ def generate_truncnorm_distribution(
 
 
 def generate_exponential_distribution(
-    n: int, integral: float, lambdda: float, rng: BitGenerator
+    n: int, integral: float, lambdda: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate an exponential distribution for a given rate parameter.
@@ -199,7 +204,7 @@ class UniformLearningStrategy(LearningStrategy):
         :
             Operational availabilities at each operational phase
         """
-        return lifetime_op_availability * np.ones(len(op_durations))
+        return lifetime_op_availability * np.ones(len(list(op_durations)))
 
 
 class UserSpecifiedLearningStrategy(LearningStrategy):
@@ -215,7 +220,7 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         operational_availabilities:
             Operational availabilities to prescribe
         """
-        self.operational_availabilities = operational_availabilities
+        self.operational_availabilities = list(operational_availabilities)
 
     def generate_phase_availabilities(
         self, lifetime_op_availability: float, op_durations: Iterable[float]
@@ -240,24 +245,24 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         FuelCycleError
             Number of phases should be equal to the number of operational availabilities
         """
-        if len(op_durations) != len(self.operational_availabilities):
+        op_durs = np.asarray(list(op_durations))
+        op_avails = np.asarray(self.operational_availabilities)
+        if len(op_durs) != len(op_avails):
             raise FuelCycleError(
                 "The number of phases is not equal to the number of user-specified"
                 " operational availabilities."
             )
 
-        total_fpy = np.sum(op_durations)
-        fraction = (total_fpy / lifetime_op_availability) / (
-            op_durations / self.operational_availabilities
-        )
-        if not np.isclose(fraction, 1.0):
+        total_fpy = float(np.sum(op_durs))
+        fraction = (total_fpy / lifetime_op_availability) / (op_durs / op_avails)
+        if not np.all(np.isclose(fraction, 1.0)):
             bluemira_warn(
                 "User-specified operational availabilities do not match the specified"
-                f" lifetime operational : {fraction:.2f} != 1.0. Normalising to adjust"
+                f" lifetime operational : {fraction} != 1.0. Normalising to adjust"
                 " to meet the specified lifetime operational availability."
             )
 
-        return fraction * self.operational_availabilities
+        return fraction * op_avails
 
 
 class GompertzLearningStrategy(LearningStrategy):
@@ -283,13 +288,16 @@ class GompertzLearningStrategy(LearningStrategy):
         self.max_op_a = max_op_availability
         super().__init__()
 
-    def _f_op_availabilities(self, t, x, arg_dates):
-        a_ops = self.min_op_a + f_gompertz(
+    def _f_op_availabilities(
+        self, t: np.ndarray, x: float, arg_dates: np.ndarray
+    ) -> np.ndarray:
+        a_ops: np.ndarray = self.min_op_a + f_gompertz(
             t, self.max_op_a - self.min_op_a, x, self.learn_rate
         )
 
         return np.array([
-            np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])
+            float(np.mean(a_ops[int(arg_dates[i]) : int(d)]))
+            for i, d in enumerate(arg_dates[1:])
         ])
 
     def generate_phase_availabilities(
@@ -321,9 +329,9 @@ class GompertzLearningStrategy(LearningStrategy):
                 " bounds on the phase operational availability."
             )
 
-        op_durations = np.append(0, op_durations)
-        total_fpy = np.sum(op_durations)
-        cum_fpy = np.cumsum(op_durations)
+        durations = np.append(0.0, np.asarray(op_durations, dtype=float))
+        total_fpy = float(np.sum(durations))
+        cum_fpy = np.cumsum(durations)
 
         t = np.linspace(0, total_fpy, 100)
         arg_dates = np.array([np.argmin(abs(t - i)) for i in cum_fpy])
@@ -343,7 +351,9 @@ class GompertzLearningStrategy(LearningStrategy):
             # NOTE: Fancy analytical integral objective of Gompertz function
             # was a resounding failure. Do not touch this again.
             # The brute force is strong in this one.
-            return total_fpy / lifetime_op_availability - sum(op_durations[1:] / a_ops_i)
+            return total_fpy / lifetime_op_availability - float(
+                np.sum(durations[1:] / a_ops_i)
+            )
 
         x_opt = brentq(f_opt, 0, 10e10)
         return self._f_op_availabilities(t, x_opt, arg_dates)

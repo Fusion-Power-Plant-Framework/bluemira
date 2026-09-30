@@ -181,7 +181,7 @@ def cyclic_pattern(
     n: int,
     *,
     include_first: bool = True,
-) -> list[Geometry | DeformedGeometry]:
+) -> Geometry | DeformedGeometry:
     """
     Build a cyclic pattern of a Geometry.
 

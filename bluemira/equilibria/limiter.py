@@ -38,12 +38,17 @@ class Limiter:
         The z coordinates of the limiter points
     """
 
+    x: npt.NDArray[np.float64]
+    z: npt.NDArray[np.float64]
+    xz: Iterator[npt.NDArray[np.float64]]
+    _i: int
+
     __slots__ = ("_i", "x", "xz", "z")
 
     def __init__(self, x: npt.ArrayLike, z: npt.ArrayLike):
-        self.x = x
-        self.z = z
-        self.xz = cycle(np.array([x, z]).T)
+        self.x = np.asarray(x, dtype=np.float64)
+        self.z = np.asarray(z, dtype=np.float64)
+        self.xz = cycle(np.array([self.x, self.z]).T)
         self._i = 0
 
     def __iter__(self) -> Iterator[npt.NDArray]:
@@ -83,7 +88,7 @@ class Limiter:
         if self._i >= len(self):
             raise StopIteration
         self._i += 1
-        return next(self.xz[self._i - 1])
+        return next(self.xz)
 
     def plot(self, ax: Axes | None = None) -> LimiterPlotter:
         """

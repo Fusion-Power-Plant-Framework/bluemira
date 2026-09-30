@@ -9,7 +9,13 @@ Function to find inscribed rectangle.
 In contained file because loop module imports geomtools and geombase modules
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -87,23 +93,28 @@ def inscribed_rect_in_poly(
     xx = Coordinates([[x, 0, z], [x + 1, 0, z], [x, 1, z], [0, 0, 0]])
     zz = Coordinates([[x, 0, z], [x, 0, z + 1], [x, 1, z], [0, 0, 0]])
 
-    xo, rot_p = [x, 0, z], [0, 1, 0]
+    xo = (float(x), 0.0, float(z))
+    rot_p = (0.0, 1.0, 0.0)
 
-    xx_plane = BluemiraPlane.from_3_points(*xx.points[:3])
-    zz_plane = BluemiraPlane.from_3_points(*zz.points[:3])
+    xx_plane = BluemiraPlane.from_3_points(xx.points[0], xx.points[1], xx.points[2])
+    zz_plane = BluemiraPlane.from_3_points(zz.points[0], zz.points[1], zz.points[2])
 
     xx_rot = deepcopy(xx)
     xx_rot.rotate(base=xo, direction=rot_p, degree=angle_r)
-    xz_plane = BluemiraPlane.from_3_points(*xx_rot.points[:3])
+    xz_plane = BluemiraPlane.from_3_points(
+        xx_rot.points[0], xx_rot.points[1], xx_rot.points[2]
+    )
 
     zz_rot = deepcopy(xx)
     zz_rot.rotate(base=xo, direction=rot_p, degree=-angle_r)
-    zx_plane = BluemiraPlane.from_3_points(*zz_rot.points[:3])
+    zx_plane = BluemiraPlane.from_3_points(
+        zz_rot.points[0], zz_rot.points[1], zz_rot.points[2]
+    )
 
     # Set up distance calculation
     getdxdz = _GetDxDz(
         coordinates,
-        [x_point, z_point],
+        (x_point, z_point),
         aspectratio,
         convex=convex,
         planes=[xx_plane, zz_plane, xz_plane, zx_plane],
@@ -171,7 +182,9 @@ class _GetDxDz:
 
         self.elements = np.arange(1, self.n_p + 1)[0::2]
 
-        self.check = self.approx if convex else self.precise
+        self.check: Callable[[int, np.ndarray], None] = (
+            self.approx if convex else self.precise
+        )
 
     def approx(self, n: int, lpi: np.ndarray):
         """
@@ -179,7 +192,7 @@ class _GetDxDz:
         """
         self.vec_arr_x[n : n + 2] = lpi[0, [0, 2]], lpi[-1, [0, 2]]
 
-    def precise(self, n, lpi):
+    def precise(self, n: int, lpi: np.ndarray):
         """
         Precise nearest intersection.
         """
@@ -207,7 +220,8 @@ class _GetDxDz:
         """
         for n, plane in zip(self.elements, self.planes, strict=False):
             lpi = coords_plane_intersect(self.coords, plane)
-            self.check(n, lpi)
+            if lpi is not None:
+                self.check(n, lpi)
 
         self.vec_arr_z = self.vec_arr_x.copy()
         self.vec_arr_x[:, 1] = self.point[1]

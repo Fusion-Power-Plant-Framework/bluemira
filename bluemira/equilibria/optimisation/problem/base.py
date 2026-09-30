@@ -69,7 +69,7 @@ class CoilsetOptimiserResult:
             coilset=coilset,
             f_x=opt_result.f_x,
             n_evals=opt_result.n_evals,
-            history=opt_result.history,
+            history=opt_result.history or [],
             constraints_satisfied=opt_result.constraints_satisfied,
         )
 
@@ -269,20 +269,18 @@ class CoilsetOptimisationProblem(abc.ABC):
 
                 if df_c is not None:
                     # wrap the derivative function
-                    @functools.wraps(f.df_constraint)
-                    def wrapped_df_c(x, f=f):
-                        df_res = f.df_constraint(
-                            self.coilset._opt_currents_expand_mat @ x
-                        )
+                    @functools.wraps(df_c)
+                    def wrapped_df_c(x, df_c=df_c):
+                        df_res = df_c(self.coilset._opt_currents_expand_mat @ x)
                         return df_res @ self.coilset._opt_currents_expand_mat
 
                     df_c = wrapped_df_c
 
             d: ConstraintT = {
-                "name": f.name,
+                "name": f.name or "",
                 "f_constraint": f_c,
                 "df_constraint": df_c,
-                "tolerance": constraint.tolerance,
+                "tolerance": np.asarray(getattr(constraint, "tolerance", 1e-4)),
             }
             # TODO @hsaunders1904: tidy this up, so the interface guarantees this works!
             # 3581
@@ -338,5 +336,6 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
         for constraint in self.constraints:
             if isinstance(constraint, UpdateableConstraint):
                 constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
-            if "scale" in constraint._args:
-                constraint._args["scale"] = self.scale
+            args = getattr(constraint, "_args", None)
+            if args is not None and "scale" in args:
+                args["scale"] = self.scale

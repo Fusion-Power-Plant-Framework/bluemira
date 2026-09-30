@@ -42,8 +42,8 @@ class BluemiraPlacement:
 
     def __init__(
         self,
-        base: Iterable[float] = [0.0, 0.0, 0.0],
-        axis: Iterable[float] = [0.0, 0.0, 1.0],
+        base: Iterable[float] = (0.0, 0.0, 0.0),
+        axis: Iterable[float] = (0.0, 0.0, 1.0),
         angle: float = 0.0,
         label: str = "",
     ):
@@ -135,7 +135,7 @@ class BluemiraPlacement:
     @property
     def axis(self) -> np.ndarray:
         """Placement's rotation matrix"""
-        return self._shape.Rotation.Axis
+        return np.array(self._shape.Rotation.Axis)
 
     @axis.setter
     def axis(self, value: Iterable[float]):
@@ -147,7 +147,7 @@ class BluemiraPlacement:
         value:
             Axis vector
         """
-        self._shape.Axis = cadapi.Base.Vector(value)
+        self._shape.Rotation.Axis = cadapi.Base.Vector(value)
 
     @property
     def angle(self) -> float:
@@ -164,7 +164,7 @@ class BluemiraPlacement:
         value:
             Angle value in degree
         """
-        self._shape.Angle = value
+        self._shape.Rotation.Angle = np.deg2rad(value)
 
     def to_matrix(self) -> np.ndarray:
         """
@@ -258,7 +258,10 @@ class BluemiraPlacement:
         return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
 
     def extract_plane(
-        self, v1: Iterable[float], v2: Iterable[float], base: float | None = None
+        self,
+        v1: Iterable[float],
+        v2: Iterable[float],
+        base: Iterable[float] | None = None,
     ) -> BluemiraPlane:
         """
         Return a plane identified by two vector given in the self placement
@@ -276,13 +279,12 @@ class BluemiraPlacement:
         -------
         A BluemiraPlane
         """
-        if base is None:
-            base = self.base
+        base_pt = self.base if base is None else base
 
         p1 = self.mult_vec(v1)
         p2 = self.mult_vec(v2)
 
-        return BluemiraPlane.from_3_points(base, p1, p2)
+        return BluemiraPlane.from_3_points(base_pt, p1, p2)
 
     def xy_plane(self):
         """

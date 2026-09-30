@@ -12,10 +12,20 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, fields
 from operator import attrgetter
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeAlias
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Literal,
+    Required,
+    TypeAlias,
+    TypeVar,
+    TypedDict,
+    cast,
+)
 
 import numpy as np
 import openmc
+from matplotlib.figure import Figure
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -68,6 +78,8 @@ class OpenMCRunModes(BaseRunMode):
 
 OPENMC_NAME = "OpenMC"
 
+ElectronTreatment = Literal["ttb", "led"]
+
 
 @dataclass
 class OpenMCSimulationRuntimeParameters:
@@ -110,10 +122,10 @@ class OpenMCSimulationRuntimeParameters:
     batches: int = 2
     photon_transport: bool = True
     # Bremsstrahlung only matters for very thin objects
-    electron_treatment: Literal["ttb", "led"] = "led"
+    electron_treatment: ElectronTreatment = "led"
     run_mode: str = OpenMCRunModes.RUN.value
     openmc_write_summary: bool = False
-    plot_axis: str = "xz"
+    plot_axis: Literal["xy", "xz", "yz"] = "xz"
     plot_pixel_per_metre: int = 100
     rel_max_lost_particles: float = 1e-6
     max_lost_particles: int = 10
@@ -122,8 +134,32 @@ class OpenMCSimulationRuntimeParameters:
 
 # Signature for a function that creates an OpenMC neutron source
 NeutronSourceCreator: TypeAlias = Callable[
-    [Equilibrium, PlasmaSourceParameters], tuple[openmc.Source, float, float]
+    [Equilibrium, PlasmaSourceParameters],
+    tuple[openmc.SourceBase | Sequence[openmc.SourceBase], float, float],
 ]
+CSGRunResult: TypeAlias = tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]
+DAGMCRunResult: TypeAlias = tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
+NeutronicsRunResult: TypeAlias = (
+    tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
+)
+
+
+class OpenMCBuildConfig(TypedDict, total=False):
+    """OpenMC build config options"""
+
+    neutronics_output_path: str | Path
+    particles: Required[int]
+    cross_section_xml: Required[str | Path]
+    batches: int
+    photon_transport: bool
+    electron_treatment: ElectronTreatment
+    run_mode: str
+    openmc_write_summary: bool
+    plot_axis: Literal["xy", "xz", "yz"]
+    plot_pixel_per_metre: int
+    rel_max_lost_particles: float
+    max_lost_particles: int
+    tally_mesh_size: tuple[int, int, int]
 
 
 @dataclass
@@ -158,9 +194,15 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
     tally_mats: openmc.Materials
     tally_geom: openmc.Geometry | CellStage
+    universe: openmc.Universe
 
     def __init__(
-        self, codes_name: str, cross_section_xml: str, eq: Equilibrium, source, materials
+        self,
+        codes_name: str,
+        cross_section_xml: str,
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
+        materials,
     ):
         super().__init__(None, codes_name)
 
@@ -207,7 +249,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         return model
 
     @abstractmethod
-    def _create_geometry(self) -> tuple[openmc.Universe, openmc.geometry]: ...
+    def _create_geometry(self) -> tuple[openmc.Universe, openmc.Geometry]: ...
 
     def _create_tallies(self, tally_function: TALLY_FUNCTION_TYPE) -> openmc.Tallies:
         tallies_list = []
@@ -225,10 +267,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         self,
         run_mode,
         runtime_params,
-        eq,
-        source_params,
-        tally_function,
-        *,
+        *args,
         debug: bool = False,
     ):
         """Plot an openmc run"""
@@ -238,10 +277,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         self,
         run_mode,
         runtime_params,
-        eq,
-        source_params,
-        tally_function,
-        *,
+        *args,
         debug: bool = False,
     ):
         """Volume calculation on openmc run"""
@@ -357,9 +393,9 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         )
 
     @property
-    def tally_mats(self) -> list[openmc.Material]:
+    def tally_mats(self) -> Sequence[openmc.Material]:
         """Tally materials"""
-        return self.mat_list(self.materials)
+        return list(self.mat_list(self.materials))
 
     @property
     def tally_geom(self) -> CellStage:
@@ -372,7 +408,7 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         return universe, geometry
 
     def plot(
-        self, run_mode, runtime_params, *_args, debug: bool = False
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot an openmc run"""
         return self._plot(
@@ -380,7 +416,7 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         )
 
     def volume(
-        self, run_mode, runtime_params, *_args, debug: bool = False
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
     ) -> tuple[openmc.Model, None]:
         """Volume calculation on openmc run"""
         return self._volume(
@@ -425,13 +461,18 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         return self.geometry
 
     def plot(
-        self, run_mode, runtime_params, *_args, debug: bool = False
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
     ) -> tuple[openmc.Model, PlotConfig]:
         """Plot an openmc run"""
         return self._plot(run_mode, runtime_params, debug=debug)
 
     def volume(
-        self, run_mode, runtime_params, *_args, debug: bool = False
+        self,
+        run_mode,
+        runtime_params,
+        *_args,
+        debug: bool = False,
+        **_kwargs,
     ) -> tuple[openmc.Model, None]:
         """Volume calculation on openmc run"""
         return self._volume(
@@ -443,6 +484,9 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         )
 
 
+_OMCReturnT = TypeVar("_OMCReturnT")
+
+
 class OpenMCRun(CodesTask):
     """Run task for OpenMC solver"""
 
@@ -452,7 +496,9 @@ class OpenMCRun(CodesTask):
         self.out_path = out_path
 
     @staticmethod
-    def _run(run_mode, function, **kwargs):
+    def _run(
+        run_mode: OpenMCRunModes, function: Callable[..., _OMCReturnT], **kwargs
+    ) -> _OMCReturnT:
         """Run openmc"""
         folder = run_mode.name.lower()
         return _timing(
@@ -534,7 +580,9 @@ class OpenMCCSGTeardown(CodesTeardown):
         self.cell_arrays = cell_arrays
         self.pre_cell_model = pre_cell_model
 
-    def run(self, universe, source_info: SourceInfo, statepoint_file):
+    def run(
+        self, universe, source_info: SourceInfo, statepoint_file
+    ) -> tuple[OpenMCCSGResult, NeutronicsOutputParams]:
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
             universe,
@@ -545,12 +593,14 @@ class OpenMCCSGTeardown(CodesTeardown):
         )
         output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
 
-        return result, output_params
+        return cast("NeutronicsRunResult", result), output_params
 
     @staticmethod
     def plot(_universe, _source_info, fig: FigureData, **_kwargs):
         """Plot stage for Teardown task"""
-        fig.axis.get_figure().savefig(fig.path)
+        fig_obj = fig.axis.get_figure()
+        if isinstance(fig_obj, Figure):
+            fig_obj.savefig(fig.path)
         return fig.axis
 
     def volume(self, _universe, _source_params, _statepoint_file) -> dict[int, float]:
@@ -579,12 +629,14 @@ class OpenMCDAGTeardown(CodesTeardown):
         )
         output_params = NeutronicsOutputParams.from_openmc_dag_result(result)
 
-        return result, output_params
+        return cast("NeutronicsRunResult", result), output_params
 
     @staticmethod
     def plot(_universe, _source_info, fig: FigureData, **_kwargs):
         """Plot stage for Teardown task"""
-        fig.axis.get_figure().save_fig(fig.path)
+        fig_obj = fig.axis.get_figure()
+        if isinstance(fig_obj, Figure):
+            fig_obj.savefig(fig.path)
         return fig.axis
 
     def volume(self, _universe, _source_params, _statepoint_file) -> dict[int, float]:
@@ -592,11 +644,10 @@ class OpenMCDAGTeardown(CodesTeardown):
         raise NotImplementedError
 
 
+TALLY_RETURN_TYPE = tuple[str, str, Sequence[openmc.Filter] | None]
 TALLY_FUNCTION_TYPE = Callable[
     [list[openmc.Material], CellStage | openmc.Geometry],
-    tuple[
-        str, str, list[openmc.CellFilter | openmc.MaterialFilter | openmc.ParticleFilter]
-    ],
+    list[TALLY_RETURN_TYPE],
 ]
 
 
@@ -604,8 +655,9 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     """OpenMC 2D neutronics solver"""
 
     params: OpenMCNeutronicsSolverParams
-    setup_cls: type[OpenMCBaseSetup]
-    teardown_cls: type[CodesTeardown]
+    setup_cls: type[Any]
+    teardown_cls: type[Any]
+    _setup: OpenMCBaseSetup
 
     name: str = OPENMC_NAME
     param_cls: type[OpenMCNeutronicsSolverParams] = OpenMCNeutronicsSolverParams
@@ -615,7 +667,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     def __init__(
         self,
         params: dict | ParameterFrame,
-        build_config: dict,
+        build_config: OpenMCBuildConfig,
         eq: Equilibrium,
         source: NeutronSourceCreator,
     ):
@@ -647,7 +699,11 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 
     def execute(
         self, run_mode, *, debug=False
-    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
+    ) -> (
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        | dict[int, float]
+        | None
+    ):
         """Execute the setup, run, and teardown tasks, in order."""
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
@@ -673,7 +729,11 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
+    ) -> (
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        | dict[int, float]
+        | None
+    ):
         result = None
         if setup := self._get_execution_method(self._setup, run_mode):
             model, config = setup(
@@ -688,19 +748,19 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
             result = run(run_mode, model, config, debug=debug)
         if teardown := self._get_execution_method(self._teardown, run_mode):
             result = teardown(self._setup.universe, config, result)
-        return result
+        return cast("NeutronicsRunResult", result)
 
 
 class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC CSG neutronics"""
 
     setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup
-    teardown_cls: type[CodesTeardown] = OpenMCCSGTeardown
+    teardown_cls: type[OpenMCCSGTeardown] = OpenMCCSGTeardown
 
     def __init__(
         self,
         params: dict | ParameterFrame,
-        build_config: dict,
+        build_config: OpenMCBuildConfig,
         eq: Equilibrium,
         source: NeutronSourceCreator,
         neutronics_model: NeutronicsReactor,
@@ -731,10 +791,10 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]:
+    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float] | None:
         self._setup = self.setup_cls(
             self.name,
-            str(self.build_config["cross_section_xml"]),
+            str(runtime_params.cross_section_xml),
             self.eq,
             self.source,
             self.materials,
@@ -747,7 +807,10 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
             self.cell_arrays, self.neutronics_model, self.out_path, self.name
         )
 
-        return super()._single_run(run_mode, source_params, runtime_params, debug=debug)
+        return cast(
+            "CSGRunResult",
+            super()._single_run(run_mode, source_params, runtime_params, debug=debug),
+        )
 
 
 class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
@@ -759,7 +822,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
     def __init__(
         self,
         params: dict | ParameterFrame,
-        build_config: dict,
+        build_config: OpenMCBuildConfig,
         eq: Equilibrium,
         source: NeutronSourceCreator,
         dagmc_model_path: Path,
@@ -786,10 +849,10 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]:
+    ) -> tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float] | None:
         self._setup = self.setup_cls(
             self.name,
-            str(self.build_config["cross_section_xml"]),
+            str(runtime_params.cross_section_xml),
             self.eq,
             self.source,
             self.materials,
@@ -798,4 +861,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
 
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(self.out_path, self.name)
-        return super()._single_run(run_mode, source_params, runtime_params, debug=debug)
+        return cast(
+            "DAGMCRunResult",
+            super()._single_run(run_mode, source_params, runtime_params, debug=debug),
+        )

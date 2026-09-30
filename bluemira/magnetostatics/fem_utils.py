@@ -11,10 +11,10 @@ Finite element method utilities
 from __future__ import annotations
 
 import functools
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import patch
 
 import gmsh
@@ -22,7 +22,8 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tr
 import numpy as np
 import ufl
-from dolfinx import cpp, geometry, plot
+import ufl.core.expr
+from dolfinx import cpp, default_scalar_type, geometry, plot
 from dolfinx.fem import (
     Constant,
     Expression,
@@ -37,7 +38,6 @@ from dolfinx.io import gmshio
 from dolfinx.mesh import entities_to_geometry
 from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
-from petsc4py import PETSc
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 
@@ -112,7 +112,7 @@ def model_to_mesh(
 
 def extract_geometry(
     func: Callable[[type[gmsh.model]], np.ndarray],
-    dimensions: Iterable[int],
+    dimensions: Sequence[int] | np.ndarray,
     model: type[gmsh.model],
 ):
     """
@@ -127,8 +127,9 @@ def extract_geometry(
         Extracted model geometry.
     """
     x = func(model)
-    if any(dimensions != np.arange(len(dimensions))):
-        return x[:, dimensions]
+    dim_arr = np.asarray(dimensions)
+    if np.any(dim_arr != np.arange(len(dim_arr))):
+        return x[:, dim_arr]
     return x
 
 
@@ -157,25 +158,27 @@ class BluemiraFemFunction(Function):
     replaced simply by BluemiraFemFunction.
     """
 
+    dx: Any
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
-    def interpolate(self, u, cells=None):
+    def interpolate(self, u0, cells0=None, cells1=None):
         """Interpolate function and cache bb_tree"""
-        if cells is None:
+        if cells0 is None:
             mesh = self.function_space.mesh
             cell_map = mesh.topology.index_map(mesh.topology.dim)
             num_cells_on_proc = cell_map.size_local + cell_map.num_ghosts
-            cells = np.arange(num_cells_on_proc, dtype=np.int32)
+            cells0 = np.arange(num_cells_on_proc, dtype=np.int32)
 
-        if hasattr(u, "function_space"):
+        if hasattr(u0, "function_space"):
             nmm = create_interpolation_data(
-                self.function_space, u.function_space, cells, padding=1e-8
+                self.function_space, u0.function_space, cells0, padding=1e-8
             )
-            super().interpolate_nonmatching(u, cells, interpolation_data=nmm)
+            super().interpolate_nonmatching(u0, cells0, interpolation_data=nmm)
         else:
-            super().interpolate(u, cells)
+            super().interpolate(u0, cells0, cells1)
         calc_bb_tree(self.function_space.mesh)
 
     def __call__(self, points: np.ndarray):
@@ -313,7 +316,7 @@ def calculate_area(
     :
         area of the subdomain
     """
-    return integrate_f(Constant(mesh, PETSc.ScalarType(1)), mesh, boundaries, tag)
+    return integrate_f(Constant(mesh, default_scalar_type(1)), mesh, boundaries, tag)
 
 
 def integrate_f(
@@ -483,7 +486,11 @@ def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
     """
     mesh = function.function_space.mesh
 
-    bb_tree = function._bb_tree if hasattr(function, "_bb_tree") else calc_bb_tree(mesh)
+    bb_tree = (
+        function._bb_tree
+        if isinstance(function, BluemiraFemFunction)
+        else calc_bb_tree(mesh)
+    )
     cells = []
     points_on_proc = []
 
@@ -532,7 +539,7 @@ def plot_scalar_field(
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> dict[str, plt.Axes | None]:
+) -> dict[str, Any]:
     """
     Plot a scalar field from numpy arrays.
 
@@ -583,7 +590,8 @@ def plot_scalar_field(
 
     if tofill:
         cntrf = ax.tricontourf(triang, data, levels=levels, cmap="RdBu_r")
-        fig.colorbar(cntrf, ax=ax)
+        if fig is not None:
+            fig.colorbar(cntrf, ax=ax)
 
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")
@@ -616,7 +624,7 @@ def read_from_msh(
 
     """
     with patch("dolfinx.io.gmshio.model_to_mesh", new=model_to_mesh):
-        return gmshio.read_from_msh(filename, comm, rank, gdim, partitioner)
+        return gmshio.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner)
 
 
 @dataclass
@@ -718,7 +726,7 @@ def compute_B_from_Psi(
     W0 = functionspace(mesh, (*eltype, (mesh.geometry.dim,)))  # noqa: N806
     B0 = BluemiraFemFunction(W0)
 
-    x_0 = ufl.SpatialCoordinate(mesh)[0]
+    x_0 = cast("Any", ufl.SpatialCoordinate(mesh))[0]
 
     B_expr = Expression(
         ufl.as_vector((-psi.dx(1) / (2 * np.pi * x_0), psi.dx(0) / (2 * np.pi * x_0))),

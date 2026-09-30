@@ -154,7 +154,7 @@ class MaximiseFluxObjective(ObjectiveFunction):
 
     def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""  # noqa: DOC201
-        return -self.scale * self.c_psi_mat @ vector
+        return float(-self.scale * self.c_psi_mat @ vector)
 
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Gradient of the objective function for an optimisation."""  # noqa: DOC201

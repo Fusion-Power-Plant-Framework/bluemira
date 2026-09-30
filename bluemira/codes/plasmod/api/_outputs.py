@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import dataclass
-from typing import TextIO
+from typing import Any, TextIO, cast
 
 import numpy as np
 
@@ -129,7 +129,7 @@ class PlasmodOutputs:
         """
         scalars = read_plasmod_output(scalar_stream)
         profiles = read_plasmod_output(profile_stream)
-        return cls(**scalars, **profiles)
+        return cls(**cast("dict[str, Any]", scalars), **cast("dict[str, Any]", profiles))
 
 
 def read_plasmod_output(io_stream: TextIO) -> dict[str, np.ndarray | float]:

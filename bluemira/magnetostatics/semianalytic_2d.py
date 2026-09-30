@@ -265,7 +265,7 @@ def semianalytic_Bx(
     ----------
     .. doi:: 10.1109/TMAG.2011.2167981
     """
-    r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
+    r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, float(x), float(z), d_xc, d_zc)
 
     Bx = integrate(
         _full_x_integrand, tuple(np.asarray((r1, r2, z1, z2)).ravel()), 0, np.pi
@@ -318,7 +318,7 @@ def semianalytic_Bz(
     ----------
     .. doi:: 10.1109/TMAG.2011.2167981
     """
-    r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, x, z, d_xc, d_zc)
+    r1, r2, z1, z2, j_tor = _get_working_coords(xc, zc, float(x), float(z), d_xc, d_zc)
 
     try:
         Bz = integrate(

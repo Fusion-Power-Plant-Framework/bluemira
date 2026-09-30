@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
     from bluemira.codes.process.equation_variable_mapping import (
         Constraint,
-        ConstraintSelection,
         Objective,
     )
     from bluemira.codes.process.model_mapping import (
@@ -258,7 +257,7 @@ class PROCESSTemplateBuilder:
             self._check_missing_iteration_variables(constraint)
             self._check_missing_inputs(constraint)
 
-    def _check_missing_inputs(self, model: PROCESSModel | ConstraintSelection):
+    def _check_missing_inputs(self, model: PROCESSModel | Constraint):
         missing_inputs = [
             input_name
             for input_name in model.requires_values
@@ -273,7 +272,7 @@ class PROCESSTemplateBuilder:
                 " Default values will be used."
             )
 
-    def _check_missing_iteration_variables(self, constraint: ConstraintSelection):
+    def _check_missing_iteration_variables(self, constraint: Constraint):
         missing_itv = [
             VAR_ITERATION_MAPPING[itv_num]
             for itv_num in constraint.requires_variables

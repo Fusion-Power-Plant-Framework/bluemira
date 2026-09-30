@@ -92,6 +92,7 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         fixed_coils: bool = True,
         keep_history: bool = False,
         check_constraints: bool = False,
+        **kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem

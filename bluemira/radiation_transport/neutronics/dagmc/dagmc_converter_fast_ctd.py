@@ -8,6 +8,7 @@ fast_ctd DAGMC converter workflow definition.
 """
 
 import json
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Literal
 
@@ -15,7 +16,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_error, bluemira
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.codes import fast_ctd
 from bluemira.codes.python_occ import imprint_solids
-from bluemira.geometry.base import BluemiraGeo, BluemiraGeoT
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.radiation_transport.neutronics.dagmc.dagmc_converter import (
@@ -71,10 +72,10 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
 
     def run_converter(
         self,
-        shapes: list,
+        shapes: Iterable[BluemiraGeo],
         names: list[str],
         comp_mat_mapping: dict[str, str],
-        output_dagmc_model_path: Path,
+        output_dagmc_model_path: str | Path,
     ) -> None:
         """
         Run the converter.
@@ -102,7 +103,7 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
 
     def __init__(
         self,
-        shapes: list[BluemiraGeoT],
+        shapes: Iterable[BluemiraGeo],
         names: list[str],
         comp_mat_mapping: dict[str, str],
     ):
@@ -158,7 +159,7 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
 
     def run(
         self,
-        output_dagmc_model_path: Path,
+        output_dagmc_model_path: str | Path,
         converter_config: DAGMCConverterFastCTDConfig,
     ) -> None:
         """
@@ -176,6 +177,7 @@ class DAGMCConverterFastCTD(DAGMCConverter[DAGMCConverterFastCTDConfig]):
         TypeError
             If the shapes are not of type BluemiraSolid or BluemiraCompound.
         """
+        output_dagmc_model_path = Path(output_dagmc_model_path)
         bluemira_print("Running fast_ctd CAD to DAGMC workflow")
 
         imprinted_geom_step_file_p = output_dagmc_model_path.with_name(

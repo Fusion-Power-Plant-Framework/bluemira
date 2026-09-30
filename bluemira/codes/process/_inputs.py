@@ -176,7 +176,7 @@ class ProcessInputs:
     str_tf_con_res: float | None = None
     str_wp_max: float | None = None
     i_str_wp: int | None = None
-    quench_model: str = None
+    quench_model: str | None = None
     tcritsc: float | None = None
     t_tf_superconductor_quench: float | None = None
     dx_tf_wp_insertion_gap: float | None = None

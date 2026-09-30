@@ -13,7 +13,7 @@ from __future__ import annotations
 import enum
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -306,15 +306,22 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         -------
         :
             Selected flux line as a wire.
+
+        Raises
+        ------
+        ValueError
+            If equilibrium grid coordinates are not defined
         """
         # Get the flux surface that crosses the through the start or end point.
         # We can use this surface to guide the shape of the wire.
         pick_point = start if start_picked else end
         psi_start = self.equilibrium.psi(*pick_point)
+        if self.equilibrium.x is None or self.equilibrium.z is None:
+            raise ValueError("Equilibrium grid coordinates are not defined")
         flux_surface = find_flux_surface_through_point(
             self.equilibrium.x,
             self.equilibrium.z,
-            self.equilibrium.psi(),
+            cast("np.ndarray", self.equilibrium.psi()),
             start[0],
             start[1],
             psi_start,
@@ -360,7 +367,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         label: str,
         target_baffle_join_point: np.ndarray,
         target_dome_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Divertor designer method for making the baffles.
@@ -434,7 +442,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
                 label,
                 wall_join_point,
                 target_baffle_join_point,
-                target_start,
+                target_start=target_start,
             )
         if baffle_type == self.STRAIGHT_BAFFLE:
             return self._make_straight_baffle(
@@ -470,20 +478,21 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             The baffle shape
         """
-        wire = make_bezier(
+        return make_bezier(
             points=[
                 np.insert(wall_join_point, 1, 0.0),
                 np.insert(target_join_point, 1, 0.0),
-            ]
+            ],
+            label=label,
         )
-        return BluemiraWire(wire, label=label)
 
     def _make_fluxline_baffle(
         self,
         label: str,
         wall_join_point: np.ndarray,
         target_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Make a baffle using the divertor leg flux line shape.
@@ -515,6 +524,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         The default is that the flux surface is picked based on the lowest z coordinate
         of the start and end point.
         """
+        if target_start is None:
+            target_start = target_join_point[1] < wall_join_point[1]
         return self.make_flux_line_wire(
             start=target_join_point,
             end=wall_join_point,
@@ -721,7 +732,7 @@ class DivertorBuilder(Builder):
 
         return body
 
-    def build_xyz(self, degree: float = 360.0) -> list[PhysicalComponent]:
+    def build_xyz(self, degree: float = 360.0) -> list[Component]:
         """
         Build the x-y-z components of the divertor.
         """  # noqa: DOC201

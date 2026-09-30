@@ -76,7 +76,7 @@ class PFCoilBuilder(Builder):
             xyz=self.build_xyz(self.xz_cross_section, degree=0),
         )
 
-    def build_xy(self, shape: BluemiraWire) -> list[PhysicalComponent]:
+    def build_xy(self, shape: BluemiraWire) -> list[Component]:
         """
         Build the xy cross-section of the PF coil.
 
@@ -179,8 +179,8 @@ class PFCoilBuilder(Builder):
         xz_components = self.build_xz(shape)
         components = []
         for c in xz_components:
-            shape = revolve_shape(c.shape, degree=sector_degree * n_sectors)
-            c_xyz = PhysicalComponent(c.name, shape, material=c.material)
+            revolved_shape = revolve_shape(c.shape, degree=sector_degree * n_sectors)
+            c_xyz = PhysicalComponent(c.name, revolved_shape, material=c.material)
             apply_component_display_options(
                 c_xyz, color=c.plot_options.face_options["color"]
             )
@@ -219,11 +219,20 @@ class PFCoilPictureFrame(Designer):
         -------
         :
             The PictureFrame shape as a wire.
+
+        Raises
+        ------
+        ValueError
+            If coil dimensions dx and dz are not specified
         """
-        x_in = self.coil.x - self.coil.dx
-        x_out = self.coil.x + self.coil.dx
-        z_up = self.coil.z + self.coil.dz
-        z_down = self.coil.z - self.coil.dz
+        if self.coil.dx is None or self.coil.dz is None:
+            raise ValueError("Coil dimensions dx and dz must be specified")
+        dx = self.coil.dx
+        dz = self.coil.dz
+        x_in = self.coil.x - dx
+        x_out = self.coil.x + dx
+        z_up = self.coil.z + dz
+        z_down = self.coil.z - dz
         return PictureFrame({
             "x1": {"value": x_in, "fixed": True},
             "x2": {"value": x_out, "fixed": True},

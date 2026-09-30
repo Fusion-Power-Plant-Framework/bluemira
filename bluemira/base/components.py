@@ -11,7 +11,7 @@ Module containing the base Component class.
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable, Sequence
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeVar, cast, overload
 
 import anytree
 from anytree import NodeMixin, RenderTree
@@ -23,7 +23,7 @@ from bluemira.display.plotter import Plottable
 if TYPE_CHECKING:
     from matproplib.material import Material
 
-    from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.geometry.base import BluemiraGeo
 
 
 ComponentT = TypeVar("ComponentT", bound="Component")
@@ -53,8 +53,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: ComponentT | None = None,
-        children: list[ComponentT] | None = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__()
         self.name = name
@@ -88,7 +88,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        component_filter: Callable[[ComponentT], bool] | None = None,
+        component_filter: Callable[[Component], bool] | None = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -137,7 +137,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return str(RenderTree(self))
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: Component | None = None) -> Self:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
@@ -165,7 +165,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 
-        return self_copy
+        return cast("Self", self_copy)
 
     def copy_children(self, parent: ComponentT) -> list[ComponentT]:
         """
@@ -187,9 +187,24 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return [] if len(self.children) == 0 else [c.copy(parent) for c in self.children]
 
+    @overload
+    def get_component(
+        self, name: str, *, first: Literal[True] = True, full_tree: bool = False
+    ) -> Component | None: ...
+
+    @overload
+    def get_component(
+        self, name: str, *, first: Literal[False], full_tree: bool = False
+    ) -> tuple[Component, ...] | None: ...
+
+    @overload
     def get_component(
         self, name: str, *, first: bool = True, full_tree: bool = False
-    ) -> ComponentT | tuple[ComponentT] | None:
+    ) -> Component | tuple[Component, ...] | None: ...
+
+    def get_component(
+        self, name: str, *, first: bool = True, full_tree: bool = False
+    ) -> Component | tuple[Component, ...] | None:
         """
         Find the components with the specified name.
 
@@ -213,10 +228,13 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             This function is just a wrapper of the anytree.search.findall
             function.
         """
-        return self._get_thing(
-            lambda n: anytree.search._filter_by_name(n, "name", name),
-            first=first,
-            full_tree=full_tree,
+        return cast(
+            "Component | tuple[Component, ...] | None",
+            self._get_thing(
+                lambda n: anytree.search._filter_by_name(n, "name", name),
+                first=first,
+                full_tree=full_tree,
+            ),
         )
 
     def get_component_properties(
@@ -275,11 +293,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def _get_thing(
         self,
-        filter_: Callable[[ComponentT], bool] | None,
+        filter_: Callable[[Component], bool] | None,
         *,
         first: bool,
         full_tree: bool,
-    ) -> ComponentT | tuple[ComponentT] | None:
+    ) -> Any:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
@@ -390,16 +408,16 @@ class PhysicalComponent(Component):
     def __init__(
         self,
         name: str,
-        shape: BluemiraGeoT,
+        shape: BluemiraGeo,
         material: Material | None = None,
-        parent: ComponentT | None = None,
-        children: list[ComponentT] | None = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, parent, children)
         self._shape = shape
         self._material = material
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: Component | None = None) -> Self:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
@@ -430,17 +448,17 @@ class PhysicalComponent(Component):
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 
-        return self_copy
+        return cast("Self", self_copy)
 
     @property
-    def shape(self) -> BluemiraGeoT:
+    def shape(self) -> BluemiraGeo:
         """
         The geometric shape of the Component.
         """
         return self._shape
 
     @shape.setter
-    def shape(self, value: BluemiraGeoT):
+    def shape(self, value: BluemiraGeo):
         self._shape = value
 
     @property
@@ -463,16 +481,16 @@ class MagneticComponent(PhysicalComponent):
     def __init__(
         self,
         name: str,
-        shape: BluemiraGeoT,
+        shape: BluemiraGeo,
         material: Material | None = None,
         conductor: Any = None,
-        parent: ComponentT | None = None,
-        children: list[ComponentT] | None = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
 
-    def copy(self, parent: ComponentT | None = None) -> ComponentT:
+    def copy(self, parent: Component | None = None) -> Self:
         """
         Copies this component and its children (recursively)
         and sets `parent` as this copy's parent.
@@ -505,7 +523,7 @@ class MagneticComponent(PhysicalComponent):
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 
-        return self_copy
+        return cast("Self", self_copy)
 
     @property
     def conductor(self):

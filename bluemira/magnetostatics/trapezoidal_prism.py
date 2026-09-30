@@ -347,7 +347,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
 
         length = np.linalg.norm(ds)
         self._check_angle_values(alpha, beta)
-        self._check_raise_self_intersection(length, breadth, alpha, beta)
+        self._check_raise_self_intersection(float(length), breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self._dcm = np.array([t_vec, ds / length, normal], dtype=float)
@@ -428,7 +428,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         """
         point = np.array([x, y, z])
         # Convert to local coordinates
-        point = self._global_to_local([point])[0]
+        point = self._global_to_local(np.array([point]))[0]
         # Evaluate field in local coordinates
         b_local = MU_0_4PI * self._rho * self._BxByBz(point)
         # Convert vector back to global coordinates

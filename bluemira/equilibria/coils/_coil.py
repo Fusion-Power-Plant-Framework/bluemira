@@ -326,7 +326,11 @@ class Coil(CoilFieldsMixin):
             \\text{area} = 4 \\cdot dx \\cdot dz
 
         """
-        return 4 * self.dx * self.dz
+        if self.dx is None or self.dz is None:
+            return 0.0
+        dx = self.dx or 0.0
+        dz = self.dz or 0.0
+        return 4 * dx * dz
 
     @property
     def volume(self) -> float:
@@ -350,14 +354,18 @@ class Coil(CoilFieldsMixin):
         """Coil x coordinate boundary"""
         if getattr(self, "_x_boundary", None) is not None:
             return self._x_boundary
-        return self._make_boundary(self.x, self.z, self.dx, self.dz)[0]
+        dx = self.dx or 0.0
+        dz = self.dz or 0.0
+        return self._make_boundary(self.x, self.z, dx, dz)[0]
 
     @property
     def z_boundary(self):
         """Coil z coordinate boundary"""
         if getattr(self, "_z_boundary", None) is not None:
             return self._z_boundary
-        return self._make_boundary(self.x, self.z, self.dx, self.dz)[1]
+        dx = self.dx or 0.0
+        dz = self.dz or 0.0
+        return self._make_boundary(self.x, self.z, dx, dz)[1]
 
     @property
     def _quad_boundary(self):
@@ -506,8 +514,8 @@ class Coil(CoilFieldsMixin):
         """
         return (
             np.inf
-            if np.isnan(self.j_max)
-            else get_max_current(self.dx, self.dz, self.j_max)
+            if np.isnan(self.j_max) or self.dx is None or self.dz is None
+            else get_max_current(self.dx or 0.0, self.dz or 0.0, self.j_max)
         )
 
     def _discretise(self):
@@ -555,10 +563,10 @@ class Coil(CoilFieldsMixin):
             self.fix_size = False
 
     def _set_coil_attributes(self):
-        self._current_radius = 0.5 * np.hypot(self.dx, self.dz)
-        self._x_boundary, self._z_boundary = self._make_boundary(
-            self.x, self.z, self.dx, self.dz
-        )
+        dx = self.dx or 0.0
+        dz = self.dz or 0.0
+        self._current_radius = 0.5 * np.hypot(dx, dz)
+        self._x_boundary, self._z_boundary = self._make_boundary(self.x, self.z, dx, dz)
 
     def _rectangular_discretisation(self):
         """
@@ -566,15 +574,17 @@ class Coil(CoilFieldsMixin):
         of the discretisation. Each filament will be plotted as a rectangle
         with the filament at its centre.
         """
-        nx = np.maximum(1, np.ceil(self.dx * 2 / self.discretisation))
-        nz = np.maximum(1, np.ceil(self.dz * 2 / self.discretisation))
+        dx = self.dx or 0.0
+        dz = self.dz or 0.0
+        nx = np.maximum(1, np.ceil(dx * 2 / self.discretisation))
+        nz = np.maximum(1, np.ceil(dz * 2 / self.discretisation))
 
         if nx * nz != 1:
-            sc_dx, sc_dz = self.dx / nx, self.dz / nz
+            sc_dx, sc_dz = dx / nx, dz / nz
 
             # Calculate sub-coil centroids
-            x_sc = (self.x - self.dx) + sc_dx * np.arange(1, 2 * nx, 2)
-            z_sc = (self.z - self.dz) + sc_dz * np.arange(1, 2 * nz, 2)
+            x_sc = (self.x - dx) + sc_dx * np.arange(1, 2 * nx, 2)
+            z_sc = (self.z - dz) + sc_dz * np.arange(1, 2 * nz, 2)
             x_sc, z_sc = np.meshgrid(x_sc, z_sc)
 
             self._quad_x = x_sc.flatten()
@@ -622,7 +632,10 @@ class Coil(CoilFieldsMixin):
 
     @staticmethod
     def _make_boundary(
-        x_c: float, z_c: float, dx: float, dz: float
+        x_c: float | np.ndarray,
+        z_c: float | np.ndarray,
+        dx: float | np.ndarray,
+        dz: float | np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
         """
         Makes the coil boundary vectors

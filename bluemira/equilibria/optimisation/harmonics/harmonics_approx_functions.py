@@ -485,7 +485,9 @@ def fs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     result2 = boolean_cut(c2_face, c1_face)
 
     #  Calculate metric
-    return (sum(f.area for f in result1) + sum(f.area for f in result2)) / (
+    res1_list = result1 if isinstance(result1, list) else [result1]
+    res2_list = result2 if isinstance(result2, list) else [result2]
+    return (sum(f.area for f in res1_list) + sum(f.area for f in res2_list)) / (
         c1_face.area + c2_face.area
     )
 
@@ -796,7 +798,7 @@ def spherical_harmonic_approximation(
         _p1, _p2, _p3, _p4 = plot_psi_comparision(
             grid=grid,
             eq=eq,
-            vac_psi_app=coilset_approx_psi,
+            vac_psi_app=np.asarray(coilset_approx_psi),
             nlevels=nlevels,
             original_flux_surface=original_fs,
             approx_flux_surface=approx_fs,
@@ -859,6 +861,7 @@ def plot_psi_comparision(
     """
     tot_psi_org = eq.psi(grid.x, grid.z)
     vac_psi_org = eq.coilset.psi(grid.x, grid.z)
+    assert eq.plasma is not None  # noqa: S101
     tot_psi_app = eq.plasma.psi(grid.x, grid.z) + vac_psi_app
 
     cmap = PLOT_DEFAULTS["psi"]["cmap"]

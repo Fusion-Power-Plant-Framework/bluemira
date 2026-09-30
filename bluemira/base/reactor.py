@@ -10,11 +10,11 @@ from __future__ import annotations
 import abc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, get_args, get_type_hints
+from typing import TYPE_CHECKING, Any, Generic, Literal, Unpack, get_args, get_type_hints
 
 from rich.progress import track
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, ComponentT
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
@@ -32,14 +32,13 @@ if TYPE_CHECKING:
     from os import PathLike
 
     import bluemira.codes._geometryapi as cadapi
-    from bluemira.base.components import ComponentT
 
 
 DIM_2D = Literal["xy", "xz"]
 DIM_3D = Literal["xyz"]
 
 
-class BaseManager(abc.ABC):
+class BaseManager(abc.ABC, Generic[ComponentT]):
     """
     A base wrapper around a component tree or component trees.
 
@@ -51,7 +50,7 @@ class BaseManager(abc.ABC):
     """
 
     @abc.abstractmethod
-    def component(self) -> ComponentT:
+    def component(self) -> Component:
         """
         Return the component tree wrapped by this manager.
         """
@@ -170,7 +169,7 @@ class BaseManager(abc.ABC):
             )
 
 
-class ComponentManager(BaseManager):
+class ComponentManager(BaseManager[ComponentT]):
     """
     A wrapper around a component tree.
 
@@ -194,16 +193,18 @@ class ComponentManager(BaseManager):
         The component tree this manager should wrap.
     """
 
-    def __init__(self, component: ComponentT) -> None:
+    def __init__(self, component: Component) -> None:
         self._component = component
 
     def _init_construction_param_values(  # noqa: PLR6301
-        self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
+        self, c_params: ConstructionParams | None, kwargs: ConstructionParams
     ) -> ConstructionParamValues:
-        c_params = c_params or {}
+        c_params_dict = dict(c_params) if c_params else {}
         possible_keys = ConstructionParams.__annotations__.keys()
         if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
+
+        return ConstructionParamValues.from_construction_params(c_params_dict)
 
         return ConstructionParamValues.from_construction_params(c_params)
 
@@ -214,7 +215,7 @@ class ComponentManager(BaseManager):
         """  # noqa: DOC201
         return CADConstructionType.PATTERN_RADIAL
 
-    def component(self) -> ComponentT:
+    def component(self) -> Component:
         """
         Return the component tree wrapped by this manager.
 
@@ -245,7 +246,7 @@ class ComponentManager(BaseManager):
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
-        **kwargs,
+        **kwargs: Unpack[ConstructionParams],
     ):
         """
         Save the CAD build of the component.
@@ -280,7 +281,7 @@ class ComponentManager(BaseManager):
         self,
         dim: DIM_3D | DIM_2D = "xyz",
         construction_params: ConstructionParams | None = None,
-        **kwargs,
+        **kwargs: Unpack[ConstructionParams],
     ):
         """
         Show the CAD build of the component.
@@ -309,7 +310,7 @@ class ComponentManager(BaseManager):
         self,
         dim: DIM_2D = "xz",
         construction_params: ConstructionParams | None = None,
-        **kwargs,
+        **kwargs: Unpack[ConstructionParams],
     ):
         """
         Plot the component.
@@ -334,7 +335,7 @@ class ComponentManager(BaseManager):
         )
 
 
-class Reactor(BaseManager):
+class Reactor(BaseManager[Component]):
     """
     Base class for reactor definitions.
 
@@ -388,14 +389,18 @@ class Reactor(BaseManager):
         self.start_time = time.perf_counter()
 
     def _init_construction_param_values(
-        self, c_params: ConstructionParams | None, kwargs: dict[str, Any]
+        self,
+        c_params: ConstructionParams | None,
+        kwargs: ConstructionParams | dict[str, Any],
     ) -> ConstructionParamValues:
-        c_params = c_params or {}
-        c_params["total_sectors"] = self.n_sectors
+        c_params_dict = dict(c_params) if c_params else {}
+        c_params_dict["total_sectors"] = self.n_sectors
 
         possible_keys = ConstructionParams.__annotations__.keys()
         if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params |= {key: kwargs.pop(key) for key in pop_keys}
+            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
+
+        return ConstructionParamValues.from_construction_params(c_params_dict)
 
         return ConstructionParamValues.from_construction_params(c_params)
 
@@ -521,7 +526,7 @@ class Reactor(BaseManager):
         filename: str | None = None,
         cad_format: str | cadapi.CADFileType = "stp",
         directory: str | PathLike = "",
-        **kwargs,
+        **kwargs: Unpack[ConstructionParams],
     ):
         """
         Save the CAD build of the reactor.
@@ -580,7 +585,7 @@ class Reactor(BaseManager):
         self,
         dim: DIM_3D | DIM_2D = "xyz",
         construction_params: ConstructionParams | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ):
         """
         Show the CAD build of the reactor.
@@ -617,7 +622,7 @@ class Reactor(BaseManager):
         self,
         dim: DIM_2D = "xz",
         construction_params: ConstructionParams | None = None,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ):
         """
         Plot the reactor.
@@ -645,5 +650,6 @@ class Reactor(BaseManager):
                 self._init_construction_param_values(construction_params, kwargs),
                 for_save=False,
             ),
+            show=bool(kwargs.pop("show", True)),
             **kwargs,
         )

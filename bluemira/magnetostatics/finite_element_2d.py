@@ -9,17 +9,26 @@ Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
 from collections.abc import Iterable
+from typing import Any, cast
 
 import dolfinx.fem
+import dolfinx.mesh
 import numpy as np
 from basix.ufl import element
-from dolfinx.fem import Expression, dirichletbc, functionspace, locate_dofs_topological
+from dolfinx import default_scalar_type as ScalarType  # noqa: N812
+from dolfinx.fem import (
+    DirichletBC,
+    Expression,
+    dirichletbc,
+    functionspace,
+    locate_dofs_topological,
+)
 from dolfinx.fem.petsc import LinearProblem
 from dolfinx.mesh import locate_entities_boundary
-from petsc4py.PETSc import ScalarType
 from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
 
 from bluemira.base.constants import MU_0
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 
@@ -54,6 +63,12 @@ class FemMagnetostatic2d:
         Order of the approximating polynomial basis functions
     """
 
+    mesh: dolfinx.mesh.Mesh | None
+    V: dolfinx.fem.FunctionSpace | None
+    g: BluemiraFemFunction | Expression | None
+    boundaries: Any
+    psi: BluemiraFemFunction | None
+
     def __init__(self, p_order: int = 2):
         self.p_order = p_order
         self.mesh = None
@@ -78,8 +93,11 @@ class FemMagnetostatic2d:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
         """
-        # check whether mesh is a filename or a mesh, then load it or use it
-        self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
+        if isinstance(mesh, str):
+            raise NotImplementedError(
+                "Loading mesh directly from filename is not supported."
+            )
+        self.mesh = mesh
 
         # define boundaries
         if boundaries is None:
@@ -99,12 +117,8 @@ class FemMagnetostatic2d:
         u = TrialFunction(self.V)
         self.v = TestFunction(self.V)
 
-        self.a = (
-            1
-            / (2.0 * np.pi * MU_0)
-            * (1 / SpatialCoordinate(self.mesh)[0] * dot(grad(u), grad(self.v)))
-            * dx
-        )
+        sc = cast("Any", SpatialCoordinate(self.mesh))
+        self.a = 1 / (2.0 * np.pi * MU_0) * (1 / sc[0] * dot(grad(u), grad(self.v))) * dx
 
         # initialise solution
         self.psi = BluemiraFemFunction(self.V)
@@ -116,9 +130,7 @@ class FemMagnetostatic2d:
     def define_g(
         self,
         g: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
-        dirichlet_bc_function: dolfinx.fem.Expression
-        | BluemiraFemFunction
-        | None = None,
+        dirichlet_bc_function: (DirichletBC | Iterable[DirichletBC] | None) = None,
         dirichlet_marker: int | None = None,  # noqa: ARG002
         neumann_bc_function: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
     ):
@@ -134,7 +146,16 @@ class FemMagnetostatic2d:
         dirichlet_marker:
             Identification number for the dirichlet boundary
 
+        Raises
+        ------
+        MagnetostaticsError
+            If mesh and function space are not set
         """
+        if self.mesh is None or self.V is None:
+            raise MagnetostaticsError(
+                "Mesh and function space must be set before defining g."
+            )
+
         if g is not None:
             self.g = g
 
@@ -145,13 +166,13 @@ class FemMagnetostatic2d:
                 self.mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
             )
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
-            bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
+            bcs = [dirichletbc(np.array(0.0, dtype=ScalarType), dofs, self.V)]
         else:
             # TODO @ivanmaione: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
             # 3653
             bcs = (
-                dirichlet_bc_function
+                list(dirichlet_bc_function)
                 if isinstance(dirichlet_bc_function, Iterable)
                 else [dirichlet_bc_function]
             )
@@ -187,7 +208,7 @@ class FemMagnetostatic2d:
         psi:
             Magnetic flux
         """
-        self.psi = self.problem.solve()
+        self.psi = cast("BluemiraFemFunction", self.problem.solve())
 
         return self.psi
 
@@ -209,6 +230,8 @@ class FemMagnetostatic2d:
 
         Raises
         ------
+        MagnetostaticsError
+            If mesh, function space, or psi are not set
         ValueError
             Cannot calculate B for a given element
 
@@ -217,6 +240,13 @@ class FemMagnetostatic2d:
         code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
+        if self.mesh is None or self.V is None:
+            raise MagnetostaticsError(
+                "Mesh and function space must be set before calculating B."
+            )
+        if self.psi is None:
+            raise MagnetostaticsError("Problem must be solved before calculating B.")
+
         degree = self.V.ufl_element().degree
         if degree == 1:
             base_eltype = ("DG", 0)
@@ -234,7 +264,7 @@ class FemMagnetostatic2d:
 
         B0 = BluemiraFemFunction(W0)
 
-        x = SpatialCoordinate(self.mesh)
+        x = cast("Any", SpatialCoordinate(self.mesh))
 
         r = x[0]
 

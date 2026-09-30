@@ -225,7 +225,7 @@ class PlasmaCoil:
         If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
-            return self._dpsi_dx_func(self.grid.x, self.grid.z)
+            return self._dpsi_dx_func(self._grid.x, self._grid.z)
 
         if not self._check_in_grid(x, z):
             return self._convolve(greens_dpsi_dx, x, z)
@@ -255,7 +255,7 @@ class PlasmaCoil:
         If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
-            return self._dpsi_dz_func(self.grid.x, self.grid.z)
+            return self._dpsi_dz_func(self._grid.x, self._grid.z)
 
         if not self._check_in_grid(x, z):
             return self._convolve(greens_dpsi_dz, x, z)
@@ -435,7 +435,7 @@ class PlasmaCoil:
         :
             A simple string representation of the PlasmaCoil.
         """
-        n_filaments = np.count_nonzero(self._j_tor)
+        n_filaments = 0 if self._j_tor is None else int(np.count_nonzero(self._j_tor))
         return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 

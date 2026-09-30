@@ -70,6 +70,8 @@ class Solver(CodesSolver):
     DEFAULT_OUTPUT_FILE = "plasmod_output.dat"
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
+    params: PlasmodSolverParams
+
     def __init__(
         self, params: dict | ParameterFrame, build_config: dict[str, Any] | None = None
     ):
@@ -104,7 +106,7 @@ class Solver(CodesSolver):
             "read_directory", self.build_config.get("directory", "./")
         )
 
-    def execute(self, run_mode: str | RunMode) -> ParameterFrame:
+    def execute(self, run_mode: str | BaseRunMode) -> ParameterFrame:
         """
         Execute this plasmod solver.
 
@@ -212,9 +214,10 @@ class Solver(CodesSolver):
         -------
         A dictionary mapping profile enum to values.
         """
-        profiles_dict = {}
+        profiles_dict: dict[Profiles, np.ndarray] = {}
         for profile in profiles:
-            profiles_dict[profile] = self.get_profile(profile)
+            p = profile if isinstance(profile, Profiles) else Profiles(profile)
+            profiles_dict[p] = self.get_profile(p)
         return profiles_dict
 
     def plasmod_outputs(self) -> PlasmodOutputs:

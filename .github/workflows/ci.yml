@@ -138,6 +138,7 @@ jobs:
           PYTEST_PRIVATE: ${{ (!github.event.pull_request.head.repo.fork && github.repository == 'fusion-power-plant-framework/bluemira') && '--private' || '' }}
         run: |
           export BLUEMIRA_GEOMETRY_BACKEND=${{ matrix.backend }}
+          ty check bluemira
           pytest --cov=bluemira \
                  --cov-report html:htmlcov_bluemira \
                  --cov-report xml \

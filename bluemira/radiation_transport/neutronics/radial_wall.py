@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from numpy import typing as npt
@@ -73,7 +73,7 @@ class CellWalls:
         """Number of cell wall panels"""  # noqa: DOC201
         return len(self.cell_walls)
 
-    def __getitem__(self, index_or_slice) -> npt.NDArray | float:
+    def __getitem__(self, index_or_slice) -> Any:
         """Get cell wall panel"""  # noqa: DOC201
         return self.cell_walls[index_or_slice]
 
@@ -181,7 +181,7 @@ class CellWalls:
         length: float
         """
         _end_i, _start_i = self.cell_walls[i]
-        return np.linalg.norm(_end_i - _start_i)
+        return float(np.linalg.norm(_end_i - _start_i))
 
     def set_length(self, i, new_length):
         """Set the length of the i-th cell-wall"""

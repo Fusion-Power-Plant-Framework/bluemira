@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Scipy optimisation interface"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -19,7 +17,10 @@ from bluemira.optimisation._scipy.parameters import (
     _filter_to_scipy_options,
     _make_alg_params,
 )
-from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
+from bluemira.optimisation._scipy.registry import (
+    SCIPY_REGISTRY,
+    ScipyAlgConfig,
+)
 from bluemira.optimisation._tools import (
     _check_bounds_dims,
     _initial_guess_from_bounds,
@@ -31,7 +32,7 @@ from bluemira.utilities.error import OptVariablesError
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+    from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
 
 class ScipyOptimiser(Optimiser):
@@ -63,7 +64,7 @@ class ScipyOptimiser(Optimiser):
         self.keep_history = keep_history
 
     @property
-    def algorithm(self) -> AlgorithmType:
+    def algorithm(self) -> Algorithm:
         """
         The optimiser's algorithm.
         """
@@ -336,7 +337,7 @@ class ScipyOptimiser(Optimiser):
         """
         Set the lower bound for each optimisation parameter.
 
-        Set to `-np.inf` to unbound the parameter's minimum.
+        Set to `-np.inf` to unbound the parameter's minimum.\
 
         Raises
         ------

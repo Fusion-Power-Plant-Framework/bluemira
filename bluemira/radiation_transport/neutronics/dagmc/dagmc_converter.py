@@ -29,6 +29,7 @@ class DAGMCConverterConfig(BaseModel, ABC):
         self,
         shapes: Iterable[BluemiraGeoT],
         names: list[str],
+        comp_mat_mapping: dict[str, str],
         output_dagmc_model_path: str | Path,
     ) -> None:
         """

@@ -18,7 +18,7 @@ from __future__ import annotations
 import contextlib
 import math
 from itertools import pairwise
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import cadquery as cq
 import numpy as np
@@ -193,25 +193,29 @@ def _face_from_wires_tolerant(outer: cq.Wire, inner: list) -> cq.Face:
     return face
 
 
-class apiFace(metaclass=_apiFaceMeta):
-    """Drop-in for ``cq.Face``.
+if TYPE_CHECKING:
+    apiFace = cq.Face
+else:
 
-    Calling ``apiFace(wire)`` with a ``cq.Wire`` uses ``makeFromWires``
-    instead of the raw OCC constructor that FreeCAD's ``Part.Face(wire)`` used.
-    On numerically non-planar wires it falls back to an SVD-fitted plane +
-    ``BRepBuilderAPI_MakeFace`` path so slight construction noise doesn't
-    reject faces that are planar by design.
-    """
+    class apiFace(metaclass=_apiFaceMeta):
+        """Drop-in for ``cq.Face``.
 
-    def __new__(cls, obj=None):
-        if isinstance(obj, cq.Wire):
-            return _face_from_wires_tolerant(obj, [])
-        if isinstance(obj, (list, tuple)):
-            wires = list(obj)
-            return _face_from_wires_tolerant(wires[0], wires[1:])
-        if obj is None:
-            return cq.Face.__new__(cq.Face)
-        return cq.Face(obj)
+        Calling ``apiFace(wire)`` with a ``cq.Wire`` uses ``makeFromWires``
+        instead of the raw OCC constructor that FreeCAD's ``Part.Face(wire)`` used.
+        On numerically non-planar wires it falls back to an SVD-fitted plane +
+        ``BRepBuilderAPI_MakeFace`` path so slight construction noise doesn't
+        reject faces that are planar by design.
+        """
+
+        def __new__(cls, obj=None):
+            if isinstance(obj, cq.Wire):
+                return _face_from_wires_tolerant(obj, [])
+            if isinstance(obj, (list, tuple)):
+                wires = list(obj)
+                return _face_from_wires_tolerant(wires[0], wires[1:])
+            if obj is None:
+                return cq.Face.__new__(cq.Face)
+            return cq.Face(obj)
 
 
 EPS = 1e-8
@@ -550,7 +554,7 @@ def sweep_shape(  # noqa: C901, PLR0912
             # stitches the shell back together via vertex/edge merging within
             # tolerance, restoring a single coherent boundary.
             if solid and len(profiles) > 1:
-                temp_result = _sewn_solid(temp_result)
+                temp_result = _sewn_solid(cast("apiSolid", temp_result))
             # We could check ``is_valid_deep`` here, but it is extremely computationally
             # expensive and invalid geometry will end up calling it twice.
             # Instead, it is best to just call ``fix_shape`` regardless, it is much
@@ -591,7 +595,7 @@ def sweep_shape(  # noqa: C901, PLR0912
         ) from last_exc
 
     if solid:
-        return result
+        return cast("apiShell | apiSolid", result)
     return result.Shells()[0]
 
 
@@ -656,7 +660,11 @@ def offset_wire(
         raise InvalidCADInputsError("Cannot offset a non-planar wire.")
 
     # CadQuery offset2D kind: 'arc' | 'intersection' | 'tangent'
-    _join_map = {"arc": "arc", "intersect": "intersection", "tangent": "tangent"}
+    _join_map: dict[str, Literal["arc", "intersection", "tangent"]] = {
+        "arc": "arc",
+        "intersect": "intersection",
+        "tangent": "tangent",
+    }
     kind = _join_map[join.lower()]
 
     if join.lower() == "tangent":
@@ -793,7 +801,7 @@ def area(obj: apiShape) -> float:
                 _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
             )
             return outer_area - hole_area
-        return obj.Area  # property (monkey-patched) → float
+        return float(cast("Any", obj).Area)
     return obj.Area()  # method on Wire/Solid/Shell/Edge → float
 
 
@@ -1027,7 +1035,7 @@ def arrange_edges(old_wire: apiWire, new_wire: apiWire) -> apiWire:
         if i < len(old_edges) and (
             new_edge.wrapped.Orientation() != old_edges[i].wrapped.Orientation()
         ):
-            adjusted.append(reverse_shape(new_edge))
+            adjusted.append(cast("apiEdge", reverse_shape(new_edge)))
         else:
             adjusted.append(new_edge)
     try:
@@ -1171,7 +1179,7 @@ def ordered_vertexes(obj: apiShape) -> np.ndarray:
     """Vertices in connectivity order along a wire."""
     edge_list = ordered_edges(obj)
     pts = [_vector_to_numpy(e.startPoint()) for e in edge_list]
-    if not obj.IsClosed():
+    if not cast("Any", obj).IsClosed():
         pts.append(_vector_to_numpy(edge_list[-1].endPoint()))
     return np.array(pts)
 
@@ -1224,7 +1232,7 @@ def make_compound(shapes: list[apiShape]) -> apiCompound:
     b.MakeCompound(comp)
     for s in shapes:
         b.Add(comp, s.wrapped)
-    return cq.Shape.cast(comp)
+    return cast("apiCompound", cq.Shape.cast(comp))
 
 
 # ---------------------------------------------------------------------------
@@ -1700,7 +1708,7 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     # a Face back (not a Compound containing one Face), otherwise downstream
     # ``.boundary[0]`` access misinterprets the wrapping.
     if isinstance(result, cq.Face):
-        return result
+        return cast("apiShell | apiSolid", result)
 
     if isinstance(result, cq.Compound):
         if all(isinstance(s, cq.Face) for s in shapes):
@@ -1911,8 +1919,8 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
         and all(isinstance(t, apiWire) for t in tools)
     ):
         if all(t.IsClosed() for t in tools):
-            return _split_wire_by_closed_tools(shape, tools)
-        return _split_wire_at_tool_crossings(shape, tools)
+            return cast("list[apiShape]", _split_wire_by_closed_tools(shape, tools))
+        return cast("list[apiShape]", _split_wire_at_tool_crossings(shape, tools))
 
     result = shape.cut(*tools)
     # OCC's BRepAlgoAPI_Cut can return nested compounds, and cq.Shape.Solids()
@@ -2059,7 +2067,7 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
             frags = [cq.Shape.cast(t) for t in algo.Generated(s.wrapped)]
         fragment_map.append(frags)
 
-    return compound, fragment_map
+    return cast("apiCompound", compound), fragment_map
 
 
 # ---------------------------------------------------------------------------
@@ -2211,7 +2219,7 @@ def slice_shape(shape: apiShape, plane_origin, plane_axis):
     if isinstance(shape, cq.Solid) or (
         isinstance(shape, cq.Compound) and shape.Solids()
     ):
-        assembled = [_force_close_wire(w) for w in assembled]
+        assembled = [_force_close_wire(cast("apiWire", w)) for w in assembled]
     return assembled
 
 
@@ -2377,7 +2385,7 @@ def serialise_shape(shape: apiWire) -> dict:
     return {"Wire": serialised}
 
 
-def deserialise_shape(buffer: dict) -> apiWire:
+def deserialise_shape(buffer: dict) -> apiWire | None:
     """Deserialise a dict (from serialise_shape / FreeCAD format) to a CadQuery wire."""
     # Local import: ``_curves`` is loaded after ``_core`` by ``__init__``, but
     # this function is only called at runtime, so a deferred import is enough
@@ -2391,7 +2399,7 @@ def deserialise_shape(buffer: dict) -> apiWire:
 
     for type_, v in buffer.items():
         if type_ == "Wire":
-            edges = [deserialise_shape(item) for item in v]
+            edges = [e for item in v if (e := deserialise_shape(item)) is not None]
             return wire_from_wires(edges)
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])

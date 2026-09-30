@@ -11,7 +11,7 @@ Structural module plotting tools
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from matplotlib.colors import Normalize, TwoSlopeNorm
@@ -23,13 +23,14 @@ from bluemira.structural.constants import DEFLECT_COLOR, STRESS_COLOR, LoadKind,
 from bluemira.utilities.plot_tools import Plot3D
 
 if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
+    from mpl_toolkits.mplot3d.axes3d import Axes3D
 
     from bluemira.structural.element import Element
     from bluemira.structural.geometry import DeformedGeometry, Geometry
+    from bluemira.structural.loads import Load
     from bluemira.structural.node import Node
 
-DEFAULT_STRUCT_PLOT_OPTIONS = {
+DEFAULT_STRUCT_PLOT_OPTIONS: dict[str, Any] = {
     "bound_scale": 1.1,
     "show_all_nodes": True,
     "show_stress": False,
@@ -47,7 +48,7 @@ DEFAULT_STRUCT_PLOT_OPTIONS = {
 }
 
 
-def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
+def annotate_node(ax: Axes3D, node: Node, text_size: int, color: str):
     """
     Annotate a node.
     """
@@ -55,12 +56,13 @@ def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
     ax.text(node.x, node.y, node.z, name, fontsize=text_size, color=color)
 
 
-def annotate_element(ax: Axes, element: Element, text_size: int, color: str):
+def annotate_element(ax: Axes3D, element: Element, text_size: int, color: str):
     """
     Annotate an element.
     """
     name = f"E{element.id_number}"
-    ax.text(*element.mid_point, name, size=text_size, color=color)
+    x, y, z = element.mid_point
+    ax.text(x, y, z, name, size=text_size, color=color)
 
 
 def arrow_scale(vector: np.ndarray, max_length: float, max_force: float) -> np.ndarray:
@@ -90,7 +92,7 @@ def arrow_scale(vector: np.ndarray, max_length: float, max_force: float) -> np.n
     return scale * vector / v_norm
 
 
-def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
+def _plot_force(ax: Axes3D, node: Node, vector: np.ndarray, color: str = "r"):
     """
     Plots a single force arrow in 3-D to indicate a linear load
 
@@ -111,7 +113,12 @@ def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
 
 
 def _plot_moment(
-    ax: Axes, node: Node, vector: np.ndarray, color: str = "r", *, support: bool = False
+    ax: Axes3D,
+    node: Node,
+    vector: np.ndarray,
+    color: str = "r",
+    *,
+    support: bool = False,
 ):
     """
     Plots a double "moment" arrow in 3-D to indicate a moment load. Offset the
@@ -158,7 +165,9 @@ class BasePlotter:
     Base utility plotting class for structural models
     """
 
-    def __init__(self, geometry: Geometry, ax: Axes | None = None, **kwargs):
+    options: dict[str, Any]
+
+    def __init__(self, geometry: Geometry, ax: Axes3D | None = None, **kwargs):
         self.geometry = geometry
         if ax is None:
             self.ax = Plot3D()
@@ -235,7 +244,7 @@ class BasePlotter:
         size: float
             The font size to use in plotting
         """
-        return max(10, self.size // 30)
+        return max(10, int(self.size // 30))
 
     def plot_nodes(self):
         """
@@ -364,34 +373,41 @@ class BasePlotter:
         elif "M" in load["sub_type"]:
             _plot_moment(self.ax, node, load_value, color="r")
 
-    def _plot_element_load(self, element, load):
-        load = load.Q * load.sub_type.vector
+    def _plot_element_load(self, element: Element, load: Load):
+        if load.Q is None:
+            return
+        subtype = LoadType(load.subtype)
+        load_vec = load.Q * subtype.vector
 
-        load = arrow_scale(load, 10 * self.unit_length, self.force_size)
+        load_vec = arrow_scale(load_vec, 10 * self.unit_length, self.force_size)
 
         dcm = element.lambda_matrix[0:3, 0:3]
-        load @= dcm
+        load_vec @= dcm
         point = np.array(
             [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
-        point += (np.array([1.0, 0.0, 0.0]) * float(load.x)) @ dcm
-        self.ax.quiver(*point - load, *load, color="r")
+        x_val = 0.0 if load.x is None else float(load.x)
+        point += (np.array([1.0, 0.0, 0.0]) * x_val) @ dcm
+        self.ax.quiver(*point - load_vec, *load_vec, color="r")
 
-    def _plot_distributed_load(self, element, load):
+    def _plot_distributed_load(self, element: Element, load: Load):
+        if load.w is None:
+            return
+        subtype = LoadType(load.subtype)
         length = element.length
         n = int(length * 10)
         dcm = element.lambda_matrix[0:3, 0:3]
 
-        load = load.w * load.subtype.vector / length
-        load = arrow_scale(load, 10 * self.unit_length, self.force_size) @ dcm
-        load = (load * np.ones((n, 3))).T
+        load_vec = load.w * subtype.vector / length
+        load_vec = arrow_scale(load_vec, 10 * self.unit_length, self.force_size) @ dcm
+        load_vec = (load_vec * np.ones((n, 3))).T
 
         point = np.array(
             [element.node_1.x, element.node_1.y, element.node_1.z], dtype=float
         )
         point = point * np.ones((n, 3))  # noqa: PLR6104
         point += (np.linspace(0, length, n)[:, None] * np.array([1.0, 0, 0])) @ dcm
-        self.ax.quiver(*point.T - load, *load, color="r")
+        self.ax.quiver(*point.T - load_vec, *load_vec, color="r")
 
     def _set_aspect_equal(self):
         """
@@ -413,7 +429,7 @@ class GeometryPlotter(BasePlotter):
     Utility class for the plotting of structural geometry models
     """
 
-    def __init__(self, geometry: Geometry, ax: Axes | None = None, **kwargs):
+    def __init__(self, geometry: Geometry, ax: Axes3D | None = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["show_stress"] = False
@@ -434,7 +450,7 @@ class DeformedGeometryPlotter(BasePlotter):
     overlaying with GeometryPlotters
     """
 
-    def __init__(self, geometry: DeformedGeometry, ax: Axes | None = None, **kwargs):
+    def __init__(self, geometry: DeformedGeometry, ax: Axes3D | None = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
@@ -459,7 +475,7 @@ class StressDeformedGeometryPlotter(BasePlotter):
     def __init__(
         self,
         geometry: DeformedGeometry,
-        ax: Axes | None = None,
+        ax: Axes3D | None = None,
         stress: np.ndarray | None = None,
         *,
         deflection: bool = False,
@@ -475,7 +491,11 @@ class StressDeformedGeometryPlotter(BasePlotter):
         self.options["show_all_nodes"] = False
         self.options["show_as_grey"] = False
 
-        self.color_normer = self.make_color_normer(stress, deflection=deflection)
+        self.color_normer = (
+            self.make_color_normer(stress, deflection=deflection)
+            if stress is not None
+            else None
+        )
 
         self.plot_nodes()
         self.plot_elements()

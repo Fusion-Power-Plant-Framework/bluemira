@@ -5,17 +5,22 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Collection of utility functions for the module."""
 
-from collections.abc import Callable, Iterable
-from typing import Any, NoReturn
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, NoReturn
 
 import numpy as np
 from scipy.optimize._numdiff import (  # noqa: PLC2701
     approx_derivative as _approx_derivative,
 )
-from scipy.optimize._optimize import OptimizeResult
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationError
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
+
+    from scipy.optimize._optimize import OptimizeResult
 
 _FloatOrArray = float | np.ndarray
 
@@ -144,6 +149,8 @@ def process_scipy_result(res: OptimizeResult, alg: str) -> np.ndarray:
     ----------
     res:
         Scipy optimise result
+    alg:
+        The algorithm name
 
     Returns
     -------
@@ -204,8 +211,8 @@ def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarr
     # we can take an average
     np.nan_to_num(
         bounds,
-        posinf=np.finfo(np.float64).max,
-        neginf=np.finfo(np.float64).min,
+        posinf=float(np.finfo(np.float64).max),
+        neginf=float(np.finfo(np.float64).min),
         copy=False,
     )
     return np.mean(bounds, axis=0)

@@ -57,13 +57,19 @@ class CodesTask(abc.ABC):
     Base class for a task used by a solver for an external code.
     """
 
-    def __init__(self, params: MappedParameterFrame, codes_name: str) -> None:
+    def __init__(
+        self,
+        params: MappedParameterFrame | None,
+        codes_name: str,
+        *_args: Any,
+        **_kwargs: Any,
+    ) -> None:
         super().__init__()
         self.params = params
         self._name = codes_name
 
     @abc.abstractmethod
-    def run(self):
+    def run(self, *_args: Any, **_kwargs: Any) -> Any:
         """Run the task."""
 
     def _run_subprocess(self, command: list[str], **kwargs):
@@ -143,6 +149,9 @@ class CodesSetup(CodesTask):
             def remapper(x):
                 return x
 
+        if self.params is None:
+            return _inputs
+
         for bm_name, mapping in self.params.mappings.items():
             if not mapping.send:
                 continue
@@ -210,7 +219,8 @@ class CodesTeardown(CodesTask):
         mapped_outputs = self._map_external_outputs_to_bluemira_params(
             outputs, recv_all=recv_all
         )
-        self.params.update_values(mapped_outputs, source=self._name)
+        if self.params is not None:
+            self.params.update_values(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
         self, external_outputs: dict[str, Any], *, recv_all: bool
@@ -236,11 +246,15 @@ class CodesTeardown(CodesTask):
         unit conversions made).
         """
         mapped_outputs = {}
+        if self.params is None:
+            return mapped_outputs
+
         for bm_name, mapping in self.params.mappings.items():
             if not (mapping.recv or recv_all):
                 continue
             # out name is set name if it's not provided
-            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)  # type: ignore[type]
+            assert mapping.out_name is not None  # noqa: S101
+            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)
             if mapping.unit is None:
                 bluemira_warn(
                     f"{mapping.out_name} from code {self._name} has no known unit"
@@ -376,7 +390,7 @@ class CodesSolver(abc.ABC):
         Common run modes are RUN, MOCK, READ, etc,.
         """
 
-    def execute(self, run_mode: str | BaseRunMode) -> Any:
+    def execute(self, run_mode: str | BaseRunMode, *_args: Any, **_kwargs: Any) -> Any:
         """
         Execute the setup, run, and teardown tasks, in order.
         """  # noqa: DOC201
