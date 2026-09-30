@@ -11,18 +11,18 @@ A collection of generic physical constants, conversions, and miscellaneous const
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, TypeVar, cast, overload, override
+from typing import TYPE_CHECKING, Any, TypeVar, cast, overload
 
 import numpy as np
 import numpy.typing as npt
 from periodictable import elements
 from pint import Quantity, UnitRegistry, set_application_registry
 from pint.errors import PintError
+from pint.facets.context import objects as pint_obj
 from pint.facets.context.objects import Context
 from pint.util import UnitsContainer
 
 if TYPE_CHECKING:
-    from pint.facets.context import objects as pint_obj
     from pint.facets.plain.unit import PlainUnit as Unit
 
 
@@ -81,7 +81,7 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    default_preferred_units: list[Any]
+    default_preferred_units: list[Unit]
 
     def _add_contexts(self, contexts: list[Context] | tuple[Context, ...] | None = None):
         """
@@ -103,12 +103,11 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    @override
-    def enable_contexts(self, *contexts: pint_obj.Context, **kwargs):
+    def enable_contexts(self, *contexts: str | pint_obj.Context, **kwargs):
         """
         Enable contexts
         """
-        self._add_contexts(contexts)
+        self._add_contexts(tuple(c for c in contexts if isinstance(c, pint_obj.Context)))
 
         super().enable_contexts(*[*self.contexts, *contexts], **kwargs)
         # Extra units
@@ -140,8 +139,8 @@ class BMUnitRegistry(UnitRegistry):
             e_to_t,
             t_units,
             ev_units,
-            lambda _, x: x * conversion,
-            lambda _, x: x / conversion,
+            lambda ureg, value, **_kwargs: value * conversion,  # noqa: ARG005
+            lambda ureg, value, **_kwargs: value / conversion,  # noqa: ARG005
         )
 
     def _mass_energy_context(self):
@@ -165,8 +164,8 @@ class BMUnitRegistry(UnitRegistry):
             m_to_e,
             m_units,
             e_units,
-            lambda _, x: x * conversion,
-            lambda _, x: x / conversion,
+            lambda ureg, value, **_kwargs: value * conversion,  # noqa: ARG005
+            lambda ureg, value, **_kwargs: value / conversion,  # noqa: ARG005
         )
 
     @property
@@ -217,8 +216,8 @@ class BMUnitRegistry(UnitRegistry):
             mols_to_pam3,
             mol_units,
             pam3_units,
-            lambda ureg, x: x * ureg.flow_conversion,
-            lambda ureg, x: x / ureg.flow_conversion,
+            lambda ureg, value, **_kwargs: value * ureg.flow_conversion,
+            lambda ureg, value, **_kwargs: value / ureg.flow_conversion,
         )
 
     @staticmethod
