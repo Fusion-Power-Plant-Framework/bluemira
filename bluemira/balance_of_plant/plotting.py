@@ -56,23 +56,15 @@ class SuperSankey(Sankey):
         # the Sankey class can't handle.
         if future is None:
             # There is only one connection, Sankey knows how to do this
-            c: tuple[int, int]
-            if isinstance(connect, list):
-                c = connect[0]
-            elif connect is None:
-                c = (0, 0)
-            else:
-                c = connect
-            lbls = "" if labels is None else labels
             super().add(
                 patchlabel,
                 flows,
                 orientations,
-                lbls,
+                "" if labels is None else labels,
                 trunklength,
                 pathlengths,
                 prior,
-                c,
+                connect[0] if isinstance(connect, list) else connect,
                 rotation,
                 **kwargs,
             )
@@ -111,7 +103,7 @@ class SuperSankey(Sankey):
         connect: list[tuple[int, int]],
         rotation: float,
         **kwargs,
-    ) -> None:
+    ):
         """
         Handles two connections in a Sankey diagram.
 
@@ -227,7 +219,7 @@ class SuperSankey(Sankey):
         x0 = np.zeros(2)
         result = optimise(minimise_dxdy, x0=x0, algorithm="SLSQP_SCIPY")
         self.extent = extent  # Finish clean-up
-        return (float(result.x[0]), float(result.x[1]))
+        return tuple(result.x)
 
 
 BALANCE_PLOT_DEFAULTS: BOPPlotOpts = {
@@ -352,9 +344,9 @@ class BalanceOfPlantPlotter:
         :
             The Sankey diagram object
         """
-        trunk_length: float = self.plot_options["trunk_length"]
-        l_s: float = self.plot_options["standard_length"]
-        l_m: float = self.plot_options["medium_length"]
+        trunk_length = self.plot_options["trunk_length"]
+        l_s = self.plot_options["standard_length"]
+        l_m = self.plot_options["medium_length"]
 
         # 0: Plasma
         sankey.add(
