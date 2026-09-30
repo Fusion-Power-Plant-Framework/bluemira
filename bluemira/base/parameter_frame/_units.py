@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pint import Quantity
+    from pint.facets.plain import PlainQuantity
 
     from bluemira.base.parameter_frame._parameter import ParamDictT
 
@@ -151,7 +152,9 @@ def _remake_units(quantity: Quantity) -> pint.Quantity:
     )
 
 
-def _convert_non_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Any:
+def _convert_non_commutative(
+    unit_list: list[Quantity], filter_index: list[int]
+) -> Quantity:
     """Converts angle units and combines non commutative units
 
     Notes
@@ -163,7 +166,7 @@ def _convert_non_commutative(unit_list: list[Quantity], filter_index: list[int])
     def get_key(i: Quantity) -> str:
         return next(iter(i._units.keys()))
 
-    def get_exp(i: Any) -> str:
+    def get_exp(i: Quantity) -> str:
         return str(next(iter(i._units.values())))
 
     filtered_list = [unit_list[i] for i in filter_index]
@@ -178,12 +181,12 @@ def _convert_non_commutative(unit_list: list[Quantity], filter_index: list[int])
             filtered_list[no] = i.to(ureg.Unit(f"{ANGLE}**{get_exp(i)}"))
 
     # multiplies all quantities together
-    if not filtered_list:
-        return ureg.Quantity(1)
     return cast("pint.Quantity", math.prod(filtered_list))
 
 
-def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Any:
+def _combine_commutative(
+    unit_list: list[Quantity], filter_index: list[int]
+) -> PlainQuantity | float:
     """
     Combine commutative units
 
@@ -198,10 +201,10 @@ def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> 
     filtered_list = [unit_list[i] for i in filter_index]
 
     quantity = math.prod(filtered_list)
-    if isinstance(quantity, int | float) or not hasattr(quantity, "to_preferred"):
-        # is quantity now a number
+    if not isinstance(quantity, ureg.Quantity):
+        # quantity is now a number
         return quantity
-
+    quantity = cast("pint.Quantity", quantity)
     # Prefer the users SI converted unit
     # if the number of constituent units is <= the number in the new unit
     # this one line does a lot for us in the reconstruction
