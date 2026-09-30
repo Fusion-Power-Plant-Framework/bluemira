@@ -138,7 +138,12 @@ class ParameterFrame:
         for field in fields(self):
             yield getattr(self, field.name)
 
-    def update(self, new_values: dict[str, Any] | ParameterFrame):
+    def update(
+        self,
+        new_values: dict[str, ParameterValueType]
+        | dict[str, ParamDictT]
+        | ParameterFrame,
+    ):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
             self.update_from_frame(new_values)
@@ -183,17 +188,13 @@ class ParameterFrame:
     def update_from_dict(self, new_values: dict[str, ParamDictT], source: str = ""):
         """Update from a dictionary representation of a ``ParameterFrame``"""
         for key, value in new_values.items():
-            value_copy = dict(value)
-            value_copy.pop("name", None)
+            value["name"] = key
             if source:
-                value_copy["source"] = source
-            val = value_copy.pop("value")
+                value["source"] = source
             self._set_param(
                 key,
                 Parameter(
-                    name=key,
-                    value=val,
-                    **cast("dict[str, Any]", value_copy),
+                    **value,
                     _value_types=_validate_parameter_field(key, self._types[key]),
                 ),
             )
@@ -404,14 +405,8 @@ class ParameterFrame:
             raise ValueError(
                 f"Unit conversion failed for {member} from {member_param_data['unit']}"
             ) from pe
-        param_dict = dict(member_param_data)
-        if "name" in param_dict:
-            name_val = param_dict.pop("name")
-            if not isinstance(name_val, str):
-                raise TypeError(f"name must be a str, got {type(name_val).__name__}")
-        return Parameter(
-            name=member, **cast("dict[str, Any]", param_dict), _value_types=value_type
-        )
+        member_param_data["name"] = member
+        return Parameter(**member_param_data, _value_types=value_type)
 
     def to_dict(self, *, use_last: bool = False) -> dict[str, dict[str, Any]]:
         """Serialise this ParameterFrame to a dictionary.
@@ -456,24 +451,21 @@ class ParameterFrame:
         :
             The tabulated data as column headers and a list of rows
         """
-        keys_list = (
-            list(ParamDictT.__annotations__.keys()) if keys is None else list(keys)
-        )
+        columns = list(ParamDictT.__annotations__.keys()) if keys is None else list(keys)
         try:
-            pkey = keys_list.index("Parameter")
+            pkey = columns.index("Parameter")
         except ValueError:
             pkey = None
 
         if pkey is not None:
-            keys_list.pop(pkey)
-            if "name" in keys_list:
-                keys_list.pop(keys_list.index("name"))
-            if "unit" in keys_list:
-                keys_list.pop(keys_list.index("unit"))
-            keys_list.insert(pkey, "unit")
-            keys_list.insert(pkey, "name")
+            columns.pop(pkey)
+            if "name" in columns:
+                columns.pop(columns.index("name"))
+            if "unit" in columns:
+                columns.pop(columns.index("unit"))
+                columns.insert(pkey, "unit")
+                columns.insert(pkey, "name")
 
-        columns = keys_list
         rec_col = copy.deepcopy(columns)
 
         try:

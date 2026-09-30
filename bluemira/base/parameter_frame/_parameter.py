@@ -42,7 +42,7 @@ class ParamDictT(TypedDict, total=False):
 
     name: str
     value: Required[Any]
-    unit: Required[str | None]
+    unit: Required[str]
     source: str
     description: str
     long_name: str
