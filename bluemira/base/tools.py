@@ -319,7 +319,7 @@ def circular_pattern_xyz_components(
 
 
 def copy_and_filter_component(
-    comp: Component, dim: str, component_filter: Callable[[ComponentT], bool] | None
+    comp: Component, dim: str, component_filter: Callable[[Component], bool] | None
 ) -> Component:
     """
     Copies a component (deeply) then filters
