@@ -13,32 +13,21 @@ Grad-Shafranov equilibrium solves from Bluemira to FreeGSNKE.
 
 from __future__ import annotations
 
-import sys
 import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-# Ensure FreeCAD's bundled 'Ext' directory does not shadow standard lazy_loader
-if any(p.endswith(("/Ext", "/Ext/")) for p in sys.path):
-    sys.path = [p for p in sys.path if not p.endswith(("/Ext", "/Ext/"))]
-if "lazy_loader" in sys.modules and not hasattr(
-    sys.modules["lazy_loader"], "attach_stub"
-):
-    del sys.modules["lazy_loader"]
-    if "lazy_loader.lazy_loader" in sys.modules:
-        del sys.modules["lazy_loader.lazy_loader"]
-
 import numpy as np
+from freegsnke.GSstaticsolver import NKGSsolver
 from freegsnke.build_machine import (
     apply_tokamak_components,
     build_tokamak_components,
 )
 from freegsnke.equilibrium_update import Equilibrium as FreeGSNKE_Equilibrium
-from freegsnke.GSstaticsolver import NKGSsolver
 from freegsnke.jtor_update import GeneralPprimeFFprime
 from freegsnke.machine_update import Machine
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.equilibria.coils import Circuit, Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.error import EquilibriaError
 
@@ -108,7 +97,7 @@ def coilset_to_freegsnke_tokamak(
 
     Raises
     ------
-    EquilibriaError:
+    EquilibriaError
         If coilset is empty or neither limiter nor grid is supplied.
     """
     if not coilset._coils:
@@ -120,16 +109,12 @@ def coilset_to_freegsnke_tokamak(
     for idx, element in enumerate(coilset._coils):
         if isinstance(element, (Circuit, SymmetricCircuit)):
             elem_name = (
-                element.name
-                if isinstance(element.name, str)
-                else f"circuit_{idx}"
+                element.name if isinstance(element.name, str) else f"circuit_{idx}"
             )
             circuit_dict: dict[str, Any] = {}
             for sub_idx, subcoil in enumerate(element._coils):
                 sub_name = (
-                    subcoil.name
-                    if getattr(subcoil, "name", None)
-                    else f"sub_{sub_idx}"
+                    subcoil.name if getattr(subcoil, "name", None) else f"sub_{sub_idx}"
                 )
                 if sub_name in circuit_dict:
                     sub_name = f"{sub_name}_{sub_idx}"
@@ -145,7 +130,7 @@ def coilset_to_freegsnke_tokamak(
             active_coils_data[elem_name] = circuit_dict
             coil_currents[elem_name] = float(np.asarray(element.current).flat[0])
         elif isinstance(element, Coil):
-            elem_name = element.name if element.name else f"coil_{idx}"
+            elem_name = element.name or f"coil_{idx}"
             active_coils_data[elem_name] = {
                 "R": [float(element.x)],
                 "Z": [float(element.z)],
@@ -175,7 +160,7 @@ def coilset_to_freegsnke_tokamak(
         ]
     else:
         raise EquilibriaError(
-            "A limiter or grid boundary must be provided to construct a FreeGSNKE Machine."
+            "A limiter or grid boundary are required to construct a FreeGSNKE Machine."
         )
 
     components = build_tokamak_components(
@@ -231,7 +216,10 @@ def profile_to_freegsnke(
 
     ip = float(profile.I_p) if profile.I_p is not None else 0.0
 
-    if getattr(profile, "B_0", None) is not None and getattr(profile, "R_0", None) is not None:
+    if (
+        getattr(profile, "B_0", None) is not None
+        and getattr(profile, "R_0", None) is not None
+    ):
         fvac = float(profile.R_0 * profile.B_0)
     elif hasattr(profile, "fvac") and callable(profile.fvac):
         fvac = float(profile.fvac())
@@ -250,7 +238,7 @@ def profile_to_freegsnke(
 
 
 def update_bluemira_from_freegsnke(
-    bluemira_eq: Equilibrium,
+    eq: Equilibrium,
     freegsnke_eq: FreeGSNKE_Equilibrium,
     freegsnke_profiles: GeneralPprimeFFprime,
 ) -> None:
@@ -263,7 +251,7 @@ def update_bluemira_from_freegsnke(
 
     Parameters
     ----------
-    bluemira_eq:
+    eq:
         Bluemira Equilibrium to update in-place.
     freegsnke_eq:
         Converged FreeGSNKE Equilibrium instance.
@@ -277,24 +265,30 @@ def update_bluemira_from_freegsnke(
     jtor = np.asarray(freegsnke_profiles.jtor, dtype=np.float64).copy()
 
     # Update plasma coil representation and flux interpolators
-    bluemira_eq._update_plasma(bluemira_plasma_psi, jtor)
-    bluemira_eq._jtor = jtor
+    eq._update_plasma(bluemira_plasma_psi, jtor)
+    eq._jtor = jtor
 
+    # TODO(hsaunders1904): this section is quite ugly. Seems like there are attributes of
+    # the FreeGSNKE equilibrium that Bluemira does not have. We're monkey-patching the
+    # Equilibrium object with new attributes here, which absolutely should not happen.
+    # Need to work out a more permanent solution; maybe there are direct equivalents
+    # somewhere that weren't spotted, or these are attributes we don't really need.
     if hasattr(freegsnke_eq, "_current") and freegsnke_eq._current is not None:
-        bluemira_eq._I_p = float(freegsnke_eq._current)
+        # TODO(hsaunders1904): maybe should be eq.profiles.I_p?
+        eq._I_p = float(freegsnke_eq._current)
 
     if hasattr(freegsnke_eq, "psi_axis") and freegsnke_eq.psi_axis is not None:
-        bluemira_eq.psi_ax = float(freegsnke_eq.psi_axis)
+        eq.psi_ax = float(freegsnke_eq.psi_axis)
 
     if hasattr(freegsnke_eq, "psi_bndry") and freegsnke_eq.psi_bndry is not None:
-        bluemira_eq.psi_b = float(freegsnke_eq.psi_bndry)
+        eq.psi_b = float(freegsnke_eq.psi_bndry)
 
-    bluemira_eq._plasmacoil = None
-    bluemira_eq._clear_OX_points()
+    eq._plasmacoil = None
+    eq._clear_OX_points()
 
     # Re-detect topology
     try:
-        bluemira_eq.get_OX_points(force_update=True)
+        eq.get_OX_points(force_update=True)
     except Exception as exc:  # noqa: BLE001
         bluemira_warn(
             f"Could not automatically detect OX points following forward solve: {exc}"
@@ -302,7 +296,7 @@ def update_bluemira_from_freegsnke(
 
 
 def run_forward_solve(
-    bluemira_eq: Equilibrium,
+    eq: Equilibrium,
     *,
     target_relative_tolerance: float = 1e-6,
     max_iterations: int = 100,
@@ -318,7 +312,7 @@ def run_forward_solve(
 
     Parameters
     ----------
-    bluemira_eq:
+    eq:
         Bluemira Equilibrium containing coils, grid, profiles, and optional limiter.
     target_relative_tolerance:
         Relative nonlinear residual convergence threshold. Default is 1e-6.
@@ -328,7 +322,7 @@ def run_forward_solve(
         Finite-difference spatial operator order (2 or 4). Default is 2.
     force_up_down_symmetric:
         Whether to enforce up-down symmetry at each iteration. If None,
-        defaults to `bluemira_eq._force_symmetry`.
+        defaults to `eq._force_symmetry`.
     Picard_handover:
         Residual tolerance handover threshold between Picard and Newton-Krylov steps.
     verbose:
@@ -345,63 +339,53 @@ def run_forward_solve(
 
     Raises
     ------
-    EquilibriaError:
+    EquilibriaError
         If required equilibrium components are missing or solver fails.
     """
     t0 = time.perf_counter()
 
-    if bluemira_eq.coilset is None or not bluemira_eq.coilset._coils:
+    if eq.coilset is None or not eq.coilset._coils:
         raise EquilibriaError(
             "Cannot perform forward solve: Equilibrium has no coils configured."
         )
 
-    if bluemira_eq.profiles is None:
-        raise EquilibriaError(
-            "Cannot perform forward solve: Equilibrium has no profiles configured."
-        )
-
-    if bluemira_eq.grid is None:
-        raise EquilibriaError(
-            "Cannot perform forward solve: Equilibrium has no grid configured."
-        )
-
     # 1. Build FreeGSNKE Machine
     tokamak = coilset_to_freegsnke_tokamak(
-        bluemira_eq.coilset,
-        limiter=bluemira_eq.limiter,
-        grid=bluemira_eq.grid,
+        eq.coilset,
+        limiter=eq.limiter,
+        grid=eq.grid,
     )
 
     # 2. Build FreeGSNKE Equilibrium
     freegsnke_eq = FreeGSNKE_Equilibrium(
         tokamak=tokamak,
-        Rmin=float(bluemira_eq.grid.x_min),
-        Rmax=float(bluemira_eq.grid.x_max),
-        Zmin=float(bluemira_eq.grid.z_min),
-        Zmax=float(bluemira_eq.grid.z_max),
-        nx=int(bluemira_eq.grid.nx),
-        ny=int(bluemira_eq.grid.nz),
+        Rmin=float(eq.grid.x_min),
+        Rmax=float(eq.grid.x_max),
+        Zmin=float(eq.grid.z_min),
+        Zmax=float(eq.grid.z_max),
+        nx=int(eq.grid.nx),
+        ny=int(eq.grid.nz),
     )
 
     # Warm-start from existing plasma psi if available
-    if (
-        hasattr(bluemira_eq, "plasma")
-        and bluemira_eq.plasma is not None
-        and hasattr(bluemira_eq.plasma, "psi")
-    ):
+    if hasattr(eq, "plasma") and eq.plasma is not None and hasattr(eq.plasma, "psi"):
         try:
-            current_psi = bluemira_eq.plasma.psi()
-            if current_psi is not None and np.any(np.abs(current_psi) > 1e-12):
-                freegsnke_eq.plasma_psi = np.asarray(current_psi, dtype=np.float64).copy()
+            PSI_EPS = 1e-12
+            current_psi = eq.plasma.psi()
+            if current_psi is not None and np.any(np.abs(current_psi) > PSI_EPS):
+                freegsnke_eq.plasma_psi = np.asarray(
+                    current_psi, dtype=np.float64
+                ).copy()
         except Exception:  # noqa: BLE001
-            pass
+            # No psi available, so let freegsnke come up with an initial guess.
+            bluemira_debug("no existing plasma psi for forward solve initial guess")
 
     # 3. Build FreeGSNKE Profile
-    freegsnke_profiles = profile_to_freegsnke(bluemira_eq.profiles, freegsnke_eq)
+    freegsnke_profiles = profile_to_freegsnke(eq.profiles, freegsnke_eq)
 
     # 4. Configure Symmetry
     symmetric = (
-        bool(getattr(bluemira_eq, "force_symmetry", False))
+        eq.force_symmetry
         if force_up_down_symmetric is None
         else bool(force_up_down_symmetric)
     )
@@ -425,7 +409,7 @@ def run_forward_solve(
     )
 
     # 6. Back-propagate solution to Bluemira
-    update_bluemira_from_freegsnke(bluemira_eq, freegsnke_eq, freegsnke_profiles)
+    update_bluemira_from_freegsnke(eq, freegsnke_eq, freegsnke_profiles)
 
     time_taken = time.perf_counter() - t0
     rel_error = getattr(solver, "relative_change", float("nan"))
@@ -437,9 +421,9 @@ def run_forward_solve(
         converged=converged,
         iterations=iterations,
         relative_error=float(rel_error),
-        psi_axis=float(bluemira_eq.psi_ax) if bluemira_eq.psi_ax is not None else float("nan"),
-        psi_boundary=float(bluemira_eq.psi_b) if bluemira_eq.psi_b is not None else float("nan"),
-        plasma_current=float(bluemira_eq._I_p) if bluemira_eq._I_p is not None else float("nan"),
+        psi_axis=float(eq.psi_ax) if eq.psi_ax is not None else float("nan"),
+        psi_boundary=float(eq.psi_b) if eq.psi_b is not None else float("nan"),
+        plasma_current=float(eq._I_p) if eq._I_p is not None else float("nan"),
         time_taken=time_taken,
         has_relevant_xpoint=bool(getattr(freegsnke_eq, "has_relevant_xpoint", False)),
     )
@@ -484,6 +468,7 @@ class ForwardGSSolver:
 
     def solve(
         self,
+        *,
         verbose: bool = False,
         suppress: bool = True,
         **kwargs: Any,

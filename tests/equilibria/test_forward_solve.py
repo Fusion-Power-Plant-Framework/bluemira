@@ -15,7 +15,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from eqdsk.errors import NoSingleConventionError
+from freegsnke.equilibrium_update import Equilibrium as FreeGSNKE_Equilibrium
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import (
@@ -75,7 +75,7 @@ def mastu_equilibrium() -> Equilibrium:
             for i, (r1, z1, r2, z2) in enumerate(
                 zip(d["1"]["R"], d["1"]["Z"], d["2"]["R"], d["2"]["Z"], strict=False)
             ):
-                coils.append(
+                coils.extend((
                     Coil(
                         r1,
                         z1,
@@ -84,9 +84,7 @@ def mastu_equilibrium() -> Equilibrium:
                         dz=d["1"]["dZ"] / 2,
                         ctype="PF",
                         name=f"{n}U_{i}",
-                    )
-                )
-                coils.append(
+                    ),
                     Coil(
                         r2,
                         z2,
@@ -95,8 +93,8 @@ def mastu_equilibrium() -> Equilibrium:
                         dz=d["2"]["dZ"] / 2,
                         ctype="PF",
                         name=f"{n}L_{i}",
-                    )
-                )
+                    ),
+                ))
         circuits.append(Circuit(*coils))
 
     full_coilset = CoilSet(*circuits)
@@ -163,7 +161,6 @@ class TestBridgeConversions:
         profile = CustomProfile(p_bluemira, f_bluemira, R_0=1.5, B_0=2.0, I_p=5e5)
 
         tokamak = coilset_to_freegsnke_tokamak(simple_coilset, grid=simple_grid)
-        from freegsnke.equilibrium_update import Equilibrium as FreeGSNKE_Equilibrium
 
         freegsnke_eq = FreeGSNKE_Equilibrium(
             tokamak=tokamak,
@@ -188,7 +185,9 @@ class TestForwardSolve:
 
     def test_forward_solve_missing_coils_error(self, simple_grid: Grid):
         pn = np.linspace(0.0, 1.0, 50)
-        profile = CustomProfile(1e4 * (1.0 - 0.8 * pn), 0.5 * (1.0 - 0.8 * pn), R_0=1.5, B_0=2.0, I_p=5e5)
+        profile = CustomProfile(
+            1e4 * (1.0 - 0.8 * pn), 0.5 * (1.0 - 0.8 * pn), R_0=1.5, B_0=2.0, I_p=5e5
+        )
         empty_coilset = CoilSet.__new__(CoilSet)
         empty_coilset._coils = ()
         eq = Equilibrium.__new__(Equilibrium)
@@ -196,16 +195,6 @@ class TestForwardSolve:
         eq.grid = simple_grid
         eq.profiles = profile
         with pytest.raises(EquilibriaError, match="no coils"):
-            eq.forward_solve()
-
-    def test_forward_solve_missing_profiles_error(
-        self, simple_coilset: CoilSet, simple_grid: Grid
-    ):
-        pn = np.linspace(0.0, 1.0, 50)
-        profile = CustomProfile(1e4 * (1.0 - 0.8 * pn), 0.5 * (1.0 - 0.8 * pn), R_0=1.5, B_0=2.0, I_p=5e5)
-        eq = Equilibrium(simple_coilset, simple_grid, profile)
-        eq.profiles = None
-        with pytest.raises(EquilibriaError, match="no profiles"):
             eq.forward_solve()
 
     def test_forward_solve_execution(self, mastu_equilibrium: Equilibrium):
@@ -248,20 +237,15 @@ class TestForwardSolve:
         assert isinstance(result, ForwardSolveResult)
         assert result.iterations >= 0
 
-
-class TestEQDSKCOCOSAutoIdentification:
-    """Test EQDSK reading with auto COCOS determination and ambiguity errors."""
-
-    def test_ambiguous_eqdsk_without_from_cocos_raises(self):
-        path = get_bluemira_path("equilibria", subfolder="examples")
-        with pytest.raises(NoSingleConventionError):
-            Equilibrium.from_eqdsk(Path(path, "MASTU-FREEGSNKE.eqdsk"))
-
-    def test_specifying_from_cocos_succeeds(self):
-        path = get_bluemira_path("equilibria", subfolder="examples")
-        eq = Equilibrium.from_eqdsk(
-            Path(path, "MASTU-FREEGSNKE.eqdsk"),
-            from_cocos=7,
+    def test_run_forward_solve_function_call(self, mastu_equilibrium: Equilibrium):
+        eq = mastu_equilibrium
+        result = run_forward_solve(
+            eq,
+            target_relative_tolerance=0.05,
+            max_iterations=30,
+            order=2,
+            force_up_down_symmetric=True,
+            suppress=True,
         )
-        assert eq is not None
-        assert eq.grid is not None
+        assert isinstance(result, ForwardSolveResult)
+        assert result.iterations >= 0

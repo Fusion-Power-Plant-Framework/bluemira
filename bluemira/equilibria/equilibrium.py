@@ -29,7 +29,6 @@ from bluemira.base.look_and_feel import (
     bluemira_print_flush,
     bluemira_warn,
 )
-from bluemira.equilibria import ForwardSolveResult, run_forward_solve
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import BLUEMIRA_DEFAULT_COCOS, PSI_NORM_TOL
@@ -50,11 +49,19 @@ from bluemira.equilibria.flux_surfaces import (
     CoreResults,
     analyse_plasma_core,
 )
+from bluemira.equilibria.freegsnke_bridge import (
+    ForwardSolveResult,
+    run_forward_solve,
+)
 from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import EqSummary, _calc_li3minargs, calc_psi_norm
+from bluemira.equilibria.physics import (
+    EqSummary,
+    _calc_li3minargs,
+    calc_psi_norm,
+)
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
@@ -1749,7 +1756,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         )
 
     def _update_plasma(
-        self, plasma_psi: npt.NDArray[np.float64], j_tor: npt.NDArray[np.float64]
+        self,
+        plasma_psi: npt.NDArray[np.float64],
+        j_tor: npt.NDArray[np.float64],
     ):
         """
         Update the plasma
@@ -2177,7 +2186,10 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
-        self, psi: np.ndarray | None = None, psi_n_tol: float = 1e-6, delta_start=0.01
+        self,
+        psi: np.ndarray | None = None,
+        psi_n_tol: float = 1e-6,
+        delta_start=0.01,
     ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
@@ -2209,7 +2221,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         )[0]
 
     def get_separatrix(
-        self, psi: npt.NDArray[np.float64] | None = None, psi_n_tol: float = 1e-6
+        self,
+        psi: npt.NDArray[np.float64] | None = None,
+        psi_n_tol: float = 1e-6,
     ) -> Coordinates | list[Coordinates]:
         """
         Get the plasma separatrix(-ices).
@@ -2433,7 +2447,11 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: Axes | None = None, *, plasma: bool = False, show_ox: bool = True
+        self,
+        ax: Axes | None = None,
+        *,
+        plasma: bool = False,
+        show_ox: bool = True,
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
