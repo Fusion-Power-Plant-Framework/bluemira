@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 # TODO @je-cook: Remove on culmination of rich fix
 # 3802
-jp.JUPYTER_HTML_FORMAT = (  # ty: ignore[invalid-assignment]
+jp.JUPYTER_HTML_FORMAT = (  # type: ignore[ty:invalid-assignment]
     '<pre style="white-space:pre;overflow-x:auto;line-height:normal;'
     "margin:0;"  # this is the change
     "font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New'"
