@@ -53,8 +53,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: ComponentT | None = None,
-        children: list[ComponentT] | None = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__()
         self.name = name
@@ -88,7 +88,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        component_filter: Callable[[ComponentT], bool] | None = None,
+        component_filter: Callable[[Component], bool] | None = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -293,7 +293,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def _get_thing(
         self,
-        filter_: Callable[[Any], bool] | None,
+        filter_: Callable[[Component], bool] | None,
         *,
         first: bool,
         full_tree: bool,
@@ -362,11 +362,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         duplicates = []
         for idx, child in reversed(list(enumerate(children))):
             existing = self.get_component(child.name)
-            if existing is not None and isinstance(existing, Component):
+            if existing is not None:
                 if merge_trees:
-                    existing.children = tuple(
-                        list(existing.children) + list(child.children)
-                    )
+                    existing.children = list(existing.children) + list(child.children)
                     children.pop(idx)
                 else:
                     duplicates += [child]
