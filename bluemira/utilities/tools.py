@@ -530,12 +530,10 @@ class ColourDescriptor:
         -----
         The value can be anything accepted by matplotlib.colors.to_hex
         """
-        val: Any = value
-        if hasattr(val, "as_hex"):
-            val = val.as_hex()
-            while isinstance(val, list):
-                val = val[0]
-        setattr(obj, self._name, val)
+        if hasattr(value, "as_hex") and callable(value.as_hex):
+            val = value.as_hex()
+            value = val[0] if isinstance(val, list) else str(val)
+        setattr(obj, self._name, value)
 
 
 def iterable_to_list(obj: Any | Iterable[Any]) -> list[Any]:

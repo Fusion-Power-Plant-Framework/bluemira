@@ -14,7 +14,7 @@ import json
 import operator
 from dataclasses import MISSING, field, fields
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, NotRequired, TextIO, TypedDict, cast
+from typing import TYPE_CHECKING, NotRequired, TextIO, TypedDict, cast
 
 import numpy as np
 from tabulate import tabulate
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
     import numpy.typing as npt
+    from _typeshed import DataclassInstance
 
 
 class OptVarVarDictValueT(TypedDict, total=False):
@@ -99,7 +100,7 @@ class OptVariable:
         self._value = value
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound
-        self.fixed: bool = bool(fixed)
+        self.fixed = fixed
         self.description = description
 
         self._validate_bounds()
@@ -418,7 +419,7 @@ class OptVariablesFrame:
             )
         if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
-        for dcf in fields(cast("Any", cls)):
+        for dcf in fields(cast("DataclassInstance", cls)):
             field_name = dcf.name
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
@@ -478,7 +479,7 @@ class OptVariablesFrame:
         :
             Each optimisation variable
         """
-        for dcf in fields(cast("Any", self)):
+        for dcf in fields(cast("DataclassInstance", self)):
             yield getattr(self, dcf.name)
 
     def __getitem__(self, name: str) -> OptVariable:
@@ -504,7 +505,7 @@ class OptVariablesFrame:
         lower_bound: float | None = None,
         upper_bound: float | None = None,
         *,
-        fixed: bool | None = False,
+        fixed: bool = False,
         strict_bounds: bool = True,
     ):
         """
@@ -562,7 +563,7 @@ class OptVariablesFrame:
                     "value": v.get("value", None),
                     "lower_bound": v.get("lower_bound", None),
                     "upper_bound": v.get("upper_bound", None),
-                    "fixed": v.get("fixed", None),
+                    "fixed": v.get("fixed", False),
                 }
                 if all(i is None for i in kwargs.values()):
                     raise OptVariablesError(
