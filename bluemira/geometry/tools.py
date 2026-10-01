@@ -19,7 +19,7 @@ import operator
 from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, overload
 
 import numba as nb
 import numpy as np
@@ -1513,6 +1513,12 @@ class CutLocation(Enum):
     """remove lower part of shape after cut"""
 
 
+@overload
+def slice_shape(shape: BluemiraWire, plane: BluemiraPlane) -> np.ndarray | None: ...
+@overload
+def slice_shape(
+    shape: BluemiraGeo, plane: BluemiraPlane
+) -> np.ndarray | list[BluemiraWire] | None: ...
 def slice_shape(
     shape: BluemiraGeo, plane: BluemiraPlane
 ) -> np.ndarray | list[BluemiraWire] | None:
