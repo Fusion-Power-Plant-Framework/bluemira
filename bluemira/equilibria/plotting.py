@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 from matplotlib.gridspec import GridSpec
 from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
 from scipy.interpolate import RectBivariateSpline
@@ -54,6 +53,7 @@ from bluemira.utilities.plot_tools import (
 
 if TYPE_CHECKING:
     import numpy.typing as npt
+    from matplotlib.axes import Axes
 
     from bluemira.equilibria.diagnostics import EqDiagnosticOptions
     from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium

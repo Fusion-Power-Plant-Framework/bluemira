@@ -11,7 +11,7 @@ A collection of tools used for position interpolation.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -23,6 +23,8 @@ from bluemira.utilities.error import PositionerError
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy.typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
@@ -55,7 +57,7 @@ class XZGeometryInterpolator(abc.ABC):
         coordinates = self.geometry.discretise(
             byedges=True, dl=self.geometry.length / num_pts
         )
-        coordinates.set_ccw(np.array([0, 1, 0]))
+        coordinates.set_ccw([0, 1, 0])
         return coordinates.xz
 
     @abc.abstractmethod
@@ -105,14 +107,12 @@ class PathInterpolator(XZGeometryInterpolator):
         """
         clipped = np.clip(l_values, 0.0, 1.0)
         if is_num(clipped):
-            val = self.geometry.value_at(alpha=float(np.asarray(clipped).item()))
-            return float(val[0]), float(val[2])
+            return tuple(self.geometry.value_at(alpha=float(clipped))[[0, 2]])
 
         l_arr = np.asarray(clipped)
         x, z = np.zeros(len(l_arr)), np.zeros(len(l_arr))
         for i, lv in enumerate(l_arr):
-            val = self.geometry.value_at(alpha=float(lv))
-            x[i], z[i] = val[0], val[2]
+            x[i], z[i] = self.geometry.value_at(alpha=lv)[[0, 2]]
 
         return x, z
 
@@ -126,11 +126,8 @@ class PathInterpolator(XZGeometryInterpolator):
             The normalised coordinates
         """
         if is_num(x) and is_num(z):
-            return float(
-                self.geometry.parameter_at(
-                    [float(np.asarray(x).item()), 0.0, float(np.asarray(z).item())],
-                    tolerance=VERY_BIG,
-                )
+            return self.geometry.parameter_at(
+                np.asarray([x, 0.0, z]), tolerance=VERY_BIG
             )
 
         x_arr = np.asarray(x, dtype=np.float64)
@@ -179,8 +176,8 @@ class RegionInterpolator(XZGeometryInterpolator):
     def __init__(self, geometry: BluemiraWire):
         super().__init__(geometry)
         self._check_geometry_feasibility(geometry)
-        self.z_min: float = geometry.bounding_box.z_min
-        self.z_max: float = geometry.bounding_box.z_max
+        self.z_min = geometry.bounding_box.z_min
+        self.z_max = geometry.bounding_box.z_max
 
     def _check_geometry_feasibility(self, geometry: BluemiraWire):
         """
@@ -240,42 +237,23 @@ class RegionInterpolator(XZGeometryInterpolator):
             When loop is not a Convex Hull
 
         """
-        l_arr = np.asarray(l_values)
-        if l_arr.ndim == 1:
-            l0_f = float(l_arr[0])
-            l1_f = float(l_arr[1])
-            z = self.z_min + (self.z_max - self.z_min) * l1_f
+        l_0, l_1 = np.asarray(l_values)
+        z = self.z_min + (self.z_max - self.z_min) * l_1
 
-            plane = BluemiraPlane.from_3_points(
-                [0.0, 0.0, z], [1.0, 0.0, z], [0.0, 1.0, z]
+        plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
+
+        intersect = slice_shape(self.geometry, plane) or []
+        if len(intersect) == 1:
+            x = intersect[0][0]
+        elif len(intersect) == 2:  # noqa: PLR2004
+            x_min, x_max = sorted([intersect[0][0], intersect[1][0]])
+            x = x_min + (x_max - x_min) * l_0
+        else:
+            raise PositionerError(
+                "Unexpected number of intersections in x-z conversion."
             )
 
-            intersect: Any = slice_shape(self.geometry, plane)
-            if intersect is None or len(intersect) == 0:
-                raise PositionerError(
-                    "Unexpected number of intersections in x-z conversion."
-                )
-            if len(intersect) == 1:
-                x = float(intersect[0][0])
-            elif len(intersect) == 2:  # noqa: PLR2004
-                x_min, x_max = sorted([float(intersect[0][0]), float(intersect[1][0])])
-                x = x_min + (x_max - x_min) * l0_f
-            else:
-                raise PositionerError(
-                    "Unexpected number of intersections in x-z conversion."
-                )
-
-            return x, z
-
-        l_0_arr = np.asarray(l_arr[0], dtype=np.float64)
-        l_1_arr = np.asarray(l_arr[1], dtype=np.float64)
-        x_arr = np.zeros(len(l_0_arr))
-        z_arr = np.zeros(len(l_0_arr))
-        for i, (l0_i, l1_i) in enumerate(zip(l_0_arr, l_1_arr, strict=False)):
-            xi, zi = self.to_xz((l0_i, l1_i))
-            x_arr[i] = xi  # type: ignore[assignment]
-            z_arr[i] = zi  # type: ignore[assignment]
-        return x_arr, z_arr
+        return x, z
 
     def to_L(
         self, x: npt.ArrayLike, z: npt.ArrayLike
@@ -303,31 +281,18 @@ class RegionInterpolator(XZGeometryInterpolator):
             When loop is not a Convex Hull
 
         """
-        if is_num(x) and is_num(z):
-            xf = float(np.asarray(x).item())
-            zf = float(np.asarray(z).item())
-            l_1 = (zf - self.z_min) / (self.z_max - self.z_min)
-            l_1 = float(np.clip(l_1, 0.0, 1.0))
+        x, z = float(np.asarray(x)), float(np.asarray(z))
+        l_1 = (z - self.z_min) / (self.z_max - self.z_min)
+        l_1 = np.clip(l_1, 0.0, 1.0)
 
-            plane = BluemiraPlane.from_3_points(
-                [xf, 0.0, zf], [xf + 1.0, 0.0, zf], [xf, 1.0, zf]
-            )
-            intersect: Any = slice_shape(self.geometry, plane)
-
-            return self._intersect_filter(xf, l_1, intersect)
-
-        x_arr = np.asarray(x, dtype=np.float64)
-        z_arr = np.asarray(z, dtype=np.float64)
-        l_0_arr = np.zeros(len(x_arr))
-        l_1_arr = np.zeros(len(x_arr))
-        for i, (xi, zi) in enumerate(zip(x_arr, z_arr, strict=False)):
-            l0_i, l1_i = self.to_L(xi, zi)
-            l_0_arr[i] = l0_i  # type: ignore[assignment]
-            l_1_arr[i] = l1_i  # type: ignore[assignment]
-        return l_0_arr, l_1_arr
+        plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
+        return self._intersect_filter(x, l_1, slice_shape(self.geometry, plane))
 
     def _intersect_filter(
-        self, x: float, l_1: float, intersect: list[Any] | None
+        self,
+        x: float,
+        l_1: float,
+        intersect: Sequence[float | None] | npt.NDArray | None,
     ) -> tuple[float, float]:
         """
         Checks where points are based on number of intersections
@@ -361,22 +326,14 @@ class RegionInterpolator(XZGeometryInterpolator):
             When geometry is not a convex
         """
         if intersect is None:
-            plane = BluemiraPlane.from_3_points(
-                [x, 0.0, 0.0], [x + 1.0, 0.0, 0.0], [x, 1.0, 0.0]
-            )
-            intersect: Any = slice_shape(self.geometry, plane)
+            plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
+            intersect = slice_shape(self.geometry, plane)
             l_0, l_1 = self._intersect_filter(
                 x, l_1, [False] if intersect is None else intersect
             )
         elif len(intersect) == 2:  # noqa: PLR2004
-            pts = [p for p in intersect if isinstance(p, np.ndarray)]
-            if len(pts) == 2:  # noqa: PLR2004
-                x_min, x_max = sorted([float(pts[0][0]), float(pts[1][0])])
-                l_0 = float(np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0))
-            else:
-                raise PositionerError(
-                    "Unexpected number of intersections in L conversion."
-                )
+            x_min, x_max = sorted([float(intersect[0][0]), float(intersect[1][0])])  # type: ignore[ty:not-subscriptable]
+            l_0 = float(np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0))
         elif len(intersect) == 1:
             l_0 = float(l_1 == 1.0)  # noqa: RUF069
         else:
@@ -404,7 +361,7 @@ class PositionMapper:
     def __init__(self, interpolators: dict[str, XZGeometryInterpolator]):
         self.interpolators = interpolators
 
-    def _check_length(self, thing: Any):
+    def _check_length(self, thing: list[npt.ArrayLike] | npt.NDArray):
         """
         Check that something is the same length as the number of available interpolators.
 
@@ -418,7 +375,7 @@ class PositionMapper:
                 f"Object of length: {len(thing)} not of length {len(self.interpolators)}"
             )
 
-    def _vector_to_list(self, l_values: Any) -> list[Any]:
+    def _vector_to_list(self, l_values: npt.NDArray) -> list[npt.ArrayLike]:
         """
         Convert a vector of l_values into a ragged list if necessary
 

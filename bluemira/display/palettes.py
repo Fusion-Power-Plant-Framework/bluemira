@@ -41,7 +41,9 @@ class ColorPalette:
                 colour_list.append(v)
             else:
                 colour_list.extend(v._palette)
-        self._palette: list[Any] = list(sns.color_palette(colour_list))
+        self._palette: list[ColorType | ColorPalette] = list(
+            sns.color_palette(colour_list)
+        )
         self._cycle = cycle(colour_list)
 
     def keys(self):
@@ -208,7 +210,7 @@ class ColorPalette:
         """
         return len(self._palette)
 
-    def as_hex(self) -> list[str] | list[list[str]] | str:
+    def as_hex(self) -> str | list[str | list[Any]] | list[list[str]]:
         """
 
         Returns

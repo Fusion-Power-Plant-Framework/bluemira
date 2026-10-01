@@ -745,8 +745,8 @@ def rotation_matrix_v1v2(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     :
         A roational matrix based off two vectors.
     """
-    v1_arr = np.array(v1, dtype=float)
-    v2_arr = np.array(v2, dtype=float)
+    v1_arr = np.asarray(v1, dtype=float)
+    v2_arr = np.asarray(v2, dtype=float)
     v1_arr /= np.linalg.norm(v1_arr)
     v2_arr /= np.linalg.norm(v2_arr)
 
