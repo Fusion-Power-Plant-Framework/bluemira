@@ -171,7 +171,6 @@ This is not a hard rule, and there are some notable exceptions:
 All of the above means that this is bad:
 
 ```python
-
 import bluemira.base as base
 from ..geometry import tools
 import os
@@ -201,36 +200,37 @@ with type-hints. An example is shown below:
 def IPB98y2(
     I_p: float, B_t: float, P_sep: float, n: float, R_0: float, A: float, kappa: float
 ) -> float:
-  """
-  ITER IPB98(y, 2) Confinement time scaling [2]
+    """
+    ITER IPB98(y, 2) Confinement time scaling [2]
 
-  Parameters
-  ----------
-  I_p:
-      Plasma current [A]
-  B_t:
-      Toroidal field at R_0 [T]
-  P_sep:
-      Separatrix power [W]
-  n:
-      Line average plasma density [1/m^3]
-  R_0:
-      Major radius [m]
-  A:
-      Aspect ratio
-  kappa:
-      Plasma elongation
+    Parameters
+    ----------
+    I_p:
+        Plasma current [A]
+    B_t:
+        Toroidal field at R_0 [T]
+    P_sep:
+        Separatrix power [W]
+    n:
+        Line average plasma density [1/m^3]
+    R_0:
+        Major radius [m]
+    A:
+        Aspect ratio
+    kappa:
+        Plasma elongation
 
-  Returns
-  -------
-  Energy confinement time [s]
+    Returns
+    -------
+    :
+        Energy confinement time [s]
 
-  Notes
-  -----
-  [2] :doi:`ITER Physics Expert Group, Nucl. Fus. 39, 12 <10.1088/0029-5515/39/12/302>`
+    Notes
+    -----
+    [2] :doi:`ITER Physics Expert Group, Nucl. Fus. 39, 12 <10.1088/0029-5515/39/12/302>`
 
-  \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
-  """
+    \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
+    """
 ```
 
 The API documentation is built automatically using `sphinx` which reads docstrings and argument types
