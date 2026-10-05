@@ -270,6 +270,24 @@ class TestComponentPlotter:
         ax = plot_2d(self.group2, self.group2_options, show=False)
         ax.figure.suptitle("red face and green face, no wires on red")
 
+    def test_ndiscr_inherits_unless_explicitly_set(self):
+        self.group.plot_options.ndiscr = 25
+        self.child2.plot_options.ndiscr = 8
+        explicit_default = PhysicalComponent(
+            "ExplicitDefault", shape=self.child1.shape, parent=self.group
+        )
+        explicit_default.plot_options.ndiscr = 100
+        explicit_default.plot_options.face_options["color"] = "orange"
+        pl = plotter.ComponentPlotter(self.group.plot_options)
+        by_name = {}
+        for item in pl._create_plotters(self.group):
+            colour = item.options.face_options["color"]
+            by_name[colour] = item.options.ndiscr
+        assert by_name[self.child1.plot_options.face_options["color"]] == 25
+        assert by_name["green"] == 8
+        assert by_name["orange"] == 100
+        assert self.child2.plot_options.face_options["color"] == "green"
+
     def test_plotting_2d_nothing_to_plot(self):
         ax = plotter.ComponentPlotter(show_faces=False).plot_2d(self.group, show=False)
         assert ax is None
