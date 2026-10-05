@@ -25,4 +25,4 @@ B = np.sqrt(Bx**2 + By**2 + Bz**2)
 
 source.plot()
 ax = plt.gca()
-ax.contourf(xx, yy, B, zdir="z", offset=1)
+ax.contourf(xx, yy, B, zdir="z", offset=1, cmap="magma")
