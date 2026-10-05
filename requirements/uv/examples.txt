@@ -284,6 +284,7 @@ numpy==2.2.6
     #   pandas
     #   periodictable
     #   pyvista
+    #   pyvista-validation
     #   scikit-learn
     #   scipy
     #   seaborn
@@ -380,8 +381,10 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-json-logger==4.2.0
     # via jupyter-events
-pyvista==0.48.4
+pyvista==0.49.0
     # via bluemira (pyproject.toml)
+pyvista-validation==0.2.2
+    # via pyvista
 pyyaml==6.0.3
     # via
     #   jupyter-events
@@ -496,6 +499,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   pyvista
+    #   pyvista-validation
     #   referencing
     #   typeguard
     #   typing-inspection
@@ -507,7 +511,7 @@ uri-template==1.3.0
     # via jsonschema
 urllib3==2.7.0
     # via requests
-vtk==9.3.1
+vtk==9.7.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista

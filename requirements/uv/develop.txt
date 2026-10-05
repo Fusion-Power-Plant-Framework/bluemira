@@ -256,6 +256,7 @@ numpy==2.2.6
     #   pandas
     #   periodictable
     #   pyvista
+    #   pyvista-validation
     #   scikit-learn
     #   scipy
     #   seaborn
@@ -366,8 +367,10 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-discovery==1.5.2
     # via virtualenv
-pyvista==0.48.4
+pyvista==0.49.0
     # via bluemira (pyproject.toml)
+pyvista-validation==0.2.2
+    # via pyvista
 pyyaml==6.0.3
     # via
     #   jupyter-cache
@@ -493,6 +496,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   pyvista
+    #   pyvista-validation
     #   referencing
     #   sqlalchemy
     #   typeguard
@@ -503,7 +507,7 @@ urllib3==2.7.0
     # via requests
 virtualenv==21.7.4
     # via pre-commit
-vtk==9.3.1
+vtk==9.7.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista

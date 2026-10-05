@@ -350,6 +350,7 @@ numpy==2.2.6
     #   periodictable
     #   polyscope
     #   pyvista
+    #   pyvista-validation
     #   scikit-learn
     #   scipy
     #   seaborn
@@ -481,8 +482,10 @@ python-discovery==1.5.2
     # via virtualenv
 python-json-logger==4.2.0
     # via jupyter-events
-pyvista==0.48.4
+pyvista==0.49.0
     # via bluemira (pyproject.toml)
+pyvista-validation==0.2.2
+    # via pyvista
 pyyaml==6.0.3
     # via
     #   jupyter-cache
@@ -647,6 +650,7 @@ typing-extensions==4.16.0
     #   pydantic
     #   pydantic-core
     #   pyvista
+    #   pyvista-validation
     #   referencing
     #   sqlalchemy
     #   typeguard
@@ -661,7 +665,7 @@ urllib3==2.7.0
     # via requests
 virtualenv==21.7.4
     # via pre-commit
-vtk==9.3.1
+vtk==9.7.1
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
