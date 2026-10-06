@@ -1916,7 +1916,7 @@ def signed_distance(
         # Use boolean_cut to get wires for the region that overlap, can then
         # sum the lengths
         overlap = boolean_cut(origin, target)
-        return np.sum(x.length for x in overlap)
+        return sum(x.length for x in overlap)
     # There are no intersections, return minimum distance
     return -d
 
