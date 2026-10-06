@@ -1913,8 +1913,9 @@ def signed_distance(
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0
         # There are multiple intersections: the wires are overlapping
-        # Use boolean_common to get wires of the overlap, can then sum the lengths
-        overlap = boolean_common(origin, target)
+        # Use boolean_cut to get wires for the region that overlap, can then
+        # sum the lengths
+        overlap = boolean_cut(origin, target)
         return np.sum(x.length for x in overlap)
     # There are no intersections, return minimum distance
     return -d
