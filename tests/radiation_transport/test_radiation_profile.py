@@ -412,12 +412,12 @@ class TestCoreRadiation:
         x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
         wall_detectors = make_wall_detectors(x_wd, z_wd, max_wall_len, X_WIDTH)
         r_vect = np.array([
-            wall_detectors.detector_center.x[0],
+            wall_detectors[0].detector_center.x,
             0,
-            wall_detectors.detector_center.z[0],
+            wall_detectors[0].detector_center.z,
         ])
         # Test output normals point inwards
-        assert np.dot(wall_detectors.normal_vector[0], r_vect) < 0
+        assert np.dot(wall_detectors[0].normal_vector, r_vect) < 0
 
     def test_FirstWallRadiationSolver(self):
         cherab = pytest.importorskip("cherab")
