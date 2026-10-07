@@ -401,19 +401,22 @@ class TestCoreRadiation:
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
         wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH, plot=True
         )
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)
         assert len(wall_detectors) == 532
-
         # CW check - wall_detectors must be output CCW
         assert check_ccw(self.fw_shape.x, self.fw_shape.z)
         # Reverse to make CW
         x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
-        wall_detector = make_wall_detectors(x_wd, z_wd, max_wall_len, X_WIDTH)[0]
+        # OMP is at max x-coord in this example FW,
+        wall_detector = make_wall_detectors(
+            x_wd, z_wd, max_wall_len, X_WIDTH, plot=True
+        )[np.argmax(x_wd)]
+        assert np.isclose(z_wd[np.argmax(x_wd)], 0.0, atol=1e-3)
         r = Vector3D(wall_detector.detector_center.x, 0, wall_detector.detector_center.z)
-        # Test output normals point inwards
+        # Test OMP output normal point inwards
         assert wall_detector.normal_vector.dot(r) < 0
 
     def test_FirstWallRadiationSolver(self):
