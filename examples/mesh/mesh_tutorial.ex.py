@@ -120,8 +120,8 @@ directory.mkdir(parents=True, exist_ok=True)
 
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 m = meshing.Mesh(meshfile=meshfiles)
-buffer = m(c_all)
-print(m.get_gmsh_dict(buffer))
+entities = m(c_all)
+print(entities)
 
 # %% [markdown]
 #
