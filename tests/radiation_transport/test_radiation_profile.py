@@ -14,7 +14,7 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, check_ccw
 from bluemira.radiation_transport.midplane_temperature_density import (
     collect_rho_core_values,
     midplane_profiles,
@@ -405,6 +405,19 @@ class TestCoreRadiation:
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)
         assert len(wall_detectors) == 532
+
+        # CW check - wall_detectors must be output CCW
+        assert check_ccw(self.fw_shape.x, self.fw_shape.z)
+        # Reverse to make CW
+        x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
+        wall_detectors = make_wall_detectors(x_wd, z_wd, max_wall_len, X_WIDTH)
+        r_vect = np.array([
+            wall_detectors.detector_center.x[0],
+            0,
+            wall_detectors.detector_center.z[0],
+        ])
+        # Test output normals point inwards
+        assert np.dot(wall_detectors.normal_vector[0], r_vect) < 0
 
     def test_FirstWallRadiationSolver(self):
         cherab = pytest.importorskip("cherab")
