@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from raysect.core import Vector3D
 
 from bluemira.base import constants
 from bluemira.base.constants import raw_uc
@@ -410,14 +411,10 @@ class TestCoreRadiation:
         assert check_ccw(self.fw_shape.x, self.fw_shape.z)
         # Reverse to make CW
         x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
-        wall_detectors = make_wall_detectors(x_wd, z_wd, max_wall_len, X_WIDTH)
-        r_vect = np.array([
-            wall_detectors[0].detector_center.x,
-            0,
-            wall_detectors[0].detector_center.z,
-        ])
+        wall_detector = make_wall_detectors(x_wd, z_wd, max_wall_len, X_WIDTH)[0]
+        r = Vector3D(wall_detector.detector_center.x, 0, wall_detector.detector_center.z)
         # Test output normals point inwards
-        assert np.dot(wall_detectors[0].normal_vector, r_vect) < 0
+        assert wall_detector.normal_vector.dot(r) < 0
 
     def test_FirstWallRadiationSolver(self):
         cherab = pytest.importorskip("cherab")
