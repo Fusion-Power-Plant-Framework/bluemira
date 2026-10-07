@@ -25,7 +25,7 @@ from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
 from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
-from bluemira.geometry.coordinates import Coordinates, in_polygon
+from bluemira.geometry.coordinates import Coordinates, check_ccw, in_polygon
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -1470,8 +1470,14 @@ class FirstWallRadiationSolver:
             parent=world,
             material=emitter,
         )
+
+        # Make sure that, no matter what the input, the FW detectors are always CCW.
+        if check_ccw(self.fw_shape.x, self.fw_shape.z):
+            x_wd, z_wd = self.fw_shape.x, self.fw_shape.z
+        else:
+            x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
         self.wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=verbose
+            x_wd, z_wd, max_wall_len, x_width, plot=verbose
         )
         self.wall_loads = detect_radiation(
             self.wall_detectors, n_samples, world, verbose=verbose
