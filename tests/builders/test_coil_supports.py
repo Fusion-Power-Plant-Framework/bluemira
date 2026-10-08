@@ -47,7 +47,7 @@ class TestITERGravitySupportBuilder:
     pf_xz_koz = pf.create_shape()
     ta = TripleArc()
     ta.adjust_variable("x1", value=3, lower_bound=2, upper_bound=4)
-    ta.adjust_variable("f2", value=2, lower_bound=2, upper_bound=4)
+    ta.adjust_variable("r2", value=2, lower_bound=2, upper_bound=4)
     ta_xz_koz = ta.create_shape()
 
     tf_kozs = (pd_xz_koz, pf_xz_koz, ta_xz_koz)

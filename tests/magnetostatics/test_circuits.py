@@ -147,8 +147,8 @@ class TestArbitraryPlanarXSCircuit:
         "x1": {"value": 4},
         "dz": {"value": 0},
         "sl": {"value": 6.5},
-        "f1": {"value": 3},
-        "f2": {"value": 4},
+        "r1": {"value": 3},
+        "r2": {"value": 4},
         "a1": {"value": 20},
         "a2": {"value": 40},
     }

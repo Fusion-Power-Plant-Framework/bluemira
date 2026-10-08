@@ -565,8 +565,8 @@ class TestTripleArc:
         p.adjust_variable("x1", value=4)
         p.adjust_variable("dz", value=0)
         p.adjust_variable("sl", value=0, lower_bound=0)
-        p.adjust_variable("f1", value=3)
-        p.adjust_variable("f2", value=3)
+        p.adjust_variable("r1", value=3)
+        p.adjust_variable("r2", value=3)
         p.adjust_variable("a1", value=45)
         p.adjust_variable("a2", value=45)
         wire = p.create_shape()
@@ -585,8 +585,8 @@ class TestTripleArc:
         # curve too tight, crosses the symmetry plane too early due to strict conditions.
         p.variables.a1.adjust(120)
         p.variables.a2.adjust(40)
-        p.variables.f1.adjust(2)
-        p.variables.f2.adjust(12)
+        p.variables.r1.adjust(2)
+        p.variables.r2.adjust(12)
         p.variables.sl.adjust(5)
         with pytest.raises(GeometryParameterisationError):
             p.create_shape()
