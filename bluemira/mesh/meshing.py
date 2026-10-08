@@ -234,34 +234,6 @@ def _mesh_brep_objects(objects: list[BluemiraGeo]) -> list[GmshEntity]:
     return entities
 
 
-def _initialise_mesh(terminal: int = 1, modelname: str = "Mesh"):
-    """
-    Initialise Gmsh and set General.Terminal to 1 so that output
-    messages are printed to terminal.
-    """
-    gmsh.initialize()
-
-    gmsh.option.setNumber("General.Terminal", terminal)
-
-    gmsh.logger.start()
-
-    gmsh.model.add(modelname)
-
-
-def _save_mesh(meshfile: str = "Mesh.geo_unrolled"):
-    """Save mesh to disk."""
-    gmsh.write(meshfile)
-
-
-def _write_log(logfile: str = "gmsh.log"):
-    """
-    Write Gmsh log to file.
-
-    gmsh.logger.stop() and gmsh.finalize() should be called when done.
-    """
-    Path(logfile).write_text("\n".join(str(item) for item in gmsh.logger.get()))
-
-
 @dataclass
 class MeshOptions:
     """Options controlling meshing of a Bluemira geometry."""
@@ -306,16 +278,12 @@ class Mesh:
     def __init__(
         self,
         modelname: str = "Mesh",
-        terminal: int = 0,
         meshfile: str | list[str] | None = None,
-        logfile: str = "gmsh.log",
     ):
         self.modelname = modelname
-        self.terminal = terminal
         self.meshfile = (
             ["Mesh.geo_unrolled", "Mesh.msh"] if meshfile is None else meshfile
         )
-        self.logfile = logfile
 
     @staticmethod
     def _check_meshfile(meshfile: str | list) -> list[str]:
@@ -477,15 +445,22 @@ class Mesh:
 
         Raises
         ------
+        RuntimeError
+            If Gmsh has not been initialised.
         ValueError
             If ``dim`` is not 1, 2, or 3.
         """
+        if not gmsh.is_initialized():
+            raise RuntimeError(
+                "Gmsh is not initialised. Initialise a GmshSession before meshing."
+            )
+
         if dim not in {1, 2, 3}:
             raise ValueError(f"Mesh dimension must be 1, 2, or 3, got {dim}.")
 
         bluemira_print("Starting mesh process...")
 
-        _initialise_mesh(self.terminal, self.modelname)
+        gmsh.model.add(self.modelname)
 
         objects = self._collect_meshable_objects(comp)
         entities = _mesh_brep_objects(objects)
@@ -493,9 +468,81 @@ class Mesh:
         gmsh.model.mesh.generate(dim)
 
         for file in self.meshfile:
-            _save_mesh(file)
-
-        _write_log(self.logfile)
+            gmsh.write(file)
 
         bluemira_print("Mesh process completed.")
         return entities
+
+
+class GmshSession:
+    """Manage the Gmsh Python API session."""
+
+    def __init__(self, *, terminal: int = 0, logfile: str | Path | None = "gmsh.log"):
+        self.terminal = terminal
+        self.logfile = logfile
+        self._owns_session = False
+        self._active = False
+
+    def __enter__(self):
+        """
+        Called upon entering ``with GmshSession():``
+
+        Returns
+        -------
+        :
+            Active Gmsh session.
+        """
+        return self.initialize()
+
+    def __exit__(self, *_):
+        """Called upon exiting ``with GmshSession():``"""
+        self.finalize()
+
+    def initialize(self):
+        """
+        Initialise the Gmsh session.
+
+        Ideally this is called indirectly through ``with GmshSession()`` calling
+        ``__enter``. However, an explicit method is implemented for notebook users
+        that may want to carry a session over multiple cells.
+
+        Returns
+        -------
+        :
+            GmshSession.
+        """
+        if self._active:
+            return self
+
+        if not gmsh.is_initialized():
+            gmsh.initialize()
+            self._owns_session = True
+
+        gmsh.option.setNumber("General.Terminal", self.terminal)
+        gmsh.logger.start()
+
+        self._active = True
+        return self
+
+    def finalize(self):
+        """
+        Finalise the Gmsh session.
+
+        Again, this is ideally called automatically when a ``with GmshSession()`` block
+        if exited, calling ``__exit__``. However, an explicit method is implemented for
+        notebook users again.
+        """
+        if not self._active:
+            return
+
+        try:
+            if self.logfile is not None:
+                Path(self.logfile).write_text("\n".join(gmsh.logger.get()))
+        finally:
+            gmsh.logger.stop()
+
+            if self._owns_session and gmsh.is_initialized():
+                gmsh.finalize()
+
+            self._active = False
+            self._owns_session = False
