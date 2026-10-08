@@ -1099,17 +1099,15 @@ class TripleArcOptVaribles(OptVariablesFrame):
     sl: OptVariable = ov(
         "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
     )
-    # TODO @OceanNuclear: can we rename the radii f1 f2 to something like r1 r2?
-    # https://github.com/Fusion-Power-Plant-Framework/bluemira/issues/3827
-    f1: OptVariable = ov(
-        "f1",
+    r1: OptVariable = ov(
+        "r1",
         3,
         lower_bound=2,
         upper_bound=12,
         description="radii of top and bottom left arc [m]",
     )
-    f2: OptVariable = ov(
-        "f2",
+    r2: OptVariable = ov(
+        "r2",
         4,
         lower_bound=2,
         upper_bound=12,
@@ -1160,9 +1158,9 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             Vertical offset from z=0 [m]
         sl: float
             Length of inboard straigh section [m]
-        f1: float
+        r1: float
             radii of top and bottom left arc [m]
-        f2: float
+        r2: float
             radii of top and bottom middle arc [m]
         a1: float
             top left and bottom left arc angle [degrees]
@@ -1223,7 +1221,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         -------
         CAD Wire of the geometry
         """
-        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
+        x1, dz, sl, r1, r2, a1, a2 = self.variables.values
         wire_names = [
             "upper_inboard_arc",
             "upper_mid_arc",
@@ -1234,7 +1232,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         ]
         wires = []
         for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
-            *_get_centres((a1, a2), (f1, f2), x1, dz + sl / 2, reflection_zplane=dz),
+            *_get_centres((a1, a2), (r1, r2), x1, dz + sl / 2, reflection_zplane=dz),
             wire_names,
             strict=True,
         ):
@@ -1273,7 +1271,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             Labels to parameterisation plots.
         """
         _offset_x, _offset_z = super()._label_function(ax, shape)
-        x1, dz, sl, f1, f2, a1, a2 = self.variables.values
+        x1, dz, sl, r1, r2, a1, a2 = self.variables.values
 
         half_straight_length = sl / 2
         x_val = 0.5 + x1
@@ -1285,7 +1283,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             (x_val + 0.1, dz),
         )
         centres, angles, radii = _get_centres(
-            (a1, a2), (f1, f2), x1, dz + half_straight_length, reflection_zplane=dz
+            (a1, a2), (r1, r2), x1, dz + half_straight_length, reflection_zplane=dz
         )
 
         for i, (centre, s_f_angles, radius) in enumerate(
