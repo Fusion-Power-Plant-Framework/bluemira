@@ -154,15 +154,15 @@ gdim = 2  # Geometric dimension of the mesh
 directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 
-meshing.Mesh(meshfile=meshfiles)(c_universe, dim=gdim)
+with meshing.GmshSession():
+    meshing.Mesh(meshfile=meshfiles)(c_universe, dim=gdim)
 
-(mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=gdim)
+    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=gdim)
+
+    gmsh.write("Mesh.msh")
 
 mesh.topology.create_entities(ft.dim)
 mesh.topology.create_connectivity(ft.dim, mesh.topology.dim)
-
-gmsh.write("Mesh.msh")
-gmsh.finalize()
 
 with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
