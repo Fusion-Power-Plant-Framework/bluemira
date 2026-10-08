@@ -1232,7 +1232,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         ]
         wires = []
         for (xc, zc), (start_angle, end_angle), radius_i, name in zip(
-            *_get_centres((a1, a2), (r1, r2), x1, dz + sl / 2, reflection_zplane=dz),
+            *_get_centres([a1, a2], [r1, r2], x1, dz + sl / 2, reflection_zplane=dz),
             wire_names,
             strict=True,
         ):
@@ -1283,7 +1283,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             (x_val + 0.1, dz),
         )
         centres, angles, radii = _get_centres(
-            (a1, a2), (r1, r2), x1, dz + half_straight_length, reflection_zplane=dz
+            [a1, a2], [r1, r2], x1, dz + half_straight_length, reflection_zplane=dz
         )
 
         for i, (centre, s_f_angles, radius) in enumerate(
