@@ -37,7 +37,7 @@ use a simple dictionary with `lcar` and `physical_group` keys.
 .. code-block:: python
 
         from bluemira.geometry.tools import make_polygon
-        from bluemira.mesh.meshing import Mesh
+        from bluemira.mesh import meshing
 
         poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
@@ -45,12 +45,13 @@ use a simple dictionary with `lcar` and `physical_group` keys.
 
         poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
-        m = Mesh(
-            meshfile=[
-                (tmp_path / mf).as_posix() for mf in ("Mesh.geo_unrolled", "Mesh.msh")
-            ]
-        )
-        m(poly)
+        with meshing.GmshSession():
+            m = meshing.Mesh(
+                meshfile=[
+                    (tmp_path / mf).as_posix() for mf in ("Mesh.geo_unrolled", "Mesh.msh")
+                ]
+            )
+            m(poly)
 
 
 The previous code results in the generation of a mesh file, `Mesh.msh` by default, in
