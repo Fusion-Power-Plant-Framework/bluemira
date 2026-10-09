@@ -129,6 +129,13 @@ def assert_entities_have_elements(
         assert sum(len(tags) for tags in element_tags) > 0
 
 
+def number_of_elements(dim: int) -> int:
+    """Return the number of generated mesh elements of a given dimension."""
+    _, element_tags, _ = gmsh.model.mesh.getElements(dim)
+
+    return sum(len(tags) for tags in element_tags)
+
+
 # -----------------------------------------------------------------------------
 # Gmsh session
 # -----------------------------------------------------------------------------
@@ -460,3 +467,273 @@ def test_mesh_3d_touching_solids_are_conforming(
         assert next(iter(shared_surfaces))[0] == 2
 
         assert_entities_have_elements(volumes)
+
+
+# -----------------------------------------------------------------------------
+# Mesh settings
+# -----------------------------------------------------------------------------
+
+
+def test_mesh_settings_defaults():
+    settings = meshing.MeshSettings()
+
+    assert settings.algorithm_2d == 6
+    assert settings.algorithm_3d == 1
+    assert settings.element_order == 1
+    assert settings.mesh_size_min == pytest.approx(0.0)
+    assert settings.mesh_size_max == pytest.approx(1e22)
+    assert settings.optimise is True
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"element_order": 0},
+        {"element_order": -1},
+        {"mesh_size_min": -0.1},
+        {"mesh_size_max": 0},
+        {"mesh_size_max": -1},
+        {
+            "mesh_size_min": 2.0,
+            "mesh_size_max": 1.0,
+        },
+    ],
+)
+def test_mesh_settings_reject_invalid_values(kwargs):
+    with pytest.raises(ValueError):  # noqa: PT011
+        meshing.MeshSettings(**kwargs)
+
+
+def test_mesh_uses_default_settings_when_none_are_given():
+    mesh = meshing.Mesh(meshfile="Mesh.msh")
+
+    assert mesh.settings == meshing.MeshSettings()
+
+
+def test_mesh_preserves_supplied_settings():
+    settings = meshing.MeshSettings(
+        algorithm_2d=5,
+        element_order=2,
+        mesh_size_max=0.5,
+        optimise=False,
+    )
+
+    mesh = meshing.Mesh(
+        meshfile="Mesh.msh",
+        settings=settings,
+    )
+
+    assert mesh.settings is settings
+
+
+def test_mesh_applies_gmsh_settings(tmp_path):
+    surface = make_square_surface(lcar=1.0)
+
+    settings = meshing.MeshSettings(
+        algorithm_2d=5,
+        algorithm_3d=4,
+        element_order=2,
+        mesh_size_min=0.1,
+        mesh_size_max=0.5,
+        optimise=False,
+    )
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / "mesh.msh").as_posix(),
+            settings=settings,
+        )(surface, dim=2)
+
+        assert gmsh.option.get_number("Mesh.Algorithm") == 5
+        assert gmsh.option.get_number("Mesh.Algorithm3D") == 4
+        assert gmsh.option.get_number("Mesh.ElementOrder") == 2
+        assert gmsh.option.get_number("Mesh.MeshSizeMin") == pytest.approx(0.1)
+        assert gmsh.option.get_number("Mesh.MeshSizeMax") == pytest.approx(0.5)
+        assert gmsh.option.get_number("Mesh.Optimize") == 0
+
+
+def test_default_settings_replace_previous_custom_settings(
+    tmp_path,
+):
+    surface = make_square_surface(lcar=1.0)
+
+    custom = meshing.MeshSettings(
+        algorithm_2d=5,
+        algorithm_3d=4,
+        element_order=2,
+        mesh_size_min=0.1,
+        mesh_size_max=0.5,
+        optimise=False,
+    )
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            modelname="custom",
+            meshfile=(tmp_path / "custom.msh").as_posix(),
+            settings=custom,
+        )(surface)
+
+        assert gmsh.option.get_number("Mesh.Algorithm") == 5
+        assert gmsh.option.get_number("Mesh.Algorithm3D") == 4
+        assert gmsh.option.get_number("Mesh.ElementOrder") == 2
+        assert gmsh.option.get_number("Mesh.MeshSizeMin") == pytest.approx(0.1)
+        assert gmsh.option.get_number("Mesh.MeshSizeMax") == pytest.approx(0.5)
+        assert gmsh.option.get_number("Mesh.Optimize") == 0
+
+        meshing.Mesh(
+            modelname="default",
+            meshfile=(tmp_path / "default.msh").as_posix(),
+        )(surface)
+
+        assert gmsh.option.get_number("Mesh.Algorithm") == 6
+        assert gmsh.option.get_number("Mesh.Algorithm3D") == 1
+        assert gmsh.option.get_number("Mesh.ElementOrder") == 1
+        assert gmsh.option.get_number("Mesh.MeshSizeMin") == 0
+        assert gmsh.option.get_number("Mesh.MeshSizeMax") == pytest.approx(1e22)
+        assert gmsh.option.get_number("Mesh.Optimize") == 1
+
+
+@pytest.mark.parametrize("order", [1, 2])
+def test_element_order_is_applied(
+    order,
+    tmp_path,
+):
+    surface = make_square_surface(lcar=0.25)
+
+    settings = meshing.MeshSettings(
+        element_order=order,
+    )
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / f"order_{order}.msh").as_posix(),
+            settings=settings,
+        )(surface, dim=2)
+
+        element_types, _, _ = gmsh.model.mesh.getElements(
+            dim=2,
+        )
+
+        generated_orders = {
+            gmsh.model.mesh.getElementProperties(element_type)[2]
+            for element_type in element_types
+        }
+
+        assert generated_orders == {order}
+
+
+def test_smaller_mesh_size_max_creates_finer_mesh(
+    tmp_path,
+):
+    coarse_surface = make_square_surface(lcar=10.0)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            modelname="coarse",
+            meshfile=(tmp_path / "coarse.msh").as_posix(),
+            settings=meshing.MeshSettings(
+                mesh_size_max=0.5,
+            ),
+        )(coarse_surface, dim=2)
+
+        coarse_elements = number_of_elements(2)
+
+    fine_surface = make_square_surface(lcar=10.0)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            modelname="fine",
+            meshfile=(tmp_path / "fine.msh").as_posix(),
+            settings=meshing.MeshSettings(
+                mesh_size_max=0.1,
+            ),
+        )(fine_surface, dim=2)
+
+        fine_elements = number_of_elements(2)
+
+    assert fine_elements > coarse_elements
+
+
+def test_mesh_size_min_is_applied(tmp_path):
+    surface = make_square_surface(lcar=0.01)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / "mesh.msh").as_posix(),
+            settings=meshing.MeshSettings(
+                mesh_size_min=0.2,
+            ),
+        )(surface, dim=2)
+
+        assert gmsh.option.get_number("Mesh.MeshSizeMin") == pytest.approx(0.2)
+
+
+@pytest.mark.parametrize("algorithm", [5, 6])
+def test_2d_mesh_algorithms_generate_mesh(
+    algorithm,
+    tmp_path,
+):
+    surface = make_square_surface(lcar=0.25)
+
+    settings = meshing.MeshSettings(
+        algorithm_2d=algorithm,
+    )
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / f"algorithm_2d_{algorithm}.msh").as_posix(),
+            settings=settings,
+        )(surface, dim=2)
+
+        assert gmsh.option.get_number("Mesh.Algorithm") == algorithm
+        assert number_of_elements(2) > 0
+
+
+@pytest.mark.parametrize("algorithm", [1, 4])
+def test_3d_mesh_algorithms_generate_mesh(
+    algorithm,
+    tmp_path,
+):
+    cylinder = make_cylinder()
+    cylinder.mesh_options = {
+        "lcar": 1.0,
+        "physical_group": "cylinder",
+    }
+
+    settings = meshing.MeshSettings(
+        algorithm_3d=algorithm,
+    )
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / f"algorithm_3d_{algorithm}.msh").as_posix(),
+            settings=settings,
+        )(cylinder, dim=3)
+
+        assert gmsh.option.get_number("Mesh.Algorithm3D") == algorithm
+        assert number_of_elements(3) > 0
+
+
+@pytest.mark.parametrize(
+    ("optimise", "expected"),
+    [
+        (True, 1),
+        (False, 0),
+    ],
+)
+def test_optimise_setting_is_applied(
+    optimise,
+    expected,
+    tmp_path,
+):
+    surface = make_square_surface(lcar=0.25)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh(
+            meshfile=(tmp_path / "mesh.msh").as_posix(),
+            settings=meshing.MeshSettings(
+                optimise=optimise,
+            ),
+        )(surface, dim=2)
+
+        assert gmsh.option.get_number("Mesh.Optimize") == expected
