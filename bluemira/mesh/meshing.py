@@ -234,6 +234,21 @@ def _mesh_brep_objects(objects: list[BluemiraGeo]) -> list[GmshEntity]:
     return entities
 
 
+def _apply_mesh_settings(settings: MeshSettings) -> None:
+    """Apply global Gmsh mesh settings."""
+    options = {
+        "Mesh.Algorithm": settings.algorithm_2d,
+        "Mesh.Algorithm3D": settings.algorithm_3d,
+        "Mesh.ElementOrder": settings.element_order,
+        "Mesh.MeshSizeMin": settings.mesh_size_min,
+        "Mesh.MeshSizeMax": settings.mesh_size_max,
+        "Mesh.Optimize": int(settings.optimise),
+    }
+
+    for name, value in options.items():
+        gmsh.option.set_number(name, value)
+
+
 @dataclass
 class MeshOptions:
     """Options controlling meshing of a Bluemira geometry."""
@@ -270,6 +285,36 @@ class Meshable:
             )
 
 
+@dataclass
+class MeshSettings:
+    """Global Gmesh mesh settings (defaults from Gmsh docs)."""
+
+    algorithm_2d: int = 6
+    algorithm_3d: int = 1
+    element_order: int = 1
+    mesh_size_min: float = 0.0
+    mesh_size_max: float = 1e22
+    optimise: bool = True
+
+    def __post_init__(self):
+        """
+        Validate settings.
+
+        Raises
+        ------
+        ValueError
+            If settings are invalid.
+        """
+        if self.element_order < 1:
+            raise ValueError("element_order must be at least 1.")
+        if self.mesh_size_min < 0:
+            raise ValueError("mesh_size_min must be positive.")
+        if self.mesh_size_max <= 0:
+            raise ValueError("mesh_size_max must be positive.")
+        if self.mesh_size_min > self.mesh_size_max:
+            raise ValueError("mesh_size_min cannot be greater than mesh_size_max.")
+
+
 class Mesh:
     """
     A class for supporting the creation of meshes and writing out those meshes to files.
@@ -279,11 +324,13 @@ class Mesh:
         self,
         modelname: str = "Mesh",
         meshfile: str | list[str] | None = None,
+        settings: MeshSettings | None = None,
     ):
         self.modelname = modelname
         self.meshfile = (
             ["Mesh.geo_unrolled", "Mesh.msh"] if meshfile is None else meshfile
         )
+        self.settings = MeshSettings() if settings is None else settings
 
     @staticmethod
     def _check_meshfile(meshfile: str | list) -> list[str]:
@@ -464,6 +511,8 @@ class Mesh:
 
         objects = self._collect_meshable_objects(comp)
         entities = _mesh_brep_objects(objects)
+
+        _apply_mesh_settings(self.settings)
 
         gmsh.model.mesh.generate(dim)
 
