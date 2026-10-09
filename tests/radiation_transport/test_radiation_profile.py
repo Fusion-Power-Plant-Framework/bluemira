@@ -8,13 +8,14 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from raysect.core import Vector3D
 
 from bluemira.base import constants
 from bluemira.base.constants import raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.process import api
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, check_ccw
 from bluemira.radiation_transport.midplane_temperature_density import (
     collect_rho_core_values,
     midplane_profiles,
@@ -405,6 +406,18 @@ class TestCoreRadiation:
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)
         assert len(wall_detectors) == 532
+        # CW check - wall_detectors must be output CCW, so test what happens when we switch input to CW
+        assert check_ccw(self.fw_shape.x, self.fw_shape.z)
+        # Reverse to make CW
+        x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
+        # OMP is at max x-coord in this example FW
+        wall_detector = make_wall_detectors(
+            x_wd, z_wd, max_wall_len, X_WIDTH, plot=True
+        )[np.argmax(x_wd)]
+        assert np.isclose(z_wd[np.argmax(x_wd)], 0.0, atol=1e-3)
+        r = Vector3D(wall_detector.detector_center.x, 0, wall_detector.detector_center.z)
+        # Test OMP output normal point inwards/the wall detectors are made CCW
+        assert wall_detector.normal_vector.dot(r) < 0
 
     def test_FirstWallRadiationSolver(self):
         cherab = pytest.importorskip("cherab")
