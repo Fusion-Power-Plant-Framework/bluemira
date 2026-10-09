@@ -10,7 +10,16 @@ from __future__ import annotations
 import abc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Generic, Literal, Unpack, get_args, get_type_hints
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Generic,
+    Literal,
+    Unpack,
+    cast,
+    get_args,
+    get_type_hints,
+)
 
 from rich.progress import track
 
@@ -50,7 +59,7 @@ class BaseManager(abc.ABC, Generic[ComponentT]):
     """
 
     @abc.abstractmethod
-    def component(self) -> Component:
+    def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
         """
@@ -169,6 +178,18 @@ class BaseManager(abc.ABC, Generic[ComponentT]):
             )
 
 
+def _init_construction_param_values(
+    c_params: ConstructionParams | None,
+    kwargs: ConstructionParams | dict[str, Any],
+) -> ConstructionParamValues:
+    c_params = cast("ConstructionParams", c_params or {})
+    possible_keys = ConstructionParams.__annotations__.keys()
+    if pop_keys := set(kwargs.keys()).intersection(possible_keys):
+        c_params.update({key: kwargs.pop(key) for key in pop_keys})  # type: ignore[ty:invalid-argument-type, ty:no-matching-overload]
+
+    return ConstructionParamValues.from_construction_params(c_params)
+
+
 class ComponentManager(BaseManager[ComponentT]):
     """
     A wrapper around a component tree.
@@ -193,20 +214,13 @@ class ComponentManager(BaseManager[ComponentT]):
         The component tree this manager should wrap.
     """
 
-    def __init__(self, component: Component) -> None:
+    def __init__(self, component: ComponentT) -> None:
         self._component = component
 
     def _init_construction_param_values(  # noqa: PLR6301
         self, c_params: ConstructionParams | None, kwargs: ConstructionParams
     ) -> ConstructionParamValues:
-        c_params_dict = dict(c_params) if c_params else {}
-        possible_keys = ConstructionParams.__annotations__.keys()
-        if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
-
-        return ConstructionParamValues.from_construction_params(c_params_dict)
-
-        return ConstructionParamValues.from_construction_params(c_params)
+        return _init_construction_param_values(c_params, kwargs)
 
     @staticmethod
     def cad_construction_type() -> CADConstructionType:
@@ -215,7 +229,7 @@ class ComponentManager(BaseManager[ComponentT]):
         """  # noqa: DOC201
         return CADConstructionType.PATTERN_RADIAL
 
-    def component(self) -> Component:
+    def component(self) -> ComponentT:
         """
         Return the component tree wrapped by this manager.
 
@@ -393,16 +407,9 @@ class Reactor(BaseManager[Component]):
         c_params: ConstructionParams | None,
         kwargs: ConstructionParams | dict[str, Any],
     ) -> ConstructionParamValues:
-        c_params_dict = dict(c_params) if c_params else {}
-        c_params_dict["total_sectors"] = self.n_sectors
-
-        possible_keys = ConstructionParams.__annotations__.keys()
-        if pop_keys := set(kwargs.keys()).intersection(possible_keys):
-            c_params_dict.update({key: kwargs.pop(key) for key in pop_keys})
-
-        return ConstructionParamValues.from_construction_params(c_params_dict)
-
-        return ConstructionParamValues.from_construction_params(c_params)
+        c_params = cast("ConstructionParams", c_params or {})
+        c_params["total_sectors"] = self.n_sectors
+        return _init_construction_param_values(c_params, kwargs)
 
     def component(self) -> Component:
         """Return the component tree.
@@ -585,7 +592,7 @@ class Reactor(BaseManager[Component]):
         self,
         dim: DIM_3D | DIM_2D = "xyz",
         construction_params: ConstructionParams | None = None,
-        **kwargs: dict[str, Any],
+        **kwargs,
     ):
         """
         Show the CAD build of the reactor.
@@ -622,7 +629,7 @@ class Reactor(BaseManager[Component]):
         self,
         dim: DIM_2D = "xz",
         construction_params: ConstructionParams | None = None,
-        **kwargs: dict[str, Any],
+        **kwargs,
     ):
         """
         Plot the reactor.
