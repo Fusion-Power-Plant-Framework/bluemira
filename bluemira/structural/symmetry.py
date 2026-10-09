@@ -10,7 +10,7 @@ Symmetry boundary conditions
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -39,19 +39,9 @@ class CyclicSymmetry:
         The list of left and right DOF ids
     """
 
-    def __init__(self, geometry: Geometry, cycle_sym_ids: list[list[Any]]):
+    def __init__(self, geometry: Geometry, cycle_sym_ids: list[list[int]]):
         self.geometry = geometry
         self.cycle_sym_ids = cycle_sym_ids
-
-        # Constructors
-        self.t_block = None
-        self.t_matrix = None
-        self.left_nodes = None
-        self.right_nodes = None
-        self.theta = None
-        self.n = None
-        self.axis = None
-        self.selections = None
 
         if self.cycle_sym_ids:
             self._prepare_cyclic_symmetry()
@@ -124,12 +114,7 @@ class CyclicSymmetry:
         p:
             The partitioned block load vector
         """
-        if (
-            not self.cycle_sym_ids
-            or self.left_nodes is None
-            or self.right_nodes is None
-            or self.t_matrix is None
-        ):
+        if not self.cycle_sym_ids:
             # Do nothing
             return k, p
 
@@ -176,7 +161,7 @@ class CyclicSymmetry:
         -------
         The re-ordered deflection vector
         """
-        if not self.cycle_sym_ids or self.selections is None or self.t_matrix is None:
+        if not self.cycle_sym_ids:
             # Do nothing
             return u_original
 

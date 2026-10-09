@@ -61,7 +61,7 @@ class LoadKind(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> LoadKind:
+    def _missing_(cls, value: object | str) -> LoadKind:
         if isinstance(value, str):
             try:
                 return cls[value.replace(" ", "_").upper()]
@@ -81,7 +81,7 @@ class SubLoadType(Enum):
     ALL = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> SubLoadType:
+    def _missing_(cls, value: object | str) -> SubLoadType:
         if isinstance(value, str):
             try:
                 return cls[value.upper()]
@@ -104,7 +104,7 @@ class LoadType(IntEnum):
     Mz = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> LoadType:
+    def _missing_(cls, value: object | str) -> LoadType:
         if isinstance(value, str):
             try:
                 return cls[value.capitalize()]
@@ -133,7 +133,7 @@ class DisplacementType(IntEnum):
     Rz = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> DisplacementType:
+    def _missing_(cls, value: object | str) -> DisplacementType:
         if isinstance(value, str):
             try:
                 return cls[value.capitalize()]
