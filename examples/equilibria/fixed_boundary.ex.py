@@ -75,7 +75,8 @@ plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
+with meshing.GmshSession():
+    meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
 
 (mesh, ct, ft), labels = read_from_msh("fixed_boundary_example.msh", gdim=[0, 2])
 
