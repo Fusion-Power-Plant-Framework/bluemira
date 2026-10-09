@@ -45,10 +45,9 @@ class PowerLawScaling:
         exponents: Iterable[float],
         exp_errs: np.ndarray | list[float] | None = None,
     ):
-        self.c: float = constant
-        self.constant_err: float = constant_err
-        self.exponents: np.ndarray = np.array(exponents)
-        self.errors: np.ndarray | None
+        self.c = constant
+        self.constant_err = constant_err
+        self.exponents = np.array(exponents)
         if exp_errs is None:
             self.errors = None
         else:
@@ -118,19 +117,12 @@ class PowerLawScaling:
             )
 
         constant_range = [self.c - self.constant_err, self.c + self.constant_err]
-        errors = (
-            self.errors if self.errors is not None else np.zeros_like(self.exponents)
-        )
-
         min_terms = np.zeros(len(self))
         max_terms = np.zeros(len(self))
+
+        errors = np.zeros_like(self.exponents) if self.errors is None else self.errors
         for i, (arg, exp, err) in enumerate(
-            zip(
-                args,
-                self.exponents,
-                () if self.errors is None else self.errors,
-                strict=False,
-            )
+            zip(args, self.exponents, errors, strict=False)
         ):
             term_values = [arg ** (exp - err), arg ** (exp + err)]
             min_terms[i] = min(term_values)
