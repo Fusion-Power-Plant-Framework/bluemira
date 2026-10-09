@@ -10,13 +10,11 @@ Finite element Node object
 
 from __future__ import annotations
 
-from typing import Any
-
 import numpy as np
 
 from bluemira.structural.constants import D_TOLERANCE, LoadKind
 from bluemira.structural.error import StructuralError
-from bluemira.structural.loads import Load, node_load
+from bluemira.structural.loads import Load, LoadTD, node_load
 
 
 class Node:
@@ -101,7 +99,7 @@ class Node:
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load: Load | dict[str, Any]):
+    def add_load(self, load: Load | LoadTD):
         """
         Applies a load to the Node object.
 

@@ -19,7 +19,7 @@ from scipy.linalg import block_diag
 from bluemira.geometry.coordinates import rotation_matrix
 
 if TYPE_CHECKING:
-    from bluemira.structural.geometry import DeformedGeometry, Geometry
+    from bluemira.structural.geometry import Geometry
 
 
 def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
@@ -181,7 +181,7 @@ def cyclic_pattern(
     n: int,
     *,
     include_first: bool = True,
-) -> Geometry | DeformedGeometry:
+) -> Geometry:
     """
     Build a cyclic pattern of a Geometry.
 

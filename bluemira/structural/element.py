@@ -10,7 +10,7 @@ Finite element class
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -18,7 +18,7 @@ from bluemira.base.constants import GRAVITY
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.structural.constants import NU, N_INTERP, SD_LIMIT, LoadKind
 from bluemira.structural.error import StructuralError
-from bluemira.structural.loads import Load, distributed_load, point_load
+from bluemira.structural.loads import Load, LoadTD, distributed_load, point_load
 from bluemira.structural.node import get_midpoint
 from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
@@ -416,7 +416,7 @@ class Element:
             M_y = \\frac{y_1 + y_2}{2}, \\quad
             M_z = \\frac{z_1 + z_2}{2}
         """
-        return np.array(get_midpoint(self.node_1, self.node_2))
+        return np.asarray(get_midpoint(self.node_1, self.node_2))
 
     @property
     def space_vector(self):
@@ -523,7 +523,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Load | dict[str, Any]):
+    def add_load(self, load: Load | LoadTD):
         """
         Applies a load to the Element object.
 

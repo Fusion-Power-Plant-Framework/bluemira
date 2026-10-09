@@ -106,18 +106,11 @@ class Result:
         """
         return DeformedGeometry(self.geometry, scale=scale)
 
-    def _make_cyclic_geometry(
-        self, geometry: Geometry | None = None
-    ) -> Geometry | DeformedGeometry:
+    def _make_cyclic_geometry(self, geometry: Geometry | None = None) -> Geometry:
         if geometry is None:
             geometry = self.geometry
 
-        if (
-            self._cycle_sym is None
-            or self._cycle_sym.n is None
-            or self._cycle_sym.theta is None
-            or self._cycle_sym.axis is None
-        ):
+        if self._cycle_sym is None:
             raise StructuralError("No cyclic symmetry defined for this result.")
 
         n = self._cycle_sym.n
