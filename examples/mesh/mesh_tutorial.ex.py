@@ -119,9 +119,12 @@ directory = directory.joinpath("examples", "mesh_tutorial")
 directory.mkdir(parents=True, exist_ok=True)
 
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
-m = meshing.Mesh(meshfile=meshfiles)
-buffer = m(c_all)
-print(m.get_gmsh_dict(buffer))
+
+with meshing.GmshSession():
+    m = meshing.Mesh(meshfile=meshfiles)
+    entities = m(c_all)
+
+print(entities)
 
 # %% [markdown]
 #

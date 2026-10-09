@@ -1,85 +1,197 @@
 Meshing
 =======
 
-The mesh core of bluemira is based on the open source 3D finite element mesh
-generator gmsh_. A basic api has been implemented to interface with geometry
-objects and functions.
+``bluemira`` uses the open-source finite element mesh generator Gmsh_ to generate meshes
+from geometry.
 
-.. note:: Currently only a minor part of the gmsh potentiality has been
-    implemented in the respective api.
+The main meshing classes are:
 
-.. warning:: Only 1D and 2D mesh operations are implemented. Mesh of 3D objects will
-   raise and error.
+* :py:class:`bluemira.mesh.meshing.Mesh`
+* :py:class:`bluemira.mesh.meshing.Meshable`
+* :py:class:`bluemira.mesh.meshing.MeshOptions`
+* :py:class:`bluemira.mesh.meshing.MeshSettings`
+* :py:class:`bluemira.mesh.meshing.GmeshSession`
 
-The meshing module of bluemira implements the following main classes:
+Both 2D and 3D meshes are supported.
 
-* :py:class:`bluemira.mesh.meshing.Meshable`: base class from which meshable objects
-  inherit
-* :py:class:`bluemira.mesh.meshing.Mesh`: active class that performs the mesh operation
-
-Meshable objects
-----------------
-All objects that inherit from :py:class:`Meshable` are provided by a mesh_options dictionary
-in which the following properties can be specified:
-
-* lcar: characteristic mesh length size associated to the vertexes of the geometric
-  object
-
-* physical_group: label to group the model entities
+.. note::
+    ``bluemira`` currently exposes a subset of the options available in Gmsh.
 
 
-Geometry definition and Mesh assignment
----------------------------------------
-All :py:class:`BluemiraGeo` objects inherit from :py:class:`Meshable`. After creating a geo object,
-`mesh_options` must to be specified (no default values are used). The easiest way is to
-use a simple dictionary with `lcar` and `physical_group` keys.
+Mesh options
+------------
+
+All :py:class:`BluemiraGeo` objects have `mesh_options` that can be used to
+control the local mesh.
+
+The currently available options are:
+
+`lcar`\
+Characteristic mesh size associated with the geometry.
+
+`physical_group`\
+Name used to identify the geometry in the generated mesh.
+
+For example:
 
 .. code-block:: python
 
-        from bluemira.geometry.tools import make_polygon
-        from bluemira.mesh.meshing import Mesh
+    from bluemira.geometry.tools import make_polygon
 
-        poly = make_polygon(
+    poly = make_polygon(
+        [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
+    )
+
+    poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
+
+
+Gmsh session
+------------
+
+A Gmsh session must be active before generating a mesh.
+
+For scripts, the recommended approach is to use :py:class:`bluemira.mesh.meshing.GmshSession`
+as a context manager:
+
+.. code-block:: python
+
+    from bluemira.mesh import meshing
+
+    with meshing.GmshSession():
+        meshing.Mesh()
+
+The session is automatically cleaned up when the context is exited.
+
+For interactive or notebook use, the session can also be controlled explicitly:
+
+.. code-block:: python
+
+    from bluemira.mesh import meshing
+
+    session = meshing.GmshSession()
+    session.initialize()
+
+    meshing.Mesh()
+
+    session.finalize()
+
+
+Generating a 2D mesh
+--------------------
+
+A simple 2D mesh can be generated from a face:
+
+.. code-block:: python
+
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.geometry.tools import make_polygon
+    from bluemira.mesh import meshing
+
+    poly = make_polygon(
             [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
         )
 
-        poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
+    poly.mesh_options = {"lcar": 0.1, "physical_group": "poly"}
 
-        m = Mesh(
-            meshfile=[
-                (tmp_path / mf).as_posix() for mf in ("Mesh.geo_unrolled", "Mesh.msh")
-            ]
-        )
-        m(poly)
+    surface = BluemiraFace(poly)
+
+    surface.mesh_options = {"lcar": 0.2, "physical_group": "surface"}
+
+    with meshing.GmshSession():
+        meshing.Mesh()(surface, dim=2)
 
 
-The previous code results in the generation of a mesh file, `Mesh.msh` by default, in
-which the mesh is stored, and a gmsh file, `Mesh.geo_unrolled` by default, for
-checking purpose.
+Generating a 3D mesh
+--------------------
 
-.. important::
-
-    Only objects that have a `physical_group` are exported into the `Mesh.msh` file (see
-    gmsh_ for more information).
-
-fenics import
--------------
-Once the mesh has been generated, it can be imported in a PDEs solver. Fenics_ solver,
-is integrated into bluemira.
+The same interface can be used for 3D geometry:
 
 .. code-block:: python
 
-    # TODO fix
-    from bluemira.mesh.tools import import_mesh
-    from bluemira.base.file import get_bluemira_path
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.geometry.tools import extrude_shape, make_circle
+    from bluemira.mesh import meshing
 
-    # mesh, boundaries, subdomains, labels = import_mesh(
-    #     "ReferenceMesh",
-    #     directory=get_bluemira_path('mesh/test_data', subfolder='tests'),
-    #     subdomains=True,
-    # )
-    # print(mesh.coordinates())
+    circle = make_circle(radius=5, center=[0, 0, 0])
+    cylinder = extrude_shape(BluemiraFace(circle), vec=[0, 0, 10])
+
+    cylinder.mesh_options = {"lcar": 1.0, "physical_group": "cylinder"}
+
+    with meshing.GmshSession():
+        meshing.Mesh()(cylinder, dim=3)
 
 
-.. _Fenics: https://fenicsproject.org/
-.. _gmsh: https://gmsh.info
+Global mesh settings
+--------------------
+
+Global mesh generation settings can be supplied using :py:class:`bluemira.mesh.meshing.MeshSettings`.
+
+The currently available settings include:
+
+* `algorithm_2d` - 2D meshing algorithm.
+* `algorithm_3d` - 3D meshing algorithm.
+* `element_order` - Geometric accuracy and interpolation precision of mesh elements.
+* `mesh_size_min` - Minimum mesh element size.
+* `mesh_size_max` - Maximum mesh element size.
+* `optimise` - Improve the quality of elements.
+
+For example:
+
+.. code-block:: python
+
+    from bluemira.mesh import meshing
+
+    settings = meshing.MeshSettings(
+        element_order=2,
+        mesh_size_min=0.05,
+        mesh_size_max=0.5,
+        optimise=True,
+    )
+
+    with meshing.GmshSession():
+        meshing.Mesh(settings=settings)
+
+
+Output files
+------------
+
+By default, :py:class:`bluemira.mesh.meshing.Mesh` writes:
+
+`Mesh.geo_unrolled`\
+Gmsh model file.
+
+`Mesh.msh`\
+Generated mesh.
+
+Alternative output paths may be supplied:
+
+.. code-block:: python
+
+    from bluemira.mesh import meshing
+
+    with meshing.GmshSession():
+        mesh = meshing.Mesh(
+            meshfile=["output/Mesh.geo_unrolled", "output/Mesh.msh"]
+        )
+
+.. important::
+    Geometry that needs to be identified in downstream finite element workflows
+    should be assigned a `physical_group`.
+
+
+Importing generated meshes
+--------------------------
+
+A generated `.msh` file can be converted and imported using the utilities in
+:mod:`bluemira.mesh.tools`.
+
+.. code-block:: python
+
+    from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+    msh_to_xdmf("Mesh.msh", dimensions=(0, 2))
+
+    mesh, boundaries, subdomains, labels = import_mesh("Mesh", subdomains=True)
+
+
+.. _Gmsh: https://gmsh.info/
