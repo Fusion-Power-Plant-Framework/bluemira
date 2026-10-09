@@ -34,13 +34,14 @@ from bluemira.geometry.tools import revolve_shape, save_cad, serialise_shape
 from bluemira.radiation_transport.neutronics.dagmc import save_cad_to_dagmc
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping
+    from collections.abc import Callable, Iterable
     from pathlib import Path
 
     from matproplib.material import Material
 
     import bluemira.codes._geometryapi as cadapi
     from bluemira.base.reactor import ComponentManager
+    from bluemira.geometry.base import BluemiraGeo
 
 
 _T = TypeVar("_T")
@@ -83,7 +84,7 @@ class FilterMaterial:
             True if the node should be kept, False otherwise.
         """
         if hasattr(node, "material"):
-            return self._apply_filters(node.material)
+            return self._apply_filters(cast("Material", node.material))
         return True
 
     def __setattr__(self, name: str, value: Any):
@@ -102,7 +103,7 @@ class FilterMaterial:
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
-    def _apply_filters(self, material: Any) -> bool:
+    def _apply_filters(self, material: Material) -> bool:
         bool_store = True
 
         if self.keep_material is not None:
@@ -173,9 +174,7 @@ class ConstructionParamValues:
         )
 
     @classmethod
-    def from_construction_params(
-        cls, construction_params: ConstructionParams | Mapping[str, Any] | None
-    ):
+    def from_construction_params(cls, construction_params: ConstructionParams | None):
         """
         Create the ConstructionParamValues from the ConstructionParams.
 
@@ -189,15 +188,15 @@ class ConstructionParamValues:
         :
             The ConstructionParamValues object
         """
-        construction_params: ConstructionParams = construction_params or {}
+        construction_params = cast("ConstructionParams", construction_params or {})
         comp_filter = (
             construction_params["component_filter"]
             if "component_filter" in construction_params
             else FilterMaterial()
         )
 
-        tot_secs = int(construction_params.get("total_sectors") or 1)
-        n_secs = int(construction_params.get("n_sectors") or tot_secs)
+        tot_secs = int(construction_params.get("total_sectors", 1))  # type: ignore[ty:invalid-argument-type]
+        n_secs = int(construction_params.get("n_sectors", tot_secs))  # type: ignore[ty:invalid-argument-type]
 
         return cls(
             with_components=construction_params.get("with_components"),
@@ -279,7 +278,7 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 
     """
     shapes = get_properties_from_components(comp, ("shape",))
-    return BluemiraCompound(cast("Any", list(shapes)), comp.name)
+    return BluemiraCompound(cast("list[BluemiraGeo]", list(shapes)), comp.name)
 
 
 def circular_pattern_xyz_components(
