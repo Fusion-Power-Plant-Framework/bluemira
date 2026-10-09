@@ -1901,6 +1901,11 @@ def signed_distance(
             \\text{positive estimate of overlap length} & \\text{if overlap exists}
         \\end{cases}
     """
+    # Ensure both origin and target are BluemiraWires for ease
+    if isinstance(origin, Coordinates):
+        origin = BluemiraWire(make_polygon(origin))
+    if isinstance(target, Coordinates):
+        target = BluemiraWire(make_polygon(target))
     d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
     if d == 0.0:  # noqa: RUF069
@@ -1908,21 +1913,10 @@ def signed_distance(
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0
         # There are multiple intersections: the wires are overlapping
-        # For now, without boolean operations, get an estimate of the intersection
-        # length
-        length = 0
-        for i in range(1, len(vectors)):
-            p1 = vectors[i - 1][0]
-            p2 = vectors[i][0]
-
-            length += np.sqrt(
-                (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
-            )
-
-        # TODO @je-cook: Use a boolean difference operation to get the lengths of the
-        # overlapping wire segment(s)
-        # 3590
-        return length
+        # Use boolean_cut to get wires for the region that overlap, can then
+        # sum the lengths
+        overlap = boolean_cut(origin, target)
+        return np.sum(x.length for x in overlap)
     # There are no intersections, return minimum distance
     return -d
 
