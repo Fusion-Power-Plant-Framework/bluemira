@@ -109,11 +109,11 @@ c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 
-meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
+with meshing.GmshSession():
+    meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 
-(mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=2)
-gmsh.write("Mesh.msh")
-gmsh.finalize()
+    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=2)
+    gmsh.write("Mesh.msh")
 
 with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
