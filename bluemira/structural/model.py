@@ -44,7 +44,7 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> BoundaryConditionMethod:
+    def _missing_(cls, value: object | str) -> BoundaryConditionMethod:
         if isinstance(value, str):
             try:
                 return cls[value.upper()]
