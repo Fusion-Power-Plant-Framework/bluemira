@@ -18,7 +18,7 @@ from __future__ import annotations
 import contextlib
 import math
 from itertools import pairwise
-from typing import TYPE_CHECKING, Any, Literal, cast
+from typing import TYPE_CHECKING, Literal, cast
 
 import cadquery as cq
 import numpy as np
@@ -595,7 +595,7 @@ def sweep_shape(  # noqa: C901, PLR0912
         ) from last_exc
 
     if solid:
-        return cast("apiShell | apiSolid", result)
+        return cast("apiSolid", result)
     return result.Shells()[0]
 
 
@@ -801,7 +801,7 @@ def area(obj: apiShape) -> float:
                 _occ_face_area(_face_from_wires_tolerant(w, []).wrapped) for w in inner
             )
             return outer_area - hole_area
-        return float(cast("Any", obj).Area)
+        return cast("float", obj.Area)  # property (monkey-patched) → float
     return obj.Area()  # method on Wire/Solid/Shell/Edge → float
 
 
@@ -1179,7 +1179,7 @@ def ordered_vertexes(obj: apiShape) -> np.ndarray:
     """Vertices in connectivity order along a wire."""
     edge_list = ordered_edges(obj)
     pts = [_vector_to_numpy(e.startPoint()) for e in edge_list]
-    if not cast("Any", obj).IsClosed():
+    if not cast("apiWire | apiEdge", obj).IsClosed():
         pts.append(_vector_to_numpy(edge_list[-1].endPoint()))
     return np.array(pts)
 
@@ -1708,7 +1708,7 @@ def boolean_fuse(shapes: list, *, remove_splitter: bool = True) -> apiShape:
     # a Face back (not a Compound containing one Face), otherwise downstream
     # ``.boundary[0]`` access misinterprets the wrapping.
     if isinstance(result, cq.Face):
-        return cast("apiShell | apiSolid", result)
+        return result
 
     if isinstance(result, cq.Compound):
         if all(isinstance(s, cq.Face) for s in shapes):
@@ -1901,7 +1901,12 @@ def _split_wire_at_tool_crossings(wire: apiWire, tools: list[apiWire]) -> list[a
     return wires
 
 
-def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[apiShape]:
+def boolean_cut(
+    shape: apiShape,
+    tools: list[apiShape] | list[apiWire] | list[apiFace] | list[apiFace | apiWire],
+    *,
+    split: bool = True,
+) -> list[apiShape] | list[apiWire]:
     """Boolean subtraction — return list of result shapes."""
     if not isinstance(tools, list):
         tools = [tools]
@@ -1918,9 +1923,10 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
         and isinstance(shape, apiWire)
         and all(isinstance(t, apiWire) for t in tools)
     ):
+        tools = cast("list[apiWire]", tools)
         if all(t.IsClosed() for t in tools):
-            return cast("list[apiShape]", _split_wire_by_closed_tools(shape, tools))
-        return cast("list[apiShape]", _split_wire_at_tool_crossings(shape, tools))
+            return _split_wire_by_closed_tools(shape, tools)
+        return _split_wire_at_tool_crossings(shape, tools)
 
     result = shape.cut(*tools)
     # OCC's BRepAlgoAPI_Cut can return nested compounds, and cq.Shape.Solids()
@@ -1937,7 +1943,7 @@ def boolean_cut(shape: apiShape, tools: list, *, split: bool = True) -> list[api
     return [result]
 
 
-def boolean_common(shape: apiShape, tools: list) -> list[apiShape]:
+def boolean_common(shape: apiShape, tools: list[apiShape] | apiShape) -> list[apiShape]:
     """Boolean intersection — return list of result shapes.
 
     Empty when the operands only touch: shared faces are not an intersection.
@@ -1975,13 +1981,13 @@ def boolean_common(shape: apiShape, tools: list) -> list[apiShape]:
     return [result]
 
 
-def face_cut_holes(face: apiFace, holes: list) -> list:
+def face_cut_holes(face: apiFace, holes: list[apiFace | apiWire]) -> apiFace:
     """Cut hole faces out of an outer face.
 
     Parity with ``_freecad.api.face_cut_holes``: no coplanar guard — callers
     guarantee the input wires are coplanar by construction.
     """
-    return boolean_cut(face, holes, split=False)
+    return cast("apiFace", boolean_cut(face, holes, split=False))
 
 
 _TOPABS_FOR_KIND: dict = {
@@ -1992,7 +1998,7 @@ _TOPABS_FOR_KIND: dict = {
 }
 
 
-def _collect_subshapes(shape: apiShape, kind: type) -> list:
+def _collect_subshapes(shape: apiShape, kind: type) -> list[apiShape]:
     """Recursively collect all sub-shapes of *shape* that are instances of *kind*.
 
     CadQuery's ``.Solids()``/``.Faces()``/``.Wires()`` only walk the immediate
@@ -2031,7 +2037,9 @@ def _collect_subshapes(shape: apiShape, kind: type) -> list:
     return collected
 
 
-def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound, list]:
+def boolean_fragments(
+    shapes: list, tolerance: float = 0.0
+) -> tuple[apiCompound, list[list[apiShape]]]:
     """Split shapes into their Boolean fragments (general fuse).
 
     Returns
@@ -2055,7 +2063,7 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
     if not algo.IsDone():
         raise CadQueryError("Boolean fragments operation failed")
 
-    compound = cq.Shape.cast(algo.Shape())
+    compound = cast("apiCompound", cq.Shape.cast(algo.Shape()))
 
     # Build fragment map: for each input, collect its Modified/Generated outputs.
     # If a shape is unmodified (no intersection), its list is empty — matching
@@ -2067,7 +2075,7 @@ def boolean_fragments(shapes: list, tolerance: float = 0.0) -> tuple[apiCompound
             frags = [cq.Shape.cast(t) for t in algo.Generated(s.wrapped)]
         fragment_map.append(frags)
 
-    return cast("apiCompound", compound), fragment_map
+    return compound, fragment_map
 
 
 # ---------------------------------------------------------------------------

@@ -99,22 +99,6 @@ class _CQPlacement:
         self.Rotation = _Rotation(tuple(_ax), angle_rad)
 
     @property
-    def Axis(self) -> _Vector:
-        return self.Rotation.Axis
-
-    @Axis.setter
-    def Axis(self, val: _Vector):
-        self.Rotation.Axis = val
-
-    @property
-    def Angle(self) -> float:
-        return self.Rotation.Angle
-
-    @Angle.setter
-    def Angle(self, val: float):
-        self.Rotation.Angle = val
-
-    @property
     def Matrix(self) -> _HomogeneousMatrix:
         """4x4 homogeneous transformation matrix (FreeCAD Placement.Matrix API)."""
         R = self._rot_matrix()
