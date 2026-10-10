@@ -364,9 +364,9 @@ class PFCoilSupportBuilder(Builder):
         :
             The x-z components of the PF coil support.
         """
-        result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
-        assert result is not None  # noqa: S101
-        wire_results = cast("list[BluemiraWire]", result)
+        wire_results = cast(
+            "list[BluemiraWire]", slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
+        )
         wire_results.sort(key=lambda wire: -wire.length)
         face = BluemiraFace(wire_results)
         component = PhysicalComponent(
@@ -405,7 +405,7 @@ class PFCoilSupportBuilder(Builder):
         return BluemiraFace([box_outer, box_inner])
 
     @staticmethod
-    def _get_first_intersection(point, angle, wire: BluemiraWire):
+    def _get_first_intersection(point: npt.ArrayLike, angle: float, wire: BluemiraWire):
         """
         Returns
         -------
@@ -427,7 +427,7 @@ class PFCoilSupportBuilder(Builder):
             return None
 
         directed_intersections = []
-        for inter in cast("list[np.ndarray]", intersections):
+        for inter in intersections:
             direction = inter - point
             direction /= np.linalg.norm(direction)
             if np.dot(correct_direction, direction) >= 0:
@@ -929,8 +929,9 @@ class OISBuilder(Builder):
         half_plane = BluemiraPlane(base=(0, 0, 0), axis=direction)
 
         components = []
+        self.ois_xz_profiles = cast("list[BluemiraWire]", self.ois_xz_profiles)
         for i, ois_profile in enumerate(self.ois_xz_profiles):
-            ois_profile_1 = cast("BluemiraWire", ois_profile.deepcopy())
+            ois_profile_1 = ois_profile.deepcopy()
             ois_profile_1.translate(vector=(0, 0.5 * width, 0))
 
             ois_profile_2 = ois_profile_1.deepcopy()
@@ -949,9 +950,9 @@ class OISBuilder(Builder):
 
             # Then we "chop" it in half, but without the boolean_cut operation
             # This is because I cba to write a project_shape function...
-            slice_res = slice_shape(ois_right, half_plane)
-            assert slice_res is not None  # noqa: S101
-            ois_profile_mid = cast("BluemiraWire", slice_res[0])
+            ois_profile_mid = cast(
+                "list[BluemiraWire]", slice_shape(ois_right, half_plane)
+            )[0]
 
             path = make_polygon([
                 ois_profile_1.center_of_mass,

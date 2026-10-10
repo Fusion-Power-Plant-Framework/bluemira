@@ -79,7 +79,7 @@ def apply_component_display_options(
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
     """
     if isinstance(color, ColorPalette):
-        color = color.as_hex()
+        color = cast("ColorType", color.as_hex())
     phys_component.plot_options.face_options["color"] = color
     phys_component.display_cad_options.color = color
     if transparency:
