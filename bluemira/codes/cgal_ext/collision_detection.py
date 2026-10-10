@@ -15,15 +15,15 @@ import numpy as np
 from bluemira.codes.cgal_ext._guard import cgal_guard
 
 try:
-    from CGAL.CGAL_Kernel import Point_3  # ty: ignore[unresolved-import]
-    from CGAL.CGAL_Polygon_mesh_processing import (  # ty: ignore[unresolved-import]
+    from CGAL.CGAL_Kernel import Point_3  # type: ignore[ty:unresolved-import]
+    from CGAL.CGAL_Polygon_mesh_processing import (  # type: ignore[ty:unresolved-import]
         Int_Vector,
         Point_3_Vector,
         Polygon_Vector,
         do_intersect,
         polygon_soup_to_polygon_mesh,
     )
-    from CGAL.CGAL_Polyhedron_3 import Polyhedron_3  # ty: ignore[unresolved-import]
+    from CGAL.CGAL_Polyhedron_3 import Polyhedron_3  # type: ignore[ty:unresolved-import]
 except ImportError:
     pass
 
