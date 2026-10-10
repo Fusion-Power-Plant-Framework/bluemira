@@ -306,18 +306,11 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         -------
         :
             Selected flux line as a wire.
-
-        Raises
-        ------
-        ValueError
-            If equilibrium grid coordinates are not defined
         """
         # Get the flux surface that crosses the through the start or end point.
         # We can use this surface to guide the shape of the wire.
         pick_point = start if start_picked else end
         psi_start = self.equilibrium.psi(*pick_point)
-        if self.equilibrium.x is None or self.equilibrium.z is None:
-            raise ValueError("Equilibrium grid coordinates are not defined")
         flux_surface = find_flux_surface_through_point(
             self.equilibrium.x,
             self.equilibrium.z,
