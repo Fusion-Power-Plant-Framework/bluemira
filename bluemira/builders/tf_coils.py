@@ -209,6 +209,7 @@ class RipplePointSelector:
                 "Ripple points have not been selected. Call set_wire first."
             )
         return {
+            "name": type(self).__name__,
             "f_constraint": self._constrain_ripple,
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
@@ -398,8 +399,7 @@ class MaximiseSelector(RipplePointSelector):
             opt_conditions={"ftol_rel": 1e-6, "max_eval": 2000},
         )
 
-        assert self._wire is not None  # noqa: S101
-        max_ripple_point = self._wire.value_at(float(result.x[0]))
+        max_ripple_point = cast("BluemiraWire", self._wire).value_at(float(result.x[0]))
 
         self.points = Coordinates(max_ripple_point.reshape(3, -1))
         ripple = self.solver.ripple(*self.points)
@@ -510,8 +510,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         else:
             self._keep_out_zone = []
 
-        if ripple_selector is None:
-            ripple_selector = ExtremaSelector()
         ripple_selector.set_wire(self.ripple_wire)
         self.ripple_values: np.ndarray | None = None
 
@@ -570,8 +568,9 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self.solver.update_cage(self.parameterisation.create_shape())
         if self.ripple_selector.points is None:
             raise BuilderError("Ripple selector points have not been generated.")
-        ripple_vals = self.solver.ripple(*self.ripple_selector.points)
-        self.ripple_values = np.atleast_1d(ripple_vals)
+        self.ripple_values = np.atleast_1d(
+            self.solver.ripple(*self.ripple_selector.points)
+        )
         return self.parameterisation
 
     def plot(self, ax: plt.Axes | None = None):
@@ -621,8 +620,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         norm.autoscale(rv)
         cm = mpl.colormaps.get_cmap("viridis")
         sm = mpl.cm.ScalarMappable(cmap=cm, norm=norm)
-        vmin, vmax = float(np.min(rv)) - 1e-6, float(np.max(rv)) + 1e-6
-        sm.set_clim(vmin, vmax)
+        sm.set_clim(np.min(rv) - 1e-6, np.max(rv) + 1e-6)
         ax.scatter(
             self.ripple_selector.points.x,
             self.ripple_selector.points.z,

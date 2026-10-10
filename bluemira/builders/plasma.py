@@ -62,11 +62,9 @@ class Plasma(ComponentManager):
         xz = self.component().get_component("xz")
         if xz is None:
             raise ValueError("Component 'xz' not found")
-        lcfs_comp = xz.get_component(PlasmaBuilder.LCFS)
-        if not isinstance(lcfs_comp, PhysicalComponent):
-            raise TypeError("Expected PhysicalComponent for LCFS")
-        shape = cast("BluemiraFace", lcfs_comp.shape)
-        return shape.boundary[0]
+        return cast(
+            "PhysicalComponent", xz.get_component(PlasmaBuilder.LCFS)
+        ).shape.boundary[0]
 
 
 @dataclass
