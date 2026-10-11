@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -36,7 +36,7 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | str | QueryType) -> QueryType:
         if isinstance(value, str):
             try:
                 if value.upper() == "95TH":
@@ -104,10 +104,10 @@ class FuelCycleAnalysis:
             timelines = [timelines]
 
         for timeline in track(timelines):
-            self.model.run(timeline)
-            self.m_T_req.append(self.model.m_T_req)
-            self.t_d.append(self.model.t_d)
-            self.m_dot_release.append(self.model.m_dot_release)
+            results = self.model.run(timeline)
+            self.m_T_req.append(results.m_T_req)
+            self.t_d.append(results.t_d)
+            self.m_dot_release.append(results.m_dot_release)
 
     def get_startup_inventory(self, query: str = "max") -> float:
         """

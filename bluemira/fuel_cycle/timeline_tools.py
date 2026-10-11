@@ -9,10 +9,11 @@ Distribution and timeline utilities
 """
 
 import abc
-from collections.abc import Iterable
-from typing import Any, overload
+from collections.abc import Iterable, Sequence
+from typing import overload
 
 import numpy as np
+import numpy.typing as npt
 from numpy.random import Generator, SeedSequence
 from scipy.optimize import brentq
 
@@ -34,7 +35,9 @@ __all__ = [
 def f_gompertz(t: float, a: float, b: float, c: float) -> float: ...
 @overload
 def f_gompertz(t: np.ndarray, a: float, b: float, c: float) -> np.ndarray: ...
-def f_gompertz(t: float | np.ndarray, a: float, b: float, c: float) -> Any:
+def f_gompertz(
+    t: float | np.ndarray, a: float, b: float, c: float
+) -> np.ndarray | float:
     """
     Gompertz sigmoid function parameterisation.
 
@@ -160,7 +163,7 @@ class LearningStrategy(abc.ABC):
 
     @abc.abstractmethod
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -187,7 +190,7 @@ class UniformLearningStrategy(LearningStrategy):
 
     @staticmethod
     def generate_phase_availabilities(
-        lifetime_op_availability: float, op_durations: Iterable[float]
+        lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -204,7 +207,7 @@ class UniformLearningStrategy(LearningStrategy):
         :
             Operational availabilities at each operational phase
         """
-        return lifetime_op_availability * np.ones(len(list(op_durations)))
+        return lifetime_op_availability * np.ones(len(op_durations))
 
 
 class UserSpecifiedLearningStrategy(LearningStrategy):
@@ -213,17 +216,17 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
     each operational phase.
     """
 
-    def __init__(self, operational_availabilities: Iterable[float]):
+    def __init__(self, operational_availabilities: Sequence[float]):
         """
         Parameters
         ----------
         operational_availabilities:
             Operational availabilities to prescribe
         """
-        self.operational_availabilities = list(operational_availabilities)
+        self.operational_availabilities = np.asarray(operational_availabilities)
 
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -245,24 +248,24 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         FuelCycleError
             Number of phases should be equal to the number of operational availabilities
         """
-        op_durs = np.asarray(list(op_durations))
-        op_avails = np.asarray(self.operational_availabilities)
-        if len(op_durs) != len(op_avails):
+        if len(op_durations) != len(self.operational_availabilities):
             raise FuelCycleError(
                 "The number of phases is not equal to the number of user-specified"
                 " operational availabilities."
             )
 
-        total_fpy = float(np.sum(op_durs))
-        fraction = (total_fpy / lifetime_op_availability) / (op_durs / op_avails)
-        if not np.all(np.isclose(fraction, 1.0)):
+        total_fpy = np.sum(op_durations)
+        fraction = (total_fpy / lifetime_op_availability) / (
+            op_durations / self.operational_availabilities
+        )
+        if not np.isclose(fraction, 1.0):
             bluemira_warn(
                 "User-specified operational availabilities do not match the specified"
-                f" lifetime operational : {fraction} != 1.0. Normalising to adjust"
+                f" lifetime operational : {fraction:.2f} != 1.0. Normalising to adjust"
                 " to meet the specified lifetime operational availability."
             )
 
-        return fraction * op_avails
+        return fraction * self.operational_availabilities
 
 
 class GompertzLearningStrategy(LearningStrategy):
@@ -291,17 +294,16 @@ class GompertzLearningStrategy(LearningStrategy):
     def _f_op_availabilities(
         self, t: np.ndarray, x: float, arg_dates: np.ndarray
     ) -> np.ndarray:
-        a_ops: np.ndarray = self.min_op_a + f_gompertz(
+        a_ops = self.min_op_a + f_gompertz(
             t, self.max_op_a - self.min_op_a, x, self.learn_rate
         )
 
         return np.array([
-            float(np.mean(a_ops[int(arg_dates[i]) : int(d)]))
-            for i, d in enumerate(arg_dates[1:])
+            np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])
         ])
 
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: npt.ArrayLike
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -329,9 +331,9 @@ class GompertzLearningStrategy(LearningStrategy):
                 " bounds on the phase operational availability."
             )
 
-        durations = np.append(0.0, np.asarray(op_durations, dtype=float))
-        total_fpy = float(np.sum(durations))
-        cum_fpy = np.cumsum(durations)
+        op_durations = np.append(0, op_durations)
+        total_fpy = np.sum(op_durations)
+        cum_fpy = np.cumsum(op_durations)
 
         t = np.linspace(0, total_fpy, 100)
         arg_dates = np.array([np.argmin(abs(t - i)) for i in cum_fpy])
@@ -351,9 +353,7 @@ class GompertzLearningStrategy(LearningStrategy):
             # NOTE: Fancy analytical integral objective of Gompertz function
             # was a resounding failure. Do not touch this again.
             # The brute force is strong in this one.
-            return total_fpy / lifetime_op_availability - float(
-                np.sum(durations[1:] / a_ops_i)
-            )
+            return total_fpy / lifetime_op_availability - sum(op_durations[1:] / a_ops_i)
 
         x_opt = brentq(f_opt, 0, 10e10)
         return self._f_op_availabilities(t, x_opt, arg_dates)
