@@ -17,10 +17,7 @@ from bluemira.optimisation._scipy.parameters import (
     _filter_to_scipy_options,
     _make_alg_params,
 )
-from bluemira.optimisation._scipy.registry import (
-    SCIPY_REGISTRY,
-    ScipyAlgConfig,
-)
+from bluemira.optimisation._scipy.registry import SCIPY_REGISTRY, ScipyAlgConfig
 from bluemira.optimisation._tools import (
     _check_bounds_dims,
     _initial_guess_from_bounds,
@@ -329,15 +326,15 @@ class ScipyOptimiser(Optimiser):
             f_x=result.fun,
             x=result.x,
             n_evals=result.nit if hasattr(result, "nit") else result.nfev,
-            history=None,
-            constraint_history=None,
+            history=[],
+            constraint_history=[],
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
         """
         Set the lower bound for each optimisation parameter.
 
-        Set to `-np.inf` to unbound the parameter's minimum.\
+        Set to `-np.inf` to unbound the parameter's minimum.
 
         Raises
         ------
