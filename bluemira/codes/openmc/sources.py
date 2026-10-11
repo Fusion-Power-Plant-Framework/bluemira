@@ -27,15 +27,15 @@ from tokamak_neutron_source.flux import (
 from tokamak_neutron_source.profile import ParabolicPedestalProfile
 
 from bluemira.base.constants import raw_uc
-from bluemira.codes.openmc.params import (
-    OpenMCNeutronicsSolverParams,
-    PlasmaSourceParameters,
-)
 from bluemira.radiation_transport.neutronics.constants import DT_NEUTRON_ENERGY
 
 if TYPE_CHECKING:
     from openmc import IndependentSource
 
+    from bluemira.codes.openmc.params import (
+        OpenMCNeutronicsSolverParams,
+        PlasmaSourceParameters,
+    )
     from bluemira.equilibria.equilibrium import Equilibrium
 
 
@@ -99,8 +99,6 @@ def make_tokamak_source(
     lcfs = equilibrium.get_LCFS()
     o_point = equilibrium.get_OX_points()[0][0]
     o_point = FluxPoint(*o_point)
-    assert equilibrium.x is not None  # noqa: S101
-    assert equilibrium.z is not None  # noqa: S101
     flux_map = FluxMap(
         ClosedFluxSurface(lcfs.x, lcfs.z),
         o_point,
@@ -121,16 +119,11 @@ def make_tokamak_source(
 
 
 def make_ring_source(
-    source_parameters: OpenMCNeutronicsSolverParams | PlasmaSourceParameters,
+    source_parameters: OpenMCNeutronicsSolverParams,
 ) -> IndependentSource:
     """Create the ring source"""  # noqa: DOC201
-    if isinstance(source_parameters, OpenMCNeutronicsSolverParams):
-        return create_ring_source(
-            source_parameters.R_0.value, source_parameters.shaf_shift.value
-        )
     return create_ring_source(
-        getattr(source_parameters, "major_radius", 0.0),
-        getattr(source_parameters, "shaf_shift", 0.0),
+        source_parameters.R_0.value, source_parameters.shaf_shift.value
     )
 
 
