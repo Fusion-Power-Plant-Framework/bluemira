@@ -20,7 +20,7 @@ class NLOptConditions:
     ftol_rel: float | None = None
     xtol_abs: float | None = None
     xtol_rel: float | None = None
-    max_eval: int | float | None = None
+    max_eval: int | None = None
     max_time: float | None = None
     stop_val: float | None = None
 

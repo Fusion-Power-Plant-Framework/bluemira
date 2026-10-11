@@ -51,7 +51,7 @@ class Algorithm(Enum):
         return obj
 
     @classmethod
-    def _missing_(cls, value: object) -> Algorithm:
+    def _missing_(cls, value: object | str) -> Algorithm:
         """
         Handle cases where the algorithm type provided is not a valid algorithm.
 
