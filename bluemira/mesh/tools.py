@@ -65,7 +65,7 @@ def plot_dolfinx_mesh(mesh, *, show: bool = True):
     tdim = mesh.topology.dim
     grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, tdim))
     plotter.add_mesh(grid, show_edges=True)
-    plotter.view_xy()  # ty: ignore[missing-argument]
+    plotter.view_xy()  # type: ignore[ty:missing-argument]
     if show:
         plotter.show()
     return plotter
