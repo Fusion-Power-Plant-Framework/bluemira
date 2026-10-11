@@ -113,11 +113,11 @@ class PlasmaSourceParameters:
     electron_temperature_ped: float  # [keV]
     electron_temperature_sep: float  # [keV]
 
-    ie_temperature_ratio: Parameter[float]
+    ie_temperature_ratio: float
     """Ion to electron temperature ratio (volume-averaged)."""
-    va_fuel_ion_density: Parameter[float]
+    va_fuel_ion_density: float
     """Volume-averaged fuel ion density [1/metre^3]."""
-    va_electron_density: Parameter[float]
+    va_electron_density: float
     """Volumed-averaged plasma electron density [1/metre^3]."""
 
     # mapping from parameter names in params.json (extracted by

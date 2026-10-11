@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import chain, pairwise
-from typing import TYPE_CHECKING, Any, cast, overload
+from typing import TYPE_CHECKING, cast, overload
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    import bluemira.codes._geometryapi as cadapi
     from bluemira.codes.openmc.material import MaterialsLibrary
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.radiation_transport.neutronics.geometry import (
@@ -64,7 +65,6 @@ if TYPE_CHECKING:
         StraightLineInfo,
         WireInfoList,
     )
-
 
 # Found to work by trial and error. I'm sorry.
 SHRINK_DISTANCE = 0.0005  # [m] = 0.05cm = 0.5 mm
@@ -95,13 +95,10 @@ class CellStage:
             self.ext_void,
         )
 
-    def get_all_hollow_merged_cells(self, csg: BluemiraNeutronicsCSG):
+    def get_all_hollow_merged_cells(self):
         """Blanket and divertor cells"""
         return [
-            *[
-                openmc.Cell(region=stack.get_overall_region(csg))
-                for stack in self.blanket
-            ],
+            *[openmc.Cell(region=stack.get_overall_region()) for stack in self.blanket],
             *[openmc.Cell(region=stack.get_overall_region()) for stack in self.divertor],
         ]
 
@@ -153,8 +150,8 @@ def plot_surfaces(surfaces_list: list[openmc.Surface], ax=None):
         plot_surface_at_1000cm(ax, surface, color_num=i)
     ax.legend()
     ax.set_aspect("equal")
-    ax.set_ylim((-1000.0, 1000.0))
-    ax.set_xlim((-1000.0, 1000.0))
+    ax.set_ylim(-1000.0, 1000.0)
+    ax.set_xlim(-1000.0, 1000.0)
     return ax
 
 
@@ -264,7 +261,7 @@ def torus_from_3points(
     p2 = (float(point2[0]), 0.0, float(point2[-1]))
     p3 = (float(point3[0]), 0.0, float(point3[-1]))
     circle = make_circle_arc_3P(p1, p2, p3)
-    cad_circle = cast("Any", circle.shape).OrderedEdges[0].Curve
+    cad_circle = circle.shape.OrderedEdges[0].Curve  # type: ignore[ty:unresolved-attribute]
     center, radius = cad_circle.Center, cad_circle.Radius
     return torus_from_circle(
         [center[0], center[-1]], radius, surface_id=surface_id, name=name
@@ -296,7 +293,7 @@ def torus_from_circle(
 
 
 def z_torus(
-    center: Sequence[float] | npt.NDArray[np.floating],
+    center: Sequence[float],
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",
@@ -313,10 +310,7 @@ def z_torus(
         minor radius of the torus
 
     """
-    center_arr = np.asarray(center)
-    major_radius, height, minor_radius = [
-        to_cm(x) for x in (center_arr[0], center_arr[-1], minor_radius)
-    ]
+    major_radius, height, minor_radius = to_cm([center[0], center[-1], minor_radius])
     return openmc.ZTorus(
         z0=height,
         a=major_radius,
@@ -885,7 +879,7 @@ class BluemiraNeutronicsCSG:
             info = wire.key_points
             plane_cone_cylinder = self.surface_from_straight_line(info, name=name)
             if isinstance(info, CircleInfo):
-                torus = torus_from_circle(list(info.center), info.radius, name=name)
+                torus = torus_from_circle(info.center, info.radius, name=name)
                 # will need the openmc.Union of these two objects later.
                 surface_list.append((plane_cone_cylinder, torus))
             else:
@@ -1428,7 +1422,9 @@ class BlanketCellStack:
             Incorrect number of edges on external wire
         """
         # check exterior wire is correct
-        ext_curve_comp = cast("Any", pre_cell.exterior_wire.shape).OrderedEdges
+        ext_curve_comp = cast(
+            "cadapi.apiWire", pre_cell.exterior_wire.shape
+        ).OrderedEdges  # type: ignore [ty:unresolved-attribute]
         if len(ext_curve_comp) != 1:
             raise TypeError("Incorrect type of BluemiraWire parsed in.")
         if not ext_curve_comp[0].Curve.TypeId.startswith("Part::GeomLine"):
@@ -1532,11 +1528,13 @@ class BlanketCellStack:
                     f"{cell_type}-{cell_type.name} "
                     f"interface boundary of blanket cell stack {i}"
                 )
-            ext_surf = csg.surface_from_2points(
-                *points,
-                surface_id=surface_ids[j],  # up to M+1
+            ext_surf = cast(
+                "openmc.Surface",
+                csg.surface_from_2points(
+                    *points,
+                    surface_id=surface_ids[j],  # up to M+1
+                ),
             )
-            assert ext_surf is not None  # noqa: S101
             cell_stack.append(
                 BlanketCell(
                     exterior_surface=ext_surf,
@@ -1755,12 +1753,10 @@ class BlanketCellArray:
                 name=f"Blanket cell wall of blanket cell stack {i + 1}",
             )
 
-            assert ccw_surf is not None  # noqa: S101
-            assert cw_surf is not None  # noqa: S101
             stack = BlanketCellStack.from_pre_cell(
                 pre_cell,
-                ccw_surf,
-                cw_surf,
+                cast("openmc.Surface", ccw_surf),
+                cast("openmc.Surface", cw_surf),
                 get_depth_values(pre_cell, blanket_dimensions),
                 csg=csg,
                 fill_lib=materials,

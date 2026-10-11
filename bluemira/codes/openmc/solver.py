@@ -16,11 +16,13 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Literal,
+    Protocol,
     Required,
     TypeAlias,
     TypeVar,
     TypedDict,
     cast,
+    overload,
 )
 
 import numpy as np
@@ -251,7 +253,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
     @abstractmethod
     def _create_geometry(self) -> tuple[openmc.Universe, openmc.Geometry]: ...
 
-    def _create_tallies(self, tally_function: TALLY_FUNCTION_TYPE) -> openmc.Tallies:
+    def _create_tallies(self, tally_function: TallyFunctionType) -> openmc.Tallies:
         tallies_list = []
         for name, scores, filters in tally_function(self.tally_mats, self.tally_geom):
             tally = openmc.Tally(name=name)
@@ -593,7 +595,7 @@ class OpenMCCSGTeardown(CodesTeardown):
         )
         output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
 
-        return cast("NeutronicsRunResult", result), output_params
+        return result, output_params
 
     @staticmethod
     def plot(_universe, _source_info, fig: FigureData, **_kwargs):
@@ -616,7 +618,7 @@ class OpenMCCSGTeardown(CodesTeardown):
 class OpenMCDAGTeardown(CodesTeardown):
     """Teardown for DAGMC run"""
 
-    def __init__(self, out_path: str, codes_name: str):
+    def __init__(self, out_path: Path, codes_name: str):
         super().__init__(None, codes_name)
 
         self.out_path = out_path
@@ -645,10 +647,24 @@ class OpenMCDAGTeardown(CodesTeardown):
 
 
 TALLY_RETURN_TYPE = tuple[str, str, Sequence[openmc.Filter] | None]
-TALLY_FUNCTION_TYPE = Callable[
-    [list[openmc.Material], CellStage | openmc.Geometry],
-    list[TALLY_RETURN_TYPE],
-]
+
+
+class TallyFunctionType(Protocol):
+    """Tallying function protocol"""
+
+    @overload
+    def __call__(
+        self, material_list: list[openmc.Material], model: CellStage
+    ) -> list[TALLY_RETURN_TYPE]: ...
+    @overload
+    def __call__(
+        self, material_list: list[openmc.Material], model: openmc.Geometry
+    ) -> list[TALLY_RETURN_TYPE]: ...
+    def __call__(
+        self, material_list: list[openmc.Material], model: CellStage | openmc.Geometry
+    ) -> list[TALLY_RETURN_TYPE]:
+        """Call Signature"""
+        ...
 
 
 class OpenMCNeutronicsSolver(CodesSolver, ABC):
@@ -674,7 +690,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config
 
-        self.out_path = self.build_config.get("neutronics_output_path", Path.cwd())
+        self.out_path = Path(self.build_config.get("neutronics_output_path", Path.cwd()))
 
         self.eq = eq
         self.source = source
@@ -689,12 +705,12 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         self._source = value
 
     @property
-    def tally_function(self) -> TALLY_FUNCTION_TYPE:
+    def tally_function(self) -> TallyFunctionType:
         """Function used to set up tallies"""
         return self._tally_function
 
     @tally_function.setter
-    def tally_function(self, value: TALLY_FUNCTION_TYPE):
+    def tally_function(self, value: TallyFunctionType):
         self._tally_function = value
 
     def execute(
@@ -710,7 +726,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 
         source_params = PlasmaSourceParameters.from_parameterframe(self.params)
         runtime_params = OpenMCSimulationRuntimeParameters(**{
-            k.name: self.build_config[k.name]
+            k.name: self.build_config[k.name]  # type: ignore[ty:invalid-key]
             for k in fields(OpenMCSimulationRuntimeParameters)
             if k.name in self.build_config
         })
@@ -765,7 +781,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         source: NeutronSourceCreator,
         neutronics_model: NeutronicsReactor,
         op_cond: OperationalConditions,
-        tally_function: TALLY_FUNCTION_TYPE | None = None,
+        tally_function: TallyFunctionType | None = None,
     ):
         super().__init__(params, build_config, eq, source)
         self.neutronics_model = neutronics_model
@@ -781,7 +797,9 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         )
 
         self.tally_function = (
-            csg_filter_cells if tally_function is None else tally_function
+            cast("TallyFunctionType", csg_filter_cells)
+            if tally_function is None
+            else cast("TallyFunctionType", tally_function)
         )
 
     def _single_run(
@@ -804,7 +822,10 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(
-            self.cell_arrays, self.neutronics_model, self.out_path, self.name
+            self.cell_arrays,
+            self.neutronics_model,
+            self.out_path,  # type: ignore[ty:invalid-argument-type]
+            self.name,
         )
 
         return cast(
@@ -827,20 +848,26 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         source: NeutronSourceCreator,
         dagmc_model_path: Path,
         materials,
-        tally_function: TALLY_FUNCTION_TYPE | None = None,
+        tally_function: TallyFunctionType | None = None,
     ):
         super().__init__(params, build_config, eq, source)
         self.dagmc_model_path = dagmc_model_path
         self.materials = materials
 
-        def tally(mat, model):
+        def tally(
+            materal_list: list[openmc.Material], model: openmc.Geometry
+        ) -> list[TALLY_RETURN_TYPE]:
             return dagmc_tallys(
-                mat,
+                materal_list,
                 model,
                 mesh_shape=tuple(build_config.get("tally_mesh_size", (100, 100, 100))),
             )
 
-        self.tally_function = tally if tally_function is None else tally_function
+        self.tally_function = (
+            cast("TallyFunctionType", tally)
+            if tally_function is None
+            else tally_function
+        )
 
     def _single_run(
         self,
@@ -860,7 +887,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         )
 
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(self.out_path, self.name)  # type: ignore[ty:invalid-argument-type]
         return cast(
             "DAGMCRunResult",
             super()._single_run(run_mode, source_params, runtime_params, debug=debug),
