@@ -10,10 +10,7 @@ Fuel cycle model fundamental building blocks
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from typing import TYPE_CHECKING, Protocol, cast
 
 import numpy as np
 
@@ -26,6 +23,9 @@ from bluemira.fuel_cycle.tools import (
     linear_bathtub,
     sqrt_bathtub,
 )
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class FuelCycleFlow:
@@ -72,6 +72,16 @@ class FuelCycleFlow:
 
         fractions.append(1 - sum(fractions))
         return np.array([fraction * self.out_flow for fraction in fractions])
+
+
+class ModelMapProtocol(Protocol):
+    """FuelCylcleComponent model type"""
+
+    def __call__(
+        self, flow: npt.NDArray, t: npt.NDArray, *args, **kwargs
+    ) -> tuple[npt.NDArray, npt.NDArray, float, float]:
+        """Call signature"""
+        ...
 
 
 class FuelCycleComponent:
@@ -136,8 +146,7 @@ class FuelCycleComponent:
         self.inventory: np.ndarray | None = None
         self.sum_in = 0
         self.decayed = 0
-
-        model_map = {
+        model_map: dict[str, ModelMapProtocol] = {
             "fountaintub": fountain_bathtub,
             "fountain": fountain,
             "bathtub": linear_bathtub,
@@ -152,12 +161,8 @@ class FuelCycleComponent:
         if retention_model not in model_map:
             raise FuelCycleError(f"Model type '{retention_model}' not recognised.")
 
-        self.model: Callable[..., Any] = model_map[retention_model]
-        self.model_args: tuple[Any, ...] = (
-            args_map[retention_model]
-            if isinstance(args_map[retention_model], tuple)
-            else (args_map[retention_model],)
-        )
+        self.model = model_map[retention_model]
+        self.model_args = args_map[retention_model]
 
     def add_in_flow(self, flow: np.ndarray):
         """
@@ -175,12 +180,8 @@ class FuelCycleComponent:
         Run the tritium retention model on the fuel cycle component tritium
         flow.
         """
-        model = cast("Any", self.model)
-        args = (
-            self.model_args if isinstance(self.model_args, tuple) else (self.model_args,)
-        )
-        self.m_out, self.inventory, self.sum_in, self.decayed = model(
-            self.flow, self.t, *args
+        self.m_out, self.inventory, self.sum_in, self.decayed = self.model(
+            self.flow, self.t, *self.model_args
         )
 
     def get_out_flow(self) -> np.ndarray:
@@ -195,5 +196,4 @@ class FuelCycleComponent:
         if self.m_out is None:
             bluemira_warn("Need to run component first.")
             self.run()
-        assert self.m_out is not None  # noqa: S101
-        return self.m_out
+        return cast("np.ndarray", self.m_out)
