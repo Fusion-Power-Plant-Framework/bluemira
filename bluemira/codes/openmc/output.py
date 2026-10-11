@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import openmc
@@ -29,6 +29,7 @@ from bluemira.radiation_transport.neutronics.constants import (
 from bluemira.utilities.tools import numpy_to_vtk
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     import pandas as pd
 
     from bluemira.codes.openmc.make_csg import CellStage
@@ -84,10 +85,14 @@ class OpenMCResultBase:
         return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
-    def _convert_dict_contents(dataset: dict[str, Any]):
+    def _convert_dict_contents(
+        dataset: dict[int, dict[str, float | str] | list[str] | npt.ArrayLike],
+    ):
         for k, v in dataset.items():
-            vals = list(v.values()) if isinstance(v, dict) else v
-            dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
+            vals = list(v.values()) if isinstance(v, dict) else np.asarray(v)
+            dataset[k] = (
+                cast("list[str]", vals) if isinstance(vals[0], str) else np.asarray(vals)
+            )
         return dataset
 
     @staticmethod

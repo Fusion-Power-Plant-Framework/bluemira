@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+from itertools import chain
 from typing import TYPE_CHECKING
 
 import openmc
@@ -17,7 +18,7 @@ if TYPE_CHECKING:
 
 
 def csg_filter_cells(
-    material_list: list[openmc.Material], csg_model: CellStage
+    material_list: list[openmc.Material], model: CellStage
 ) -> list[TALLY_RETURN_TYPE]:
     """
     Create scores and the filter for the scores. Give them names.
@@ -44,10 +45,12 @@ def csg_filter_cells(
         Divide by area to get fluence in unit: cm^-2.
 
     """
-    blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
-    blanket_excl_vv = [cell for stack in blanket_cell_array for cell in list(stack)[:-1]]
-    div_excl_vv = [cell for stack in divertor_cell_array for cell in list(stack)[:-1]]
-    cells = list(csg_model.cells[:-1])  # exclude the external void
+    blanket_cell_array, divertor_cell_array = model.blanket, model.divertor
+    blanket_excl_vv = [
+        *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
+    ]
+    div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
+    cells = list(model.cells[:-1])  # exclude the external void
     cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [
         *(stack[0] for stack in blanket_cell_array),
