@@ -8,15 +8,16 @@
 Simple structural material representations
 """
 
-from typing import Any
+from collections.abc import Sequence
 
+from matproplib import OperationalConditions
 from matproplib.library.fluids import Void
 from matproplib.material import material
 from matproplib.properties.group import props
 
 
 # Just some simple materials to play with during tests and the like
-def sm(self: Any, op_cond: Any = None) -> Any:
+def sm(self, op_cond: OperationalConditions | None = None) -> Sequence[float] | float:
     """Simple shear modulus"""  # noqa: DOC201
     return self.youngs_modulus(op_cond) / (0.5 + 0.5 * self.poissons_ratio(op_cond))
 
@@ -32,7 +33,7 @@ SS316 = material(
         density=8910,
         coefficient_thermal_expansion=18e-6,
         average_yield_stress=360e6,
-        shear_modulus={"value": sm},
+        shear_modulus=sm,
     ),
 )
 
@@ -44,7 +45,7 @@ FORGED_SS316LN = material(
         density=8910,
         coefficient_thermal_expansion=10.36e-6,
         average_yield_stress=800e6,
-        shear_modulus={"value": sm},
+        shear_modulus=sm,
     ),
 )
 """Forged SS316LN plates: OIS structural material as defined in 2MBS88 and"
@@ -59,7 +60,7 @@ FORGED_JJ1 = material(
         density=8910,
         coefficient_thermal_expansion=10.38e-6,
         average_yield_stress=1000e6,
-        shear_modulus={"value": sm},
+        shear_modulus=sm,
     ),
 )
 """Forged EK1/JJ1 strengthened austenitic steel plates: TF inner leg material"
@@ -74,7 +75,7 @@ CAST_EC1 = material(
         density=8910,
         coefficient_thermal_expansion=10.38e-6,
         average_yield_stress=750e6,
-        shear_modulus={"value": sm},
+        shear_modulus=sm,
     ),
 )
 """ Cast EC1 strengthened austenitic steel castings: TF outer leg material as"
@@ -88,7 +89,7 @@ CONCRETE = material(
         density=2400,
         coefficient_thermal_expansion=12e-6,
         average_yield_stress=40e6,
-        shear_modulus={"value": sm},
+        shear_modulus=sm,
     ),
 )
 """Typical concrete properties at room temperature"""
