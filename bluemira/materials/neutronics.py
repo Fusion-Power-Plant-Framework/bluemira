@@ -22,11 +22,12 @@ if TYPE_CHECKING:
     from matproplib.material import Material
 
 
+# cop out until mpl types fixed
 def _openmc_config(*args: Any, **kwargs: Any) -> Any:
     return OpenMCNeutronicConfig(*args, **kwargs)
 
 
-def _op_cond(*args: Any, **kwargs: Any) -> Any:
+def _op_cond(*args: Any, **kwargs: Any) -> OperationalConditions:
     return OperationalConditions(*args, **kwargs)
 
 
@@ -47,7 +48,7 @@ def make_PbLi_mat(li_enrich_ao) -> Material:
     return material(
         name="PbLi",
         elements={"Pb": 0.83, "Li": 0.17},
-        properties=props(density={"value": 9.4, "unit": "g/cm^3"}),
+        properties=props(density=(9.4, "g/cm^3")),
         converters=_openmc_config(
             enrichment=li_enrich_ao, enrichment_target="Li6", enrichment_type="atomic"
         ),
@@ -76,10 +77,7 @@ def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
         name="lithium_orthosilicate",
         elements={"Li": 4 / 9, "Si28": 1 / 9, "O16": 4 / 9},
         properties=props(
-            density={
-                "value": packing_fraction * (2.247 + 0.078 * (1.0 - li_enrich_ao)),
-                "unit": "g/cm^3",
-            }
+            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3"),
         ),
         converters=_openmc_config(
             enrichment=li_enrich_ao * 100,
@@ -111,10 +109,7 @@ def make_Li2TiO3_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
         name="lithium_titanate",
         elements={"Li": 2 / 6, "Ti": 1 / 6, "O16": 3 / 6},
         properties=props(
-            density={
-                "value": packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)),
-                "unit": "g/cm^3",
-            }
+            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3")
         ),
         converters=_openmc_config(
             enrichment=li_enrich_ao * 100,
