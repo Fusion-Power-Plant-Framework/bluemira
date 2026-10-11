@@ -375,9 +375,11 @@ class NloptOptimiser(Optimiser):
         else:
             self._opt.set_min_objective(self._objective.call)
 
-    def _set_termination_conditions(self, opt_conditions: Mapping[str, Any]) -> None:
+    def _set_termination_conditions(
+        self, opt_conditions: Mapping[str, int | float | None]
+    ) -> None:
         """Validate and set the termination conditions."""
-        self._opt_conditions = NLOptConditions(**opt_conditions)
+        self._opt_conditions = NLOptConditions(**opt_conditions)  # type: ignore[ty:invalid-argument-type]
         if self._opt_conditions.ftol_abs:
             self._opt.set_ftol_abs(self._opt_conditions.ftol_abs)
         if self._opt_conditions.ftol_rel:
@@ -389,7 +391,7 @@ class NloptOptimiser(Optimiser):
         if self._opt_conditions.max_time:
             self._opt.set_maxtime(self._opt_conditions.max_time)
         if self._opt_conditions.max_eval:
-            self._opt.set_maxeval(int(self._opt_conditions.max_eval))
+            self._opt.set_maxeval(self._opt_conditions.max_eval)
         if self._opt_conditions.stop_val:
             self._opt.set_stopval(self._opt_conditions.stop_val)
 

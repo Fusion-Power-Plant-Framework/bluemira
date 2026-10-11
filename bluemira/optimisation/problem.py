@@ -55,7 +55,7 @@ class OptimisationProblemBase:
         return default
 
     @staticmethod
-    def __is_method(f: Any, cls: type[Any]) -> bool:
+    def __is_method(f: __MethodT, cls: type[Any]) -> bool:
         """
         Determine if the given method is a member of this base class or not.
 
@@ -68,10 +68,10 @@ class OptimisationProblemBase:
             true if the given method is a member of this base class else false
         """
         try:
-            this_f = getattr(cls, f.__name__)
+            this_f = getattr(cls, f.__name__)  # type: ignore[ty:unresolved-attribute]
         except AttributeError:
             return False
-        return f.__func__ is not this_f
+        return f.__func__ is not this_f  # type: ignore[ty:unresolved-attribute]
 
 
 class OptimisationProblem(abc.ABC, OptimisationProblemBase):
