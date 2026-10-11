@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -43,7 +43,7 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value: object) -> PlotType:
+    def _missing_(cls, value: object | str | PlotType) -> PlotType:
         if isinstance(value, str):
             try:
                 return cls[value.upper()]
@@ -80,6 +80,24 @@ class LifeCycle:
         Random number generator seed for operational outages
     """
 
+    total_planned_maintenance: float
+    total_ramptime: float
+    t_unplanned_m: float
+    t_on_total: float
+    t_interdown: float
+    unplanned: float
+    min_downtime: float
+    T: Timeline | None
+    a_ops: np.ndarray
+    phase_names: list[str]
+    phase_durations: list[float]
+    n_blk_replace: int
+    n_div_replace: int
+    fpy: float
+    tf_lifeend: float
+    vv_lifeend: float
+    n_cycles: float
+
     def __init__(
         self,
         config: LifeCycleParams | dict[str, float],
@@ -106,37 +124,19 @@ class LifeCycle:
             )
 
         # Constructors
-        self.total_planned_maintenance: float = 0.0
-        self.total_ramptime: float = 0.0
-        self.t_unplanned_m: float = 0.0
-        self.t_on_total: float = 0.0
-        self.t_interdown: float = 0.0
-        self.cs_down: float | None = None
-        self.unplanned: float = 0.0
-        self.min_downtime: float = 0.0
-        self.T: Timeline | None = None
-        self.a_ops: np.ndarray = np.array([])
-        self.phase_names: list[str] = []
-        self.phase_durations: list[float] = []
-        self.n_blk_replace: int = 0
-        self.n_div_replace: int = 0
-        self.fpy: float = 0.0
-        self.tf_lifeend: float | None = None
-        self.vv_lifeend: float | None = None
-        self.A_global: float | None = None
-        self.n_cycles: float = 0.0
+        self.T = None
+        self.n_blk_replace = 0
+        self.n_div_replace = 0
+        self.fpy = 0
+        self.n_cycles = 0
 
         # Derive/convert inputs
-        self.maintenance_l: float = float(self.params.bmd)  # [s]
-        self.maintenance_s: float = float(self.params.dmd)  # [s]
-        self.t_rampup: float = float(self.params.I_p / self.params.s_ramp_up)  # [s]
-        self.t_rampdown: float = float(self.params.I_p / self.params.s_ramp_down)  # [s]
-        self.t_flattop: float = float(
-            self.params.t_pulse - self.t_rampup - self.t_rampdown
-        )  # [s]
-        self.t_min_down: float = float(
-            max(self.params.t_cs_recharge, self.params.t_pumpdown)
-        )
+        self.maintenance_l = self.params.bmd  # [s]
+        self.maintenance_s = self.params.dmd  # [s]
+        self.t_rampup = self.params.I_p / self.params.s_ramp_up  # [s]
+        self.t_rampdown = self.params.I_p / self.params.s_ramp_down  # [s]
+        self.t_flattop = self.params.t_pulse - self.t_rampup - self.t_rampdown  # [s]
+        self.t_min_down = max(self.params.t_cs_recharge, self.params.t_pumpdown)
 
         # Build timeline
         self.life_neutronics()
@@ -388,8 +388,7 @@ class LifeCycle:
             _f, ax = plt.subplots(1, 1)
         # Plotting crutches
         fs, s, h = 0.0, 0.0, 0.95 * self.fpy
-        ft: list[float] = [0.0]
-        rt: list[float] = [0.0]
+        ft, rt = [0.0], [0.0]
         j = 0
         length = 0.0
         for p_n, p_d in zip(self.phase_names, self.phase_durations, strict=False):
@@ -435,7 +434,7 @@ class LifeCycle:
         ax.plot(rt, ft, color="#0072bd")
         ax.set_xlabel("Elapsed plant lifetime [years]")
         ax.set_ylabel("Full power years [fpy]")
-        ax.set_xlim((0.0, self.fpy / self.params.A_global))
+        ax.set_xlim(0.0, self.fpy / self.params.A_global)
         ax.set_ylim(bottom=0)
 
     def plot_load_factor(self, typ: str = "pie", ax: plt.Axes | None = None):
@@ -460,13 +459,13 @@ class LifeCycle:
         if self.T is None:
             bluemira_warn("Need to run make_timeline first.")
             self.make_timeline()
-        assert self.T is not None  # noqa: S101
-        sizes: list[float] = [
-            float(self.t_on_total),
-            float(self.total_ramptime),
-            float(self.t_interdown),
-            float(self.total_planned_maintenance),
-            float(self.t_unplanned_m),
+
+        sizes = [
+            self.t_on_total,
+            self.total_ramptime,
+            self.t_interdown,
+            self.total_planned_maintenance,
+            self.t_unplanned_m,
         ]
         plt_typ = PlotType(typ)
         if plt_typ is PlotType.PIE:
@@ -486,11 +485,11 @@ class LifeCycle:
                 ax.bar(1, s / sum_sizes * 100, bottom=bottom, label=labels[i])
                 bottom += s / sum_sizes * 100
             ax.set_xticklabels([""])
-            ax.set_xlim((0.0, 6.0))
+            ax.set_xlim(0.0, 6.0)
             ax.legend()
         plt.title(
             f"Breakdown of DEMO reactor lifetime\n A = {self.params.A_global:.2f},"
-            f"{self.fpy:.2f} fpy, {self.T.plant_life:.2f} years"
+            f"{self.fpy:.2f} fpy, {cast('Timeline', self.T).plant_life:.2f} years"
         )
 
     def write(self, filename: str, **kwargs):
@@ -505,9 +504,8 @@ class LifeCycle:
         if self.T is None:
             bluemira_warn("Need to run make_timeline first.")
             self.make_timeline()
-        assert self.T is not None  # noqa: S101
         bluemira_print(f"Writing {filename}")
-        data = self.T.to_dict()
+        data = cast("Timeline", self.T).to_dict()
         return json_writer(data, filename, **kwargs)
 
     @staticmethod
