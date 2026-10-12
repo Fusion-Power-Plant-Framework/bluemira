@@ -10,6 +10,7 @@ import pytest
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -737,3 +738,193 @@ def test_optimise_setting_is_applied(
         )(surface, dim=2)
 
         assert gmsh.option.get_number("Mesh.Optimize") == expected
+
+
+# -----------------------------------------------------------------------------
+# Mesh complex examples
+# -----------------------------------------------------------------------------
+
+
+def make_polygon_face(points, label, lcar):
+    """Create a face with a named physical group and target mesh size."""
+    wire = tools.make_polygon(points, closed=True, label=label)
+    face = BluemiraFace(wire, label=label)
+    face.mesh_options = {
+        "lcar": lcar,
+        "physical_group": label,
+    }
+    return face
+
+
+def make_nested_rectangle_component(lcar):
+    """Build a rectangular ring and its inner region as separate faces."""
+    outer = tools.make_polygon(
+        [
+            [0, 0, 0],
+            [4, 0, 0],
+            [4, 0, 4],
+            [0, 0, 4],
+        ],
+        closed=True,
+        label="pf_outer",
+    )
+    inner = tools.make_polygon(
+        [
+            [0.15, 0, 0.15],
+            [3.85, 0, 0.15],
+            [3.85, 0, 3.85],
+            [0.15, 0, 3.85],
+        ],
+        closed=True,
+        label="pf_inner",
+    )
+
+    ring = BluemiraFace([outer, inner], label="pf_outer")
+    ring.mesh_options = {
+        "lcar": lcar / 2,
+        "physical_group": "pf_outer",
+    }
+
+    core = BluemiraFace(inner, label="pf_inner")
+    core.mesh_options = {
+        "lcar": lcar,
+        "physical_group": "pf_inner",
+    }
+
+    component = Component("pf_coil")
+    PhysicalComponent("outer_region", ring, parent=component)
+    PhysicalComponent("inner_region", core, parent=component)
+    return component
+
+
+@pytest.mark.parametrize("lcar", [0.15, 0.3, 0.6])
+def test_mesh_nested_rectangles_with_thin_outer_region(lcar):
+    """Thin outer rectangular regions and the inner region should mesh."""
+    component = make_nested_rectangle_component(lcar)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh()(component, dim=2)
+
+        groups = physical_groups_by_name(2)
+        assert "pf_outer" in groups
+        assert "pf_inner" in groups
+
+        assert_entities_have_elements([tag for tags in groups.values() for tag in tags])
+
+        # The outer ring should have a finer target size than the core.
+        # The exact number of elements is intentionally not prescribed.
+        assert number_of_elements(2) > 0
+
+
+def make_square_with_circular_inclusion(lcar):
+    """Build a square ring around a circular region."""
+    square = tools.make_polygon(
+        [
+            [-1, 0, -1],
+            [1, 0, -1],
+            [1, 0, 1],
+            [-1, 0, 1],
+        ],
+        closed=True,
+        label="square_boundary",
+    )
+    circle = tools.make_circle(
+        radius=0.35,
+        center=[0, 0, 0],
+        label="circle_boundary",
+        axis=(0, 1, 0),
+    )
+
+    ring = BluemiraFace([square, circle], label="square_region")
+    ring.mesh_options = {
+        "lcar": lcar,
+        "physical_group": "square_region",
+    }
+
+    disk = BluemiraFace(circle, label="circular_region")
+    disk.mesh_options = {
+        "lcar": lcar / 8,
+        "physical_group": "circular_region",
+    }
+
+    component = Component("square_with_circle")
+    PhysicalComponent("square_region", ring, parent=component)
+    PhysicalComponent("circular_region", disk, parent=component)
+    return component
+
+
+def test_mesh_circle_inside_square():
+    """A circular inclusion should mesh alongside the surrounding square."""
+    component = make_square_with_circular_inclusion(lcar=0.2)
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh()(component, dim=2)
+
+        groups = physical_groups_by_name(2)
+        assert "square_region" in groups
+        assert "circular_region" in groups
+
+        assert_entities_have_elements([tag for tags in groups.values() for tag in tags])
+        assert number_of_elements(2) > 0
+
+
+@pytest.fixture
+def tf_centreline():
+    return PrincetonD({
+        "x1": {"value": 4, "fixed": True},
+        "x2": {"value": 15, "fixed": True},
+        "dz": {"value": 0, "fixed": True},
+    }).create_shape()
+
+
+@pytest.fixture
+def tf_winding_pack_xz(tf_centreline):
+    outer = tools.offset_wire(tf_centreline, 1.0)
+    return BluemiraFace([outer, tf_centreline])
+
+
+@pytest.fixture
+def tf_winding_pack_xyz(tf_centreline):
+    half_width = 0.5
+    half_depth = 0.5
+    cross_section = tools.make_polygon(
+        {
+            "x": [3.5, 4.5, 4.5, 3.5],
+            "y": [-half_depth, -half_depth, half_depth, half_depth],
+            "z": 0,
+        },
+        closed=True,
+    )
+    return tools.sweep_shape(cross_section, tf_centreline)
+
+
+def test_tf_winding_pack_xz_meshes(tf_winding_pack_xz):
+    tf_winding_pack_xz.mesh_options = {
+        "lcar": 0.4,
+        "physical_group": "tf_winding_pack_xz",
+    }
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh()(tf_winding_pack_xz, dim=2)
+
+        groups = physical_groups_by_name(2)
+        assert "tf_winding_pack_xz" in groups
+        assert_entities_have_elements([
+            (2, tag) for _, tag in groups["tf_winding_pack_xz"]
+        ])
+
+
+def test_tf_winding_pack_xyz_meshes(tf_winding_pack_xyz):
+    tf_winding_pack_xyz.mesh_options = {
+        "lcar": 0.8,
+        "physical_group": "tf_winding_pack_xyz",
+    }
+
+    with meshing.GmshSession(logfile=None):
+        meshing.Mesh()(tf_winding_pack_xyz, dim=3)
+
+        groups = physical_groups_by_name(3)
+        assert "tf_winding_pack_xyz" in groups
+        assert_entities_have_elements([
+            (3, tag) for _, tag in groups["tf_winding_pack_xyz"]
+        ])
