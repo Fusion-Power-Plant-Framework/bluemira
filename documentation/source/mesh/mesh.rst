@@ -187,11 +187,20 @@ A generated `.msh` file can be converted and imported using the utilities in
 
 .. code-block:: python
 
+    from bluemira.base.file import get_bluemira_path
     from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-    msh_to_xdmf("Mesh.msh", dimensions=(0, 2))
+    msh_to_xdmf(
+        "GeneratedMesh.msh",
+        directory=get_bluemira_path("mesh/test_data", subfolder="tests"),
+        dimensions=(0, 2),
+    )
 
-    mesh, boundaries, subdomains, labels = import_mesh("Mesh", subdomains=True)
+    mesh, boundaries, subdomains, labels = import_mesh(
+        "GeneratedMesh",
+        directory=get_bluemira_path("mesh/test_data", subfolder="tests"),
+        subdomains=True,
+    )
 
 
 .. _Gmsh: https://gmsh.info/
