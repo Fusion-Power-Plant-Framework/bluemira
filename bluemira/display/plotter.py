@@ -46,8 +46,8 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
 
-    from bluemira.base.components import Component
-    from bluemira.geometry.base import BluemiraGeoT
+    from bluemira.base.components import Component, PhysicalComponent
+    from bluemira.geometry.base import BluemiraGeo, BluemiraGeoT
 
 UNIT_LABEL = "[m]"
 X_LABEL = f"x {UNIT_LABEL}"
@@ -312,14 +312,16 @@ class BasePlotter(ABC):
             raise DisplayError(f"{view} is not a valid view")
 
     @property
-    def ax(self) -> Any:
+    def ax(self) -> Axes:
         """
         The axes object
         """
         try:
-            return self._ax
+            return cast("Axes", self._ax)
         except AttributeError:
-            return None
+            _fig, self._ax = plt.subplots()
+
+        return self._ax
 
     @abstractmethod
     def _check_obj(self, obj):
@@ -386,15 +388,15 @@ class BasePlotter(ABC):
         self.ax.set_xlabel(offset.format(X_LABEL))
         self.ax.set_ylabel(offset.format(Y_LABEL))
         if hasattr(self.ax, "set_zlabel"):
-            self.ax.set_zlabel(offset.format(Z_LABEL))
+            self.ax.set_zlabel(offset.format(Z_LABEL))  # type: ignore[ty:call-non-callable]
 
     def plot_2d(
         self,
-        obj: Any,
+        obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
         ax: Axes | None = None,
         *,
         show: bool = True,
-    ) -> Any:
+    ) -> Axes:
         """
         2D plotting method
 
@@ -438,11 +440,11 @@ class BasePlotter(ABC):
 
     def plot_3d(
         self,
-        obj: Any,
+        obj: npt.ArrayLike | Coordinates | BluemiraGeoT | Component,
         ax: Axes | None = None,
         *,
         show: bool = True,
-    ) -> Any:
+    ) -> Axes:
         """
         3D plotting method
 
@@ -507,7 +509,7 @@ class PointsPlotter(BasePlotter):
         """
         return bool(self.options.show_points)
 
-    def _populate_data(self, obj: Any):
+    def _populate_data(self, obj: npt.ArrayLike):
         points = _parse_to_xyz_array(obj).T
         self._data = points
         # apply rotation matrix given by options['view']
@@ -565,8 +567,8 @@ class WirePlotter(BasePlotter):
         """
         return not (not self.options.show_points and not self.options.show_wires)
 
-    def _populate_data(self, obj: Any):
-        new_wire: BluemiraWire = obj.deepcopy()
+    def _populate_data(self, obj: BluemiraWire):
+        new_wire = obj.deepcopy()
         pointsw = new_wire.discretise(
             ndiscr=self.options._options.ndiscr, byedges=self.options._options.byedges
         ).T
@@ -630,7 +632,7 @@ class FacePlotter(BasePlotter):
             and not self.options.show_faces
         )
 
-    def _populate_data(self, obj: Any) -> None:
+    def _populate_data(self, obj: BluemiraFace) -> None:
         data_list = []
         self._wplotters = []
         for boundary in obj._plotting_wires():
@@ -662,10 +664,7 @@ class FacePlotter(BasePlotter):
     def _make_plot_3d(self):
         if self.options.show_faces:
             poly = art3d.Poly3DCollection([self._data], **self.options.face_options)
-            if hasattr(self.ax, "add_collection3d"):
-                self.ax.add_collection3d(poly)
-            else:
-                self.ax.add_collection(poly)
+            self.ax.add_collection3d(poly)  # type: ignore[ty:unresolved-attribute]
 
         for plotter in self._wplotters:
             plotter._ax = self.ax
@@ -723,13 +722,13 @@ class ComponentPlotter(BasePlotter):
                     options = comp.plot_options
             else:
                 options = comp.plot_options
-            shape = getattr(comp, "shape")  # noqa: B009
+            shape = cast("PhysicalComponent", comp).shape
             yield _get_plotter_class(shape)(options, data=shape)
         else:
             for child in comp.children:
                 yield from self._create_plotters(child)
 
-    def _populate_data(self, obj: Any):
+    def _populate_data(self, obj: Component):
         self._cplotters = list(self._create_plotters(obj))
 
     def _make_plot_2d(self):
@@ -752,9 +751,12 @@ class ComponentPlotter(BasePlotter):
 
 
 def _validate_plot_inputs(
-    parts: Any,
-    options: Any,
-) -> tuple[list[Any], list[Any]]:
+    parts: Coordinates | BluemiraGeo | Iterable[BluemiraGeo | Coordinates],
+    options: PlotOptions | Iterable[None] | Iterable[PlotOptions] | None,
+) -> tuple[
+    list[BluemiraGeo | Coordinates],
+    list[None] | list[PlotOptions] | list[PlotOptions | None],
+]:
     """
     Validate the lists of parts and options, applying some default options.
 
@@ -769,9 +771,9 @@ def _validate_plot_inputs(
         Number of options not equal to number of parts
     """
     if isinstance(parts, list):
-        part_list = parts
+        part_list = cast("list[BluemiraGeo | Coordinates]", parts)
     elif isinstance(parts, Iterable) and not isinstance(parts, Coordinates):
-        part_list = list(parts)
+        part_list: list[BluemiraGeo | Coordinates] = list(parts)
     else:
         part_list = [parts]
 
@@ -828,7 +830,7 @@ def plot_2d(
     *,
     show: bool = True,
     **kwargs,
-) -> Any:
+) -> Axes:
     """
     The implementation of the display API for BluemiraGeo parts.
 
@@ -875,7 +877,7 @@ def plot_3d(
     *,
     show: bool = True,
     **kwargs,
-) -> Any:
+) -> Axes:
     """
     The implementation of the display API for BluemiraGeo parts.
 
@@ -974,7 +976,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax: Axes | None = None, *, show: bool = True) -> Any:
+    def plot_2d(self, ax: Axes | None = None, *, show: bool = True) -> Axes:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -984,9 +986,9 @@ class Plottable:
         :
             The axes with the plotted data.
         """
-        return self._plotter.plot_2d(self, ax=ax, show=show)
+        return self._plotter.plot_2d(cast("Component", self), ax=ax, show=show)
 
-    def plot_3d(self, ax: Axes | None = None, *, show: bool = True) -> Any:
+    def plot_3d(self, ax: Axes | None = None, *, show: bool = True) -> Axes:
         """
         Function to 3D plot a component.
 
@@ -995,7 +997,7 @@ class Plottable:
         :
             The axes with the plotted data.
         """
-        return self._plotter.plot_3d(self, ax=ax, show=show)
+        return self._plotter.plot_3d(cast("Component", self), ax=ax, show=show)
 
 
 def _get_ndim(coords: Coordinates) -> int:
@@ -1112,12 +1114,12 @@ def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
             ax.plot([x], [y], [z], color="w")
 
     ax.plot(*coords.xyz, color=kwargs["edgecolor"], lw=kwargs["linewidth"])
+    nv = cast("npt.NDArray", coords.normal_vector)
     if kwargs["fill"]:
         if not coords.is_planar:
             bluemira_warn("Cannot fill plot of non-planar Coordinates.")
             return
-        assert coords.normal_vector is not None  # noqa: S101
-        dcm = rotation_matrix_v1v2(-coords.normal_vector, np.array([0.0, 0.0, 1.0])).T
+        dcm = rotation_matrix_v1v2(-nv, np.array([0.0, 0.0, 1.0])).T
 
         xyz = dcm @ coords.xyz
         center_of_mass = get_centroid_3d(*xyz)
@@ -1136,7 +1138,7 @@ def _plot_3d(coords: Coordinates, ax: Axes | None = None, **kwargs):
         # And now re-transform the matplotlib object to 3-D
         p = BluemiraPathPatch3D(
             poly,
-            -coords.normal_vector,
+            -nv,
             np.array(coords.center_of_mass),
             color=kwargs["facecolor"],
             alpha=kwargs["alpha"],
@@ -1187,7 +1189,7 @@ def plot_2d_mesh_plt(
     nodes: np.ndarray,
     faces: np.ndarray,
     face_groups: np.ndarray | None = None,
-    group_colors: dict[int, Any] | None = None,
+    group_colors: dict[int, str] | None = None,
     cmap: str = "tab20",
     figsize: tuple = (6, 6),
     title: str = "2D Triangular Mesh",
@@ -1239,13 +1241,11 @@ def plot_2d_mesh_plt(
 
         if group_colors is None:
             color_map = plt.get_cmap(cmap, n_groups)
-            colors_dict: dict[Any, Any] = {
+            group_colors: dict[str, tuple[float, float, float, float]] = {
                 group: color_map(i) for i, group in enumerate(unique_groups)
             }
-        else:
-            colors_dict = group_colors
 
-        face_colors = [colors_dict[group] for group in face_groups]
+        face_colors = [group_colors[group] for group in face_groups]
 
         collection = PolyCollection(
             triangles, facecolors=face_colors, edgecolors="k", linewidths=1
