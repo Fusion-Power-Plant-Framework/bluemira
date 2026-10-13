@@ -155,10 +155,10 @@ def code_guard(code_module: str, add_message: str = ""):
 
 
 def create_mapping(
-    in_mappings: Mapping[str, tuple[str, str]] | None = None,
-    out_mappings: Mapping[str, tuple[str, str]] | None = None,
-    io_mappings: Mapping[str, tuple[str, str]] | None = None,
-    none_mappings: Mapping[str, tuple[str, str]] | None = None,
+    in_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    out_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    io_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    none_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
 ) -> dict[str, ParameterMapping]:
     """
     Creates mappings for external codes
@@ -175,7 +175,9 @@ def create_mapping(
     inouts = {"send": True, "recv": True}
     nones = {"send": False, "recv": False}
 
-    mapping_pairs: list[tuple[Mapping[str, tuple[str, str]] | None, dict[str, bool]]] = [
+    mapping_pairs: list[
+        tuple[Mapping[str, tuple[str | tuple[str, ...], str]] | None, dict[str, bool]]
+    ] = [
         (in_mappings, ins),
         (out_mappings, outs),
         (io_mappings, inouts),
