@@ -31,7 +31,7 @@ from bluemira.optimisation._algorithm import (
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.equilibrium import CoilSetMHDState
     from bluemira.optimisation._optimiser import OptimiserResult
     from bluemira.optimisation.typed import ConstraintT
 
@@ -303,7 +303,7 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        eq: Equilibrium,
+        eq: CoilSetMHDState,
         opt_algorithm: AlgorithmType,
         *,
         max_currents: npt.ArrayLike | None = None,
