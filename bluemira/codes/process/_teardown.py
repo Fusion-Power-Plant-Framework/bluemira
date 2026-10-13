@@ -9,7 +9,7 @@ PROCESS teardown functions
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -167,7 +167,7 @@ class Teardown(CodesTeardown):
         return self._mfile_wrapper
 
     def _get_output_or_raise(
-        self, external_outputs: dict[str, Any], parameter_name: str
+        self, external_outputs: dict[str, Any], parameter_name: str | None
     ):
         output_value = external_outputs.get(parameter_name)
 
@@ -176,7 +176,7 @@ class Teardown(CodesTeardown):
 
         # The parameter may have become obsolete,
         # try to update the name and check again
-        updated_parameter_name = update_obsolete_vars(parameter_name)
+        updated_parameter_name = update_obsolete_vars(cast("str", parameter_name))
 
         # no update, not obsolete, just no value found
         if updated_parameter_name == parameter_name:

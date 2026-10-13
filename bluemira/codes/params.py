@@ -10,7 +10,7 @@ from __future__ import annotations
 import abc
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, cast
 
 from bluemira.base.parameter_frame import ParamDictT, ParameterFrame
 from bluemira.codes.error import CodesError
@@ -27,7 +27,7 @@ class MappedParameterFrame(ParameterFrame):
     on how to declare parameters.
     """
 
-    _mappings: dict[str, ParameterMapping] = {}
+    _mappings: dict[str, ParameterMapping]
 
     def __post_init__(self):
         """Ensure mappings are as immutable as we can manage"""
@@ -64,11 +64,14 @@ class MappedParameterFrame(ParameterFrame):
         data = {} if data is None else data
         new_param_dict: dict[str, ParamDictT] = {}
         for bm_map_name, param_map in cls._mappings.items():
-            new_param_dict[bm_map_name] = {
-                "value": data.get(param_map.name),
-                "unit": param_map.unit,
-                "source": source,
-            }
+            new_param_dict[bm_map_name] = cast(
+                "ParamDictT",
+                {
+                    "value": data.get(param_map.name),
+                    "unit": param_map.unit,
+                    "source": source,
+                },
+            )
 
         return cls.from_dict(new_param_dict)
 

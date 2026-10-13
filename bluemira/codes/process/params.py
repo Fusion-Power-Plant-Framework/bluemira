@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from bluemira.base.parameter_frame import Parameter  # noqa: TC001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
@@ -439,33 +439,16 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._defaults.to_invariable()
 
     @classmethod
-    def from_defaults(
-        cls,
-        data: dict | ProcessInputs | None = None,
-        source: str = "bluemira codes default",
-        template: ProcessInputs | None = None,
-        **_kwargs: Any,
-    ) -> ProcessSolverParams:
+    def from_defaults(cls, template: ProcessInputs | None = None) -> ProcessSolverParams:  # type: ignore[ty:invalid-method-override]
         """
         Initialise from defaults
         """  # noqa: DOC201
-        if isinstance(data, ProcessInputs):
-            template = data
-            data = None
         if template is None:
             template = ProcessInputs()
-            self = super().from_defaults(
-                data if data is not None else template.to_dict(),
-                source=source,
-                **_kwargs,
-            )
+            self = super().from_defaults(template.to_dict())
         else:
             self = super().from_defaults(
-                data if data is not None else template.to_dict(),
-                source=f"{NAME} user input template"
-                if source == "bluemira codes default"
-                else source,
-                **_kwargs,
+                template.to_dict(), source=f"{NAME} user input template"
             )
         self.__defaults = template
         return self
