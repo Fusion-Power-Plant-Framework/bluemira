@@ -326,8 +326,6 @@ class Coil(CoilFieldsMixin):
             \\text{area} = 4 \\cdot dx \\cdot dz
 
         """
-        if self.dx is None or self.dz is None:
-            return 0.0
         dx = self.dx or 0.0
         dz = self.dz or 0.0
         return 4 * dx * dz
@@ -514,8 +512,8 @@ class Coil(CoilFieldsMixin):
         """
         return (
             np.inf
-            if np.isnan(self.j_max) or self.dx is None or self.dz is None
-            else get_max_current(self.dx or 0.0, self.dz or 0.0, self.j_max)
+            if np.isnan(self.j_max)
+            else get_max_current(self.dx or 0, self.dz or 0, self.j_max)
         )
 
     def _discretise(self):
