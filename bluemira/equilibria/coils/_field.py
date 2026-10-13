@@ -35,7 +35,6 @@ from bluemira.magnetostatics.semianalytic_2d import (
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils._grouping import CoilGroup
-    from bluemira.equilibria.equilibrium import Equilibrium
 
 
 class CoilGroupFieldsMixin:
@@ -258,7 +257,7 @@ class CoilGroupFieldsMixin:
         """  # noqa: DOC201
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def F(self, eqcoil: CoilGroup | Equilibrium) -> np.ndarray:
+    def F(self, eqcoil: CoilGroup) -> np.ndarray:
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -383,9 +382,8 @@ class CoilGroupFieldsMixin:
                 return self._response_greens(greens_func, x, z)
             if np.all(inside):
                 # Not called for circuits as they will always be a mixture
-                assert semianalytic_func is not None  # noqa: S101
-                return self._response_analytical(semianalytic_func, x, z)
-            return self._combined_control(inside, x, z, greens_func, semianalytic_func)
+                return self._response_analytical(semianalytic_func, x, z)  # type: ignore[ty:invalid-argument-type]
+            return self._combined_control(inside, x, z, greens_func, semianalytic_func)  # type: ignore[ty:invalid-argument-type]
         return self._response_greens(greens_func, x, z)
 
     def _combined_control(
@@ -394,7 +392,7 @@ class CoilGroupFieldsMixin:
         x: float | np.ndarray,
         z: float | np.ndarray,
         greens_func: Callable,
-        semianalytic_func: Callable | None,
+        semianalytic_func: Callable,
     ) -> float | np.ndarray:
         """
         Combine semianalytic and greens function calculation of [psi, Bx, Bz]
@@ -448,7 +446,6 @@ class CoilGroupFieldsMixin:
                 )
 
             if np.any(points):
-                assert semianalytic_func is not None  # noqa: S101
                 response[points, coil] = self._response_analytical(
                     semianalytic_func,
                     x[points],
@@ -538,21 +535,18 @@ class CoilGroupFieldsMixin:
             _quad_x = self._quad_x
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
-        assert _quad_x is not None  # noqa: S101
-        assert _quad_z is not None  # noqa: S101
-        assert _quad_weight is not None  # noqa: S101
 
-        ind = np.nonzero(_quad_weight)
-        out = np.zeros((*x.shape, *_quad_x.shape))
+        ind = np.nonzero(_quad_weight)  # type: ignore[ty:invalid-argument-type]
+        out = np.zeros((*x.shape, *_quad_x.shape))  # type: ignore[ty:unresolved-attribute]
 
         out[*(slice(None) for _ in x.shape), *ind] = greens(
-            _quad_x[ind][np.newaxis],
-            _quad_z[ind][np.newaxis],
+            _quad_x[ind][np.newaxis],  # type: ignore[ty:not-subscriptable]
+            _quad_z[ind][np.newaxis],  # type: ignore[ty:not-subscriptable]
             x[..., np.newaxis],
             z[..., np.newaxis],
         )
 
-        return np.squeeze(np.einsum(self._einsum_str, out, _quad_weight))
+        return np.squeeze(np.einsum(self._einsum_str, out, _quad_weight))  # type: ignore[ty:no-matching-overload]
 
     def _response_analytical(
         self,
@@ -599,19 +593,15 @@ class CoilGroupFieldsMixin:
             coil_z = self.z
             coil_dx = self.dx
             coil_dz = self.dz
-        assert coil_x is not None  # noqa: S101
-        assert coil_z is not None  # noqa: S101
-        assert coil_dx is not None  # noqa: S101
-        assert coil_dz is not None  # noqa: S101
 
         return np.squeeze(
             semianalytic(
-                coil_x[np.newaxis],
-                coil_z[np.newaxis],
+                coil_x[np.newaxis],  # type: ignore[ty:not-subscriptable]
+                coil_z[np.newaxis],  # type: ignore[ty:not-subscriptable]
                 x[..., np.newaxis],
                 z[..., np.newaxis],
-                d_xc=coil_dx[np.newaxis],
-                d_zc=coil_dz[np.newaxis],
+                d_xc=coil_dx[np.newaxis],  # type: ignore[ty:not-subscriptable]
+                d_zc=coil_dz[np.newaxis],  # type: ignore[ty:not-subscriptable]
             )
         )
 
@@ -1102,7 +1092,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         x: float | np.ndarray,
         z: float | np.ndarray,
         greens_func: Callable,
-        semianalytic_func: Callable | None,
+        semianalytic_func: Callable,
     ) -> float | np.ndarray:
         """
         Combine semianalytic and greens function calculation of magnetic field
@@ -1139,7 +1129,6 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
             )
 
         if np.any(points):
-            assert semianalytic_func is not None  # noqa: S101
             response[points] = self._response_analytical(
                 semianalytic_func, x_arr[points], z_arr[points]
             )
