@@ -45,6 +45,8 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    import dolfinx
+
     from bluemira.codes._typing import TransportSolver
     from bluemira.codes.interface import BaseRunMode
     from bluemira.codes.plasmod.api._solver import Solver
@@ -54,6 +56,7 @@ if TYPE_CHECKING:
     )
     from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
     from bluemira.geometry.parameterisations import GeometryParameterisation
+    from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -361,8 +364,7 @@ def solve_transport_fixed_boundary(
         coarse_mesh = mesh
 
         gs_solver.set_mesh(mesh)
-        assert gs_solver.mesh is not None  # noqa: S101
-        points = gs_solver.mesh.geometry.x
+        points = cast("dolfinx.mesh.Mesh", gs_solver.mesh).geometry.x
         psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_inner_iter):
@@ -410,8 +412,7 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
-            assert gs_solver.psi is not None  # noqa: S101
-            psi2d = gs_solver.psi(points)
+            psi2d = cast("BluemiraFemFunction", gs_solver.psi)(points)
 
             eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
                 psi2d, ord=2
@@ -423,7 +424,9 @@ def solve_transport_fixed_boundary(
             bluemira_print(f"Error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
             psi2d_0 = psi2d
             if refine:
-                magnetic_axis = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
+                magnetic_axis = find_magnetic_axis(
+                    cast("BluemiraFemFunction", gs_solver.psi), gs_solver.mesh
+                )
                 magnetic_axis = np.array([magnetic_axis[0], magnetic_axis[1], 0])
                 mesh = refine_mesh(coarse_mesh, magnetic_axis, distance, num_levels)
                 bluemira_print(f"Mesh refined on magnetic axis {magnetic_axis[:2]}")
@@ -468,7 +471,6 @@ def solve_transport_fixed_boundary(
     )
 
     if gif:
-        assert folder is not None  # noqa: S101
         make_gif(str(folder), figname, clean=not debug)
     return equilibrium
 

@@ -49,18 +49,22 @@ class InDat:
         self.filename = filename
         self.data = {}
 
-    def add_parameter(self, key, value):
+    def add_parameter(self, key, value):  # noqa:D102
         self.data[key] = value
 
-    def write_in_dat(self, output_filename=None):
+    def write_in_dat(self, output_filename=None):  # noqa:D102
         pass
 
 
 OBS_VARS = {}
 
 try:
-    from process.core.io.in_dat import InDat  # type: ignore # noqa: F401
-    from process.core.io.mfile import MFile  # type: ignore # noqa: F401
+    from process.core.io.in_dat import (
+        InDat,  # type: ignore[ty:invalid-assignment] # noqa: F401
+    )
+    from process.core.io.mfile import (
+        MFile,  # type: ignore[ty:invalid-assignment]  # noqa: F401
+    )
     from process.core.io.obsolete_vars import OBS_VARS
     from process.models.physics.impurity_radiation import (
         ImpurityDataHeader,

@@ -19,17 +19,17 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Protocol
 from unittest import mock
 
-import FreeCAD  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
-import BOPTools.JoinAPI  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
-import BOPTools.SplitAPI  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
-import DraftGeomUtils  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
-import FreeCADGui  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
-import Part  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+import FreeCAD  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import BOPTools.JoinAPI  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import BOPTools.SplitAPI  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import DraftGeomUtils  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import FreeCADGui  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import Part  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
 import numpy as np
-from FreeCAD import (  # ty: ignore[unresolved-import] # type: ignore[import-not-found]
+from FreeCAD import (  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
     Base,
 )
 from matplotlib import colors
@@ -1643,7 +1643,7 @@ class _CADType:
     def __contains__(self, value: str) -> bool:
         return value.casefold() in self._casefolded
 
-    def __eq__(self, value: object) -> bool:
+    def __eq__(self, value: object | str | _CADType) -> bool:
         if isinstance(value, str):
             return value.casefold() in self._casefolded
         if isinstance(value, _CADType):
@@ -1770,7 +1770,7 @@ class CADFileType(enum.Enum):
     Z88_FEM_MESH_2 = _CADType("i1.txt", "feminout.importZ88Mesh")
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | str) -> CADFileType:
         if isinstance(value, str):
             if value.upper() in cls.__members__:
                 return cls[value.upper()]

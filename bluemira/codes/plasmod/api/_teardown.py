@@ -8,6 +8,7 @@ Defines the 'Teardown' stage for the plasmod solver.
 """
 
 from pathlib import Path
+from typing import cast
 
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.codes.error import CodesError
@@ -104,8 +105,7 @@ class Teardown(CodesTeardown):
             raise CodesError(
                 f"Could not read plasmod output file: {os_error}."
             ) from os_error
-        if self.outputs.i_flag is not None:
-            self._raise_on_plasmod_error_code(self.outputs.i_flag)
+        self._raise_on_plasmod_error_code(cast("int", self.outputs.i_flag))
         self._update_params_with_outputs(vars(self.outputs))
 
     @staticmethod

@@ -268,8 +268,8 @@ class Solver(CodesSolver):
             ]:
                 lpatches.append(patches.Patch(color=colour, label=comp[0]))
 
-        ax.set_xlim((0.0, float(np.ceil(radial_build["Radial Build"][-1][-1]))))
-        ax.set_ylim((-width * 0.5, width * 0.5))
+        ax.set_xlim(0.0, np.ceil(radial_build["Radial Build"][-1][-1]))
+        ax.set_ylim(-width * 0.5, width * 0.5)
         ax.set_xticks([*list(ax.get_xticks()), R_0])
         if ax.axes is not None:
             ax.axes.set_axisbelow(b=False)
