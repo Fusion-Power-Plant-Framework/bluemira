@@ -126,8 +126,9 @@ class CodesSetup(CodesTask):
 
         Returns
         -------
-        Keys are external code parameter names, values are the input
-        values for those parameters.
+        :
+            Keys are external code parameter names, values are the input
+            values for those parameters.
 
         Raises
         ------
@@ -253,7 +254,6 @@ class CodesTeardown(CodesTask):
             if not (mapping.recv or recv_all):
                 continue
             # out name is set name if it's not provided
-            assert mapping.out_name is not None  # noqa: S101
             output_value = self._get_output_or_raise(external_outputs, mapping.out_name)
             if mapping.unit is None:
                 bluemira_warn(
@@ -270,7 +270,7 @@ class CodesTeardown(CodesTask):
         return mapped_outputs
 
     def _get_output_or_raise(
-        self, external_outputs: dict[str, Any], parameter_name: str
+        self, external_outputs: dict[str, Any], parameter_name: str | None
     ):
         output_value = external_outputs.get(parameter_name)
         if output_value is None:

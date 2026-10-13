@@ -8,16 +8,15 @@
 Utility functions for interacting with external codes
 """
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess  # noqa: S404
 import threading
-from collections.abc import Callable, Mapping
 from enum import Enum
 from functools import wraps
-from pathlib import Path
-from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -28,6 +27,11 @@ from bluemira.base.look_and_feel import (
 from bluemira.codes.error import CodesError
 from bluemira.codes.params import ParameterMapping
 from bluemira.utilities.tools import get_module
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+    from pathlib import Path
+    from types import ModuleType
 
 
 class Model(Enum):
@@ -50,7 +54,7 @@ class Model(Enum):
         bluemira_print(infostr)
 
     @classmethod
-    def _missing_(cls, value: object) -> Any:
+    def _missing_(cls, value: object | str) -> Model:
         if isinstance(value, str):
             try:
                 return cls[value]
@@ -151,10 +155,10 @@ def code_guard(code_module: str, add_message: str = ""):
 
 
 def create_mapping(
-    in_mappings: Mapping[str, Any] | None = None,
-    out_mappings: Mapping[str, Any] | None = None,
-    io_mappings: Mapping[str, Any] | None = None,
-    none_mappings: Mapping[str, Any] | None = None,
+    in_mappings: Mapping[str, tuple[str, str]] | None = None,
+    out_mappings: Mapping[str, tuple[str, str]] | None = None,
+    io_mappings: Mapping[str, tuple[str, str]] | None = None,
+    none_mappings: Mapping[str, tuple[str, str]] | None = None,
 ) -> dict[str, ParameterMapping]:
     """
     Creates mappings for external codes
@@ -171,7 +175,7 @@ def create_mapping(
     inouts = {"send": True, "recv": True}
     nones = {"send": False, "recv": False}
 
-    mapping_pairs: list[tuple[Mapping[str, Any] | None, dict[str, bool]]] = [
+    mapping_pairs: list[tuple[Mapping[str, tuple[str, str]] | None, dict[str, bool]]] = [
         (in_mappings, ins),
         (out_mappings, outs),
         (io_mappings, inouts),

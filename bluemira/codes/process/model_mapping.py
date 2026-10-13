@@ -1,9 +1,3 @@
-from dataclasses import dataclass, field
-from itertools import cycle
-from typing import Any
-
-from bluemira.codes.utilities import Model
-
 # SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
 # SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
@@ -13,6 +7,12 @@ from bluemira.codes.utilities import Model
 """
 PROCESS model mappings
 """
+
+from dataclasses import dataclass, field
+from itertools import cycle
+from typing import cast
+
+from bluemira.codes.utilities import Model
 
 
 class classproperty:  # noqa: N801
@@ -49,7 +49,7 @@ class ModelSelection:
     _value_: int
     requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
-    _switches: Any = field(repr=False, default=None)
+    _switches: list[str] | None = field(repr=False, default=None)
 
 
 class PROCESSModel(ModelSelection, Model):
@@ -63,7 +63,7 @@ class PROCESSModel(ModelSelection, Model):
         PROCESS switch name
         """
         raise NotImplementedError(
-            f"{self.__class__.__name__} has no 'switch_name' property."
+            f"{type(self).__name__} has no 'switch_name' property."
         )
 
 
@@ -1151,8 +1151,8 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
         PROCESS switch name
         """
         if self._switches is None:
-            self._switches = cycle(["i_hcd_primary", "i_hcd_secondary"])
-        return next(self._switches)
+            self._switches = cycle(["i_hcd_primary", "i_hcd_secondary"])  # type:ignore[ty:invalid-assignment]
+        return next(cast("cycle", self._switches))
 
     FENSTER_LH = 1
     ICYCCD = 2

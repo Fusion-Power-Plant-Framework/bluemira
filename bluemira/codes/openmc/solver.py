@@ -14,7 +14,6 @@ from operator import attrgetter
 from pathlib import Path
 from typing import (
     TYPE_CHECKING,
-    Any,
     Literal,
     Protocol,
     Required,
@@ -61,6 +60,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matproplib.conditions import OperationalConditions
 
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
         NeutronicsReactor,
     )
@@ -194,7 +194,7 @@ class FigureData:
 class OpenMCBaseSetup(CodesSetup, ABC):
     """Setup task for OpenMC solver"""
 
-    tally_mats: openmc.Materials
+    tally_mats: Sequence[openmc.Material]
     tally_geom: openmc.Geometry | CellStage
     universe: openmc.Universe
 
@@ -255,7 +255,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
     def _create_tallies(self, tally_function: TallyFunctionType) -> openmc.Tallies:
         tallies_list = []
-        for name, scores, filters in tally_function(self.tally_mats, self.tally_geom):
+        for name, scores, filters in tally_function(self.tally_mats, self.tally_geom):  # type: ignore[ty:no-matching-overload]
             tally = openmc.Tally(name=name)
             tally.scores = [scores]
             if filters is not None:
@@ -395,12 +395,12 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         )
 
     @property
-    def tally_mats(self) -> Sequence[openmc.Material]:
+    def tally_mats(self) -> Sequence[openmc.Material]:  # type: ignore[ty:invalid-property-type-override]
         """Tally materials"""
         return list(self.mat_list(self.materials))
 
     @property
-    def tally_geom(self) -> CellStage:
+    def tally_geom(self) -> CellStage:  # type: ignore[ty:invalid-property-type-override]
         """Tally geometry"""
         return self.cell_arrays
 
@@ -453,12 +453,12 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         return universe, geometry
 
     @property
-    def tally_mats(self) -> list[openmc.Material]:
+    def tally_mats(self) -> list[openmc.Material]:  # type: ignore[ty:invalid-property-type-override]
         """Tally materials"""
         return self.materials
 
     @property
-    def tally_geom(self) -> openmc.Geometry:
+    def tally_geom(self) -> openmc.Geometry:  # type: ignore[ty:invalid-property-type-override]
         """Tally geometry"""
         return self.geometry
 
@@ -670,9 +670,9 @@ class TallyFunctionType(Protocol):
 class OpenMCNeutronicsSolver(CodesSolver, ABC):
     """OpenMC 2D neutronics solver"""
 
-    params: OpenMCNeutronicsSolverParams
-    setup_cls: type[Any]
-    teardown_cls: type[Any]
+    params: OpenMCNeutronicsSolverParams  # type:ignore [ty:invalid-attribute-override]
+    setup_cls: type[OpenMCBaseSetup]
+    teardown_cls: type[CodesTeardown]
     _setup: OpenMCBaseSetup
 
     name: str = OPENMC_NAME
@@ -682,7 +682,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 
     def __init__(
         self,
-        params: dict | ParameterFrame,
+        params: ParameterFrameLike,
         build_config: OpenMCBuildConfig,
         eq: Equilibrium,
         source: NeutronSourceCreator,
@@ -816,15 +816,15 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
             self.eq,
             self.source,
             self.materials,
-            self.cell_arrays,
+            self.cell_arrays,  # type: ignore[ty:too-many-positional-arguments]
             self.neutronics_model,
         )
 
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(
-            self.cell_arrays,
-            self.neutronics_model,
-            self.out_path,  # type: ignore[ty:invalid-argument-type]
+            self.cell_arrays,  # type: ignore[ty:invalid-argument-type]
+            self.neutronics_model,  # type: ignore[ty:invalid-argument-type]
+            self.out_path,
             self.name,
         )
 
@@ -883,7 +883,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
             self.eq,
             self.source,
             self.materials,
-            self.dagmc_model_path,
+            self.dagmc_model_path,  # type: ignore[ty:too-many-positional-arguments]
         )
 
         self._run = self.run_cls(self.out_path, self.name)
