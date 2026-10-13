@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from itertools import combinations
 from math import factorial
+from typing import cast
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -690,7 +691,6 @@ def _separate_psi_contributions(
     """
     excluded_coils = list(set(eq.coilset.name) - set(th_params.th_coil_names))
 
-    assert eq.plasma is not None  # noqa: S101
     if collocation is not None:
         plasma_psi_cl = eq.plasma.psi(collocation.x, collocation.z)
         coilset_psi_cl = eq.coilset.psi(collocation.x, collocation.z)
@@ -1024,7 +1024,6 @@ def toroidal_harmonic_approximation(
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
         eq, th_params, collocation
     )
-    assert collocation_psi is not None  # noqa: S101
 
     mask = _get_plasma_mask(
         eq=eq, th_params=th_params, psi_norm=psi_norm, plasma_mask=plasma_mask
@@ -1061,7 +1060,7 @@ def toroidal_harmonic_approximation(
                 collocation,
                 cos_m_chosen,
                 sin_m_chosen,
-                collocation_psi,
+                cast("np.ndarray", collocation_psi),
                 mask,
                 true_coilset_psi,
             )

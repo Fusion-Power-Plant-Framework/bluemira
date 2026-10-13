@@ -10,7 +10,7 @@ Harmonics constraint functions.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
@@ -72,15 +72,12 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     ):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
-            tol_list = [max(smallest_tol, 10**x) for x in ord_mag]
+            tol_list = np.array([max(smallest_tol, 10**x) for x in ord_mag])
             tolerance_arr = np.nan_to_num(
-                np.array(tol_list),
-                nan=smallest_tol,
-                posinf=smallest_tol,
-                neginf=smallest_tol,
+                tol_list, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
             )
         elif is_num(tolerance):
-            tolerance_arr = float(tolerance) * np.ones(len(ref_harmonics))
+            tolerance_arr = tolerance * np.ones(len(ref_harmonics))
         else:
             tolerance_arr = np.asarray(tolerance)
             if len(tolerance_arr) != len(ref_harmonics):
@@ -178,9 +175,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             value=self._args["value"],
             scale=self._args["scale"],
         )
-        f_constraint.constraint_type = (
-            "inequality" if self.constraint_type == "inequality" else "equality"
-        )
+        f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
     def plot(self, ax):
@@ -312,8 +307,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         if a_cos is None and a_sin is None:
             return np.array([])
         if a_cos is None:
-            assert a_sin is not None  # noqa: S101
-            return a_sin
+            return cast("np.ndarray", a_sin)
         if a_sin is None:
             return a_cos
         a_mat = np.append(a_cos, a_sin, axis=0)
@@ -336,9 +330,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             value=self._args["value"],
             scale=self._args["scale"],
         )
-        f_constraint.constraint_type = (
-            "inequality" if self.constraint_type == "inequality" else "equality"
-        )  # type: ignore[assignment]
+        f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
     def plot(self, ax):

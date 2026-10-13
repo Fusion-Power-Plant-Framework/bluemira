@@ -30,11 +30,13 @@ from bluemira.geometry.coordinates import interpolate_points
 from bluemira.utilities.tools import abs_rel_difference, is_num
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.equilibrium import CoilSetMHDState, Equilibrium
 
 
-def _get_dummy_equilibrium(equilibrium: Equilibrium):
+def _get_dummy_equilibrium(equilibrium: CoilSetMHDState):
     """
     Returns
     -------
@@ -79,7 +81,9 @@ class UpdateableConstraint(ABC):
         self._name = value
 
     @abstractmethod
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
+    def prepare(
+        self, equilibrium: CoilSetMHDState, *, I_not_dI=False, fixed_coils=False
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -91,7 +95,7 @@ class UpdateableConstraint(ABC):
         """
 
     @abstractmethod
-    def evaluate(self, equilibrium: Equilibrium):
+    def evaluate(self, equilibrium: CoilSetMHDState):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -167,7 +171,7 @@ class FieldConstraints(UpdateableConstraint):
 
     def prepare(
         self,
-        equilibrium: Equilibrium,
+        equilibrium: CoilSetMHDState,
         *,
         I_not_dI: bool = False,
         fixed_coils: bool = False,
@@ -204,7 +208,7 @@ class FieldConstraints(UpdateableConstraint):
             np.asarray(coilset.Bz_response(self.x, self.z, control=True)),
         )
 
-    def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -286,7 +290,7 @@ class CoilFieldConstraints(FieldConstraints):
 
     def prepare(
         self,
-        equilibrium: Equilibrium,
+        equilibrium: CoilSetMHDState,
         *,
         I_not_dI: bool = False,
         fixed_coils: bool = False,
@@ -373,7 +377,7 @@ class CoilForceConstraints(UpdateableConstraint):
 
     def prepare(
         self,
-        equilibrium: Equilibrium,
+        equilibrium: CoilSetMHDState,
         *,
         I_not_dI: bool = False,
         fixed_coils: bool = False,
@@ -398,7 +402,7 @@ class CoilForceConstraints(UpdateableConstraint):
         return coilset.control_F(coilset, control=True)
 
     @staticmethod
-    def evaluate(equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -412,7 +416,7 @@ class CoilForceConstraints(UpdateableConstraint):
         current = cc.current
         non_zero = np.nonzero(current)[0]
         if non_zero.size:
-            fp[non_zero] = cc.F(equilibrium)[non_zero] / current[non_zero][:, None]
+            fp[non_zero] = cc.F(cc)[non_zero] / current[non_zero][:, None]
         return fp
 
     def f_constraint(self) -> CoilForceConstraintFunction:
@@ -460,7 +464,7 @@ class MagneticConstraint(UpdateableConstraint):
 
     def prepare(
         self,
-        equilibrium: Equilibrium,
+        equilibrium: CoilSetMHDState,
         *,
         I_not_dI: bool = False,
         fixed_coils: bool = False,
@@ -478,7 +482,7 @@ class MagneticConstraint(UpdateableConstraint):
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
-    def update_target(self, equilibrium: Equilibrium):
+    def update_target(self, equilibrium: CoilSetMHDState):
         """
         Update the target value of the magnetic constraint.
         """
@@ -573,7 +577,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         self._args["value"] = constraint_value
 
     @abstractmethod
-    def update_target(self, equilibrium: Equilibrium):
+    def update_target(self, equilibrium: CoilSetMHDState):
         """
         Update the target value of the magnetic constraint.
         """
@@ -616,7 +620,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             coilset.Bz_response(self.x, self.z, control=True),
         ])
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -683,7 +687,7 @@ class VerticalFieldConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.Bz_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -742,7 +746,7 @@ class RadialFieldConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.Bx_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -801,7 +805,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.psi_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -861,7 +865,7 @@ class DPsiDxConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dx_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -921,7 +925,7 @@ class DPsiDzConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dz_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -988,7 +992,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             - coilset.psi_response(self.ref_x, self.ref_z, control=True)
         )
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -999,7 +1003,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         return np.asarray(equilibrium.psi(self.x, self.z))
 
-    def update_target(self, equilibrium: Equilibrium):
+    def update_target(self, equilibrium: CoilSetMHDState):
         """
         We need to update the target value, as it is a relative constraint.
         """
@@ -1057,7 +1061,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.psi_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -1106,14 +1110,14 @@ class MagneticConstraintSet:
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
+    eq: Equilibrium
+    A: npt.NDArray
+    target: npt.NDArray
+    background: npt.NDArray
     __slots__ = ("A", "background", "coilset", "constraints", "eq", "target", "w")
 
     def __init__(self, constraints: list[MagneticConstraint]):
         self.constraints = constraints
-        self.eq = None
-        self.A = None
-        self.target = None
-        self.background = None
 
     def __call__(
         self,
@@ -1137,7 +1141,7 @@ class MagneticConstraintSet:
                 constraint.update_target(equilibrium)
 
         # Re-build control response matrix
-        if not fixed_coils or (fixed_coils and self.A is None):
+        if not fixed_coils or (fixed_coils and not hasattr(self, "A")):
             self.build_control_matrix()
             self.build_target()
 
@@ -1164,7 +1168,6 @@ class MagneticConstraintSet:
         weighted_b:
             b scaled by the weight matrix
         """
-        assert self.A is not None  # noqa: S101
         weights = self.w
         weighted_a = weights[:, np.newaxis] * self.A
         weighted_b = weights * self.b
@@ -1216,7 +1219,6 @@ class MagneticConstraintSet:
         self.background = np.zeros(len(self))
 
         i = 0
-        assert self.eq is not None  # noqa: S101
         for constraint in self.constraints:
             n = len(constraint)
             self.background[i : i + n] = np.squeeze(constraint.evaluate(self.eq))
@@ -1227,8 +1229,6 @@ class MagneticConstraintSet:
         """
         The b vector of target - background values.
         """
-        assert self.target is not None  # noqa: S101
-        assert self.background is not None  # noqa: S101
         return self.target - self.background
 
     def update_psi_boundary(self, psi_bndry: float):
