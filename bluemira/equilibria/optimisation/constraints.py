@@ -865,7 +865,7 @@ class DPsiDxConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dx_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:invalid-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -925,7 +925,7 @@ class DPsiDzConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dz_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: CoilSetMHDState) -> np.ndarray:
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:invalid-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -1110,7 +1110,7 @@ class MagneticConstraintSet:
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
-    eq: Equilibrium
+    eq: CoilSetMHDState
     A: npt.NDArray
     target: npt.NDArray
     background: npt.NDArray
@@ -1121,7 +1121,7 @@ class MagneticConstraintSet:
 
     def __call__(
         self,
-        equilibrium: Equilibrium,
+        equilibrium: CoilSetMHDState,
         *,
         I_not_dI: bool = False,
         fixed_coils: bool = False,

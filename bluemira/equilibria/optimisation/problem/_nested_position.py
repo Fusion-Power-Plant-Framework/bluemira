@@ -23,7 +23,7 @@ the method used to map the coilset object to the state vector
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -37,6 +37,7 @@ from bluemira.equilibria.optimisation.problem.base import (
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 if TYPE_CHECKING:
+    from bluemira.equilibria import Equilibrium
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
@@ -125,7 +126,7 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
         *,
         keep_history: bool = False,
         check_constraints: bool = False,
-        **kwargs,
+        **_kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
@@ -270,8 +271,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             entry = max(list(debug.keys()))
             value = opt_result.f_x
             sub_opt_prob.eq._remap_greens()
-            sub_opt_prob.eq._clear_OX_points()
-            lcfs = sub_opt_prob.eq.get_LCFS()
+            cast("Equilibrium", sub_opt_prob.eq)._clear_OX_points()
+            lcfs = cast("Equilibrium", sub_opt_prob.eq).get_LCFS()
             debug[entry].append([lcfs, value])
 
     def sub_opt_objective(
@@ -357,7 +358,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         verbose: bool = False,
         keep_history: bool = False,
         check_constraints: bool = False,
-        **kwargs,
+        **_kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP
@@ -403,6 +404,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         # Clean up state of Equilibrium objects
         for sub_opt in self.sub_opt_problems:
             sub_opt.eq._remap_greens()
-            sub_opt.eq._clear_OX_points()
+            cast("Equilibrium", sub_opt.eq)._clear_OX_points()
 
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
