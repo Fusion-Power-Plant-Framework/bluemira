@@ -69,7 +69,7 @@ class CoilsetOptimiserResult:
             coilset=coilset,
             f_x=opt_result.f_x,
             n_evals=opt_result.n_evals,
-            history=opt_result.history or [],
+            history=opt_result.history,
             constraints_satisfied=opt_result.constraints_satisfied,
         )
 
