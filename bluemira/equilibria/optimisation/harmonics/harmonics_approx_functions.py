@@ -861,7 +861,6 @@ def plot_psi_comparision(
     """
     tot_psi_org = eq.psi(grid.x, grid.z)
     vac_psi_org = eq.coilset.psi(grid.x, grid.z)
-    assert eq.plasma is not None  # noqa: S101
     tot_psi_app = eq.plasma.psi(grid.x, grid.z) + vac_psi_app
 
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
