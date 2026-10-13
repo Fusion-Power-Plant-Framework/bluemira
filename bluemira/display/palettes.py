@@ -11,7 +11,7 @@ Colour palettes
 from __future__ import annotations
 
 from itertools import cycle, zip_longest
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, cast, overload
 
 import numpy as np
 import seaborn as sns
@@ -33,8 +33,8 @@ class ColorPalette:
         Dictionary of color names to any object matplotlib will recognise as a color
     """
 
-    def __init__(self, palette_map: dict[str, Any]):
-        self._dict: dict[str, Any] = palette_map
+    def __init__(self, palette_map: dict[str, ColorType | ColorPalette]):
+        self._dict: dict[str, ColorType | ColorPalette] = palette_map
         colour_list = []
         for v in palette_map.values():
             if isinstance(v, str | tuple):
@@ -64,7 +64,7 @@ class ColorPalette:
         """
         return next(self._cycle)
 
-    def __setitem__(self, idx_or_key: int | str, value: Any):
+    def __setitem__(self, idx_or_key: int | str, value: ColorType | ColorPalette):
         """
         Set an item in the ColorPalette by index or key
 
@@ -124,11 +124,14 @@ class ColorPalette:
             a row of hex colors.
         """
         _hex_val = self.as_hex()
-        _hex: list[Any] = [_hex_val] if isinstance(_hex_val, str) else list(_hex_val)
+        _hex = cast(
+            "list[str] | list[list[str]]",
+            [_hex_val] if isinstance(_hex_val, str) else list(_hex_val),
+        )
         if any(isinstance(h, list) for h in _hex):
             for i, h in enumerate(_hex):
                 if isinstance(h, str):
-                    _hex[i] = [h]
+                    _hex[i] = [h]  # type: ignore[ty:invalid-assignment]
             _hex = list(map(list, zip_longest(*_hex, fillvalue="  ")))
         return _hex
 
@@ -190,7 +193,7 @@ class ColorPalette:
             a representation of the ColorPalette
         """
         try:
-            g_ipy = globals().get("get_ipython", lambda: None)()
+            g_ipy = get_ipython()  # type: ignore[ty:unresolved-reference]
             if "terminal" in str(type(g_ipy)) or g_ipy is None:
                 return self._repr_colour_str(self._hex_horizontal()).strip(" \n")
         except NameError:
@@ -210,7 +213,7 @@ class ColorPalette:
         """
         return len(self._palette)
 
-    def as_hex(self) -> str | list[str | list[Any]] | list[list[str]]:
+    def as_hex(self) -> list[str] | list[list[str]] | str:
         """
 
         Returns
@@ -229,7 +232,10 @@ class ColorPalette:
             hex_list.append(colors.to_hex(self._palette))
         else:
             hex_list.append(self._palette)
-        return hex_list[0] if len(hex_list) == 1 else hex_list
+        return cast(
+            "list[str] | list[list[str]] | str",
+            hex_list[0] if len(hex_list) == 1 else hex_list,
+        )
 
 
 def background_colour_string(hexstring: str, sqlen=2) -> str:
@@ -249,10 +255,10 @@ def background_colour_string(hexstring: str, sqlen=2) -> str:
 
 
 def make_rgb_alpha(
-    rgb: tuple[float, ...],
+    rgb: tuple[float, float, float],
     alpha: float,
-    background_rgb: tuple[float, ...] = (1.0, 1.0, 1.0),
-) -> tuple[float, ...]:
+    background_rgb: tuple[float, float, float] = (1.0, 1.0, 1.0),
+) -> ColorType:
     """
     Adds a transparency to a RGB color tuple
 
@@ -269,9 +275,12 @@ def make_rgb_alpha(
     -------
     The RGB tuple accounting for transparency
     """
-    return tuple(
-        alpha * c1 + (1 - alpha) * c2
-        for (c1, c2) in zip(rgb, background_rgb, strict=False)
+    return cast(
+        "tuple[float, float, float]",
+        tuple(
+            alpha * c1 + (1 - alpha) * c2
+            for (c1, c2) in zip(rgb, background_rgb, strict=False)
+        ),
     )
 
 
