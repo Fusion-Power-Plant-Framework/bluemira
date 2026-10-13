@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.diagnostics import EqDiagnosticOptions
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import CoilSetMHDState, Equilibrium
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
 from bluemira.equilibria.optimisation.problem.base import (
@@ -53,7 +53,7 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
 
     def __init__(
         self,
-        eq: Equilibrium,
+        eq: CoilSetMHDState,
         max_currents: npt.ArrayLike | None = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: dict[str, float | int] | None = None,
@@ -61,7 +61,7 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         constraints: list[UpdateableConstraint] | None = None,
         *,
         plot: bool | None = False,
-        reference_eq: Equilibrium | None = None,
+        reference_eq: CoilSetMHDState | None = None,
         diag_ops: EqDiagnosticOptions | None = None,
     ):
         super().__init__(
@@ -77,6 +77,10 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         # TODO @geograham: Should we have diagnostic plotting as an option for all COPs?
         # 3798
         if self.plotting_enabled:
+            if not isinstance(self.eq, Equilibrium) or (
+                not isinstance(reference_eq, Equilibrium) and reference_eq is not None
+            ):
+                raise NotImplementedError
             eq_copy = deepcopy(self.eq)
             eq_copy.label = "Reference"
             self.comp_plot = EquilibriumComparisonPlotter(
@@ -92,7 +96,7 @@ class MinimalCurrentCOP(EqCoilsetOptimisationProblem):
         fixed_coils: bool = True,
         keep_history: bool = False,
         check_constraints: bool = False,
-        **kwargs,
+        **_kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Run the optimisation problem
