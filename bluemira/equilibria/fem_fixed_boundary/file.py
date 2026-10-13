@@ -112,7 +112,7 @@ def save_fixed_boundary_to_file(
     p_prime_func = _interpolate_profile(psi_norm, p_prime)
     ff_prime_func = _interpolate_profile(psi_norm, ff_prime)
 
-    if equilibrium.R_0 is None:
+    if not hasattr(equilibrium, "R_0"):
         bluemira_warn(
             "No explicit R_0 information provided when saving fixed boundary equilibrium"
             " to file. Taking the average of the boundary radial coordinate extrema."
@@ -120,7 +120,7 @@ def save_fixed_boundary_to_file(
         R_0 = grid.x_mid
     else:
         R_0 = equilibrium.R_0
-    if equilibrium.B_0 is None:
+    if not hasattr(equilibrium, "B_0"):
         bluemira_warn(
             "No explicit B_0 information provided when saving fixed boundary equilibrium"
             " to file. Setting to 0!"
