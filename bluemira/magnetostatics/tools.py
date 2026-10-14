@@ -240,7 +240,7 @@ def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
 
 
 def _quad_helper(
-    func: Callable,
+    func: Callable | LowLevelCallable,
     lower: float,
     upper: float,
     args: tuple[float, ...],
@@ -313,7 +313,7 @@ def integrate(
 
     # 1. Cheap path: try normal quad first.
     try:
-        return _quad_helper(func, lower, upper, args, sign)
+        return _quad_helper(func, lower, upper, tuple(args), sign)
     except (
         IntegrationWarning,
         ValueError,
@@ -356,7 +356,7 @@ def integrate(
                 func,
                 aa,
                 bb,
-                args,
+                tuple(args),
                 sign=1.0,
                 limit=200,
             )
