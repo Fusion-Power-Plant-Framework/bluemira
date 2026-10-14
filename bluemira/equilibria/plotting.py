@@ -570,7 +570,7 @@ class EquilibriumPlotterMixin:
             levels=levels,
             cmap=cmap,
             zorder=Zorder.PSI.value,
-            linewidths=PLOT_DEFAULTS["contour"]["linewidths"],
+            linewidths=kwargs.pop("linewidths", PLOT_DEFAULTS["contour"]["linewidths"]),
         )
 
     def plot_plasma_current(self, *, smooth: bool = True, **kwargs):
@@ -668,6 +668,8 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         plasma=True,
         show_ox=True,
         field: EqBPlotParam = EqBPlotParam.PSI,
+        nlevels: int = PLOT_DEFAULTS["psi"]["nlevels"],
+        linewidths: float = PLOT_DEFAULTS["contour"]["linewidths"],
     ):
         super().__init__(ax)
         self.eq = equilibrium
@@ -700,7 +702,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
             self.op_psi = np.amin(self.psi)
 
         if field not in EqBPlotParam.FIELD:
-            self.plot_psi()
+            self.plot_psi(nlevels=nlevels, linewidth=linewidths)
         elif field is EqBPlotParam.BP:
             self.plot_B_component()
         elif field is EqBPlotParam.BT:
