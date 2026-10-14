@@ -114,7 +114,7 @@ def _get_symmetric_coils(
     rtol:
         Relative tolerance used when comparing coil values,
         rtol = 1.e-5 is the default value for np.allclose.
-        The values for the secondary coil in the pair will be
+        The values for the secondary coil in the pair will be5
         set to be equal to the primary coil values if they are
         within rtol.
 
@@ -132,19 +132,18 @@ def _get_symmetric_coils(
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
-    sym_stack = [[coil_matrix[0], 1, [0]]]
+    sym_stack: list[tuple[list[float], int, list[int]]] = [(coil_matrix[0], 1, [0])]
     for i in range(1, len(x)):
         coil = coil_matrix[i]
 
         for j, sym_coil in enumerate(sym_stack):
             if np.allclose(coil, sym_coil[0], rtol=rtol):
-                coil = sym_coil[0]
-                sym_stack[j][1] += 1
+                sym_stack[j][1] += 1  # type: ignore[ty:invalid-assignment]
                 sym_coil[2].append(i)
                 break
 
         else:
-            sym_stack.append([coil, 1, [i]])
+            sym_stack.append((coil, 1, [i]))
 
     coil_data, count, _inds = np.array(sym_stack, dtype=object).T
 

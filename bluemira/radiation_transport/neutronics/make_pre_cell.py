@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from itertools import pairwise
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast, overload
 
 import numpy as np
 from numpy import typing as npt
@@ -38,7 +38,11 @@ from bluemira.radiation_transport.neutronics.wires import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from matplotlib.axes import Axes
+
+    from bluemira.geometry.shell import BluemiraShell
 
 CCW_90 = np.array([[0, 0, -1], [0, 1, 0], [1, 0, 0]])
 CW_90 = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
@@ -163,19 +167,22 @@ def calculate_new_circle(
     new_circle_info:
         An instance of CircleInfo representing the new (scaled) arc of circle.
     """
+    old_pts = np.asarray(old_circle_info[:2], dtype=float)
     new_chord_vector = np.diff(new_points, axis=0)
-    old_chord_vector = np.diff(old_circle_info[:2], axis=0)
+    old_chord_vector = np.diff(old_pts, axis=0)
     scale_factor = np.linalg.norm(new_chord_vector) / np.linalg.norm(old_chord_vector)
-    new_radius = old_circle_info.radius * scale_factor
-    possible_centers = find_equidistant_point(*new_points[:, ::2], new_radius)
+    new_radius = float(old_circle_info.radius * scale_factor)
+    possible_centers = find_equidistant_point(
+        new_points[0, ::2], new_points[1, ::2], new_radius
+    )
     center1, center2 = np.insert(possible_centers, 1, 0, axis=1)
 
-    old_chord_mid_point = np.mean(old_circle_info[:2], axis=0)
+    old_chord_mid_point = np.mean(old_pts, axis=0)
     old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
     # chord should stay on the same side of the center after transformation.
     new_center = pick_higher_point(center1, center2, old_radius_vector)
 
-    return CircleInfo(*new_points, new_center, new_radius)
+    return CircleInfo(new_points[0], new_points[1], new_center, new_radius)
 
 
 class PreCell:
@@ -255,7 +262,9 @@ class PreCell:
         Revolved 180° instead of 360° for easier viewing
         """
         if not hasattr(self, "_half_solid"):
-            self._half_solid = BluemiraSolid(revolve_shape(self.outline))
+            self._half_solid = BluemiraSolid(
+                cast("BluemiraShell", revolve_shape(self.outline))
+            )
         return self._half_solid
 
     @property
@@ -285,7 +294,9 @@ class PreCell:
     def blanket_half_solid(self) -> BluemiraSolid:
         """Get the volume of the blanket"""
         if not hasattr(self, "_blanket_half_solid"):
-            self._blanket_half_solid = BluemiraSolid(revolve_shape(self.blanket_outline))
+            self._blanket_half_solid = BluemiraSolid(
+                cast("BluemiraShell", revolve_shape(self.blanket_outline))
+            )
         return self._blanket_half_solid
 
     def plot_2d(self, *args, **kwargs) -> Axes:
@@ -332,7 +343,7 @@ class PreCell:
         if not hasattr(self, "_normal_to_interior"):
             if isinstance(self.interior_wire, Coordinates):
                 self._normal_to_interior = get_bisection_line(
-                    *self.cell_walls.reshape([4, 2])
+                    *self.cell_walls.cell_walls.reshape([4, 2])
                 )[1]
             else:
                 interior_vector = self.cell_walls.starts[0] - self.cell_walls.starts[1]
@@ -433,7 +444,7 @@ class PreCellArray:
             raise GeometryError(f"{self} must have convex exterior wires!")
 
     @property
-    def volumes(self) -> tuple[float]:
+    def volumes(self) -> tuple[tuple[float, float], ...]:
         """Create the iterable of volumes on demand."""
         if not hasattr(self, "_volumes"):
             # Immutable property, hence wrapped in tuple.
@@ -552,7 +563,11 @@ class PreCellArray:
         """Number of pre cells"""  # noqa: DOC201
         return len(self.pre_cells)
 
-    def __getitem__(self, index_or_slice) -> list[PreCell] | PreCell:
+    @overload
+    def __getitem__(self, index_or_slice: int) -> PreCell: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[PreCell]: ...
+    def __getitem__(self, index_or_slice: int | slice) -> list[PreCell] | PreCell:
         """Get pre cell"""  # noqa: DOC201
         return self.pre_cells[index_or_slice]
 
@@ -691,7 +706,9 @@ class DivertorPreCell:
         Revolved 180° instead of 360° for easier viewing
         """
         if not hasattr(self, "_half_solid"):
-            self._half_solid = BluemiraSolid(revolve_shape(self.outline))
+            self._half_solid = BluemiraSolid(
+                cast("BluemiraShell", revolve_shape(self.outline))
+            )
         return self._half_solid
 
     def offset_interior_wire(self, thickness: float) -> WireInfoList:
@@ -730,12 +747,14 @@ class DivertorPreCell:
 
         # assumed normalised
         cw_dir = choose_direction(
-            self.cw_wall[0].tangents[0], self.cw_wall.end_point, self.cw_wall.start_point
+            np.asarray(self.cw_wall[0].tangents[0], dtype=float),
+            np.asarray(self.cw_wall.end_point, dtype=float),
+            np.asarray(self.cw_wall.start_point, dtype=float),
         )
         ccw_dir = choose_direction(
-            self.ccw_wall[0].tangents[1],
-            self.ccw_wall.start_point,
-            self.ccw_wall.end_point,
+            np.asarray(self.ccw_wall[0].tangents[1], dtype=float),
+            np.asarray(self.ccw_wall.start_point, dtype=float),
+            np.asarray(self.ccw_wall.end_point, dtype=float),
         )
 
         cw_norm = CCW_90 @ cw_dir
@@ -839,7 +858,17 @@ class DivertorPreCellArray:
         """Number of pre cells"""  # noqa: DOC201
         return len(self.pre_cells)
 
-    def __getitem__(self, index_or_slice) -> list[DivertorPreCell] | DivertorPreCell:
+    def __iter__(self) -> Iterator[DivertorPreCell]:
+        """Iterator for DivertorPreCellArray"""
+        return iter(self.pre_cells)
+
+    @overload
+    def __getitem__(self, index_or_slice: int) -> DivertorPreCell: ...
+    @overload
+    def __getitem__(self, index_or_slice: slice) -> list[DivertorPreCell]: ...
+    def __getitem__(
+        self, index_or_slice: int | slice
+    ) -> list[DivertorPreCell] | DivertorPreCell:
         """Get pre cell"""  # noqa: DOC201
         return self.pre_cells[index_or_slice]
 

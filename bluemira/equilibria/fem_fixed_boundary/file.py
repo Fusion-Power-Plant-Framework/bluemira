@@ -11,7 +11,7 @@ File saving for fixed boundary equilibrium
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from eqdsk import EQDSKInterface
@@ -50,13 +50,18 @@ def _fpol_profile(ffprime, psi_norm, psi_mag, fvac):
     return fpol
 
 
+FileFormat = Literal[
+    "eqdsk", "geqdsk", "json", "imas", "EQDSK", "GEQDSK", "JSON", "IMAS"
+]
+
+
 def save_fixed_boundary_to_file(
     file_path: str,
     file_header_name: str,
     equilibrium: FixedBoundaryEquilibrium,
     nx: int,
     nz: int,
-    file_format: str = "json",
+    file_format: FileFormat = "json",
     json_kwargs: dict | None = None,
 ) -> EQDSKInterface:
     """
@@ -107,7 +112,7 @@ def save_fixed_boundary_to_file(
     p_prime_func = _interpolate_profile(psi_norm, p_prime)
     ff_prime_func = _interpolate_profile(psi_norm, ff_prime)
 
-    if equilibrium.R_0 is None:
+    if not hasattr(equilibrium, "R_0"):
         bluemira_warn(
             "No explicit R_0 information provided when saving fixed boundary equilibrium"
             " to file. Taking the average of the boundary radial coordinate extrema."
@@ -115,7 +120,7 @@ def save_fixed_boundary_to_file(
         R_0 = grid.x_mid
     else:
         R_0 = equilibrium.R_0
-    if equilibrium.B_0 is None:
+    if not hasattr(equilibrium, "B_0"):
         bluemira_warn(
             "No explicit B_0 information provided when saving fixed boundary equilibrium"
             " to file. Setting to 0!"
@@ -147,7 +152,7 @@ def save_fixed_boundary_to_file(
         pprime=p_prime,
         psi=psi,
         psibdry=0,
-        psimag=psi_mag,
+        psimag=float(psi_mag),
         xbdry=xbdry,
         xc=np.array([]),
         xcentre=grid.x_mid,

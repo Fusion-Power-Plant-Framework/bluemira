@@ -10,7 +10,10 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import numpy as np
 
@@ -31,8 +34,6 @@ from bluemira.magnetostatics.semianalytic_2d import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from bluemira.equilibria.coils._grouping import CoilGroup
 
 
@@ -42,6 +43,17 @@ class CoilGroupFieldsMixin:
 
     Add field calculation mechanics to coilgroups
     """
+
+    x: Any
+    z: Any
+    dx: Any
+    dz: Any
+    current: Any
+    _current_radius: Any
+    _einsum_str: str
+    _quad_x: Any
+    _quad_z: Any
+    _quad_weighting: Any
 
     __slots__ = (
         "_Bx_analytic",
@@ -312,8 +324,8 @@ class CoilGroupFieldsMixin:
 
         # External field
         mask_ext = np.nonzero(~same_pos)
-        Bz[mask_ext] = coil_grp.Bz_response(x, z)[mask_ext]
-        Bx[mask_ext] = coil_grp.Bx_response(x, z)[mask_ext]
+        Bz[mask_ext] = np.asarray(coil_grp.Bz_response(x, z))[mask_ext]
+        Bx[mask_ext] = np.asarray(coil_grp.Bx_response(x, z))[mask_ext]
 
         # Final response: 1 x B
         return 2 * np.pi * x[:, None, None] * np.stack([Bz, -Bx], axis=-1)
@@ -329,7 +341,7 @@ class CoilGroupFieldsMixin:
         x: float | np.ndarray,
         z: float | np.ndarray,
         greens_func: Callable,
-        semianalytic_func: Callable,
+        semianalytic_func: Callable | None,
         *,
         disable_analytic: bool = False,
     ) -> float | np.ndarray:
@@ -370,8 +382,8 @@ class CoilGroupFieldsMixin:
                 return self._response_greens(greens_func, x, z)
             if np.all(inside):
                 # Not called for circuits as they will always be a mixture
-                return self._response_analytical(semianalytic_func, x, z)
-            return self._combined_control(inside, x, z, greens_func, semianalytic_func)
+                return self._response_analytical(semianalytic_func, x, z)  # type: ignore[ty:invalid-argument-type]
+            return self._combined_control(inside, x, z, greens_func, semianalytic_func)  # type: ignore[ty:invalid-argument-type]
         return self._response_greens(greens_func, x, z)
 
     def _combined_control(
@@ -406,6 +418,8 @@ class CoilGroupFieldsMixin:
         :
             Combined control response
         """
+        x = np.asarray(x)
+        z = np.asarray(z)
         response = np.zeros_like(inside, dtype=float)
         for coil, (points, qx, qz, qw, cx, cz, cdx, cdz) in enumerate(
             zip(
@@ -446,7 +460,7 @@ class CoilGroupFieldsMixin:
         return np.squeeze(response)
 
     def _points_inside_coil(
-        self, x: float | np.array, z: float | np.array, *, atol: float = X_TOLERANCE
+        self, x: float | np.ndarray, z: float | np.ndarray, *, atol: float = X_TOLERANCE
     ) -> np.ndarray:
         """
         Determine which points lie inside or on the coil boundary.
@@ -522,17 +536,17 @@ class CoilGroupFieldsMixin:
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
 
-        ind = np.nonzero(_quad_weight)
-        out = np.zeros((*x.shape, *_quad_x.shape))
+        ind = np.nonzero(_quad_weight)  # type: ignore[ty:invalid-argument-type]
+        out = np.zeros((*x.shape, *_quad_x.shape))  # type: ignore[ty:unresolved-attribute]
 
         out[*(slice(None) for _ in x.shape), *ind] = greens(
-            _quad_x[ind][np.newaxis],
-            _quad_z[ind][np.newaxis],
+            _quad_x[ind][np.newaxis],  # type: ignore[ty:not-subscriptable]
+            _quad_z[ind][np.newaxis],  # type: ignore[ty:not-subscriptable]
             x[..., np.newaxis],
             z[..., np.newaxis],
         )
 
-        return np.squeeze(np.einsum(self._einsum_str, out, _quad_weight))
+        return np.squeeze(np.einsum(self._einsum_str, out, _quad_weight))  # type: ignore[ty:no-matching-overload]
 
     def _response_analytical(
         self,
@@ -582,12 +596,12 @@ class CoilGroupFieldsMixin:
 
         return np.squeeze(
             semianalytic(
-                coil_x[np.newaxis],
-                coil_z[np.newaxis],
+                coil_x[np.newaxis],  # type: ignore[ty:not-subscriptable]
+                coil_z[np.newaxis],  # type: ignore[ty:not-subscriptable]
                 x[..., np.newaxis],
                 z[..., np.newaxis],
-                d_xc=coil_dx[np.newaxis],
-                d_zc=coil_dz[np.newaxis],
+                d_xc=coil_dx[np.newaxis],  # type: ignore[ty:not-subscriptable]
+                d_zc=coil_dz[np.newaxis],  # type: ignore[ty:not-subscriptable]
             )
         )
 
@@ -602,14 +616,25 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     __slots__ = ()
 
-    def psi(
+    _control_ind: Any
+
+    def _sum(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        values: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
+        raise NotImplementedError
+
+    def psi(
+        self,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
+        *,
+        sum_coils: bool = True,
+        control: bool = False,
+    ) -> float | np.ndarray:
         """
         Psi of Coilset
 
@@ -633,12 +658,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dx(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         dPsi/dx of Coilset
 
@@ -662,12 +687,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dz(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         dPsi/dz of Coilset
 
@@ -691,12 +716,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bx(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Bx of Coilset
 
@@ -720,12 +745,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bz(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Bz of Coilset
 
@@ -745,16 +770,18 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         :
             Vertical magnetic field
         """
-        return self._sum(super().Bz(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(
+            np.asarray(super().Bz(x, z)), sum_coils=sum_coils, control=control
+        )
 
     def dB_d(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = True,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         dB_d of Coilset
 
@@ -777,12 +804,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def psi_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit psi of Coilset
 
@@ -808,12 +835,12 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dx_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit dpsi/dx of Coilset
 
@@ -834,17 +861,19 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             dPsi/dx response
         """
         return self._sum(
-            super().dpsi_dx_response(x, z), sum_coils=sum_coils, control=control
+            np.asarray(super().dpsi_dx_response(x, z)),
+            sum_coils=sum_coils,
+            control=control,
         )
 
     def dpsi_dz_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit dpsi/dz of Coilset
 
@@ -865,17 +894,19 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             dPsi/dz response
         """
         return self._sum(
-            super().dpsi_dz_response(x, z), sum_coils=sum_coils, control=control
+            np.asarray(super().dpsi_dz_response(x, z)),
+            sum_coils=sum_coils,
+            control=control,
         )
 
     def Bx_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit Bx of Coilset
 
@@ -895,16 +926,20 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         :
             Bx response
         """
-        return self._sum(super().Bx_response(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(
+            np.asarray(super().Bx_response(x, z)),
+            sum_coils=sum_coils,
+            control=control,
+        )
 
     def Bz_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit Bz of Coilset
 
@@ -924,16 +959,20 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         :
             Bz response
         """
-        return self._sum(super().Bz_response(x, z), sum_coils=sum_coils, control=control)
+        return self._sum(
+            np.asarray(super().Bz_response(x, z)),
+            sum_coils=sum_coils,
+            control=control,
+        )
 
     def dB_d_response(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         *,
         sum_coils: bool = False,
         control: bool = False,
-    ) -> np.ndarray:
+    ) -> float | np.ndarray:
         """
         Unit dB_d of Coilset
 
@@ -977,22 +1016,22 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
         """
         if control:
             inds = self._control_ind
-            inds2 = coil_grp._control_ind
+            inds2 = getattr(coil_grp, "_control_ind", slice(None))
         else:
             inds = inds2 = slice(None)
 
         return super().control_F(coil_grp)[inds][:, inds2]
 
     def _stored_greens(
-        self, bgreen: np.ndarray, *, sum_coils: bool = True, control: bool = False
-    ) -> np.ndarray:
+        self, green: float | np.ndarray, *, sum_coils: bool = True, control: bool = False
+    ) -> float | np.ndarray:
         """
         Uses the Greens mapped dict to quickly compute the Bx,Bz or psi
 
         Parameters
         ----------
-        bgreen:
-            The unit Bx response
+        green:
+            The unit response
         sum_coils:
             sum over coils
         control:
@@ -1004,7 +1043,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             Cached Greens response
         """
         return self._sum(
-            super()._stored_greens(bgreen), sum_coils=sum_coils, control=control
+            super()._stored_greens(green), sum_coils=sum_coils, control=control
         )
 
 
@@ -1018,7 +1057,7 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
     __slots__ = ()
 
     def _points_inside_coil(
-        self, x: float | np.array, z: float | np.array, *, atol: float = X_TOLERANCE
+        self, x: float | np.ndarray, z: float | np.ndarray, *, atol: float = X_TOLERANCE
     ) -> np.ndarray:
         """
         Determine which points lie inside or on the coil boundary.
@@ -1050,11 +1089,11 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
     def _combined_control(
         self,
         inside: np.ndarray,
-        x: np.ndarray,
-        z: np.ndarray,
+        x: float | np.ndarray,
+        z: float | np.ndarray,
         greens_func: Callable,
         semianalytic_func: Callable,
-    ):
+    ) -> float | np.ndarray:
         """
         Combine semianalytic and greens function calculation of magnetic field
 
@@ -1081,15 +1120,17 @@ class CoilFieldsMixin(CoilGroupFieldsMixin):
         """
         response = np.zeros(inside.shape[:-1])
         points = inside[..., 0]
+        x_arr = np.asarray(x)
+        z_arr = np.asarray(z)
 
         if np.any(~points):
             response[~points] = self._response_greens(
-                greens_func, x[~points], z[~points]
+                greens_func, x_arr[~points], z_arr[~points]
             )
 
         if np.any(points):
             response[points] = self._response_analytical(
-                semianalytic_func, x[points], z[points]
+                semianalytic_func, x_arr[points], z_arr[points]
             )
 
         return response

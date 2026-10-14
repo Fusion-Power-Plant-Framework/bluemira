@@ -471,7 +471,7 @@ class PolyhedralPrismCurrentSource(
         self._halflength = 0.5 * length
         self._check_angle_values(alpha, beta, bypass_endcap_error, endcap_warning)
         m_breadth = np.max(np.abs(xs_coordinates.x))
-        self._check_raise_self_intersection(length, m_breadth, alpha, beta)
+        self._check_raise_self_intersection(float(length), m_breadth, alpha, beta)
 
         # Normalised direction cosine matrix
         self._dcm = np.array([t_vec, ds / length, normal], dtype=float)
@@ -496,7 +496,13 @@ class PolyhedralPrismCurrentSource(
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
 
-    def _check_angle_values(self, alpha, beta, bypass_endcap_error, endcap_warning):
+    def _check_angle_values(
+        self,
+        alpha: float,
+        beta: float,
+        bypass_endcap_error: bool | None = False,  # noqa: FBT001, FBT002
+        endcap_warning: bool | None = False,  # noqa: FBT001, FBT002
+    ):
         """
         Check that end-cap angles are acceptable.
 
@@ -548,7 +554,7 @@ class PolyhedralPrismCurrentSource(
         if not np.allclose(origin, centroid):
             dx, dy, dz = centroid
             self._xs.translate((-dx, -dy, -dz))
-        self._xs.set_ccw([0, 1, 0])
+        self._xs.set_ccw(np.array([0, 1, 0]))
 
     @process_xyz_array
     def field(
@@ -645,7 +651,7 @@ class PolyhedralPrismCurrentSource(
         )
 
         # Points for plotting only
-        points = [np.vstack(lower_points), np.vstack(upper_points)]
+        points = [lower_points, upper_points]
         # Lines between corners
         points.extend([
             np.vstack([lower_points[i], upper_points[i]]) for i in range(n_rect_faces)
@@ -799,7 +805,7 @@ def _field_bottura(
             face_normal, face_points[i], n_sides[i], point
         )
         B += face_normal * surface_integral
-    return -MU_0_4PI * np.cross(current_direction, B)
+    return np.asarray(-MU_0_4PI * np.cross(current_direction, B), dtype=np.float64)
 
 
 @nb.jit(nopython=True, cache=True)

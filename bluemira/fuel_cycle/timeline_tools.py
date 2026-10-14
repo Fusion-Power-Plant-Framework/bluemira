@@ -9,10 +9,12 @@ Distribution and timeline utilities
 """
 
 import abc
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
+from typing import overload
 
 import numpy as np
-from numpy.random import BitGenerator, SeedSequence
+import numpy.typing as npt
+from numpy.random import Generator, SeedSequence
 from scipy.optimize import brentq
 
 from bluemira.base.constants import RNGSeeds
@@ -29,7 +31,13 @@ __all__ = [
 ]
 
 
-def f_gompertz(t: float, a: float, b: float, c: float) -> float:
+@overload
+def f_gompertz(t: float, a: float, b: float, c: float) -> float: ...
+@overload
+def f_gompertz(t: np.ndarray, a: float, b: float, c: float) -> np.ndarray: ...
+def f_gompertz(
+    t: float | np.ndarray, a: float, b: float, c: float
+) -> np.ndarray | float:
     """
     Gompertz sigmoid function parameterisation.
 
@@ -54,7 +62,7 @@ def histify(x: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
 
 def generate_lognorm_distribution(
-    n: int, integral: float, sigma: float, rng: BitGenerator
+    n: int, integral: float, sigma: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate a log-norm distribution for a given standard deviation of the
@@ -90,7 +98,7 @@ def generate_lognorm_distribution(
 
 
 def generate_truncnorm_distribution(
-    n: int, integral: float, sigma: float, rng: BitGenerator
+    n: int, integral: float, sigma: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate a truncated normal distribution for a given standard deviation.
@@ -121,7 +129,7 @@ def generate_truncnorm_distribution(
 
 
 def generate_exponential_distribution(
-    n: int, integral: float, lambdda: float, rng: BitGenerator
+    n: int, integral: float, lambdda: float, rng: Generator
 ) -> np.ndarray:
     """
     Generate an exponential distribution for a given rate parameter.
@@ -155,7 +163,7 @@ class LearningStrategy(abc.ABC):
 
     @abc.abstractmethod
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -182,7 +190,7 @@ class UniformLearningStrategy(LearningStrategy):
 
     @staticmethod
     def generate_phase_availabilities(
-        lifetime_op_availability: float, op_durations: Iterable[float]
+        lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -208,17 +216,17 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
     each operational phase.
     """
 
-    def __init__(self, operational_availabilities: Iterable[float]):
+    def __init__(self, operational_availabilities: Sequence[float]):
         """
         Parameters
         ----------
         operational_availabilities:
             Operational availabilities to prescribe
         """
-        self.operational_availabilities = operational_availabilities
+        self.operational_availabilities = np.asarray(operational_availabilities)
 
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: Sequence[float]
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
@@ -283,7 +291,9 @@ class GompertzLearningStrategy(LearningStrategy):
         self.max_op_a = max_op_availability
         super().__init__()
 
-    def _f_op_availabilities(self, t, x, arg_dates):
+    def _f_op_availabilities(
+        self, t: np.ndarray, x: float, arg_dates: np.ndarray
+    ) -> np.ndarray:
         a_ops = self.min_op_a + f_gompertz(
             t, self.max_op_a - self.min_op_a, x, self.learn_rate
         )
@@ -293,7 +303,7 @@ class GompertzLearningStrategy(LearningStrategy):
         ])
 
     def generate_phase_availabilities(
-        self, lifetime_op_availability: float, op_durations: Iterable[float]
+        self, lifetime_op_availability: float, op_durations: npt.ArrayLike
     ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.

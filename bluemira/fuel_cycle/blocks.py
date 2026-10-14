@@ -8,6 +8,10 @@
 Fuel cycle model fundamental building blocks
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Protocol, cast
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -19,6 +23,9 @@ from bluemira.fuel_cycle.tools import (
     linear_bathtub,
     sqrt_bathtub,
 )
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 
 class FuelCycleFlow:
@@ -65,6 +72,16 @@ class FuelCycleFlow:
 
         fractions.append(1 - sum(fractions))
         return np.array([fraction * self.out_flow for fraction in fractions])
+
+
+class ModelMapProtocol(Protocol):
+    """FuelCylcleComponent model type"""
+
+    def __call__(
+        self, flow: npt.NDArray, t: npt.NDArray, *args, **kwargs
+    ) -> tuple[npt.NDArray, npt.NDArray, float, float]:
+        """Call signature"""
+        ...
 
 
 class FuelCycleComponent:
@@ -125,12 +142,11 @@ class FuelCycleComponent:
         self.summing = summing
         # Set 0 flow default
         self.flow = np.zeros(len(t))
-        self.m_out = None
-        self.inventory = None
+        self.m_out: np.ndarray | None = None
+        self.inventory: np.ndarray | None = None
         self.sum_in = 0
         self.decayed = 0
-
-        model_map = {
+        model_map: dict[str, ModelMapProtocol] = {
             "fountaintub": fountain_bathtub,
             "fountain": fountain,
             "bathtub": linear_bathtub,
@@ -138,7 +154,7 @@ class FuelCycleComponent:
         }
         args_map = {
             "fountaintub": (self.eta, self.max_inventory, self.min_inventory),
-            "fountain": self.min_inventory,
+            "fountain": (self.min_inventory,),
             "bathtub": (self.eta, self.bci, self.max_inventory),
             "sqrt_bathtub": (self.eta, self.bci, self.max_inventory, _testing),
         }
@@ -180,4 +196,4 @@ class FuelCycleComponent:
         if self.m_out is None:
             bluemira_warn("Need to run component first.")
             self.run()
-        return self.m_out
+        return cast("np.ndarray", self.m_out)

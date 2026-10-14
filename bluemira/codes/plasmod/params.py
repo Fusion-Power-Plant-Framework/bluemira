@@ -10,6 +10,7 @@ Parameter definitions for Plasmod.
 from copy import deepcopy
 from dataclasses import asdict, dataclass
 from enum import Enum
+from typing import Self
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
@@ -121,10 +122,10 @@ class PlasmodSolverParams(MappedParameterFrame):
     @property
     def defaults(self) -> dict[str, float | Enum]:
         """Defaults for Plasmod"""
-        return self._defaults.to_dict()
+        return asdict(self._defaults)
 
     @classmethod
-    def from_defaults(cls) -> MappedParameterFrame:
+    def from_defaults(cls) -> Self:  # type: ignore[ty:invalid-method-override]
         """
         Initialise from defaults
         """

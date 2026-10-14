@@ -13,7 +13,7 @@ import subprocess  # noqa: S404
 from pathlib import Path
 
 import freecad  # noqa: F401
-import FreeCAD
+import FreeCAD  # type: ignore[ty:unresolved-import]
 
 from bluemira.base.look_and_feel import bluemira_warn
 

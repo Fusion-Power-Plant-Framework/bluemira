@@ -99,7 +99,7 @@ class ZeroDNeutronicsModel:
                 "Neutron fractions sum to less than 1.0, putting the change in auxiliary"
                 " neutron power."
             )
-            self.params.update_from_dict({"f_n_aux": diff}, source=self._source)
+            self.params.update_values({"f_n_aux": diff}, source=self._source)
 
     def run(self) -> ZeroDNeutronicsResult:
         """

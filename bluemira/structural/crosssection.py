@@ -472,7 +472,7 @@ class AnalyticalCompositeCrossSection(CrossSection):
         if len(materials) != n:
             raise StructuralError(f"Need {n} materials for this geometry.")
 
-        outer = AnalyticalCrossSection(geometry.boundary)
+        outer = AnalyticalCrossSection(BluemiraFace(geometry.boundary[0]))
         inners = []
         for wire in geometry.boundary[1:]:
             face = BluemiraFace(wire)

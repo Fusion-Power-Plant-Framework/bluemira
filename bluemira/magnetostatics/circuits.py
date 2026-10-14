@@ -9,6 +9,7 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
+from typing import Any
 
 import numpy as np
 import numpy.typing as npt
@@ -43,8 +44,8 @@ class PlanarCircuit(SourceGroup):
         current: float,
         source_class: type[TrapezoidalPrismCurrentSource]
         | type[PolyhedralPrismCurrentSource],
-        xs_args: npt.NDArray[np.float64],
-    ) -> list[TrapezoidalPrismCurrentSource | PolyhedralPrismCurrentSource]:
+        xs_args: tuple[Any, ...],
+    ) -> list[Any]:
         """
         Generate the sources of a given class along the discretised shape
 
@@ -57,6 +58,7 @@ class PlanarCircuit(SourceGroup):
         betas, alphas = self._get_betas_alphas(shape)
 
         normal = shape.normal_vector
+        assert normal is not None
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
@@ -141,7 +143,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._transform_to_xz(deepcopy(shape))
         self._t_shape = shape
         closed = shape.closed
-        self._clockwise = shape.check_ccw((0, 1, 0))
+        self._clockwise = shape.check_ccw(np.array([0, 1, 0]))
         d_l = np.diff(shape.T, axis=0)
         midpoints = shape.T[:-1, :] + 0.5 * d_l
         betas = (
@@ -176,13 +178,16 @@ class PlanarCircuit(SourceGroup):
         :
             Tranformed coordinates.
         """
-        normal_vector = shape.normal_vector
+        coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
+        normal_vector = coords.normal_vector
+        assert normal_vector is not None
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
-            return shape
-        shape.translate(-np.array(shape.center_of_mass))
+            return coords
+        com = coords.center_of_mass
+        coords.translate((-float(com[0]), -float(com[1]), -float(com[2])))
 
         rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
-        return Coordinates(rot_mat @ shape._array)
+        return Coordinates(rot_mat @ coords._array)
 
     def _get_half_angle(
         self,
@@ -335,13 +340,15 @@ class HelmholtzCage(SourceGroup):
     The plane at 0 degrees is set to be between two circuits.
     """
 
-    def __init__(self, circuit: CurrentSource, n_TF: int):
+    def __init__(self, circuit: CurrentSource | SourceGroup, n_TF: int):
         self.n_TF = n_TF
         sources = self._pattern(circuit)
 
         super().__init__(sources)
 
-    def _pattern(self, circuit: CurrentSource) -> list[CurrentSource]:
+    def _pattern(
+        self, circuit: CurrentSource | SourceGroup
+    ) -> list[CurrentSource | SourceGroup]:
         """
         Pattern the CurrentSource axisymmetrically.
 

@@ -8,15 +8,15 @@
 Utility functions for interacting with external codes
 """
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess  # noqa: S404
 import threading
-from collections.abc import Callable
 from enum import Enum
 from functools import wraps
-from types import ModuleType
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -27,6 +27,11 @@ from bluemira.base.look_and_feel import (
 from bluemira.codes.error import CodesError
 from bluemira.codes.params import ParameterMapping
 from bluemira.utilities.tools import get_module
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Mapping
+    from pathlib import Path
+    from types import ModuleType
 
 
 class Model(Enum):
@@ -49,17 +54,18 @@ class Model(Enum):
         bluemira_print(infostr)
 
     @classmethod
-    def _missing_(cls, value):
-        try:
-            return cls[value]
-        except KeyError:
-            raise ValueError(
-                f"{cls.__name__} has no type {value}."
-                f" Select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object | str) -> Model:
+        if isinstance(value, str):
+            try:
+                return cls[value]
+            except KeyError:
+                pass
+        raise ValueError(
+            f"{cls.__name__} has no type {value}. Select from {(*cls._member_names_,)}"
+        )
 
 
-def read_mock_json_or_raise(file_path: str, name: str) -> dict[str, float]:
+def read_mock_json_or_raise(file_path: str | Path, name: str) -> dict[str, float]:
     """
     Read json file or raise CodesError
 
@@ -149,8 +155,11 @@ def code_guard(code_module: str, add_message: str = ""):
 
 
 def create_mapping(
-    in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
-) -> dict[str, Any]:
+    in_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    out_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    io_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+    none_mappings: Mapping[str, tuple[str | tuple[str, ...], str]] | None = None,
+) -> dict[str, ParameterMapping]:
     """
     Creates mappings for external codes
 
@@ -160,18 +169,22 @@ def create_mapping(
         A mapping from bluemira names to an external code ParameterMapping
 
     """
-    mappings = {}
+    mappings: dict[str, ParameterMapping] = {}
     ins = {"send": True, "recv": False}
     outs = {"send": False, "recv": True}
     inouts = {"send": True, "recv": True}
     nones = {"send": False, "recv": False}
 
-    for puts, sr in [
-        [in_mappings, ins],
-        [out_mappings, outs],
-        [io_mappings, inouts],
-        [none_mappings, nones],
-    ]:
+    mapping_pairs: list[
+        tuple[Mapping[str, tuple[str | tuple[str, ...], str]] | None, dict[str, bool]]
+    ] = [
+        (in_mappings, ins),
+        (out_mappings, outs),
+        (io_mappings, inouts),
+        (none_mappings, nones),
+    ]
+
+    for puts, sr in mapping_pairs:
         if puts is not None:
             for bm_key, (ec_key, unit) in puts.items():
                 if isinstance(ec_key, tuple):
@@ -271,8 +284,8 @@ def run_subprocess(
     return_code: int
         The return code of the subprocess.
     """
-    stdout = LogPipe("print", flush_callable, flush_printer=flush_printer)
-    stderr = LogPipe("error", flush_callable)
+    stdout: Any = LogPipe("print", flush_callable, flush_printer=flush_printer)
+    stderr: Any = LogPipe("error", flush_callable)
 
     kwargs["cwd"] = run_directory
     kwargs.pop("shell", None)  # Protect against user input

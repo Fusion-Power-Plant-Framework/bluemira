@@ -376,10 +376,10 @@ class NloptOptimiser(Optimiser):
             self._opt.set_min_objective(self._objective.call)
 
     def _set_termination_conditions(
-        self, opt_conditions: Mapping[str, int | float]
+        self, opt_conditions: Mapping[str, int | float | None]
     ) -> None:
         """Validate and set the termination conditions."""
-        self._opt_conditions = NLOptConditions(**opt_conditions)
+        self._opt_conditions = NLOptConditions(**opt_conditions)  # type: ignore[ty:invalid-argument-type]
         if self._opt_conditions.ftol_abs:
             self._opt.set_ftol_abs(self._opt_conditions.ftol_abs)
         if self._opt_conditions.ftol_rel:
@@ -435,9 +435,10 @@ def _check_bounds_vals(algorithm: AlgorithmType, bounds: npt.ArrayLike) -> None:
     OptimisationParametersError
         Invalid bounds for the specified algorithm.
     """
-    if algorithm in NLOPT_GLOBAL and np.inf in bounds:
+    alg = Algorithm(algorithm)
+    if alg in NLOPT_GLOBAL and np.isinf(np.asarray(bounds)).any():
         raise OptimisationParametersError(
-            f"Global optimisation algorithms, such as {algorithm.name}, "
+            f"Global optimisation algorithms, such as {alg.name}, "
             "do not support infinite bounds. Please specify finite bounds."
         )
 

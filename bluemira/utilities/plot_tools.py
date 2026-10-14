@@ -29,6 +29,7 @@ from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.contour import ContourSet
 
@@ -156,7 +157,7 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
         ],
         key=lambda x: int(find_digit.findall(x.name)[-1]),
     )
-    imageio.mimsave(
+    imageio.mimsave(  # type: ignore[ty:no-matching-overload]
         Path(folder, f"{figname}.gif"),
         [imageio.imread(fp) for fp in ims],
         "GIF-FI",
@@ -329,7 +330,7 @@ class BluemiraPathPatch3D(PathPatch3D):
         self,
         path: Path_mpl,
         normal: np.ndarray,
-        translation: np.ndarray | None = None,
+        translation: npt.ArrayLike | None = None,
         color: str = "b",
         **kwargs,
     ):
@@ -339,17 +340,14 @@ class BluemiraPathPatch3D(PathPatch3D):
 
         Patch.__init__(self, **kwargs)
 
-        if translation is None:
-            translation = [0, 0, 0]
-
         self._path2d = path
         self._code3d = path.codes
         self._facecolor3d = self._patch2d.get_facecolor
 
-        r_matrix = rotation_matrix_v1v2(normal, (0, 0, 1))
-        t_matrix = np.array(translation)
+        r_matrix = rotation_matrix_v1v2(normal, [0, 0, 1])
+        t_matrix = np.zeros(3) if translation is None else np.asarray(translation)
 
-        points = path.vertices
+        points = np.asarray(path.vertices)
 
         new_points = np.array([np.dot(r_matrix, np.array([x, y, 0])) for x, y in points])
 

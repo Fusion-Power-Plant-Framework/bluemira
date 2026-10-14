@@ -8,13 +8,19 @@
 Harmonics constraint functions.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
+
 import matplotlib.patches as patch
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     UpdateableConstraint,
     _get_dummy_equilibrium,
@@ -60,23 +66,25 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         sh_coil_names: list,
         tolerance: float | npt.NDArray | None = None,
         smallest_tol: float = 1e-6,
-        constraint_type: str = "equality",
+        constraint_type: Literal["inequality", "equality"] = "equality",
         *,
         invert: bool = False,
     ):
         if tolerance is None:
             ord_mag = np.floor(np.log10(np.absolute(ref_harmonics))) - 3
-            tolerance = [max(smallest_tol, 10**x) for x in ord_mag]
-            np.nan_to_num(
-                tolerance, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
+            tol_list = np.array([max(smallest_tol, 10**x) for x in ord_mag])
+            tolerance_arr = np.nan_to_num(
+                tol_list, nan=smallest_tol, posinf=smallest_tol, neginf=smallest_tol
             )
         elif is_num(tolerance):
-            tolerance *= np.ones(len(ref_harmonics))
-        elif len(tolerance) != len(ref_harmonics):
-            raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
+            tolerance_arr = tolerance * np.ones(len(ref_harmonics))
+        else:
+            tolerance_arr = np.asarray(tolerance)
+            if len(tolerance_arr) != len(ref_harmonics):
+                raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
 
         self.constraint_type = constraint_type
-        self.tolerance = tolerance
+        self.tolerance = tolerance_arr
 
         self.target_harmonics = ref_harmonics
         self.max_degree = len(ref_harmonics)
@@ -93,7 +101,12 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self.sh_coil_names = sh_coil_names
         self.r_t = r_t
 
-        self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1e6}
+        self._args: dict[str, Any] = {
+            "a_mat": None,
+            "b_vec": None,
+            "value": 0.0,
+            "scale": 1e6,
+        }
 
     @property
     def control_coil_names(self):
@@ -147,7 +160,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             coilset, self.max_degree, self.r_t, self.sh_coil_names
         )
 
-    def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
+    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
@@ -155,7 +168,13 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = SphericalHarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = SphericalHarmonicConstraintFunction(
+            name=self.name,
+            a_mat=self._args["a_mat"],
+            b_vec=self._args["b_vec"],
+            value=self._args["value"],
+            scale=self._args["scale"],
+        )
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
@@ -189,7 +208,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         th_result: ToroidalHarmonicsSelectionResult,
         relative_tolerance_cos: float | npt.NDArray[np.float64] = 1e-3,
         relative_tolerance_sin: float | npt.NDArray[np.float64] = 1e-3,
-        constraint_type: str = "equality",
+        constraint_type: Literal["inequality", "equality"] = "equality",
         weights: float | np.ndarray = 1.0,
     ):
         self.constraint_type = constraint_type
@@ -227,7 +246,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             self.target_harmonics_cos, self.target_harmonics_sin, axis=0
         )
         self.weights = weights
-        self._args = {
+        self._args: dict[str, Any] = {
             "a_mat": None,
             "b_vec": self.target_value,
             "value": 0.0,
@@ -285,8 +304,10 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             cos_m_chosen=self.cos_degrees_chosen,
             sin_m_chosen=self.sin_degrees_chosen,
         )
+        if a_cos is None and a_sin is None:
+            return np.array([])
         if a_cos is None:
-            return a_sin
+            return cast("np.ndarray", a_sin)
         if a_sin is None:
             return a_cos
         a_mat = np.append(a_cos, a_sin, axis=0)
@@ -294,9 +315,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             a_mat = np.append(a_mat, -a_mat, axis=0)
         return a_mat
 
-    def evaluate(
-        self, _eq: Equilibrium
-    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
@@ -304,7 +323,13 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
 
     def f_constraint(self) -> ToroidalHarmonicConstraintFunction:
         """Constraint function."""  # noqa: DOC201
-        f_constraint = ToroidalHarmonicConstraintFunction(name=self.name, **self._args)
+        f_constraint = ToroidalHarmonicConstraintFunction(
+            name=self.name,
+            a_mat=self._args["a_mat"],
+            b_vec=self._args["b_vec"],
+            value=self._args["value"],
+            scale=self._args["scale"],
+        )
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
 

@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from collections.abc import Sequence
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar, overload
 
 import numba as nb
 import numpy as np
@@ -93,8 +93,17 @@ def _ellipk(m: float) -> float:
     return _C1 - 0.5 * np.log(m)
 
 
+if TYPE_CHECKING:
+
+    @overload
+    def ellipk_nb(m: float) -> float: ...
+    @overload
+    def ellipk_nb(m: np.ndarray) -> np.ndarray: ...
+    def ellipk_nb(m: _FloatOrArray) -> _FloatOrArray: ...
+
+
 @nb.vectorize([nb.float64(nb.float64)], nopython=True, cache=True)
-def ellipk_nb(m: _FloatOrArray) -> _FloatOrArray:
+def ellipk_nb(m: float) -> float:
     """
     Complete elliptic integral of the first kind, K(m).
 

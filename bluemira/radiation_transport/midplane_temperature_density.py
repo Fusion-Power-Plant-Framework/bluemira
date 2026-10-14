@@ -172,6 +172,9 @@ def core_electron_density_temperature_profile(
     te0_keV = params.T_e_0.value_as("keV")
     teped_keV = params.T_e_ped.value_as("keV")
     tesep_keV = params.T_e_sep.value_as("keV")
+    assert te0_keV is not None
+    assert teped_keV is not None
+    assert tesep_keV is not None
 
     n_grad_ped0 = params.n_e_0.value - params.n_e_ped.value
     t_grad_ped0 = te0_keV - teped_keV

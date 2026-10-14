@@ -23,7 +23,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
 
     from bluemira.base.components import Component
 
@@ -603,7 +603,7 @@ class Mesh:
 
     def get_gmsh_dict(
         self, buffer: dict, file_format: str | GmshFileType = GmshFileType.DEFAULT
-    ) -> dict[MeshTags, list]:
+    ) -> dict[MeshTags | MeshTagsNC, list]:
         """
         Returns
         -------
@@ -619,7 +619,7 @@ class Mesh:
         if isinstance(file_format, str):
             file_format = GmshFileType[file_format.upper()]
 
-        gmsh_dict = {d: [] for d in MeshTagsNC}
+        gmsh_dict: dict[MeshTags | MeshTagsNC, list] = {d: [] for d in MeshTagsNC}
 
         def _extract_mesh_from_buffer(buffer, obj_name):
             if obj_name not in buffer:
@@ -840,7 +840,7 @@ class _FreeCADGmsh:
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 
-def _add_points(*point: Iterable) -> list:
+def _add_points(*point: Sequence[Any]) -> list[int]:
     """
     Add gmsh model points
 

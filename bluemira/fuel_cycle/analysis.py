@@ -36,15 +36,17 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: str | QueryType) -> QueryType:
-        try:
-            if value.upper() == "95TH":
-                return cls.P95TH
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object | str | QueryType) -> QueryType:
+        if isinstance(value, str):
+            try:
+                if value.upper() == "95TH":
+                    return cls.P95TH
+                return cls[value.upper()]
+            except KeyError:
+                raise ValueError(
+                    f"Invalid query: {value}. Choose from: {(*cls._member_names_,)}"
+                ) from None
+        return super()._missing_(value)
 
 
 class FuelCycleAnalysis:
@@ -102,10 +104,10 @@ class FuelCycleAnalysis:
             timelines = [timelines]
 
         for timeline in track(timelines):
-            self.model.run(timeline)
-            self.m_T_req.append(self.model.m_T_req)
-            self.t_d.append(self.model.t_d)
-            self.m_dot_release.append(self.model.m_dot_release)
+            results = self.model.run(timeline)
+            self.m_T_req.append(results.m_T_req)
+            self.t_d.append(results.t_d)
+            self.m_dot_release.append(results.m_dot_release)
 
     def get_startup_inventory(self, query: str = "max") -> float:
         """

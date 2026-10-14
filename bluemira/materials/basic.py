@@ -8,13 +8,16 @@
 Simple structural material representations
 """
 
+from collections.abc import Sequence
+
+from matproplib import OperationalConditions
 from matproplib.library.fluids import Void
 from matproplib.material import material
 from matproplib.properties.group import props
 
 
 # Just some simple materials to play with during tests and the like
-def sm(self, op_cond):
+def sm(self, op_cond: OperationalConditions | None = None) -> Sequence[float] | float:
     """Simple shear modulus"""  # noqa: DOC201
     return self.youngs_modulus(op_cond) / (0.5 + 0.5 * self.poissons_ratio(op_cond))
 
