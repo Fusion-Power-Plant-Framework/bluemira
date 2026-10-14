@@ -129,6 +129,16 @@ jobs:
         with:
           version: ${{ matrix.with-process }}
 
+      - name: Check Typing
+        shell: bash -l {0}
+        run: |
+          echo '```console' >> "$GITHUB_STEP_SUMMARY"
+
+          ty check bluemira --color never 2>&1 \
+            | tee -a "$GITHUB_STEP_SUMMARY" || true
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run pytest bluemira
         shell: bash -l {0}
         env:
@@ -138,7 +148,6 @@ jobs:
           PYTEST_PRIVATE: ${{ (!github.event.pull_request.head.repo.fork && github.repository == 'fusion-power-plant-framework/bluemira') && '--private' || '' }}
         run: |
           export BLUEMIRA_GEOMETRY_BACKEND=${{ matrix.backend }}
-          ty check bluemira
           pytest --cov=bluemira \
                  --cov-report html:htmlcov_bluemira \
                  --cov-report xml \
