@@ -485,11 +485,8 @@ def greens_Bz(
     e, k = _elliptic_integrals(k2)
     i1, i2 = _i1_i2(u, u2, k2, e, k)
 
-    xc2 = xc * xc
-    w2 = xc2 - x * x - h * h
-
-    bz = MU_0_2PI * (i1 + w2 * i2)
-    bz_axis = 0.5 * MU_0 * xc2 / (u2 * u)
+    bz = MU_0_2PI * _radial_term(xc, x, h, i1, i2)
+    bz_axis = 0.5 * MU_0 * xc * xc / (u2 * u)
 
     return np.where(x <= 0.0, bz_axis, bz)
 
