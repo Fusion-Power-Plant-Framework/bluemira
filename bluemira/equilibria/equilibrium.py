@@ -56,6 +56,7 @@ from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import EqSummary, _calc_li3minargs, calc_psi_norm
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
+    PLOT_DEFAULTS,
     BreakdownPlotter,
     CorePlotter,
     CorePlotter2,
@@ -491,7 +492,13 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: Axes | None = None, *, field: EqBPlotParam = EqBPlotParam.PSI):
+    def plot(
+        self,
+        ax: Axes | None = None,
+        *,
+        plasma: bool = True,
+        field: EqBPlotParam = EqBPlotParam.PSI,
+    ):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
 
@@ -500,7 +507,7 @@ class FixedPlasmaEquilibrium(MHDState):
         :
             the plot axis
         """
-        return FixedPlasmaEquilibriumPlotter(self, ax, field=field)
+        return FixedPlasmaEquilibriumPlotter(self, ax, plasma=plasma, field=field)
 
 
 class CoilSetMHDState(MHDState):
@@ -2369,7 +2376,13 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: Axes | None = None, *, plasma: bool = False, show_ox: bool = True
+        self,
+        ax: Axes | None = None,
+        *,
+        plasma: bool = True,
+        show_ox: bool = True,
+        nlevels: int = PLOT_DEFAULTS["psi"]["nlevels"],
+        linewidths: float = PLOT_DEFAULTS["contour"]["linewidths"],
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
@@ -2379,7 +2392,14 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             The plot axis
         """
-        return EquilibriumPlotter(self, ax, plasma=plasma, show_ox=show_ox)
+        return EquilibriumPlotter(
+            self,
+            ax,
+            plasma=plasma,
+            show_ox=show_ox,
+            nlevels=nlevels,
+            linewidths=linewidths,
+        )
 
     def plot_field(self, ax: Axes | None = None, *, show_ox: bool = True):
         """
