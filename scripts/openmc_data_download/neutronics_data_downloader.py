@@ -162,7 +162,9 @@ def _convertion_progress(*string, **_kwargs):
 
 
 def combine_xml(
-    lib_names: tuple[str, ...], thermal_files: tuple[str, ...], thermal_prefix: Path
+    lib_names: tuple[str, ...],
+    thermal_files: tuple[str, ...] | None,
+    thermal_prefix: Path | None,
 ):
     """Combine cross_section.xml files from all libraries.
 
@@ -172,10 +174,11 @@ def combine_xml(
     where the first xml record with matching 'materials' string is returned.
     """
     bluemira_print("Removing uneeded files")
-    for i in thermal_files:
-        Path(thermal_prefix / f"{i}.h5").unlink()
-    for file in ["bebeo", "obeo"]:  # acer files aren't needed.
-        Path("endf-b7.1-ace", f"{file}.acer").unlink()
+    if "endf" in lib_names:
+        for i in thermal_files:
+            Path(thermal_prefix / f"{i}.h5").unlink()
+        for file in ["bebeo", "obeo"]:  # acer files aren't needed.
+            Path("endf-b7.1-ace", f"{file}.acer").unlink()
 
     bluemira_print("Combining cross section xml files")
     xml_handle = [
@@ -187,7 +190,10 @@ def combine_xml(
         remove_list = []
         for elem in data.iter():
             if elem.tag == "library":
-                if elem.attrib["materials"] in thermal_files:
+                if (
+                    thermal_files is not None
+                    and elem.attrib["materials"] in thermal_files
+                ):
                     remove_list.append(elem)
                 else:
                     elem.attrib["path"] = str(Path(name, elem.attrib["path"]))
@@ -277,8 +283,12 @@ def main(p):
         download_data(download, libs, lib_names)
 
         # convert_endf crashes if you dont have these available...
-        thermal_files = ("c_O_in_BeO", "c_Be_in_BeO")
-        thermal_prefix = endf.args.destination / "neutron"
+        if "endf" in lib_names:
+            thermal_files = ("c_O_in_BeO", "c_Be_in_BeO")
+            thermal_prefix = endf.args.destination / "neutron"
+        else:
+            thermal_files = None
+            thermal_prefix = None
 
         combine_xml(lib_names, thermal_files, thermal_prefix)
 
