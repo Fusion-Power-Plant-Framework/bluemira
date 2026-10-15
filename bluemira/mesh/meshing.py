@@ -10,12 +10,10 @@ Core functionality for the bluemira mesh module.
 
 from __future__ import annotations
 
-import operator
-import pprint
-from dataclasses import asdict, dataclass
-from enum import Enum, IntEnum, auto
+from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING
 
 import gmsh
 
@@ -23,127 +21,240 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
-
     from bluemira.base.components import Component
+    from bluemira.geometry.base import BluemiraGeo
 
 
-# Mesh options for the moment are limited to definition of mesh size for each point (
-# quantity called lcar to be consistent with gmsh) and the definition of physical
-# groups.
+MESH_EXTENSIONS = {
+    ".geo",
+    ".geo_unrolled",
+    ".msh",
+    ".xdmf",
+    ".h5",
+    ".ini",
+}
 
 
 @dataclass
-class DefaultMeshOptions:
-    """Default mesh options"""
-
-    lcar: float | None = None
-    physical_group: float | None = None
-
-
-class MeshTags(IntEnum):
-    """Mesh tags and dimensions"""
-
-    POINTS = 0
-    CNTRPOINTS = 0
-    CURVE = 1
-    SURFACE = 2
-    # TODO @je-cook: what is the num
-    # 3655
-    CURVELOOP = -1
-
-
-class MeshTagsNC(IntEnum):
-    """Mesh tags and dimensions
-
-    CURVELOOP is not in this class.
-    All entries are equal to the equivalent entry in MeshTags
+class GmshEntity:
+    """
+    Association between a Bluemira geometry object and the Gmsh
+    entities representing it.
     """
 
-    POINTS = MeshTags.POINTS
-    CNTRPOINTS = MeshTags.CNTRPOINTS
-    CURVE = MeshTags.CURVE
-    SURFACE = MeshTags.SURFACE
-
-
-class GEOS(IntEnum):
-    """Supported geometry types and thier dimesions"""
-
-    BluemiraWire = 1
-    BluemiraFace = 2
-    BluemiraShell = 2
-    BluemiraCompound = 2
-
-
-SUPPORTED_GEOS = tuple(GEOS.__members__.keys())
-
-
-def get_default_options() -> DefaultMeshOptions:
-    """
-    Returns
-    -------
-    :
-        The default display options.
-    """
-    return DefaultMeshOptions()
-
-
-class MeshOptions:
-    """
-    The options that are available for meshing objects.
-    """
-
-    def __init__(self, **kwargs):
-        self._options = get_default_options()
-        self.modify(**kwargs)
+    source: BluemiraGeo
+    dim_tags: list[tuple[int, int]]
 
     @property
     def lcar(self) -> float | None:
-        """
-        Mesh size of points.
-        """
-        return self._options.lcar
-
-    @lcar.setter
-    def lcar(self, val: float):
-        self._options.lcar = val
+        """Mesh size."""
+        return self.source.mesh_options.lcar
 
     @property
-    def physical_group(self) -> float | None:
-        """
-        Definition of physical groups.
-        """
-        return self._options.physical_group
+    def physical_group(self):
+        """Physical group name."""
+        return self.source.mesh_options.physical_group
 
-    @physical_group.setter
-    def physical_group(self, val: float):
-        self._options.physical_group = val
 
-    def as_dict(self) -> dict[str, float | None]:
-        """
-        Returns
-        -------
-        :
-            The instance as a dictionary.
-        """
-        return asdict(self._options)
+def _import_brep(obj: BluemiraGeo) -> list[tuple[int, int]]:
+    """
+    Import a Bluemira geometry object into the current Gmsh OCC model.
 
-    def modify(self, **kwargs):
-        """
-        Function to override meshing options.
-        """
-        for k, v in kwargs.items():
-            if hasattr(self._options, k):
-                setattr(self._options, k, v)
+    Returns
+    -------
+    :
+        Gmsh dimension-tag pairs created by the import.
+    """
+    with TemporaryDirectory() as directory:
+        brep_file = (Path(directory) / "shape.brep").as_posix()
 
-    def __repr__(self) -> str:
-        """
-        Returns
-        -------
-        :
-            Representation string of the DisplayOptions.
-        """
-        return f"{type(self).__name__}({pprint.pformat(self._options)}" + "\n)"
+        obj.shape.exportBrep(brep_file)
+
+        return gmsh.model.occ.importShapes(brep_file)
+
+
+def _get_entities_recursive(
+    dim_tags: list[tuple[int, int]],
+    target_dim: int,
+) -> list[tuple[int, int]]:
+    """
+    Get entities of ``target_dim`` belonging to the supplied Gmsh entities.
+
+    Returns
+    -------
+    :
+        Unique Gmsh dimension-tag pairs of the requested dimension.
+    """
+    entities: set[tuple[int, int]] = set()
+    pending = list(dim_tags)
+
+    while pending:
+        dim_tag = pending.pop()
+        dim, _ = dim_tag
+
+        if dim == target_dim:
+            entities.add(dim_tag)
+            continue
+
+        if dim < target_dim:
+            continue
+
+        boundary = gmsh.model.getBoundary(
+            [dim_tag],
+            combined=False,
+            oriented=False,
+            recursive=False,
+        )
+
+        pending.extend(boundary)
+
+    return sorted(entities)
+
+
+def _apply_mesh_sizes(
+    entities: list[GmshEntity],
+) -> None:
+    """
+    Apply mesh sizes to final Gmsh points.
+
+    The smallest requested size takes precedence so that a finer
+    parent or child mesh requirement is never overwritten by a
+    coarser one.
+    """
+    point_sizes: dict[int, float] = {}
+
+    for entity in entities:
+        if entity.lcar is None:
+            continue
+
+        points = _get_entities_recursive(
+            entity.dim_tags,
+            target_dim=0,
+        )
+
+        for _, point_tag in points:
+            point_sizes[point_tag] = min(
+                point_sizes.get(point_tag, entity.lcar),
+                entity.lcar,
+            )
+
+    points_by_size: dict[float, list[tuple[int, int]]] = {}
+
+    for point_tag, size in point_sizes.items():
+        points_by_size.setdefault(size, []).append((0, point_tag))
+
+    for size, points in points_by_size.items():
+        gmsh.model.mesh.setSize(
+            points,
+            size,
+        )
+
+
+def _apply_physical_group(entity: GmshEntity):
+    if entity.physical_group is None:
+        return
+
+    entities_by_dim: dict[int, list[int]] = {}
+
+    for dim, tag in entity.dim_tags:
+        entities_by_dim.setdefault(dim, []).append(tag)
+
+    for dim, tags in entities_by_dim.items():
+        physical_tag = gmsh.model.addPhysicalGroup(dim, tags)
+
+        gmsh.model.setPhysicalName(dim, physical_tag, entity.physical_group)
+
+
+def _fragment_entities(entities: list[GmshEntity]) -> None:
+    """
+    Fragment imported OCC entities and update source provenance.
+
+    Gmsh returns one output mapping entry for every input dim-tag.
+    Preserve the original grouping of dim-tags by GmshEntity so
+    each Bluemira object remains associated with all final entities
+    produced from it.
+    """
+    if len(entities) <= 1:
+        return
+
+    input_dim_tags = [dim_tag for entity in entities for dim_tag in entity.dim_tags]
+
+    if len(input_dim_tags) <= 1:
+        return
+
+    _, out_map = gmsh.model.occ.fragment(
+        objectDimTags=input_dim_tags,
+        toolDimTags=[],
+    )
+
+    gmsh.model.occ.synchronize()
+
+    offset = 0
+
+    for entity in entities:
+        count = len(entity.dim_tags)
+
+        mapped = out_map[offset : offset + count]
+
+        entity.dim_tags = sorted({output for mappings in mapped for output in mappings})
+
+        offset += count
+
+
+def _mesh_brep_objects(objects: list[BluemiraGeo]) -> list[GmshEntity]:
+    """
+    Import, fragment, and configure Bluemira geometry in Gmsh.
+
+    Returns
+    -------
+    :
+        Source-to-Gmsh entity mappings after fragmentation.
+    """
+    entities = []
+
+    for obj in objects:
+        dim_tags = _import_brep(obj)
+
+        entities.append(
+            GmshEntity(
+                source=obj,
+                dim_tags=dim_tags,
+            )
+        )
+
+    gmsh.model.occ.synchronize()
+
+    _fragment_entities(entities)
+
+    _apply_mesh_sizes(entities)
+
+    for entity in entities:
+        _apply_physical_group(entity)
+
+    return entities
+
+
+def _apply_mesh_settings(settings: MeshSettings) -> None:
+    """Apply global Gmsh mesh settings."""
+    options = {
+        "Mesh.Algorithm": settings.algorithm_2d,
+        "Mesh.Algorithm3D": settings.algorithm_3d,
+        "Mesh.ElementOrder": settings.element_order,
+        "Mesh.MeshSizeMin": settings.mesh_size_min,
+        "Mesh.MeshSizeMax": settings.mesh_size_max,
+        "Mesh.Optimize": int(settings.optimise),
+    }
+
+    for name, value in options.items():
+        gmsh.option.set_number(name, value)
+
+
+@dataclass
+class MeshOptions:
+    """Options controlling meshing of a Bluemira geometry."""
+
+    lcar: float | None = None
+    physical_group: str | None = None
 
 
 class Meshable:
@@ -165,48 +276,43 @@ class Meshable:
         if isinstance(value, MeshOptions):
             self._mesh_options = value
         elif isinstance(value, dict):
-            if self.mesh_options is None:
-                self.mesh_options = MeshOptions()
-            self.mesh_options.modify(**value)
+            for key, val in value.items():
+                if hasattr(self._mesh_options, key):
+                    setattr(self._mesh_options, key, val)
         else:
-            raise MeshOptionsError("Mesh options must be set to a MeshOptions instance.")
+            raise MeshOptionsError(
+                "Mesh options must be a MeshOptions instance or dictionary."
+            )
 
 
-class _GmshEnum(Enum):
-    """Internal tag used to dispatch gmsh meshing on compound-like shapes."""
+@dataclass
+class MeshSettings:
+    """Global Gmesh mesh settings (defaults from Gmsh docs)."""
 
-    SHELL = "BluemiraShell"
-    COMPOUND = "BluemiraCompound"
+    algorithm_2d: int = 6
+    algorithm_3d: int = 1
+    element_order: int = 1
+    mesh_size_min: float = 0.0
+    mesh_size_max: float = 1e22
+    optimise: bool = True
 
-
-class GmshFileType(Enum):
-    """Gmsh file output types"""
-
-    DEFAULT = auto()
-    GMSH = auto()
-
-
-class MshFileExtensionType(Enum):
-    """Gmsh file extensions"""
-
-    GEO = ".geo"
-    GEO_UNROLLED = ".geo_unrolled"
-    MSH = ".msh"
-    XDMF = ".xdmf"
-    H5 = ".h5"
-    ini = ".ini"
-
-    @classmethod
-    def _missing_(cls, value):
+    def __post_init__(self):
         """
-        Called when value does not match any enum member.
+        Validate settings.
 
         Raises
         ------
         ValueError
-            Unsupported mesh file extension
+            If settings are invalid.
         """
-        raise ValueError(f"Unsupported mesh file extension: '{value}'")
+        if self.element_order < 1:
+            raise ValueError("element_order must be at least 1.")
+        if self.mesh_size_min < 0:
+            raise ValueError("mesh_size_min must be positive.")
+        if self.mesh_size_max <= 0:
+            raise ValueError("mesh_size_max must be positive.")
+        if self.mesh_size_min > self.mesh_size_max:
+            raise ValueError("mesh_size_min cannot be greater than mesh_size_max.")
 
 
 class Mesh:
@@ -217,16 +323,14 @@ class Mesh:
     def __init__(
         self,
         modelname: str = "Mesh",
-        terminal: int = 0,
         meshfile: str | list[str] | None = None,
-        logfile: str = "gmsh.log",
+        settings: MeshSettings | None = None,
     ):
         self.modelname = modelname
-        self.terminal = terminal
         self.meshfile = (
             ["Mesh.geo_unrolled", "Mesh.msh"] if meshfile is None else meshfile
         )
-        self.logfile = logfile
+        self.settings = MeshSettings() if settings is None else settings
 
     @staticmethod
     def _check_meshfile(meshfile: str | list) -> list[str]:
@@ -255,7 +359,9 @@ class Mesh:
 
         for filename in meshfile:
             ext = Path(filename).suffix.lower()
-            MshFileExtensionType(ext)  # raises error if invalid
+
+            if ext not in MESH_EXTENSIONS:
+                raise ValueError(f"Unsupported mesh file extension: {ext}")
 
         return meshfile
 
@@ -270,583 +376,222 @@ class Mesh:
     def meshfile(self, meshfile: str | list[str]):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, comp: Component | Meshable, dim: int = 2):
+    @staticmethod
+    def _has_mesh_options(obj: Meshable) -> bool:
+        return (
+            obj.mesh_options.lcar is not None
+            or obj.mesh_options.physical_group is not None
+        )
+
+    def _collect_geometry_objects(
+        self,
+        shape: BluemiraGeo,
+    ) -> list[BluemiraGeo]:
         """
-        Generate the mesh and save it to file.
+        Collect geometry requiring independent Gmsh provenance.
+
+        The top-level geometry is always included. Nested geometry is included
+        when it has explicit mesh options.
 
         Returns
         -------
         :
-            The serialised shape
+            Geometry objects to import independently into Gmsh.
+        """
+        objects = []
+        seen = set()
+
+        def visit(obj, *, include=False):
+            if not isinstance(obj, Meshable):
+                return
+
+            obj_id = id(obj)
+
+            if (include or self._has_mesh_options(obj)) and obj_id not in seen:
+                seen.add(obj_id)
+                objects.append(obj)
+
+            for boundary in obj.boundary:
+                if isinstance(boundary, Meshable):
+                    visit(boundary)
+
+        visit(shape, include=True)
+
+        return objects
+
+    def _collect_meshable_objects(
+        self,
+        comp: Component | Meshable,
+    ) -> list[BluemiraGeo]:
+        """
+        Collect geometry objects that need independent Gmsh provenance.
+
+        PhysicalComponent shapes are always included. Nested geometry is
+        additionally included when it has explicit mesh options.
+
+        Returns
+        -------
+        :
+            Geometry objects to import independently into Gmsh.
 
         Raises
         ------
         TypeError
-            Objects not meshable
+            If ``comp`` is neither a Component nor a Meshable object.
         """
-        bluemira_print("Starting mesh process...")
-
         from bluemira.base.components import (  # noqa: PLC0415
             Component,
             PhysicalComponent,
         )
 
-        if isinstance(comp, PhysicalComponent):
-            shape_to_mesh = comp.shape
-        elif isinstance(comp, Component):
-            from bluemira.base.tools import (  # noqa: PLC0415
-                create_compound_from_component,
-            )
+        objects = []
+        seen = set()
 
-            # This is done to create a single bluemira geometry
-            # from a component that may hold more than one geometry.
-            # This allows the meshing to be done on a single object,
-            # and have the labels set to the obj name.
+        def add_geometry(shape):
+            for obj in self._collect_geometry_objects(shape):
+                obj_id = id(obj)
 
-            shape_to_mesh = create_compound_from_component(comp)
-        else:
-            shape_to_mesh = comp
+                if obj_id not in seen:
+                    seen.add(obj_id)
+                    objects.append(obj)
 
-        if isinstance(shape_to_mesh, Meshable):
-            # gmsh is initialised
-            _FreeCADGmsh._initialise_mesh(self.terminal, self.modelname)
-            # Mesh the object. A dictionary with the geometrical and internal
-            # information that are used by gmsh is returned. In particular,
-            # a gmsh key is added to any meshed entity.
-            buffer = self.__mesh_obj(shape_to_mesh, dim=dim)
-            # Check for possible intersection (only allowed at the boundary to adjust
-            # the gmsh_dictionary
-            self.__iterate_gmsh_dict(buffer, self._check_intersections)
+        def visit_component(component):
+            if isinstance(component, PhysicalComponent):
+                add_geometry(component.shape)
 
-            # Create the physical groups
-            self._apply_physical_group(buffer)
+            for child in component.children:
+                visit_component(child)
 
-            # apply the mesh size
-            self._apply_mesh_size(buffer)
-
-            # generate the mesh
-            _FreeCADGmsh._generate_mesh()
-
-            # save the mesh file
-            for file in self.meshfile:
-                _FreeCADGmsh._save_mesh(file)
-
-            # close gmsh
-            _FreeCADGmsh._finalise_mesh(self.logfile)
+        if isinstance(comp, Component):
+            visit_component(comp)
+        elif isinstance(comp, Meshable):
+            add_geometry(comp)
         else:
             raise TypeError(
-                f"Only Meshable objects can be meshed, got ${type(shape_to_mesh)}"
+                f"Only Component or Meshable objects can be meshed, got {type(comp)}"
             )
+
+        return objects
+
+    def __call__(self, comp: Component | Meshable, dim: int = 2) -> list[GmshEntity]:
+        """
+        Generate a Gmsh mesh from Bluemira geometry and save it to file.
+
+        Returns
+        -------
+        comp:
+            Geometry or component tree to mesh.
+        dim:
+            Dimension of mesh elements to generate.
+
+        Returns
+        -------
+        :
+            Mapping between the source Bluemira geometries and their
+            final Gmsh entities.
+
+        Raises
+        ------
+        RuntimeError
+            If Gmsh has not been initialised.
+        ValueError
+            If ``dim`` is not 1, 2, or 3.
+        """
+        if not gmsh.is_initialized():
+            raise RuntimeError(
+                "Gmsh is not initialised. Initialise a GmshSession before meshing."
+            )
+
+        if dim not in {1, 2, 3}:
+            raise ValueError(f"Mesh dimension must be 1, 2, or 3, got {dim}.")
+
+        bluemira_print("Starting mesh process...")
+
+        gmsh.model.add(self.modelname)
+
+        objects = self._collect_meshable_objects(comp)
+        entities = _mesh_brep_objects(objects)
+
+        _apply_mesh_settings(self.settings)
+
+        gmsh.model.mesh.generate(dim)
+
+        for file in self.meshfile:
+            gmsh.write(file)
 
         bluemira_print("Mesh process completed.")
+        return entities
 
-        return buffer
 
-    def __mesh_obj(self, obj, dim: int) -> dict[str, Any]:
+class GmshSession:
+    """Manage the Gmsh Python API session."""
+
+    def __init__(self, *, terminal: int = 0, logfile: str | Path | None = "gmsh.log"):
+        self.terminal = terminal
+        self.logfile = logfile
+        self._owns_session = False
+        self._active = False
+
+    def __enter__(self):
         """
-        Function to mesh the object.
+        Called upon entering ``with GmshSession():``
 
         Returns
         -------
         :
-            The serialised shape
-
-        Raises
-        ------
-        ValueError
-            Meshing not implemented for geometry type
+            Active Gmsh session.
         """
-        from bluemira.geometry.tools import serialise_shape  # noqa: PLC0415
+        return self.initialize()
 
-        if type(obj).__name__ not in SUPPORTED_GEOS:
-            raise ValueError(
-                f"Mesh procedure not implemented for {obj.__class__.__name__} type."
-            )
+    def __exit__(self, *_):
+        """Called upon exiting ``with GmshSession():``"""
+        self.finalize()
 
-        # object is serialised into a dictionary
-        buffer = serialise_shape(obj)
-
-        # Each object is recreated into gmsh. Here there is a trick: in order to
-        # allow the correct mesh in case of intersection, the procedure
-        # is made meshing the objects with increasing dimension.
-        for d in range(1, dim + 1, 1):
-            self.__convert_item_to_gmsh(buffer, d)
-        return buffer
-
-    def __convert_item_to_gmsh(self, buffer: dict, dim: int):
-        for k in buffer:
-            if k == "BluemiraWire":
-                self.__convert_wire_to_gmsh(buffer, dim)
-            if k == "BluemiraFace":
-                self.__convert_face_to_gmsh(buffer, dim)
-            if k in {"BluemiraShell", "BluemiraCompound"}:
-                self.__convert_compound_shell_to_gmsh(
-                    buffer, dim, converter=_GmshEnum(k)
-                )
-
-    def _apply_physical_group(self, buffer: dict):
+    def initialize(self):
         """
-        Function to apply physical groups
-        """
-        for k, v in buffer.items():
-            if k in SUPPORTED_GEOS:
-                if "physical_group" in v:
-                    _FreeCADGmsh.add_physical_group(
-                        GEOS[k].value,
-                        self.get_gmsh_dict(buffer, GmshFileType.DEFAULT)[
-                            MeshTags(GEOS[k].value)
-                        ],
-                        v["physical_group"],
-                    )
-                for o in v["boundary"]:
-                    self._apply_physical_group(o)
+        Initialise the Gmsh session.
 
-    def _apply_mesh_size(self, buffer: dict):
-        """
-        Function to apply mesh size.
-        """
-        # mesh size is applied not only to the vertexes of the defined geometry,
-        # but also to the intersection points (new vertexes). For this reason,
-        # it is important to do this operation after the completion of the mesh
-        # procedure.
-        points_lcar2 = self.__create_dict_for_mesh_size(buffer)
-        if len(points_lcar2) > 0:
-            for p in points_lcar2:
-                _FreeCADGmsh._set_mesh_size([(0, p[0])], p[1])
-
-    def __create_dict_for_mesh_size(self, buffer: dict) -> list[tuple[str, float]]:
-        """
-        Function to create the correct dictionary format for the
-        application of the mesh size.
+        Ideally this is called indirectly through ``with GmshSession()`` calling
+        ``__enter``. However, an explicit method is implemented for notebook users
+        that may want to carry a session over multiple cells.
 
         Returns
         -------
         :
-            list of lcar point tuples
+            GmshSession.
         """
-        points_lcar = []
-        for k, v in buffer.items():
-            if k in SUPPORTED_GEOS:
-                if "lcar" in v and v["lcar"] is not None:
-                    points_tags = self.get_gmsh_dict(buffer, GmshFileType.GMSH)[
-                        MeshTags(0)
-                    ]
-                    if len(points_tags) > 0:
-                        points_lcar += [(p[1], v["lcar"]) for p in points_tags]
-                for o in v["boundary"]:
-                    points_lcar += self.__create_dict_for_mesh_size(o)
-        points_lcar = sorted(points_lcar, key=operator.itemgetter(0, 1))
-        points_lcar.reverse()
-        points_lcar = dict(points_lcar)
-        return list(points_lcar.items())
+        if self._active:
+            return self
 
-    def __apply_fragment(
-        self,
-        buffer: dict,
-        dim: Iterable[int] = (2, 1, 0),
-        all_ent=None,
-        tools: list | None = None,
-        *,
-        remove_object: bool = True,
-        remove_tool: bool = True,
-    ):
-        """
-        Apply the boolean fragment operation.
-        """
-        all_ent, _oo, oov = _FreeCADGmsh._fragment(
-            dim,
-            all_ent,
-            [] if tools is None else tools,
-            remove_object=remove_object,
-            remove_tool=remove_tool,
-        )
-        self.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
+        if not gmsh.is_initialized():
+            gmsh.initialize()
+            self._owns_session = True
 
-    @staticmethod
-    def _check_intersections(gmsh_dict: dict):
-        """
-        Check intersection and add the necessary vertexes to the gmsh dict.
-        """
-        if len(gmsh_dict[MeshTags.CURVE]) > 0:
-            gmsh_curve_tag = [(1, tag) for tag in gmsh_dict[MeshTags.CURVE]]
-            gmsh_dict[MeshTags.POINTS] = list({
-                tag[1] for tag in _FreeCADGmsh._get_boundary(gmsh_curve_tag)
-            })
-
-    def __iterate_gmsh_dict(self, buffer: dict, function: Callable, *args):
-        """
-        Supporting function to iterate over a gmsh dict.
-        """
-        if "BluemiraWire" in buffer:
-            if "gmsh" in buffer["BluemiraWire"]:
-                function(buffer["BluemiraWire"]["gmsh"], *args)
-            for item in buffer["BluemiraWire"]["boundary"]:
-                for k in item:
-                    if k == "BluemiraWire":
-                        self.__iterate_gmsh_dict(item, function, *args)
-
-        for buffer_type in ("BluemiraFace", "BluemiraShell", "BluemiraCompound"):
-            if buffer_type in buffer:
-                if "gmsh" in buffer[buffer_type]:
-                    function(buffer[buffer_type]["gmsh"], *args)
-                for item in buffer[buffer_type]["boundary"]:
-                    self.__iterate_gmsh_dict(item, function, *args)
-
-    @staticmethod
-    def __buffer_loop(buffer: dict, type_check: str, *, raise_error=False):
-        for type_, value in buffer.items():
-            if type_ != type_check:
-                if raise_error:
-                    raise NotImplementedError(
-                        f"Serialisation non implemented for {type_}"
-                    )
-                continue
-            yield value
-
-    def __convert_wire_to_gmsh(self, buffer: dict, dim: int):
-        """
-        Converts a wire to gmsh. If dim is not equal to 1, wire is not meshed.
-        """
-        if dim != 1:
-            return
-
-        for value in self.__buffer_loop(buffer, "BluemiraWire", raise_error=True):
-            value["gmsh"] = {mt: [] for mt in MeshTags}
-            for item in value["boundary"]:
-                for btype_, bvalue in item.items():
-                    if btype_ == "BluemiraWire":
-                        self.__convert_wire_to_gmsh(item, dim)
-                    else:
-                        for curve in bvalue:
-                            curve_gmsh_dict = _FreeCADGmsh.create_gmsh_curve(curve)
-                            for key in (
-                                MeshTags.POINTS,
-                                MeshTags.CNTRPOINTS,
-                                MeshTags.CURVE,
-                            ):
-                                value["gmsh"][key] += curve_gmsh_dict[key]
-
-            # get the dictionary of the BluemiraWire defined in buffer
-            # as default or gmsh format
-            dict_gmsh = self.get_gmsh_dict(buffer, GmshFileType.GMSH)
-
-            # fragment points_tag and curves
-            self.__apply_fragment(
-                buffer,
-                dict_gmsh[MeshTags.POINTS] + dict_gmsh[MeshTags.CURVE],
-                [],
-                remove_object=False,
-                remove_tool=False,
-            )
-
-    def __convert_face_to_gmsh(self, buffer: dict, dim: int):
-        """
-        Converts a face to gmsh.
-        """
-        if dim == 1:
-            for value in self.__buffer_loop(buffer, "BluemiraFace"):
-                value["gmsh"] = {}
-                for item in value["boundary"]:
-                    for btype_ in item:
-                        if btype_ == "BluemiraWire":
-                            self.__convert_wire_to_gmsh(item, dim)
-
-                # get the dictionary of the BluemiraWire defined in buffer
-                # as default or gmsh format
-                dict_gmsh = self.get_gmsh_dict(buffer, GmshFileType.GMSH)
-
-                # fragment points_tag and curves
-                self.__apply_fragment(
-                    buffer,
-                    all_ent=dict_gmsh[MeshTags.POINTS] + dict_gmsh[MeshTags.CURVE],
-                )
-        elif dim == 2:  # noqa: PLR2004
-            for value in self.__buffer_loop(buffer, "BluemiraFace"):
-                value["gmsh"][MeshTags.CURVELOOP] = [
-                    gmsh.model.occ.addCurveLoop(self.get_gmsh_dict(item)[MeshTags.CURVE])
-                    for item in value["boundary"]
-                ]
-                gmsh.model.occ.synchronize()
-                value["gmsh"][MeshTags.SURFACE] = [
-                    gmsh.model.occ.addPlaneSurface(value["gmsh"][MeshTags.CURVELOOP])
-                ]
-                gmsh.model.occ.synchronize()
-
-    def __convert_compound_shell_to_gmsh(
-        self, buffer: dict, dim: int, converter: _GmshEnum
-    ):
-        """
-        Converts a shell to gmsh.
-        """
-        if converter == _GmshEnum.SHELL:
-            convert_f = self.__convert_face_to_gmsh
-        elif converter == _GmshEnum.COMPOUND:
-            convert_f = self.__convert_item_to_gmsh
-
-        if dim == 1:
-            for value in self.__buffer_loop(buffer, converter.value):
-                value["gmsh"] = {}
-                for item in value["boundary"]:
-                    convert_f(item, dim)
-                    # dictionary of the BluemiraShell or Component defined in buffer
-                    dict_gmsh = self.get_gmsh_dict(buffer, GmshFileType.GMSH)
-
-                    # fragment points_tag and curves
-                    self.__apply_fragment(
-                        buffer,
-                        all_ent=dict_gmsh[MeshTags.POINTS] + dict_gmsh[MeshTags.CURVE],
-                    )
-        elif dim == 2:  # noqa: PLR2004
-            for value in self.__buffer_loop(buffer, converter.value):
-                for item in value["boundary"]:
-                    convert_f(item, dim)
-
-    def get_gmsh_dict(
-        self, buffer: dict, file_format: str | GmshFileType = GmshFileType.DEFAULT
-    ) -> dict[MeshTags, list]:
-        """
-        Returns
-        -------
-        :
-            the gmsh dict in a default (only tags) or gmsh (tuple(dim,
-            tag)) format.
-
-        Raises
-        ------
-        ValueError
-            No object to mesh
-        """
-        if isinstance(file_format, str):
-            file_format = GmshFileType[file_format.upper()]
-
-        gmsh_dict = {d: [] for d in MeshTagsNC}
-
-        def _extract_mesh_from_buffer(buffer, obj_name):
-            if obj_name not in buffer:
-                raise ValueError(f"No {obj_name} to mesh.")
-
-            if "gmsh" in buffer[obj_name]:
-                for d in MeshTagsNC:
-                    if d in buffer[obj_name]["gmsh"]:
-                        gmsh_dict[d] += buffer[obj_name]["gmsh"][d]
-
-            for item in buffer[obj_name]["boundary"]:
-                if obj_name == "BluemiraWire":
-                    for k in item:
-                        if k == obj_name:
-                            temp_dict = self.get_gmsh_dict(item)
-                            for d in MeshTagsNC:
-                                gmsh_dict[d] += temp_dict[d]
-                else:
-                    temp_dict = self.get_gmsh_dict(item)
-                    for d in MeshTagsNC:
-                        gmsh_dict[d] += temp_dict[d]
-
-        for geo_name in SUPPORTED_GEOS:
-            if geo_name in buffer:
-                _extract_mesh_from_buffer(buffer, geo_name)
-
-        gmsh_dict = {d: list(dict.fromkeys(gmsh_dict[d])) for d in MeshTagsNC}
-
-        if file_format == GmshFileType.DEFAULT:
-            return gmsh_dict
-        return {d: [(d.value, tag) for tag in gmsh_dict[d]] for d in MeshTagsNC}
-
-
-class _FreeCADGmsh:
-    @staticmethod
-    def _initialise_mesh(terminal: int = 1, modelname: str = "Mesh"):
-        # GMSH file generation
-        # Before using any functions in the Python API,
-        # Gmsh must be initialised:
-        gmsh.initialize()
-
-        # By default Gmsh will not print out any messages:
-        # in order to output messages
-        # on the terminal, just set the "General.Terminal" option to 1:
-        gmsh.option.setNumber("General.Terminal", terminal)
-
+        gmsh.option.setNumber("General.Terminal", self.terminal)
         gmsh.logger.start()
 
-        # gmsh.option.setNumber("Mesh.MshFileVersion", 2.0)
+        self._active = True
+        return self
 
-        # Next we add a new model named "t1" (if gmsh.model.add() is
-        # not called a new
-        # unnamed model will be created on the fly, if necessary):
-        gmsh.model.add(modelname)
-
-    @staticmethod
-    def _save_mesh(meshfile: str = "Mesh.geo_unrolled"):
-        # ... and save it to disk
-        gmsh.write(meshfile)
-
-    @staticmethod
-    def _finalise_mesh(logfile: str = "gmsh.log"):
-        Path(logfile).write_text("\n".join(str(item) for item in gmsh.logger.get()))
-        # This should be called when you are done using the Gmsh Python API:
-        # gmsh.logger.stop()
-        # gmsh.finalize()
-
-    @staticmethod
-    def _generate_mesh(mesh_dim: int = 3):
-        # Before it can be meshed, the internal CAD representation must
-        # be synchronised with the Gmsh model, which will create the
-        # relevant Gmsh data structures. This is achieved by the
-        # gmsh.model.occ.synchronize() API call for the built-in
-        # geometry kernel. Synchronisations can be called at any time,
-        # but they involve a non trivial amount of processing;
-        # so while you could synchronise the internal CAD data after
-        # every CAD command, it is usually better to minimise
-        # the number of synchronisation points.
-        gmsh.model.occ.synchronize()
-
-        # We can then generate a mesh...
-        gmsh.model.mesh.generate(mesh_dim)
-
-    @staticmethod
-    def create_gmsh_curve(buffer: dict) -> dict:
+    def finalize(self):
         """
-        Function to create gmsh curve from a dictionary (buffer).
+        Finalise the Gmsh session.
 
-        Returns
-        -------
-        :
-            gmsh dictionary of curve
+        Again, this is ideally called automatically when a ``with GmshSession()`` block
+        if exited, calling ``__exit__``. However, an explicit method is implemented for
+        notebook users again.
         """
-        gmsh_dict = {}
+        if not self._active:
+            return
 
-        points_tag = []
-        cntrpoints_tag = []
-        curve_tag = []
-        for type_ in buffer:
-            if type_ == "LineSegment":
-                points_tag.extend(
-                    _add_points(buffer[type_]["StartPoint"], buffer[type_]["EndPoint"])
-                )
-                curve_tag.append(gmsh.model.occ.addLine(points_tag[0], points_tag[1]))
-            elif type_ == "BezierCurve":
-                cntrpoints_tag.extend(_add_points(*buffer[type_]["Poles"]))
-                curve_tag.append(gmsh.model.occ.addBezier(cntrpoints_tag))
-                points_tag.extend((cntrpoints_tag[0], cntrpoints_tag[-1]))
-            elif type_ == "BSplineCurve":
-                cntrpoints_tag.extend(_add_points(*buffer[type_]["Poles"]))
-                curve_tag.append(gmsh.model.occ.addBSpline(cntrpoints_tag))
-                points_tag.extend((cntrpoints_tag[0], cntrpoints_tag[-1]))
-            elif type_ == "ArcOfCircle":
-                start_tag, end_tag, centre_tag = _add_points(
-                    buffer[type_]["StartPoint"],
-                    buffer[type_]["EndPoint"],
-                    buffer[type_]["Center"],
-                )
-                points_tag.extend((start_tag, end_tag))
-                curve_tag.append(
-                    gmsh.model.occ.addCircleArc(start_tag, centre_tag, end_tag)
-                )
-                cntrpoints_tag.append(centre_tag)
-            elif type_ == "ArcOfEllipse":
-                start_tag, end_tag, focus_tag, centre_tag = _add_points(
-                    buffer[type_]["StartPoint"],
-                    buffer[type_]["EndPoint"],
-                    buffer[type_]["Focus1"],
-                    buffer[type_]["Center"],
-                )
-                points_tag.extend((start_tag, end_tag))
-                curve_tag.append(
-                    gmsh.model.occ.addEllipseArc(
-                        start_tag, centre_tag, focus_tag, end_tag
-                    )
-                )
-                cntrpoints_tag.extend((centre_tag, focus_tag))
-            else:
-                raise NotImplementedError(
-                    f"Gmsh curve creation non implemented for {type_}"
-                )
+        try:
+            if self.logfile is not None:
+                Path(self.logfile).write_text("\n".join(gmsh.logger.get()))
+        finally:
+            gmsh.logger.stop()
 
-        gmsh_dict[MeshTags.POINTS] = points_tag
-        gmsh_dict[MeshTags.CNTRPOINTS] = cntrpoints_tag
-        gmsh_dict[MeshTags.CURVE] = curve_tag
-        gmsh.model.occ.synchronize()
-        return gmsh_dict
+            if self._owns_session and gmsh.is_initialized():
+                gmsh.finalize()
 
-    @staticmethod
-    def _fragment(
-        dim: int | Iterable[int] = (2, 1, 0),
-        all_ent: list[int] | None = None,
-        tools: list | None = None,
-        *,
-        remove_object: bool = True,
-        remove_tool: bool = True,
-    ) -> tuple[list[int], list[tuple], list[list[tuple]]]:
-        if isinstance(dim, int):
-            dim = [dim]
-        if all_ent is None:
-            all_ent = []
-            for d in dim:
-                all_ent += gmsh.model.getEntities(d)
-        oo = []
-        oov = []
-        if len(all_ent) > 1:
-            oo, oov = gmsh.model.occ.fragment(
-                objectDimTags=all_ent,
-                toolDimTags=[] if tools is None else tools,
-                removeObject=remove_object,
-                removeTool=remove_tool,
-            )
-            gmsh.model.occ.synchronize()
-
-        return all_ent, oo, oov
-
-    @staticmethod
-    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: list | None = None) -> dict:
-        if oov is None:
-            oov = []
-
-        new_gmsh_dict = {key: [] for key in MeshTagsNC}
-
-        for tagtype, values in mesh_dict.items():
-            if tagtype != MeshTags.CURVELOOP:
-                dim = tagtype.value
-                for v in values:
-                    if (dim, v) in all_ent:
-                        if len(oov) > 0:
-                            new_gmsh_dict[tagtype].extend([
-                                o[1] for o in oov[all_ent.index((dim, v))]
-                            ])
-                    else:
-                        new_gmsh_dict[tagtype].append(v)
-
-        for key in MeshTagsNC:
-            mesh_dict[key] = list(dict.fromkeys(new_gmsh_dict[key]))
-
-        return new_gmsh_dict
-
-    @staticmethod
-    def set_mesh_size(dim_tags, size):
-        gmsh.model.occ.mesh.setSize(dim_tags, size)
-        gmsh.model.occ.synchronize()
-
-    @staticmethod
-    def add_physical_group(dim, tags, name: str | None = None):
-        tag = gmsh.model.addPhysicalGroup(dim, tags)
-        if name is not None:
-            gmsh.model.setPhysicalName(dim, tag, name)
-
-    @staticmethod
-    def _set_mesh_size(dim_tags, size):
-        gmsh.model.mesh.setSize(dim_tags, size)
-
-    @staticmethod
-    def _get_boundary(dimtags, *, combined=False, recursive=False):
-        return gmsh.model.getBoundary(dimtags, combined, recursive)
-
-
-def _add_points(*point: Iterable) -> list:
-    """
-    Add gmsh model points
-
-    Returns
-    -------
-    :
-        List of points added to occ model
-    """
-    return [gmsh.model.occ.addPoint(p[0], p[1], p[2]) for p in point]
+            self._active = False
+            self._owns_session = False
