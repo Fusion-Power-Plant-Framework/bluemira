@@ -249,11 +249,22 @@ class PlotOptions(Options):
     The options that are available for plotting objects
     """
 
-    __slots__ = ()
+    __slots__ = ("_explicit_ndiscr",)
 
     def __init__(self, **kwargs):
+        self._explicit_ndiscr = False
         self._options = DefaultPlotOptions()
         super().__init__(**kwargs)
+
+    def __setattr__(self, attr: str, val):
+        if attr == "ndiscr" and getattr(self, "_options", None) is not None:
+            object.__setattr__(self, "_explicit_ndiscr", True)
+        Options.__setattr__(self, attr, val)
+
+    @property
+    def ndiscr_is_explicit(self) -> bool:
+        """Whether ``ndiscr`` was assigned, including an explicit default."""
+        return self._explicit_ndiscr
 
 
 def get_default_options() -> PlotOptions:
@@ -706,21 +717,30 @@ class ComponentPlotter(BasePlotter):
             and not self.options.show_faces
         )
 
-    def _create_plotters(self, comp: Component) -> Iterator[BasePlotter]:
+    def _create_plotters(
+        self, comp: Component, inherited_ndiscr: int | None = None
+    ) -> Iterator[BasePlotter]:
+        if comp.plot_options.ndiscr_is_explicit:
+            ndiscr = comp.plot_options.ndiscr
+        elif inherited_ndiscr is not None:
+            ndiscr = inherited_ndiscr
+        else:
+            ndiscr = self.options.ndiscr
         if comp.is_leaf and getattr(comp, "shape", None) is not None:
             if comp.plot_options.face_options["color"] in flatten_iterable(
                 BLUE_PALETTE.as_hex()
             ):
                 if self.options._user_options:
-                    options = self.options
+                    options = deepcopy(self.options)
                 else:
-                    options = comp.plot_options
+                    options = deepcopy(comp.plot_options)
             else:
-                options = comp.plot_options
+                options = deepcopy(comp.plot_options)
+            options.ndiscr = ndiscr
             yield _get_plotter_class(comp.shape)(options, data=comp.shape)
         else:
             for child in comp.children:
-                yield from self._create_plotters(child)
+                yield from self._create_plotters(child, ndiscr)
 
     def _populate_data(self, comp: Component):
         self._cplotters = list(self._create_plotters(comp))
