@@ -32,6 +32,8 @@ import numpy as np
 from FreeCAD import Base
 from matplotlib import colors
 
+from bluemira.codes.cadapi._base_types import CurveType
+
 try:
     from pivy import coin, quarter
 except ImportError:
@@ -1120,6 +1122,33 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
         For planar faces, the normal is the same everywhere.
     """
     return np.array(face.normalAt(alpha_1, alpha_2))
+
+
+EDGE_TYPE_TO_ENUM = {
+    Part.Line: CurveType.LINE,
+    Part.LineSegment: CurveType.LINE,
+    Part.Circle: CurveType.CIRCLE,
+    Part.ArcOfCircle: CurveType.CIRCLE,
+    Part.Ellipse: CurveType.ELLIPSE,
+    Part.ArcOfEllipse: CurveType.ELLIPSE,
+    Part.ArcOfHyperbola: CurveType.HYPERBOLA,
+    Part.Hyperbola: CurveType.HYPERBOLA,
+    Part.ArcOfParabola: CurveType.PARABOLA,
+    Part.Parabola: CurveType.PARABOLA,
+    Part.BezierCurve: CurveType.BEZIER,
+    Part.BSplineCurve: CurveType.BSPLINE,
+}
+
+
+def get_edge_type(edge: apiEdge) -> CurveType:
+    """Get curve type from edge
+
+    Returns
+    -------
+    :
+        Curve type
+    """
+    return EDGE_TYPE_TO_ENUM[edge.Curve]
 
 
 # ======================================================================================

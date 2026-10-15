@@ -247,8 +247,8 @@ def z_plane(z: float):
 
 
 def calculate_plane_dir(
-    start_point, end_point
-) -> tuple[BluemiraPlane, npt.NDArray[float]]:
+    start_point: npt.NDArray, end_point: npt.NDArray
+) -> tuple[BluemiraPlane, npt.NDArray]:
     """
     Calculate the cutting plane and the direction of the cut from 2 points.
     Both points must lie on the RZ plane.

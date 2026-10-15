@@ -32,6 +32,7 @@ from OCP.TColStd import (
 from OCP.TColgp import TColgp_Array1OfPnt, TColgp_Array2OfPnt
 from OCP.gp import gp_Ax2, gp_Circ, gp_Dir, gp_Pnt, gp_Vec
 
+from bluemira.codes.cadapi._base_types import CurveType
 from bluemira.codes.cadapi._cadquery.aliases import (
     _OCC_DEFAULT_TOL,
     _POINT_COINCIDENCE_TOL,
@@ -39,6 +40,18 @@ from bluemira.codes.cadapi._cadquery.aliases import (
     apiWire,
 )
 from bluemira.codes.error import CadQueryError
+
+
+def get_edge_type(edge: apiEdge | apiWire) -> CurveType:
+    """Get curve type from edge
+
+    Returns
+    -------
+    :
+        Curve type
+    """
+    cq_edge = edge.Edges()[0] if isinstance(edge, apiWire) else edge
+    return CurveType(cq_edge.geomType())
 
 
 def make_bezier(
@@ -378,6 +391,7 @@ def make_ellipse(
 
 
 __all__ = [
+    "get_edge_type",
     "make_bezier",
     "make_bspline",
     "make_bspline_g1_blend",
