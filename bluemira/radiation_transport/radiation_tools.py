@@ -931,10 +931,15 @@ def pfr_filter(
         halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix, strict=False)
     ]
 
+    # Closing the domain
     if len(domains_x) != 1:
-        # Closing the domain
+        if not np.isclose(domains_z[0][-1], domains_z[1][0], atol=1.0):
+            domains_x[1] = domains_x[1][::-1]
+            domains_z[1] = domains_z[1][::-1]
         domains_x[1] = np.append(domains_x[1], domains_x[0][0])
         domains_z[1] = np.append(domains_z[1], domains_z[0][0])
+        domains_x[1] = np.insert(domains_x[1], 0, domains_x[0][-1])
+        domains_z[1] = np.insert(domains_z[1], 0, domains_z[0][-1])
 
     return np.concatenate(domains_x), np.concatenate(domains_z)
 
