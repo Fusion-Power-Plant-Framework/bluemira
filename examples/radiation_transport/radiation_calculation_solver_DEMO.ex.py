@@ -160,8 +160,8 @@ source = RadiationSource(
     confinement_time_sol=config["tau_sol"],
     source_sol_dl=0.1,
 )
-source.analyse(firstwall_geom=fw_shape)
-source.rad_map(fw_shape)
+source.analyse()
+source.rad_map()
 
 # %% [markdown]
 #
