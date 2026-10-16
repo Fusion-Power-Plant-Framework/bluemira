@@ -26,6 +26,9 @@ from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    _process_first_wall,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -76,7 +79,7 @@ class WallDetector:
     y_vector: Vector3D
 
 
-def upstream_temperature(
+def _upstream_temperature(
     b_pol: float,
     b_tot: float,
     lambda_q_near: float,
@@ -112,7 +115,7 @@ def upstream_temperature(
     k_0:
         Material's conductivity
     firstwall_geom:
-        First wall geometry
+        First wall geometry - coords should be CCW
     connection_length:
         connection length from the midplane to the target
 
@@ -143,7 +146,7 @@ def upstream_temperature(
     return raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
 
 
-def target_temperature(
+def _target_temperature(
     p_sol: float,
     t_u: float,
     n_u: float,
@@ -237,7 +240,7 @@ def target_temperature(
     return f_ion_t if roots.dtype == complex else roots[np.nonzero(roots > t_crit)[0][0]]
 
 
-def specific_point_temperature(
+def _specific_point_temperature(
     x_p: float,
     z_p: float,
     t_u: float,
@@ -277,7 +280,7 @@ def specific_point_temperature(
     k_0:
         Material's conductivity
     firstwall_geom:
-        first wall geometry
+        first wall geometry - coords should be CCW
     connection_length:
         connection length from the midplane to the target
     lfs:
@@ -331,7 +334,7 @@ def specific_point_temperature(
     return ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
 
-def electron_density_and_temperature_sol_decay(
+def _electron_density_and_temperature_sol_decay(
     t_sep: float,
     n_sep: float,
     lambda_q_near: float,
@@ -422,7 +425,7 @@ def electron_density_and_temperature_sol_decay(
     return te_sol, ne_sol
 
 
-def gaussian_decay(
+def _gaussian_decay(
     max_value: float, min_value: float, no_points: float, *, decay: bool = True
 ) -> np.ndarray:
     """
@@ -468,7 +471,7 @@ def gaussian_decay(
     return dec_param
 
 
-def exponential_decay(
+def _exponential_decay(
     max_value: float, min_value: float, no_points: float, *, decay: bool = False
 ) -> np.ndarray:
     """
@@ -507,7 +510,7 @@ def exponential_decay(
     return a[1] + (b[1] - a[1]) * (np.log(arg) / np.log(base))
 
 
-def ion_front_distance(
+def _ion_front_distance(
     x_strike: float,
     z_strike: float,
     eq: Equilibrium,
@@ -571,7 +574,7 @@ def ion_front_distance(
     return abs(z_strike - x_pt_z) - abs(z_ext)
 
 
-def calculate_zeff(
+def _calculate_zeff(
     impurities_content: np.ndarray,
     imp_data_z_ref: np.ndarray,
     imp_data_t_ref: np.ndarray,
@@ -662,7 +665,7 @@ def calculate_zeff(
     return zeff, avg_zeff, total_fraction, intermediate_values
 
 
-def calculate_total_radiated_power(
+def _calculate_total_radiated_power(
     x: np.ndarray, z: np.ndarray, p_rad: np.ndarray
 ) -> float:
     """
@@ -722,7 +725,7 @@ def calculate_total_radiated_power(
     return p_total
 
 
-def radiative_loss_function_values(
+def _radiative_loss_function_values(
     te: np.ndarray, t_ref: np.ndarray, l_ref: np.ndarray
 ) -> np.ndarray:
     """
@@ -749,7 +752,7 @@ def radiative_loss_function_values(
     return interp1d(t_ref, l_ref)(te)
 
 
-def radiative_loss_function_plot(
+def _radiative_loss_function_plot(
     t_ref: np.ndarray, lz_val: Iterable[np.ndarray], species: Iterable[str]
 ) -> plt.Axes:
     """
@@ -786,7 +789,7 @@ def radiative_loss_function_plot(
     return ax
 
 
-def calculate_line_radiation_loss(
+def _calculate_line_radiation_loss(
     ne: np.ndarray, p_loss_f: np.ndarray, species_frac: float
 ) -> np.ndarray:
     """
@@ -1046,7 +1049,7 @@ class DetectedRadiation:
 
 
 # Adapted functions from Stuart
-def detect_radiation(
+def _detect_radiation(
     wall_detectors: list[WallDetector],
     n_samples: int,
     world: World,
@@ -1176,7 +1179,7 @@ def detect_radiation(
     )
 
 
-def make_wall_detectors(
+def _make_wall_detectors(
     wall_r, wall_z, max_wall_len, x_width, *, plot=False
 ) -> list[WallDetector]:
     """
@@ -1281,7 +1284,7 @@ def make_wall_detectors(
     return wall_detectors
 
 
-def plot_radiation_loads(
+def _plot_radiation_loads(
     radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
 ):
     """
@@ -1412,7 +1415,7 @@ class FirstWallRadiationSolver:
     def __init__(self, source_func: Callable, firstwall_shape: Coordinates):
         self.rad_source = source_func
         self.rad_3d = AxisymmetricMapper(self.rad_source)
-        self.fw_shape = firstwall_shape
+        self.fw_shape = _process_first_wall(firstwall_shape)
         self.wall_detectors = None
         self.wall_loads = None
 
@@ -1470,10 +1473,10 @@ class FirstWallRadiationSolver:
             parent=world,
             material=emitter,
         )
-        self.wall_detectors = make_wall_detectors(
+        self.wall_detectors = _make_wall_detectors(
             self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=verbose
         )
-        self.wall_loads = detect_radiation(
+        self.wall_loads = _detect_radiation(
             self.wall_detectors, n_samples, world, verbose=verbose
         )
 
@@ -1484,7 +1487,7 @@ class FirstWallRadiationSolver:
 
     def plot(self):
         """Plot the radiation on the wall [MW/m^2]."""
-        plot_radiation_loads(
+        _plot_radiation_loads(
             self.rad_3d,
             self.wall_detectors,
             self.wall_loads,
