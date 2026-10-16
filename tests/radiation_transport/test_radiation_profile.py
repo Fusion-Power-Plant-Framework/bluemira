@@ -412,7 +412,11 @@ class TestCoreRadiation:
         x_wd, z_wd = self.fw_shape.x[::-1], self.fw_shape.z[::-1]
         # OMP is at max x-coord in this example FW,
         wall_detector = make_wall_detectors(
-            x_wd, z_wd, max_wall_len, X_WIDTH, plot=True
+            x_wd,
+            z_wd,
+            max_wall_len,
+            X_WIDTH,
+            plot=True,
         )[np.argmax(x_wd)]
         assert np.isclose(z_wd[np.argmax(x_wd)], 0.0, atol=1e-3)
         r = Vector3D(wall_detector.detector_center.x, 0, wall_detector.detector_center.z)
