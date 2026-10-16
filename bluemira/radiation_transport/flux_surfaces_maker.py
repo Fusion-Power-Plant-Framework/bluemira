@@ -81,7 +81,7 @@ def analyse_first_wall_flux_surfaces(
         )
         dx_imp = None
         x_sep_imp = None
-    return dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp
+    return first_wall, dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp
 
 
 def _process_first_wall(first_wall: Coordinates) -> Coordinates:
