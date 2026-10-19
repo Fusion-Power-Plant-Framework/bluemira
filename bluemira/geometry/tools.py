@@ -2538,38 +2538,63 @@ def repair_gaps_between_faces(
 def check_touching_geos(
     geo_1: BluemiraSolid | BluemiraFace,
     geo_2: BluemiraSolid | BluemiraFace,
-    rtol: float = 1e-10,
+    atol: float = 1e-10,
 ) -> bool:
     """
-    Check if two geos of the same type touch each other.
+    Check if two geometries of the same type touch without overlapping.
+
+    Parameters
+    ----------
+    geo_1 : BluemiraSolid | BluemiraFace
+        The first geometry.
+    geo_2 : BluemiraSolid | BluemiraFace
+        The second geometry.
+    atol : float, default=1e-10
+        Absolute tolerance for the distance between the geometries.
+        The area and volume tolerances are derived as atol**2 and atol**3,
+        respectively.
 
     Returns
     -------
     bool
-        True if the geos touch at any point and do not overlap,
-        else False.
+        True if the geometries touch within tolerance without overlapping,
+        otherwise False.
 
     Raises
     ------
     TypeError
-        if geo_1 and geo_2 are not of the same type
+        If geo_1 and geo_2 are not of the same type.
+    ValueError
+        If atol is negative or non-finite.
+
+    Notes
+    -----
+    Area and volume tolerances are derived from atol as atol**2 and atol**3,
+    respectively. These may be too strict for the geometry kernel's numerical
+    precision.
     """
     if type(geo_1) is not type(geo_2):
         raise TypeError("geo_1 and geo_2 must be of the same type")
 
-    dist, _ = distance_to(geo_1, geo_2)
-    mutual_distance = bool(np.isclose(dist, 0, rtol=rtol))
+    if not np.isfinite(atol) or atol < 0:
+        raise ValueError("atol must be finite and non-negative")
 
-    # Mutual distance can be 0 if there is an overlap or they are touching.
-    # Hence also check the intersection area/volume.
+    dist, _ = distance_to(geo_1, geo_2)
+    mutual_distance = bool(np.isclose(dist, 0, atol=atol))
+
+    # Mutual distance can be zero if the geometries overlap or touch.
+    # Hence, also check the intersection area or volume.
     intersection = geo_1.shape.intersect(geo_2.shape)
 
-    intersection_size = (
-        intersection.Area() if isinstance(geo_1, BluemiraFace) else intersection.Volume()
-    )
+    if isinstance(geo_1, BluemiraFace):
+        intersection_size = intersection.Area()
+        intersection_atol = atol**2
+    else:
+        intersection_size = intersection.Volume()
+        intersection_atol = atol**3
 
-    intersection_is_zero = bool(np.isclose(intersection_size, 0, rtol=rtol))
+    intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
 
-    # If both the distance and intersection size are zero,
-    # they are touching without overlap.
+    # If both the distance and intersection size are within tolerance
+    # of zero, the geometries are considered to touch without overlap.
     return bool(mutual_distance and intersection_is_zero)
