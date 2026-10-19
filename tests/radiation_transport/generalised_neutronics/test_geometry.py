@@ -314,7 +314,7 @@ class TestNeutronicsGeometryManager:
         warnings = []
 
         monkeypatch.setattr(
-            "bluemira.base.look_and_feel.bluemira_warn",
+            "bluemira.radiation_transport.generalised_neutronics.geometry.bluemira_warn",
             warnings.append,
         )
 
