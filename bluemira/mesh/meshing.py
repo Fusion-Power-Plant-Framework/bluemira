@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 
 import gmsh
 
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.mesh.error import MeshOptionsError
 
 if TYPE_CHECKING:
@@ -32,6 +32,16 @@ MESH_EXTENSIONS = {
     ".xdmf",
     ".h5",
     ".ini",
+}
+
+ELEMENT_TYPE_BY_DIM = {
+    2: {"tri", "quad"},
+    3: {"tet", "hex"},
+}
+
+MESH_STRATEGY = {
+    "structured",
+    "unstructured",
 }
 
 
@@ -54,6 +64,16 @@ class GmshEntity:
     def physical_group(self):
         """Physical group name."""
         return self.source.mesh_options.physical_group
+
+    @property
+    def element_type(self):
+        """Requested element type for the geometry."""
+        return self.source.mesh_options.element_type
+
+    @property
+    def mesh_strategy(self):
+        """Requested mesh strategy for the geometry."""
+        return self.source.mesh_options.mesh_strategy
 
 
 def _import_brep(obj: BluemiraGeo) -> list[tuple[int, int]]:
@@ -165,6 +185,104 @@ def _apply_physical_group(entity: GmshEntity):
         gmsh.model.setPhysicalName(dim, physical_tag, entity.physical_group)
 
 
+def _apply_element_type(entities: list[GmshEntity]) -> None:
+    """
+    Apply element type and meshing strategy preferences to Gmsh entities.
+
+    Supported element types:
+        - 2D: ``tri``, ``quad``
+        - 3D: ``tet``, ``hex``
+
+    Supported strategies:
+        - ``unstructured``: use Gmsh's unstructured meshing algorithms,
+          quadrilateral surfaces request recombination.
+        - ``structured``: apply Gmsh's automatic transfinite constraints
+          to suitable surfaces or volumes.
+
+    Gmsh cannot guarantee a pure quad or hex mesh for arbitrary geometry
+    through these requests alone. Structure meshing applies only where the
+    geometry satisfies Gmsh's requirements.
+
+    Raises
+    ------
+    MeshOptionsError
+        If the requested element type, strategy, dimension, or options
+        conflict.
+    """
+    surface_options: dict[int, tuple[str, str]] = {}
+    volume_options: dict[int, tuple[str, str]] = {}
+
+    for entity in entities:
+        if (element_type := entity.element_type) is None:
+            continue
+
+        if (strategy := entity.mesh_strategy) not in MESH_STRATEGY:
+            raise MeshOptionsError(
+                f"Unsupported mesh_strategy {strategy}. "
+                f"Supported values are {MESH_STRATEGY}."
+            )
+
+        if not (dim_tags := entity.dim_tags):
+            raise MeshOptionsError(
+                f"Cannot apply element_type={element_type}: "
+                f"no Gmsh entities were found for {entity.source}."
+            )
+
+        for dim, tag in dim_tags:
+            if dim not in ELEMENT_TYPE_BY_DIM:
+                continue
+
+            supported_types = ELEMENT_TYPE_BY_DIM[dim]
+            if element_type not in supported_types:
+                raise MeshOptionsError(
+                    f"element_type={element_type} is incompatible with "
+                    f"dimension {dim}. Supported values are {supported_types}."
+                )
+
+            if element_type in {"tri", "tet"} and strategy == "structured":
+                bluemira_warn(
+                    f"mesh_strategy='structured' is not supported for "
+                    f"element_type={element_type}. Continuing unstructured."
+                )
+
+            options_by_tag = surface_options if dim == 2 else volume_options  # noqa: PLR2004
+            previous = options_by_tag.get(tag)
+            current = (element_type, strategy)
+
+            if previous is not None and previous != current:
+                raise MeshOptionsError(
+                    f"Conflicting mesh options for Gmsh entity (dimension={dim},"
+                    f" tag={tag}): {previous} and {current}."
+                )
+
+            options_by_tag[tag] = current
+
+    for surface_tag, (element_type, strategy) in surface_options.items():
+        if element_type == "tri":
+            continue
+
+        if strategy == "structured":
+            gmsh.model.mesh.set_transfinite_automatic(
+                [(2, surface_tag)],
+                recombine=True,
+            )
+        else:
+            gmsh.model.mesh.set_recombine(2, surface_tag)
+
+    hex_volumes = []
+    for volume_tag, (element_type, strategy) in volume_options.items():
+        if element_type == "tet":
+            continue
+
+        hex_volumes.append(volume_tag)
+
+        if strategy == "structured":
+            gmsh.model.mesh.set_transfinite_automatic(
+                [(3, volume_tag)],
+                recombine=True,
+            )
+
+
 def _fragment_entities(entities: list[GmshEntity]) -> None:
     """
     Fragment imported OCC entities and update source provenance.
@@ -228,6 +346,8 @@ def _mesh_brep_objects(objects: list[BluemiraGeo]) -> list[GmshEntity]:
 
     _apply_mesh_sizes(entities)
 
+    _apply_element_type(entities)
+
     for entity in entities:
         _apply_physical_group(entity)
 
@@ -255,6 +375,8 @@ class MeshOptions:
 
     lcar: float | None = None
     physical_group: str | None = None
+    element_type: str | None = None
+    mesh_strategy: str = "unstructured"
 
 
 class Meshable:
@@ -381,6 +503,8 @@ class Mesh:
         return (
             obj.mesh_options.lcar is not None
             or obj.mesh_options.physical_group is not None
+            or obj.mesh_options.element_type is not None
+            or obj.mesh_options.mesh_strategy != "unstructured"
         )
 
     def _collect_geometry_objects(
