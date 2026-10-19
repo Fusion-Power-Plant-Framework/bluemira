@@ -768,3 +768,25 @@ def plot_meshtags(
     with pyvista_plot_show_save(filename) as plotter:
         plotter.add_mesh(grid, show_edges=True, show_scalar_bar=False)
         plotter.view_xy()
+
+
+def quick_plot(mesh: Mesh):
+    """..."""
+    import dolfinx  # noqa: PLC0415
+    import pyvista  # noqa: PLC0415
+
+    space = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
+
+    cells, types, x = dolfinx.plot.vtk_mesh(space)
+
+    grid = pyvista.UnstructuredGrid(cells, types, x)
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(
+        grid,
+        color="white",
+        show_edges=True,
+        line_width=2,
+    )
+    plotter.view_xy()
+    plotter.show()
