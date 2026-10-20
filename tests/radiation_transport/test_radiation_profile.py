@@ -416,7 +416,7 @@ class TestCoreRadiation:
             z_wd,
             max_wall_len,
             X_WIDTH,
-            plot=True,
+            plot=False,
         )[np.argmax(x_wd)]
         assert np.isclose(z_wd[np.argmax(x_wd)], 0.0, atol=1e-3)
         r = Vector3D(wall_detector.detector_center.x, 0, wall_detector.detector_center.z)
