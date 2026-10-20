@@ -609,7 +609,7 @@ def find_flux_surf(
     psinorm: float,
     o_points: list[Opoint] | None = None,
     x_points: list[Xpoint] | None = None,
-) -> npt.NDArray[np.float64] | None:
+) -> npt.NDArray[np.float64]:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
     Uses least squares to retain only the most appropriate flux surface. This
@@ -641,6 +641,7 @@ def find_flux_surf(
     ------
     EquilibriaError
         No flux surface found at psi_norm
+        Closed flux surface found but does not enclose O-point
 
     Notes
     -----
