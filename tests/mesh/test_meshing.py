@@ -4,6 +4,9 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from types import SimpleNamespace
+from unittest.mock import Mock
+
 import gmsh
 import pytest
 
@@ -928,3 +931,324 @@ def test_tf_winding_pack_xyz_meshes(tf_winding_pack_xyz):
         assert_entities_have_elements([
             (3, tag) for _, tag in groups["tf_winding_pack_xyz"]
         ])
+
+
+# -----------------------------------------------------------------------------
+# Mesh element type tests
+# -----------------------------------------------------------------------------
+
+
+@pytest.fixture
+def gmsh_mock(monkeypatch):
+    mesh = Mock()
+
+    monkeypatch.setattr(
+        meshing,
+        "gmsh",
+        SimpleNamespace(
+            model=SimpleNamespace(
+                mesh=mesh,
+            )
+        ),
+    )
+
+    return mesh
+
+
+def make_entity(
+    *,
+    dim_tags,
+    element_type=None,
+    mesh_strategy="unstructured",
+):
+    source = SimpleNamespace(
+        mesh_options=meshing.MeshOptions(
+            element_type=element_type,
+            mesh_strategy=mesh_strategy,
+        )
+    )
+
+    return meshing.GmshEntity(
+        source=source,
+        dim_tags=dim_tags,
+    )
+
+
+def test_none_element_type_is_ignored(gmsh_mock):
+    """Entities with no element_type configured are ignored."""
+    entity = make_entity(
+        dim_tags=[(2, 1)],
+        element_type=None,
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_recombine.assert_not_called()
+    gmsh_mock.set_transfinite_automatic.assert_not_called()
+
+
+def test_invalid_mesh_strategy_raises():
+    """An unsupported mesh strategy is rejected."""
+    entity = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+        mesh_strategy="banana",
+    )
+
+    with pytest.raises(
+        meshing.MeshOptionsError,
+        match="Unsupported mesh_strategy",
+    ):
+        meshing._apply_element_type([entity])
+
+
+def test_no_dim_tags_raises():
+    """Element type options cannot be applied to empty entities."""
+    entity = make_entity(
+        dim_tags=[],
+        element_type="quad",
+    )
+
+    with pytest.raises(
+        meshing.MeshOptionsError,
+        match="no Gmsh entities were found",
+    ):
+        meshing._apply_element_type([entity])
+
+
+def test_quad_not_allowed_on_volume():
+    """Quad elements cannot be assigned to a volume."""
+    entity = make_entity(
+        dim_tags=[(3, 7)],
+        element_type="quad",
+    )
+
+    with pytest.raises(
+        meshing.MeshOptionsError,
+        match="incompatible with dimension 3",
+    ):
+        meshing._apply_element_type([entity])
+
+
+def test_hex_not_allowed_on_surface():
+    """Hex elements cannot be assigned to surfaces."""
+    entity = make_entity(
+        dim_tags=[(2, 7)],
+        element_type="hex",
+    )
+
+    with pytest.raises(
+        meshing.MeshOptionsError,
+        match="incompatible with dimension 2",
+    ):
+        meshing._apply_element_type([entity])
+
+
+def test_tet_not_allowed_on_surface():
+    """Tet elements cannot be assigned to surfaces."""
+    entity = make_entity(
+        dim_tags=[(2, 7)],
+        element_type="tet",
+    )
+
+    with pytest.raises(meshing.MeshOptionsError):
+        meshing._apply_element_type([entity])
+
+
+def test_tri_not_allowed_on_volume():
+    """Tri elements cannot be assigned to volumes."""
+    entity = make_entity(
+        dim_tags=[(3, 7)],
+        element_type="tri",
+    )
+
+    with pytest.raises(meshing.MeshOptionsError):
+        meshing._apply_element_type([entity])
+
+
+def test_structured_tri_warns(monkeypatch):
+    """Structured meshing requests for tri elements warn."""
+    warning = Mock()
+    monkeypatch.setattr(meshing, "bluemira_warn", warning)
+
+    entity = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="tri",
+        mesh_strategy="structured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    warning.assert_called_once()
+
+
+def test_structured_tet_warns(monkeypatch):
+    """Structured meshing requests for tet elements warn."""
+    warning = Mock()
+    monkeypatch.setattr(meshing, "bluemira_warn", warning)
+
+    entity = make_entity(
+        dim_tags=[(3, 1)],
+        element_type="tet",
+        mesh_strategy="structured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    warning.assert_called_once()
+
+
+def test_quad_unstructured_sets_recombine(gmsh_mock):
+    """Unstructured quad surfaces request recombination"""
+    entity = make_entity(
+        dim_tags=[(2, 42)],
+        element_type="quad",
+        mesh_strategy="unstructured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_recombine.assert_called_once_with(2, 42)
+
+
+def test_quad_structured_sets_transfinite(gmsh_mock):
+    """Structured quad surfaces use transfinite meshing."""
+    entity = make_entity(
+        dim_tags=[(2, 42)],
+        element_type="quad",
+        mesh_strategy="structured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_transfinite_automatic.assert_called_once_with(
+        [(2, 42)],
+        recombine=True,
+    )
+
+
+def test_tri_generates_no_surface_constraints(gmsh_mock):
+    """Tri surface meshing requires no extra constraints."""
+    entity = make_entity(
+        dim_tags=[(2, 12)],
+        element_type="tri",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_recombine.assert_not_called()
+    gmsh_mock.set_transfinite_automatic.assert_not_called()
+
+
+def test_hex_structured_sets_transfinite(gmsh_mock):
+    """Structured hex volumes use transfinite meshing."""
+    entity = make_entity(
+        dim_tags=[(3, 8)],
+        element_type="hex",
+        mesh_strategy="structured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_transfinite_automatic.assert_called_once_with(
+        [(3, 8)],
+        recombine=True,
+    )
+
+
+def test_hex_unstructured_currently_no_api_calls(gmsh_mock):
+    """Unstructured hex requests not implemented."""
+    entity = make_entity(
+        dim_tags=[(3, 8)],
+        element_type="hex",
+        mesh_strategy="unstructured",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_transfinite_automatic.assert_not_called()
+    gmsh_mock.set_recombine.assert_not_called()
+
+
+def test_same_tag_same_options_allowed(gmsh_mock):
+    """Identical mesh options may be applied to the same entity."""
+    e1 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+    )
+
+    e2 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+    )
+
+    meshing._apply_element_type([e1, e2])
+
+    gmsh_mock.set_recombine.assert_called_once_with(2, 1)
+
+
+def test_same_surface_conflicting_element_type_raises():
+    """Conflicting element types on the same surface are rejected."""
+    e1 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+    )
+
+    e2 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="tri",
+    )
+
+    with pytest.raises(
+        meshing.MeshOptionsError,
+        match="Conflicting mesh options",
+    ):
+        meshing._apply_element_type([e1, e2])
+
+
+def test_same_surface_conflicting_strategy_raises():
+    """Conflicting mesh strategies on the same surface are rejected."""
+    e1 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+        mesh_strategy="structured",
+    )
+
+    e2 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+        mesh_strategy="unstructured",
+    )
+
+    with pytest.raises(meshing.MeshOptionsError):
+        meshing._apply_element_type([e1, e2])
+
+
+def test_dimension_one_entities_are_ignored(gmsh_mock):
+    """Unsupported dimensions are silently ignored."""
+    entity = make_entity(
+        dim_tags=[(1, 99)],
+        element_type="quad",
+    )
+
+    meshing._apply_element_type([entity])
+
+    gmsh_mock.set_recombine.assert_not_called()
+    gmsh_mock.set_transfinite_automatic.assert_not_called()
+
+
+def test_same_numeric_tag_in_different_dimensions_not_conflict(gmsh_mock):
+    """Surface and volume tags are tracked independently."""
+    e1 = make_entity(
+        dim_tags=[(2, 1)],
+        element_type="quad",
+    )
+
+    e2 = make_entity(
+        dim_tags=[(3, 1)],
+        element_type="hex",
+    )
+
+    meshing._apply_element_type([e1, e2])
+
+    gmsh_mock.set_recombine.assert_called_once_with(2, 1)
