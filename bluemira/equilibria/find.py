@@ -668,14 +668,15 @@ def find_flux_surf(
 
     is_closed = np.allclose(candidate[:, 0], candidate[:, -1], rtol=EPS, atol=0)
 
-    if is_closed and psinorm < 0.01 and not in_polygon(xo, zo, candidate.T):  # noqa: PLR2004
-        bluemira_warn(
+    if is_closed and psinorm < 0.05 and not in_polygon(xo, zo, candidate.T):  # noqa: PLR2004
+        # psinorm check for speed (avoid calling in_polygon unless necessary)
+        raise EquilibriaError(
             "Found a closed flux surface that does not enclose the equilibrium O-point. "
             "This is usually unintended and often indicates that the requested "
             f"psi-normalised value is too close to the magnetic axis ({psinorm=}). "
-            "A valid contour near the O-point could not be identified. Returning None."
+            "A contour near the O-point could not be identified, though other contours "
+            "at this psinorm are present."
         )
-        return None
 
     return candidate
 
