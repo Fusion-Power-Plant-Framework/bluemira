@@ -2089,7 +2089,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         psi: npt.NDArray[np.float64] | None = None,
         o_points: Iterable | None = None,
         x_points: Iterable | None = None,
-    ) -> Coordinates:
+    ) -> Coordinates | None:
         """
         Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
 
@@ -2110,6 +2110,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         f = find_flux_surf(
             self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
         )
+        if f is None:
+            return None
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
