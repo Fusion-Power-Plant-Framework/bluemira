@@ -281,6 +281,11 @@ def _apply_element_type(entities: list[GmshEntity]) -> None:
                 [(3, volume_tag)],
                 recombine=True,
             )
+        else:
+            bluemira_warn(
+                "Unstructured meshing with hexahedral elements is not enabled "
+                "at the local level."
+            )
 
 
 def _fragment_entities(entities: list[GmshEntity]) -> None:
