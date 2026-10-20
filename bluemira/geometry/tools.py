@@ -2503,7 +2503,8 @@ def repair_gaps_between_faces(
     TypeError
         If geo_1 and geos_2 are not BluemiraFace Objects.
     ValueError
-        if only one geo is given
+        If only one geo is given, if sewing results in a null shape, or if
+        sewing splits a single face into multiple faces.
     """
     try:
         import cadquery as cq  # noqa: PLC0415
@@ -2527,9 +2528,20 @@ def repair_gaps_between_faces(
 
     sewing.Perform()
 
-    sewed = cq.Shape.cast(sewing.SewedShape())
+    repaired_faces = []
+    for geo in geos:
+        if sewing.IsModified(geo.shape.wrapped):
+            mod_shape = cq.Shape.cast(sewing.Modified(geo.shape.wrapped))
+            faces = mod_shape.Faces()
+            if len(faces) == 0:
+                raise ValueError("Sewing operation resulted in a null shape.")
+            if len(faces) > 1:
+                raise ValueError("Sewing operation split a face into multiple faces.")
+            repaired_faces.append(convert(faces[0]))
+        else:
+            repaired_faces.append(geo)
 
-    return [convert(face) for face in sewed.Faces()]
+    return repaired_faces
 
 
 # ======================================================================================
