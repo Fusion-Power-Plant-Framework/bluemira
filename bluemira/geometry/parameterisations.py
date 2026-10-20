@@ -3354,3 +3354,133 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
         final.translate((0, 0, dz))
 
         return final
+
+
+@dataclass
+class PillOptVariables(OptVariablesFrame):
+    # copied from triplearcoptvariables  , need to adapt
+    x1: OptVariable = ov(
+        "x1", 4.486, lower_bound=4, upper_bound=5, description="Inner limb radius"
+    )
+    dz: OptVariable = ov(
+        "dz", 0, lower_bound=-1, upper_bound=1, description="Vertical offset from z=0"
+    )
+    sl: OptVariable = ov(
+        "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
+    )
+    r1: OptVariable = ov(
+        "r1",
+        3,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom left arc [m]",
+    )
+    r2: OptVariable = ov(
+        "r2",
+        4,
+        lower_bound=2,
+        upper_bound=12,
+        description="radii of top and bottom middle arc [m]",
+    )
+
+    a1: OptVariable = ov(
+        "a1",
+        20,
+        lower_bound=5,
+        upper_bound=120,
+        description="top left and bottom left arc angle [degrees]",
+    )
+    a2: OptVariable = ov(
+        "a2",
+        40,
+        lower_bound=10,
+        upper_bound=120,
+        description="top middle and bottom middle arc angle [degrees]",
+    )
+
+
+class Pill(GeometryParameterisation[PillOptVariables]):
+    __slots__ = ()
+    n_ineq_constraints: int = 0
+    optvar_cls: type[PillOptVariables] = PillOptVariables
+
+    def __init__(self, variables: PillOptVariables | VarDictT | None = None):
+        super().__init__(variables)
+
+    def create_shape(self, label: str = "") -> BluemiraWire:
+        x_line, z_line, length_line, r1, r2, a1, a2 = self.variables.values
+        # Create left line, parallel to z-axis
+        line_top = z_line + (length_line / 2.0)
+        line_bottom = z_line - (length_line / 2.0)
+        straight_segment = make_polygon([
+            (x_line, 0, line_bottom),
+            (x_line, 0, line_top),
+        ])
+
+        radii = [r1, r2]
+        angles = [a1, a2]
+
+        wires = []
+        wires.append(straight_segment)
+        for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
+            zip(
+                *_get_centres(angles, radii, x_line, line_top, reflection_zplane=z_line),
+                strict=True,
+            )
+        ):
+            arc = make_circle(
+                ri,
+                center=(xc, 0, zc),
+                start_angle=(end_angle),
+                end_angle=(start_angle),
+                axis=(0, -1, 0),
+                label=f"arc_{i + 1}",
+            )
+            wires.append(arc)
+
+        straight_segment_right = wire_closure(
+            BluemiraWire(wires), label="straight_segment_right"
+        )
+        wires.append(straight_segment_right)
+
+        return BluemiraWire(wires, label=label)
+
+    def _label_function(self, ax: plt.Axes, shape: BluemiraWire):
+        """
+        Adds labels to parameterisation plots
+
+        Parameters
+        ----------
+        ax:
+            Matplotlib axis instance
+        shape:
+            parameterisation wire
+
+        """
+        _offset_x, _offset_z = super()._label_function(ax, shape)
+
+        x_line, z_line, length_line, r1, r2, a1, a2 = self.variables.values
+        # Create left line, parallel to z-axis
+
+        radii = [r1, r2]
+        angles = [a1, a2]
+        line_top = z_line + (length_line / 2.0)
+
+        centres, angles, radii = _get_centres(
+            angles, radii, x_line, line_top, reflection_zplane=z_line
+        )
+
+        for r_no, (centre, s_f_angles, radius) in enumerate(
+            zip(centres, angles, radii, strict=True), start=1
+        ):
+            centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
+            self._annotator(
+                ax,
+                f"r{r_no}",
+                centre,
+                _get_rotated_point(centre, radius, centre_angle),
+                _get_rotated_point(centre, 0.5 * radius, centre_angle),
+            )
+            self._angle_annotator(
+                ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
+            )
