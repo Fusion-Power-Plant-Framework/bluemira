@@ -521,14 +521,6 @@ class CoreRadiation(Radiation):
         self.z_tot = np.concatenate([flux_tube.z for flux_tube in self.flux_tubes])
         self.rad_tot = np.concatenate(self.total_rad)
 
-        # In case of flux surfaces with corresponding psi_n found outside of LCFS
-        remove_extra_loops = (self.z_tot <= np.max(self.lcfs.z)) & (
-            self.z_tot >= np.min(self.lcfs.z)
-        )
-        self.rad_tot = self.rad_tot[remove_extra_loops]
-        self.x_tot = self.x_tot[remove_extra_loops]
-        self.z_tot = self.z_tot[remove_extra_loops]
-
         # Calculate the total radiated power
         return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
