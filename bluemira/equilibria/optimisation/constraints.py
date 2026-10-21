@@ -129,7 +129,7 @@ class FieldConstraints(UpdateableConstraint):
         z: float | np.ndarray,
         B_max: float | np.ndarray,
         tolerance: float | np.ndarray | None = None,
-        constraint_type: str = "inequality",
+        constraint_type: Literal["equality", "inequality"] = "inequality",
     ):
         x_arr = np.atleast_1d(x)
         z_arr = np.atleast_1d(z)
@@ -228,9 +228,7 @@ class FieldConstraints(UpdateableConstraint):
         f_constraint = FieldConstraintFunction(
             name=self.name, **cast("dict[str, Any]", self._args)
         )
-        f_constraint.constraint_type = cast(
-            'Literal["inequality", "equality"]', self.f_constraint_type
-        )
+        f_constraint.constraint_type = self.f_constraint_type
         return f_constraint
 
     def __len__(self) -> int:
@@ -512,9 +510,7 @@ class MagneticConstraint(UpdateableConstraint):
             The non-linear, numerical, part of the constraint.
         """
         f_constraint = self._f_constraint(name=self.name, **self._args)
-        f_constraint.constraint_type = cast(
-            'Literal["inequality", "equality"]', self.constraint_type
-        )
+        f_constraint.constraint_type = self.constraint_type
         return f_constraint
 
 
@@ -1007,7 +1003,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         We need to update the target value, as it is a relative constraint.
         """
-        self.target_value = np.array([float(equilibrium.psi(self.ref_x, self.ref_z))])
+        self.target_value = equilibrium.psi(self.ref_x, self.ref_z)
 
     def plot(self, ax):
         """

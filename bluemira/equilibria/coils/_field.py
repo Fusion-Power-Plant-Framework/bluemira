@@ -118,28 +118,24 @@ class CoilGroupFieldsMixin:
         """
         return self._mix_control_method(x, z, greens_dbz_dx, None, disable_analytic=True)
 
-    def psi(self, x: float | np.ndarray, z: float | np.ndarray):
+    def psi(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
         Calculate poloidal flux at (x, z)
         """  # noqa: DOC201
         return self.psi_response(x, z) * self.current
 
-    def psi_response(self, x, z):
+    def psi_response(self, x: npt.ArrayLike, z: npt.ArrayLike):
         return self._mix_control_method(
             x, z, greens_psi, semianalytic_psi, disable_analytic=not self._psi_analytic
         )
 
-    def dpsi_dx(self, x: float | np.ndarray, z: float | np.ndarray):
+    def dpsi_dx(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
         Calculate dpsi/dx at (x, z)
         """  # noqa: DOC201
         return self.dpsi_dx_response(x, z) * self.current
 
-    def dpsi_dx_response(
-        self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> float | np.ndarray:
+    def dpsi_dx_response(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Unit dpsi/dx of Coilset
 
@@ -158,17 +154,13 @@ class CoilGroupFieldsMixin:
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
         return self._response_greens(greens_dpsi_dx, x, z)
 
-    def dpsi_dz(self, x: float | np.ndarray, z: float | np.ndarray):
+    def dpsi_dz(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
         Calculate dpsi/dz at (x, z)
         """  # noqa: DOC201
         return self.dpsi_dz_response(x, z) * self.current
 
-    def dpsi_dz_response(
-        self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
-    ) -> float | np.ndarray:
+    def dpsi_dz_response(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Unit dpsi/dz of Coilset
 
@@ -187,15 +179,13 @@ class CoilGroupFieldsMixin:
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
         return self._response_greens(greens_dpsi_dz, x, z)
 
-    def Bx(self, x: float | np.ndarray, z: float | np.ndarray):
+    def Bx(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
         Calculate radial magnetic field Bx at (x, z)
         """  # noqa: DOC201
         return self.Bx_response(x, z) * self.current
 
-    def Bx_response(
-        self, x: float | np.ndarray, z: float | np.ndarray
-    ) -> float | np.ndarray:
+    def Bx_response(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Calculate the radial magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -217,15 +207,13 @@ class CoilGroupFieldsMixin:
             x, z, greens_Bx, semianalytic_Bx, disable_analytic=not self._Bx_analytic
         )
 
-    def Bz(self, x: float | np.ndarray, z: float | np.ndarray) -> float | np.ndarray:
+    def Bz(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Calculate vertical magnetic field Bz at (x, z)
         """  # noqa: DOC201
         return self.Bz_response(x, z) * self.current
 
-    def Bz_response(
-        self, x: float | np.ndarray, z: float | np.ndarray
-    ) -> float | np.ndarray:
+    def Bz_response(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
         """
         Calculate the vertical magnetic field response at (x, z) due to a unit
         current. Green's functions are used outside the coil, and a semianalytic
@@ -247,7 +235,7 @@ class CoilGroupFieldsMixin:
             x, z, greens_Bz, semianalytic_Bz, disable_analytic=not self._Bz_analytic
         )
 
-    def Bp(self, x: float | np.ndarray, z: float | np.ndarray):
+    def Bp(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
         Calculate poloidal magnetic field Bp at (x, z)
 
@@ -342,8 +330,8 @@ class CoilGroupFieldsMixin:
 
     def _mix_control_method(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         greens_func: Callable,
         semianalytic_func: Callable | None,
         *,
@@ -808,8 +796,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def psi_response(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = False,
         control: bool = False,
@@ -839,8 +827,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dx_response(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = False,
         control: bool = False,
@@ -872,8 +860,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dz_response(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = False,
         control: bool = False,
@@ -905,8 +893,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bx_response(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = False,
         control: bool = False,
@@ -938,8 +926,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bz_response(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = False,
         control: bool = False,
