@@ -8,12 +8,20 @@
 The bluemira equilibria module
 """
 
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.coils import Circuit, Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_OX_points,
     find_flux_surfs,
+)
+from bluemira.equilibria.freegsnke_bridge import (
+    ForwardGSSolver,
+    ForwardSolveResult,
+    coilset_to_freegsnke_tokamak,
+    profile_to_freegsnke,
+    run_forward_solve,
+    update_bluemira_from_freegsnke,
 )
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
@@ -28,18 +36,25 @@ from bluemira.equilibria.solve import PicardIterator
 __all__ = [
     "BetaIpProfile",
     "Breakdown",
+    "Circuit",
     "Coil",
     "CoilSet",
     "CustomProfile",
     "Equilibrium",
+    "ForwardGSSolver",
+    "ForwardSolveResult",
     "Grid",
     "Limiter",
     "PicardIterator",
     "SymmetricCircuit",
+    "coilset_to_freegsnke_tokamak",
     "find_LCFS_separatrix",
     "find_OX_points",
     "find_flux_surfs",
     "flux_surface_cunningham",
     "flux_surface_johner",
     "flux_surface_manickam",
+    "profile_to_freegsnke",
+    "run_forward_solve",
+    "update_bluemira_from_freegsnke",
 ]

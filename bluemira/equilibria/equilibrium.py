@@ -49,11 +49,19 @@ from bluemira.equilibria.flux_surfaces import (
     CoreResults,
     analyse_plasma_core,
 )
+from bluemira.equilibria.freegsnke_bridge import (
+    ForwardSolveResult,
+    run_forward_solve,
+)
 from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
-from bluemira.equilibria.physics import EqSummary, _calc_li3minargs, calc_psi_norm
+from bluemira.equilibria.physics import (
+    EqSummary,
+    _calc_li3minargs,
+    calc_psi_norm,
+)
 from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 from bluemira.equilibria.plotting import (
     BreakdownPlotter,
@@ -1684,8 +1692,73 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         except StopIteration:
             pass
 
+    def forward_solve(
+        self,
+        *,
+        target_relative_tolerance: float = 1e-6,
+        max_iterations: int = 100,
+        order: int = 2,
+        force_up_down_symmetric: bool | None = None,
+        picard_handover: float = 0.11,
+        verbose: bool = False,
+        suppress: bool = True,
+        **kwargs: Any,
+    ) -> ForwardSolveResult:
+        """
+        Execute FreeGSNKE static forward Grad-Shafranov solve on this Equilibrium.
+
+        Parameters
+        ----------
+        target_relative_tolerance:
+            Relative residual convergence threshold. Default is 1e-6.
+        max_iterations:
+            Maximum solver iterations. Default is 100.
+        order:
+            Spatial finite-difference operator order (2 or 4). Default is 2.
+        force_up_down_symmetric:
+            Whether to enforce up-down symmetry. If None, uses self.force_symmetry.
+        picard_handover:
+            Picard to Newton-Krylov handover threshold. Default is 0.11.
+        verbose:
+            Print iteration diagnostics. Default is False.
+        target_relative_tolerance:
+            Relative residual convergence threshold. Default is 1e-6.
+        max_iterations:
+            Maximum solver iterations. Default is 100.
+        order:
+            Spatial finite-difference operator order (2 or 4). Default is 2.
+        force_up_down_symmetric:
+            Whether to enforce up-down symmetry. If None, uses self.force_symmetry.
+        picard_handover:
+            Picard to Newton-Krylov handover threshold. Default is 0.11.
+        verbose:
+            Print iteration diagnostics. Default is False.
+        suppress:
+            Suppress FreeGSNKE console output. Default is True.
+        **kwargs:
+            Additional arguments forwarded to FreeGSNKE solver.
+
+        Returns
+        -------
+        ForwardSolveResult
+            Convergence metrics and diagnostics.
+        """
+        return run_forward_solve(
+            self,
+            target_relative_tolerance=target_relative_tolerance,
+            max_iterations=max_iterations,
+            order=order,
+            force_up_down_symmetric=force_up_down_symmetric,
+            picard_handover=picard_handover,
+            verbose=verbose,
+            suppress=suppress,
+            **kwargs,
+        )
+
     def _update_plasma(
-        self, plasma_psi: npt.NDArray[np.float64], j_tor: npt.NDArray[np.float64]
+        self,
+        plasma_psi: npt.NDArray[np.float64],
+        j_tor: npt.NDArray[np.float64],
     ):
         """
         Update the plasma
@@ -2113,7 +2186,10 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
-        self, psi: np.ndarray | None = None, psi_n_tol: float = 1e-6, delta_start=0.01
+        self,
+        psi: np.ndarray | None = None,
+        psi_n_tol: float = 1e-6,
+        delta_start=0.01,
     ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
@@ -2145,7 +2221,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         )[0]
 
     def get_separatrix(
-        self, psi: npt.NDArray[np.float64] | None = None, psi_n_tol: float = 1e-6
+        self,
+        psi: npt.NDArray[np.float64] | None = None,
+        psi_n_tol: float = 1e-6,
     ) -> Coordinates | list[Coordinates]:
         """
         Get the plasma separatrix(-ices).
@@ -2369,7 +2447,11 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return abs(psi_1 - psi_2) < PSI_NORM_TOL
 
     def plot(
-        self, ax: Axes | None = None, *, plasma: bool = False, show_ox: bool = True
+        self,
+        ax: Axes | None = None,
+        *,
+        plasma: bool = False,
+        show_ox: bool = True,
     ):
         """
         Plot the equilibrium magnetic flux surfaces object onto `ax`.
