@@ -11,7 +11,7 @@ from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import cycle
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -166,11 +166,11 @@ def select_multi_eqs(
         If list of input values is not the same length as the input equilibria
     """
     if not isinstance(equilibrium_input, Sequence) or isinstance(equilibrium_input, str):
-        eq_input: Sequence[str | Equilibrium] = [equilibrium_input]
+        eq_input = [equilibrium_input]
     else:
         eq_input = equilibrium_input
 
-    fof_list: Sequence[FixedOrFree] = (
+    fof_list = (
         [fixed_or_free] * len(eq_input)
         if not isinstance(fixed_or_free, Sequence)
         else fixed_or_free
@@ -180,7 +180,7 @@ def select_multi_eqs(
             "FixedOrFree list length not equal to the number of equilibria."
         )
 
-    dummy_coils_list: Sequence = (
+    dummy_coils_list = (
         [dummy_coils] * len(eq_input)
         if not isinstance(dummy_coils, Sequence)
         else dummy_coils
@@ -191,12 +191,12 @@ def select_multi_eqs(
         )
 
     if isinstance(from_cocos, int):
-        cocos_list: Sequence[int] = [from_cocos] * len(eq_input)
+        cocos_list = [from_cocos] * len(eq_input)
     else:
         cocos_list = list(from_cocos)
 
     if isinstance(qpsi_positive, bool | type(None)):
-        qp_list: Sequence[bool | None] = len(eq_input) * [qpsi_positive]
+        qp_list = len(eq_input) * [qpsi_positive]
     else:
         qp_list = list(qpsi_positive)
 
@@ -211,7 +211,6 @@ def select_multi_eqs(
     else:
         eq_names = list(equilibrium_names)
 
-    cc_list: Sequence[Any]
     if (
         isinstance(control_coils, CoilType)
         or control_coils is None
@@ -1383,13 +1382,14 @@ class MultiEqAnalysis:
 
     def plot_divertor_length_angle(
         self,
-        n_layers=10,
-        x_offsets=0.10,
+        n_layers: int = 10,
+        x_offsets: float = 0.10,
         plasma_facing_boundary_list=None,
-        legs_to_plot=DivLegsToPlot.ALL,
-        ax=None,
-        show=True,  # noqa: FBT002
-        radian=True,  # noqa: FBT002
+        legs_to_plot: DivLegsToPlot = DivLegsToPlot.ALL,
+        ax: npt.NDArray | None = None,
+        *,
+        show: bool = True,
+        radian: bool = True,
     ):
         """
         Plot the divertor leg length and grazing angle for the equilibria
@@ -1438,6 +1438,7 @@ class MultiEqAnalysis:
                 _, ax = plt.subplots(2, 4, sharex="col")
             elif legs_to_plot in DivLegsToPlot.PAIR:
                 _, ax = plt.subplots(2, 2, sharex="col")
+        ax = cast("npt.NDArray", ax)
 
         def plot_div_value(i, value, ax, name, n_layers=n_layers, dx_off=x_offsets):
             for j, (k, v) in enumerate(value.items()):
@@ -1447,7 +1448,6 @@ class MultiEqAnalysis:
                 ax[i, j].set_title(k)
                 ax[i, j].legend()
 
-        assert ax is not None  # noqa: S101
         for lngth, ang, name in zip(
             lengths, angles, self.equilibria_dict.keys(), strict=False
         ):

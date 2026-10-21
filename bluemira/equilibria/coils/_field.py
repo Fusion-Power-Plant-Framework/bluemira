@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
+
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -34,6 +36,8 @@ from bluemira.magnetostatics.semianalytic_2d import (
 )
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
+
     from bluemira.equilibria.coils._grouping import CoilGroup
 
 
@@ -44,16 +48,16 @@ class CoilGroupFieldsMixin:
     Add field calculation mechanics to coilgroups
     """
 
-    x: Any
-    z: Any
-    dx: Any
-    dz: Any
-    current: Any
-    _current_radius: Any
+    x: npt.NDArray
+    z: npt.NDArray
+    dx: npt.NDArray
+    dz: npt.NDArray
+    current: npt.NDArray
+    _current_radius: npt.NDArray
     _einsum_str: str
-    _quad_x: Any
-    _quad_z: Any
-    _quad_weighting: Any
+    _quad_x: npt.NDArray
+    _quad_z: npt.NDArray
+    _quad_weighting: npt.NDArray
 
     __slots__ = (
         "_Bx_analytic",
@@ -257,7 +261,7 @@ class CoilGroupFieldsMixin:
         """  # noqa: DOC201
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def F(self, eqcoil: CoilGroup) -> np.ndarray:
+    def F(self, eqcoil: CoilGroup | PlasmaCoil | NoPlasmaCoil) -> np.ndarray:
         """
         Calculate the force response at the coil centre including the coil
         self-force.
@@ -629,8 +633,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def psi(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,
@@ -658,8 +662,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dx(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,
@@ -687,8 +691,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def dpsi_dz(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,
@@ -716,8 +720,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bx(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,
@@ -745,8 +749,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def Bz(
         self,
-        x: float | np.ndarray,
-        z: float | np.ndarray,
+        x: npt.ArrayLike,
+        z: npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,

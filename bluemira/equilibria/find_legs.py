@@ -94,8 +94,6 @@ class LegFlux:
 
         self.n_null = NumNull.DN if eq.is_double_null else NumNull.SN
         o_points, x_points = eq.get_OX_points()
-        assert eq.x is not None  # noqa: S101
-        assert eq.z is not None  # noqa: S101
         psi_grid = np.asarray(eq.psi())
         lcfs, self.separatrix = find_LCFS_separatrix(
             eq.x,

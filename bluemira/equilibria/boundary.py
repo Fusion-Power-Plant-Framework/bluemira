@@ -38,9 +38,7 @@ class FreeBoundary:
 
         values = np.zeros((len(self.edges), grid.nx, grid.nz))
         for i, (j, k) in enumerate(self.edges):
-            g: npt.NDArray[np.float64] = np.array(
-                greens_psi(x, z, x[j, k], z[j, k]), dtype=np.float64
-            )
+            g = np.asarray(greens_psi(x, z, x[j, k], z[j, k]))
             g[j, k] = 0.0  # Drop NaNs
             values[i] = g
         self.f_greens = values
