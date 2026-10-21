@@ -753,13 +753,13 @@ def find_field_surf(
 
 
 def find_flux_surface_through_point(
-    x: npt.NDArray[np.float64],
-    z: npt.NDArray[np.float64],
-    psi: npt.NDArray[np.float64],
+    x: npt.NDArray,
+    z: npt.NDArray,
+    psi: npt.NDArray,
     point_x: float,
     point_z: float,
-    point_psi: float | npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    point_psi: float | npt.NDArray,
+) -> npt.NDArray:
     """
     Get a flux surface passing through a point.
 
@@ -855,7 +855,7 @@ def find_LCFS_separatrix(
     closed.
     """
 
-    def get_flux_loop(psi_norm):
+    def get_flux_loop(psi_norm: float) -> Coordinates:
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
         return Coordinates({"x": f_s[0], "z": f_s[1]})
 
