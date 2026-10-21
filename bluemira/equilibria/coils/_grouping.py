@@ -776,7 +776,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("fix_size")
 
     @property
-    def _current_radius(self) -> np.ndarray:  # type: ignore[ty:invalid-property-type-override]
+    def _current_radius(self) -> np.ndarray:
         """Coil current radius"""
         return self.__getter("_current_radius")
 

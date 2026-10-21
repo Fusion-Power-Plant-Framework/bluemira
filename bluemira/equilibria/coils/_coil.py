@@ -378,13 +378,13 @@ class Coil(CoilFieldsMixin):
         return self._flag_sizefix
 
     @x.setter
-    def x(self, value: float):
+    def x(self, value: float):  # type: ignore[ty:invalid-property-type-override]
         """Set coil x position"""
         self._x = np.maximum(floatify(value), 0)
         self._re_discretise()
 
     @z.setter
-    def z(self, value: float):
+    def z(self, value: float):  # type: ignore[ty:invalid-property-type-override]
         """Set coil z position"""
         self._z = floatify(value)
         self._re_discretise()
@@ -401,7 +401,7 @@ class Coil(CoilFieldsMixin):
         self._ctype = CoilType(value[0] if isinstance(value, np.ndarray) else value)
 
     @dx.setter
-    def dx(self, value: float | None):
+    def dx(self, value: float | None):  # type: ignore[ty:invalid-property-type-override]
         """Set coil dx size"""
         self._dx = None if value is None else floatify(value)
         if isinstance(self._dx, float) and self._x - self._dx < 0:
@@ -415,13 +415,13 @@ class Coil(CoilFieldsMixin):
         self._re_discretise()
 
     @dz.setter
-    def dz(self, value: float | None):
+    def dz(self, value: float | None):  # type: ignore[ty:invalid-property-type-override]
         """Set coil dz size"""
         self._dz = None if value is None else floatify(value)
         self._re_discretise()
 
     @current.setter
-    def current(self, value: float):
+    def current(self, value: float):  # type: ignore[ty:invalid-property-type-override]
         """Set coil current"""
         self._current = floatify(value)
         if None not in {self.dx, self.dz}:
