@@ -112,6 +112,7 @@ class MHDState:
     dx: float
     dz: float
     _eqdsk: EQDSKInterface | None = None
+    profiles: Profile
 
     def __init__(
         self,

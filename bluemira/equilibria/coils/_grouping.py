@@ -943,7 +943,7 @@ class Circuit(CoilGroup):
         if isinstance(values, Sequence):
             # Force the same value of current for all coils
             values = values[0]
-        self.__setter("current", values)
+        self._CoilGroup__setter("current", values)  # type: ignore[ty:unresolved-attribute]
 
 
 class SymmetricCircuit(Circuit):
