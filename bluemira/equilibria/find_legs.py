@@ -11,14 +11,13 @@ from __future__ import annotations
 
 import operator
 from enum import Enum, auto
-from typing import Any, cast
+from typing import cast
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.equilibria import Grid
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (

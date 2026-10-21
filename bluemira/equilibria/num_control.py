@@ -130,6 +130,4 @@ class VirtualController(CoilGroup):
         """  # noqa: DOC201
         if x is None and z is None:
             return np.asarray(self.current) * self._pgreen
-        assert x is not None  # noqa: S101
-        assert z is not None  # noqa: S101
         return np.asarray(super().psi(x, z))
