@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numba as nb

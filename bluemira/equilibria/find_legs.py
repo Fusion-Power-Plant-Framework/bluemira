@@ -7,14 +7,18 @@
 Class and Methods for separatrix legs.
 """
 
+from __future__ import annotations
+
 import operator
 from enum import Enum, auto
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.equilibria import Grid
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
@@ -47,6 +51,9 @@ class SortSplit(Enum):
     """Split the flux in x-direction"""
     Z = auto()
     """Split the flux in z-direction"""
+
+
+LegDictT = dict[str, list[Coordinates] | None]
 
 
 class LegFlux:
@@ -136,7 +143,7 @@ class LegFlux:
         self._legs = legs
 
     @property
-    def legs(self):
+    def legs(self) -> LegDictT:
         """Separatrix legs in dictionary."""
         return self._legs
 
@@ -219,7 +226,7 @@ class LegFlux:
         if self.n_null == NumNull.DN and (len(xlow) + len(xup) < 2):  # noqa: PLR2004
             self._print_warning_set_flag()
 
-    def _which_legs(self):
+    def _which_legs(self) -> SortSplit:
         """
         Determine how to find and sort legs.
         For a double null this function:
@@ -260,15 +267,14 @@ class LegFlux:
         self.x_points = self.x_points[0]
         return SortSplit.X
 
-    def _get_leg_offsets(self, leg_dict, eq):
+    def _get_leg_offsets(self, leg_dict: LegDictT, eq: Equilibrium) -> LegDictT:
         """
         Expands the leg list if user requires offset flux surfaces.
         """  # noqa: DOC201
         dx_offsets = np.linspace(0, self.x_offsets, self.n_layers)[1:]
-        for name in leg_dict:
-            leg = leg_dict[name]
+        for name, leg in leg_dict.items():
             direction = -1 if name.find("inner") != -1 else 1
-            if len(leg) > 0 and leg[0] is not None:
+            if leg is not None and len(leg) > 0:
                 leg.extend(
                     _extract_offsets(
                         eq,
@@ -282,7 +288,7 @@ class LegFlux:
                 leg_dict[name] = leg
         return leg_dict
 
-    def _get_legs(self):
+    def _get_legs(self) -> LegDictT:
         """
         Get separatrix legs.
 
@@ -381,7 +387,7 @@ def split(septrx: Coordinates, n_null: NumNull):
 
 def get_legs_length_and_angle(
     eq: Equilibrium,
-    leg_dict: dict[str, Any],
+    leg_dict: dict[str, npt.NDArray | list[Coordinates | None]],
     plasma_facing_boundary: Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary.
@@ -432,7 +438,7 @@ def get_single_null_legs(separatrix, delta, o_point, x_points, imin=None):
     return add_pair_to_dict(sorted_legs, x_p=x_points, o_p=o_point)
 
 
-def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
+def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point) -> LegDictT:
     """
     Returns
     -------
@@ -456,7 +462,9 @@ def get_legs_double_null_xsplit(separatrix, delta, x_points, o_point):
     }
 
 
-def get_legs_double_null_zsplit(separatrix, delta, x_points, o_point, x_range_lcfs):
+def get_legs_double_null_zsplit(
+    separatrix, delta, x_points, o_point, x_range_lcfs
+) -> LegDictT:
     """
     Returns
     -------
@@ -508,7 +516,7 @@ def get_legs_double_null_zsplit(separatrix, delta, x_points, o_point, x_range_lc
     return leg_dict
 
 
-def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
+def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None) -> list[Coordinates] | None:
     """
     Extracts leg/s from given flux line and return as sorted list.
     Legs are sorted by inner then outer.
@@ -542,7 +550,9 @@ def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
     return legs
 
 
-def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> list:
+def _extract_offsets(
+    eq, ref_leg, direction, o_p, dx_offsets, delta_offsets
+) -> list[Coordinates]:
     """
     Returns
     -------
@@ -561,15 +571,15 @@ def _extract_offsets(eq, ref_leg, direction, o_p, dx_offsets, delta_offsets) -> 
     return offset_legs
 
 
-def add_pair_to_dict(sorted_legs, x_p, o_p):
+def add_pair_to_dict(sorted_legs, x_p, o_p) -> LegDictT:
     """
     Convert a upper or lower pair of sorted legs into a dictionary.
     """  # noqa: DOC201
     location = "lower" if x_p.z < o_p.z else "upper"
     if sorted_legs is None:
-        return {f"{location}_inner": [None], f"{location}_outer": [None]}
+        return {f"{location}_inner": None, f"{location}_outer": None}
     if len(sorted_legs) <= 1:
-        return {f"{location}_inner": [None], f"{location}_outer": [None]}
+        return {f"{location}_inner": None, f"{location}_outer": None}
     # Legs always sorted IN then OUT
     return {f"{location}_inner": [sorted_legs[0]], f"{location}_outer": [sorted_legs[1]]}
 
@@ -604,7 +614,6 @@ def _extract_leg(
         "z": [z_cut, z_cut],
     })
     new_flux_line, arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
-    assert arg_inters is not None  # noqa: S101
     arg_inters.sort()
     # Lower null vs upper null
     func = operator.lt if z_cut < o_point_z else operator.gt
@@ -622,7 +631,7 @@ def _extract_leg(
             leg = Coordinates(new_flux_line[:, : arg + 1])
 
         # Make the leg flow away from the plasma core
-        if leg.argmin(np.array([x_cut, 0.0, z_cut])) > 3:  # noqa: PLR2004
+        if leg.argmin([x_cut, 0.0, z_cut]) > 3:  # noqa: PLR2004
             leg.reverse()
 
         flux_legs.append(leg)
@@ -750,7 +759,7 @@ def calculate_connection_length(
 
     # Use Separatrix (in BM is first 'open' fs) flux if div target point not chosen
     if div_target_start_point is None:
-        if calc_method == CalcMethod.FIELD_LINE_TRACER:
+        if calculation_method == CalcMethod.FIELD_LINE_TRACER:
             raise BluemiraError(
                 "Field line tracer method requires input div_target_start_point."
                 "Please use flux surface geometry method or input a target location."
@@ -759,25 +768,22 @@ def calculate_connection_length(
         legflux = LegFlux(eq=eq, psi_n_tol=psi_n_tol, delta_lcfs=delta_start, rtol=rtol)
 
         if legflux.n_null == NumNull.DN:
-            assert isinstance(legflux.separatrix, list)  # noqa: S101
             if legflux.sort_split == SortSplit.X:
-                legflux.separatrix.sort(key=lambda leg: -leg.x[0])
-            f_s: Coordinates = legflux.separatrix[0]
+                cast("list[Coordinates]", legflux.separatrix).sort(
+                    key=lambda leg: -leg.x[0]
+                )
+            f_s = legflux.separatrix[0]
         else:
-            assert isinstance(legflux.separatrix, Coordinates)  # noqa: S101
-            f_s = legflux.separatrix
+            f_s = cast("Coordinates", legflux.separatrix)
 
     else:
-        assert eq.x is not None  # noqa: S101
-        assert eq.z is not None  # noqa: S101
-        psi_grid = np.asarray(eq.psi())
-        target_x = float(np.asarray(div_target_start_point.x).item())
-        target_z = float(np.asarray(div_target_start_point.z).item())
-        psi_val = float(np.asarray(eq.psi(target_x, target_z)).item())
+        target_x = div_target_start_point.x.item()
+        target_z = div_target_start_point.z.item()
+        psi_val = eq.psi(target_x, target_z)
         xfs, zfs = find_flux_surface_through_point(
             eq.x,
             eq.z,
-            psi_grid,
+            np.asarray(eq.psi()),
             target_x,
             target_z,
             psi_val,
@@ -798,7 +804,7 @@ def calculate_connection_length(
         return 0.0
     x = np.max(f_s.x[z_abs == np.min(z_abs)])
 
-    if calc_method == CalcMethod.FIELD_LINE_TRACER:
+    if calculation_method == CalcMethod.FIELD_LINE_TRACER:
         return calculate_connection_length_flt(
             eq=eq,
             x=x,
@@ -809,7 +815,7 @@ def calculate_connection_length(
             n_turns_max=n_turns_max,
         )
 
-    if calc_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
+    if calculation_method == CalcMethod.FLUX_SURFACE_GEOMETRY:
         return calculate_connection_length_fs(
             eq=eq, x=x, z=z, forward=forward, first_wall=first_wall, f_s=f_s
         )
