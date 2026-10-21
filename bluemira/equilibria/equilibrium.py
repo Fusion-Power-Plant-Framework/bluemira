@@ -123,10 +123,10 @@ class MHDState:
         self.set_grid(grid)
         self.limiter: Limiter | None = None
         self._o_point_fallback = o_point_fallback
-        self._label: str | None = None
+        self._label = ""
 
     @property
-    def label(self) -> str | None:
+    def label(self) -> str:
         """
         A name used to identify the MHD state.
         """

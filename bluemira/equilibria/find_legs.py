@@ -11,14 +11,12 @@ from __future__ import annotations
 
 import operator
 from enum import Enum, auto
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
-import numpy.typing as npt
 
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     find_LCFS_separatrix,
@@ -32,6 +30,9 @@ from bluemira.equilibria.flux_surfaces import (
     calculate_connection_length_fs,
 )
 from bluemira.geometry.coordinates import Coordinates, get_intersect, join_intersect
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 
 class NumNull(Enum):
@@ -386,7 +387,7 @@ def split(septrx: Coordinates, n_null: NumNull):
 
 def get_legs_length_and_angle(
     eq: Equilibrium,
-    leg_dict: dict[str, npt.NDArray | list[Coordinates | None]],
+    leg_dict: dict[str, list[Coordinates] | None],
     plasma_facing_boundary: Coordinates | None = None,
 ):
     """Calculates the length of all the divertor legs in a dictionary.
@@ -403,6 +404,8 @@ def get_legs_length_and_angle(
     for name, leg_list in leg_dict.items():
         lengths = []
         angles = []
+        if leg_list is None:
+            continue
         for leg in leg_list:
             if not leg:
                 con_length = 0.0

@@ -10,7 +10,7 @@ Numerical vertical stability control - still not quite there!
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -102,8 +102,8 @@ class VirtualController(CoilGroup):
         \t:math:`\\Bigr|_{\\substack{X_{cur}, Z_{cur}}}`
         """  # noqa: DOC201
         xcur, zcur = self.eq.effective_centre()
-        bx_vac = float(np.asarray(self.coilset.Bx(xcur, zcur)))
-        bx_feedback = float(np.asarray(self.Bx_response(xcur, zcur)))
+        bx_vac = self.coilset.Bx(xcur, zcur)
+        bx_feedback = self.Bx_response(xcur, zcur)
         return -self.gz * bx_vac / bx_feedback
 
     def adjust_currents(self, d_current: float | npt.NDArray[np.float64]):
@@ -120,14 +120,14 @@ class VirtualController(CoilGroup):
         currents = self.feedback_current()
         self.adjust_currents(currents)
 
-    def psi(  # type: ignore[override]
+    def psi(
         self,
-        x: float | np.ndarray | None = None,
-        z: float | np.ndarray | None = None,
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
     ) -> npt.NDArray[np.float64]:
         """
         Get the psi array of the VirtualController
         """  # noqa: DOC201
         if x is None and z is None:
             return np.asarray(self.current) * self._pgreen
-        return np.asarray(super().psi(x, z))
+        return np.asarray(super().psi(cast("npt.NDArray", x), cast("npt.NDArray", z)))

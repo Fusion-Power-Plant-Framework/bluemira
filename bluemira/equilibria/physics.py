@@ -165,15 +165,12 @@ def calc_q0(eq: Equilibrium) -> float:
     The MHD safety factor on the plasma axis
     """
     opoint = eq.get_OX_points()[0][0]
-    assert eq.x is not None  # noqa: S101
-    assert eq.z is not None  # noqa: S101
-    assert eq._jtor is not None  # noqa: S101
     psi_func = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], np.asarray(eq.psi()))
-    psi_xx0 = float(psi_func(opoint.x, opoint.z, dx=2, grid=False))
-    psi_zz0 = float(psi_func(opoint.x, opoint.z, dy=2, grid=False))
+    psi_xx0 = psi_func(opoint.x, opoint.z, dx=2, grid=False)
+    psi_zz0 = psi_func(opoint.x, opoint.z, dy=2, grid=False)
     b_0 = eq.Bt(opoint.x)
     jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
-    j_0 = float(jfunc(opoint.x, opoint.z, grid=False))
+    j_0 = jfunc(opoint.x, opoint.z, grid=False)
     k_0 = calc_k0(psi_xx0, psi_zz0)
     return (b_0 / (MU_0 * opoint.x * j_0)) * (1 + k_0**2) / k_0
 
@@ -299,10 +296,6 @@ def calc_energy(eq: Equilibrium) -> float:
     -------
         Stored poloidal magnetic energy
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.z is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
     psi_arr = np.asarray(eq.psi())
     bp_arr = np.asarray(eq.Bp())
     return _calc_Bp2_int(
@@ -345,7 +338,6 @@ def calc_Li(eq: Equilibrium) -> float:
     """
     bp_energy = calc_energy(eq)
     i_p = eq.profiles.I_p
-    assert i_p is not None  # noqa: S101
     return _calc_Li_from_energy(bp_energy, i_p)
 
 
@@ -411,12 +403,7 @@ def calc_li3(eq: Equilibrium) -> float:
     -------
         Approximate normalised internal inductance of the plasma
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.z is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
     i_p = eq.profiles.I_p
-    assert i_p is not None  # noqa: S101
     psi_arr = np.asarray(eq.psi())
     bp_arr = np.asarray(eq.Bp())
     return _calc_li3minargs(
@@ -493,9 +480,6 @@ def calc_p_average(eq: Equilibrium) -> float:
     -------
     The average plasma pressure [Pa]
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
     return _calc_p_average(eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz)
 
 
@@ -547,10 +531,6 @@ def calc_beta_t(eq: Equilibrium) -> float:
     -------
     Ratio of plasma to toroidal magnetic pressure
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
-    assert eq.profiles._B_0 is not None  # noqa: S101
     return _calc_beta_t(
         eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles._B_0
     )
@@ -607,9 +587,6 @@ def calc_beta_p(eq: Equilibrium) -> float:
     -------
     Ratio of plasma to magnetic pressure
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
     bp_arr = np.asarray(eq.Bp())
     return _calc_beta_p(
         eq.pressure_map(), bp_arr, eq._get_core_mask(), eq.x, eq.dx, eq.dz
@@ -638,10 +615,6 @@ def calc_beta_p_approximate(eq: Equilibrium) -> float:
     -------
     Ratio of plasma to poloidal magnetic pressure
     """
-    assert eq.x is not None  # noqa: S101
-    assert eq.dx is not None  # noqa: S101
-    assert eq.dz is not None  # noqa: S101
-    assert eq.profiles.I_p is not None  # noqa: S101
     return _calc_beta_p_approx(
         eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz, eq.profiles.I_p
     )
@@ -770,7 +743,6 @@ class EqSummary(ParameterFrame):
         """  # noqa: DOC201
         R_0 = eq.profiles.R_0
         I_p = eq.profiles.I_p
-        assert I_p is not None  # noqa: S101
         energy = calc_energy(eq)
         li_true = _calc_Li_from_energy(energy, I_p)
 
@@ -792,7 +764,7 @@ class EqSummary(ParameterFrame):
 
         # d['dXsep'] = self.calc_dXsep()
         dx_shaf, dz_shaf = f100.shafranov_shift(eq)
-        eq_name = eq.label or ""
+        eq_name = eq.label
         return cls(
             W=Parameter("W", energy, "J", eq_name),
             Li=Parameter("Li", li_true, "", eq_name, long_name="internal_inductance"),

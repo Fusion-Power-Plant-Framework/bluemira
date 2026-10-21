@@ -1116,7 +1116,7 @@ def _in_plasma(
     return mask
 
 
-def interpolate_psi(psi, psi_grid: Grid, new_grid: Grid):
+def interpolate_psi(psi, psi_grid: Grid, new_grid: Grid) -> npt.NDArray:
     """
     Interpolate psi over new comparison grid
 
