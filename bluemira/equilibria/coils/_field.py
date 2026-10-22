@@ -10,7 +10,7 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -606,7 +606,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     __slots__ = ()
 
-    _control_ind: Any
+    _control_ind: npt.NDArray
 
     def _sum(
         self,

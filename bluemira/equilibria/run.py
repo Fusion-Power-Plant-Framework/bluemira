@@ -13,7 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -158,7 +158,7 @@ class EQConfig:
     opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 1000, "ftol_rel": 1e-6}
     )
-    opt_parameters: dict[str, Any] = field(
+    opt_parameters: dict[str, float] = field(
         default_factory=lambda: {"initial_step": 0.03}
     )
     coil_mesh_size: float = 0.3
