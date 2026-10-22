@@ -18,6 +18,7 @@ from bluemira.equilibria.coils import CoilGroup, CoilSet
 from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.diagnostics import EqBPlotParam
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import find_OX_points, interpolate_psi
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (
@@ -350,6 +351,9 @@ class TestEquilibrium:
             Path(path, "DN-DEMO_eqref.json"), from_cocos=3, qpsi_positive=False
         )
         cls.sn = Equilibrium.from_eqdsk(Path(path, "eqref_OOB.json"), from_cocos=7)
+        cls.st = Equilibrium.from_eqdsk(
+            Path(path, "steplike_lcfs_sep_test.json"), from_cocos=3
+        )
 
     def test_double_null(self):
         assert self.dn.is_double_null
@@ -405,6 +409,20 @@ class TestEquilibrium:
     @pytest.mark.parametrize("plasma", [False, True])
     def test_plotting_plasma(self, plasma):
         self.dn.plot(plasma=plasma)
+
+    def test_get_flux_surface_none(self):
+        with pytest.raises(EquilibriaError):
+            self.sn.get_flux_surface(0.0)
+        with pytest.raises(EquilibriaError):
+            self.st.get_flux_surface(0.0)
+
+    def test_get_flux_surface_closed(self):
+        fs = self.sn.get_flux_surface(0.05)
+        assert fs.closed
+        fs = self.dn.get_flux_surface(0.05)
+        assert fs.closed
+        fs = self.st.get_flux_surface(0.05)
+        assert fs.closed
 
 
 def make_eq_constraints():

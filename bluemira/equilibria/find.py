@@ -19,6 +19,7 @@ import numpy as np
 from contourpy import LineType, contour_generator
 from scipy.interpolate import RectBivariateSpline
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
@@ -640,6 +641,7 @@ def find_flux_surf(
     ------
     EquilibriaError
         No flux surface found at psi_norm
+        Closed flux surface found but does not enclose O-point
 
     Notes
     -----
@@ -663,7 +665,21 @@ def find_flux_surf(
 
     # Choose the most logical flux surface
     err = [f_min(*group.T) for group in psi_surfs]
-    return psi_surfs[np.argmin(err)].T
+    candidate = psi_surfs[np.argmin(err)].T
+
+    is_closed = np.allclose(candidate[:, 0], candidate[:, -1], rtol=EPS, atol=0)
+
+    if is_closed and psinorm < 0.05 and not in_polygon(xo, zo, candidate.T):  # noqa: PLR2004
+        # psinorm check for speed (avoid calling in_polygon unless necessary)
+        raise EquilibriaError(
+            "Found a closed flux surface that does not enclose the equilibrium O-point. "
+            "This is usually unintended and often indicates that the requested "
+            f"psi-normalised value is too close to the magnetic axis ({psinorm=}). "
+            "A contour near the O-point could not be identified, though other contours "
+            "at this psinorm are present."
+        )
+
+    return candidate
 
 
 def find_field_surf(
