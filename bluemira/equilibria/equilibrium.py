@@ -2307,7 +2307,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             The X-points
         """
-        if (self._o_points is None and self._x_points is None) or force_update is True:
+        if (self._o_points is None or self._x_points is None) or force_update is True:
             psi_arr = np.asarray(self.psi()) if psi is None else psi
             self._o_points, self._x_points = find_OX_points(
                 self.x,
