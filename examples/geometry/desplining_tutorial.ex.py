@@ -250,27 +250,6 @@ visualise_desplining(
 )
 
 # %% [markdown]
-# We saw that originally the XZ face had 4 vertices, and after desplining with
-# a discretisation of 100, it has 100 + 2 vertices.
-#
-# But what if the user, without knowing the number of vertices in the original
-# geometry, provides a discretisation value smaller than that, say 3?
-#
-# For this particular example, it will still work, i.e. it will fall back to 4,
-# as we are discretising by edges.
-#
-# However, this may not always be enough for more complex geometries. For such
-# cases, we have the `fallback_to_existing_discretisation` option, which allows
-# us to fall back to the existing discretisation when needed.
-# To use this, you just have to run
-# %%
-face_1_desplined = despline_xz_face(
-    xz_face_1,
-    15,
-    fallback_to_existing_discretisation=True,
-)
-
-# %% [markdown]
 # ## Toy Model - 2 (Two faces touching each other)
 #
 # Let's make the problem a little harder. So far, we have looked at desplining
