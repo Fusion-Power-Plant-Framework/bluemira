@@ -82,7 +82,7 @@ from bluemira.geometry.wire import BluemiraWire
 current_backend = os.getenv("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").lower()
 
 if current_backend != "cadquery":
-    print(f"Skipping example: requires cadquery, current backend is {current_backend}")
+    bluemira_warn(f"Skipping example: requires cadquery, current backend is {current_backend}")
     sys.exit(0)  # Exit gracefully
 
 # %% [markdown]
