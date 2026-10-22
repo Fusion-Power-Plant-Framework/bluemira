@@ -9,7 +9,7 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
-from typing import Any
+from typing import cast
 
 import numpy as np
 import numpy.typing as npt
@@ -44,8 +44,8 @@ class PlanarCircuit(SourceGroup):
         current: float,
         source_class: type[TrapezoidalPrismCurrentSource]
         | type[PolyhedralPrismCurrentSource],
-        xs_args: tuple[Any, ...],
-    ) -> list[Any]:
+        xs_args: tuple[float | Coordinates | npt.NDArray, ...],
+    ) -> list[TrapezoidalPrismCurrentSource | PolyhedralPrismCurrentSource]:
         """
         Generate the sources of a given class along the discretised shape
 
@@ -57,8 +57,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._process_planar_shape(shape)
         betas, alphas = self._get_betas_alphas(shape)
 
-        normal = shape.normal_vector
-        assert normal is not None
+        normal = cast("npt.NDArray", shape.normal_vector)
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
@@ -77,7 +76,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *xs_args,
+                    *cast("tuple[Coordinates, ...]", xs_args),
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -98,7 +97,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *xs_args,
+                    *cast("tuple[float, ...]", xs_args),  # type:ignore[ty:invalid-argument-type]
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -143,7 +142,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._transform_to_xz(deepcopy(shape))
         self._t_shape = shape
         closed = shape.closed
-        self._clockwise = shape.check_ccw(np.array([0, 1, 0]))
+        self._clockwise = shape.check_ccw([0, 1, 0])
         d_l = np.diff(shape.T, axis=0)
         midpoints = shape.T[:-1, :] + 0.5 * d_l
         betas = (
@@ -179,12 +178,10 @@ class PlanarCircuit(SourceGroup):
             Tranformed coordinates.
         """
         coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
-        normal_vector = coords.normal_vector
-        assert normal_vector is not None
+        normal_vector = cast("npt.NDArray", coords.normal_vector)
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
             return coords
-        com = coords.center_of_mass
-        coords.translate((-float(com[0]), -float(com[1]), -float(com[2])))
+        coords.translate(-np.array(coords.center_of_mass))
 
         rot_mat = rotation_matrix_v1v2(normal_vector, np.array([0.0, -1.0, 0.0]))
         return Coordinates(rot_mat @ coords._array)

@@ -587,7 +587,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
             b = np.zeros(3)
             for p in quadrature_points:
-                point = self._global_to_local([p])[0]
+                point = self._global_to_local(np.asarray([p]))[0]
                 rp, tp, zp = self._local_to_cylindrical(point)
                 b += self._BxByBz(rp, tp, zp)
 

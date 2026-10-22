@@ -469,7 +469,12 @@ class PolyhedralPrismCurrentSource(
         self._warning = False
         length = np.linalg.norm(ds)
         self._halflength = 0.5 * length
-        self._check_angle_values(alpha, beta, bypass_endcap_error, endcap_warning)
+        self._check_angle_values(
+            alpha,
+            beta,
+            bypass_endcap_error=bypass_endcap_error,
+            endcap_warning=endcap_warning,
+        )
         m_breadth = np.max(np.abs(xs_coordinates.x))
         self._check_raise_self_intersection(float(length), m_breadth, alpha, beta)
 
@@ -500,8 +505,9 @@ class PolyhedralPrismCurrentSource(
         self,
         alpha: float,
         beta: float,
-        bypass_endcap_error: bool | None = False,  # noqa: FBT001, FBT002
-        endcap_warning: bool | None = False,  # noqa: FBT001, FBT002
+        *,
+        bypass_endcap_error: bool | None = False,
+        endcap_warning: bool | None = False,
     ):
         """
         Check that end-cap angles are acceptable.
@@ -554,7 +560,7 @@ class PolyhedralPrismCurrentSource(
         if not np.allclose(origin, centroid):
             dx, dy, dz = centroid
             self._xs.translate((-dx, -dy, -dz))
-        self._xs.set_ccw(np.array([0, 1, 0]))
+        self._xs.set_ccw([0, 1, 0])
 
     @process_xyz_array
     def field(

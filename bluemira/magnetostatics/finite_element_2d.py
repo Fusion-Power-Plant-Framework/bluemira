@@ -63,23 +63,19 @@ class FemMagnetostatic2d:
         Order of the approximating polynomial basis functions
     """
 
-    mesh: dolfinx.mesh.Mesh | None
-    V: dolfinx.fem.FunctionSpace | None
-    g: BluemiraFemFunction | Expression | None
+    mesh: dolfinx.mesh.Mesh
+    V: dolfinx.fem.FunctionSpace
+    g: BluemiraFemFunction | Expression
     boundaries: Any
-    psi: BluemiraFemFunction | None
+    psi: BluemiraFemFunction
 
     def __init__(self, p_order: int = 2):
         self.p_order = p_order
-        self.mesh = None
-        self.V = None
-        self.g = None
         self.boundaries = None
-        self.psi = None
 
     def set_mesh(
         self,
-        mesh: dolfinx.mesh.Mesh | str,
+        mesh: dolfinx.mesh.Mesh,
         boundaries: dolfinx.mesh.Mesh | str | None = None,
     ):
         """
@@ -93,10 +89,6 @@ class FemMagnetostatic2d:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
         """
-        if isinstance(mesh, str):
-            raise NotImplementedError(
-                "Loading mesh directly from filename is not supported."
-            )
         self.mesh = mesh
 
         # define boundaries
@@ -151,7 +143,7 @@ class FemMagnetostatic2d:
         MagnetostaticsError
             If mesh and function space are not set
         """
-        if self.mesh is None or self.V is None:
+        if not hasattr(self, "mesh") or not hasattr(self, "V"):
             raise MagnetostaticsError(
                 "Mesh and function space must be set before defining g."
             )
@@ -240,11 +232,11 @@ class FemMagnetostatic2d:
         code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
-        if self.mesh is None or self.V is None:
+        if not hasattr(self, "mesh") or not hasattr(self, "V"):
             raise MagnetostaticsError(
                 "Mesh and function space must be set before calculating B."
             )
-        if self.psi is None:
+        if not hasattr(self, "psi"):
             raise MagnetostaticsError("Problem must be solved before calculating B.")
 
         degree = self.V.ufl_element().degree
