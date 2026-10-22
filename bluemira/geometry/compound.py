@@ -54,7 +54,7 @@ class BluemiraCompound(BluemiraGeo):
     ):
         boundary_classes = [BluemiraGeo]
         self._compound_obj = _compound_obj
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type:ignore[ty:invalid-argument-type]
 
     def _create_shape(self) -> cadapi.apiCompound:
         """
@@ -92,7 +92,8 @@ class BluemiraCompound(BluemiraGeo):
             topo_compound_shapes = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
         else:
             topo_compound_shapes = [
-                BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.edges(obj)
+                BluemiraWire(wire)
+                for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]  # type: ignore[ty:invalid-argument-type]
             ]
 
         return cls(topo_compound_shapes, label=label, _compound_obj=obj)
@@ -109,9 +110,7 @@ class BluemiraCompound(BluemiraGeo):
         """
         The edges of the compound.
         """
-        return tuple(
-            BluemiraWire(cadapi.wire_from_edges([o])) for o in cadapi.edges(self.shape)
-        )
+        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))  # type: ignore[ty:invalid-argument-type]
 
     @property
     def wires(self) -> tuple[BluemiraWire, ...]:

@@ -16,17 +16,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from pyclipper import (
-    ET_CLOSEDPOLYGON,  # ty: ignore[unresolved-import]
-    ET_OPENROUND,  # ty: ignore[unresolved-import]
-    ET_OPENSQUARE,  # ty: ignore[unresolved-import]
-    JT_MITER,  # ty: ignore[unresolved-import]
-    JT_ROUND,  # ty: ignore[unresolved-import]
-    JT_SQUARE,  # ty: ignore[unresolved-import]
-    PolyTreeToPaths,  # ty: ignore[unresolved-import]
-    PyPolyNode,  # ty: ignore[unresolved-import]
-    PyclipperOffset,  # ty: ignore[unresolved-import]
-    scale_from_clipper,  # ty: ignore[unresolved-import]
-    scale_to_clipper,  # ty: ignore[unresolved-import]
+    ET_CLOSEDPOLYGON,  # type: ignore[ty:unresolved-import]
+    ET_OPENROUND,  # type: ignore[ty:unresolved-import]
+    ET_OPENSQUARE,  # type: ignore[ty:unresolved-import]
+    JT_MITER,  # type: ignore[ty:unresolved-import]
+    JT_ROUND,  # type: ignore[ty:unresolved-import]
+    JT_SQUARE,  # type: ignore[ty:unresolved-import]
+    PolyTreeToPaths,  # type: ignore[ty:unresolved-import]
+    PyPolyNode,  # type: ignore[ty:unresolved-import]
+    PyclipperOffset,  # type: ignore[ty:unresolved-import]
+    scale_from_clipper,  # type: ignore[ty:unresolved-import]
+    scale_to_clipper,  # type: ignore[ty:unresolved-import]
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -220,13 +220,12 @@ class OffsetOperationManager(PyclipperMixin):
         :
             List of offset coordinates objects.
         """
-        scale = self._scale or _CLIPPER_SCALE
-        delta = round(delta * scale)  # approximation
+        delta = round(delta * self._scale)  # approximation
         solution = self.tool.Execute(delta)
         return self.handle_solution(solution)
 
     @staticmethod
-    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> float | None:
+    def _calculate_scale(path: np.ndarray, coordinates: Coordinates) -> float:
         """
         Calculate the pyclipper scaling to integers
 
@@ -241,7 +240,7 @@ class OffsetOperationManager(PyclipperMixin):
                 return path[i][0] / coordinates.x[i]
             if path[i][1] != 0:
                 return path[i][1] / coordinates.z[i]
-        return None
+        return 1
 
 
 class RoundOffset(OffsetOperationManager):
@@ -349,8 +348,6 @@ def offset_clipper(
     result = result[0]
 
     # Transform offset coordinates back to original plane
-    if coordinates.normal_vector is None:
-        raise GeometryError("Coordinates must have a normal vector to offset.")
     return transform_coordinates_to_original(result, com, coordinates.normal_vector)
 
 
@@ -382,7 +379,7 @@ def transform_coordinates_to_xz(
 def transform_coordinates_to_original(
     coordinates: Coordinates,
     base: np.ndarray | tuple[float, float, float] | Sequence[float],
-    original_normal: np.ndarray | tuple[float, float, float] | Sequence[float],
+    original_normal: np.ndarray | tuple[float, float, float] | Sequence[float] | None,
 ) -> Coordinates:
     """
     Rotate coordinates back to original plane

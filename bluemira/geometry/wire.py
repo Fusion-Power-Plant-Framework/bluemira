@@ -59,7 +59,7 @@ class BluemiraWire(BluemiraGeo):
         label: str = "",
     ):
         boundary_classes = [type(self), cadapi.apiWire]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type: ignore[ty:invalid-argument-type]
         self._check_orientations()
 
     def _check_orientations(self):

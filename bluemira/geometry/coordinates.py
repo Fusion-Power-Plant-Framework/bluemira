@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from enum import Enum, auto
 from itertools import count, starmap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numba as nb
 import numpy as np
@@ -750,9 +750,9 @@ def rotation_matrix_v1v2(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
     v1_arr /= np.linalg.norm(v1_arr)
     v2_arr /= np.linalg.norm(v2_arr)
 
-    cos_angle = float(np.dot(v1_arr, v2_arr))
-    d = np.cross(v1_arr, v2_arr)
-    sin_angle = float(np.linalg.norm(d))
+    cos_angle = np.dot(v1_arr, v2_arr)
+    d = cast("npt.NDArray", cross_2d_3d(v1_arr, v2_arr))
+    sin_angle = np.linalg.norm(d)
 
     if sin_angle == 0:
         matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
@@ -952,7 +952,7 @@ def on_polygon(x: float, z: float, poly: npt.NDArray[np.float64]) -> bool:
     -------
     Whether or not the point is on the perimeter of the polygon
     """
-    xz = np.array([x, z], dtype=np.float64)
+    xz = np.array([x, z], dtype=nb.float64)  # type: ignore[ty:no-matching-overload]
     for ind in range(poly.shape[0] - 1):
         c = check_linesegment(poly[ind], poly[ind + 1], xz)
 
@@ -961,7 +961,7 @@ def on_polygon(x: float, z: float, poly: npt.NDArray[np.float64]) -> bool:
     return False
 
 
-def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
+def normal_vector(side_vectors: np.ndarray) -> npt.NDArray:
     """
     Find the anti-clockwise normal vector to the given side vectors.
 
@@ -1335,7 +1335,7 @@ class Coordinates:
         if not self.check_ccw(axis=axis):
             self.reverse()
 
-    def distance_to(self, point: np.ndarray) -> np.ndarray:
+    def distance_to(self, point: npt.ArrayLike) -> np.ndarray:
         """
         Calculates the distances from each point in the Coordinates to the point.
 
@@ -1362,7 +1362,7 @@ class Coordinates:
         point = point.reshape(3, 1).T
         return cdist(self.xyz.T, point, "euclidean")
 
-    def argmin(self, point: np.ndarray) -> int:
+    def argmin(self, point: npt.ArrayLike) -> int:
         """
         Parameters
         ----------
@@ -1515,7 +1515,9 @@ class Coordinates:
             The Coordinates as a JSON file.
         """
         return json_writer(
-            self.as_dict(), Path(filename).with_suffix("").with_suffix(".json"), **kwargs
+            self.as_dict(),
+            Path(filename).with_suffix("").with_suffix(".json"),
+            **kwargs,  # type:ignore[ty:invalid-argument-type]
         )
 
     # =============================================================================
@@ -2071,7 +2073,7 @@ def _intersect_count(xz_inter: np.ndarray, xz_2: np.ndarray) -> np.ndarray:
 
 def join_intersect(
     tgt_poly: Coordinates, ref_poly: Coordinates, *, get_arg: bool = False
-) -> tuple[Coordinates, list[int] | None] | Coordinates:
+) -> tuple[Coordinates, list[int]] | Coordinates:
     """
     Add the intersection points between tgt_poly and ref_poly to tgt_poly.
 

@@ -43,7 +43,7 @@ class BluemiraShell(BluemiraGeo):
         self, boundary: Sequence[BluemiraFace] | BluemiraFace | None, label: str = ""
     ):
         boundary_classes = [BluemiraFace]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type: ignore[ty:invalid-argument-type]
 
     def _create_shell(self, *, check_reverse: bool = True):
         """Creation of the shell

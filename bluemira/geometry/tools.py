@@ -103,7 +103,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, o: Any) -> Any:
+    def default(self, o: BluemiraGeoT | np.ndarray | Any) -> Any:
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
 
@@ -282,7 +282,7 @@ def _make_vertex(point: npt.ArrayLike | Coordinates) -> cadapi.apiVertex:
     if len(pt) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
-    return cadapi.make_vertex(float(pt[0]), float(pt[1]), float(pt[2]))
+    return cadapi.make_vertex(*pt)
 
 
 class GeometryCreationIn(Protocol):
@@ -1753,13 +1753,10 @@ def save_cad(
     if names is not None and not isinstance(names, list):
         names = [names]
 
-    cad_format_str: str = (
-        str(cad_format.value) if hasattr(cad_format, "value") else str(cad_format)
-    )
     cadapi.save_cad(
         [s.shape for s in shapes],
         Path(filename).as_posix(),
-        cad_format=cad_format_str,
+        cad_format=cad_format,  # type: ignore[ty:invalid-argument-type]
         labels=names,
         colours=colours,
         **kwargs,
@@ -1768,7 +1765,7 @@ def save_cad(
 
 def import_cad(
     filename: str | Path,
-    cad_format: Any = None,
+    cad_format: str | cadapi.CADFileType | None = None,
     unit_scale: str = "m",
     **kwargs,
 ) -> BluemiraGeo | list[BluemiraGeo]:
@@ -1781,7 +1778,7 @@ def import_cad(
     """
     objs = [
         convert(s[0], label=s[1])
-        for s in cadapi.import_cad(filename, cad_format, unit_scale, **kwargs)
+        for s in cadapi.import_cad(filename, cad_format, unit_scale, **kwargs)  # type: ignore[ty:invalid-argument-type]
     ]
 
     if len(objs) == 1:
