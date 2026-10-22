@@ -173,7 +173,6 @@ def despline_xz_component(
         return desplined_comp
 
     # Else, Despline
-    bluemira_print(f"Desplining {component.name}")
     for i, wire in enumerate(face.boundary):
         # check if the discretisation is enough
         if len(wire.vertexes.T) - 1 > discretisation:
