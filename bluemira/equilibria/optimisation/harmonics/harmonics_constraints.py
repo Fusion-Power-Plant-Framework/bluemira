@@ -116,7 +116,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         """
         return self.sh_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):  # type: ignore[ty:invalid-method-override]
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
 
@@ -160,7 +160,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             coilset, self.max_degree, self.r_t, self.sh_coil_names
         )
 
-    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002
+    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002 # type: ignore[ty:invalid-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201
@@ -261,7 +261,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
         """
         return self.th_params.th_coil_names
 
-    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=True):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=True):  # type: ignore[ty:invalid-method-override]
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
 
@@ -315,7 +315,7 @@ class ToroidalHarmonicConstraint(UpdateableConstraint):
             a_mat = np.append(a_mat, -a_mat, axis=0)
         return a_mat
 
-    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002
+    def evaluate(self, equilibrium: Equilibrium) -> npt.NDArray[np.float64]:  # noqa: ARG002 # type: ignore[ty:invalid-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
         """  # noqa: DOC201

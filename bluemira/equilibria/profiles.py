@@ -11,7 +11,7 @@ Plasma profile objects, shape functions, and associated tools
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Protocol
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -37,7 +37,7 @@ from bluemira.equilibria.physics import _calc_beta_p
 from bluemira.equilibria.plotting import ProfilePlotter
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sized
     from pathlib import Path
 
     import numpy.typing as npt
@@ -59,7 +59,7 @@ __all__ = [
 
 
 def fitfunc(
-    func: Callable[[npt.ArrayLike], npt.NDArray],
+    func: DFuncT,
     data: npt.NDArray[np.float64],
     order: int | None = None,
 ) -> npt.NDArray[np.float64]:
@@ -87,7 +87,7 @@ def fitfunc(
 
 
 @nb.jit(nopython=True)
-def singlepowerfunc(x: float, *args) -> float:
+def singlepowerfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Single power shape function defined e.g. CREATE stuff
 
@@ -98,7 +98,7 @@ def singlepowerfunc(x: float, *args) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def doublepowerfunc(x: float, *args) -> float:
+def doublepowerfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Double power shape function defined e.g. in
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
@@ -112,9 +112,7 @@ def doublepowerfunc(x: float, *args) -> float:
 
 
 @nb.jit(cache=True, forceobj=True)
-def pshape(
-    shape: Callable[[float], float], psinorm: float, psio: float, psix: float
-) -> float:
+def pshape(shape: ShapeFunction, psinorm: float, psio: float, psix: float) -> float:
     """
     Integral of jtorshape to calculate pressure
 
@@ -132,7 +130,7 @@ def speedy_pressure(
     psi_norm: npt.NDArray[np.float64],
     psio: float,
     psix: float,
-    shape: Callable[[float], float],
+    shape: ShapeFunction,
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -172,7 +170,7 @@ def speedy_pressure_mask(
     psi_norm: npt.NDArray[np.float64],
     psio: float,
     psix: float,
-    shape: Callable[[float], float],
+    shape: ShapeFunction,
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -205,7 +203,7 @@ def speedy_pressure_mask(
 
 
 # @nb.jit(cache=True)
-def laopoly(x: Any, *args: Any) -> Any:
+def laopoly(x: npt.NDArray, *args: float) -> npt.NDArray:
     """
     Polynomial shape function defined in
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
@@ -220,7 +218,7 @@ def laopoly(x: Any, *args: Any) -> Any:
 
 
 @nb.jit(nopython=True, cache=True)
-def luxonexp(x: float, *args) -> float:
+def luxonexp(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Exponential shape function defined in
     :doi:`Luxon 1984 <10.1088/0029-5515/22/6/009>`
@@ -230,19 +228,24 @@ def luxonexp(x: float, *args) -> float:
     return np.exp(-(x**2) * alpha**2)
 
 
+class DFuncT(Protocol):
+    @staticmethod
+    def __call__(x: float | npt.NDArray, *args: float) -> float | npt.NDArray: ...
+
+
 class ShapeFunction:
     """
     Shape function object
     """
 
     _order: int = 1
-    _dfunc: Any = None
+    _dfunc: DFuncT
     _fact: float = 1.0
-    coeffs: Any
-    data: npt.NDArray[np.float64] | None = None
+    coeffs: npt.NDArray
+    data: npt.NDArray[np.float64]
 
-    def __init__(self, coeffs: Any):
-        self.coeffs = coeffs
+    def __init__(self, coeffs: Sized | npt.ArrayLike | npt.NDArray):
+        self.coeffs = np.asarray(coeffs)
 
     @classmethod
     def from_datafit(cls, data: npt.NDArray[np.float64], order: int | None = None):
@@ -257,10 +260,10 @@ class ShapeFunction:
         cls.data = data
         return cls(coeffs)
 
-    def _func(self, x: Any) -> Any:
+    def _func(self, x: float | npt.NDArray) -> float | npt.NDArray:
         return self._dfunc(x, *self.coeffs)
 
-    def __call__(self, x: Any) -> Any:
+    def __call__(self, x: float | npt.NDArray) -> float | npt.NDArray:
         """
         Calculate the value of the ShapeFunction for given x.
         """  # noqa: DOC201
@@ -279,11 +282,9 @@ class ShapeFunction:
         f, ax = plt.subplots()
         x = np.linspace(0, 1)
         ax.plot(x, self(x), label="Shape function - fitted")
-        if getattr(self, "data", None) is not None:
-            data = self.data
-            assert data is not None  # noqa: S101
-            xd = np.linspace(0, 1, len(data))
-            ax.plot(xd, data, label="Shape function - actual")
+        if hasattr(self, "data"):
+            xd = np.linspace(0, 1, len(self.data))
+            ax.plot(xd, self.data, label="Shape function - actual")
         ax.legend()
         f.show()
 
@@ -310,13 +311,13 @@ class SinglePowerFunc(ShapeFunction):
     _order = 1
     _fact = 1
 
-    def __init__(self, args):
+    def __init__(self, args: Sized):
         if len(args) != self._order:
             raise ValueError(f"Function coefficients {len(args)} != {self._order}")
-        self.coeffs = args
+        super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return singlepowerfunc(x, *args)
 
 
@@ -328,13 +329,13 @@ class DoublePowerFunc(ShapeFunction):
     _order = 2
     _fact = 1
 
-    def __init__(self, args):
+    def __init__(self, args: Sized):
         if len(args) != self._order:
             raise ValueError(f"Function coefficients {len(args)} != {self._order}")
-        self.coeffs = args
+        super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return doublepowerfunc(x, *args)
 
 
@@ -346,13 +347,13 @@ class LaoPolynomialFunc(ShapeFunction):
     _fact = 1
     _order = 3
 
-    def __init__(self, coeffs: Any):
+    def __init__(self, coeffs: npt.ArrayLike):
         coeffs_arr = np.atleast_1d(coeffs)
         self.n = len(coeffs_arr) - 1
-        self.coeffs = coeffs_arr
+        super().__init__(coeffs_arr)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:invalid-attribute-override]
         return laopoly(x, *args)
 
 
@@ -367,12 +368,12 @@ class LuxonExpFunc(ShapeFunction):
     def __init__(self, coeffs: npt.ArrayLike):
         if not hasattr(coeffs, "__len__"):
             self.n = 1
-            self.coeffs = [coeffs]
+            super().__init__(coeffs)
         else:
             raise ValueError("The Luxon function only has one coefficient.")
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return luxonexp(x, *args)
 
 
@@ -390,15 +391,15 @@ class Profile(ABC):
     """
 
     R_0: float
-    _l_i_min_iter: int = 0
-    I_p: float | None = None
-    B_0: float | None = None
-    _B_0: float | None = None
-    psiax: float = 0.0
-    psisep: float = 0.0
-    _fvac: float = 1.0
-    dx: float = 0.0
-    dz: float = 0.0
+    _l_i_min_iter: int
+    _B_0: float
+    I_p: float
+    psiax: float
+    psisep: float
+    _fvac: float
+    dx: float
+    dz: float
+    shape: ShapeFunction
 
     def _scalar_denorm(self, prime, norm):
         """
@@ -577,14 +578,7 @@ class Profile(ABC):
         """f*df/dpsi as a function of normalised psi"""
 
 
-class IpProfile(Profile):
-    """Profile that includes I_p and B_0"""
-
-    I_p: float
-    _B_0: float
-
-
-class BetaIpProfile(IpProfile):
+class BetaIpProfile(Profile):
     """
     Constrain poloidal Beta and plasma current following logic as laid out in
     :doi:`Jeon, 2015 <10.3938/jkps.67.843>` and
@@ -709,14 +703,12 @@ class BetaIpProfile(IpProfile):
             Bx = _Bx_func(x, z)
             Bz = _Bz_func(x, z)
             Bp = np.hypot(Bx, Bz)
-            assert mask is not None  # noqa: S101
             beta_p_actual = _calc_beta_p(pfunc, Bp, mask, x, self.dx, self.dz)
 
             lambd_beta0 = -self.betap / beta_p_actual * self.R_0
 
         else:
             # If there are no X-points, use less accurate beta_p constraint
-            assert self.I_p is not None  # noqa: S101
             lambd_beta0 = (
                 -self.betap
                 * self.I_p**2
@@ -726,7 +718,6 @@ class BetaIpProfile(IpProfile):
                 / self.int2d(pfunc)
             )
 
-        assert self.I_p is not None  # noqa: S101
         part_a = self.int2d(jtorshape * x / self.R_0)
         part_b = self.int2d(jtorshape * self.R_0 / x)
         lambd = (self.I_p + lambd_beta0 * (part_b - part_a)) / part_b
@@ -740,13 +731,15 @@ class BetaIpProfile(IpProfile):
         """
         dp/dpsi as a function of normalised psi
         """  # noqa: DOC201
-        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
+        return self.lambd * self.beta0 / self.R_0 * self.shape(np.asarray(pn))
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
         """  # noqa: DOC201
-        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)
+        return (
+            MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(np.asarray(pn))
+        )
 
 
 class BetaLiIpProfile(BetaIpProfile):
@@ -794,7 +787,7 @@ class BetaLiIpProfile(BetaIpProfile):
         self._l_i_min_iter = li_min_iter
 
 
-class CustomProfile(IpProfile):
+class CustomProfile(Profile):
     """
     User-specified profile functions p'(psi), ff'(psi)
     jtor = R*p' + ff'/(R*MU_0)
@@ -813,6 +806,8 @@ class CustomProfile(IpProfile):
         Plasma current [A]. If None, the plasma current will be calculated
         from p' and ff'.
     """
+
+    I_p: float | None  # type: ignore[ty:invalid-attribute-override]
 
     def __init__(
         self,
