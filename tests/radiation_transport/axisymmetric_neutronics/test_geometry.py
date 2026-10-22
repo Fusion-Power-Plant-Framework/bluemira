@@ -19,7 +19,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
-    NeutronicsGeometryManager,
+    AxisymmetricNeutronicsGeomManager,
 )
 
 
@@ -262,7 +262,7 @@ def touching_splined_pair():
 
 @pytest.mark.cadquery_only
 class TestNeutronicsGeometryManager:
-    """Tests for NeutronicsGeometryManager."""
+    """Tests for AxisymmetricNeutronicsGeomManager."""
 
     @pytest.mark.parametrize(
         ("pair_fixture", "index", "expected"),
@@ -283,7 +283,7 @@ class TestNeutronicsGeometryManager:
         components = request.getfixturevalue(pair_fixture)
 
         assert (
-            NeutronicsGeometryManager.check_touching(
+            AxisymmetricNeutronicsGeomManager.check_touching(
                 components[index],
                 components,
                 overlap_tolerance=1e-6,
@@ -301,14 +301,14 @@ class TestNeutronicsGeometryManager:
     def test_from_list_of_components(self, pair_fixture, request, monkeypatch):
         components = request.getfixturevalue(pair_fixture)
 
-        manager = NeutronicsGeometryManager.from_list_of_components(
+        manager = AxisymmetricNeutronicsGeomManager.from_list_of_components(
             components=list(components),
             discretisations=[10, 10],
             overlap_tolerance=1e-6,
             gap_tolerance=1e-2,
         )
 
-        assert isinstance(manager, NeutronicsGeometryManager)
+        assert isinstance(manager, AxisymmetricNeutronicsGeomManager)
         assert len(manager.get_all_components()) == len(components)
 
         warnings = []

@@ -30,7 +30,7 @@ if TYPE_CHECKING:
 
 
 @dataclass
-class NeutronicsComponent:
+class AxisymmetricNeutronicsComponent:
     """
     Store component data used during neutronics pre-processing.
     """
@@ -69,7 +69,7 @@ class NeutronicsComponent:
         )
 
 
-class NeutronicsGeometryManager(ComponentManager):
+class AxisymmetricNeutronicsGeomManager(ComponentManager):
     """Manage components used to construct the neutronics geometry."""
 
     def __init__(
@@ -133,7 +133,7 @@ class NeutronicsGeometryManager(ComponentManager):
         discretisations: list[int],
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
-    ) -> NeutronicsGeometryManager:
+    ) -> AxisymmetricNeutronicsGeomManager:
         """Create a neutronics geometry manager from components.
 
         Parameters
@@ -149,7 +149,7 @@ class NeutronicsGeometryManager(ComponentManager):
 
         Returns
         -------
-        NeutronicsGeometryManager
+        AxisymmetricNeutronicsGeomManager
             Manager containing the processed neutronics components.
 
         Raises
@@ -178,7 +178,7 @@ class NeutronicsGeometryManager(ComponentManager):
             xyz_shape = xyz_component.children[0].shape
 
             all_neutronics_comps.append(
-                NeutronicsComponent(
+                AxisymmetricNeutronicsComponent(
                     name=comp.name,
                     original_volume=xyz_shape.volume,
                     touching_components=cls.check_touching(
@@ -303,14 +303,14 @@ class NeutronicsGeometryManager(ComponentManager):
 
     @staticmethod
     def fix_xz_overlaps_and_gaps(
-        neutronics_comps: list[NeutronicsComponent],
+        neutronics_comps: list[AxisymmetricNeutronicsComponent],
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
     ) -> None:
         """Fix overlaps and gaps between desplined XZ faces.
 
         Components that should touch are identified from the
-        ``touching_components`` stored on each ``NeutronicsComponent``.
+        ``touching_components`` stored on each ``AxisymmetricNeutronicsComponent``.
 
         Overlaps introduced during desplining are repaired first. For each
         component, all overlapping neighbours that should touch it are repaired
