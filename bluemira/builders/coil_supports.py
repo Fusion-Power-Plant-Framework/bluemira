@@ -121,7 +121,6 @@ class ITERGravitySupportBuilder(Builder):
         slice_result = slice_shape(xyz_component.shape, xz_plane)
 
         # Process UGLY SLICE
-        assert slice_result is not None  # noqa: S101
         wires = sorted(
             cast("list[BluemiraWire]", slice_result), key=lambda wire: wire.length
         )
