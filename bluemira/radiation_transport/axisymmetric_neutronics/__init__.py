@@ -4,5 +4,5 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-New Neutronics Module that applies for any reactor
+Generalised axisymmetric neutronics module
 """
