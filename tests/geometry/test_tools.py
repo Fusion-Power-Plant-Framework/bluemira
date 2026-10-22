@@ -37,9 +37,11 @@ from bluemira.geometry.tools import (
     boolean_fragments,
     boolean_fuse,
     chamfer_wire_2D,
+    check_touching_geos,
     connect_shapes,
     convex_hull_wires_2d,
     deserialise_shape,
+    distance_to,
     extrude_shape,
     fallback_to,
     fillet_wire_2D,
@@ -55,6 +57,8 @@ from bluemira.geometry.tools import (
     mirror_shape,
     offset_wire,
     point_inside_shape,
+    repair_gaps_between_faces,
+    repair_overlapping_geos,
     revolve_shape,
     save_as_STP,
     save_cad,
@@ -1197,3 +1201,258 @@ class TestBooleanCommon:
         assert boolean_cut(wall, [cavity])[0].volume == pytest.approx(
             wall.volume, rel=1e-9
         )
+
+
+def _make_faces(vertices):
+    return [BluemiraFace(make_polygon(v, closed=True)) for v in vertices]
+
+
+def _revolve(face):
+    return revolve_shape(
+        face,
+        base=(0, 0, 0),
+        direction=(0, 0, 1),
+        degree=360.0,
+    )
+
+
+@pytest.mark.cadquery_only
+class TestCheckTouchingGeos:
+    """Tests for check_touching_geos()."""
+
+    @pytest.fixture(
+        params=[
+            (
+                [[1, 0, 0.25], [2, 0, 0.25], [2, 0, 0.5], [1, 0, 0.5]],
+                True,
+            ),
+            (
+                [[1, 0, 0], [2, 0, 0], [2, 0, 1], [1, 0, 1]],
+                True,
+            ),
+            (
+                [[2, 0, 0], [3, 0, 0], [3, 0, 1], [2, 0, 1]],
+                False,
+            ),
+        ],
+        ids=["partially-touching", "fully-touching", "non-touching"],
+    )
+    def face_pair(self, request):
+        vertices_2, expected = request.param
+        faces = _make_faces([
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+            vertices_2,
+        ])
+        return faces, expected
+
+    @pytest.mark.parametrize(
+        "as_solid",
+        [False, True],
+        ids=["faces", "solids"],
+    )
+    def test_touching_geos(self, face_pair, as_solid):
+        geos, expected = face_pair
+
+        if as_solid:
+            geos = [_revolve(geo) for geo in geos]
+
+        assert check_touching_geos(*geos) is expected
+
+
+@pytest.mark.cadquery_only
+class TestRepairOverlappingGeos:
+    """Tests for repair_overlapping_geos()."""
+
+    @pytest.fixture
+    def overlapping_faces(self):
+        return _make_faces([
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+            [
+                [0.5, 0, 0.25],
+                [2, 0, 0.25],
+                [2, 0, 0.5],
+                [0.5, 0, 0.5],
+            ],
+        ])
+
+    @pytest.fixture
+    def overlapping_solids(self, overlapping_faces):
+        return [_revolve(face) for face in overlapping_faces]
+
+    @pytest.mark.parametrize(
+        ("fixture", "measure"),
+        [
+            ("overlapping_faces", "area"),
+            ("overlapping_solids", "volume"),
+        ],
+        ids=["faces", "solids"],
+    )
+    @pytest.mark.parametrize(
+        "order",
+        [(0, 1), (1, 0)],
+        ids=["repair-geo-1", "repair-geo-2"],
+    )
+    def test_repair_overlapping_geos(
+        self,
+        request,
+        fixture,
+        measure,
+        order,
+    ):
+        geos = request.getfixturevalue(fixture)
+        repair_idx, priority_idx = order
+        geo = geos[repair_idx]
+        priority_geo = geos[priority_idx]
+
+        original = getattr(geo, measure)
+        priority_original = getattr(priority_geo, measure)
+
+        repaired = repair_overlapping_geos(
+            geo,
+            [priority_geo],
+        )
+
+        assert getattr(repaired, measure) < original
+        assert getattr(priority_geo, measure) == pytest.approx(priority_original)
+        assert check_touching_geos(repaired, priority_geo)
+
+    @pytest.mark.parametrize(
+        "order",
+        [(0, 1), (1, 0)],
+        ids=["solid-vs-face", "face-vs-solid"],
+    )
+    def test_different_types_raise_type_error(
+        self,
+        overlapping_faces,
+        overlapping_solids,
+        order,
+    ):
+        solid_idx, face_idx = order
+        geos = [overlapping_solids[0], overlapping_faces[1]]
+
+        with pytest.raises(
+            TypeError,
+            match="geo_1 and geo_2 must be of the same type",
+        ):
+            repair_overlapping_geos(
+                geos[solid_idx],
+                [geos[face_idx]],
+            )
+
+    @pytest.mark.parametrize(
+        "fixture",
+        ["overlapping_faces", "overlapping_solids"],
+        ids=["face", "solid"],
+    )
+    def test_single_geo_raises_value_error(self, request, fixture):
+        geo = request.getfixturevalue(fixture)[0]
+
+        with pytest.raises(
+            ValueError,
+            match="geos_2 must contain at least one geometry",
+        ):
+            repair_overlapping_geos(geo, [])
+
+
+@pytest.mark.cadquery_only
+class TestRepairGapsBetweenFaces:
+    """Tests for repair_gaps_between_faces()."""
+
+    @pytest.fixture
+    def straight_edged_faces(self):
+        gap = 1e-3
+        return _make_faces([
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+            [
+                [1 + gap, 0, 0],
+                [2, 0, 0],
+                [2, 0, 1],
+                [1 + gap, 0, 1],
+            ],
+        ])
+
+    @pytest.fixture
+    def curve_by_polylines_faces(self):
+        gap = 1e-3
+        polyline = [
+            [1.00, 0, 0.00],
+            [1.10, 0, 0.25],
+            [1.15, 0, 0.50],
+            [1.10, 0, 0.75],
+            [1.00, 0, 1.00],
+        ]
+        offset_polyline = [[x + gap, y, z] for x, y, z in polyline]
+
+        return _make_faces([
+            [[0, 0, 0], *polyline, [0, 0, 1]],
+            [*offset_polyline, [2, 0, 1], [2, 0, 0]],
+        ])
+
+    @pytest.mark.parametrize(
+        "fixture",
+        [
+            "straight_edged_faces",
+            "curve_by_polylines_faces",
+        ],
+        ids=["straight-edged", "curve-by-polylines"],
+    )
+    def test_repair_gap(self, request, fixture):
+        faces = request.getfixturevalue(fixture)
+
+        repaired = repair_gaps_between_faces(
+            faces,
+            tolerance=1e-2,
+        )
+
+        distance, _ = distance_to(*repaired)
+
+        assert distance == pytest.approx(0.0)
+
+    def test_gap_larger_than_tolerance_not_repaired(self):
+        gap = 1e-1
+        faces = _make_faces([
+            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]],
+            [
+                [1 + gap, 0, 0],
+                [2, 0, 0],
+                [2, 0, 1],
+                [1 + gap, 0, 1],
+            ],
+        ])
+
+        repaired = repair_gaps_between_faces(
+            faces,
+            tolerance=1e-2,
+        )
+
+        distance, _ = distance_to(*repaired)
+
+        assert distance > 0
+
+    @pytest.mark.parametrize(
+        "n_faces",
+        [0, 1],
+        ids=["no-faces", "one-face"],
+    )
+    def test_too_few_faces_raise_value_error(
+        self,
+        straight_edged_faces,
+        n_faces,
+    ):
+        with pytest.raises(
+            ValueError,
+            match="At least two faces are required",
+        ):
+            repair_gaps_between_faces(straight_edged_faces[:n_faces])
+
+    def test_non_face_raises_type_error(
+        self,
+        straight_edged_faces,
+    ):
+        solid = _revolve(straight_edged_faces[0])
+
+        with pytest.raises(
+            TypeError,
+            match="All geometries must be BluemiraFace objects",
+        ):
+            repair_gaps_between_faces([straight_edged_faces[0], solid])

@@ -2410,3 +2410,203 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
     angle = np.array(np.arctan2(det, dot))
     angle[angle < 0] += 2 * np.pi
     return np.degrees(angle)
+
+
+# ======================================================================================
+# Approximately fix the overlap of two overlapping geos
+# ======================================================================================
+def repair_overlapping_geos(
+    geo_1: BluemiraSolid | BluemiraFace,
+    geos_2: list[BluemiraSolid | BluemiraFace],
+) -> BluemiraSolid | BluemiraFace:
+    """
+    Fix the overlap of geo_1 with a list of geometries in geos_2 by first
+    fusing geo_1 with all geometries in geos_2 and then subtracting the
+    union of geos_2 from the fused geometry.
+
+    Parameters
+    ----------
+    geo_1:
+        Geometry to be repaired.
+    geos_2:
+        Geometries that remain unchanged and take priority over geo_1.
+
+    Returns
+    -------
+    BluemiraSolid | BluemiraFace
+        Repaired geo_1.
+
+    Raises
+    ------
+    ValueError
+        If geos_2 is empty.
+    TypeError
+        If geo_1 and geos_2 are not of the same type.
+
+    GeometryError
+        If boolean cut creates multiple geometries.
+
+    Note
+    ------
+    The overlapping boundaries of BluemiraFace objects, or the corresponding
+    overlapping faces of BluemiraSolid objects, may form either a single
+    continuous overlap region or multiple spatially discontinuous overlap
+    regions. Applying the boolean cut directly in the latter case may
+    introduce unnecessary internal boundaries, resulting in fragmented
+    surfaces that meet like puzzle pieces rather than forming a smooth,
+    continuous interface.
+
+    Fusing geo_1 with geos_2 first combines these overlap regions into a
+    single topological representation before the subtraction, reducing
+    such fragmentation and preserving a smoother interface in the repaired
+    geo_1.
+    """
+    if not geos_2:
+        raise ValueError("geos_2 must contain at least one geometry")
+    if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
+
+    fused = boolean_fuse([geo_1, *geos_2])
+    repaired = boolean_cut(fused, geos_2)
+
+    if isinstance(repaired, list) and len(repaired) > 1:
+        raise GeometryError("boolean cut created multiple geometries")
+
+    return repaired[0] if isinstance(repaired, list) else repaired
+
+
+# ======================================================================================
+# Approximately fix the gap between two geos which are supposed to be touching
+# ======================================================================================
+def repair_gaps_between_faces(
+    geos: list[BluemiraFace],
+    tolerance: float = 1e-2,
+) -> list[BluemiraFace]:
+    """
+    Repair small gaps between neighbouring BluemiraFaces which should touch.
+
+    Parameters
+    ----------
+    geos:
+        Faces whose neighbouring boundaries should coincide.
+    tolerance:
+        maximum distance between boundaries that OpenCascade is
+        allowed to treat as coincident and sew together.
+
+    Returns
+    -------
+    list[BluemiraFace]
+        Faces with neighbouring boundaries sewn together.
+
+    Raises
+    ------
+    TypeError
+        If geo_1 and geos_2 are not BluemiraFace Objects.
+    ValueError
+        If only one geo is given, if sewing results in a null shape, or if
+        sewing splits a single face into multiple faces.
+    """
+    try:
+        import cadquery as cq  # noqa: PLC0415
+        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing  # noqa: PLC0415
+
+    except ImportError:
+        bluemira_warn("Gap repair requires CadQuery. Skipping gap repair.")
+        return geos
+
+    if not all(isinstance(geo, BluemiraFace) for geo in geos):
+        raise TypeError("All geometries must be BluemiraFace objects")
+
+    n_geo_min = 2
+    if len(geos) < n_geo_min:
+        raise ValueError("At least two faces are required")
+
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+
+    for geo in geos:
+        sewing.Add(geo.shape.wrapped)
+
+    sewing.Perform()
+
+    repaired_faces = []
+    for geo in geos:
+        if sewing.IsModified(geo.shape.wrapped):
+            mod_shape = cq.Shape.cast(sewing.Modified(geo.shape.wrapped))
+            faces = mod_shape.Faces()
+            if len(faces) == 0:
+                raise ValueError("Sewing operation resulted in a null shape.")
+            if len(faces) > 1:
+                raise ValueError("Sewing operation split a face into multiple faces.")
+            repaired_faces.append(convert(faces[0]))
+        else:
+            repaired_faces.append(geo)
+
+    return repaired_faces
+
+
+# ======================================================================================
+# Check if two geos are touching
+# ======================================================================================
+def check_touching_geos(
+    geo_1: BluemiraSolid | BluemiraFace,
+    geo_2: BluemiraSolid | BluemiraFace,
+    atol: float = 1e-10,
+) -> bool:
+    """
+    Check if two geometries of the same type touch without overlapping.
+
+    Parameters
+    ----------
+    geo_1 : BluemiraSolid | BluemiraFace
+        The first geometry.
+    geo_2 : BluemiraSolid | BluemiraFace
+        The second geometry.
+    atol : float, default=1e-10
+        Absolute tolerance for the distance between the geometries.
+        The area and volume tolerances are derived as atol**2 and atol**3,
+        respectively.
+
+    Returns
+    -------
+    bool
+        True if the geometries touch within tolerance without overlapping,
+        otherwise False.
+
+    Raises
+    ------
+    TypeError
+        If geo_1 and geo_2 are not of the same type.
+    ValueError
+        If atol is negative or non-finite.
+
+    Notes
+    -----
+    Area and volume tolerances are derived from atol as atol**2 and atol**3,
+    respectively. These may be too strict for the geometry kernel's numerical
+    precision.
+    """
+    if type(geo_1) is not type(geo_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
+
+    if not np.isfinite(atol) or atol < 0:
+        raise ValueError("atol must be finite and non-negative")
+
+    dist, _ = distance_to(geo_1, geo_2)
+    mutual_distance = bool(np.isclose(dist, 0, atol=atol))
+
+    # Mutual distance can be zero if the geometries overlap or touch.
+    # Hence, also check the intersection area or volume.
+    intersection = geo_1.shape.intersect(geo_2.shape)
+
+    if isinstance(geo_1, BluemiraFace):
+        intersection_size = intersection.Area()
+        intersection_atol = atol**2
+    else:
+        intersection_size = intersection.Volume()
+        intersection_atol = atol**3
+
+    intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
+
+    # If both the distance and intersection size are within tolerance
+    # of zero, the geometries are considered to touch without overlap.
+    return bool(mutual_distance and intersection_is_zero)
