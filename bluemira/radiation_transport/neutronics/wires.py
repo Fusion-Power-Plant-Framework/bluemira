@@ -40,9 +40,9 @@ class StraightLineInfo(NamedTuple):
 class CircleInfo(NamedTuple):
     """Arc of a Circle, LESS THAN 180°"""
 
-    start_point: Iterable[float]  # 3D coordinates
-    end_point: Iterable[float]  # 3D coordinates
-    center: Iterable[float]  # 3D coordinates
+    start_point: Sequence[float]  # 3D coordinates
+    end_point: Sequence[float]  # 3D coordinates
+    center: Sequence[float]  # 3D coordinates
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:
@@ -171,7 +171,9 @@ class WireInfoList:
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
         old_kp = self.info_list[0].key_points
-        self.info_list[0].key_points = old_kp._replace(start_point=new_start_point)
+        self.info_list[0].key_points = old_kp._replace(
+            start_point=new_start_point.tolist()
+        )
 
     @property
     def end_point(self):
