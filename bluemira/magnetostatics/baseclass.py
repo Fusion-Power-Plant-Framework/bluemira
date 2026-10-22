@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -36,7 +36,7 @@ class CurrentSource(ABC):
     """
 
     current: float
-    _points: Any
+    _points: npt.NDArray
 
     def set_current(self, current: float):
         """
@@ -119,7 +119,7 @@ class CrossSectionCurrentSource(CurrentSource):
 
     _origin: np.ndarray
     _dcm: np.ndarray
-    _points: Any
+    _points: npt.NDArray
     _rho: float
     _area: float
 
@@ -243,13 +243,7 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
 
 
 class PrismEndCapMixin:
-    def _check_angle_values(
-        self,
-        alpha: float,
-        beta: float,
-        bypass_endcap_error: bool | None = False,  # noqa: FBT001, FBT002, ARG002
-        endcap_warning: bool | None = False,  # noqa: FBT001, FBT002, ARG002
-    ):
+    def _check_angle_values(self, alpha: float, beta: float):
         """
         Check that end-cap angles are acceptable.
 
@@ -304,11 +298,12 @@ class SourceGroup(ABC):
     """
 
     sources: list[CurrentSource | SourceGroup]
-    _points: Any
+    _points: npt.NDArray
 
     def __init__(self, sources: Sequence[CurrentSource | SourceGroup]):
         self.sources = list(sources)
-        self._points = np.vstack([np.vstack(s._points) for s in self.sources])
+        # each source points can be an array of arrays
+        self._points = np.vstack([np.vstack(s._points) for s in self.sources])  # type: ignore[ty:no-matching-overload]
 
     def set_current(self, current: float):
         """

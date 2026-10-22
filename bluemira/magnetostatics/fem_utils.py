@@ -22,7 +22,6 @@ import matplotlib.pyplot as plt
 import matplotlib.tri as tr
 import numpy as np
 import ufl
-import ufl.core.expr
 from dolfinx import cpp, default_scalar_type, geometry, plot
 from dolfinx.fem import (
     Constant,
@@ -44,6 +43,8 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 if TYPE_CHECKING:
     import numpy.typing as npt
     from dolfinx.mesh import Mesh
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 old_m_to_m = gmshio.model_to_mesh
 
@@ -446,7 +447,7 @@ def error_L2(  # noqa: N802
     # Interpolate exact solution, special handling if exact solution
     # is a ufl expression or a python lambda function
     u_ex_W = BluemiraFemFunction(W)  # noqa: N806
-    if not isinstance(u_ex, ufl.core.expr.Expr):
+    if not isinstance(u_ex, ufl.core.expr.Expr):  # type:ignore[ty:possibly-missing-submodule]
         u_expr = Expression(u_ex, W.element.interpolation_points())
         u_ex_W.interpolate(u_expr)
     else:
@@ -539,7 +540,7 @@ def plot_scalar_field(
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> dict[str, Any]:
+) -> dict[str, Axes | tr.TriContourSet | None]:
     """
     Plot a scalar field from numpy arrays.
 
@@ -568,7 +569,7 @@ def plot_scalar_field(
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig = ax.get_figure()
+        fig = cast("Figure", ax.get_figure())
 
     defaults = {"linewidths": 2, "colors": "k"}
     contour_kwargs = {**defaults, **kwargs}
@@ -590,8 +591,7 @@ def plot_scalar_field(
 
     if tofill:
         cntrf = ax.tricontourf(triang, data, levels=levels, cmap="RdBu_r")
-        if fig is not None:
-            fig.colorbar(cntrf, ax=ax)
+        fig.colorbar(cntrf, ax=ax)
 
     ax.set_xlabel("x [m]")
     ax.set_ylabel("z [m]")

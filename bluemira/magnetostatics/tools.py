@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     float64: Any
     intc: Any
 else:
-    from numba.types import CPointer, float64, intc  # ty: ignore[unresolved-import]
+    from numba.types import CPointer, float64, intc  # type: ignore[ty:unresolved-import]
 from scipy import LowLevelCallable
 from scipy.integrate import IntegrationWarning, nquad, quad
 

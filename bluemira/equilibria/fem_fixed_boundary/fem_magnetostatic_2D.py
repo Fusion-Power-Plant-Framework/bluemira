@@ -139,7 +139,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         p_prime: Callable[[float], float] | None = None,
         ff_prime: Callable[[float], float] | None = None,
-        mesh: dolfinx.mesh.Mesh | str | None = None,
+        mesh: dolfinx.mesh.Mesh | None = None,
         I_p: float | None = None,
         R_0: float | None = None,
         B_0: float | None = None,
@@ -211,7 +211,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def set_mesh(
         self,
-        mesh: dolfinx.mesh.Mesh | str,
+        mesh: dolfinx.mesh.Mesh,
         boundaries: dolfinx.mesh.Mesh | str | None = None,
     ):
         """
