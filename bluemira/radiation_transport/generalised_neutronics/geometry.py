@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Geometry for generalised neutronics
+Geometry for generalised axisymmetric neutronics
 """
 
 from __future__ import annotations
