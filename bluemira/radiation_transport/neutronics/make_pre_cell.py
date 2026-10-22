@@ -180,7 +180,7 @@ def calculate_new_circle(
     old_chord_mid_point = np.mean(old_pts, axis=0)
     old_radius_vector = np.array(old_circle_info.center) - old_chord_mid_point
     # chord should stay on the same side of the center after transformation.
-    new_center = pick_higher_point(center1, center2, old_radius_vector)
+    new_center = pick_higher_point(center1, center2, old_radius_vector).tolist()
 
     return CircleInfo(new_points[0], new_points[1], new_center, new_radius)
 

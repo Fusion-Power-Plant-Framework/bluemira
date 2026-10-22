@@ -30,7 +30,7 @@ class DAGMCConverterFastCTDConfig(DAGMCConverterConfig):
     Converter config model for DAGMCConverterFastCTD.
     """
 
-    converter_type: Literal["fast_ctd"] = "fast_ctd"
+    converter_type: Literal["fast_ctd"] = "fast_ctd"  # type: ignore[ty:invalid-mutable-override]
 
     imprint_geometry: bool = True
     """If True, imprint the geometry before converting to DAGMC."""
