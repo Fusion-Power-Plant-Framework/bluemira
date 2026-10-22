@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -121,7 +123,8 @@ def despline_xz_face(
     name: str = "",
     parent_name: str = "",
     *,
-    fallback_to_existing_discretisation: bool = False,
+    max_side_length: float = 0.1,
+    min_side_length: float = 0.001,
 ) -> BluemiraFace:
     """
     Despline relevant splined edges in xz face.
@@ -136,42 +139,66 @@ def despline_xz_face(
     discretisation
         Discretisation for splined boundary (the total boundary of the
         face that has splined face is discretised).
+    max_side_length
+        Maximum length of wire edges, in metres, used to warn
+        when the requested discretisation may be insufficient.
+    min_side_length
+        Minimum length of wire edges, in metres. A warning is
+        issued if any side is shorter than this length.
 
     Returns
     -------
     BluemiraFace
         BluemiraFace with desplined boundaries.
     """
+    boundaries = []
+
     for i, wire in enumerate(xz_face.boundary):
-        # check if the discretisation is enough
         if len(wire.vertexes.T) - 1 > discretisation:
-            # current discretisation {len(wire.vertexes.T)-2
-            # excluding endpoints
-            # parent_name is used as in general name of xz components are "xz"
             bluemira_warn(
                 f"{name} for {parent_name},"
                 f" xz boundary wire {i}:"
                 f" The discretisation specified {discretisation}"
-                " is lower than the wire's current discretisation"
-                f" {len(wire.vertexes.T) - 1}."
+                f" is lower than the wire's current discretisation"
+                f" {len(wire.vertexes.T) - 1}. With byedges=True,"
+                " the provided discretisation may not determine"
+                " the final number of edges in the desplined wire."
             )
-            if fallback_to_existing_discretisation:
-                bluemira_warn(
-                    f"falling back to the wire's current discretisation: "
-                    f"{len(wire.vertexes.T) - 1}"
-                )
-                discretisation = len(wire.vertexes.T) - 1
 
-    boundaries = [
-        make_polygon(
-            wire.discretise(
-                ndiscr=discretisation,
-                byedges=True,
-            ),
-            closed=wire.is_closed(),
+        points = wire.discretise(
+            ndiscr=discretisation,
+            byedges=True,
         )
-        for wire in xz_face.boundary
-    ]
+
+        side_lengths = np.linalg.norm(np.diff(points, axis=1), axis=0)
+
+        max_edge_length = np.max(side_lengths)
+        min_edge_length = np.min(side_lengths)
+
+        if max_edge_length > max_side_length:
+            bluemira_warn(
+                f"{name} for {parent_name},"
+                f" xz boundary wire {i}:"
+                f" Maximum edge length is {max_edge_length:.4f} m,"
+                f" exceeding the specified limit of {max_side_length} m."
+                " Consider increasing the discretisation."
+            )
+
+        if min_edge_length < min_side_length:
+            bluemira_warn(
+                f"{name} for {parent_name},"
+                f" xz boundary wire {i}:"
+                f" Minimum edge length is {min_edge_length:.6f} m,"
+                f" below the specified limit of {min_side_length} m."
+                " Consider reducing the discretisation."
+            )
+
+        boundaries.append(
+            make_polygon(
+                points,
+                closed=wire.is_closed(),
+            )
+        )
 
     return BluemiraFace(
         boundaries,
