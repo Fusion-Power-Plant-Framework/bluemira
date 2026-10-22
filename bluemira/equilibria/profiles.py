@@ -59,7 +59,7 @@ __all__ = [
 
 
 def fitfunc(
-    func: Callable[[float], float],
+    func: Callable[[npt.ArrayLike], npt.NDArray],
     data: npt.NDArray[np.float64],
     order: int | None = None,
 ) -> npt.NDArray[np.float64]:

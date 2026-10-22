@@ -559,7 +559,7 @@ class EquilibriumPlotterMixin:
         nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
         cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
 
-        if poloidal and isinstance(self.eq, FixedPlasmaEquilibrium):
+        if poloidal and type(self.eq).__name__ == "FixedPlasmaEquilibrium":
             raise NotImplementedError(
                 "Toroidal field not available for FixedPlasmaEquilibrium"
             )

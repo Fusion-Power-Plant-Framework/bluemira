@@ -12,11 +12,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
-
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -36,9 +31,12 @@ from bluemira.magnetostatics.semianalytic_2d import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import numpy.typing as npt
 
     from bluemira.equilibria.coils._grouping import CoilGroup
+    from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
 
 
 class CoilGroupFieldsMixin:
@@ -621,8 +619,8 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
     def psi(
         self,
-        x: npt.ArrayLike,
-        z: npt.ArrayLike,
+        x: float | npt.ArrayLike,
+        z: float | npt.ArrayLike,
         *,
         sum_coils: bool = True,
         control: bool = False,
