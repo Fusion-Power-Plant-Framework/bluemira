@@ -45,7 +45,7 @@ class BluemiraSolid(BluemiraGeo):
         self, boundary: Sequence[BluemiraShell] | BluemiraShell | None, label: str = ""
     ):
         boundary_classes = [BluemiraShell]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type: ignore[ty:invalid-argument-type]
 
     def _create_solid(self, *, check_reverse: bool = True):
         """Creation of the solid

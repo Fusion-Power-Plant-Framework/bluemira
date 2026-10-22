@@ -12,10 +12,7 @@ In contained file because loop module imports geomtools and geombase modules
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -27,6 +24,9 @@ from bluemira.geometry.coordinates import (
     in_polygon,
 )
 from bluemira.geometry.plane import BluemiraPlane
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 __all__ = ["inscribed_rect_in_poly"]
 
@@ -93,8 +93,7 @@ def inscribed_rect_in_poly(
     xx = Coordinates([[x, 0, z], [x + 1, 0, z], [x, 1, z], [0, 0, 0]])
     zz = Coordinates([[x, 0, z], [x, 0, z + 1], [x, 1, z], [0, 0, 0]])
 
-    xo = (float(x), 0.0, float(z))
-    rot_p = (0.0, 1.0, 0.0)
+    xo, rot_p = [x, 0, z], [0, 1, 0]
 
     xx_plane = BluemiraPlane.from_3_points(xx.points[0], xx.points[1], xx.points[2])
     zz_plane = BluemiraPlane.from_3_points(zz.points[0], zz.points[1], zz.points[2])
@@ -182,9 +181,7 @@ class _GetDxDz:
 
         self.elements = np.arange(1, self.n_p + 1)[0::2]
 
-        self.check: Callable[[int, np.ndarray], None] = (
-            self.approx if convex else self.precise
-        )
+        self.check = self.approx if convex else self.precise
 
     def approx(self, n: int, lpi: np.ndarray):
         """
@@ -219,9 +216,8 @@ class _GetDxDz:
             maximum height/2 of rectangle
         """
         for n, plane in zip(self.elements, self.planes, strict=False):
-            lpi = coords_plane_intersect(self.coords, plane)
-            if lpi is not None:
-                self.check(n, lpi)
+            lpi = cast("npt.NDArray", coords_plane_intersect(self.coords, plane))
+            self.check(n, lpi)
 
         self.vec_arr_z = self.vec_arr_x.copy()
         self.vec_arr_x[:, 1] = self.point[1]

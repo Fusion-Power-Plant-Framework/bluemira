@@ -132,8 +132,8 @@ def offset(
     # Normal vectors for each side
     v = normal_vector(_side_vector(p))
     # Construct points offset
-    off_p = np.column_stack(p + offset_value * v)
-    off_p2 = np.column_stack(np.roll(p, 1) + offset_value * v)
+    off_p = (p + offset_value * v).T
+    off_p2 = (np.roll(p, 1) + offset_value * v).T
     off_p = np.array([off_p[:, 0], off_p[:, 1]])
     off_p2 = np.array([off_p2[:, 0], off_p2[:, 1]])
     ox = np.empty((off_p2[0].size + off_p2[0].size,))

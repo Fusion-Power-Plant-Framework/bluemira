@@ -40,12 +40,10 @@ class BluemiraFace(BluemiraGeo):
     """
 
     def __init__(
-        self,
-        boundary: BluemiraWire | Sequence[BluemiraWire] | None,
-        label: str = "",
+        self, boundary: BluemiraWire | Sequence[BluemiraWire] | None, label: str = ""
     ):
         boundary_classes = [BluemiraWire]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type: ignore[ty:invalid-argument-type]
 
     @staticmethod
     def _converter(func):
@@ -65,7 +63,7 @@ class BluemiraFace(BluemiraGeo):
         for w in cadapi.wires(self.shape):
             yield BluemiraWire(w)
 
-    def copy(self, label: str | None = None) -> BluemiraFace:
+    def copy(self) -> BluemiraFace:  # type: ignore[ty:invalid-method-override]
         """Make a copy of the BluemiraFace
 
         Returns
@@ -73,8 +71,7 @@ class BluemiraFace(BluemiraGeo):
         :
             A copy of the BluemiraFace.
         """
-        lbl = self.label if label is None else label
-        return BluemiraFace(self.boundary, lbl)
+        return BluemiraFace(self.boundary, self.label)
 
     def deepcopy(self, label: str | None = None) -> BluemiraFace:
         """Make a copy of the BluemiraFace
@@ -144,7 +141,7 @@ class BluemiraFace(BluemiraGeo):
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
-            _faces = cadapi.face_cut_holes(face, fholes)
+            _faces = cast("list[cadapi.apiFace]", cadapi.face_cut_holes(face, fholes))
             if not _faces:
                 raise DisjointedFaceError("Cutting the holes produced no face.")
             if len(_faces) > 1:

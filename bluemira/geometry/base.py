@@ -22,8 +22,6 @@ from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.placement import BluemiraPlacement
 
@@ -56,10 +54,10 @@ class BluemiraGeo(ABC, meshing.Meshable):
         self,
         boundary: Any,
         label: str = "",
-        boundary_classes: Sequence[type] | None = None,
+        boundary_classes: list[type[BluemiraGeo]] | None = None,
     ):
         super().__init__()
-        self._boundary_classes = list(boundary_classes) if boundary_classes else []
+        self._boundary_classes = boundary_classes or []
         self.__orientation = _Orientation.FORWARD
         self.label = label
         self._set_boundary(boundary)
@@ -124,7 +122,7 @@ class BluemiraGeo(ABC, meshing.Meshable):
                 return objs
         raise TypeError(
             f"Only {self._boundary_classes} objects can be used for {self.__class__}, "
-            f"got {np.unique([type(o) for o in objs], sorted=False)}"
+            f"got {np.unique([type(o) for o in objs], sorted=False)}"  # type: ignore[ty:no-matching-overload]
         )
 
     @property
