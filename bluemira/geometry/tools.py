@@ -2492,9 +2492,9 @@ def repair_overlapping_geos(
         raise TypeError("geo_1 and geo_2 must be of the same type")
     if not geos_2:
         raise ValueError("geos_2 must contain at least one geometry")
-    fused_geos_2 = boolean_fuse(geos_2) if len(geos_2) > 1 else geos_2[0]
-    fused = boolean_fuse([geo_1, fused_geos_2])
-    repaired = boolean_cut(fused, fused_geos_2)
+
+    fused = boolean_fuse([geo_1, *geos_2])
+    repaired = boolean_cut(fused, geos_2)
 
     if isinstance(repaired, list) and len(repaired) > 1:
         raise GeometryError("boolean cut created multiple geometries")
