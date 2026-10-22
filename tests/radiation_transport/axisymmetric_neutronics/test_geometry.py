@@ -18,7 +18,7 @@ from bluemira.geometry.tools import (
     revolve_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.radiation_transport.generalised_neutronics.geometry import (
+from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     NeutronicsGeometryManager,
 )
 
@@ -314,7 +314,7 @@ class TestNeutronicsGeometryManager:
         warnings = []
 
         monkeypatch.setattr(
-            "bluemira.radiation_transport.generalised_neutronics.geometry.bluemira_warn",
+            "bluemira.radiation_transport.axisymmetric_neutronics.geometry.bluemira_warn",
             warnings.append,
         )
 
