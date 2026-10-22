@@ -623,7 +623,7 @@ def calc_beta_p_approximate(eq: Equilibrium) -> float:
 def _calc_beta_p(
     pressure_map: npt.NDArray[np.float64],
     Bp: npt.NDArray[np.float64],
-    mask: npt.NDArray[np.float64],
+    mask: npt.NDArray[np.float64] | None,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,

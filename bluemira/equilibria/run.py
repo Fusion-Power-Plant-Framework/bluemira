@@ -41,7 +41,7 @@ from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.profiles import IpProfile, OPointCalcOptions
+from bluemira.equilibria.profiles import OPointCalcOptions, Profile
 from bluemira.equilibria.solve import (
     ConvergenceCriterion,
     DudsonConvergence,
@@ -62,7 +62,6 @@ if TYPE_CHECKING:
         CoilsetOptimiserResult,
         EqCoilsetOptimisationProblem,
     )
-    from bluemira.equilibria.profiles import Profile
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.face import BluemiraFace
     from bluemira.utilities.positioning import PositionMapper
@@ -308,7 +307,7 @@ class PulsedCoilsetDesign(ABC):
         coilset: CoilSet,
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
-        profiles: IpProfile,
+        profiles: Profile,
         breakdown_settings: dict | BreakdownCOPConfig | None = None,
         equilibrium_settings: dict | EQConfig | None = None,
         current_opt_constraints: list[UpdateableConstraint] | None = None,
@@ -723,7 +722,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         position_mapper: PositionMapper,
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
-        profiles: IpProfile,
+        profiles: Profile,
         breakdown_settings: dict | BreakdownCOPConfig | None = None,
         equilibrium_settings: dict | EQConfig | None = None,
         current_opt_constraints: list[UpdateableConstraint] | None = None,

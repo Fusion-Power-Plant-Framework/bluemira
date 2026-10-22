@@ -66,7 +66,6 @@ from bluemira.equilibria.plotting import (
 from bluemira.equilibria.profiles import (
     BetaLiIpProfile,
     CustomProfile,
-    IpProfile,
     OPointCalcOptions,
     Profile,
 )
@@ -962,7 +961,7 @@ class Breakdown(CoilSetMHDState):
             The minimum poloidal magnetic flux at the edge of the breakdown
             region [V.s/rad]
         """
-        return self.psi(*self.breakdown_point)
+        return cast("float", self.psi(*self.breakdown_point))
 
     def Bx(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1205,7 +1204,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         self,
         coilset: CoilSet,
         grid: Grid,
-        profiles: IpProfile,
+        profiles: Profile,
         *,
         force_symmetry: bool = False,
         vcontrol: str | None = None,
