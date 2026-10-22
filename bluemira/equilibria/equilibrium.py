@@ -525,6 +525,7 @@ class CoilSetMHDState(MHDState):
     """
 
     plasma: PlasmaCoil | NoPlasmaCoil
+    _jtor: npt.NDArray[np.float64] | None
 
     def __init__(
         self,
@@ -748,8 +749,11 @@ class CoilSetMHDState(MHDState):
 
     @abstractmethod
     def psi(  # noqa: D102
-        self, x: npt.ArrayLike, z: npt.ArrayLike
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def plot(self, ax: Axes | None): ...  # noqa: D102
 
 
 class Breakdown(CoilSetMHDState):
@@ -965,7 +969,7 @@ class Breakdown(CoilSetMHDState):
             The minimum poloidal magnetic flux at the edge of the breakdown
             region [V.s/rad]
         """
-        return float(self.psi(*self.breakdown_point))
+        return self.psi(*self.breakdown_point)
 
     def Bx(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None

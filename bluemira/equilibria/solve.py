@@ -11,7 +11,7 @@ Picard iteration procedures for equilibria (and their infinite variations)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    from bluemira.equilibria import Equilibrium
     from bluemira.equilibria.optimisation.problem import EqCoilsetOptimisationProblem
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
 
@@ -476,7 +477,7 @@ class PicardIterator:
         keep_history: bool = False,
         check_constraints: bool = False,
     ):
-        self.eq = optimisation_problem.eq
+        self.eq = cast("Equilibrium", optimisation_problem.eq)
         self.coilset = self.eq.coilset
         self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):
@@ -540,7 +541,7 @@ class PicardIterator:
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
             except EquilibriaError as ee:
-                self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+                self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
                 bluemira_error(f"Failed to solve. {ee.args[0]}")
                 break
         else:
@@ -548,7 +549,7 @@ class PicardIterator:
                 "EQUILIBRIA G-S unable to find converged value after"
                 f" {self.i} iterations."
             )
-            self.diagnostic_plotting.make_gif()
+            self.diagnostic_plotting.make_gif()  # type: ignore[ty:missing-argument]
         self._teardown()
         return self.result
 
@@ -585,9 +586,9 @@ class PicardIterator:
         self._psi = self.eq.psi()
         self._j_tor = self.eq._jtor
         check = self.check_converged()
-        self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+        self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
         if check:
-            self.diagnostic_plotting.make_gif()
+            self.diagnostic_plotting.make_gif()  # type: ignore[ty:missing-argument]
             raise StopIteration
         self._optimise_coilset()
         self._psi = (
@@ -611,7 +612,7 @@ class PicardIterator:
             bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
         except EquilibriaError:
-            self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+            self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
             bluemira_error("No X point found. Failed to solve.")
         return self.result
 
@@ -667,10 +668,7 @@ class PicardIterator:
         reasonable understanding of the final state.
         """
         o_points, x_points = self.eq.get_OX_points(force_update=True)
-        assert self.eq.x is not None  # noqa: S101
-        assert self.eq.z is not None  # noqa: S101
-        psi_val = self.eq.psi()
-        assert isinstance(psi_val, np.ndarray)  # noqa: S101
+        psi_val = np.asarray(self.eq.psi())
         self.eq._jtor = self.eq.profiles.jtor(
             self.eq.x,
             self.eq.z,

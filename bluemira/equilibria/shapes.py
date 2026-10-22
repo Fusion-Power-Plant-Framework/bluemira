@@ -181,7 +181,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[ZakharovLCFSOptVariables] = ZakharovLCFSOptVariables
+    optvar_cls: type[ZakharovLCFSOptVariables] = ZakharovLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -285,7 +285,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[CunninghamLCFSOptVariables] = CunninghamLCFSOptVariables
+    optvar_cls: type[CunninghamLCFSOptVariables] = CunninghamLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -390,7 +390,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[ManickamLCFSOptVariables] = ManickamLCFSOptVariables
+    optvar_cls: type[ManickamLCFSOptVariables] = ManickamLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -660,7 +660,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[KuiroukidisLCFSOptVariables] = KuiroukidisLCFSOptVariables
+    optvar_cls: type[KuiroukidisLCFSOptVariables] = KuiroukidisLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -1044,7 +1044,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[JohnerLCFSOptVariables] = JohnerLCFSOptVariables
+    optvar_cls: type[JohnerLCFSOptVariables] = JohnerLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """

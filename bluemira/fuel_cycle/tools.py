@@ -873,8 +873,7 @@ def _sqrt_thresh_sink(
     max_inventory: float,
     sum_in: float,
     decayed: float,
-    *,
-    _testing: bool = False,
+    _testing: bool = False,  # noqa: FBT002, FBT001
 ) -> tuple[float, float, float, float]:
     """
     A simple sqrt tritium retention sink model. Used over a time-step.

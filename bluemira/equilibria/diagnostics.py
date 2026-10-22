@@ -25,7 +25,7 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 if TYPE_CHECKING:
     from os import PathLike
 
-    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.equilibrium import CoilSetMHDState
     from bluemira.equilibria.solve import ConvergenceCriterion
 
 
@@ -328,7 +328,9 @@ class PicardDiagnosticOptions:
                 str(self.figure_folder), self.plot_name, file_format=self.file_format
             )
 
-    def update_figure(self, eq: Equilibrium, convergence: ConvergenceCriterion, i: int):
+    def update_figure(
+        self, eq: CoilSetMHDState, convergence: ConvergenceCriterion, i: int
+    ):
         """
         Updates the figure if plotting is used
         """

@@ -13,7 +13,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -41,7 +41,7 @@ from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.profiles import OPointCalcOptions
+from bluemira.equilibria.profiles import IpProfile, OPointCalcOptions
 from bluemira.equilibria.solve import (
     ConvergenceCriterion,
     DudsonConvergence,
@@ -308,7 +308,7 @@ class PulsedCoilsetDesign(ABC):
         coilset: CoilSet,
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
-        profiles: Profile,
+        profiles: IpProfile,
         breakdown_settings: dict | BreakdownCOPConfig | None = None,
         equilibrium_settings: dict | EQConfig | None = None,
         current_opt_constraints: list[UpdateableConstraint] | None = None,
@@ -530,8 +530,7 @@ class PulsedCoilsetDesign(ABC):
             Start of flat top and end of flat top optimisation problems.
         """
         eq_ref = self.snapshots[self.EQ_REF].eq
-        pf_coiltype = self.coilset.get_coiltype("PF")
-        assert pf_coiltype is not None  # noqa: S101
+        pf_coiltype = cast("CoilSet", self.coilset.get_coiltype("PF"))
         max_currents_pf = self._get_max_currents(pf_coiltype)
         max_currents = self._get_max_currents(self.coilset)
 
@@ -539,7 +538,6 @@ class PulsedCoilsetDesign(ABC):
         for psi_boundary in [psi_sof, psi_eof]:
             eq = deepcopy(eq_ref)
             pf_eq = eq.coilset.get_coiltype("PF")
-            assert pf_eq is not None  # noqa: S101
             pf_eq.resize(max_currents_pf)
 
             current_constraints = []
@@ -725,7 +723,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         position_mapper: PositionMapper,
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
-        profiles: Profile,
+        profiles: IpProfile,
         breakdown_settings: dict | BreakdownCOPConfig | None = None,
         equilibrium_settings: dict | EQConfig | None = None,
         current_opt_constraints: list[UpdateableConstraint] | None = None,
@@ -816,13 +814,11 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Set the current bounds on the current optimisation problems, fix coil sizes, and
         mesh.
         """  # noqa: DOC201
-        cs_coiltype = coilset.get_coiltype("CS")
-        assert cs_coiltype is not None  # noqa: S101
+        cs_coiltype = cast("CoilSet", coilset.get_coiltype("CS"))
         max_cs_currents = cs_coiltype.get_max_current(0.0)
         pf_currents = []
         for problem in sub_opt_problems:
-            pf_coiltype = problem.eq.coilset.get_coiltype("PF")
-            assert pf_coiltype is not None  # noqa: S101
+            pf_coiltype = cast("CoilSet", problem.eq.coilset.get_coiltype("PF"))
             pf_coils = pf_coiltype.get_control_coils()
             pf_currents.append(np.abs(pf_coils.current))
 
@@ -833,8 +829,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
         for problem in sub_opt_problems:
             pf_coiltype = problem.eq.coilset.get_coiltype("PF")
-            assert pf_coiltype is not None  # noqa: S101
-            pf_coils = pf_coiltype.get_control_coils()
+            pf_coils = cast("CoilSet", pf_coiltype).get_control_coils()
             pf_coils.resize(max_pf_currents)
             pf_coils.fix_size = True
             pf_coils.discretisation = self.eq_config.coil_mesh_size
