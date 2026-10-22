@@ -10,7 +10,7 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -20,6 +20,8 @@ from bluemira.geometry.plane import BluemiraPlane
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+
+    import numpy.typing as npt
 
 __all__ = ["BluemiraPlacement"]
 
@@ -135,7 +137,7 @@ class BluemiraPlacement:
     @property
     def axis(self) -> np.ndarray:
         """Placement's rotation matrix"""
-        return np.array(self._shape.Rotation.Axis)
+        return cast("npt.NDArray", self._shape.Rotation.Axis)
 
     @axis.setter
     def axis(self, value: Iterable[float]):

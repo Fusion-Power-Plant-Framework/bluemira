@@ -228,12 +228,12 @@ def _nested_check(maybe_obsolete: str) -> str | list[str] | None:
         The newest process name or names
     """
     while maybe_obsolete in OBS_VARS:
-        new_name = OBS_VARS[maybe_obsolete]
-        if new_name == "None":
+        maybe_obsolete = OBS_VARS[maybe_obsolete]  # type:ignore[ty:invalid-assignment]
+        if maybe_obsolete == "None":
             return None
-        if isinstance(new_name, list):
+        if isinstance(maybe_obsolete, list):
             names = []
-            for p in new_name:
+            for p in maybe_obsolete:
                 names += [_nested_check(p)]
             return list(flatten_iterable(names))
     return maybe_obsolete
