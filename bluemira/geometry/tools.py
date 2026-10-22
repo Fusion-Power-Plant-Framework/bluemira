@@ -2461,10 +2461,10 @@ def repair_overlapping_geos(
     such fragmentation and preserving a smoother interface in the repaired
     geo_1.
     """
-    if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
-        raise TypeError("geo_1 and geo_2 must be of the same type")
     if not geos_2:
         raise ValueError("geos_2 must contain at least one geometry")
+    if not all(type(geo_1) is type(geo_2) for geo_2 in geos_2):
+        raise TypeError("geo_1 and geo_2 must be of the same type")
 
     fused = boolean_fuse([geo_1, *geos_2])
     repaired = boolean_cut(fused, geos_2)
