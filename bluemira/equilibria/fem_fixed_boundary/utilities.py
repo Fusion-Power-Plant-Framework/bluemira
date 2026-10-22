@@ -588,6 +588,7 @@ def create_mesh(
     :
         Mesh object
     """
-    meshfile = Path(directory, mesh_name_msh).as_posix()
-    meshing.Mesh(meshfile=meshfile)(plasma)
+    with meshing.GmshSession():
+        meshfile = Path(directory, mesh_name_msh).as_posix()
+        meshing.Mesh(meshfile=meshfile)(plasma)
     return read_from_msh(meshfile, comm, rank, gdim=gdim)
