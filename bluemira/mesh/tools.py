@@ -334,8 +334,8 @@ def _make_mesh(
 ) -> meshio.Mesh:
     return meshio.Mesh(
         mesh.points[:, list(dimensions)],
-        cells=cells,  # ty: ignore[invalid-argument-type]
-        cell_data=cell_data,  # ty: ignore[invalid-argument-type]
+        cells=cells,  # type: ignore[ty:invalid-argument-type]
+        cell_data=cell_data,  # type: ignore[ty:invalid-argument-type]
     )
 
 

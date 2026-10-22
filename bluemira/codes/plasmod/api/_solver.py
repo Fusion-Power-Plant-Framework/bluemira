@@ -70,7 +70,7 @@ class Solver(CodesSolver):
     DEFAULT_OUTPUT_FILE = "plasmod_output.dat"
     DEFAULT_PROFILES_FILE = "plasmod_profiles.dat"
 
-    params: PlasmodSolverParams
+    params: PlasmodSolverParams  # type: ignore[ty:invalid-mutable-override]
 
     def __init__(
         self, params: dict | ParameterFrame, build_config: dict[str, Any] | None = None

@@ -770,8 +770,8 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC CSG neutronics"""
 
-    setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup
-    teardown_cls: type[OpenMCCSGTeardown] = OpenMCCSGTeardown
+    setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup  # type: ignore[ty:invalid-mutable-override]
+    teardown_cls: type[OpenMCCSGTeardown] = OpenMCCSGTeardown  # type: ignore[ty:invalid-mutable-override]
 
     def __init__(
         self,
@@ -837,7 +837,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC DAGMC neutronics"""
 
-    setup_cls: type[OpenMCDAGSetup] = OpenMCDAGSetup
+    setup_cls: type[OpenMCDAGSetup] = OpenMCDAGSetup  # type: ignore[ty:invalid-mutable-override]
     teardown_cls: type[CodesTeardown] = OpenMCDAGTeardown
 
     def __init__(
