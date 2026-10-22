@@ -61,6 +61,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import FacePlotter, plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.despliner import despline_xz_component
