@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.look_and_feel import bluemira_info, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.reactor import ComponentManager
 from bluemira.geometry.despliner import (
     despline_xz_component,
@@ -239,7 +239,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
             volume_differences[neutronics_comp.name] = relative_volume_difference
 
-            bluemira_info(
+            bluemira_debug(
                 f"{neutronics_comp.name}: volume difference after pre-processing = "
                 f"{relative_volume_difference:.4%}"
             )
