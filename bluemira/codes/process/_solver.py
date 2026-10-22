@@ -109,7 +109,7 @@ class Solver(CodesSolver):
     """
 
     name: str = PROCESS_NAME
-    params: ProcessSolverParams
+    params: ProcessSolverParams  # type: ignore[ty:invalid-mutable-override]
     setup_cls: type[Setup] = Setup
     run_cls: type[Run] = Run
     teardown_cls: type[Teardown] = Teardown

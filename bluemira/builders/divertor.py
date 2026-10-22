@@ -20,6 +20,7 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -61,7 +62,7 @@ class LegPosition(enum.Enum):
 
 def get_separatrix_legs(
     equilibrium: Equilibrium,
-) -> dict[LegPosition, list[BluemiraWire]]:
+) -> dict[LegPosition, list[BluemiraWire] | None]:
     """
     Find the separatrix legs for the given equilibrium.
 
@@ -74,8 +75,12 @@ def get_separatrix_legs(
     # we want the legs from will need to be added
     legs = LegFlux(equilibrium).legs
     return {
-        LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
-        LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],
+        LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]]
+        if legs["lower_inner"] is not None
+        else None,
+        LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]]
+        if legs["lower_outer"] is not None
+        else None,
     }
 
 
@@ -222,9 +227,17 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         -------
         :
             Coordinates of the target
-        """
-        sol = self._get_sols_for_leg(leg)[0]
 
+        Raises
+        ------
+        BuilderError
+            SOL not found
+        """
+        sol = self._get_sols_for_leg(leg)
+
+        if sol is None:
+            raise BuilderError("No sol found")
+        sol = sol[0]
         target_point = sol.value_at(distance=self.leg_length[leg].value)
         # use a point slightly further along the leg to get a vector
         # tangent to the sep. leg in the expect direction
@@ -250,7 +263,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
 
     def _get_sols_for_leg(
         self, leg: LegPosition, layers: Iterable[int] = (0, -1)
-    ) -> list[BluemiraWire]:
+    ) -> list[BluemiraWire] | None:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
 
@@ -259,7 +272,10 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             Separatrix legs
         """
-        return [self.separatrix_legs[leg][layer] for layer in layers]
+        lg = self.separatrix_legs[leg]
+        if lg is None:
+            return None
+        return [lg[layer] for layer in layers]
 
     def make_dome(
         self,

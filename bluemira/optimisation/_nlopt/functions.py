@@ -68,7 +68,7 @@ class ObjectiveFunction(_NloptFunction):
     """
 
     f: ObjectiveCallable
-    f0: float
+    f0: float  # type:ignore[ty:invalid-mutable-override]
 
     def __init__(
         self,
@@ -137,7 +137,7 @@ class Constraint(_NloptFunction):
     """Holder for NLOpt constraint functions."""
 
     f: OptimiserCallable
-    f0: np.ndarray
+    f0: np.ndarray  # type:ignore[ty:invalid-mutable-override]
 
     def __init__(
         self,
