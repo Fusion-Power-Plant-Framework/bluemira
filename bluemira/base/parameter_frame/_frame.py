@@ -405,7 +405,9 @@ class ParameterFrame:
             raise ValueError(
                 f"Unit conversion failed for {member} from {member_param_data['unit']}"
             ) from pe
-        member_param_data["name"] = member
+
+        if "name" not in member_param_data:
+            member_param_data["name"] = member
         return Parameter(**member_param_data, _value_types=value_type)
 
     def to_dict(self, *, use_last: bool = False) -> dict[str, dict[str, Any]]:
