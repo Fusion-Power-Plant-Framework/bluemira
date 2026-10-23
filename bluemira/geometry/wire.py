@@ -228,8 +228,7 @@ class BluemiraWire(BluemiraGeo):
             raise GeometryError("Must specify either alpha or distance, not both.")
 
         if distance is None:
-            if alpha is None:
-                raise GeometryError("Must specify one of alpha or distance.")
+            alpha = cast("float", alpha)
             if alpha < 0.0:
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
