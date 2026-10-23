@@ -134,8 +134,8 @@ jobs:
         run: |
           echo '```console' >> "$GITHUB_STEP_SUMMARY"
 
-          ty check bluemira --color never --output-format=concise 2>&1 \
-            | tee -a "$GITHUB_STEP_SUMMARY" || true
+          ty check bluemira --color never --output-format=concise --exit-zero-on-warning 2>&1 \
+            | tee -a "$GITHUB_STEP_SUMMARY"
 
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
