@@ -57,10 +57,10 @@ class ChargedParticleSolver:
     """
 
     first_wall: Coordinates
-    flux_surfaces_ob_down: list[PartialOpenFluxSurface]
-    flux_surfaces_ob_up: list[PartialOpenFluxSurface]
-    flux_surfaces_ib_down: list[PartialOpenFluxSurface]
-    flux_surfaces_ib_up: list[PartialOpenFluxSurface]
+    flux_surfaces_ob_down: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ob_up: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ib_down: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ib_up: list[PartialOpenFluxSurface] | None
     x_sep_omp: float
     x_sep_imp: float
     result: tuple[np.ndarray, ...]
@@ -76,6 +76,12 @@ class ChargedParticleSolver:
         self.params = self._make_params(config)
         self._check_params()
         self.dx_mp = dx_mp
+
+        # Constructors
+        self.flux_surfaces_ob_down = None
+        self.flux_surfaces_ob_up = None
+        self.flux_surfaces_ib_down = None
+        self.flux_surfaces_ib_up = None
 
         # Pre-processing
         self.psi_n_tol = psi_n_tol
