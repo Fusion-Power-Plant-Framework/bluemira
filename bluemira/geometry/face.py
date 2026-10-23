@@ -10,7 +10,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import bluemira.codes._geometryapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
@@ -39,9 +39,11 @@ class BluemiraFace(BluemiraGeo):
         Label to assign to the BluemiraFace
     """
 
-    def __init__(self, boundary: BluemiraWire | Sequence[BluemiraWire], label: str = ""):
+    def __init__(
+        self, boundary: BluemiraWire | Sequence[BluemiraWire] | None, label: str = ""
+    ):
         boundary_classes = [BluemiraWire]
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type: ignore[ty:invalid-argument-type]
 
     @staticmethod
     def _converter(func):
@@ -61,7 +63,7 @@ class BluemiraFace(BluemiraGeo):
         for w in cadapi.wires(self.shape):
             yield BluemiraWire(w)
 
-    def copy(self):
+    def copy(self) -> BluemiraFace:  # type: ignore[ty:invalid-method-override]
         """Make a copy of the BluemiraFace
 
         Returns
@@ -139,7 +141,7 @@ class BluemiraFace(BluemiraGeo):
 
         if len(self.boundary) > 1:
             fholes = [cadapi.apiFace(h.shape) for h in self.boundary[1:]]
-            _faces = cadapi.face_cut_holes(face, fholes)
+            _faces = cast("list[cadapi.apiFace]", cadapi.face_cut_holes(face, fholes))
             if not _faces:
                 raise DisjointedFaceError("Cutting the holes produced no face.")
             if len(_faces) > 1:
@@ -164,6 +166,11 @@ class BluemiraFace(BluemiraGeo):
         if check_reverse:
             return self._check_reverse(face)
         return face
+
+    @property
+    def shape(self) -> cadapi.apiFace:
+        """CAD shape of the face."""
+        return cast("cadapi.apiFace", super().shape)
 
     def _create_shape(self) -> cadapi.apiFace:
         """
@@ -197,7 +204,7 @@ class BluemiraFace(BluemiraGeo):
 
     def discretise(
         self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
-    ) -> np.ndarray:
+    ) -> list[np.ndarray]:
         """
         Make an array of the geometry.
 
@@ -243,7 +250,7 @@ class BluemiraFace(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire, ...]:
         """
         The edges of the face.
         """
@@ -252,7 +259,7 @@ class BluemiraFace(BluemiraGeo):
         )
 
     @property
-    def wires(self) -> tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire, ...]:
         """
         The wires of the face.
         """

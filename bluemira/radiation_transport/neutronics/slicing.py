@@ -8,7 +8,7 @@
 from __future__ import annotations
 
 from itertools import chain, pairwise, starmap
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
@@ -122,7 +122,10 @@ def cut_curve(
                 used_alpha -= 1.0
         elif alpha < beta:  # alpha is expected to be larger than beta.
             used_alpha += 1.0
-        param_range = np.linspace(used_alpha, beta, discretisation_level) % 1.0
+        param_range = np.asarray(
+            np.linspace(used_alpha, beta, discretisation_level) % 1.0,
+            dtype=np.float64,
+        )
         yield param_range[::-1] if reverse else param_range
 
 
@@ -145,7 +148,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
     wire_container = []
 
     def add_line(
-        edge: cadapi.apiEdge,
+        edge: Any,
         wire: BluemiraWire,
         start_vec: cadapi.apiVector | npt.NDArray,
         end_vec: cadapi.apiVector | npt.NDArray,
@@ -161,7 +164,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         )
 
     def add_circle(
-        edge: cadapi.apiEdge,
+        edge: Any,
         wire: BluemiraWire,
         start_vec: cadapi.apiVector | npt.NDArray,
         end_vec: cadapi.apiVector | npt.NDArray,
@@ -217,11 +220,17 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         if len(wire_container) == 0:
             wire_container.append(wire_info)
             continue
-        distance_to_start = np.linalg.norm(
-            wire_container[-1].key_points.end_point - wire_info.key_points.start_point
+        distance_to_start = float(
+            np.linalg.norm(
+                np.asarray(wire_container[-1].key_points.end_point, dtype=float)
+                - np.asarray(wire_info.key_points.start_point, dtype=float)
+            )
         )
-        distance_to_end = np.linalg.norm(
-            wire_container[-1].key_points.end_point - wire_info.key_points.end_point
+        distance_to_end = float(
+            np.linalg.norm(
+                np.asarray(wire_container[-1].key_points.end_point, dtype=float)
+                - np.asarray(wire_info.key_points.end_point, dtype=float)
+            )
         )
         if distance_to_end < distance_to_start:
             wire_info = wire_info.reverse()
@@ -231,7 +240,9 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
 
 
 def turned_morethan_180(
-    xyz_vector1: Sequence[float], xyz_vector2: Sequence[float], direction_sign: int
+    xyz_vector1: Sequence[float] | npt.NDArray[np.float64],
+    xyz_vector2: Sequence[float] | npt.NDArray[np.float64],
+    direction_sign: int,
 ) -> bool:
     """
     Checked if one needs to rotate vector 1 by more than 180° in the specified direction
@@ -269,7 +280,9 @@ def turned_morethan_180(
 
 
 def deviate_less_than(
-    xyz_vector1: Sequence[float], xyz_vector2: Sequence[float], threshold_degrees: float
+    xyz_vector1: Sequence[float] | npt.NDArray[np.float64],
+    xyz_vector2: Sequence[float] | npt.NDArray[np.float64],
+    threshold_degrees: float,
 ) -> bool:
     """
     Check if two vector's angles less than a certain threshold angle (in degrees).
@@ -519,11 +532,16 @@ class PanelsAndExteriorCurve:
         threshold_angle = np.deg2rad(snap_to_horizontal_angle)
 
         # initial cut point
-        add_cut_points(
-            *calculate_plane_dir(
-                self.interior_panels[0], [starting_cut[0], 0, starting_cut[-1]]
+        if starting_cut is None:
+            plane = z_plane(self.interior_panels[0][-1])
+            add_cut_points(plane, np.array([1.0, 0.0, 0.0]))
+        else:
+            add_cut_points(
+                *calculate_plane_dir(
+                    self.interior_panels[0],
+                    np.array([starting_cut[0], 0.0, starting_cut[-1]], dtype=np.float64),
+                )
             )
-        )
 
         for i in range(1, len(self.interior_panels) - 1):
             origin, c_dir = self.get_bisection_line(i)
@@ -537,11 +555,16 @@ class PanelsAndExteriorCurve:
             add_cut_points(plane, c_dir)
 
         # final cut point
-        add_cut_points(
-            *calculate_plane_dir(
-                self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
+        if ending_cut is None:
+            plane = z_plane(self.interior_panels[-1][-1])
+            add_cut_points(plane, np.array([1.0, 0.0, 0.0]))
+        else:
+            add_cut_points(
+                *calculate_plane_dir(
+                    self.interior_panels[-1],
+                    np.array([ending_cut[0], 0.0, ending_cut[-1]], dtype=np.float64),
+                )
             )
-        )
 
         return vv_cut_points, exterior_cut_points
 
@@ -805,12 +828,17 @@ class DivertorWireAndExteriorCurve:
             )
 
         # initial cut point
-        add_cut_points(
-            *calculate_plane_dir(
-                np.array(self.convex_segments[0][0].key_points[0]),
-                [starting_cut[0], 0, starting_cut[-1]],
+        start_pt = np.array(self.convex_segments[0][0].key_points[0], dtype=np.float64)
+        if starting_cut is None:
+            plane = z_plane(start_pt[-1])
+            add_cut_points(plane, np.array([1.0, 0.0, 0.0]))
+        else:
+            add_cut_points(
+                *calculate_plane_dir(
+                    start_pt,
+                    np.array([starting_cut[0], 0.0, starting_cut[-1]], dtype=np.float64),
+                )
             )
-        )
 
         for i in range(len(self.convex_segments) - 1):
             origin, c_dir = self.get_projection_line(i)
@@ -818,12 +846,17 @@ class DivertorWireAndExteriorCurve:
             add_cut_points(plane, c_dir)
 
         # final cut point
-        add_cut_points(
-            *calculate_plane_dir(
-                np.array(self.convex_segments[-1][-1].key_points[1]),
-                [ending_cut[0], 0, ending_cut[-1]],
+        end_pt = np.array(self.convex_segments[-1][-1].key_points[1], dtype=np.float64)
+        if ending_cut is None:
+            plane = z_plane(end_pt[-1])
+            add_cut_points(plane, np.array([1.0, 0.0, 0.0]))
+        else:
+            add_cut_points(
+                *calculate_plane_dir(
+                    end_pt,
+                    np.array([ending_cut[0], 0.0, ending_cut[-1]], dtype=np.float64),
+                )
             )
-        )
 
         return vv_cut_points, exterior_cut_points
 

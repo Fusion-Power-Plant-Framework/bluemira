@@ -5,14 +5,21 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Functions for creating the openmc tallies."""
 
+from __future__ import annotations
+
 from itertools import chain
+from typing import TYPE_CHECKING
 
 import openmc
 
-from bluemira.codes.openmc.make_csg import CellStage
+if TYPE_CHECKING:
+    from bluemira.codes.openmc.make_csg import CellStage
+    from bluemira.codes.openmc.solver import TALLY_RETURN_TYPE
 
 
-def csg_filter_cells(material_list, csg_model: CellStage):
+def csg_filter_cells(
+    material_list: list[openmc.Material], model: CellStage
+) -> list[TALLY_RETURN_TYPE]:
     """
     Create scores and the filter for the scores. Give them names.
 
@@ -38,12 +45,12 @@ def csg_filter_cells(material_list, csg_model: CellStage):
         Divide by area to get fluence in unit: cm^-2.
 
     """
-    blanket_cell_array, divertor_cell_array = csg_model.blanket, csg_model.divertor
+    blanket_cell_array, divertor_cell_array = model.blanket, model.divertor
     blanket_excl_vv = [
         *chain.from_iterable([stack[:-1] for stack in blanket_cell_array])
     ]
     div_excl_vv = [*chain.from_iterable([stack[:-1] for stack in divertor_cell_array])]
-    cells = list(csg_model.cells[:-1])  # exclude the external void
+    cells = list(model.cells[:-1])  # exclude the external void
     cells.pop(-2)  # plasma void also should be excluded.
     fw_surf_cells = [
         *(stack[0] for stack in blanket_cell_array),
@@ -73,7 +80,7 @@ def csg_filter_cells(material_list, csg_model: CellStage):
     photon_filter = openmc.ParticleFilter(["photon"])
 
     # name, scores, filters
-    return (
+    return [
         ("TBR", "(n,Xt)", []),  # theoretical maximum TBR only, obviously.
         # Powers
         ("total power in known materials", "heating", [mat_filter, cell_filter]),
@@ -91,14 +98,14 @@ def csg_filter_cells(material_list, csg_model: CellStage):
         # DPA
         ("damage", "damage-energy", [cell_filter]),
         # used to get the EUROFER OBMP
-    )
+    ]
 
 
 def dagmc_tallys(
     material_list,
     model: openmc.Geometry,
-    mesh_shape: tuple[float, ...] = (100, 100, 100),
-):
+    mesh_shape: tuple[int, int, int] = (100, 100, 100),
+) -> list[TALLY_RETURN_TYPE]:
     """DAGMC default mesh tallys"""  # noqa: DOC201
     # mesh that covers the geometry
     mesh = openmc.RegularMesh.from_domain(model, dimension=mesh_shape)

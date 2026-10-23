@@ -15,7 +15,7 @@ from enum import Enum
 from threading import Event
 from time import sleep
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import rich.jupyter as jp
 from rich import default_styles
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
 # TODO @je-cook: Remove on culmination of rich fix
 # 3802
-jp.JUPYTER_HTML_FORMAT = (
+jp.JUPYTER_HTML_FORMAT = (  # type: ignore[ty:invalid-assignment]
     '<pre style="white-space:pre;overflow-x:auto;line-height:normal;'
     "margin:0;"  # this is the change
     "font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New'"
@@ -61,7 +61,7 @@ class LogLevel(Enum):
         self.colour = colour
 
     @classmethod
-    def _missing_(cls, value: int | str) -> LogLevel:
+    def _missing_(cls, value: object | int | str) -> LogLevel:
         if isinstance(value, int):
             if cls.CRITICAL.value < value < 10:  # noqa: PLR2004
                 return cls.CRITICAL
@@ -70,7 +70,7 @@ class LogLevel(Enum):
                 return cls(value)
             return cls.CRITICAL
         try:
-            return cls[value.upper()]
+            return cls[value.upper()]  # type: ignore [ty:unresolved-attribute]
         except (KeyError, AttributeError):
             raise LogsError(
                 f"Unknown severity level: {value}. Choose from: {(*cls._member_names_,)}"
@@ -100,8 +100,9 @@ def stop_progress(logger: LoggerAdapter, stop: Event, wait: float = 4):
         if stop.is_set():
             return
         sleep(0.1)
-    logger.progress.stop()
-    logger.progress = None
+    if logger.progress is not None:
+        logger.progress.stop()
+        logger.progress = None
 
 
 class LoggerAdapter(logging.Logger):
@@ -112,7 +113,7 @@ class LoggerAdapter(logging.Logger):
 
     def _base(
         self,
-        func: Callable[[str], None],
+        func: Callable[..., Any],
         msg: str,
         *args,
         flush: bool = False,
@@ -126,7 +127,8 @@ class LoggerAdapter(logging.Logger):
             msg = msg.strip()
         if (
             flush
-            and get_log_level("bluemira", as_str=False) <= LogLevel(func.__name__).value
+            and get_log_level("bluemira", as_str=False)
+            <= LogLevel(getattr(func, "__name__", "")).value
         ):
             self._stop_p.set()
             if self.progress is None:
@@ -210,9 +212,9 @@ class BluemiraRichHandler(RichHandler):
             record=record, traceback=traceback, message_renderable=message_renderable
         )
         if getattr(record, "_flushing", False):
-            self.console._flushing = True
+            self.console._flushing = True  # type: ignore[ty:unresolved-attribute]
             return log_renderable
-        self.console._flushing = False
+        self.console._flushing = False  # type: ignore[ty:unresolved-attribute]
         if getattr(record, "_clean", True):
             return log_renderable
         return Panel(
@@ -241,7 +243,7 @@ class ConsoleFlush(Console):
 
 def logger_setup(
     logfilename: str = "bluemira.log", *, level: str | int = "INFO"
-) -> logging.Logger:
+) -> LoggerAdapter:
     """
     Create logger with two handlers.
 
@@ -301,7 +303,7 @@ def logger_setup(
     root_logger.addHandler(on_screen_handler_err)
     root_logger.addHandler(recorded_handler)
 
-    return bm_logger
+    return cast("LoggerAdapter", bm_logger)
 
 
 def set_log_level(
@@ -354,7 +356,7 @@ def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str 
     logger = logging.getLogger(logger_name)
 
     max_level = 0
-    for handler in logger.handlers or logger.parent.handlers:
+    for handler in logger.handlers or (logger.parent.handlers if logger.parent else []):
         if (
             not isinstance(handler, BluemiraRichFileHandler)
             and handler.level > max_level
@@ -376,7 +378,7 @@ def _modify_handler(new_level: LogLevel, logger: logging.Logger):
     logger:
         Logger to be used
     """
-    for handler in logger.handlers or logger.parent.handlers:
+    for handler in logger.handlers or (logger.parent.handlers if logger.parent else []):
         if not isinstance(handler, BluemiraRichFileHandler):
             handler.setLevel(new_level.value_for_logging)
 

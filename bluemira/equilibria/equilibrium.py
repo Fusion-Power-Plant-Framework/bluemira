@@ -10,11 +10,12 @@ Plasma MHD equilibrium and state objects
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import Iterable
 from copy import deepcopy
 from enum import Enum, auto
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -87,7 +88,9 @@ class VerticalPositionControlType(Enum):
     FEEDBACK = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: object):
+        if not isinstance(value, str):
+            return None
         try:
             return cls[value.upper()]
         except KeyError:
@@ -102,6 +105,13 @@ class MHDState:
     Base class for magneto-hydrodynamic states
     """
 
+    x: npt.NDArray[np.float64]
+    z: npt.NDArray[np.float64]
+    dx: float
+    dz: float
+    _eqdsk: EQDSKInterface | None = None
+    profiles: Profile
+
     def __init__(
         self,
         grid: Grid,
@@ -109,14 +119,10 @@ class MHDState:
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.GRID_CENTRE,
     ):
         # Constructors
-        self.x: npt.NDArray[np.float64] | None = None
-        self.z: npt.NDArray[np.float64] | None = None
-        self.dx: float | None = None
-        self.dz: float | None = None
         self.set_grid(grid)
         self.limiter: Limiter | None = None
         self._o_point_fallback = o_point_fallback
-        self._label: str | None = None
+        self._label = ""
 
     @property
     def label(self) -> str:
@@ -139,7 +145,7 @@ class MHDState:
         grid:
             The grid upon which to solve the Equilibrium
         """
-        self.grid: Grid = grid
+        self.grid = grid
         self.x, self.z = self.grid.x, self.grid.z
         self.dx, self.dz = self.grid.dx, self.grid.dz
 
@@ -153,7 +159,7 @@ class MHDState:
         full_coil: bool = False,
         regrid_nx_nz: tuple[int, int] | None = None,
         **kwargs,
-    ) -> tuple[EQDSKInterface, Grid, tuple[int, int] | None]:
+    ) -> tuple[EQDSKInterface, Grid, tuple[int, int] | None, *tuple[Any, ...]]:
         """
         Get eqdsk data from file for read in
 
@@ -367,9 +373,9 @@ class FixedPlasmaEquilibrium(MHDState):
     def to_eqdsk(
         self,
         data,
-        filename,
+        filename: str | Path,
         header="bluemira_equilibria",
-        directory=None,
+        directory: str | None = None,
         filetype="json",
         to_cocos=BLUEMIRA_DEFAULT_COCOS,
         **kwargs,
@@ -386,7 +392,9 @@ class FixedPlasmaEquilibrium(MHDState):
         )
         eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
         eqdsk = eqdsk.to_cocos(to_cocos)
-        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
+        eqdsk.write(
+            cast("Path", self.filename).as_posix(), file_format=filetype, **kwargs
+        )
 
     def get_LCFS(self) -> Coordinates:
         """
@@ -508,6 +516,9 @@ class CoilSetMHDState(MHDState):
     Base class for magneto-hydrodynamic states with a CoilSet
     """
 
+    plasma: PlasmaCoil | NoPlasmaCoil
+    _jtor: npt.NDArray[np.float64] | None
+
     def __init__(
         self,
         grid: Grid,
@@ -532,7 +543,7 @@ class CoilSetMHDState(MHDState):
         self._remap_greens()
 
     @classmethod
-    def _get_eqdsk(
+    def _get_eqdsk(  # type: ignore[override]
         cls,
         filename: Path | str,
         from_cocos: int | None = 11,
@@ -664,7 +675,7 @@ class CoilSetMHDState(MHDState):
 
         return forces[self.coilset._control_ind, :]
 
-    def get_coil_fields(self) -> npt.NDArray[np.float64]:
+    def get_coil_fields(self) -> float | npt.NDArray:
         """
         Returns the poloidal magnetic fields on the control coils
         (approximate peak at the middle inner radius of the coil)
@@ -702,6 +713,39 @@ class CoilSetMHDState(MHDState):
 
         self._remap_greens()
         return psi
+
+    @abstractmethod
+    def Bx(  # noqa: D102
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def Bz(  # noqa: D102
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def Bp(  # noqa: D102
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def dBx_dz(  # noqa: D102
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def dBz_dx(  # noqa: D102
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def psi(  # noqa: D102
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    @abstractmethod
+    def plot(self, ax: Axes | None): ...  # noqa: D102
 
 
 class Breakdown(CoilSetMHDState):
@@ -886,7 +930,12 @@ class Breakdown(CoilSetMHDState):
         )
         # Can not use identify method for breakdown, so assume input
         eqdsk._cocos = COCOS(to_cocos)
-        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
+        out_path = (
+            Path(self.filename).as_posix()
+            if self.filename is not None
+            else Path(filename).as_posix()
+        )
+        eqdsk.write(out_path, file_format=cast("Any", filetype), **kwargs)
 
     def set_breakdown_point(self, x_bd: float, z_bd: float):
         """
@@ -912,7 +961,7 @@ class Breakdown(CoilSetMHDState):
             The minimum poloidal magnetic flux at the edge of the breakdown
             region [V.s/rad]
         """
-        return self.psi(*self.breakdown_point)
+        return cast("float", self.psi(*self.breakdown_point))
 
     def Bx(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -937,7 +986,7 @@ class Breakdown(CoilSetMHDState):
         if x is None and z is None:
             return self.coilset._stored_greens(self._bx_green)
 
-        return self.coilset.Bx(x, z)
+        return self.coilset.Bx(cast("npt.NDArray", x), cast("npt.NDArray", z))
 
     def Bz(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -962,7 +1011,7 @@ class Breakdown(CoilSetMHDState):
         if x is None and z is None:
             return self.coilset._stored_greens(self._bz_green)
 
-        return self.coilset.Bz(x, z)
+        return self.coilset.Bz(np.asarray(x), np.asarray(z))
 
     def Bp(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -992,7 +1041,7 @@ class Breakdown(CoilSetMHDState):
 
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def dBx_dz(self, x: npt.ArrayLike, z: npt.ArrayLike):
+    def dBx_dz(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | npt.NDArray:
         """
         Total differential of the radial magnetic field at point (x, z) from coils
 
@@ -1014,9 +1063,9 @@ class Breakdown(CoilSetMHDState):
         -----
         As there is not plasma this is equivalent to dBz_dx
         """
-        return self.coilset.dB_d(x, z)
+        return self.coilset.dB_d(np.asarray(x), np.asarray(z))
 
-    def dBz_dx(self, x: npt.ArrayLike, z: npt.ArrayLike):
+    def dBz_dx(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | npt.NDArray:
         """
         Total differential of the vertical magnetic field at point (x, z) from coils
 
@@ -1038,7 +1087,7 @@ class Breakdown(CoilSetMHDState):
         -----
         As there is not plasma this is equivalent to dBx_dz
         """
-        return self.coilset.dB_d(x, z)
+        return self.coilset.dB_d(np.asarray(x), np.asarray(z))
 
     def psi(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1063,8 +1112,7 @@ class Breakdown(CoilSetMHDState):
         """
         if x is None and z is None:
             return self.coilset._stored_greens(self._psi_green)
-
-        return self.coilset.psi(x, z)
+        return self.coilset.psi(np.asarray(x), np.asarray(z))
 
     def get_coil_Bp(self) -> npt.NDArray[np.float64]:
         """
@@ -1074,15 +1122,17 @@ class Breakdown(CoilSetMHDState):
             The poloidal field within each coil
         """
         b = np.zeros(self.coilset.n_coils())
-        dx_mask = np.zeros_like(self.coilset.dx)
+        dx_mask = np.zeros_like(self.coilset.dx, dtype=bool)
         dx_mask[self.coilset.dx > 0] = True
         mask = in_zone(
             self.x[dx_mask],
             self.z[dx_mask],
             np.array([self.x[dx_mask], self.z[dx_mask]]).T,
         )
-        b[dx_mask] = np.max(self.Bp()[dx_mask] * mask[dx_mask], axis=-1)
-        b[~dx_mask] = np.max(self.Bp(self.x, self.z)[~dx_mask] * mask[~dx_mask], axis=-1)
+        bp = np.asarray(self.Bp())
+        b[dx_mask] = np.max(bp[dx_mask] * mask[dx_mask], axis=-1)
+        bp_grid = np.asarray(self.Bp(self.x, self.z))
+        b[~dx_mask] = np.max(bp_grid[~dx_mask] * mask[~dx_mask], axis=-1)
         return b
 
     def plot(self, ax: Axes | None = None, *, Bp: bool = False):
@@ -1146,6 +1196,12 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         The name used to identify this equilibrium
     """
 
+    _I_p: float
+    psi_ax: float
+    psi_b: float
+    _R_0: float
+    _fvac: float
+
     def __init__(
         self,
         coilset: CoilSet,
@@ -1176,10 +1232,6 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             self._li: float = profiles._l_i_target  # target plasma normalised inductance
             self._li_iter: int = 0  # li iteration count
             self._li_temp = None
-
-        self.plasma = None
-
-        self.controller = None
 
         self._set_init_plasma(self.grid, psi, jtor)
         self.boundary: FreeBoundary = FreeBoundary(self.grid)
@@ -1305,7 +1357,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         """
         qpsi_calcmode = QpsiCalcMode(qpsi_calcmode)
 
-        psi = self.psi()
+        psi = np.asarray(self.psi())
         n_x, n_z = psi.shape
         opoints, xpoints = self.get_OX_points(psi)
         opoint = opoints[0]  # Primary points
@@ -1405,7 +1457,12 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         )
         eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
         eqdsk = eqdsk.to_cocos(to_cocos)
-        eqdsk.write(self.filename.as_posix(), file_format=filetype, **kwargs)
+        out_path = (
+            Path(self.filename).as_posix()
+            if self.filename is not None
+            else Path(filename).as_posix()
+        )
+        eqdsk.write(out_path, file_format=cast("Any", filetype), **kwargs)
 
     def __getstate__(self):
         """
@@ -1548,7 +1605,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
         if jtor is None:
             if psi is None:
-                psi = self.psi()
+                psi = np.asarray(self.psi())
             o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
 
             if not o_points:
@@ -1614,7 +1671,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         self._clear_OX_points()
         self._li_iter = 0
         if psi is None:
-            psi = self.psi()
+            psi = np.asarray(self.psi())
         # Speed optimisations
         o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
         mask = in_plasma(self.x, self.z, psi, o_points=o_points, x_points=x_points)
@@ -1652,8 +1709,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             li = _calc_li3minargs(
                 self.x,
                 self.z,
-                self.psi(),
-                self.Bp(),
+                np.asarray(self.psi()),
+                np.asarray(self.Bp()),
                 self.profiles.R_0,
                 self.profiles.I_p,
                 self.dx,
@@ -1662,7 +1719,10 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             )
             self._li_temp = li
             self._jtor = jtor_opt
-            if abs_rel_difference(self._li_temp, self._li) <= self.profiles._l_i_rel_tol:
+            if (
+                abs_rel_difference(self._li_temp, self._li)
+                <= cast("BetaLiIpProfile", self.profiles)._l_i_rel_tol
+            ):
                 # Scipy's callback argument doesn't seem to work, so we do this
                 # instead...
                 raise StopIteration
@@ -1685,7 +1745,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             pass
 
     def _update_plasma(
-        self, plasma_psi: npt.NDArray[np.float64], j_tor: npt.NDArray[np.float64]
+        self,
+        plasma_psi: npt.NDArray[np.float64],
+        j_tor: npt.NDArray[np.float64] | None = None,
     ):
         """
         Update the plasma
@@ -1723,7 +1785,16 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             The radial position of the effective current centre
         zcur:
             The vertical position of the effective current centre
+
+        Raises
+        ------
+        EquilibriaError
+            If jtor has not been caculated
         """  # noqa: W505, E501
+        if self._jtor is None:
+            raise EquilibriaError(
+                "jtor has not yet been calculated, please run `eq.solve()"
+            )
         xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
@@ -1751,7 +1822,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         if x is None and z is None:
             return self.plasma.Bx() + self.coilset._stored_greens(self._bx_green)
 
-        return self.plasma.Bx(x, z) + self.coilset.Bx(x, z)
+        return self.plasma.Bx(x, z) + self.coilset.Bx(
+            cast("npt.ArrayLike", x), cast("npt.ArrayLike", z)
+        )
 
     def Bz(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1776,7 +1849,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         if x is None and z is None:
             return self.plasma.Bz() + self.coilset._stored_greens(self._bz_green)
 
-        return self.plasma.Bz(x, z) + self.coilset.Bz(x, z)
+        return self.plasma.Bz(x, z) + self.coilset.Bz(
+            cast("npt.ArrayLike", x), cast("npt.ArrayLike", z)
+        )
 
     def Bp(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1800,7 +1875,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         """
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def Bt(self, x: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
+    def Bt(self, x: npt.NDArray | float) -> float | npt.NDArray:
         """
         Toroidal magnetic field at point (x, z) from TF coils
 
@@ -1847,8 +1922,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
                 + self.coilset._stored_greens(self._psi_green)
                 + self.controller.psi()
             )
-
-        return self.plasma.psi(x, z) + self.coilset.psi(x, z)
+        return self.plasma.psi(x, z) + self.coilset.psi(
+            cast("npt.ArrayLike", x), cast("npt.ArrayLike", z)
+        )
 
     def psi_norm(self) -> npt.NDArray[np.float64]:
         """
@@ -1857,8 +1933,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             2-D x-z normalised poloidal flux map
         """
-        psi = self.psi()
-        return calc_psi_norm(psi, *self.get_OX_psis(psi))
+        psi = np.asarray(self.psi())
+        return np.asarray(calc_psi_norm(psi, *self.get_OX_psis(psi)))
 
     def dpsi_dx(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1883,7 +1959,15 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         if x is None and z is None:
             return self.plasma.dpsi_dx() + self.coilset.dpsi_dx(self.grid.x, self.grid.z)
 
-        return self.plasma.dpsi_dx(x, z) + self.coilset.dpsi_dx(x, z)
+        if isinstance(x, int | float | np.number) and isinstance(
+            z, int | float | np.number
+        ):
+            return self.plasma.dpsi_dx(float(x), float(z)) + self.coilset.dpsi_dx(
+                float(x), float(z)
+            )
+        return self.plasma.dpsi_dx(np.asarray(x), np.asarray(z)) + self.coilset.dpsi_dx(
+            np.asarray(x), np.asarray(z)
+        )
 
     def dpsi_dz(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
@@ -1907,8 +1991,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         """
         if x is None and z is None:
             return self.plasma.dpsi_dz() + self.coilset.dpsi_dz(self.grid.x, self.grid.z)
-
-        return self.plasma.dpsi_dz(x, z) + self.coilset.dpsi_dz(x, z)
+        return self.plasma.dpsi_dz(x, z) + self.coilset.dpsi_dz(
+            cast("npt.ArrayLike", x), cast("npt.ArrayLike", z)
+        )
 
     def pressure_map(self, psi_n: float | None = None) -> npt.NDArray[np.float64]:
         """
@@ -1928,15 +2013,17 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
         # psi norm values for an arbitrary coordinate on the LCFS
         lcfs = self.get_LCFS()
-        psi_lcfs_min = np.min(self.psi(lcfs.x, lcfs.z))
-        psi_n = calc_psi_norm(psi_lcfs_min, *self.get_OX_psis(psi_lcfs_min))
+        psi_lcfs_min = float(np.min(self.psi(lcfs.x, lcfs.z)))
+        psi_n_val = float(calc_psi_norm(psi_lcfs_min, *self.get_OX_psis()))
 
         # N.B. must be clipped at psi_n for interpolation if lower than 1
-        p = self.pressure(np.clip(self.psi_norm(), 0, min(1, psi_n)))
+        p = self.pressure(np.clip(self.psi_norm(), 0.0, min(1.0, psi_n_val)))
 
         return p * mask
 
-    def dBx_dz(self, x: npt.ArrayLike, z: npt.ArrayLike):
+    def dBx_dz(
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]:
         """
         Total differential of the radial magnetic field at point (x, z) from coils
 
@@ -1954,7 +2041,15 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             Differential of the radial magnetic field at x, z
         """
-        return self.plasma.dBx(x, z) + self.coilset.dB_d(x, z)
+        if isinstance(x, int | float | np.number) and isinstance(
+            z, int | float | np.number
+        ):
+            return self.plasma.dBx(float(x), float(z)) + self.coilset.dB_d(
+                float(x), float(z)
+            )
+        return self.plasma.dBx(np.asarray(x), np.asarray(z)) + self.coilset.dB_d(
+            np.asarray(x), np.asarray(z)
+        )
 
     def dBz_dx(self, x: npt.ArrayLike, z: npt.ArrayLike):
         """
@@ -1974,7 +2069,15 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             Differential of the vertical magnetic field at x, z
         """
-        return self.plasma.dBz(x, z) + self.coilset.dB_d(x, z)
+        if isinstance(x, int | float | np.number) and isinstance(
+            z, int | float | np.number
+        ):
+            return self.plasma.dBz(float(x), float(z)) + self.coilset.dB_d(
+                float(x), float(z)
+            )
+        return self.plasma.dBz(np.asarray(x), np.asarray(z)) + self.coilset.dB_d(
+            np.asarray(x), np.asarray(z)
+        )
 
     def _get_core_mask(self, psi_n: float | None = None) -> npt.NDArray[np.float64]:
         """
@@ -1991,20 +2094,21 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             A 2-D masking array for the plasma core.
         """
         o_points, x_points = self.get_OX_points()
+        psi_arr = np.asarray(self.psi())
         if psi_n is None:
             return in_plasma(
-                self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+                self.x, self.z, psi_arr, o_points=o_points, x_points=x_points
             )
         zone = self.get_flux_surface(
-            psi_n, self.psi(), o_points=o_points, x_points=x_points
+            psi_n, psi_arr, o_points=o_points, x_points=x_points
         )
         return in_zone(self.x, self.z, zone.xz.T)
 
     def q(
         self,
         psinorm: float | Iterable[float],
-        o_points: Iterable | None = None,
-        x_points: Iterable | None = None,
+        o_points: list[Opoint] | None = None,
+        x_points: list[Xpoint | Lpoint] | None = None,
     ) -> float | npt.NDArray[np.float64]:
         """
         Returns
@@ -2018,7 +2122,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             psinorm = [psinorm]
         psinorm = np.maximum(sorted(psinorm), PSI_NORM_TOL)
 
-        psi = self.psi()
+        psi = np.asarray(self.psi())
         flux_surfaces = []
         for psi_n in psinorm:
             if psi_n > 1 - PSI_NORM_TOL:
@@ -2032,7 +2136,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             flux_surfaces.append(f_s)
         q = np.array([f_s.safety_factor(self) for f_s in flux_surfaces])
         if len(q) == 1:
-            q = q[0]
+            return float(q[0])
         return q
 
     def fRBpol(self, psinorm: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
@@ -2044,7 +2148,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         """
         return self.profiles.fRBpol(psinorm)
 
-    def fvac(self) -> npt.NDArray[np.float64]:
+    def fvac(self) -> float:
         """
         Returns
         -------
@@ -2052,7 +2156,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             The vacuum f = R*Bt.
         """
         try:
-            return self.profiles.fvac()
+            return float(self.profiles.fvac())
         except AttributeError:  # When loading from eqdsks
             return self._fvac
 
@@ -2087,8 +2191,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         self,
         psi_n: float,
         psi: npt.NDArray[np.float64] | None = None,
-        o_points: Iterable | None = None,
-        x_points: Iterable | None = None,
+        o_points: list[Opoint] | None = None,
+        x_points: list[Xpoint | Lpoint] | None = None,
     ) -> Coordinates:
         """
         Get a flux surface Coordinates. NOTE: Continuous surface (bridges grid)
@@ -2105,15 +2209,17 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             Flux surface Coordinates
         """
-        if psi is None:
-            psi = self.psi()
+        psi_arr = np.asarray(self.psi()) if psi is None else psi
         f = find_flux_surf(
-            self.x, self.z, psi, psi_n, o_points=o_points, x_points=x_points
+            self.x, self.z, psi_arr, psi_n, o_points=o_points, x_points=x_points
         )
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
-        self, psi: np.ndarray | None = None, psi_n_tol: float = 1e-6, delta_start=0.01
+        self,
+        psi: npt.NDArray[np.float64] | None = None,
+        psi_n_tol: float = 1e-6,
+        delta_start: float = 0.01,
     ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
@@ -2131,13 +2237,12 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             The Coordinates of the LCFS
         """
-        if psi is None:
-            psi = self.psi()
-        o_points, x_points = self.get_OX_points(psi=psi)
+        psi_arr = np.asarray(self.psi()) if psi is None else psi
+        o_points, x_points = self.get_OX_points(psi=psi_arr)
         return find_LCFS_separatrix(
             self.x,
             self.z,
-            psi,
+            psi_arr,
             o_points,
             x_points,
             psi_n_tol=psi_n_tol,
@@ -2162,13 +2267,12 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             The separatrix coordinates (Coordinates for SN, List[Coordinates]] for DN)
         """
-        if psi is None:
-            psi = self.psi()
-        o_points, x_points = self.get_OX_points(psi=psi)
+        psi_arr = np.asarray(self.psi()) if psi is None else psi
+        o_points, x_points = self.get_OX_points(psi=psi_arr)
         return find_LCFS_separatrix(
             self.x,
             self.z,
-            psi,
+            psi_arr,
             o_points,
             x_points,
             double_null=self.is_double_null,
@@ -2185,7 +2289,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
     def get_OX_points(
         self,
-        psi: npt.NDArray[np.float64] | None = None,
+        psi: float | npt.NDArray[np.float64] | None = None,
         *,
         force_update: bool = False,
         o_point_fallback: OPointCalcOptions | None = None,
@@ -2198,13 +2302,12 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             The X-points
         """
-        if (self._o_points is None and self._x_points is None) or force_update is True:
-            if psi is None:
-                psi = self.psi()
+        if (self._o_points is None or self._x_points is None) or force_update is True:
+            psi_arr = np.asarray(self.psi() if psi is None else psi)
             self._o_points, self._x_points = find_OX_points(
                 self.x,
                 self.z,
-                psi,
+                psi_arr,
                 limiter=self.limiter,
                 o_point_fallback=o_point_fallback or self._o_point_fallback,
                 R_0=self.profiles.R_0,
@@ -2212,7 +2315,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return self._o_points, self._x_points
 
     def get_OX_psis(
-        self, psi: npt.NDArray[np.float64] | None = None
+        self, psi: float | npt.NDArray[np.float64] | None = None
     ) -> tuple[float, float]:
         """
         The psi at the base
@@ -2224,9 +2327,8 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             psi at X-point
         """
-        if psi is None:
-            psi = self.psi()
-        o_points, x_points = self.get_OX_points(psi)
+        psi_arr = np.asarray(self.psi()) if psi is None else psi
+        o_points, x_points = self.get_OX_points(psi_arr)
         return o_points[0][2], x_points[0][2]
 
     def get_midplane(self, x: float, z: float, x_psi: float) -> tuple[float, float]:
@@ -2254,13 +2356,13 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             """
             The psi error minimisation objective function.
             """  # noqa: DOC201
-            psi = self.psi(x_opt, z_opt)[0]
+            psi = np.asarray(self.psi(x_opt, z_opt))[0]
             return abs(psi - x_psi)
 
         z_arr = np.atleast_1d(np.asarray(z))
         res = optimise(
-            lambda x: psi_err(x, z_arr),
-            x0=x,
+            lambda x_var: psi_err(x_var, z_arr),
+            x0=np.atleast_1d(np.asarray(x, dtype=float)),
             algorithm="NELDER_MEAD",
             opt_conditions={"xtol_abs": 1e-7},
         )
@@ -2268,7 +2370,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
     def analyse_core(
         self, n_points: int = 50, *, plot: bool = True, ax=None
-    ) -> tuple[CoreResults, Axes]:
+    ) -> tuple[CoreResults, list[Axes]]:
         """
         Analyse the shape and characteristics of the plasma core.
 
@@ -2301,7 +2403,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
     def analyse_coils(
         self,
         print_table=True,  # noqa: FBT002
-    ) -> tuple[dict[str, Any], float, float]:
+    ) -> tuple[dict[str, Any], float | None, float | None]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
         of the equilibrium and coilset.

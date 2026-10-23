@@ -12,10 +12,12 @@ from __future__ import annotations
 
 from enum import Enum, auto
 from itertools import pairwise
+from typing import cast
 
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
+import numpy.typing as npt
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 
@@ -35,19 +37,21 @@ class NoiseModeType(Enum):
     MAX = auto()
 
     @classmethod
-    def _missing_(cls, value: str | NoiseModeType) -> NoiseModeType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise FuelCycleError(
-                f"{cls.__name__} has no mode {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object | str | NoiseModeType) -> NoiseModeType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise FuelCycleError(
+            f"{cls.__name__} has no mode {value}"
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 def find_noisy_locals(
-    x: np.ndarray, x_bins: int = 50, mode: str = "min"
-) -> tuple[np.ndarray, np.ndarray]:
+    x: npt.NDArray, x_bins: int = 50, mode: str = "min"
+) -> tuple[npt.NDArray, npt.NDArray]:
     """
     Find local minima or maxima in a noisy signal.
 
@@ -89,8 +93,8 @@ def find_noisy_locals(
 
 
 def discretise_1d(
-    x: np.ndarray, y: np.ndarray, n: int, method: str = "linear"
-) -> tuple[np.ndarray, np.ndarray]:
+    x: npt.NDArray, y: npt.NDArray, n: int, method: str = "linear"
+) -> tuple[npt.NDArray, npt.NDArray]:
     """
     Discretise x and y for a given number of points.
 
@@ -116,7 +120,7 @@ def discretise_1d(
     y = np.array(y)
     x_1d = np.linspace(x[0], x[-1], n)
     y_1d = griddata(x, y, xi=x_1d, method=method)
-    return [x_1d, y_1d]
+    return x_1d, y_1d
 
 
 def convert_flux_to_flow(flux: float, area: float) -> float:
@@ -143,8 +147,8 @@ def convert_flux_to_flow(flux: float, area: float) -> float:
 
 
 def piecewise_linear_threshold(
-    x: np.ndarray, x0: float, y0: float, m1: float, m2: float
-) -> np.ndarray:
+    x: npt.NDArray, x0: float, y0: float, m1: float, m2: float
+) -> npt.NDArray:
     """
     Piecewise linear model with initial linear slope, followed by threshold.
 
@@ -173,8 +177,8 @@ def piecewise_linear_threshold(
 
 
 def piecewise_sqrt_threshold(
-    x: np.ndarray, factor: float, kink: float, threshold: float
-) -> np.ndarray:
+    x: npt.NDArray, factor: float, kink: float, threshold: float
+) -> npt.NDArray:
     """
     Piecewise square-root model, followed by threshold.
 
@@ -207,19 +211,21 @@ class FitMethod(Enum):
     SQRT = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"No known fitting method {value}"
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object | str) -> FitMethod:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                pass
+        raise ValueError(
+            f"No known fitting method {value} "
+            f"please select from {(*cls._member_names_,)}"
+        )
 
 
 def fit_sink_data(
-    x: np.ndarray,
-    y: np.ndarray,
+    x: npt.NDArray,
+    y: npt.NDArray,
     method: str | FitMethod = FitMethod.SQRT,
     *,
     plot: bool = True,
@@ -291,7 +297,7 @@ def fit_sink_data(
 
 
 @nb.jit(nopython=True, cache=True)
-def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndarray:
+def delay_decay(t: npt.NDArray, m_t_flow: npt.NDArray, tt_delay: float) -> npt.NDArray:
     """
     Time-shift a tritium flow with a delay and account for radioactive decay.
 
@@ -319,8 +325,8 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
 
 @nb.jit(nopython=True, cache=True)
 def fountain(
-    flow: np.ndarray, t: np.ndarray, min_inventory: float
-) -> tuple[np.ndarray, ...]:
+    flow: npt.NDArray, t: npt.NDArray, min_inventory: float
+) -> tuple[npt.NDArray, npt.NDArray, float, float]:
     """
     Fountain tritium block. Needs a minimum T inventory to operate.
     This is a binary description. In reality, the TFV systems modelled here
@@ -372,13 +378,13 @@ def fountain(
         else:
             m_out[i] = 0
             inventory[i] += m_in
-    return m_out, inventory
+    return m_out, inventory, 0, 0
 
 
 @nb.jit(nopython=True, cache=True)  # Factor ~190 reduction in runtime
 def _speed_recycle(
-    m_start_up: float, t: np.ndarray, m_in: np.ndarray, m_fuel_injector: np.ndarray
-) -> np.ndarray:
+    m_start_up: float, t: npt.NDArray, m_in: npt.NDArray, m_fuel_injector: npt.NDArray
+) -> npt.NDArray:
     """
     The main recycling loop, JIT compiled.
 
@@ -411,7 +417,7 @@ def _speed_recycle(
     return m_tritium
 
 
-def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
+def find_max_load_factor(time_years: npt.NDArray, time_fpy: npt.NDArray) -> float | None:
     """
     Finds peak slope in fpy as a function of calendar years
     Divides implicitly by slightly less than a year
@@ -496,7 +502,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = r_T_burn(p_fus)  # [kg/s]
+        mb = r_T_burn(cast("float", p_fus))  # [kg/s]
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
@@ -867,8 +873,7 @@ def _sqrt_thresh_sink(
     max_inventory: float,
     sum_in: float,
     decayed: float,
-    *,
-    _testing: bool,
+    _testing: bool = False,  # noqa: FBT002, FBT001
 ) -> tuple[float, float, float, float]:
     """
     A simple sqrt tritium retention sink model. Used over a time-step.
@@ -980,8 +985,8 @@ def _sqrt_thresh_sink(
 
 @nb.jit(nopython=True, cache=True)  # Factor ~70 reduction in runtime
 def linear_bathtub(
-    flow: np.ndarray, t: np.ndarray, eta: float, bci: int, max_inventory: float
-) -> tuple[np.ndarray, np.ndarray, float, float]:
+    flow: npt.NDArray, t: npt.NDArray, eta: float, bci: int, max_inventory: float
+) -> tuple[npt.NDArray, npt.NDArray, float, float]:
     """
     Bathtub sink model.
 
@@ -1026,14 +1031,14 @@ def linear_bathtub(
 
 @nb.jit(nopython=True, cache=True)
 def sqrt_bathtub(
-    flow: np.ndarray,
-    t: np.ndarray,
+    flow: npt.NDArray,
+    t: npt.NDArray,
     factor: float,
     bci: int,
     max_inventory: float,
     *,
     _testing: bool = False,
-) -> tuple[np.ndarray, np.ndarray, float, float]:
+) -> tuple[npt.NDArray, npt.NDArray, float, float]:
     """
     Bathtub sink model with a sqrt inventory retention law.
 
@@ -1079,7 +1084,7 @@ def sqrt_bathtub(
             max_inventory,
             sum_in,
             decayed,
-            _testing,
+            _testing=_testing,
         )
         if i == bci or i < 1:
             # Dump stored inventory on component change.
@@ -1089,12 +1094,12 @@ def sqrt_bathtub(
 
 @nb.jit(nopython=True, cache=True)
 def fountain_bathtub(
-    flow: np.ndarray,
-    t: np.ndarray,
+    flow: npt.NDArray,
+    t: npt.NDArray,
     fs: float,
     max_inventory: float,
     min_inventory: float,
-) -> tuple[np.ndarray, np.ndarray, float, float]:
+) -> tuple[npt.NDArray, npt.NDArray, float, float]:
     """
     A fountain and bathtub sink simultaneously.
 

@@ -3,8 +3,6 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Scipy optimisation interface"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
@@ -31,7 +29,7 @@ from bluemira.utilities.error import OptVariablesError
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+    from bluemira.optimisation.typed import ObjectiveCallable, OptimiserCallable
 
 
 class ScipyOptimiser(Optimiser):
@@ -63,7 +61,7 @@ class ScipyOptimiser(Optimiser):
         self.keep_history = keep_history
 
     @property
-    def algorithm(self) -> AlgorithmType:
+    def algorithm(self) -> Algorithm:
         """
         The optimiser's algorithm.
         """
@@ -328,8 +326,8 @@ class ScipyOptimiser(Optimiser):
             f_x=result.fun,
             x=result.x,
             n_evals=result.nit if hasattr(result, "nit") else result.nfev,
-            history=None,
-            constraint_history=None,
+            history=[],
+            constraint_history=[],
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:

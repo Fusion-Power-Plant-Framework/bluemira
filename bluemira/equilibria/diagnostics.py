@@ -25,7 +25,7 @@ from bluemira.utilities.plot_tools import make_gif, save_figure
 if TYPE_CHECKING:
     from os import PathLike
 
-    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.equilibrium import CoilSetMHDState
     from bluemira.equilibria.solve import ConvergenceCriterion
 
 
@@ -282,7 +282,7 @@ class PicardDiagnosticOptions:
         bluemira root folder, if that path is available.
     """
 
-    plot: PicardDiagnostic = _PicardDiagnosticDescriptor()
+    plot: PicardDiagnostic = _PicardDiagnosticDescriptor()  # type: ignore[ty:invalid-assignment]
     gif: bool = False
     plot_name: str = "default_0"
     figure_folder: str | PathLike | None = None
@@ -306,7 +306,8 @@ class PicardDiagnosticOptions:
             def noop(*args, **kwargs):  # noqa: ARG001
                 return
 
-            self.update_figure = self.make_gif = self.finalise_plots = noop
+            self.update_figure = self.make_gif = self.finalise_plots = noop  # type: ignore[ty:invalid-assignment]
+
         else:
             self.f, ax = plt.subplots(
                 ncols=2 if self.plot is PicardDiagnostic.EQ_AND_CONVERGENCE else 1
@@ -323,9 +324,13 @@ class PicardDiagnosticOptions:
     def make_gif(self):
         """Make gif of iterator plot"""
         if self.gif:
-            make_gif(self.figure_folder, self.plot_name, file_format=self.file_format)
+            make_gif(
+                str(self.figure_folder), self.plot_name, file_format=self.file_format
+            )
 
-    def update_figure(self, eq: Equilibrium, convergence: ConvergenceCriterion, i: int):
+    def update_figure(
+        self, eq: CoilSetMHDState, convergence: ConvergenceCriterion, i: int
+    ):
         """
         Updates the figure if plotting is used
         """

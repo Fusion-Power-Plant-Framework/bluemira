@@ -10,7 +10,10 @@ Grid object and operations for equilibria.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, cast, final, overload
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 import numba as nb
 import numpy as np
@@ -21,8 +24,6 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import get_area_2d, get_centroid_2d
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     import numpy.typing as npt
     from eqdsk import EQDSKInterface
 
@@ -199,6 +200,10 @@ class Grid:
             e.nz,
         )
 
+    @overload
+    def point_inside(self, x: Iterable[float], z: None = None) -> bool: ...
+    @overload
+    def point_inside(self, x: float, z: float) -> bool: ...
     def point_inside(self, x: float | Iterable[float], z: float | None = None) -> bool:
         """
         Determine if a point is inside the rectangular grid (includes edges).
@@ -216,14 +221,22 @@ class Grid:
             Whether or not the point is inside the grid
         """
         if z is None:
-            x, z = x
+            x_val, z_val = cast("Iterable[float]", x)
+        else:
+            x_val, z_val = cast("float", x), z
         return (
-            (x >= self.x_min)
-            and (x <= self.x_max)
-            and (z >= self.z_min)
-            and (z <= self.z_max)
+            (x_val >= self.x_min)
+            and (x_val <= self.x_max)
+            and (z_val >= self.z_min)
+            and (z_val <= self.z_max)
         )
 
+    @overload
+    def distance_to(
+        self, x: Iterable[float], z: None = None
+    ) -> npt.NDArray[np.float64]: ...
+    @overload
+    def distance_to(self, x: float, z: float) -> npt.NDArray[np.float64]: ...
     def distance_to(
         self, x: float | Iterable[float], z: float | None = None
     ) -> npt.NDArray[np.float64]:
@@ -243,8 +256,15 @@ class Grid:
             Distances to the edges of the Grid.
         """
         if z is None:
-            x, z = x
-        return np.abs([x - self.x_min, x - self.x_max, z - self.z_min, z - self.z_max])
+            x_val, z_val = cast("Iterable[float]", x)
+        else:
+            x_val, z_val = cast("float", x), z
+        return np.abs([
+            x_val - self.x_min,
+            x_val - self.x_max,
+            z_val - self.z_min,
+            z_val - self.z_max,
+        ])
 
     def plot(self, ax=None, **kwargs):
         """

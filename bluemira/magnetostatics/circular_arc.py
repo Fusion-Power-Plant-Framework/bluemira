@@ -562,7 +562,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
-        point = self._global_to_local([point])[0]
+        point = self._global_to_local(np.array([point]))[0]
         rp, tp, zp = self._local_to_cylindrical(point)
         # Calculate field in local coordinates
         try:
@@ -587,7 +587,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
             b = np.zeros(3)
             for p in quadrature_points:
-                point = self._global_to_local([p])[0]
+                point = self._global_to_local(np.asarray([p]))[0]
                 rp, tp, zp = self._local_to_cylindrical(point)
                 b += self._BxByBz(rp, tp, zp)
 
@@ -632,7 +632,9 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
 
-    def plot(self, ax: plt.Axes | None = None, *, show_coord_sys: bool = False):
+    def plot(
+        self, ax: plt.Axes | None = None, *, show_coord_sys: bool = False, **kwargs
+    ):
         """
         Plot the CircularArcCurrentSource.
 
@@ -643,7 +645,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         show_coord_sys: bool
             Whether or not to plot the coordinate systems
         """
-        super().plot(ax=ax, show_coord_sys=show_coord_sys)
+        super().plot(ax=ax, show_coord_sys=show_coord_sys, **kwargs)
         ax = plt.gca()
         theta = self._dtheta
         x, y = make_circle_arc(

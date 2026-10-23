@@ -11,7 +11,7 @@ Plotting for balance of plant
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,7 +22,7 @@ from bluemira.display.palettes import BLUEMIRA_PALETTE
 from bluemira.optimisation import optimise
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Iterable, Sequence
 
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
@@ -41,14 +41,14 @@ class SuperSankey(Sankey):
         self,
         patchlabel: str = "",
         flows: Iterable[float] | None = None,
-        orientations: Iterable[float] | None = None,
-        labels: str | list[str | None] | None = "",
+        orientations: Iterable[int] | None = None,
+        labels: Iterable[str | None] = "",
         trunklength: float = 1.0,
-        pathlengths: float | list[float] = 0.25,
+        pathlengths: float | Iterable[float] = 0.25,
         prior: int | None = None,
-        future: int | None = None,
         connect: tuple[int, int] | list[tuple[int, int]] = (0, 0),
         rotation: float = 0,
+        future: int | None = None,
         **kwargs,
     ):
         __doc__ = super().__doc__  # noqa: F841
@@ -60,19 +60,25 @@ class SuperSankey(Sankey):
                 patchlabel,
                 flows,
                 orientations,
-                labels,
+                "" if labels is None else labels,
                 trunklength,
                 pathlengths,
                 prior,
-                connect,
+                connect[0] if isinstance(connect, list) else connect,
                 rotation,
                 **kwargs,
             )
         else:
             # There are two connections, use new method
+            if not isinstance(connect, list):
+                raise ValueError(
+                    "connect must be a list of tuples when future is specified"
+                )
+            if flows is None:
+                raise ValueError("flows must be provided when future is specified")
             self._double_connect(
                 patchlabel,
-                flows,
+                list(flows),
                 orientations,
                 labels,
                 trunklength,
@@ -87,13 +93,13 @@ class SuperSankey(Sankey):
     def _double_connect(
         self,
         patchlabel: str,
-        flows: Iterable[float] | None,
-        orientations: Iterable[float] | None,
-        labels: str | list[str | None] | None,
+        flows: Sequence[float],
+        orientations: Iterable[int] | None,
+        labels: str | Iterable[str | None],
         trunklength: float,
-        pathlengths: list[float],
+        pathlengths: float | Iterable[float],
         prior: int | None,
-        future: int | None,
+        future: int,
         connect: list[tuple[int, int]],
         rotation: float,
         **kwargs,
@@ -122,8 +128,13 @@ class SuperSankey(Sankey):
             flows, orientations, prior, future, connect, trunklength=trunklength
         )
         # Replace
-        pathlengths[0] = dx
-        pathlengths[-1] = dy
+        p_lengths: list[float]
+        if isinstance(pathlengths, (int, float)):
+            p_lengths = [float(pathlengths)] * len(flows)
+        else:
+            p_lengths = [float(p) for p in pathlengths]
+        p_lengths[0] = dx
+        p_lengths[-1] = dy
         self.add(
             patchlabel=patchlabel,
             labels=labels,
@@ -132,17 +143,17 @@ class SuperSankey(Sankey):
             prior=prior,
             connect=connect[0],
             trunklength=trunklength,
-            pathlengths=pathlengths,
+            pathlengths=p_lengths,
             rotation=rotation,
             facecolor=kwargs.get("facecolor"),
         )
 
     def _opt_connect(
         self,
-        flows: Iterable[float] | None,
-        orient: Iterable[float] | None,
+        flows: Sequence[float],
+        orient: Iterable[int] | None,
         prior: int | None,
-        future: int | None,
+        future: int,
         connect: list[tuple[int, int]],
         trunklength: float,
     ) -> tuple[float, float]:
@@ -171,14 +182,14 @@ class SuperSankey(Sankey):
         # modifications during optimisation
         extent = deepcopy(self.extent)
 
-        def minimise_dxdy(x_opt):
+        def minimise_dxdy(vector):
             """
             Minimisation function for the spatial difference between the target
             tip and the actual tip.
 
             Parameters
             ----------
-            x_opt: array_like
+            vector:
                 The vector of d_x, d_y delta-vectors to match tip positions
 
             Returns
@@ -187,8 +198,8 @@ class SuperSankey(Sankey):
                 The sum of the absolute differences
             """
             tip2 = self.diagrams[future].tips[future_index]
-            pathlengths[0] = x_opt[0]
-            pathlengths[-1] = x_opt[1]
+            pathlengths[0] = vector[0]
+            pathlengths[-1] = vector[1]
             self.add(
                 trunklength=trunklength,
                 pathlengths=pathlengths,
@@ -208,10 +219,10 @@ class SuperSankey(Sankey):
         x0 = np.zeros(2)
         result = optimise(minimise_dxdy, x0=x0, algorithm="SLSQP_SCIPY")
         self.extent = extent  # Finish clean-up
-        return result.x
+        return tuple(result.x)
 
 
-BALANCE_PLOT_DEFAULTS = {
+BALANCE_PLOT_DEFAULTS: BOPPlotOpts = {
     # Matplotlib figure
     "facecolor": "k",
     "figsize": (14, 8),
@@ -234,6 +245,30 @@ BALANCE_PLOT_DEFAULTS = {
 }
 
 
+class BOPPlotOpts(TypedDict):
+    """BOP plotting options"""
+
+    # Matplotlib figure
+    facecolor: str
+    figsize: tuple[int, int]
+    # Sankey scalings
+    scale: float
+    gap: float
+    radius: float
+    shoulder: float
+    head_angle: float
+    trunk_length: float
+    standard_length: float
+    medium_length: float
+    # Text font, colour and size
+    unit: str
+    format: str
+    font_weight: str
+    font_color: str
+    font_size: float
+    flow_font_size: float
+
+
 class BalanceOfPlantPlotter:
     """
     The plotting object for the BalanceOfPlant system. Builds a relatively
@@ -241,10 +276,10 @@ class BalanceOfPlantPlotter:
     reactor.
     """
 
-    plot_options = deepcopy(BALANCE_PLOT_DEFAULTS)
+    plot_options: BOPPlotOpts = BOPPlotOpts(**BALANCE_PLOT_DEFAULTS)
 
     def __init__(self, **kwargs):
-        self.plot_options = {**self.plot_options, **kwargs}
+        self.plot_options = BOPPlotOpts({**self.plot_options, **kwargs})
 
     def _scale_flows(self, flow_dict: dict[str, list[float]]) -> dict[str, list[float]]:
         plot_unit = self.plot_options.get("unit", "MW")
@@ -320,7 +355,6 @@ class BalanceOfPlantPlotter:
             flows=flow_dict["Plasma"],
             orientations=[0, -1, 0, -1],
             prior=None,
-            connect=None,
             trunklength=trunk_length,
             pathlengths=[l_m, l_s / 1.5, l_s, l_s],
             facecolor=BLUEMIRA_PALETTE["blue"].as_hex(),
