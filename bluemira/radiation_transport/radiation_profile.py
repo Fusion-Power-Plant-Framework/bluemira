@@ -2278,7 +2278,7 @@ class RadiationSource:
         RadiationTransportError
             rad_map not calculated
         """
-        if not hasattr(self, "xtot"):
+        if not hasattr(self, "x_tot"):
             raise RadiationTransportError(
                 "Radiation map has not been calculated yet. Call rad_map first."
             )
@@ -2362,7 +2362,7 @@ class RadiationSource:
                     self.sol_rad.flux_tubes_hfs_low,
                     self.sol_rad.flux_tubes_lfs_up,
                     self.sol_rad.flux_tubes_hfs_up,
-                ],
+                ]
             )
 
             sol_rad_flux_tubes = functools.reduce(operator.iadd, sols, [])
