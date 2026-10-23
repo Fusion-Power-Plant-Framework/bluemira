@@ -649,7 +649,7 @@ class EquilibriumPlotterMixin:
                 bluemira_warn("Unable to find lcfs")
 
 
-class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
+class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:invalid-mutable-override]
     """
     Utility class for FixedPlasmaEquilibrium plotting
     """
@@ -701,7 +701,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         )
 
 
-class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
+class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:invalid-mutable-override]
     """
     Utility class for Equilibrium plotting
     """

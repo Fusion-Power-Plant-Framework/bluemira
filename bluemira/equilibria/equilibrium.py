@@ -1110,6 +1110,8 @@ class Breakdown(CoilSetMHDState):
         :
             Poloidal magnetic flux at x, z
         """
+        if x is None and z is None:
+            return self.coilset._stored_greens(self._psi_green)
         return self.coilset.psi(np.asarray(x), np.asarray(z))
 
     def get_coil_Bp(self) -> npt.NDArray[np.float64]:
@@ -2287,7 +2289,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
 
     def get_OX_points(
         self,
-        psi: npt.NDArray[np.float64] | None = None,
+        psi: float | npt.NDArray[np.float64] | None = None,
         *,
         force_update: bool = False,
         o_point_fallback: OPointCalcOptions | None = None,
@@ -2301,7 +2303,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             The X-points
         """
         if (self._o_points is None or self._x_points is None) or force_update is True:
-            psi_arr = np.asarray(self.psi()) if psi is None else psi
+            psi_arr = np.asarray(self.psi() if psi is None else psi)
             self._o_points, self._x_points = find_OX_points(
                 self.x,
                 self.z,
@@ -2313,7 +2315,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         return self._o_points, self._x_points
 
     def get_OX_psis(
-        self, psi: npt.NDArray[np.float64] | None = None
+        self, psi: float | npt.NDArray[np.float64] | None = None
     ) -> tuple[float, float]:
         """
         The psi at the base
