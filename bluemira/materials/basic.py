@@ -33,7 +33,7 @@ SS316 = material(
         density=8910,
         coefficient_thermal_expansion=18e-6,
         average_yield_stress=360e6,
-        shear_modulus=sm,
+        shear_modulus=sm,  # type: ignore[ty:invalid-argument-type]
     ),
 )
 
@@ -45,7 +45,7 @@ FORGED_SS316LN = material(
         density=8910,
         coefficient_thermal_expansion=10.36e-6,
         average_yield_stress=800e6,
-        shear_modulus=sm,
+        shear_modulus=sm,  # type: ignore[ty:invalid-argument-type]
     ),
 )
 """Forged SS316LN plates: OIS structural material as defined in 2MBS88 and"
@@ -60,7 +60,7 @@ FORGED_JJ1 = material(
         density=8910,
         coefficient_thermal_expansion=10.38e-6,
         average_yield_stress=1000e6,
-        shear_modulus=sm,
+        shear_modulus=sm,  # type: ignore[ty:invalid-argument-type]
     ),
 )
 """Forged EK1/JJ1 strengthened austenitic steel plates: TF inner leg material"
@@ -75,7 +75,7 @@ CAST_EC1 = material(
         density=8910,
         coefficient_thermal_expansion=10.38e-6,
         average_yield_stress=750e6,
-        shear_modulus=sm,
+        shear_modulus=sm,  # type: ignore[ty:invalid-argument-type]
     ),
 )
 """ Cast EC1 strengthened austenitic steel castings: TF outer leg material as"
@@ -89,7 +89,7 @@ CONCRETE = material(
         density=2400,
         coefficient_thermal_expansion=12e-6,
         average_yield_stress=40e6,
-        shear_modulus=sm,
+        shear_modulus=sm,  # type: ignore[ty:invalid-argument-type]
     ),
 )
 """Typical concrete properties at room temperature"""
