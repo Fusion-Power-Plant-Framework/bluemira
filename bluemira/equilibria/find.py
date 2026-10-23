@@ -316,10 +316,9 @@ def o_point_fallback_calculator(
     match o_point_fallback:
         case OPointCalcOptions.GRID_CENTRE:
             if as_points:
-                o_points = [
-                    Opoint(x_, z_, cast("float", psi(x_, z_)))
-                    for x_, z_ in np.asarray([x, z])
-                ]
+                x = cast("float", x)
+                z = cast("float", z)
+                o_points = [Opoint(x, z, cast("float", psi(x, z)))]
             else:
                 nx, nz = psi.shape
                 x = cast("npt.NDArray", x)

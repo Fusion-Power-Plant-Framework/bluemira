@@ -451,23 +451,23 @@ class ParameterFrame:
         :
             The tabulated data as column headers and a list of rows
         """
-        columns = list(ParamDictT.__annotations__.keys()) if keys is None else list(keys)
         try:
-            pkey = columns.index("Parameter")
-        except ValueError:
+            pkey = keys.index("Parameter")  # type:ignore[ty:unresolved-attribute]
+        except (ValueError, AttributeError):
             pkey = None
 
         if pkey is not None:
-            columns.pop(pkey)
-            if "name" in columns:
-                columns.pop(columns.index("name"))
-            if "unit" in columns:
-                columns.pop(columns.index("unit"))
-                columns.insert(pkey, "unit")
-                columns.insert(pkey, "name")
+            keys = cast("list[str]", keys)
+            keys.pop(pkey)
+            if "name" in keys:
+                keys.pop(keys.index("name"))
+            if "unit" in keys:
+                keys.pop(keys.index("unit"))
+            keys.insert(pkey, "unit")
+            keys.insert(pkey, "name")
 
+        columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
-
         try:
             nindex = columns.index("name")
             rec_col.pop(nindex)
@@ -565,7 +565,9 @@ class ParameterFrame:
         return self.tabulate()
 
 
-def _validate_parameter_field(field, member_type: Any) -> tuple[type, ...]:
+def _validate_parameter_field(
+    field, member_type: type | GenericAlias
+) -> tuple[type, ...]:
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):

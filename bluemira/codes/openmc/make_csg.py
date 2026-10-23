@@ -269,7 +269,7 @@ def torus_from_3points(
 
 
 def torus_from_circle(
-    center: Sequence[float],
+    center: Sequence[float] | npt.NDArray,
     minor_radius: float,
     surface_id: int | None = None,
     name: str = "",

@@ -11,7 +11,7 @@ A collection of tools used for position interpolation.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -242,7 +242,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
-        intersect = slice_shape(self.geometry, plane) or []
+        intersect = cast("npt.NDArray", slice_shape(self.geometry, plane))
         if len(intersect) == 1:
             x = intersect[0][0]
         elif len(intersect) == 2:  # noqa: PLR2004

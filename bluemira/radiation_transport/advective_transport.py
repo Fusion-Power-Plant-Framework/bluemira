@@ -56,6 +56,15 @@ class ChargedParticleSolver:
         (default: 0.001).
     """
 
+    first_wall: Coordinates
+    flux_surfaces_ob_down: list[PartialOpenFluxSurface]
+    flux_surfaces_ob_up: list[PartialOpenFluxSurface]
+    flux_surfaces_ib_down: list[PartialOpenFluxSurface]
+    flux_surfaces_ib_up: list[PartialOpenFluxSurface]
+    x_sep_omp: float
+    x_sep_imp: float
+    result: tuple[np.ndarray, ...]
+
     def __init__(
         self,
         config: ChargedParticleSolverParams | dict[str, float],
@@ -67,16 +76,6 @@ class ChargedParticleSolver:
         self.params = self._make_params(config)
         self._check_params()
         self.dx_mp = dx_mp
-
-        # Constructors
-        self.first_wall: Coordinates | None = None
-        self.flux_surfaces_ob_down: list[PartialOpenFluxSurface] | None = None
-        self.flux_surfaces_ob_up: list[PartialOpenFluxSurface] | None = None
-        self.flux_surfaces_ib_down: list[PartialOpenFluxSurface] | None = None
-        self.flux_surfaces_ib_up: list[PartialOpenFluxSurface] | None = None
-        self.x_sep_omp: float | None = None
-        self.x_sep_imp: float | None = None
-        self.result: tuple[np.ndarray, ...] | None = None
 
         # Pre-processing
         self.psi_n_tol = psi_n_tol
@@ -139,7 +138,9 @@ class ChargedParticleSolver:
                 " in either the lower or upper directions."
             )
 
-    def _process_first_wall(self, first_wall):
+    def _process_first_wall(
+        self, first_wall: Coordinates
+    ) -> tuple[Coordinates, npt.NDArray, npt.NDArray]:
         """
         Force working first wall geometry to be closed and counter-clockwise.
 
@@ -282,8 +283,6 @@ class ChargedParticleSolver:
         AdvectionTransportError
             If first wall has not been initialized
         """
-        if self.first_wall is None:
-            raise AdvectionTransportError("First wall has not been initialized.")
         up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
         down_end_i = self.first_wall.argmin(
             np.array([x_down_inter[-1], 0, z_down_inter[-1]])
@@ -384,8 +383,6 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ob()
 
         # Find the intersections of the flux surfaces with the first wall
-        if self.first_wall is None:
-            raise AdvectionTransportError("First wall has not been initialized.")
         self._clip_flux_surfaces(self.first_wall)
 
         x_omp, z_omp, x_lfs_inter, z_lfs_inter, alpha_lfs = self._get_arrays(
@@ -396,8 +393,6 @@ class ChargedParticleSolver:
         )
 
         # Calculate values at OMP
-        if self.x_sep_omp is None:
-            raise AdvectionTransportError("x_sep_omp has not been calculated.")
         dx_omp = x_omp - self.x_sep_omp
         Bp_omp = self.eq.Bp(x_omp, z_omp)
         Bt_omp = self.eq.Bt(x_omp)
@@ -466,8 +461,6 @@ class ChargedParticleSolver:
         self._make_flux_surfaces_ib()
 
         # Find the intersections of the flux surfaces with the first wall
-        if self.first_wall is None:
-            raise AdvectionTransportError("First wall has not been initialized.")
         self._clip_flux_surfaces(self.first_wall)
 
         (
@@ -492,16 +485,12 @@ class ChargedParticleSolver:
         )
 
         # Calculate values at OMP
-        if self.x_sep_omp is None:
-            raise AdvectionTransportError("x_sep_omp has not been calculated.")
         dx_omp = x_omp - self.x_sep_omp
         Bp_omp = self.eq.Bp(x_omp, z_omp)
         Bt_omp = self.eq.Bt(x_omp)
         B_omp = np.hypot(Bp_omp, Bt_omp)
 
         # Calculate values at IMP
-        if self.x_sep_imp is None:
-            raise AdvectionTransportError("x_sep_imp has not been calculated.")
         dx_imp = abs(x_imp - self.x_sep_imp)
         Bp_imp = self.eq.Bp(x_imp, z_imp)
         Bt_imp = self.eq.Bt(x_imp)
@@ -658,18 +647,15 @@ class ChargedParticleSolver:
         for f_s in self.flux_surfaces:
             plot_coordinates(f_s.coords, ax=ax, linewidth=0.01)
 
-        if self.result is not None:
-            cm = ax.scatter(
-                self.result[0],
-                self.result[1],
-                c=self.result[2],
-                s=10,
-                zorder=Zorder.RADIATION.value,
-                cmap="plasma",
-            )
-            f = ax.figure
-            if f is not None:
-                f.colorbar(cm, label="MW/m²")
+        cm = ax.scatter(
+            self.result[0],
+            self.result[1],
+            c=self.result[2],
+            s=10,
+            zorder=Zorder.RADIATION.value,
+            cmap="plasma",
+        )
+        ax.figure.colorbar(cm, label="MW/m²")
         if show:
             plt.show()
         return ax

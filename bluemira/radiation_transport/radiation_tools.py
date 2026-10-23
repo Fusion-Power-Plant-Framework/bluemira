@@ -454,10 +454,10 @@ def gaussian_decay(
     dec_param:
         decayed parameter
     """
-    n_pts = int(max(no_points, 1))
+    no_points = int(max(no_points, 1))
 
     # setting values on the horizontal axis
-    x = np.linspace(float(n_pts), 0.0, n_pts)
+    x = np.linspace(no_points, 0.0, no_points)
 
     # centring the gaussian on its highest value
     mu = max(x)
