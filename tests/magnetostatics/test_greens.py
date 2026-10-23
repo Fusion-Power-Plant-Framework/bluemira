@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
+import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import pytest
@@ -431,10 +432,6 @@ class TestGreensEdgeCases:
 
 
 def test_old_plot():
-    import matplotlib.pyplot as plt
-
-    from bluemira.magnetostatics.greens_old import greens_Bz as old_greens_Bz
-
     x = np.linspace(0, 0.1, 500)
     z = np.zeros_like(x)
     coil_x, coil_z = 4, 4
