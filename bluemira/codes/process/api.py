@@ -59,14 +59,16 @@ class InDat:
 OBS_VARS = {}
 
 try:
-    from process.core.io.in_dat import (
+    from process.core.io.in_dat import (  # type: ignore[ ty:unresolved-import]
         InDat,  # type: ignore[ty:invalid-assignment] # noqa: F401
     )
-    from process.core.io.mfile import (
-        MFile,  # type: ignore[ty:invalid-assignment]  # noqa: F401
+    from process.core.io.mfile import (  # type: ignore[ ty:unresolved-import]
+        MFile,  # type: ignore[ty:invalid-assignment] # noqa: F401
     )
-    from process.core.io.obsolete_vars import OBS_VARS
-    from process.models.physics.impurity_radiation import (
+    from process.core.io.obsolete_vars import (  # type: ignore[ ty:unresolved-import]
+        OBS_VARS,
+    )
+    from process.models.physics.impurity_radiation import (  # type: ignore[ ty:unresolved-import]
         ImpurityDataHeader,
         read_impurity_file,
     )
