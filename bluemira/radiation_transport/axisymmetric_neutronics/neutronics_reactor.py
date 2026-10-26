@@ -92,7 +92,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         -------
         AxisymmetricNeutronicsGeomManager
         """
-        all_comps = self.get_all_components(reactor, self.model)
+        all_comps = self.get_all_components(reactor)
         discretisations = [
             self.default_discretisations(comp.name)
             or self.default_discretisations(comp.parent().name)
@@ -187,9 +187,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         bluemira_print(f"Plotted desplining comparisons as {plot_path}")
 
     @abstractmethod
-    def get_all_components(
-        self, reactor: Reactor, model: NeutronicsModel = NeutronicsModel.SIMPLE
-    ) -> list[Component]:
+    def get_all_components(self, reactor: Reactor) -> list[Component]:
         """
         Get all relevant components for the reactor
 
@@ -200,8 +198,9 @@ class AxisymmetricNeutronicsReactor(ABC):
         """
         ...
 
+    @staticmethod
     @abstractmethod
-    def default_discretisations(self, comp_name: str) -> int:
+    def default_discretisations(comp_name: str) -> int:
         """
         Return the default spline discretisation for a component.
 
