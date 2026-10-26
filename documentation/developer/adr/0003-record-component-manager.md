@@ -13,10 +13,10 @@ At present access to information relevant to a given `Component` is difficult / 
 to retrieve. In many situations we want short-hand access to these characteristics / attributes / properties.
 
 Options:
-* `Component` is more "active" and directly has e.g. properties and methods to retrieve information
-* `ComponentManager` is used to provide access to information relating to an abstract `Component`
-    * At the `ReactorDesigner` level or `Component` level.
-* `Builder` does everything (builds the `Component` and logic + access methods to extract information + store the `Component`)
+- `Component` is more "active" and directly has e.g. properties and methods to retrieve information
+- `ComponentManager` is used to provide access to information relating to an abstract `Component`
+  - At the `ReactorDesigner` level or `Component` level.
+- `Builder` does everything (builds the `Component` and logic + access methods to extract information + store the `Component`)
 
 It will be quite difficult to have a totally "general" `ComponentManager`.
 
@@ -33,9 +33,9 @@ to inform our decision.
 A `ComponentManager` was settled on as a good abstraction from a `Component`, physical or otherwise, and information that a user
 may require from a `Component`. For example:
 
-* The separatrix of a plasma is part of a component but requires low level knowledge to access
-* The magnetic field due to the equlibria is interlinked with the plasma but not part of the `Component`
-    * The equlibiria can be stored on the `ComponentManager`
+- The separatrix of a plasma is part of a component but requires low level knowledge to access
+- The magnetic field due to the equlibria is interlinked with the plasma but not part of the `Component`
+  - The equlibiria can be stored on the `ComponentManager`
 
 ## Consequences
 

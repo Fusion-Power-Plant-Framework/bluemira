@@ -6,34 +6,34 @@
 ![image](documentation/source/bluemira_intro_mosaic.png)
 
 
-``Bluemira`` is an integrated inter-disciplinary design tool for future fusion reactors. It
+`Bluemira` is an integrated inter-disciplinary design tool for future fusion reactors. It
 incorporates several modules, some of which rely on other codes, to carry out a range of
 typical conceptual fusion reactor design activities.
 
-``Bluemira`` was created from two similar codes: ``BLUEPRINT`` and ``MIRA`` (see
+`Bluemira` was created from two similar codes: `BLUEPRINT` and `MIRA` (see
 [publications](#publications)).
 
 ## Indepth Examples
 
-We have created some indepth examples using ``bluemira``.
+We have created some indepth examples using `bluemira`.
 
-* [**EU-DEMO**](https://github.com/Fusion-Power-Plant-Framework/bluemira-eudemo) - This is a parameterised version of a EU-DEMO like device (single null, conventional aspect ratio)
-* [**Spherical Tokamak**](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak) - This is a parameterised version of a double null, spherical tokamak based on [OpenSTEP](https://github.com/ukaea/OpenSTEP) data
+- [**EU-DEMO**](https://github.com/Fusion-Power-Plant-Framework/bluemira-eudemo) - This is a parameterised version of a EU-DEMO like device (single null, conventional aspect ratio)
+- [**Spherical Tokamak**](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak) - This is a parameterised version of a double null, spherical tokamak based on [OpenSTEP](https://github.com/ukaea/OpenSTEP) data
 
 ## Development and Timeline
 
-The `bluemira` team has been working hard since mid-2021 to combine ``BLUEPRINT`` and ``MIRA`` into a single reactor design framework. We took the opportunity to embark upon a significant refactor of both code bases, delivering improved functionality, code quality, and hopefully maintainability.
+The `bluemira` team has been working hard since mid-2021 to combine `BLUEPRINT` and `MIRA` into a single reactor design framework. We took the opportunity to embark upon a significant refactor of both code bases, delivering improved functionality, code quality, and hopefully maintainability.
 
 In addition, we have created templates and examples;
-* [bluemira-template-project](https://github.com/Fusion-Power-Plant-Framework/bluemira-template-project): A template for a new `Bluemira` reactor project
-* [bluemira-spherical-tokamak](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak): Spherical Tokamak example for `Bluemira`
-* [bluemira-stellarator](https://github.com/Fusion-Power-Plant-Framework/bluemira-stellarator): Stellarator design using `Bluemira`, Simsopt and `PROCESS`
+- [bluemira-template-project](https://github.com/Fusion-Power-Plant-Framework/bluemira-template-project): A template for a new `Bluemira` reactor project
+- [bluemira-spherical-tokamak](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak): Spherical Tokamak example for `Bluemira`
+- [bluemira-stellarator](https://github.com/Fusion-Power-Plant-Framework/bluemira-stellarator): Stellarator design using `Bluemira`, Simsopt and `PROCESS`
 
 and separate packages that others may find useful;
-* [eqdsk](https://github.com/Fusion-Power-Plant-Framework/eqdsk): g-eqdsk reading and writing with identification and conversion between COCOS versions
-* [matproplib](https://github.com/Fusion-Power-Plant-Framework/matproplib): A Materials Property library
-* [tokamak-neutron-source](https://github.com/Fusion-Power-Plant-Framework/tokamak-neutron-source): A tool to create an arbitrary parametric tokamak neutron source
-* [fast_ctd](https://github.com/Fusion-Power-Plant-Framework/fast_ctd): a Python package for fast conversion of STEP files to DAGMC models
+- [eqdsk](https://github.com/Fusion-Power-Plant-Framework/eqdsk): g-eqdsk reading and writing with identification and conversion between COCOS versions
+- [matproplib](https://github.com/Fusion-Power-Plant-Framework/matproplib): A Materials Property library
+- [tokamak-neutron-source](https://github.com/Fusion-Power-Plant-Framework/tokamak-neutron-source): A tool to create an arbitrary parametric tokamak neutron source
+- [fast_ctd](https://github.com/Fusion-Power-Plant-Framework/fast_ctd): a Python package for fast conversion of STEP files to DAGMC models
 
 Below is an overview of our development roadmap for 2026/27:
 <p align="center">
@@ -49,66 +49,66 @@ Below is an overview of our development roadmap for 2026/27:
 
 ## Modules
 
-``Bluemira`` is composed of various modules:
+`Bluemira` is composed of various modules:
 
-* `balance_of_plant`: power balance solver and tools
-* `base`: the software backbone of the ``bluemira`` framework
-* `codes`: interfaces to external codes (both API and file PI)
-* `display`: plotting and display module
-* `equilibria`: equilibrium solvers and objects
-* `fuel_cycle`: fuel cycle model
-* `geometry`: the geometry "engine" of the ``bluemira`` framework
-* `magnetostatics`: magnetostatics solvers
-* `materials`: materials module
-* `optimisation`: interface to optimisers and associated tools
-* `plasma_physics`: 0-D plasma physics tools
-* `radiation_transport` **[WIP]**: radiation and advection transport solvers
-* `structural`: beam finite element structural solver
-* `utilities`: collection of utility toolboxes for file IO, databases,
+- `balance_of_plant`: power balance solver and tools
+- `base`: the software backbone of the `bluemira` framework
+- `codes`: interfaces to external codes (both API and file PI)
+- `display`: plotting and display module
+- `equilibria`: equilibrium solvers and objects
+- `fuel_cycle`: fuel cycle model
+- `geometry`: the geometry "engine" of the `bluemira` framework
+- `magnetostatics`: magnetostatics solvers
+- `materials`: materials module
+- `optimisation`: interface to optimisers and associated tools
+- `plasma_physics`: 0-D plasma physics tools
+- `radiation_transport` **[WIP]**: radiation and advection transport solvers
+- `structural`: beam finite element structural solver
+- `utilities`: collection of utility toolboxes for file IO, databases,
   machine learning, and misc.
 
 ## Publications
 
-The ``bluemira`` code and its modules are described in the following publications:
+The `bluemira` code and its modules are described in the following publications:
 
-* [BLUEMIRA: a modular, open-source framework for designing tokamak fusion reactors, Coleman et al., *Nuclear Fusion* v **66** 126025 (2026)](https://iopscience.iop.org/article/10.1088/1741-4326/aea584)
+- # [BLUEMIRA: a modular, open-source framework for designing tokamak fusion reactors, Coleman et al., _Nuclear Fusion_ v **66** 126025 (2026)](https://iopscience.iop.org/article/10.1088/1741-4326/aea584)
 
-As ``bluemira`` is the result of an integration between two historical codes,
+As `bluemira` is the result of an integration between two historical codes,
 some previous publications may also be of interest.
 
-The ``BLUEPRINT`` code and its modules are described in the following publications:
+The `BLUEPRINT` code and its modules are described in the following publications:
 
-* [BLUEPRINT: A novel approach to fusion reactor design, Coleman and McIntosh, *Fusion Engineering and Design* v **139** pp 26-38 (2019)](https://www.sciencedirect.com/science/article/pii/S0920379618308019)
-* [DEMO tritium fuel cycle: performance, parameter explorations, and design space constraints, Coleman, Hörstensmeyer and Cismondi, *Fusion Engineering and Design* v **141** pp79-90 (2019)](https://www.sciencedirect.com/science/article/pii/S092037961930167X)
-* [The design and optimisation of tokamak poloidal field systems in the BLUEPRINT framework, Coleman and McIntosh, *Fusion Engineering and Design* v **154** 111544 (2020)](https://doi.org/10.1016/j.fusengdes.2020.111544)
-* [High-speed generation of neutronics-ready CAD models for DEMO design, Coleman, Shimwell, Davis, and McIntosh, *Fusion Engineering and Design* v **160** 112043 (2020)](https://www.sciencedirect.com/science/article/pii/S0920379620305913)
+- [BLUEPRINT: A novel approach to fusion reactor design, Coleman and McIntosh, _Fusion Engineering and Design_ v **139** pp 26-38 (2019)](https://www.sciencedirect.com/science/article/pii/S0920379618308019)
+- [DEMO tritium fuel cycle: performance, parameter explorations, and design space constraints, Coleman, Hörstensmeyer and Cismondi, _Fusion Engineering and Design_ v **141** pp79-90 (2019)](https://www.sciencedirect.com/science/article/pii/S092037961930167X)
+- [The design and optimisation of tokamak poloidal field systems in the BLUEPRINT framework, Coleman and McIntosh, _Fusion Engineering and Design_ v **154** 111544 (2020)](https://doi.org/10.1016/j.fusengdes.2020.111544)
+- [High-speed generation of neutronics-ready CAD models for DEMO design, Coleman, Shimwell, Davis, and McIntosh, _Fusion Engineering and Design_ v **160** 112043 (2020)](https://www.sciencedirect.com/science/article/pii/S0920379620305913)
 
-The ``MIRA`` code and its modules are described in the following publications:
+The `MIRA` code and its modules are described in the following publications:
 
-* [On the implementation of new technology modules for fusion reactor systems codes, Franza, Boccaccinni, Fischer, Gade, and Heller, *Fusion Engineering and Design*, v **98-99** pp 1767-1770 (2015)](https://www.sciencedirect.com/science/article/pii/S0920379615001933)
-* [Development of an advanced magnetic equilibrium model for fusion reactor system codes, Franza, Landman, and Petschanyi, *Fusion Engineering and Design*, v **136** pp 309-313 (2018)](https://www.sciencedirect.com/science/article/pii/S0920379618301157)
-* [Development and Validation of a Computational Tool for Fusion Reactors' System Analysis, Franza, Ph.D thesis, Karlsruher Institut f&uuml;r Technologie (2019)](https://publikationen.bibliothek.kit.edu/1000095873)
-* [MIRA: a multi-physics approach to designing a fusion power plant, Franza, Boccaccini, Fable, Landman, Maione, Petschanyi, Stieglitz and Zohm, *Nuclear Fusion*, v **62** 076042 (2022)](https://iopscience.iop.org/article/10.1088/1741-4326/ac6433)
+- [On the implementation of new technology modules for fusion reactor systems codes, Franza, Boccaccinni, Fischer, Gade, and Heller, _Fusion Engineering and Design_, v **98-99** pp 1767-1770 (2015)](https://www.sciencedirect.com/science/article/pii/S0920379615001933)
+- [Development of an advanced magnetic equilibrium model for fusion reactor system codes, Franza, Landman, and Petschanyi, _Fusion Engineering and Design_, v **136** pp 309-313 (2018)](https://www.sciencedirect.com/science/article/pii/S0920379618301157)
+- [Development and Validation of a Computational Tool for Fusion Reactors' System Analysis, Franza, Ph.D thesis, Karlsruher Institut f&uuml;r Technologie (2019)](https://publikationen.bibliothek.kit.edu/1000095873)
+- [MIRA: a multi-physics approach to designing a fusion power plant, Franza, Boccaccini, Fable, Landman, Maione, Petschanyi, Stieglitz and Zohm, _Nuclear Fusion_, v **62** 076042 (2022)](https://iopscience.iop.org/article/10.1088/1741-4326/ac6433)
 
 ## Terms of use
 
-``Bluemira`` is [released under the LGPLv2.1 license](LICENSE), but we also ask that
+`Bluemira` is [released under the LGPLv2.1 license](LICENSE), but we also ask that
 you show professional courtesy when using this code:
 
-1. Since you are benefiting from work on ``bluemira``, we ask that you submit any
+1. Since you are benefiting from work on `bluemira`, we ask that you submit any
    improvements you make to the code to us by submitting a pull request to this
    repository. If you are looking to develop aspects of this code or add parts to it,
    please contact us beforehand so that we can help/advise if necessary.
 
-2. If you use ``bluemira`` results in a paper or professional publication, we ask that
-   you discuss your work and results with one of the ``bluemira`` authors first so that
-   we can check them. It is not necessary to list ``bluemira`` developers as co-authors.
-   If one or more of the ``bluemira`` team are involved in preparing results or
+2. If you use `bluemira` results in a paper or professional publication, we ask that
+   you discuss your work and results with one of the `bluemira` authors first so that
+   we can check them. It is not necessary to list `bluemira` developers as co-authors.
+   If one or more of the `bluemira` team are involved in preparing results or
    new functionality used in your work, then those members should be offered a co-authorship.
 
-3. If you use ``bluemira`` or any of its modules in your work, please help ensure that
-   all the authors get the credit they deserve by citing the relevant ``bluemira``,
-   ``BLUEPRINT``, and ``MIRA`` papers.
+3. If you use `bluemira` or any of its modules in your work, please help ensure that
+   all the authors get the credit they deserve by citing the relevant `bluemira`,
+   `BLUEPRINT`, and `MIRA` papers.
 
 For a full list of existing publications, see [here](#publications).
 
@@ -122,7 +122,7 @@ See our [installation guide](https://bluemira.readthedocs.io/en/develop/installa
 
 ## Developing
 
-For working on ``bluemira`` you will also need to install the development dependencies
+For working on `bluemira` you will also need to install the development dependencies
 and the git pre-commit hook:
 
 ```shell
@@ -164,6 +164,6 @@ sphinx-build documentation/source documentation/build
 ```
 
 New pages can be added by adding them to the `documentation/source` directory and adding
-a link in the `toctree` section of `index.rst`.  The index page lives at
+a link in the `toctree` section of `index.rst`. The index page lives at
 `documentation/build/index.html`. API documentation will be automatically generated from
-the ``bluemira`` source code.
+the `bluemira` source code.

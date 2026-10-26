@@ -21,15 +21,15 @@ We want `Builder` to have a minimum set of `Parameters`.
 `design_stage` presently only handles printing logic for entry and exit to an operation.
 
 Options:
-* Do nothing
-* Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic for `Builder`
+- Do nothing
+- Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic for `Builder`
 
-* Should every `DesignStage` be a `Solver` where `["run", "read", "mock"]` logic is also
-handled?
+- Should every `DesignStage` be a `Solver` where `["run", "read", "mock"]` logic is also
+  handled?
 
 ## Decision
 
-We add a `DesignStage` class to handles the  `["run", "read", "mock"]` logic for
+We add a `DesignStage` class to handles the `["run", "read", "mock"]` logic for
 `Builder` only.
 
 We will trial the two options above taking e.g. the EUDEMO `PlasmaBuilder` as an example
