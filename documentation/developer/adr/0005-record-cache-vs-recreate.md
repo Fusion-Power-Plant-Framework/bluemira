@@ -10,33 +10,33 @@ Proposed
 
 At present we recreate FreeCAD geometries by travelling through the boundaries of their
 "Matryoshka". We have a number of issues relating to this as our implementation appears
- to be imperfect.
+to be imperfect.
 
 Assumption: `BluemiraGeo` objects are "static".
 
 Options:
-* Continue with recreating the shapes
-    * Pros:
-        * We can track labels throughout the creation of geometry
-        * Meshing and FE problems are easier to set up because of the above
+- Continue with recreating the shapes
+  - Pros:
+    - We can track labels throughout the creation of geometry
+    - Meshing and FE problems are easier to set up because of the above
     * Cons:
-        * Higher computational cost (recreate upon each call of geometry)
-        * Higher maintenance overhead
-        * Reverse engineering of FreeCAD is presently imperfect
-            * An operation can work in FreeCAD but fail upon "reconstruction" in bluemira
-            * NotClosedWireError, DisjointedFaceError, ...
-* Cache the FreeCAD shape
-    * Pros:
-        * Lower computational cost
-        * Lower maintenance cost
-        * Less logic and code
+      - Higher computational cost (recreate upon each call of geometry)
+        - Higher maintenance overhead
+        - Reverse engineering of FreeCAD is presently imperfect
+        - An operation can work in FreeCAD but fail upon "reconstruction" in bluemira
+        - NotClosedWireError, DisjointedFaceError, ...
+- Cache the FreeCAD shape
+  - Pros:
+    - Lower computational cost
+    - Lower maintenance cost
+    - Less logic and code
     * Cons:
-        * If we want to label specific boundaries of geometry, we need to travel through
+      - If we want to label specific boundaries of geometry, we need to travel through
         all the boundaries and find the "right" ones and label post-instantiation (fiddly!)
-        * This means that we cannot track shared boundaries (upon creation, but see above)
-        * Meshing and FE problems are more complicated to set up
-        * Recreation of geometry is not totally avoided, however, as there is
-        still a need to serialize/deserialize objects.
+        - This means that we cannot track shared boundaries (upon creation, but see above)
+        - Meshing and FE problems are more complicated to set up
+        - Recreation of geometry is not totally avoided, however, as there is
+          still a need to serialize/deserialize objects.
 
 ## Decision
 

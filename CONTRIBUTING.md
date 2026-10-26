@@ -1,4 +1,4 @@
-# Contributing to ``bluemira``
+# Contributing to `bluemira`
 
 When contributing to this repository, please first discuss the change you wish to make
 via issue, email, or any other method with the owners of this repository before making a
@@ -6,7 +6,7 @@ change.
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the  Contributor Covenant
+This project and everyone participating in it is governed by the Contributor Covenant
 Code of Conduct. By participating, you are expected to uphold this code. Please report
 unacceptable behavior to [matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk) and/or [ivan.maione@kit.edu](mailto:ivan.maione@kit.edu).
 
@@ -15,20 +15,19 @@ unacceptable behavior to [matti.coleman@ukaea.uk](mailto:matti.coleman@ukaea.uk)
 In order to help us address your issue effectively, we ask that you follow this
 procedure when creating an issue:
 
-* Check that the issue is not already described elsewhere in [Issues
-  ](https://github.com/Fusion-Power-Plant-Framework/bluemira/issues)
-* Write a fairly complete description of the bug/feature/problem in the issue, using
+- Check that the issue is not already described elsewhere in [Issues](https://github.com/Fusion-Power-Plant-Framework/bluemira/issues)
+- Write a fairly complete description of the bug/feature/problem in the issue, using
   the provided templates and adding the relevant tags
-* Tag the ``bluemira`` module(s) the issue concerns
-* If the issue is linked to a [Project](https://github.com/Fusion-Power-Plant-Framework/bluemira/projects), please tag it
+- Tag the `bluemira` module(s) the issue concerns
+- If the issue is linked to a [Project](https://github.com/Fusion-Power-Plant-Framework/bluemira/projects), please tag it
 
 ## Submitting a bug report
 
-``Bluemira`` is software in development and is therefore likely to contain bugs. If you
+`Bluemira` is software in development and is therefore likely to contain bugs. If you
 discover bugs, please follow this procedure:
 
-* Raise an issue using the bug template with a `bug` flag
-* Include a way to reproduce the bug in the issue, let us know the expected result and
+- Raise an issue using the bug template with a `bug` flag
+- Include a way to reproduce the bug in the issue, let us know the expected result and
   what actually happens
 
 ## Submitting a pull request
@@ -38,33 +37,33 @@ you may not be aware of parallel development work taking place, or implementatio
 decisions / subtleties which are relevant. The ideal workflow for submitting a pull
 request is as follows:
 
-* Discuss the feature with the developers first
-* Submit an issue documenting the intent of the feature you wish to develop
-* Fork our repository (see the [GitHub documentation on forking](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks))
-* Make a branch of the `develop` branch which bears a similar name as your issue (e.g.
+- Discuss the feature with the developers first
+- Submit an issue documenting the intent of the feature you wish to develop
+- Fork our repository (see the [GitHub documentation on forking](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks))
+- Make a branch of the `develop` branch which bears a similar name as your issue (e.g.
   `new_feature`)
-* Develop your feature(s) in your `new_feature` branch
-* Discuss any problems that arise in the associated issue, perhaps documenting your
+- Develop your feature(s) in your `new_feature` branch
+- Discuss any problems that arise in the associated issue, perhaps documenting your
   progress
-* Finally, as the author of the `new_feature` branch, you must submit a pull request
+- Finally, as the author of the `new_feature` branch, you must submit a pull request
   onto the `develop` branch
-  * Link the relevant issue(s) and project(s)
-  * Add an assignee, who will be responsible for reviewing and merging the PR. This
+  - Link the relevant issue(s) and project(s)
+  - Add an assignee, who will be responsible for reviewing and merging the PR. This
     should be the person you feel has the most relevant technical background and/or the
     most familiar with the underlying issue or code.
-  * The reviewers will be automatically selected based on which module(s) of the code your pull request affects.
+  - The reviewers will be automatically selected based on which module(s) of the code your pull request affects.
 
 The merge request will be reviewed by the core development team before potentially being accepted
 .
 
 ## Python style guide
 
-``Bluemira`` is an object-oriented code and is designed to run relatively fast. We use
+`Bluemira` is an object-oriented code and is designed to run relatively fast. We use
 objects to represent physical entities, as well as for certain solvers where it is
 useful to persist the state of some stored calculations in order to save run-time.
-When writing objects, make sure all attributes are initialised in the ``__init__`` method,
+When writing objects, make sure all attributes are initialised in the `__init__` method,
 and that all methods and variables that are not user-facing are made protected with a
-leading underscore: ``_protected_method``.
+leading underscore: `_protected_method`.
 
 We try to keep functions as single-purposes as possible, with as few arguments and
 keyword arguments as possible. Similarly, with classes, we try to keep the number of
@@ -72,31 +71,31 @@ attributes and methods relatively low.
 
 Python can run relatively slowly when compared with compiled languages,
 and in key areas we use a couple of tricks to speed things up:
-* Using ``__slots__`` on classes to save memory
-* Using ``numba`` just-in-time compilation to speed up certain bottleneck calculations
+- Using `__slots__` on classes to save memory
+- Using `numba` just-in-time compilation to speed up certain bottleneck calculations
 
-Please try and follow these relatively loose guidelines when developing ``bluemira``.
+Please try and follow these relatively loose guidelines when developing `bluemira`.
 We also recommend you use an integrated development environment with appropriate code
 linting to improve the code you contribute.
 
-``Bluemira`` is strictly auto-formatted using the [ruff](https://docs.astral.sh/ruff/)
+`Bluemira` is strictly auto-formatted using the [ruff](https://docs.astral.sh/ruff/)
 format module which is very similar to [black](https://pypi.org/project/black/).
 In both cases this is an opinionated subset of the
 [Python PEP8 style guide](https://www.python.org/dev/peps/pep-0008/).
 
-If you don't like how ``ruff`` formats your code, join the club... the loss of
+If you don't like how `ruff` formats your code, join the club... the loss of
 aesthetics is the price to pay for uniformity and consistency!
 The point of using it is that all code should more or less look the same, regardless of who writes it.
 
-Please read up on this if you need more details. For ``bluemira``,
-``ruff`` has the potential to generate very ugly code, especially if:
+Please read up on this if you need more details. For `bluemira`,
+`ruff` has the potential to generate very ugly code, especially if:
 
-* you are playing code golf
-* you are writing data tables of some form
-* you are coding out long mathematical formulae
+- you are playing code golf
+- you are writing data tables of some form
+- you are coding out long mathematical formulae
 
 For the first case, it is probably best you don't do this...
-If ``ruff`` breaks your one-line or chain calls into multiple lines, consider breaking these down for readability.
+If `ruff` breaks your one-line or chain calls into multiple lines, consider breaking these down for readability.
 
 In some cases, it is nicer to turn off the auto-formatting. You can do this as follows:
 ```python
@@ -118,55 +117,58 @@ To avoid checks for a single commit you can use the `--no-verify` flag when comm
 The checks do not prevent you from pushing code, but the continuous integration checks will fail.
 Please address issues raised by the checks prior to pushing your code.
 
-When writing code for ``bluemira``, please adhere to the following Python naming
+When writing code for `bluemira`, please adhere to the following Python naming
 conventions:
 
-* `ALL_CAPITALS_SNAKE_CASE` for global constants
+- `ALL_CAPITALS_SNAKE_CASE` for global constants
 
-* `CapitalisedWords` for classes
+- `CapitalisedWords` for classes
 
-* `lower_case_snake_case` for functions and methods
+- `lower_case_snake_case` for functions and methods
 
-* `lower_case_snake_case` for arguments and variables
+- `lower_case_snake_case` for arguments and variables
 
 Abbreviations are allowed to be in capitals, e.g.:
 
-* `show_CAD`
-* `build_TF_coils`
+- `show_CAD`
+- `build_TF_coils`
 
 A full list of accepted abbreviations can be found in the `pyproject.toml` file under
 `ignore_names`.
 
 We try to stick to descriptive `lower_case_snake_case` argument and local variable names with the general rule that names less than three characters should not be used.
 This is not a hard rule, and there are some notable exceptions:
-* `i`, `j`, `k` for integers (e.g. looping, indexing)
-* `m`, `n` for integers (e.g. array sizes)
-* `x`, `y`, `z`, `r` for floats or arrays describing coordinates
-* Where it makes sense to reflect mathematical notation (e.g. `R_0`)
+- `i`, `j`, `k` for integers (e.g. looping, indexing)
+- `m`, `n` for integers (e.g. array sizes)
+- `x`, `y`, `z`, `r` for floats or arrays describing coordinates
+- Where it makes sense to reflect mathematical notation (e.g. `R_0`)
 
 ### Import style
 
-* All imports should be absolute imports, eg:
+- All imports should be absolute imports, eg:
 
-    ```python
-    from bluemira.base.components import Component
-    ```
+  ```python
+  from bluemira.base.components import Component
+  ```
 
-    not this
+  not this
 
-    ```python
-    from ..base.components import Component
-    ```
-    We enforce this with the `flake8` rules in `ruff`.
-* Imports between bluemira modules should access individual methods directly.
-* Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates.
-* Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
-   ```python
-   import numpy as np
-   import matplotlib.pyplot as plt
-    ```
-    If only a few methods are used from these types of modules directly importing the method is preferred.
-* Formatting of imports is automatically organised by the rules provided by `isort` and `ruff`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
+  ```python
+  from ..base.components import Component
+  ```
+
+  We enforce this with the `flake8` rules in `ruff`.
+- Imports between bluemira modules should access individual methods directly.
+- Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates.
+- Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in `bluemira` if unsure:
+
+  ```python
+  import numpy as np
+  import matplotlib.pyplot as plt
+  ```
+
+  If only a few methods are used from these types of modules directly importing the method is preferred.
+- Formatting of imports is automatically organised by the rules provided by `isort` and `ruff`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
 
 All of the above means that this is bad:
 
@@ -192,8 +194,7 @@ from bluemira.geometry.tools import make_circle
 
 Please write all written documentation in `.rst.` format.
 
-Please write all Python docstrings in `numpydoc` style, see details [here](
-https://numpydoc.readthedocs.io/en/latest/format.html). Typing should be specified
+Please write all Python docstrings in `numpydoc` style, see details [here](https://numpydoc.readthedocs.io/en/latest/format.html). Typing should be specified
 with type-hints. An example is shown below:
 
 ```python
@@ -222,7 +223,8 @@ def IPB98y2(
 
     Returns
     -------
-    Energy confinement time [s]
+    :
+        Energy confinement time [s]
 
     Notes
     -----
@@ -239,48 +241,48 @@ and processes them accordingly.
 
 [Pytest](https://docs.pytest.org) is used for all testing of bluemira. We aim for around 80% coverage of our code as a rough metric.
 
-``Bluemira`` tests are grouped into classes for testing multiple pieces of functionality of a single class or function.
+`Bluemira` tests are grouped into classes for testing multiple pieces of functionality of a single class or function.
 
 ### Custom commandline arguments
+
 There are 3 user available extra command line flags to modify the running style of the tests:
 
-  -  ``--reactor``
-  -  ``--longrun``
-  -  ``--plotting-on``
+-  `--reactor`
+-  `--longrun`
+-  `--plotting-on`
 
-The ``plotting-on`` flag will enable visualising any plots that are created in the tests. By default these are not displayed.
+The `plotting-on` flag will enable visualising any plots that are created in the tests. By default these are not displayed.
 There are a lot of figures in the full test suite so it is recommended to only do this for a subset of the tests.
-For information about ``reactor`` and ``longrun`` tests see below.
+For information about `reactor` and `longrun` tests see below.
 
-A further ``--private`` flag is available where data is not public but tests against that data are useful.
+A further `--private` flag is available where data is not public but tests against that data are useful.
 If you have some private data that you would like to test against please contact a maintainer for more information.
 
 > [!WARNING]
 > Do not commit private data to the repository there is no simple way to remove that
-data once pushed. You will have to contact github support to fully remove the data
-as noted [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github).
+> data once pushed. You will have to contact github support to fully remove the data
+> as noted [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github).
 
 ### Marking tests
 
-``Bluemira`` has 4 custom pytest marks which can be used to decorate tests (`@pytest.mark.*`):
+`Bluemira` has 4 custom pytest marks which can be used to decorate tests (`@pytest.mark.*`):
 
-  -  ``pytest.mark.reactor``
-      Test only run with the ``--reactor`` commandline flag.
-      This is allocated for intergration tests or large systems
-  -  ``pytest.mark.longrun``
-      Test only run with the ``--longrun`` commandline flag.
-      If a test cannot be sped up and takes more than 20s consider flagging it.
-  -  ``pytest.mark.private``
-      Test only run with the ``--private`` commandline flag.
-      These tests require private data to run
-  -  ``pytest.mark.classplot``
-      These tests allow the production of a figure after all tests in a class have been run.
-      Without this mark figures are shown and closed after every test.
-      Useful for visual comparison of similar parameterisations of a test.
+-  `pytest.mark.reactor`
+   Test only run with the `--reactor` commandline flag.
+   This is allocated for intergration tests or large systems
+-  `pytest.mark.longrun`
+   Test only run with the `--longrun` commandline flag.
+   If a test cannot be sped up and takes more than 20s consider flagging it.
+-  `pytest.mark.private`
+   Test only run with the `--private` commandline flag.
+   These tests require private data to run
+-  `pytest.mark.classplot`
+   These tests allow the production of a figure after all tests in a class have been run.
+   Without this mark figures are shown and closed after every test.
+   Useful for visual comparison of similar parameterisations of a test.
 
 
 ## Releases and Packaging
 
-Release versions of ``bluemira`` are generated from git tags, and [setuptools-scm](
-https://github.com/pypa/setuptools_scm) is used so that the most recent
-tag is dynamically pulled into the ``bluemira`` itself to set `__version__` correctly. The ``main`` branch will always contain the newest release.
+Release versions of `bluemira` are generated from git tags, and [setuptools-scm](https://github.com/pypa/setuptools_scm) is used so that the most recent
+tag is dynamically pulled into the `bluemira` itself to set `__version__` correctly. The `main` branch will always contain the newest release.
