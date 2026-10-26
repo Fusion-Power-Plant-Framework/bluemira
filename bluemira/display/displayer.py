@@ -14,7 +14,7 @@ import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.error import DisplayError
@@ -23,6 +23,9 @@ from bluemira.display.tools import Options
 from bluemira.utilities.tools import get_module
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from bluemira.base.components import Component
     from bluemira.geometry.base import BluemiraGeo
 
 
@@ -33,7 +36,7 @@ class ViewerBackend(Enum):
     POLYSCOPE = "bluemira.codes._polyscope"
     CADQUERY = "bluemira.codes.cadapi._cadquery"
 
-    @classmethod
+    @classmethod  # type: ignore[ty:invalid-argument-type]
     @property
     def DEFAULT(cls):  # noqa: N802
         """Default viewer based on backend availability"""
@@ -229,7 +232,7 @@ class BaseDisplayer(ABC):
         self.options.modify(**kwargs)
 
     @abstractmethod
-    def show_cad(self, objs, **kwargs):
+    def show_cad(self, objs: Iterable[Component] | Component, **kwargs):
         """
         Display a CAD object
         """
@@ -299,7 +302,7 @@ class DisplayableCAD:
         axes
             The axes that the plot has been displayed onto.
         """
-        return self._displayer.show_cad(self, **kwargs)
+        return self._displayer.show_cad(cast("Component", self), **kwargs)
 
 
 class ComponentDisplayer(BaseDisplayer):
@@ -308,20 +311,18 @@ class ComponentDisplayer(BaseDisplayer):
     """
 
     @staticmethod
-    def show_cad(comps, **kwargs):
+    def show_cad(objs: Iterable[Component] | Component, **kwargs):
         """
         Display the CAD of a component or iterable of components
 
         Parameters
         ----------
-        comp: Union[Iterable[Component], Component]
+        objs:
             Component, or iterable of Components, to be displayed
         """
         import bluemira.base.components as bm_comp  # noqa: PLC0415
 
-        show_cad(
-            *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options", "name")
-            ),
-            **kwargs,
+        shapes, opts, names = bm_comp.get_properties_from_components(
+            objs, ("shape", "display_cad_options", "name")
         )
+        show_cad(shapes, opts, names, **kwargs)

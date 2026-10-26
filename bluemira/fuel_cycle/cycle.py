@@ -11,7 +11,7 @@ Full fuel cycle model object
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,6 +20,7 @@ from scipy.interpolate import interp1d
 from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
+from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.fuel_cycle.tools import (
     _speed_recycle,
     discretise_1d,
@@ -29,7 +30,9 @@ from bluemira.fuel_cycle.tools import (
 )
 
 if TYPE_CHECKING:
-    from bluemira.fuel_cycle.timeline import Timeline
+    from collections.abc import Mapping
+
+    import numpy.typing as npt
 
 
 class EUDEMOFuelCycleModel:
@@ -58,6 +61,40 @@ class EUDEMOFuelCycleModel:
                 The no. of time steps to use from the the timeline.
     """
 
+    params: EDFCMParams
+    verbose: bool
+    timestep: float
+    conv_thresh: float
+    n: int | None
+    iterations: int
+    A_global: float
+
+    m_T: np.ndarray
+    m_dot_release: float
+    m_T_in: np.ndarray
+    m_T_req: float
+    m_T_start: float
+    M_T_bred: float
+    M_T_stack: float
+    I_blanket: np.ndarray
+    I_plasma: np.ndarray
+    I_stack: np.ndarray
+    I_tfv: np.ndarray
+
+    grate: np.ndarray
+    brate: np.ndarray
+    prate: np.ndarray
+    DEMO_rt: np.ndarray
+    DEMO_t: np.ndarray
+    DD_rate: np.ndarray
+    DT_rate: np.ndarray
+    bci: int
+    arg_t_d: int | None
+    arg_t_infl: int
+    t: np.ndarray
+    t_d: float
+    t_infl: float
+
     def __init__(
         self,
         params: EDFCMParams | dict[str, float] | None = None,
@@ -81,40 +118,11 @@ class EUDEMOFuelCycleModel:
         self.verbose = build_config.get("verbose", False)
         self.timestep = build_config.get("timestep", 1200)
         self.conv_thresh = build_config.get("conv_thresh", 2e-4)
-        self.n = build_config.get("n", None)
+        self.n = build_config.get("n")
+        self.iterations = 0
+        self.A_global = 0.0
 
-    def _constructors(self):
-        # Constructors (untangling the spaghetti)
-        self.max_T = None
-        self.min_T = None
-        self.m_T = None
-        self.m_dot_release = None
-        self.m_T_in = None
-        self.m_T_req = None
-        self.m_T_start = None
-        self.M_T_bred = None
-        self.M_T_stack = None
-        self.M_T_burnt = None
-        self.I_blanket = None
-        self.I_plasma = None
-        self.I_stack = None
-        self.I_tfv = None
-
-        self.grate = None
-        self.brate = None
-        self.prate = None
-        self.DEMO_rt = None
-        self.DEMO_t = None
-        self.DD_rate = None
-        self.DT_rate = None
-        self.bci = None
-        self.arg_t_d = None
-        self.arg_t_infl = None
-        self.t = None
-        self.t_d = None
-        self.t_infl = None
-
-    def run(self, timeline: Timeline):
+    def run(self, timeline: Mapping[str, Any] | Timeline) -> EUDEMOFuelCycleResults:
         """
         Run the fuel cycle model.
 
@@ -122,37 +130,81 @@ class EUDEMOFuelCycleModel:
         ----------
         timeline:
             Timeline with which to run the model
+
+        Returns
+        -------
+        :
+            Results of EuDEMo fuelcycle
         """
+        if isinstance(timeline, Timeline):
+            timeline = timeline.to_dict()
+
         if self.n is None:
-            self.n = len(timeline["time"])
+            self.n = len(cast("npt.NDArray", timeline["time"]))
 
-        self.A_global = timeline["A_global"]
+        self.A_global = cast("float", timeline["A_global"])
 
-        self._constructors()
         self.initialise_arrays(timeline, self.n)
         # Initialise model with a reasonable number for decay
         self.seed_t()
         self.iterations = 0
         self.recycle()
-        self.finalise()
-        self.m_T_req += self.I_tfv[0]  # Add TFV fountain inventory
-        self.m_dot_release = self.calc_m_release()
+        max_T, min_T, arg_t_d, t_d, arg_t_infl, t_infl = self.finalise()  # noqa: N806
+        self.m_T_req += float(self.I_tfv[0])  # Add TFV fountain inventory
+
+        return EUDEMOFuelCycleResults(
+            self.params.TBR,
+            self.DEMO_t,
+            self.m_T_req,
+            self.t,
+            t_d,
+            arg_t_d,
+            t_infl,
+            arg_t_infl,
+            min_T,
+            max_T,
+            self.m_T,
+            self.I_tfv,
+            self.params.I_tfv_min,
+            self.I_stack,
+            self.I_plasma,
+            self.I_blanket,
+            self.brate,
+            self.prate,
+            self.calc_m_release(),
+        )
 
     def finalise(self):
         """
         Perform clean-up fudge to ensure all tritium returns to stores after
         the end of the reactor life.
+
+        Returns
+        -------
+        max_T:
+            maximum tritium inventory
+        min_T:
+                minimum tritium inventory
+        arg_t_d:
+
+        t_d:
+
+        arg_t_infl:
+
+         t_infl:
+
         """
         n_bins = max(int(len(self.m_T) / 4500), 400)
         # Hand tweak to get findnoisylocals looking good
-        self.max_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="max")
-        self.min_T = find_noisy_locals(self.m_T, x_bins=n_bins)
+        max_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="max")  # noqa: N806
+        min_T = find_noisy_locals(self.m_T, x_bins=n_bins)  # noqa: N806
         # self.max_T[1][-1] = self.max_T[1][-2]   #plothack
-        self.m_T[-1] = self.max_T[1][-1]
-        self.arg_t_d, self.t_d = self.calc_t_d()
-        self.arg_t_infl, self.t_infl = self.calc_t_infl()
+        self.m_T[-1] = max_T[1][-1]
+        arg_t_d, t_d = self.calc_t_d()
+        arg_t_infl, t_infl = self.calc_t_infl()
+        return max_T, min_T, arg_t_d, t_d, arg_t_infl, t_infl
 
-    def initialise_arrays(self, timeline: Timeline, n: int):
+    def initialise_arrays(self, timeline: Mapping[str, Any], n: int):
         """
         Initialise timeline arrays for TFV model.
 
@@ -160,13 +212,13 @@ class EUDEMOFuelCycleModel:
         -----
         Gas puff timeline mapped to burn signal.
         """
-        self.DEMO_t = timeline["time"][:n]
-        self.DEMO_rt = np.array(timeline["fusion_time"][:n])
-        self.DT_rate = timeline["DT_rate"][:n]
-        self.DD_rate = timeline["DD_rate"][:n]
+        self.DEMO_t = np.asarray(timeline["time"][:n])
+        self.DEMO_rt = np.asarray(timeline["fusion_time"][:n])
+        self.DT_rate = np.asarray(timeline["DT_rate"][:n])
+        self.DD_rate = np.asarray(timeline["DD_rate"][:n])
         m_gas = T_MOLAR_MASS * raw_uc(self.params.m_gas, "Pa.m^3/s", "mol/s") / 1000
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
-        self.bci = timeline["blanket_change_index"]
+        self.bci = int(timeline["blanket_change_index"])
         # Burn rate of T [kgs of T per second]
         self.brate = raw_uc(T_MOLAR_MASS, "amu", "kg") * self.DT_rate
         # T production rate from D-D reaction channel [kgs of T per second]
@@ -177,27 +229,7 @@ class EUDEMOFuelCycleModel:
         Seed an initial value to the model.
         """
         self.m_T_start = 5.0
-        self.m_T = [self.m_T_start]
-
-    def tbreed(self, TBR: float, m_T_0: float) -> np.ndarray:
-        """
-        Ideal system without T sequestration. Used for plotting and sanity.
-
-        Returns
-        -------
-        :
-            Tritium breeding
-        """
-        m_T = m_T_0 * np.ones(len(self.DEMO_t))
-        for i in range(1, len(self.DEMO_t)):
-            dt = self.DEMO_t[i] - self.DEMO_t[i - 1]
-            dts = dt * YR_TO_S
-            t_bred = TBR * self.brate[i] * dts
-            t_bred += self.prate[i] * dts
-            t_burnt = self.brate[i] * dts
-            t_DD = self.prate[i] * dts
-            m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
-        return m_T
+        self.m_T = np.array([self.m_T_start])
 
     def plasma(
         self, eta_iv: float, max_inventory: float, flows: list[np.ndarray] | None = None
@@ -230,11 +262,12 @@ class EUDEMOFuelCycleModel:
             retention_model="sqrt_bathtub",
             summing=False,
         )
-        for flow in flows:
-            plasma.add_in_flow(flow)
+        if flows is not None:
+            for flow in flows:
+                plasma.add_in_flow(flow)
         plasma.run()
-        self.I_plasma = plasma.inventory
-        return plasma.m_out
+        self.I_plasma = cast("npt.NDArray", plasma.inventory)
+        return cast("npt.NDArray", plasma.m_out)
 
     def blanket(self, eta_b: float, max_inventory: float) -> np.ndarray:
         """
@@ -257,11 +290,14 @@ class EUDEMOFuelCycleModel:
         )
         blanket.add_in_flow(m_T_bred)
         blanket.run()
-        self.M_T_bred = blanket.sum_in
-        self.I_blanket = blanket.inventory
-        return blanket.m_out
 
-    def tfv(self, eta_tfv: float, flows: list[np.ndarray]) -> np.ndarray:
+        self.M_T_bred = blanket.sum_in
+        self.I_blanket = cast("npt.NDArray", blanket.inventory)
+        return cast("npt.NDArray", blanket.m_out)
+
+    def tfv(
+        self, eta_tfv: float, flows: list[np.ndarray]
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         The TFV system where the tritium flows from the BB and plasma are combined.
 
@@ -288,8 +324,9 @@ class EUDEMOFuelCycleModel:
         for flow in flows:
             tfv.add_in_flow(flow)
         tfv.run()
-        m_tfv_out = FuelCycleFlow(self.t, tfv.m_out, 0)
-        self.I_tfv = tfv.inventory
+
+        self.I_tfv = cast("npt.NDArray", tfv.inventory)
+        m_tfv_out = FuelCycleFlow(self.t, cast("npt.NDArray", tfv.m_out), 0)
         # Exhaust processing
         m_in_isotope_re, m_in_exhaust_det = m_tfv_out.split(2, [self.params.f_exh_split])
         # Isotope rebalancing
@@ -311,7 +348,7 @@ class EUDEMOFuelCycleModel:
         for flow in flows:
             stack.add_in_flow(flow)
         stack.run()
-        self.I_stack = stack.inventory
+        self.I_stack = cast("npt.NDArray", stack.inventory)
         # Total release to the environment
         self.M_T_stack = stack.sum_in
 
@@ -329,7 +366,7 @@ class EUDEMOFuelCycleModel:
             if flow is not None:
                 injector.add_in_flow(flow)
         injector.run()
-        return injector.m_out
+        return cast("npt.NDArray", injector.m_out)
 
     def recycle(self):
         """
@@ -376,9 +413,11 @@ class EUDEMOFuelCycleModel:
         # Blanket
         m_T_bred = self.blanket(self.params.eta_bb, self.params.I_mbb)
         t, m_bred = discretise_1d(self.DEMO_t, m_T_bred, n_ts)
-        m_T_bred = FuelCycleFlow(t, m_bred, self.params.t_ters)
+        m_T_bred_flow = FuelCycleFlow(t, m_bred, self.params.t_ters)
         # Tritium extraction and recovery system + coolant water purification
-        m_T_bred_totfv, m_T_bred_tostack = m_T_bred.split(2, [self.params.f_terscwps])
+        m_T_bred_totfv, m_T_bred_tostack = m_T_bred_flow.split(
+            2, [self.params.f_terscwps]
+        )
         # TFV systems - runs in t
         m_tfv_out, m_tfv_stack = self.tfv(self.params.eta_tfv, flows=[indirect.out_flow])
         # Release to environment
@@ -400,7 +439,9 @@ class EUDEMOFuelCycleModel:
         store.run()
         # This is conservative... need to find a way to make gas available
         # instantaneously. At present this means gas puffs get "frozen" first
-        m_store = FuelCycleFlow(t, store.m_out, self.params.t_freeze).out_flow
+        m_store = FuelCycleFlow(
+            t, cast("npt.NDArray", store.m_out), self.params.t_freeze
+        ).out_flow
         # Add a correction flow for instantaneous gas puffing
 
         # m_store += gpuff_corr
@@ -433,134 +474,7 @@ class EUDEMOFuelCycleModel:
             self.m_T_start -= min_tritium
             self.recycle()
 
-    def plot(self):
-        """
-        Plot the results of the fuel cycle model.
-        """
-        _, ax = plt.subplots(2, 1)
-        self.plot_m_T(ax=ax[0])
-        self.plot_inventory(ax=ax[1])
-
-    def plot_m_T(self, **kwargs):
-        """
-        Plot the evolution of the tritium masses over time.
-
-        Returns
-        -------
-        :
-            The plot axis
-        """
-        ax = kwargs.get("ax", plt.gca())
-        ax.plot(
-            self.DEMO_t,
-            self.tbreed(self.params.TBR, self.m_T_req),
-            label="Total T inventory",
-        )
-
-        (c,) = ax.plot(
-            self.t[self.max_T[0]], self.max_T[1], label="Total unsequestered T inventory"
-        )
-        ax.plot(
-            self.t,
-            self.m_T,
-            color="gray",
-            alpha=0.8,
-            linewidth=0.1,
-            label="Unsequestered T inventory in stores",
-        )
-        ax.plot(self.t[self.max_T[0]], self.max_T[1], color=c.get_color())
-        leg = ax.legend()
-        for line in leg.get_lines():
-            line.set_linewidth(3)
-            line.set_alpha(1)
-        ax.set_ylabel("$m_{{T}}$ [kg]")
-        if "ax" not in kwargs:
-            ax.set_xlabel("Elapsed plant lifetime [years]")
-        ax.annotate(
-            "$m_{T_{start}}$",
-            xy=[0, self.m_T_req],
-            xytext=[1, self.m_T_req + 4],
-            arrowprops={"headwidth": 0.5, "width": 0.5, "facecolor": "k", "shrink": 0.1},
-        )
-
-        if np.isfinite(self.t_d):
-            s = 1 if self.t_d < 0.8 * self.DEMO_t[-1] else -1.5
-            ax.annotate(
-                "$t_{d}$",
-                xy=[self.t_d, 0],
-                xytext=[self.t_d + s, 4],
-                arrowprops={
-                    "headwidth": 0.5,
-                    "width": 0.5,
-                    "facecolor": "k",
-                    "shrink": 0.1,
-                },
-            )
-            if self.arg_t_d is not None:
-                self._plot_t_d(ax=ax)
-        else:
-            ax.annotate("$t_{d}=\\infty$", xy=[self.t[-1] - 3, 2])
-
-        if np.isfinite(self.t_infl):
-            s = 1 if self.t_d < 0.8 * self.DEMO_t[-1] else 1.5
-            ax.annotate(
-                "$t_{infl}$",
-                xy=[self.t_infl, 0],
-                xytext=[self.t_infl + s, 2],
-                arrowprops={
-                    "headwidth": 0.5,
-                    "width": 0.5,
-                    "facecolor": "k",
-                    "shrink": 0.1,
-                },
-            )
-            if self.arg_t_infl is not None:
-                self._plot_t_infl(self.arg_t_infl, ax=ax)
-
-        ax.set_xlim([0, self.t[-1]])
-        ax.set_ylim(bottom=0)
-
-        return ax
-
-    def plot_inventory(self, **kwargs):
-        """
-        Plot the evolution of the tritium inventories (including sequestered)
-        over time.
-        """
-        ax = kwargs.get("ax", plt.gca())
-        chop = -2
-
-        inventory = self._adjust_inv_plot(self.DEMO_t[:chop], self.I_plasma[:chop])
-        ax.plot(self.DEMO_t[:chop], inventory, label="In-vessel")
-        inventory = self._adjust_inv_plot(self.DEMO_t[:chop], self.I_blanket[:chop])
-
-        ax.plot(self.DEMO_t[:chop], inventory, label="Blanket")
-        ax.plot(self.t[:chop], self.I_tfv[:chop], label="TFV systems")
-        # ax.plot(self.t[:chop], self.I_stack[:chop],
-        #        label='Environment')
-        ax.legend(bbox_to_anchor=[0.99, 0.89])
-        if "ax" not in kwargs:
-            ax.set_title("Trapped T [kg]")
-        ax.set_ylabel("$m_{{T}}$ [kg]")
-        ax.set_xlabel("Elapsed plant lifetime [years]")
-        ax.set_xlim(left=0)
-
-    @staticmethod
-    def _adjust_inv_plot(t, inventory, thresh=0.2):
-        """
-        Plot correction for compressed time inventories
-
-        Returns
-        -------
-        :
-            inventory
-        """
-        inventory = inventory.copy()
-        for i in np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2:
-            inventory[i + 1] = inventory[i]
-        return inventory
-
-    def calc_t_d(self) -> float:
+    def calc_t_d(self) -> tuple[int | None, float]:
         """
         Calculate the doubling time of a fuel cycle timeline, assuming that a future
         tokamak requires the same start-up inventory as the present one.
@@ -604,26 +518,8 @@ class EUDEMOFuelCycleModel:
         :
             inflection time
         """
-        arg_t_infl = np.argmin(self.m_T)
+        arg_t_infl = int(np.argmin(self.m_T))
         return arg_t_infl, self.t[arg_t_infl]
-
-    def _plot_t_d(self, **kwargs):
-        ax = kwargs.get("ax", plt.gca())
-        ax._get_lines.get_next_color()
-        vlinex = [self.t_d, self.t_d]
-        vliney = [0, self.m_T[0] + self.params.I_tfv_min]
-        (c,) = ax.plot(
-            self.t_d, self.m_T[0] + self.params.I_tfv_min, marker="o", markersize=10
-        )
-        ax.plot(vlinex, vliney, color=c.get_color(), linestyle="--")
-
-    def _plot_t_infl(self, arg, **kwargs):
-        ax = kwargs.get("ax", plt.gca())
-        ax._get_lines.get_next_color()
-        vlinex = [self.t[arg], self.t[arg]]
-        vliney = [0, self.m_T[arg]]
-        (c,) = ax.plot(self.t[arg], self.m_T[arg], marker="o", markersize=10)
-        ax.plot(vlinex, vliney, color=c.get_color(), linestyle="--")
 
     def calc_m_release(self) -> float:
         """
@@ -635,6 +531,8 @@ class EUDEMOFuelCycleModel:
             Tritium release rate [kg/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
+        if max_load_factor is None:
+            max_load_factor = 0.0
         mb = 1000 * raw_uc(max(self.brate), "g/s", "kg/s")
         m_gas = 1000 * raw_uc(max(self.grate), "g/s", "kg/s")
         return legal_limit(
@@ -651,12 +549,211 @@ class EUDEMOFuelCycleModel:
             mb=mb,
         )
 
+
+@dataclass
+class EUDEMOFuelCycleResults:
+    """Results of the demo fuel cycle calculation"""
+
+    TBR: float
+    DEMO_t: npt.NDArray
+    m_T_req: float
+    t: npt.NDArray
+    t_d: float
+    arg_t_d: int | None
+    t_infl: float
+    arg_t_infl: int
+    max_T: npt.NDArray  # noqa: N815
+    min_T: npt.NDArray  # noqa: N815
+    m_T: npt.NDArray
+    I_tfv: npt.NDArray
+    I_tfv_min: float
+    I_stack: npt.NDArray
+    I_plasma: npt.NDArray
+    I_blanket: npt.NDArray
+    brate: npt.NDArray
+    prate: npt.NDArray
+    m_dot_release: float
+
+    def tbreed(self, TBR: float, m_T_0: float) -> np.ndarray:
+        """
+        Ideal system without T sequestration. Used for plotting and sanity.
+
+        Parameters
+        ----------
+        TBR:
+            Tritium breeding ratio
+        m_T_0:
+            Initial tritium mass
+
+        Returns
+        -------
+        :
+            Tritium mass over time
+        """
+        m_T = m_T_0 * np.ones(len(self.DEMO_t))
+        for i in range(1, len(self.DEMO_t)):
+            dt = self.DEMO_t[i] - self.DEMO_t[i - 1]
+            dts = YR_TO_S * dt
+            t_bred = TBR * self.brate[i] * dts
+            t_bred += self.prate[i] * dts
+            t_burnt = self.brate[i] * dts
+            t_DD = self.prate[i] * dts
+            m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
+        return m_T
+
+    def plot(self):
+        """
+        Plot the results of the fuel cycle model.
+        """
+        _, ax = plt.subplots(2, 1)
+        self.plot_m_T(ax=ax[0])
+        self.plot_inventory(ax=ax[1])
+
+    def plot_m_T(self, **kwargs):
+        """
+        Plot the evolution of the tritium masses over time.
+
+        Returns
+        -------
+        :
+            The plot axis
+        """
+        ax = kwargs.get("ax", plt.gca())
+        ax.plot(
+            self.DEMO_t,
+            self.tbreed(self.TBR, self.m_T_req),
+            label="Total T inventory",
+        )
+
+        (c,) = ax.plot(
+            self.t[self.max_T[0].astype(int)],
+            self.max_T[1],
+            label="Total unsequestered T inventory",
+        )
+        ax.plot(
+            self.t,
+            self.m_T,
+            color="gray",
+            alpha=0.8,
+            linewidth=0.1,
+            label="Unsequestered T inventory in stores",
+        )
+        ax.plot(self.t[self.max_T[0].astype(int)], self.max_T[1], color=c.get_color())
+        leg = ax.legend()
+        for line in leg.get_lines():
+            line.set_linewidth(3)
+            line.set_alpha(1)
+        ax.set_ylabel("$m_{{T}}$ [kg]")
+        if "ax" not in kwargs:
+            ax.set_xlabel("Elapsed plant lifetime [years]")
+        ax.annotate(
+            "$m_{T_{start}}$",
+            xy=(0.0, self.m_T_req),
+            xytext=(1.0, self.m_T_req + 4),
+            arrowprops={"headwidth": 0.5, "width": 0.5, "facecolor": "k", "shrink": 0.1},
+        )
+
+        if np.isfinite(self.t_d):
+            s = 1.0 if self.t_d < 0.8 * self.DEMO_t[-1] else -1.5
+            ax.annotate(
+                "$t_{d}$",
+                xy=(self.t_d, 0.0),
+                xytext=(self.t_d + s, 4.0),
+                arrowprops={
+                    "headwidth": 0.5,
+                    "width": 0.5,
+                    "facecolor": "k",
+                    "shrink": 0.1,
+                },
+            )
+            if self.arg_t_d is not None:
+                self._plot_t_d(ax=ax)
+        else:
+            ax.annotate(r"$t_{d}=\infty$", xy=(self.t[-1] - 3, 2.0))
+
+        if np.isfinite(self.t_infl):
+            s = 1.0 if self.t_d < 0.8 * self.DEMO_t[-1] else 1.5
+            ax.annotate(
+                "$t_{infl}$",
+                xy=(self.t_infl, 0.0),
+                xytext=(self.t_infl + s, 2.0),
+                arrowprops={
+                    "headwidth": 0.5,
+                    "width": 0.5,
+                    "facecolor": "k",
+                    "shrink": 0.1,
+                },
+            )
+            if self.arg_t_infl is not None:
+                self._plot_t_infl(self.arg_t_infl, ax=ax)
+
+        ax.set_xlim(0.0, self.t[-1])
+        ax.set_ylim(bottom=0)
+
+        return ax
+
+    def plot_inventory(self, **kwargs):
+        """
+        Plot the evolution of the tritium inventories (including sequestered)
+        over time.
+        """
+        ax = kwargs.get("ax", plt.gca())
+        chop = -2
+
+        inventory = self._adjust_inv_plot(self.DEMO_t[:chop], self.I_plasma[:chop])
+        ax.plot(self.DEMO_t[:chop], inventory, label="In-vessel")
+        inventory = self._adjust_inv_plot(self.DEMO_t[:chop], self.I_blanket[:chop])
+
+        ax.plot(self.DEMO_t[:chop], inventory, label="Blanket")
+        ax.plot(self.t[:chop], self.I_tfv[:chop], label="TFV systems")
+        # ax.plot(self.t[:chop], self.I_stack[:chop],
+        #        label='Environment')
+        ax.legend(bbox_to_anchor=[0.99, 0.89])
+        if "ax" not in kwargs:
+            ax.set_title("Trapped T [kg]")
+        ax.set_ylabel("$m_{{T}}$ [kg]")
+        ax.set_xlabel("Elapsed plant lifetime [years]")
+        ax.set_xlim(left=0)
+
+    @staticmethod
+    def _adjust_inv_plot(
+        t: np.ndarray, inventory: np.ndarray, thresh: float = 0.2
+    ) -> np.ndarray:
+        """
+        Plot correction for compressed time inventories
+
+        Returns
+        -------
+        :
+            inventory
+        """
+        inventory = inventory.copy()
+        for i in np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2:
+            inventory[i + 1] = inventory[i]
+        return inventory
+
+    def _plot_t_d(self, **kwargs):
+        ax = kwargs.get("ax", plt.gca())
+        ax._get_lines.get_next_color()
+        vlinex = [self.t_d, self.t_d]
+        vliney = [0.0, self.m_T[0] + self.I_tfv_min]
+        (c,) = ax.plot(self.t_d, self.m_T[0] + self.I_tfv_min, marker="o", markersize=10)
+        ax.plot(vlinex, vliney, color=c.get_color(), linestyle="--")
+
+    def _plot_t_infl(self, arg: int, **kwargs):
+        ax = kwargs.get("ax", plt.gca())
+        ax._get_lines.get_next_color()
+        vlinex = [self.t[arg], self.t[arg]]
+        vliney = [0.0, self.m_T[arg]]
+        (c,) = ax.plot(self.t[arg], self.m_T[arg], marker="o", markersize=10)
+        ax.plot(vlinex, vliney, color=c.get_color(), linestyle="--")
+
     def sanity(self):
         """
         Check that no tritium is lost (graphically).
         """
         _, ax = plt.subplots()
-        m_ideal = self.tbreed(self.params.TBR, self.m_T_req)
+        m_ideal = self.tbreed(self.TBR, self.m_T_req)
         inter = interp1d(self.DEMO_t, self.I_blanket)
         bb_inventory = inter(self.t)
         inter = interp1d(self.DEMO_t, self.I_plasma)
@@ -666,12 +763,12 @@ class EUDEMOFuelCycleModel:
             + bb_inventory
             + pl_inventory
             + self.I_tfv
-            - self.params.I_tfv_min
+            - self.I_tfv_min
             + self.I_stack
         )
         ax.plot(self.t, m_tritium, label="max with sequestered")
         ax.plot(self.DEMO_t, m_ideal, label="ideal")
-        ax.plot(self.t[self.max_T[0]], self.max_T[1], label="max yellow")
+        ax.plot(self.t[self.max_T[0].astype(int)], self.max_T[1], label="max yellow")
         ax.legend()
 
 

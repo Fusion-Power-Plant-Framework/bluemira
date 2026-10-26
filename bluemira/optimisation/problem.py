@@ -5,9 +5,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Interface for defining an optimisation problem."""
 
+from __future__ import annotations
+
 import abc
-from collections.abc import Callable, Mapping
-from typing import Any, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -18,7 +20,11 @@ from bluemira.optimisation._optimise import (
     optimise,
     validate_constraints,
 )
-from bluemira.optimisation.typed import ConstraintT
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from bluemira.optimisation.typed import ConstraintT
 
 
 class OptimisationProblemBase:
@@ -62,10 +68,10 @@ class OptimisationProblemBase:
             true if the given method is a member of this base class else false
         """
         try:
-            this_f = getattr(cls, f.__name__)
+            this_f = getattr(cls, f.__name__)  # type: ignore[ty:unresolved-attribute]
         except AttributeError:
             return False
-        return f.__func__ is not this_f
+        return f.__func__ is not this_f  # type: ignore[ty:unresolved-attribute]
 
 
 class OptimisationProblem(abc.ABC, OptimisationProblemBase):
@@ -91,6 +97,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
 
     def df_objective(self, x: np.ndarray) -> np.ndarray:
         """The gradient of the objective function at ``x``."""
+        raise NotImplementedError
 
     def eq_constraints(self) -> list[ConstraintT]:  # noqa: PLR6301
         """

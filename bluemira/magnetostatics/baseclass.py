@@ -15,6 +15,8 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from matplotlib.pyplot import Axes
 
 import numpy as np
@@ -34,6 +36,7 @@ class CurrentSource(ABC):
     """
 
     current: float
+    _points: npt.NDArray
 
     def set_current(self, current: float):
         """
@@ -114,9 +117,9 @@ class CrossSectionCurrentSource(CurrentSource):
     Abstract class for a current source with a cross-section
     """
 
-    _origin: np.array
-    _dcm: np.array
-    _points: np.array
+    _origin: np.ndarray
+    _dcm: np.ndarray
+    _points: npt.NDArray
     _rho: float
     _area: float
 
@@ -174,7 +177,13 @@ class CrossSectionCurrentSource(CurrentSource):
         """
         return np.array([(self._dcm @ (p - self._origin)) for p in points])
 
-    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
+    def plot(
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
+    ):
         """
         Plot the CurrentSource.
 
@@ -288,12 +297,13 @@ class SourceGroup(ABC):
     Abstract base class for multiple current sources.
     """
 
-    sources: list[CurrentSource]
-    _points: np.array
+    sources: list[CurrentSource | SourceGroup]
+    _points: npt.NDArray
 
-    def __init__(self, sources: list[CurrentSource]):
-        self.sources = sources
-        self._points = np.vstack([np.vstack(s._points) for s in self.sources])
+    def __init__(self, sources: Sequence[CurrentSource | SourceGroup]):
+        self.sources = list(sources)
+        # each source points can be an array of arrays
+        self._points = np.vstack([np.vstack(s._points) for s in self.sources])  # type: ignore[ty:no-matching-overload]
 
     def set_current(self, current: float):
         """
@@ -347,7 +357,13 @@ class SourceGroup(ABC):
             source.rotate(angle, axis)
         self._points @= rotation_matrix(angle, axis)
 
-    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
+    def plot(
+        self,
+        ax: Axes | None = None,
+        *,
+        show_coord_sys: bool = False,
+        **kwargs,  # noqa: ARG002
+    ):
         """
         Plot the MultiCurrentSource.
 

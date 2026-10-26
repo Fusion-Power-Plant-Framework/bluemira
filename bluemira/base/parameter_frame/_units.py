@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 import pint
 
@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from pint import Quantity
+    from pint.facets.plain import PlainQuantity
 
     from bluemira.base.parameter_frame._parameter import ParamDictT
 
@@ -61,7 +62,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
                 raise ValueError("Unit conversion failed") from pe
         else:
             param_data["value"] = quantity.magnitude
-        param_data["unit"] = quantity.units
+        param_data["unit"] = str(quantity.units)
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
     except TypeError:
@@ -81,7 +82,7 @@ def _validate_units(param_data: ParamDictT, value_type: Iterable[type]) -> Param
 
 
 def _ensure_SI_unit_system(
-    quantity: Quantity, param_data: ParamDictT, value_type: Iterable[type]
+    quantity: Any, param_data: ParamDictT, value_type: Iterable[type]
 ) -> ParamDictT:
     """
     Enforces our SI unit system and updates the value accordingly
@@ -166,7 +167,7 @@ def _convert_non_commutative(
         return next(iter(i._units.keys()))
 
     def get_exp(i: Quantity) -> str:
-        return next(iter(i._units.values()))
+        return str(next(iter(i._units.values())))
 
     filtered_list = [unit_list[i] for i in filter_index]
     for no, i in enumerate(filtered_list):
@@ -180,10 +181,12 @@ def _convert_non_commutative(
             filtered_list[no] = i.to(ureg.Unit(f"{ANGLE}**{get_exp(i)}"))
 
     # multiplies all quantities together
-    return math.prod(filtered_list)
+    return cast("pint.Quantity", math.prod(filtered_list))
 
 
-def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> Quantity:
+def _combine_commutative(
+    unit_list: list[Quantity], filter_index: list[int]
+) -> PlainQuantity | float:
     """
     Combine commutative units
 
@@ -199,9 +202,9 @@ def _combine_commutative(unit_list: list[Quantity], filter_index: list[int]) -> 
 
     quantity = math.prod(filtered_list)
     if not isinstance(quantity, ureg.Quantity):
-        # is quantity now a number
+        # quantity is now a number
         return quantity
-
+    quantity = cast("pint.Quantity", quantity)
     # Prefer the users SI converted unit
     # if the number of constituent units is <= the number in the new unit
     # this one line does a lot for us in the reconstruction

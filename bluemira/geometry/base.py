@@ -13,15 +13,15 @@ from __future__ import annotations
 import copy
 import enum
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING, Any, Self, TypeVar
+
+import numpy as np
 
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.mesh import meshing
 
 if TYPE_CHECKING:
-    import numpy as np
-
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.geometry.placement import BluemiraPlacement
 
@@ -52,9 +52,9 @@ class BluemiraGeo(ABC, meshing.Meshable):
 
     def __init__(
         self,
-        boundary: BluemiraGeoT | list[BluemiraGeoT],
+        boundary: Any,
         label: str = "",
-        boundary_classes: list[type[BluemiraGeoT]] | None = None,
+        boundary_classes: list[type[BluemiraGeo]] | None = None,
     ):
         super().__init__()
         self._boundary_classes = boundary_classes or []
@@ -121,7 +121,8 @@ class BluemiraGeo(ABC, meshing.Meshable):
             if check:
                 return objs
         raise TypeError(
-            f"Only {self._boundary_classes} objects can be used for {self.__class__}"
+            f"Only {self._boundary_classes} objects can be used for {self.__class__}, "
+            f"got {np.unique([type(o) for o in objs], sorted=False)}"  # type: ignore[ty:no-matching-overload]
         )
 
     @property
@@ -429,7 +430,7 @@ class BluemiraGeo(ABC, meshing.Meshable):
 
         return result
 
-    def copy(self, label: str | None = None) -> BluemiraGeo:
+    def copy(self, label: str | None = None) -> Self:
         """
         Make a copy of the BluemiraGeo.
 
@@ -445,7 +446,7 @@ class BluemiraGeo(ABC, meshing.Meshable):
             geo_copy.label = self.label
         return geo_copy
 
-    def deepcopy(self, label: str | None = None) -> BluemiraGeo:
+    def deepcopy(self: Self, label: str | None = None) -> Self:
         """
         Make a deepcopy of the BluemiraGeo.
 

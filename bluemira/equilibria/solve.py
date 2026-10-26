@@ -11,7 +11,7 @@ Picard iteration procedures for equilibria (and their infinite variations)
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
+    from bluemira.equilibria import Equilibrium
     from bluemira.equilibria.optimisation.problem import EqCoilsetOptimisationProblem
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
 
@@ -79,6 +80,7 @@ class ConvergenceCriterion(ABC):
         old_val: npt.NDArray[np.float64],
         new_val: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -155,6 +157,7 @@ class DudsonConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -206,6 +209,7 @@ class JrelConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -256,6 +260,7 @@ class LacknerConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -280,7 +285,7 @@ class LacknerConvergence(ConvergenceCriterion):
         conv = np.amax(np.abs((psi - psi_old) / psi))
         if print_status:
             bluemira_print_flush(f"EQUILIBRIA G-S iter {i}: psi convergence: {conv:e}")
-        return self.check_converged(conv)
+        return self.check_converged(float(conv))
 
 
 class JeonConvergence(ConvergenceCriterion):
@@ -301,6 +306,7 @@ class JeonConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -327,7 +333,7 @@ class JeonConvergence(ConvergenceCriterion):
             bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: psi norm convergence: {conv:e}"
             )
-        return self.check_converged(conv)
+        return self.check_converged(float(conv))
 
 
 class CunninghamConvergence(ConvergenceCriterion):
@@ -352,6 +358,7 @@ class CunninghamConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -380,7 +387,7 @@ class CunninghamConvergence(ConvergenceCriterion):
                 f"EQUILIBRIA G-S iter {i}: J_phi source convergence: {conv:e}"
             )
         self._conv = conv
-        return self.check_converged(conv)
+        return self.check_converged(float(conv))
 
 
 class JsourceConvergence(ConvergenceCriterion):
@@ -403,6 +410,7 @@ class JsourceConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        /,
         *,
         print_status: bool = True,
     ) -> bool:
@@ -430,7 +438,7 @@ class JsourceConvergence(ConvergenceCriterion):
             bluemira_print_flush(
                 f"EQUILIBRIA G-S iter {i}: ||J_phi_old-J_phi|| convergence: {conv:e}"
             )
-        return self.check_converged(conv)
+        return self.check_converged(float(conv))
 
 
 class PicardIterator:
@@ -469,7 +477,7 @@ class PicardIterator:
         keep_history: bool = False,
         check_constraints: bool = False,
     ):
-        self.eq = optimisation_problem.eq
+        self.eq = cast("Equilibrium", optimisation_problem.eq)
         self.coilset = self.eq.coilset
         self.opt_prob = optimisation_problem
         if isinstance(convergence, ConvergenceCriterion):
@@ -507,16 +515,16 @@ class PicardIterator:
         """
         The magnetic flux array.
         """
-        return self._psi
+        return np.asarray(self._psi)
 
     @property
     def j_tor(self) -> npt.NDArray[np.float64]:
         """
         The toroidal current density array.
         """
-        return self._j_tor
+        return np.asarray(self._j_tor)
 
-    def __call__(self) -> CoilsetOptimiserResult:
+    def __call__(self) -> CoilsetOptimiserResult | None:
         """
         The iteration object call handle.
 
@@ -533,7 +541,7 @@ class PicardIterator:
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
             except EquilibriaError as ee:
-                self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+                self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
                 bluemira_error(f"Failed to solve. {ee.args[0]}")
                 break
         else:
@@ -541,7 +549,7 @@ class PicardIterator:
                 "EQUILIBRIA G-S unable to find converged value after"
                 f" {self.i} iterations."
             )
-            self.diagnostic_plotting.make_gif()
+            self.diagnostic_plotting.make_gif()  # type: ignore[ty:missing-argument]
         self._teardown()
         return self.result
 
@@ -578,9 +586,9 @@ class PicardIterator:
         self._psi = self.eq.psi()
         self._j_tor = self.eq._jtor
         check = self.check_converged()
-        self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+        self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
         if check:
-            self.diagnostic_plotting.make_gif()
+            self.diagnostic_plotting.make_gif()  # type: ignore[ty:missing-argument]
             raise StopIteration
         self._optimise_coilset()
         self._psi = (
@@ -588,7 +596,7 @@ class PicardIterator:
         ) * self.eq.psi() + self.relaxation * self._psi_old
         self.i += 1
 
-    def iterate_once(self) -> CoilsetOptimiserResult:
+    def iterate_once(self) -> CoilsetOptimiserResult | None:
         """
         Perform a single iteration and handle convergence.
 
@@ -604,7 +612,7 @@ class PicardIterator:
             bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
         except EquilibriaError:
-            self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)
+            self.diagnostic_plotting.update_figure(self.eq, self.convergence, self.i)  # type: ignore[ty:missing-argument,ty:invalid-argument-type]
             bluemira_error("No X point found. Failed to solve.")
         return self.result
 
@@ -660,10 +668,11 @@ class PicardIterator:
         reasonable understanding of the final state.
         """
         o_points, x_points = self.eq.get_OX_points(force_update=True)
+        psi_val = np.asarray(self.eq.psi())
         self.eq._jtor = self.eq.profiles.jtor(
             self.eq.x,
             self.eq.z,
-            self.eq.psi(),
+            psi_val,
             o_points,
             x_points,
             o_point_fallback=self.eq._o_point_fallback,

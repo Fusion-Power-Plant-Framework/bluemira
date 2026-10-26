@@ -56,6 +56,15 @@ class ChargedParticleSolver:
         (default: 0.001).
     """
 
+    first_wall: Coordinates
+    flux_surfaces_ob_down: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ob_up: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ib_down: list[PartialOpenFluxSurface] | None
+    flux_surfaces_ib_up: list[PartialOpenFluxSurface] | None
+    x_sep_omp: float
+    x_sep_imp: float
+    result: tuple[np.ndarray, ...]
+
     def __init__(
         self,
         config: ChargedParticleSolverParams | dict[str, float],
@@ -69,14 +78,10 @@ class ChargedParticleSolver:
         self.dx_mp = dx_mp
 
         # Constructors
-        self.first_wall = None
         self.flux_surfaces_ob_down = None
         self.flux_surfaces_ob_up = None
         self.flux_surfaces_ib_down = None
         self.flux_surfaces_ib_up = None
-        self.x_sep_omp = None
-        self.x_sep_imp = None
-        self.result = None
 
         # Pre-processing
         self.psi_n_tol = psi_n_tol
@@ -139,7 +144,9 @@ class ChargedParticleSolver:
                 " in either the lower or upper directions."
             )
 
-    def _process_first_wall(self, first_wall):
+    def _process_first_wall(
+        self, first_wall: Coordinates
+    ) -> tuple[Coordinates, npt.NDArray, npt.NDArray]:
         """
         Force working first wall geometry to be closed and counter-clockwise.
 
@@ -151,11 +158,21 @@ class ChargedParticleSolver:
             the internal intersection coordinate
         out_intersection:
             the external intersection coordinate
+
+        Raises
+        ------
+        AdvectionTransportError
+            If first wall does not intersect the midplane in at least 2 points
         """
         first_wall = _process_first_wall(first_wall)
 
-        int_intersection = coords_plane_intersect(first_wall, self._yz_plane)[0]
-        out_intersection = coords_plane_intersect(first_wall, self._yz_plane)[1]
+        intersections = coords_plane_intersect(first_wall, self._yz_plane)
+        if intersections is None or len(intersections) < 2:  # noqa: PLR2004
+            raise AdvectionTransportError(
+                "First wall does not intersect the midplane in at least 2 points."
+            )
+        int_intersection = intersections[0]
+        out_intersection = intersections[1]
 
         return first_wall, int_intersection, out_intersection
 
@@ -235,20 +252,22 @@ class ChargedParticleSolver:
             )
         )
 
-    def _clip_flux_surfaces(self, first_wall):
+    def _clip_flux_surfaces(self, first_wall: Coordinates):
         """
         Clip the flux surfaces to a first wall. Catch the cases where no intersections
         are found.
         """
-        _clip_flux_surfaces(
-            first_wall,
-            [
+        groups = [
+            g
+            for g in (
                 self.flux_surfaces_ob_down,
                 self.flux_surfaces_ob_up,
                 self.flux_surfaces_ib_down,
                 self.flux_surfaces_ib_up,
-            ],
-        )
+            )
+            if g is not None
+        ]
+        _clip_flux_surfaces(first_wall, tuple(groups))
 
     def _no_wall_intersection_region(
         self, x_up_inter, z_up_inter, x_down_inter, z_down_inter, *, lfs=True
@@ -264,6 +283,11 @@ class ChargedParticleSolver:
             the z region intersection point
         wire_length:
             the length of the wire
+
+        Raises
+        ------
+        AdvectionTransportError
+            If first wall has not been initialized
         """
         up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
         down_end_i = self.first_wall.argmin(
@@ -356,6 +380,11 @@ class ChargedParticleSolver:
             The z coordinates of the flux surface intersections
         heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
+
+        Raises
+        ------
+        AdvectionTransportError
+            If required calculations or geometries are missing
         """
         self._make_flux_surfaces_ob()
 
@@ -416,7 +445,7 @@ class ChargedParticleSolver:
             ]),
         )
 
-    def _analyse_DN(self) -> tuple[npt.NDArray[float], ...]:  # noqa: PLR0914
+    def _analyse_DN(self) -> tuple[np.ndarray, ...]:  # noqa: PLR0914
         """
         Calculation for the case of double nulls.
 
@@ -428,6 +457,11 @@ class ChargedParticleSolver:
             The z coordinates of the flux surface intersections
         heat_flux:
             The perpendicular heat fluxes at the intersection points [MW/m^2]
+
+        Raises
+        ------
+        AdvectionTransportError
+            If required calculations or geometries are missing
         """
         self._make_flux_surfaces_ob()
         self._make_flux_surfaces_ib()
@@ -594,7 +628,7 @@ class ChargedParticleSolver:
             / (Bp * 2 * np.pi * x)
         )
 
-    def plot(self, ax: Axes = None, *, show=False) -> Axes:
+    def plot(self, ax: Axes | None = None, *, show=False) -> Axes:
         """
         Plot the ChargedParticleSolver results.
 
@@ -606,7 +640,8 @@ class ChargedParticleSolver:
         if ax is None:
             _, ax = plt.subplots()
 
-        plot_coordinates(self.first_wall, ax=ax, linewidth=0.5, fill=False)
+        if self.first_wall is not None:
+            plot_coordinates(self.first_wall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
 
         if isinstance(separatrix, Coordinates):
@@ -626,8 +661,7 @@ class ChargedParticleSolver:
             zorder=Zorder.RADIATION.value,
             cmap="plasma",
         )
-        f = ax.figure
-        f.colorbar(cm, label="MW/m²")
+        ax.figure.colorbar(cm, label="MW/m²")
         if show:
             plt.show()
         return ax

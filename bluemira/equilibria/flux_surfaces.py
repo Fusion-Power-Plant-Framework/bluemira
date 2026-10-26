@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -23,7 +23,7 @@ from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import PsiPoint, Xpoint, find_flux_surface_through_point
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -42,8 +42,9 @@ from bluemira.utilities.tools import floatify
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    import numpy.typing as npt
+
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.find import PsiPoint
 
 
 @nb.jit(nopython=True, cache=True)
@@ -414,7 +415,7 @@ class OpenFluxSurface(FluxSurface):
             )
 
         ref_coords = self.coords.copy()
-        intersections = coords_plane_intersect(ref_coords, plane)
+        intersections = cast("npt.NDArray", coords_plane_intersect(ref_coords, plane))
         x_inter = intersections.T[0]
 
         # Pick the first intersection, travelling from the o_point outwards
@@ -483,7 +484,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         # is at the smallest argument
         self.coords = Coordinates(coords_union_inters[:, : min(args) + 1])
 
-        fw_arg = int(first_wall.argmin([self.x_end, 0, self.z_end]))
+        fw_arg = int(first_wall.argmin([self.x_end, 0.0, self.z_end]))
 
         if fw_arg + 1 == len(first_wall):
             pass
@@ -512,7 +513,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         -------
         Target flux expansion
         """
-        return (
+        return float(
             self.x_start
             * eq.Bp(self.x_start, self.z_start)
             / (self.x_end * eq.Bp(self.x_end, self.z_end))
@@ -548,18 +549,21 @@ class PartialOpenFluxSurface(OpenFluxSurface):
         """
         # Get the x-point location for the legs
         if eq.is_double_null:
-            xpts = eq._x_points[:2]
-            xpts = xpts[np.argmin(np.abs(self.z_end - [x.z for x in xpts]))]
+            xpts_list = cast("list[Xpoint]", eq._x_points)[:2]
+            xpts = xpts_list[
+                np.argmin(np.abs(self.z_end - np.array([x.z for x in xpts_list])))
+            ]
         else:
-            xpts = eq._x_points[0]
+            xpts = cast("list[Xpoint]", eq._x_points)[0]
 
         # Calculate distances along fs to x-point
-        distances = self.coords.distance_to([xpts.x, 0, xpts.z]).flatten(order="C")
+        distances = self.coords.distance_to([xpts.x, 0.0, xpts.z]).flatten(order="C")
         argmin = np.argmin(distances)
 
         # Calculate and return the DI
-        return (distances[-1] * eq.Bp(self.x_start, self.z_start)) / (
-            distances[argmin] * eq.Bp(self.x_end, self.z_end)
+        return float(
+            (distances[-1] * eq.Bp(self.x_start, self.z_start))
+            / (distances[argmin] * eq.Bp(self.x_end, self.z_end))
         )
 
 
@@ -689,7 +693,7 @@ class FieldLine:
             _f, ax = plt.subplots()
 
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
-        xi, _, zi = coords_plane_intersect(self.coords, xz_plane).T
+        xi, _, zi = cast("npt.NDArray", coords_plane_intersect(self.coords, xz_plane)).T
         idx = np.nonzero(xi >= 0)
         xi = xi[idx]
         zi = zi[idx]
@@ -757,7 +761,7 @@ class FieldLineTracer:
             :
                 the minimal distance to the grid
             """
-            if self.boundary.point_inside(xz[:2]):
+            if cast("Grid", self.boundary).point_inside(xz[:2]):
                 return np.min(self.boundary.distance_to(xz[:2]))
             return -np.min(self.boundary.distance_to(xz[:2]))
 
@@ -770,7 +774,7 @@ class FieldLineTracer:
             :
                 the minimal distance to the grid
             """
-            return _signed_distance_2D(xz[:2], self.boundary.xz.T)
+            return _signed_distance_2D(xz[:2], cast("Coordinates", self.boundary).xz.T)
 
     def __init__(self, eq: Equilibrium, first_wall: Grid | Coordinates | None = None):
         self.eq = eq
@@ -964,21 +968,16 @@ def calculate_connection_length_fs(
     passing through Coils, but really they should be intercepted beforehand!
     """
     if f_s is None:
-        xfs, zfs = find_flux_surface_through_point(
-            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
-        )
+        psi_grid = np.asarray(eq.psi())
+        psi_point = np.asarray(eq.psi(x, z)).item()
+        xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, psi_grid, x, z, psi_point)
         f_s = Coordinates({"x": xfs, "z": zfs})
     if f_s.closed:
         bluemira_print("Flux surface is closed. No connection length calculated.")
         return 0.0
-    f_s: OpenFluxSurface = OpenFluxSurface(f_s)
+    open_f_s = OpenFluxSurface(f_s)
 
-    class Point:
-        def __init__(self, x, z):
-            self.x = x
-            self.z = z
-
-    lfs, hfs = f_s.split(Point(x=x, z=z))
+    lfs, hfs = open_f_s.split(PsiPoint(x, z, 0.0))
     fs = lfs if forward else hfs
 
     fs.clip(first_wall)

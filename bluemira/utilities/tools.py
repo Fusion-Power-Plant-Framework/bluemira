@@ -530,10 +530,9 @@ class ColourDescriptor:
         -----
         The value can be anything accepted by matplotlib.colors.to_hex
         """
-        if hasattr(value, "as_hex"):
-            value = value.as_hex()
-            if isinstance(value, list):
-                value = value[0]
+        if hasattr(value, "as_hex") and callable(value.as_hex):
+            val = value.as_hex()
+            value = val[0] if isinstance(val, list) else str(val)
         setattr(obj, self._name, value)
 
 
@@ -747,7 +746,7 @@ def sig_fig_round(x, s, low_lim=-16):
     return x_round * (tp >= low_lim)
 
 
-def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64:
+def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64 | np.ndarray:
     """
     Cross products of 2d vectors,
     since numpy >= v2 deprecated support for 2d vector inputs in np.cross.
@@ -769,7 +768,7 @@ def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64:
     return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
 
 
-def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray:
+def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray | np.float64:
     """
     Cross products of pairs of 2d or 3d vectors,
     since numpy >= v2 deprecated support for 2d vector inputs in np.cross.
@@ -1162,8 +1161,10 @@ def _loadfromspec(name: str) -> ModuleType:
     else:
         n_suffix = False
 
+    spec = imp_u.spec_from_file_location(name, requested)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load spec for module '{name}'")
     try:
-        spec = imp_u.spec_from_file_location(name, requested)
         module = imp_u.module_from_spec(spec)
         spec.loader.exec_module(module)
     except ModuleNotFoundError:
@@ -1271,6 +1272,7 @@ def deprecation_wrapper(
         :
             wrapped function
         """
+        func_name = getattr(func, "__name__", str(func))
 
         @wraps(func)
         def deprecator(*args, **kwargs) -> Any:
@@ -1279,7 +1281,7 @@ def deprecation_wrapper(
                     message
                     if isinstance(message, str)
                     else (
-                        f"'{func.__name__}' is deprecated and will be removed in the"
+                        f"'{func_name}' is deprecated and will be removed in the"
                         " next major release"
                     )
                 ),
@@ -1305,10 +1307,17 @@ def qtapp_instance() -> QApplication:
     -------
     :
         QApplication instance
+
+    Raises
+    ------
+    TypeError
+        If the instance is not a QApplication
     """
     try:
         app = QApplication([])
     except RuntimeError:
         bluemira_debug("QApplication instance already exists")
         app = QApplication.instance()
+    if not isinstance(app, QApplication):
+        raise TypeError("Failed to obtain a QApplication instance")
     return app

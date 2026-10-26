@@ -11,7 +11,7 @@ Plasma profile objects, shape functions, and associated tools
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -37,12 +37,12 @@ from bluemira.equilibria.physics import _calc_beta_p
 from bluemira.equilibria.plotting import ProfilePlotter
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sized
     from pathlib import Path
 
     import numpy.typing as npt
 
-    from bluemira.equilibria.find import Xpoint
+    from bluemira.equilibria.find import Lpoint, Xpoint
 
 __all__ = [
     "BetaIpProfile",
@@ -59,7 +59,7 @@ __all__ = [
 
 
 def fitfunc(
-    func: Callable[[float], float],
+    func: DFuncT,
     data: npt.NDArray[np.float64],
     order: int | None = None,
 ) -> npt.NDArray[np.float64]:
@@ -87,7 +87,7 @@ def fitfunc(
 
 
 @nb.jit(nopython=True)
-def singlepowerfunc(x: float, *args) -> float:
+def singlepowerfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Single power shape function defined e.g. CREATE stuff
 
@@ -98,7 +98,7 @@ def singlepowerfunc(x: float, *args) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def doublepowerfunc(x: float, *args) -> float:
+def doublepowerfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Double power shape function defined e.g. in
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
@@ -112,9 +112,7 @@ def doublepowerfunc(x: float, *args) -> float:
 
 
 @nb.jit(cache=True, forceobj=True)
-def pshape(
-    shape: Callable[[float], float], psinorm: float, psio: float, psix: float
-) -> float:
+def pshape(shape: ShapeFunction, psinorm: float, psio: float, psix: float) -> float:
     """
     Integral of jtorshape to calculate pressure
 
@@ -132,7 +130,7 @@ def speedy_pressure(
     psi_norm: npt.NDArray[np.float64],
     psio: float,
     psix: float,
-    shape: Callable[[float], float],
+    shape: ShapeFunction,
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -172,7 +170,7 @@ def speedy_pressure_mask(
     psi_norm: npt.NDArray[np.float64],
     psio: float,
     psix: float,
-    shape: Callable[[float], float],
+    shape: ShapeFunction,
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -205,7 +203,7 @@ def speedy_pressure_mask(
 
 
 # @nb.jit(cache=True)
-def laopoly(x: float, *args) -> float:
+def laopoly(x: npt.NDArray, *args: float) -> npt.NDArray:
     """
     Polynomial shape function defined in
     :doi:`Lao 1985 <10.1088/0029-5515/25/11/007>`
@@ -220,7 +218,7 @@ def laopoly(x: float, *args) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def luxonexp(x: float, *args) -> float:
+def luxonexp(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
     """
     Exponential shape function defined in
     :doi:`Luxon 1984 <10.1088/0029-5515/22/6/009>`
@@ -230,10 +228,24 @@ def luxonexp(x: float, *args) -> float:
     return np.exp(-(x**2) * alpha**2)
 
 
+class DFuncT(Protocol):
+    @staticmethod
+    def __call__(x: float | npt.NDArray, *args: float) -> float | npt.NDArray: ...
+
+
 class ShapeFunction:
     """
     Shape function object
     """
+
+    _order: int = 1
+    _dfunc: DFuncT
+    _fact: float = 1.0
+    coeffs: npt.NDArray
+    data: npt.NDArray[np.float64]
+
+    def __init__(self, coeffs: Sized | npt.ArrayLike | npt.NDArray):
+        self.coeffs = np.asarray(coeffs)
 
     @classmethod
     def from_datafit(cls, data: npt.NDArray[np.float64], order: int | None = None):
@@ -248,10 +260,10 @@ class ShapeFunction:
         cls.data = data
         return cls(coeffs)
 
-    def _func(self, x: float) -> float:
+    def _func(self, x: float | npt.NDArray) -> float | npt.NDArray:
         return self._dfunc(x, *self.coeffs)
 
-    def __call__(self, x: float) -> float:
+    def __call__(self, x: float | npt.NDArray) -> float | npt.NDArray:
         """
         Calculate the value of the ShapeFunction for given x.
         """  # noqa: DOC201
@@ -299,13 +311,13 @@ class SinglePowerFunc(ShapeFunction):
     _order = 1
     _fact = 1
 
-    def __init__(self, args):
+    def __init__(self, args: Sized):
         if len(args) != self._order:
             raise ValueError(f"Function coefficients {len(args)} != {self._order}")
-        self.coeffs = args
+        super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return singlepowerfunc(x, *args)
 
 
@@ -317,13 +329,13 @@ class DoublePowerFunc(ShapeFunction):
     _order = 2
     _fact = 1
 
-    def __init__(self, args):
+    def __init__(self, args: Sized):
         if len(args) != self._order:
             raise ValueError(f"Function coefficients {len(args)} != {self._order}")
-        self.coeffs = args
+        super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return doublepowerfunc(x, *args)
 
 
@@ -336,13 +348,12 @@ class LaoPolynomialFunc(ShapeFunction):
     _order = 3
 
     def __init__(self, coeffs: npt.ArrayLike):
-        if not hasattr(coeffs, "__len__"):
-            self.n = 0
-        self.n = len(coeffs) - 1
-        self.coeffs = coeffs
+        coeffs_arr = np.atleast_1d(coeffs)
+        self.n = len(coeffs_arr) - 1
+        super().__init__(coeffs_arr)
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:invalid-attribute-override]
         return laopoly(x, *args)
 
 
@@ -357,12 +368,12 @@ class LuxonExpFunc(ShapeFunction):
     def __init__(self, coeffs: npt.ArrayLike):
         if not hasattr(coeffs, "__len__"):
             self.n = 1
-            self.coeffs = [coeffs]
+            super().__init__(coeffs)
         else:
             raise ValueError("The Luxon function only has one coefficient.")
 
     @staticmethod
-    def _dfunc(x: float, *args) -> float:
+    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
         return luxonexp(x, *args)
 
 
@@ -380,6 +391,15 @@ class Profile(ABC):
     """
 
     R_0: float
+    _l_i_min_iter: int
+    _B_0: float
+    I_p: float
+    psiax: float
+    psisep: float
+    _fvac: float
+    dx: float
+    dz: float
+    shape: ShapeFunction
 
     def _scalar_denorm(self, prime, norm):
         """
@@ -444,11 +464,11 @@ class Profile(ABC):
         z: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
-        x_points: list[Xpoint],
+        x_points: list[Xpoint] | list[Lpoint] | list[Xpoint | Lpoint],
         lcfs: npt.NDArray[np.float64] | None = None,
         *,
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
-    ) -> tuple[float, float, npt.NDArray[np.float64]]:
+    ) -> tuple[float, float, npt.NDArray[np.float64] | None]:
         """
         Do-not-repeat-yourself utility
 
@@ -542,16 +562,19 @@ class Profile(ABC):
         z: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
-        x_points: list[Xpoint],
+        x_points: list[Xpoint] | list[Lpoint] | list[Xpoint | Lpoint],
+        lcfs: npt.NDArray[np.float64] | None = None,
+        *,
+        o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ) -> npt.NDArray[np.float64]:
         """Calculate toroidal plasma current"""
 
     @abstractmethod
-    def pprime(self, pn: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    def pprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """dp/dpsi as a function of normalised psi"""
 
     @abstractmethod
-    def ffprime(self, pn: npt.ArrayLike) -> npt.NDArray[np.float64]:
+    def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """f*df/dpsi as a function of normalised psi"""
 
 
@@ -619,7 +642,8 @@ class BetaIpProfile(Profile):
         z: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
-        x_points: list[Xpoint],
+        x_points: list[Xpoint] | list[Lpoint] | list[Xpoint | Lpoint],
+        lcfs: npt.NDArray[np.float64] | None = None,  # noqa: ARG002
         *,
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,
     ) -> npt.NDArray[np.float64]:
@@ -707,13 +731,15 @@ class BetaIpProfile(Profile):
         """
         dp/dpsi as a function of normalised psi
         """  # noqa: DOC201
-        return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
+        return self.lambd * self.beta0 / self.R_0 * self.shape(np.asarray(pn))
 
     def ffprime(self, pn: npt.ArrayLike) -> float | npt.NDArray[np.float64]:
         """
         f*df/dpsi as a function of normalised psi
         """  # noqa: DOC201
-        return MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(pn)
+        return (
+            MU_0 * self.lambd * (1 - self.beta0) * self.R_0 * self.shape(np.asarray(pn))
+        )
 
 
 class BetaLiIpProfile(BetaIpProfile):
@@ -781,14 +807,16 @@ class CustomProfile(Profile):
         from p' and ff'.
     """
 
+    I_p: float | None  # type: ignore[ty:invalid-attribute-override]
+
     def __init__(
         self,
-        pprime_func: npt.NDArray[np.float64] | Callable[[float]] | float,
-        ffprime_func: npt.NDArray[np.float64] | Callable[[float]] | float,
+        pprime_func: npt.NDArray[np.float64] | Callable[[float], float] | float,
+        ffprime_func: npt.NDArray[np.float64] | Callable[[float], float] | float,
         R_0: float,
         B_0: float,
-        p_func: npt.NDArray[np.float64] | Callable[[float]] | float | None = None,
-        f_func: npt.NDArray[np.float64] | Callable[[float]] | float | None = None,
+        p_func: npt.NDArray[np.float64] | Callable[[float], float] | float | None = None,
+        f_func: npt.NDArray[np.float64] | Callable[[float], float] | float | None = None,
         I_p: float | None = None,
     ):
         self._pprime_in = self.parse_to_callable(pprime_func)
@@ -803,7 +831,9 @@ class CustomProfile(Profile):
 
         # Fit a shape function to the pprime profile (mostly for plotting)
         x = np.linspace(0, 1, 50)
-        self.shape = LaoPolynomialFunc.from_datafit(self.pprime(x))
+        self.shape = LaoPolynomialFunc.from_datafit(
+            np.asarray(self.pprime(x), dtype=np.float64)
+        )
 
     @staticmethod
     def parse_to_callable(unknown):
@@ -841,7 +871,7 @@ class CustomProfile(Profile):
         z: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         o_points: list[Opoint],
-        x_points: list[Xpoint],
+        x_points: list[Xpoint] | list[Lpoint] | list[Xpoint | Lpoint],
         lcfs: npt.NDArray[np.float64] | None = None,
         *,
         o_point_fallback: OPointCalcOptions = OPointCalcOptions.RAISE,

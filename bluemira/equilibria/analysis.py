@@ -11,8 +11,7 @@ from collections.abc import Iterable, Sequence
 from copy import deepcopy
 from dataclasses import dataclass
 from itertools import cycle
-from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -115,13 +114,16 @@ def select_eq(
 
 def select_multi_eqs(
     equilibrium_input: str | Equilibrium | Sequence[str | Equilibrium],
-    fixed_or_free: FixedOrFree = FixedOrFree.FREE,
+    fixed_or_free: FixedOrFree | Sequence[FixedOrFree] = FixedOrFree.FREE,
     equilibrium_names: str | Sequence[str] | None = None,
     dummy_coils: Sequence | None = None,
     from_cocos: int | Iterable[int] = BLUEMIRA_DEFAULT_COCOS,
     *,
     qpsi_positive: bool | Iterable[bool | None] | None = None,
-    control_coils: CoilType | list[str] | None = None,
+    control_coils: CoilType
+    | Sequence[str]
+    | Sequence[CoilType | Sequence[str] | None]
+    | None = None,
 ):
     """
     Put information needed to load eq into a dictionary.
@@ -163,49 +165,80 @@ def select_multi_eqs(
     ValueError
         If list of input values is not the same length as the input equilibria
     """
-    if not isinstance(equilibrium_input, Sequence):
-        equilibrium_input = [equilibrium_input]
-    if not isinstance(fixed_or_free, Sequence):
-        fixed_or_free = [fixed_or_free] * len(equilibrium_input)
-    elif len(fixed_or_free) != len(equilibrium_input):
+    if not isinstance(equilibrium_input, Sequence) or isinstance(equilibrium_input, str):
+        eq_input = [equilibrium_input]
+    else:
+        eq_input = equilibrium_input
+
+    fof_list = (
+        [fixed_or_free] * len(eq_input)
+        if not isinstance(fixed_or_free, Sequence)
+        else fixed_or_free
+    )
+    if len(fof_list) != len(eq_input):
         raise ValueError(
             "FixedOrFree list length not equal to the number of equilibria."
         )
-    if not isinstance(dummy_coils, Sequence):
-        dummy_coils = [dummy_coils] * len(equilibrium_input)
-    elif len(dummy_coils) != len(equilibrium_input):
+
+    dummy_coils_list = (
+        [dummy_coils] * len(eq_input)
+        if not isinstance(dummy_coils, Sequence)
+        else dummy_coils
+    )
+    if len(dummy_coils_list) != len(eq_input):
         raise ValueError(
             "dummy_coils list length not equal to the number of equilibria."
         )
-    if is_num(from_cocos):
-        from_cocos = np.ones(len(equilibrium_input)) * from_cocos
-    if isinstance(qpsi_positive, bool | None):
-        qpsi_positive = len(equilibrium_input) * [qpsi_positive]
+
+    if isinstance(from_cocos, int):
+        cocos_list = [from_cocos] * len(eq_input)
+    else:
+        cocos_list = list(from_cocos)
+
+    if isinstance(qpsi_positive, bool | type(None)):
+        qp_list = len(eq_input) * [qpsi_positive]
+    else:
+        qp_list = list(qpsi_positive)
+
     if equilibrium_names is None:
-        equilibrium_names = [
-            "Eq_" + str(x) for x in range(1, len(equilibrium_input) + 1)
-        ]
-    elif len(equilibrium_names) != len(equilibrium_input):
+        eq_names = ["Eq_" + str(x) for x in range(1, len(eq_input) + 1)]
+    elif isinstance(equilibrium_names, str):
+        eq_names = [equilibrium_names]
+    elif len(equilibrium_names) != len(eq_input):
         raise ValueError(
             "equilibrium_names length not equal to the number of equilibria."
         )
-    if not isinstance(control_coils, Iterable):
-        control_coils = [control_coils] * len(equilibrium_input)
-
-    if isinstance(equilibrium_input[0], Equilibrium | FixedPlasmaEquilibrium):
-        equilibrium_paths = ["no path used"] * len(equilibrium_input)
     else:
-        equilibrium_paths = equilibrium_input
+        eq_names = list(equilibrium_names)
+
+    if (
+        isinstance(control_coils, CoilType)
+        or control_coils is None
+        or (
+            isinstance(control_coils, Sequence)
+            and all(isinstance(c, str) for c in control_coils)
+        )
+    ):
+        cc_list = [control_coils] * len(eq_input)
+    elif isinstance(control_coils, Iterable):
+        cc_list = list(control_coils)
+    else:
+        cc_list = [control_coils] * len(eq_input)
+
+    if isinstance(eq_input[0], Equilibrium | FixedPlasmaEquilibrium):
+        equilibrium_paths = ["no path used"] * len(eq_input)
+    else:
+        equilibrium_paths = eq_input
 
     equilibria_dict = {}
     for name, file, eq_type, dc, fc, qp, cc in zip(
-        equilibrium_names,
+        eq_names,
         equilibrium_paths,
-        fixed_or_free,
-        dummy_coils,
-        from_cocos,
-        qpsi_positive,
-        control_coils,
+        fof_list,
+        dummy_coils_list,
+        cocos_list,
+        qp_list,
+        cc_list,
         strict=False,
     ):
         equilibria_dict.update({
@@ -219,12 +252,9 @@ def select_multi_eqs(
             }
         })
 
-    if not isinstance(equilibrium_input[0], Path):
-        for eq, equilibrium_dict in zip(
-            equilibrium_input, equilibria_dict.values(), strict=False
-        ):
-            equilibrium_dict.update({"eq": eq})
-            equilibrium_dict.update({"profiles": eq.profiles})
+    for eq, equilibrium_dict in zip(eq_input, equilibria_dict.values(), strict=False):
+        if isinstance(eq, Equilibrium | FixedPlasmaEquilibrium):
+            equilibrium_dict.update({"eq": eq, "profiles": eq.profiles})
     return equilibria_dict
 
 
@@ -1352,13 +1382,14 @@ class MultiEqAnalysis:
 
     def plot_divertor_length_angle(
         self,
-        n_layers=10,
-        x_offsets=0.10,
+        n_layers: int = 10,
+        x_offsets: float = 0.10,
         plasma_facing_boundary_list=None,
-        legs_to_plot=DivLegsToPlot.ALL,
-        ax=None,
-        show=True,  # noqa: FBT002
-        radian=True,  # noqa: FBT002
+        legs_to_plot: DivLegsToPlot = DivLegsToPlot.ALL,
+        ax: npt.NDArray | None = None,
+        *,
+        show: bool = True,
+        radian: bool = True,
     ):
         """
         Plot the divertor leg length and grazing angle for the equilibria
@@ -1407,6 +1438,7 @@ class MultiEqAnalysis:
                 _, ax = plt.subplots(2, 4, sharex="col")
             elif legs_to_plot in DivLegsToPlot.PAIR:
                 _, ax = plt.subplots(2, 2, sharex="col")
+        ax = cast("npt.NDArray", ax)
 
         def plot_div_value(i, value, ax, name, n_layers=n_layers, dx_off=x_offsets):
             for j, (k, v) in enumerate(value.items()):

@@ -85,7 +85,7 @@ class CADFileType(enum.Enum):
         return self.value
 
     @classmethod
-    def _missing_(cls, value: str) -> CADFileType:
+    def _missing_(cls, value: object | str) -> CADFileType:
         # Allow "step" → STEP, "stp" → STEP, etc.
         _aliases = {
             "step": cls.STEP,
@@ -97,7 +97,10 @@ class CADFileType(enum.Enum):
             "gltf": cls.GLTRANSMISSION,
             "glb": cls.GLTRANSMISSION,
         }
-        return _aliases.get(str(value).lower())
+        cft = _aliases.get(str(value).lower())
+        if cft is None:
+            return super()._missing_(value)
+        return cft
 
     @classmethod
     def unitless_formats(cls) -> tuple[CADFileType, ...]:

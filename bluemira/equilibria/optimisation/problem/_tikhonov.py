@@ -8,7 +8,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import CoilSetMHDState, Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
     UpdateableConstraint,
@@ -60,7 +60,7 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
 
     def __init__(
         self,
-        eq: Equilibrium,
+        eq: CoilSetMHDState,
         targets: MagneticConstraintSet,
         gamma: float,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
@@ -88,6 +88,7 @@ class TikhonovCurrentCOP(EqCoilsetOptimisationProblem):
         keep_history: bool = False,
         check_constraints: bool = False,
         verbose: bool = False,
+        **_kwargs,
     ) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem

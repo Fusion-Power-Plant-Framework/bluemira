@@ -129,6 +129,16 @@ jobs:
         with:
           version: ${{ matrix.with-process }}
 
+      - name: Check Typing
+        shell: bash -l {0}
+        run: |
+          echo '```console' >> "$GITHUB_STEP_SUMMARY"
+
+          ty check bluemira --color never --output-format=concise --exit-zero-on-warning 2>&1 \
+            | tee -a "$GITHUB_STEP_SUMMARY"
+
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run pytest bluemira
         shell: bash -l {0}
         env:

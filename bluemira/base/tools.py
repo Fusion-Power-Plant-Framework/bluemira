@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
-from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict
+from typing import TYPE_CHECKING, Any, NotRequired, TypeVar, TypedDict, cast
 
 from matplotlib import colors
 from matproplib.library.fluids import Void
@@ -41,6 +41,7 @@ if TYPE_CHECKING:
 
     import bluemira.codes._geometryapi as cadapi
     from bluemira.base.reactor import ComponentManager
+    from bluemira.geometry.base import BluemiraGeo
 
 
 _T = TypeVar("_T")
@@ -83,7 +84,7 @@ class FilterMaterial:
             True if the node should be kept, False otherwise.
         """
         if hasattr(node, "material"):
-            return self._apply_filters(node.material)
+            return self._apply_filters(cast("Material", node.material))
         return True
 
     def __setattr__(self, name: str, value: Any):
@@ -102,7 +103,7 @@ class FilterMaterial:
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
-    def _apply_filters(self, material: Material | tuple[Material]) -> bool:
+    def _apply_filters(self, material: Material) -> bool:
         bool_store = True
 
         if self.keep_material is not None:
@@ -187,15 +188,15 @@ class ConstructionParamValues:
         :
             The ConstructionParamValues object
         """
-        construction_params = construction_params or {}
+        construction_params = cast("ConstructionParams", construction_params or {})
         comp_filter = (
             construction_params["component_filter"]
             if "component_filter" in construction_params
             else FilterMaterial()
         )
 
-        tot_secs = int(construction_params.get("total_sectors", 1))
-        n_secs = int(construction_params.get("n_sectors", tot_secs))
+        tot_secs = int(construction_params.get("total_sectors", 1))  # type: ignore[ty:invalid-argument-type]
+        n_secs = int(construction_params.get("n_sectors", tot_secs))  # type: ignore[ty:invalid-argument-type]
 
         return cls(
             with_components=construction_params.get("with_components"),
@@ -276,8 +277,8 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
         The BluemiraCompound component
 
     """
-    shapes = get_properties_from_components(comp, ("shape"))
-    return BluemiraCompound(shapes, comp.name)
+    shapes = get_properties_from_components(comp, ("shape",))
+    return BluemiraCompound(cast("list[BluemiraGeo]", list(shapes)), comp.name)
 
 
 def circular_pattern_xyz_components(
@@ -317,7 +318,7 @@ def circular_pattern_xyz_components(
 
 
 def copy_and_filter_component(
-    comp: Component, dim: str, component_filter: Callable[[ComponentT], bool] | None
+    comp: Component, dim: str, component_filter: Callable[[Component], bool] | None
 ) -> Component:
     """
     Copies a component (deeply) then filters

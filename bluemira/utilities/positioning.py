@@ -11,7 +11,7 @@ A collection of tools used for position interpolation.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -23,6 +23,8 @@ from bluemira.utilities.error import PositionerError
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import numpy.typing as npt
 
     from bluemira.geometry.wire import BluemiraWire
@@ -43,7 +45,7 @@ class XZGeometryInterpolator(abc.ABC):
     def __init__(self, geometry: BluemiraWire):
         self.geometry = geometry
 
-    def _get_xz_coordinates(self, num_pts):
+    def _get_xz_coordinates(self, num_pts: int) -> np.ndarray:
         """
         Get discretised x-z coordinates of the geometry.
 
@@ -68,7 +70,9 @@ class XZGeometryInterpolator(abc.ABC):
         ...
 
     @abc.abstractmethod
-    def to_L(self, x: npt.ArrayLike, z: npt.ArrayLike) -> float | np.ndarray:
+    def to_L(
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | np.ndarray | tuple[float, float] | tuple[np.ndarray, np.ndarray]:
         """
         Convert physical x-z space values to parametric-space 'L' values.
         """
@@ -78,7 +82,7 @@ class XZGeometryInterpolator(abc.ABC):
     @abc.abstractmethod
     def dimension(self) -> int:
         """
-        The dimension of the parametric space
+        Dimension of the parametric space of the Interpolator
         """
         ...
 
@@ -101,12 +105,13 @@ class PathInterpolator(XZGeometryInterpolator):
         :
             The xz coordinates
         """
-        l_values = np.clip(l_values, 0.0, 1.0)
-        if is_num(l_values):
-            return self.geometry.value_at(alpha=l_values)[[0, 2]]
+        clipped = np.clip(l_values, 0.0, 1.0)
+        if is_num(clipped):
+            return tuple(self.geometry.value_at(alpha=float(clipped))[[0, 2]])
 
-        x, z = np.zeros(len(l_values)), np.zeros(len(l_values))
-        for i, lv in enumerate(l_values):
+        l_arr = np.asarray(clipped)
+        x, z = np.zeros(len(l_arr)), np.zeros(len(l_arr))
+        for i, lv in enumerate(l_arr):
             x[i], z[i] = self.geometry.value_at(alpha=lv)[[0, 2]]
 
         return x, z
@@ -120,12 +125,18 @@ class PathInterpolator(XZGeometryInterpolator):
         :
             The normalised coordinates
         """
-        if is_num(x):
-            return self.geometry.parameter_at([x, 0, z], tolerance=VERY_BIG)
+        if is_num(x) and is_num(z):
+            return self.geometry.parameter_at(
+                np.asarray([x, 0.0, z]), tolerance=VERY_BIG
+            )
 
-        l_values = np.zeros(len(x))
-        for i, (xi, zi) in enumerate(zip(x, z, strict=False)):
-            l_values[i] = self.geometry.parameter_at([xi, 0, zi], tolerance=VERY_BIG)
+        x_arr = np.asarray(x, dtype=np.float64)
+        z_arr = np.asarray(z, dtype=np.float64)
+        l_values = np.zeros(len(x_arr))
+        for i, (xi, zi) in enumerate(zip(x_arr, z_arr, strict=False)):
+            l_values[i] = self.geometry.parameter_at(
+                [float(xi), 0.0, float(zi)], tolerance=VERY_BIG
+            )
         return l_values
 
     @property
@@ -185,7 +196,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         PositionerError
             When geometry is not a convex
         """
-        if not self.geometry.is_closed:
+        if not self.geometry.is_closed():
             raise PositionerError("RegionInterpolator can only handle closed wires.")
 
         xz_coordinates = self._get_xz_coordinates(10000)
@@ -226,12 +237,12 @@ class RegionInterpolator(XZGeometryInterpolator):
             When loop is not a Convex Hull
 
         """
-        l_0, l_1 = l_values
+        l_0, l_1 = np.asarray(l_values)
         z = self.z_min + (self.z_max - self.z_min) * l_1
 
         plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [0, 1, z])
 
-        intersect = slice_shape(self.geometry, plane)
+        intersect = cast("npt.NDArray", slice_shape(self.geometry, plane))
         if len(intersect) == 1:
             x = intersect[0][0]
         elif len(intersect) == 2:  # noqa: PLR2004
@@ -270,16 +281,18 @@ class RegionInterpolator(XZGeometryInterpolator):
             When loop is not a Convex Hull
 
         """
+        x, z = float(np.asarray(x)), float(np.asarray(z))
         l_1 = (z - self.z_min) / (self.z_max - self.z_min)
         l_1 = np.clip(l_1, 0.0, 1.0)
 
         plane = BluemiraPlane.from_3_points([x, 0, z], [x + 1, 0, z], [x, 1, z])
-        intersect = slice_shape(self.geometry, plane)
-
-        return self._intersect_filter(x, l_1, intersect)
+        return self._intersect_filter(x, l_1, slice_shape(self.geometry, plane))
 
     def _intersect_filter(
-        self, x: float, l_1: float, intersect: BluemiraPlane
+        self,
+        x: float,
+        l_1: float,
+        intersect: Sequence[float | None] | npt.NDArray | None,
     ) -> tuple[float, float]:
         """
         Checks where points are based on number of intersections
@@ -319,8 +332,8 @@ class RegionInterpolator(XZGeometryInterpolator):
                 x, l_1, [False] if intersect is None else intersect
             )
         elif len(intersect) == 2:  # noqa: PLR2004
-            x_min, x_max = sorted([intersect[0][0], intersect[1][0]])
-            l_0 = np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0)
+            x_min, x_max = sorted([float(intersect[0][0]), float(intersect[1][0])])  # type: ignore[ty:not-subscriptable]
+            l_0 = float(np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0))
         elif len(intersect) == 1:
             l_0 = float(l_1 == 1.0)  # noqa: RUF069
         else:
@@ -328,7 +341,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         return l_0, l_1
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         """
         Dimension of the parametric space of the RegionInterpolator
         """
@@ -348,7 +361,7 @@ class PositionMapper:
     def __init__(self, interpolators: dict[str, XZGeometryInterpolator]):
         self.interpolators = interpolators
 
-    def _check_length(self, thing):
+    def _check_length(self, thing: list[npt.ArrayLike] | npt.NDArray):
         """
         Check that something is the same length as the number of available interpolators.
 
@@ -362,7 +375,7 @@ class PositionMapper:
                 f"Object of length: {len(thing)} not of length {len(self.interpolators)}"
             )
 
-    def _vector_to_list(self, l_values):
+    def _vector_to_list(self, l_values: npt.NDArray) -> list[npt.ArrayLike]:
         """
         Convert a vector of l_values into a ragged list if necessary
 
@@ -393,10 +406,10 @@ class PositionMapper:
         z:
             Array of z coordinates
         """
-        l_values = self._vector_to_list(l_values)
-        self._check_length(l_values)
+        l_list = self._vector_to_list(l_values)
+        self._check_length(l_list)
         return np.array([
-            tool.to_xz(l_values[i]) for i, tool in enumerate(self.interpolators.values())
+            tool.to_xz(l_list[i]) for i, tool in enumerate(self.interpolators.values())
         ]).T
 
     def to_xz_dict(self, l_values: np.ndarray) -> dict[str, np.ndarray]:
@@ -413,11 +426,11 @@ class PositionMapper:
         -------
         Dictionary of x-z values corresponding to each interpolator
         """
-        l_values = self._vector_to_list(l_values)
-        self._check_length(l_values)
+        l_list = self._vector_to_list(l_values)
+        self._check_length(l_list)
         xz_dict = {}
         for i, (key, tool) in enumerate(self.interpolators.items()):
-            xz_dict[key] = np.asarray(tool.to_xz(l_values[i]))
+            xz_dict[key] = np.asarray(tool.to_xz(l_list[i]))
         return xz_dict
 
     def to_L(self, x: np.ndarray, z: np.ndarray) -> np.ndarray:

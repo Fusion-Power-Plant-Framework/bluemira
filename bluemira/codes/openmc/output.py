@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import openmc
@@ -29,6 +29,7 @@ from bluemira.radiation_transport.neutronics.constants import (
 from bluemira.utilities.tools import numpy_to_vtk
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     import pandas as pd
 
     from bluemira.codes.openmc.make_csg import CellStage
@@ -84,10 +85,14 @@ class OpenMCResultBase:
         return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
-    def _convert_dict_contents(dataset: dict[str, dict[int, list[str | float]]]):
+    def _convert_dict_contents(
+        dataset: dict[int, dict[str, float | str] | list[str] | npt.ArrayLike],
+    ):
         for k, v in dataset.items():
-            vals = list(v.values()) if isinstance(v, dict) else v
-            dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
+            vals = list(v.values()) if isinstance(v, dict) else np.asarray(v)
+            dataset[k] = (
+                cast("list[str]", vals) if isinstance(vals[0], str) else np.asarray(vals)
+            )
         return dataset
 
     @staticmethod
@@ -179,17 +184,16 @@ class OpenMCCSGResult(OpenMCResultBase):
     fluxes: dict
     damage: dict
 
-    photon_heat_flux: dict
-    """Photon heat flux"""
-
     universe: openmc.Universe
     cell_arrays: CellStage
     src_rate: float
     statepoint: openmc.StatePoint
-    statepoint_file: str
+    statepoint_file: str | Path
     cell_names: dict
     cell_vols: dict  # [m^3]
     mat_names: dict
+    photon_heat_flux: dict | None = None
+    """Photon heat flux"""
 
     @classmethod
     def from_run(
@@ -538,7 +542,8 @@ class OpenMCCSGResult(OpenMCResultBase):
             (self.heating, self.photon_heat_flux),
             strict=True,
         ):
-            ret_str += f"\n{title}\n{self._tabulate(data)}"
+            if data is not None:
+                ret_str += f"\n{title}\n{self._tabulate(data)}"
 
         return ret_str
 
@@ -644,16 +649,16 @@ class NeutronicsOutputParams(ParameterFrame):
 
     e_mult: Parameter[float]
     TBR: Parameter[float]
-    P_n_blanket: Parameter[float]
-    P_n_divertor: Parameter[float]
-    P_n_vessel: Parameter[float]
+    P_n_blanket: Parameter[float | None]
+    P_n_divertor: Parameter[float | None]
+    P_n_vessel: Parameter[float | None]
     P_n_aux: Parameter[float]
     P_n_e_mult: Parameter[float]
     P_n_decay: Parameter[float]
-    peak_eurofer_dpa_rate: Parameter[float]
-    peak_bb_iron_dpa_rate: Parameter[float]
-    peak_vv_iron_dpa_rate: Parameter[float]
-    peak_div_cu_dpa_rate: Parameter[float]
+    peak_eurofer_dpa_rate: Parameter[float | None]
+    peak_bb_iron_dpa_rate: Parameter[float | None]
+    peak_vv_iron_dpa_rate: Parameter[float | None]
+    peak_div_cu_dpa_rate: Parameter[float | None]
 
     @classmethod
     def from_openmc_dag_result(cls, result: OpenMCDAGMCResult):

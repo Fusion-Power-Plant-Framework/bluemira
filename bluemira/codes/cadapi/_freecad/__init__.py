@@ -17,16 +17,19 @@ def freecad_message_removal():
         The default freecad path
     """
     import importlib  # noqa: PLC0415
+    import importlib.util  # noqa: PLC0415
     import os  # noqa: PLC0415
 
     if "PATH_TO_FREECAD_LIBDIR" in os.environ:
         return os.environ["PATH_TO_FREECAD_LIBDIR"]
     freecad_default_path = None
-    with open(importlib.util.find_spec("freecad").origin) as rr:
-        for line in rr:
-            if '_path_to_freecad_libdir = "' in line:
-                freecad_default_path = line.split('"')[1]
-                break
+    spec = importlib.util.find_spec("freecad")
+    if spec is not None and spec.origin is not None:
+        with open(spec.origin) as rr:
+            for line in rr:
+                if '_path_to_freecad_libdir = "' in line:
+                    freecad_default_path = line.split('"')[1]
+                    break
     if freecad_default_path is not None:
         os.environ["PATH_TO_FREECAD_LIBDIR"] = freecad_default_path
 

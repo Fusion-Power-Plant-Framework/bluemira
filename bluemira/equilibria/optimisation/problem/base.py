@@ -31,7 +31,7 @@ from bluemira.optimisation._algorithm import (
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
-    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.equilibrium import CoilSetMHDState
     from bluemira.optimisation._optimiser import OptimiserResult
     from bluemira.optimisation.typed import ConstraintT
 
@@ -269,20 +269,18 @@ class CoilsetOptimisationProblem(abc.ABC):
 
                 if df_c is not None:
                     # wrap the derivative function
-                    @functools.wraps(f.df_constraint)
-                    def wrapped_df_c(x, f=f):
-                        df_res = f.df_constraint(
-                            self.coilset._opt_currents_expand_mat @ x
-                        )
+                    @functools.wraps(df_c)
+                    def wrapped_df_c(x, df_c=df_c):
+                        df_res = df_c(self.coilset._opt_currents_expand_mat @ x)
                         return df_res @ self.coilset._opt_currents_expand_mat
 
                     df_c = wrapped_df_c
 
             d: ConstraintT = {
-                "name": f.name,
+                "name": f.name or "",
                 "f_constraint": f_c,
                 "df_constraint": df_c,
-                "tolerance": constraint.tolerance,
+                "tolerance": np.asarray(getattr(constraint, "tolerance", 1e-4)),
             }
             # TODO @hsaunders1904: tidy this up, so the interface guarantees this works!
             # 3581
@@ -305,7 +303,7 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
 
     def __init__(
         self,
-        eq: Equilibrium,
+        eq: CoilSetMHDState,
         opt_algorithm: AlgorithmType,
         *,
         max_currents: npt.ArrayLike | None = None,
@@ -338,5 +336,6 @@ class EqCoilsetOptimisationProblem(CoilsetOptimisationProblem):
         for constraint in self.constraints:
             if isinstance(constraint, UpdateableConstraint):
                 constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
-            if "scale" in constraint._args:
-                constraint._args["scale"] = self.scale
+            args = getattr(constraint, "_args", None)
+            if args is not None and "scale" in args:
+                args["scale"] = self.scale

@@ -11,7 +11,6 @@ A simplified 2-D solver for calculating charged particle heat loads.
 from copy import deepcopy
 
 import numpy as np
-from numpy import typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -32,9 +31,9 @@ def analyse_first_wall_flux_surfaces(
     dx_mp: float = 0.001,
     source_sol_dl: float | None = None,
 ) -> tuple[
-    npt.NDArray[float],
-    npt.NDArray[float] | None,
-    list[PartialOpenFluxSurface],
+    np.ndarray,
+    np.ndarray | None,
+    tuple[list[PartialOpenFluxSurface], ...],
     float,
     float | None,
 ]:
@@ -107,7 +106,7 @@ def _process_first_wall(first_wall: Coordinates) -> Coordinates:
 
 def _analyse_SN(
     first_wall, dx_mp, equilibrium, o_point, yz_plane, dl: float | None = None
-) -> tuple[npt.NDArray[float], list[PartialOpenFluxSurface], float]:
+) -> tuple[np.ndarray, tuple[list[PartialOpenFluxSurface], ...], float]:
     """
     Calculation for the case of single nulls.
 
@@ -145,8 +144,8 @@ def _analyse_DN(
     yz_plane,
     dl: float | None = None,
 ) -> tuple[
-    npt.NDArray[float],
-    npt.NDArray[float],
+    np.ndarray,
+    np.ndarray,
     tuple[list[PartialOpenFluxSurface], ...],
     float,
     float,
@@ -215,7 +214,7 @@ def _clip_flux_surfaces(
     return flux_surfaces
 
 
-def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
+def get_array_x_mp(flux_surfaces) -> np.ndarray:
     """
     Get the x-coordinate of the mid-plane intersection point for each flux surface.
 
@@ -228,7 +227,7 @@ def get_array_x_mp(flux_surfaces) -> npt.NDArray[float]:
     return np.array([fs.x_start for fs in flux_surfaces])
 
 
-def get_array_z_mp(flux_surfaces) -> npt.NDArray[float]:
+def get_array_z_mp(flux_surfaces) -> np.ndarray:
     """
     Get the z-coordinate of the mid-plane intersection point for each flux surface.
 
@@ -240,7 +239,7 @@ def get_array_z_mp(flux_surfaces) -> npt.NDArray[float]:
     return np.array([fs.z_start for fs in flux_surfaces])
 
 
-def get_array_x_fw(flux_surfaces) -> npt.NDArray[float]:
+def get_array_x_fw(flux_surfaces) -> np.ndarray:
     """
     Get the x-coordinate of the first-wall intersection point for each flux surface.
 
@@ -252,7 +251,7 @@ def get_array_x_fw(flux_surfaces) -> npt.NDArray[float]:
     return np.array([fs.x_end for fs in flux_surfaces])
 
 
-def get_array_z_fw(flux_surfaces) -> npt.NDArray[float]:
+def get_array_z_fw(flux_surfaces) -> np.ndarray:
     """
     Get the z-coordinate of the first-wall intersection point for each flux surface.
 
@@ -264,7 +263,7 @@ def get_array_z_fw(flux_surfaces) -> npt.NDArray[float]:
     return np.array([fs.z_end for fs in flux_surfaces])
 
 
-def get_array_alpha(flux_surfaces) -> npt.NDArray[float]:
+def get_array_alpha(flux_surfaces) -> np.ndarray:
     """
     Get the alpha angle for each flux surface.
 
@@ -301,28 +300,41 @@ def _get_sep_out_intersection(
     sep = LegFlux(eq)
 
     if sep.n_null == NumNull.SN:
-        sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
-        sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
+        sep_coords = (
+            sep.separatrix[0] if isinstance(sep.separatrix, list) else sep.separatrix
+        )
+        sep_intersections = coords_plane_intersect(sep_coords, yz_plane)
+        if sep_intersections is None:
+            raise RadiationTransportError("Your separatrix does not cross the midplane.")
+        sep_arg = int(np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x)))
         x_sep_mp = sep_intersections.T[0][sep_arg]
     elif sep.sort_split == SortSplit.X:
+        if not isinstance(sep.separatrix, list):
+            raise RadiationTransportError("Separatrix must be a list of coordinates.")
         sep1_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
         sep2_intersections = coords_plane_intersect(sep.separatrix[1], yz_plane)
-        sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
-        sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - sep.o_point.x))
+        if sep1_intersections is None or sep2_intersections is None:
+            raise RadiationTransportError("Your separatrix does not cross the midplane.")
+        sep1_arg = int(np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x)))
+        sep2_arg = int(np.argmin(np.abs(sep2_intersections.T[0] - sep.o_point.x)))
         x_sep1_mp = sep1_intersections.T[0][sep1_arg]
         x_sep2_mp = sep2_intersections.T[0][sep2_arg]
         x_sep_mp = max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
     else:
         # separatrix list is sorted by loop length when found,
         # so separatrix[0] will have the intersection
+        if not isinstance(sep.separatrix, list):
+            raise RadiationTransportError("Separatrix must be a list of coordinates.")
         sep_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
-        if isinstance(sep_intersections, Coordinates):
-            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
+        if sep_intersections is not None:
+            sep_arg = int(np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x)))
             x_sep_mp = sep_intersections.T[0][sep_arg]
         else:
-            raise RadiationTransportError("Your seperatrix does not cross the midplane.")
+            raise RadiationTransportError("Your separatrix does not cross the midplane.")
 
     out_intersections = coords_plane_intersect(first_wall, yz_plane)
+    if out_intersections is None:
+        raise RadiationTransportError("First wall does not cross the midplane.")
     x_out_mp = (
         np.max(out_intersections.T[0]) if outboard else np.min(out_intersections.T[0])
     )
@@ -425,4 +437,7 @@ def _make_flux_surfaces_ibob(
         )
         is not None
     ]
-    return tuple(map(list, zip(*flux_surfaces, strict=True)))
+    if not flux_surfaces:
+        return [], []
+    fs_1, fs_2 = zip(*flux_surfaces, strict=True)
+    return list(fs_1), list(fs_2)

@@ -439,7 +439,7 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._defaults.to_invariable()
 
     @classmethod
-    def from_defaults(cls, template: ProcessInputs | None = None) -> ProcessSolverParams:
+    def from_defaults(cls, template: ProcessInputs | None = None) -> ProcessSolverParams:  # type: ignore[ty:invalid-method-override]
         """
         Initialise from defaults
         """  # noqa: DOC201
