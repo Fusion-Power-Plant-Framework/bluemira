@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass
 
 from bluemira.base.constants import EPS

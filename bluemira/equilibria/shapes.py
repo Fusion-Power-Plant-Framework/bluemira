@@ -181,7 +181,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[ZakharovLCFSOptVariables] = ZakharovLCFSOptVariables
+    optvar_cls: type[ZakharovLCFSOptVariables] = ZakharovLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -285,7 +285,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[CunninghamLCFSOptVariables] = CunninghamLCFSOptVariables
+    optvar_cls: type[CunninghamLCFSOptVariables] = CunninghamLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -390,7 +390,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[ManickamLCFSOptVariables] = ManickamLCFSOptVariables
+    optvar_cls: type[ManickamLCFSOptVariables] = ManickamLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -660,7 +660,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[KuiroukidisLCFSOptVariables] = KuiroukidisLCFSOptVariables
+    optvar_cls: type[KuiroukidisLCFSOptVariables] = KuiroukidisLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
@@ -749,7 +749,7 @@ class _InOut(Enum):
 
 def _johner_quadrant(
     delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
-) -> tuple[float, float]:
+) -> tuple[npt.NDArray, npt.NDArray]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
     t = calc_t(delta, kappa, psi)
     conditional_point = 0.5
@@ -801,7 +801,7 @@ def _johner_quadrant(
         z = beta * np.sinh(phi)
     else:
         raise ValueError("Something is wrong with the Johner parameterisation.")
-    return x, z
+    return np.asarray(x, dtype=float), np.asarray(z, dtype=float)
 
 
 def flux_surface_johner_quadrants(
@@ -1044,7 +1044,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    optvar_cls: type[JohnerLCFSOptVariables] = JohnerLCFSOptVariables
+    optvar_cls: type[JohnerLCFSOptVariables] = JohnerLCFSOptVariables  # type: ignore[ty:invalid-mutable-override]
 
     def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """

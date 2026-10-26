@@ -15,6 +15,8 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import bluemira.codes._geometryapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
@@ -23,6 +25,9 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class BluemiraCompound(BluemiraGeo):
@@ -42,14 +47,14 @@ class BluemiraCompound(BluemiraGeo):
 
     def __init__(
         self,
-        boundary: list[BluemiraGeo],
+        boundary: Sequence[BluemiraGeo] | BluemiraGeo,
         label: str = "",
         *,
         _compound_obj: cadapi.apiCompound | None = None,
     ):
         boundary_classes = [BluemiraGeo]
         self._compound_obj = _compound_obj
-        super().__init__(boundary, label, boundary_classes)
+        super().__init__(boundary, label, boundary_classes)  # type:ignore[ty:invalid-argument-type]
 
     def _create_shape(self) -> cadapi.apiCompound:
         """
@@ -88,7 +93,7 @@ class BluemiraCompound(BluemiraGeo):
         else:
             topo_compound_shapes = [
                 BluemiraWire(wire)
-                for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]
+                for wire in [cadapi.apiWire(o) for o in cadapi.edges(obj)]  # type: ignore[ty:invalid-argument-type]
             ]
 
         return cls(topo_compound_shapes, label=label, _compound_obj=obj)
@@ -105,7 +110,7 @@ class BluemiraCompound(BluemiraGeo):
         """
         The edges of the compound.
         """
-        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))
+        return tuple(BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape))  # type: ignore[ty:invalid-argument-type]
 
     @property
     def wires(self) -> tuple[BluemiraWire, ...]:

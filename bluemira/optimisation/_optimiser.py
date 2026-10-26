@@ -5,12 +5,16 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Defines the interface for an Optimiser."""
 
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-import numpy as np
+if TYPE_CHECKING:
+    import numpy as np
 
-from bluemira.optimisation.typed import OptimiserCallable
+    from bluemira.optimisation.typed import OptimiserCallable
 
 
 @dataclass

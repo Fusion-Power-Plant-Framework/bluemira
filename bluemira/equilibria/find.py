@@ -11,7 +11,7 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -27,7 +27,7 @@ from bluemira.geometry.coordinates import Coordinates, get_area_2d, in_polygon
 from bluemira.utilities.tools import floatify
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator, Sequence
 
     import numpy.typing as npt
 
@@ -119,9 +119,7 @@ class Lpoint(PsiPoint):
     __slots__ = ()
 
 
-def find_local_minima(
-    f: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+def find_local_minima(f: npt.NDArray) -> tuple[npt.NDArray, ...]:
     """
     Finds all local minima in a 2-D function map
 
@@ -154,7 +152,7 @@ def find_local_minima(
 
 
 @nb.jit(nopython=True, cache=True)
-def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.float64]:
+def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray:
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """  # noqa: DOC201
@@ -207,7 +205,7 @@ def find_local_Bp_minima_cg(
 
 def drop_space_duplicates(
     points: Iterable, tol: float = X_TOLERANCE
-) -> list[npt.NDArray[np.float64]]:
+) -> list[npt.NDArray]:
     """
     Drop duplicates from a list of points if closer together than tol
     """  # noqa: DOC201
@@ -224,7 +222,7 @@ def drop_space_duplicates(
 
 
 def triage_OX_points(
-    f_psi: RectBivariateSpline, points: list[list[float]]
+    f_psi: RectBivariateSpline, points: Sequence[Sequence[float]] | list[npt.NDArray]
 ) -> tuple[list[Opoint], list[Xpoint]]:
     """
     Triage the local Bp minima into O- and X-points: sort the field minima by second
@@ -280,9 +278,9 @@ class OPointCalcOptions(Enum):
 
 def o_point_fallback_calculator(
     o_point_fallback: OPointCalcOptions,
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray | Callable[[float, float], float] | None,
+    x: float | npt.NDArray,
+    z: float | npt.NDArray,
+    psi: Callable[[float, float], float] | npt.NDArray,
     R_0: float | None = None,
 ) -> list[Opoint]:
     """Calculate fallback options for O point finding.
@@ -318,17 +316,27 @@ def o_point_fallback_calculator(
     match o_point_fallback:
         case OPointCalcOptions.GRID_CENTRE:
             if as_points:
-                o_points = [Opoint(x, z, psi(x, z))]
+                x = cast("float", x)
+                z = cast("float", z)
+                o_points = [Opoint(x, z, cast("float", psi(x, z)))]
             else:
                 nx, nz = psi.shape
+                x = cast("npt.NDArray", x)
+                z = cast("npt.NDArray", z)
                 o_points = [Opoint(x[nx // 2], z[nz // 2], psi[nx // 2, nz // 2])]
         case OPointCalcOptions.MAJOR_RADIUS:
             if R_0 is None:
                 raise ValueError("R_0 not provided for major radius fallback")
             o_points = [
-                Opoint(R_0, 0, psi[np.abs(x - R_0).argmin(), z.argmin()])
+                Opoint(R_0, 0, cast("float", psi(R_0, 0)))
                 if as_points
-                else Opoint(R_0, 0, psi(R_0, 0))
+                else Opoint(
+                    R_0,
+                    0,
+                    cast("npt.NDArray", psi)[
+                        np.abs(x - R_0).argmin(), cast("npt.NDArray", z).argmin()
+                    ],
+                )
             ]
         case _:
             if not as_points:
@@ -421,21 +429,21 @@ def find_OX_points(
     points = drop_space_duplicates(points)
 
     o_points, x_points = triage_OX_points(f_psi, points)
-
+    x_points = cast("list[Xpoint | Lpoint]", x_points)
     if len(o_points) == 0:
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration."
             f" Defaulting to {o_point_fallback.name.lower()}."
         )
-        return o_point_fallback_calculator(
-            o_point_fallback, x_m, z_m, f_psi, R_0
-        ), x_points
+        return o_point_fallback_calculator(o_point_fallback, x_m, z_m, f_psi, R_0), list[
+            Xpoint | Lpoint
+        ](x_points)
 
     # Sort O-points by centrality to the grid
     o_points.sort(key=lambda o: (o.x - x_m) ** 2 + (o.z - z_m) ** 2)
 
     if limiter is not None:
-        limit_x = [Lpoint(*lim, f_psi(*lim)[0][0]) for lim in limiter]
+        limit_x = [Lpoint(l_x, l_z, f_psi(l_x, l_z)[0][0]) for (l_x, l_z) in limiter]
         x_points.extend(limit_x)
 
     if len(x_points) == 0:
@@ -453,7 +461,8 @@ def find_OX_points(
         ]
 
     x_op, z_op, psio = o_points[0]  # Primary O-point
-    useful_x, useless_x = [], []
+    useful_x: list[Xpoint | Lpoint] = []
+    useless_x: list[Xpoint | Lpoint] = []
     for xp in x_points:
         x_xp, z_xp, psix = xp
         d_l = np.hypot(x_xp - x_op, z_xp - z_op)
@@ -522,11 +531,8 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa: N802
 
 
 def get_contours(
-    x: npt.NDArray[np.float64],
-    z: npt.NDArray[np.float64],
-    array: npt.NDArray[np.float64],
-    value: float,
-) -> list[npt.NDArray[np.float64]]:
+    x: npt.NDArray, z: npt.NDArray, array: npt.NDArray, value: float
+) -> list[npt.NDArray]:
     """
     Get the contours of a value in continuous array.
 
@@ -549,17 +555,22 @@ def get_contours(
     con_gen = contour_generator(
         x, z, array, name="mpl2014", line_type=LineType.SeparateCode
     )
-    return con_gen.lines(value)[0]
+    return cast("list[npt.NDArray]", con_gen.lines(value)[0])
 
 
 def find_flux_surfs(
-    x: npt.NDArray[np.float64],
-    z: npt.NDArray[np.float64],
-    psi: npt.NDArray[np.float64],
+    x: npt.NDArray,
+    z: npt.NDArray,
+    psi: npt.NDArray,
     psinorm: float,
-    o_points: list[Opoint] | None = None,
-    x_points: list[Xpoint] | None = None,
-) -> list[npt.NDArray[np.float64]]:
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint]
+    | list[Lpoint]
+    | list[Xpoint | Lpoint]
+    | Xpoint
+    | Lpoint
+    | None = None,
+) -> list[npt.NDArray]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
     the grid, separate sets of coordinates will be produced.
@@ -607,8 +618,13 @@ def find_flux_surf(
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
     psinorm: float,
-    o_points: list[Opoint] | None = None,
-    x_points: list[Xpoint] | None = None,
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint]
+    | list[Lpoint]
+    | list[Xpoint | Lpoint]
+    | Xpoint
+    | Lpoint
+    | None = None,
 ) -> npt.NDArray[np.float64]:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
@@ -736,13 +752,13 @@ def find_field_surf(
 
 
 def find_flux_surface_through_point(
-    x: npt.NDArray[np.float64],
-    z: npt.NDArray[np.float64],
-    psi: npt.NDArray[np.float64],
+    x: npt.NDArray,
+    z: npt.NDArray,
+    psi: npt.NDArray,
     point_x: float,
     point_z: float,
-    point_psi: float | npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+    point_psi: float | npt.NDArray,
+) -> npt.NDArray:
     """
     Get a flux surface passing through a point.
 
@@ -783,8 +799,13 @@ def find_LCFS_separatrix(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
-    o_points: list[Opoint] | None = None,
-    x_points: list[Xpoint] | None = None,
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint]
+    | list[Lpoint]
+    | list[Xpoint | Lpoint]
+    | Xpoint
+    | Lpoint
+    | None = None,
     *,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
@@ -833,7 +854,7 @@ def find_LCFS_separatrix(
     closed.
     """
 
-    def get_flux_loop(psi_norm):
+    def get_flux_loop(psi_norm: float) -> Coordinates:
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
         return Coordinates({"x": f_s[0], "z": f_s[1]})
 
@@ -996,8 +1017,13 @@ def in_plasma(
     x: npt.NDArray[np.float64],
     z: npt.NDArray[np.float64],
     psi: npt.NDArray[np.float64],
-    o_points: list[Opoint] | None = None,
-    x_points: list[Xpoint] | None = None,
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint]
+    | list[Lpoint]
+    | list[Xpoint | Lpoint]
+    | Xpoint
+    | Lpoint
+    | None = None,
     *,
     include_edges: bool = False,
 ) -> npt.NDArray[np.float64]:
@@ -1089,7 +1115,7 @@ def _in_plasma(
     return mask
 
 
-def interpolate_psi(psi, psi_grid: Grid, new_grid: Grid):
+def interpolate_psi(psi, psi_grid: Grid, new_grid: Grid) -> npt.NDArray:
     """
     Interpolate psi over new comparison grid
 

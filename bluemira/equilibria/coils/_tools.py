@@ -132,15 +132,14 @@ def _get_symmetric_coils(
     x, z, dx, dz, currents = coilset.to_group_vecs()
     coil_matrix = np.array([x, np.abs(z), dx, dz, currents]).T
 
-    sym_stack = [[coil_matrix[0], 1, [0]]]
+    sym_stack: list[list[list[float] | int | list[int]]] = [[coil_matrix[0], 1, [0]]]
     for i in range(1, len(x)):
         coil = coil_matrix[i]
 
         for j, sym_coil in enumerate(sym_stack):
             if np.allclose(coil, sym_coil[0], rtol=rtol):
-                coil = sym_coil[0]
-                sym_stack[j][1] += 1
-                sym_coil[2].append(i)
+                sym_stack[j][1] += 1  # type: ignore[ty:unsupported-operator]
+                sym_coil[2].append(i)  # type: ignore[ty:unresolved-attribute]
                 break
 
         else:

@@ -10,7 +10,7 @@ Plasma builder.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -51,14 +51,20 @@ class Plasma(ComponentManager):
         -------
         :
             A wire representing the last-closed flux surface.
+
+        Raises
+        ------
+        ValueError
+            If component 'xz' is not found
+        TypeError
+            If LCFS component is not a PhysicalComponent
         """
-        return (
-            self
-            .component()
-            .get_component("xz")
-            .get_component(PlasmaBuilder.LCFS)
-            .shape.boundary[0]
-        )
+        xz = self.component().get_component("xz")
+        if xz is None:
+            raise ValueError("Component 'xz' not found")
+        return cast(
+            "PhysicalComponent", xz.get_component(PlasmaBuilder.LCFS)
+        ).shape.boundary[0]
 
 
 @dataclass

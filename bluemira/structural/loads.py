@@ -11,7 +11,7 @@ Load objects
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 import numpy as np
 
@@ -21,6 +21,18 @@ from bluemira.structural.error import StructuralError
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+
+class LoadTD(TypedDict):
+    """Load container"""
+
+    kind: str | LoadKind
+    subtype: str | LoadType
+    Q: float | None
+    w: float | None
+    x: float | None
+    node_id: int | None
+    element_id: int | None
 
 
 @dataclass

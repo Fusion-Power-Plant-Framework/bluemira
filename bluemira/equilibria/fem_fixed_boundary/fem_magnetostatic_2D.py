@@ -13,7 +13,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
+
+if TYPE_CHECKING:
+    from dolfinx.fem.bcs import DirichletBC
 
 import dolfinx
 import matplotlib.pyplot as plt
@@ -48,7 +51,7 @@ class FixedBoundaryEquilibrium:
 
     # Solver information
     mesh: dolfinx.mesh.Mesh
-    psi: Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]
+    psi: Callable[[npt.ArrayLike], float | npt.NDArray]
 
     # Profile information
     p_prime: np.ndarray
@@ -79,9 +82,9 @@ class FixedBoundaryEquilibrium:
         _plot_array(
             ax,
             self.mesh.geometry.x,
-            self.psi(self.mesh.geometry.x),
+            np.asarray(self.psi(self.mesh.geometry.x)),
             "",
-            cmap=PLOT_DEFAULTS["psi"]["cmap"],
+            cmap=str(PLOT_DEFAULTS["psi"]["cmap"]),
         )
 
         if show_mesh:
@@ -130,11 +133,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Relaxation factor for the Picard iteration procedure
     """
 
+    _mesh_area: float
+
     def __init__(
         self,
         p_prime: Callable[[float], float] | None = None,
         ff_prime: Callable[[float], float] | None = None,
-        mesh: dolfinx.mesh.Mesh | str | None = None,
+        mesh: dolfinx.mesh.Mesh | None = None,
         I_p: float | None = None,
         R_0: float | None = None,
         B_0: float | None = None,
@@ -144,13 +149,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
-        self._g_func = None
         self._psi_ax = None
         self._psi_b = None
         self._grad_psi = None
-        self._pprime = None
-        self._ffprime = None
-        self._mesh_area = None
 
         self._curr_target = I_p
         self._R_0 = R_0
@@ -208,7 +209,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return func
 
-    def set_mesh(self, mesh: dolfinx.mesh.Mesh | str):
+    def set_mesh(
+        self,
+        mesh: dolfinx.mesh.Mesh,
+        boundaries: dolfinx.mesh.Mesh | str | None = None,
+    ):
         """
         Set the mesh for the solver
 
@@ -216,10 +221,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ----------
         mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
+        boundaries:
+            The boundaries
         """
         from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
 
-        super().set_mesh(mesh=mesh)
+        super().set_mesh(mesh=mesh, boundaries=boundaries)
         self._reset_psi_cache()
         self._mesh_area = calculate_area(self.mesh, None, None)
 
@@ -277,7 +284,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         return g
 
-    def define_g(self):
+    def define_g(
+        self,
+        g: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
+        dirichlet_bc_function: (DirichletBC | Iterable[DirichletBC] | None) = None,
+        dirichlet_marker: int | None = None,
+        neumann_bc_function: dolfinx.fem.Expression | BluemiraFemFunction | None = None,
+    ):
         """
         Return the density current DOLFIN function given pprime and ffprime.
         """
@@ -285,18 +298,15 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._pprime, self._ffprime, self._curr_target
         )
 
-        # # This instruction seems to slow the calculation
-        # super().define_g(ScalarSubFunc(self._g_func))
-        super().define_g()
+        super().define_g(g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
 
-        # it has been replaced by this code
         dof_points = self.V.tabulate_dof_coordinates()
-        self.g.x.array[:] = self._g_func(dof_points)
+        self.g.x.array[:] = self._g_func(dof_points)  # type: ignore[ty:unresolved-attribute]
 
     def set_profiles(
         self,
-        p_prime: Callable[[float], float],
-        ff_prime: Callable[[float], float],
+        p_prime: Callable[..., Any],
+        ff_prime: Callable[..., Any],
         I_p: float | None = None,
         B_0: float | None = None,
         R_0: float | None = None,
@@ -329,12 +339,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         # to which they refer.
         if callable(p_prime):
             self._pprime = p_prime
-            self._pprime_data = p_prime(np.linspace(0, 1, 50))
+            self._pprime_data = np.asarray(p_prime(np.linspace(0, 1, 50)))
         else:
             raise TypeError("p_prime must be a function")
         if callable(ff_prime):
             self._ffprime = ff_prime
-            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
+            self._ffprime_data = np.asarray(ff_prime(np.linspace(0, 1, 50)))
         else:
             raise TypeError("ff_prime must be a function")
         if I_p is not None:
@@ -346,7 +356,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""  # noqa: DOC201
-        return integrate_f(self.g, self.mesh)
+        return integrate_f(cast("BluemiraFemFunction", self.g), self.mesh)
 
     def _update_curr(self):
         self.k = 1
@@ -367,18 +377,18 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._grad_psi = None
 
     def _check_all_inputs_ready_error(self):
-        if self.mesh is None:
+        if not hasattr(self, "mesh"):
             raise EquilibriaError(
                 "You cannot solve this problem yet! Please set the mesh first, using"
                 " set_mesh(mesh)."
             )
-        if self._pprime is None or self._ffprime is None:
+        if not hasattr(self, "_pprime") or not hasattr(self, "_ffprime"):
             raise EquilibriaError(
                 "You cannot solve this problem yet! Please set the profile functions"
                 " first, using set_profiles(p_prime, ff_prime)."
             )
 
-    def solve(
+    def solve(  # type: ignore[ty:invalid-method-override]
         self,
         *,
         plot: bool = False,
@@ -462,7 +472,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if plot and autoclose_plot:
             plt.close(f)
         if gif:
-            make_gif(folder, figname, clean=not debug)
+            make_gif(str(folder), figname, clean=not debug)
 
         return self._equilibrium()
 
@@ -475,11 +485,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """
         return FixedBoundaryEquilibrium(
             self.mesh,
-            self.psi,
+            cast("Callable[[npt.ArrayLike], float | npt.NDArray[np.float64]]", self.psi),
             self._pprime_data,
             self._ffprime_data,
-            self._R_0,
-            self._B_0,
+            cast("float", self._R_0),
+            cast("float", self._B_0),
             self._calculate_curr_tot(),
         )
 
@@ -501,7 +511,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ax,
         cax,
         i_iter: int,
-        points: Iterable,
+        points: np.ndarray,
         prev: np.ndarray,
         diff: np.ndarray,
         *,
@@ -516,9 +526,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         cm = _plot_array(
             ax[0],
             points,
-            self._g_func(points),
+            np.asarray(self._g_func(points)),
             f"({i_iter}) " + "$J_{tor}$",
-            PLOT_DEFAULTS["current"]["cmap"],
+            str(PLOT_DEFAULTS["current"]["cmap"]),
         )
         _add_colorbar(cm, cax[0], "A/m$^{2}$\n")
 
@@ -528,13 +538,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             points,
             prev,
             f"({i_iter}) " + "$\\Psi_{n}$",
-            PLOT_DEFAULTS["psi"]["cmap"],
+            str(PLOT_DEFAULTS["psi"]["cmap"]),
             levels,
         )
         _add_colorbar(cm, cax[1], "")
 
         if debug:
-            cm = self._plot_array(
+            cm = _plot_array(
                 ax[2],
                 points,
                 100 * diff,

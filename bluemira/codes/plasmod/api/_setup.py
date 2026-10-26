@@ -10,7 +10,8 @@ Defines the 'Setup' stage of the plasmod solver.
 import copy
 import dataclasses
 import enum
-from typing import Any
+from pathlib import Path
+from typing import Any, cast
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
@@ -41,11 +42,13 @@ class Setup(CodesSetup):
 
     params: PlasmodSolverParams
 
+    plasmod_input_file: str | Path
+
     def __init__(
         self,
         params: PlasmodSolverParams,
         problem_settings: dict[str, Any],
-        plasmod_input_file: str,
+        plasmod_input_file: str | Path,
     ):
         super().__init__(params, PLASMOD_NAME)
 
@@ -97,7 +100,7 @@ class Setup(CodesSetup):
         new.update(new_inputs)
         # Create a new PlasmodInputs object so we still benefit from
         # the __post_init__ processing (converts models to enums)
-        self.inputs = PlasmodInputs(**new)
+        self.inputs = PlasmodInputs(**cast("dict[str, Any]", new))
 
     @staticmethod
     def _remove_non_plasmod_inputs(_inputs: dict[str, Any]) -> dict[str, Any]:

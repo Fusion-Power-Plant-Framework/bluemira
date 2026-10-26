@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
@@ -169,9 +169,9 @@ def core_electron_density_temperature_profile(
     is referred as pedestal.
     """
     i_core = np.nonzero((rho_core > 0) & (rho_core <= rho_ped))[0]
-    te0_keV = params.T_e_0.value_as("keV")
-    teped_keV = params.T_e_ped.value_as("keV")
-    tesep_keV = params.T_e_sep.value_as("keV")
+    te0_keV = cast("float", params.T_e_0.value_as("keV"))
+    teped_keV = cast("float", params.T_e_ped.value_as("keV"))
+    tesep_keV = cast("float", params.T_e_sep.value_as("keV"))
 
     n_grad_ped0 = params.n_e_0.value - params.n_e_ped.value
     t_grad_ped0 = te0_keV - teped_keV

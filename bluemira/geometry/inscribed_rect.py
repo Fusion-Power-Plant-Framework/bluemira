@@ -9,7 +9,10 @@ Function to find inscribed rectangle.
 In contained file because loop module imports geomtools and geombase modules
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -21,6 +24,9 @@ from bluemira.geometry.coordinates import (
     in_polygon,
 )
 from bluemira.geometry.plane import BluemiraPlane
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
 
 __all__ = ["inscribed_rect_in_poly"]
 
@@ -89,21 +95,25 @@ def inscribed_rect_in_poly(
 
     xo, rot_p = [x, 0, z], [0, 1, 0]
 
-    xx_plane = BluemiraPlane.from_3_points(*xx.points[:3])
-    zz_plane = BluemiraPlane.from_3_points(*zz.points[:3])
+    xx_plane = BluemiraPlane.from_3_points(xx.points[0], xx.points[1], xx.points[2])
+    zz_plane = BluemiraPlane.from_3_points(zz.points[0], zz.points[1], zz.points[2])
 
     xx_rot = deepcopy(xx)
     xx_rot.rotate(base=xo, direction=rot_p, degree=angle_r)
-    xz_plane = BluemiraPlane.from_3_points(*xx_rot.points[:3])
+    xz_plane = BluemiraPlane.from_3_points(
+        xx_rot.points[0], xx_rot.points[1], xx_rot.points[2]
+    )
 
     zz_rot = deepcopy(xx)
     zz_rot.rotate(base=xo, direction=rot_p, degree=-angle_r)
-    zx_plane = BluemiraPlane.from_3_points(*zz_rot.points[:3])
+    zx_plane = BluemiraPlane.from_3_points(
+        zz_rot.points[0], zz_rot.points[1], zz_rot.points[2]
+    )
 
     # Set up distance calculation
     getdxdz = _GetDxDz(
         coordinates,
-        [x_point, z_point],
+        (x_point, z_point),
         aspectratio,
         convex=convex,
         planes=[xx_plane, zz_plane, xz_plane, zx_plane],
@@ -179,7 +189,7 @@ class _GetDxDz:
         """
         self.vec_arr_x[n : n + 2] = lpi[0, [0, 2]], lpi[-1, [0, 2]]
 
-    def precise(self, n, lpi):
+    def precise(self, n: int, lpi: np.ndarray):
         """
         Precise nearest intersection.
         """
@@ -206,7 +216,7 @@ class _GetDxDz:
             maximum height/2 of rectangle
         """
         for n, plane in zip(self.elements, self.planes, strict=False):
-            lpi = coords_plane_intersect(self.coords, plane)
+            lpi = cast("npt.NDArray", coords_plane_intersect(self.coords, plane))
             self.check(n, lpi)
 
         self.vec_arr_z = self.vec_arr_x.copy()

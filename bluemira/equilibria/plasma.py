@@ -225,7 +225,7 @@ class PlasmaCoil:
         If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
-            return self._dpsi_dx_func(self.grid.x, self.grid.z)
+            return self._dpsi_dx_func(self._grid.x, self._grid.z)
 
         if not self._check_in_grid(x, z):
             return self._convolve(greens_dpsi_dx, x, z)
@@ -255,7 +255,7 @@ class PlasmaCoil:
         If both x and z are None, defaults to the full map on the grid.
         """
         if x is None and z is None:
-            return self._dpsi_dz_func(self.grid.x, self.grid.z)
+            return self._dpsi_dz_func(self._grid.x, self._grid.z)
 
         if not self._check_in_grid(x, z):
             return self._convolve(greens_dpsi_dz, x, z)
@@ -435,7 +435,7 @@ class PlasmaCoil:
         :
             A simple string representation of the PlasmaCoil.
         """
-        n_filaments = np.count_nonzero(self._j_tor)
+        n_filaments = 0 if self._j_tor is None else int(np.count_nonzero(self._j_tor))
         return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 
@@ -455,7 +455,7 @@ class NoPlasmaCoil:
 
     def psi(
         self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
-    ) -> float | npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float64]:
         """
         Poloidal magnetic flux at x, z
 
@@ -470,6 +470,54 @@ class NoPlasmaCoil:
         -------
         :
             Poloidal magnetic flux at the points [V.s/rad]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        return self._return_zeros(x, z)
+
+    def dpsi_dx(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Poloidal magnetic flux gradient in x at x, z
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux gradient at the points [V.s/rad/m]
+
+        Notes
+        -----
+        If both x and z are None, defaults to the full map on the grid.
+        """
+        return self._return_zeros(x, z)
+
+    def dpsi_dz(
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
+    ) -> float | npt.NDArray[np.float64]:
+        """
+        Poloidal magnetic flux gradient in z at x, z
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates at which to calculate
+        z:
+            Vertical coordinates at which to calculate.
+
+        Returns
+        -------
+        :
+            Poloidal magnetic flux gradient at the points [V.s/rad/m]
 
         Notes
         -----

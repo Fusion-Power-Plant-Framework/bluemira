@@ -162,7 +162,7 @@ class PowerCycleEfficiencyCalc(abc.ABC):
     """
 
     @abc.abstractmethod
-    def calculate(self, *args) -> float:
+    def calculate(self, p_blanket: float, p_divertor: float) -> float:
         """
         Calculate the efficiency of the power cycle
         """
@@ -247,7 +247,9 @@ class FractionSplitStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def split(self, *args):
+    def split(
+        self, p_radiation: float, p_separatrix: float
+    ) -> tuple[float, float, float]:
         """
         Split flows somehow.
         """

@@ -24,16 +24,14 @@ from bluemira.equilibria.find import in_plasma
 from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-
     from bluemira.equilibria.equilibrium import Equilibrium
-    from bluemira.equilibria.find import Opoint, Xpoint
+    from bluemira.equilibria.find import Lpoint, Opoint, Xpoint
     from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
     from bluemira.geometry.coordinates import Coordinates
 
 
 def calc_psi_norm(
-    psi: npt.ArrayLike, opsi: float, xpsi: float
+    psi: float | npt.NDArray[np.float64], opsi: float, xpsi: float
 ) -> float | npt.NDArray[np.float64]:
     """
     Calculate normalised magnetic flux.
@@ -57,7 +55,7 @@ def calc_psi_norm(
 
 
 def calc_psi(
-    psi_norm: npt.ArrayLike, opsi: float, xpsi: float
+    psi_norm: float | npt.NDArray[np.float64], opsi: float, xpsi: float
 ) -> float | npt.NDArray[np.float64]:
     """
     Calculate the absolute psi values from normalised psi values
@@ -167,8 +165,9 @@ def calc_q0(eq: Equilibrium) -> float:
     The MHD safety factor on the plasma axis
     """
     opoint = eq.get_OX_points()[0][0]
-    psi_xx0 = eq.psi_func(opoint.x, opoint.z, dx=2, grid=False)
-    psi_zz0 = eq.psi_func(opoint.x, opoint.z, dy=2, grid=False)
+    psi_func = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], np.asarray(eq.psi()))
+    psi_xx0 = psi_func(opoint.x, opoint.z, dx=2, grid=False)
+    psi_zz0 = psi_func(opoint.x, opoint.z, dy=2, grid=False)
     b_0 = eq.Bt(opoint.x)
     jfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], eq._jtor)
     j_0 = jfunc(opoint.x, opoint.z, grid=False)
@@ -228,8 +227,8 @@ def _calc_Bp2_int(
     Bp: npt.NDArray[np.float64],
     mask: npt.NDArray[np.float64] | None,
     x: npt.NDArray[np.float64],
-    dx: npt.NDArray[np.float64],
-    dz: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
 ) -> float:
     """
     Calculates the volume integral of the poloidal field squared.
@@ -258,8 +257,8 @@ def _calc_Bp2_int(
 def _calc_p_int(
     p: npt.NDArray[np.float64],
     x: npt.NDArray[np.float64],
-    dx: npt.NDArray[np.float64],
-    dz: npt.NDArray[np.float64],
+    dx: float,
+    dz: float,
 ) -> float:
     """
     Calculates the volume integral of plasma pressure.
@@ -297,8 +296,10 @@ def calc_energy(eq: Equilibrium) -> float:
     -------
         Stored poloidal magnetic energy
     """
+    psi_arr = np.asarray(eq.psi())
+    bp_arr = np.asarray(eq.Bp())
     return _calc_Bp2_int(
-        Bp=eq.Bp(), mask=in_plasma(eq.x, eq.z, eq.psi()), x=eq.x, dx=eq.dx, dz=eq.dz
+        Bp=bp_arr, mask=in_plasma(eq.x, eq.z, psi_arr), x=eq.x, dx=eq.dx, dz=eq.dz
     ) / (2 * MU_0)
 
 
@@ -336,7 +337,8 @@ def calc_Li(eq: Equilibrium) -> float:
         Internal inductance of the plasma
     """
     bp_energy = calc_energy(eq)
-    return _calc_Li_from_energy(bp_energy, eq.profiles.I_p)
+    i_p = eq.profiles.I_p
+    return _calc_Li_from_energy(bp_energy, i_p)
 
 
 def _calc_li_from_Li(big_li: float, R_0: float) -> float:
@@ -375,7 +377,7 @@ def calc_li(eq: Equilibrium) -> float:
         Normalised internal inductance of the plasma
     """
     li = calc_Li(eq)
-    return _calc_li_from_Li(li, eq._R_0)
+    return _calc_li_from_Li(li, eq.profiles.R_0)
 
 
 def calc_li3(eq: Equilibrium) -> float:
@@ -401,8 +403,11 @@ def calc_li3(eq: Equilibrium) -> float:
     -------
         Approximate normalised internal inductance of the plasma
     """
+    i_p = eq.profiles.I_p
+    psi_arr = np.asarray(eq.psi())
+    bp_arr = np.asarray(eq.Bp())
     return _calc_li3minargs(
-        eq.x, eq.z, eq.psi(), eq.Bp(), eq.profiles.R_0, eq.profiles.I_p, eq.dx, eq.dz
+        eq.x, eq.z, psi_arr, bp_arr, eq.profiles.R_0, i_p, eq.dx, eq.dz
     )
 
 
@@ -416,8 +421,8 @@ def _calc_li3minargs(
     dx: float,
     dz: float,
     mask: npt.NDArray[np.float64] | None = None,
-    o_points: Iterable[Opoint] | None = None,
-    x_points: Iterable[Xpoint] | None = None,
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint | Lpoint] | Xpoint | Lpoint | None = None,
 ) -> float:
     """
     Calculate the normalised plasma internal inductance with arguments only.
@@ -475,12 +480,12 @@ def calc_p_average(eq: Equilibrium) -> float:
     -------
     The average plasma pressure [Pa]
     """
-    return _calc_p_average(eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dz, eq.dz)
+    return _calc_p_average(eq.pressure_map(), eq.get_LCFS(), eq.x, eq.dx, eq.dz)
 
 
 def _calc_p_average(
     pressure_map: npt.NDArray,
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -533,7 +538,7 @@ def calc_beta_t(eq: Equilibrium) -> float:
 
 def _calc_beta_t(
     pressure_map: npt.NDArray[np.float64],
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -582,8 +587,9 @@ def calc_beta_p(eq: Equilibrium) -> float:
     -------
     Ratio of plasma to magnetic pressure
     """
+    bp_arr = np.asarray(eq.Bp())
     return _calc_beta_p(
-        eq.pressure_map(), eq.Bp(), eq._get_core_mask(), eq.x, eq.dx, eq.dz
+        eq.pressure_map(), bp_arr, eq._get_core_mask(), eq.x, eq.dx, eq.dz
     )
 
 
@@ -617,7 +623,7 @@ def calc_beta_p_approximate(eq: Equilibrium) -> float:
 def _calc_beta_p(
     pressure_map: npt.NDArray[np.float64],
     Bp: npt.NDArray[np.float64],
-    mask: npt.NDArray[np.float64],
+    mask: npt.NDArray[np.float64] | None,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -653,7 +659,7 @@ def _calc_beta_p(
 
 def _calc_beta_p_approx(
     pressure_map: npt.NDArray[np.float64],
-    fs: npt.NDArray[np.float64],
+    fs: Coordinates,
     x: npt.NDArray[np.float64],
     dx: float,
     dz: float,
@@ -735,7 +741,8 @@ class EqSummary(ParameterFrame):
         """
         Create summary from equilibrium
         """  # noqa: DOC201
-        R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
+        R_0 = eq.profiles.R_0
+        I_p = eq.profiles.I_p
         energy = calc_energy(eq)
         li_true = _calc_Li_from_energy(energy, I_p)
 

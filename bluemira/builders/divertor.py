@@ -13,13 +13,14 @@ from __future__ import annotations
 import enum
 import operator
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
     apply_component_display_options,
@@ -61,7 +62,7 @@ class LegPosition(enum.Enum):
 
 def get_separatrix_legs(
     equilibrium: Equilibrium,
-) -> dict[LegPosition, list[BluemiraWire]]:
+) -> dict[LegPosition, list[BluemiraWire] | None]:
     """
     Find the separatrix legs for the given equilibrium.
 
@@ -74,8 +75,12 @@ def get_separatrix_legs(
     # we want the legs from will need to be added
     legs = LegFlux(equilibrium).legs
     return {
-        LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
-        LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],
+        LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]]
+        if legs["lower_inner"] is not None
+        else None,
+        LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]]
+        if legs["lower_outer"] is not None
+        else None,
     }
 
 
@@ -222,9 +227,17 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         -------
         :
             Coordinates of the target
-        """
-        sol = self._get_sols_for_leg(leg)[0]
 
+        Raises
+        ------
+        BuilderError
+            SOL not found
+        """
+        sol = self._get_sols_for_leg(leg)
+
+        if sol is None:
+            raise BuilderError("No sol found")
+        sol = sol[0]
         target_point = sol.value_at(distance=self.leg_length[leg].value)
         # use a point slightly further along the leg to get a vector
         # tangent to the sep. leg in the expect direction
@@ -250,7 +263,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
 
     def _get_sols_for_leg(
         self, leg: LegPosition, layers: Iterable[int] = (0, -1)
-    ) -> list[BluemiraWire]:
+    ) -> list[BluemiraWire] | None:
         """
         Get the selected scrape-off-leg layers from the separatrix legs.
 
@@ -259,7 +272,10 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             Separatrix legs
         """
-        return [self.separatrix_legs[leg][layer] for layer in layers]
+        lg = self.separatrix_legs[leg]
+        if lg is None:
+            return None
+        return [lg[layer] for layer in layers]
 
     def make_dome(
         self,
@@ -314,7 +330,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         flux_surface = find_flux_surface_through_point(
             self.equilibrium.x,
             self.equilibrium.z,
-            self.equilibrium.psi(),
+            cast("np.ndarray", self.equilibrium.psi()),
             start[0],
             start[1],
             psi_start,
@@ -360,7 +376,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         label: str,
         target_baffle_join_point: np.ndarray,
         target_dome_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Divertor designer method for making the baffles.
@@ -434,7 +451,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
                 label,
                 wall_join_point,
                 target_baffle_join_point,
-                target_start,
+                target_start=target_start,
             )
         if baffle_type == self.STRAIGHT_BAFFLE:
             return self._make_straight_baffle(
@@ -470,20 +487,21 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         :
             The baffle shape
         """
-        wire = make_bezier(
+        return make_bezier(
             points=[
                 np.insert(wall_join_point, 1, 0.0),
                 np.insert(target_join_point, 1, 0.0),
-            ]
+            ],
+            label=label,
         )
-        return BluemiraWire(wire, label=label)
 
     def _make_fluxline_baffle(
         self,
         label: str,
         wall_join_point: np.ndarray,
         target_join_point: np.ndarray,
-        target_start: bool | None = None,  # noqa: FBT001
+        *,
+        target_start: bool = False,
     ) -> BluemiraWire:
         """
         Make a baffle using the divertor leg flux line shape.
@@ -515,6 +533,8 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         The default is that the flux surface is picked based on the lowest z coordinate
         of the start and end point.
         """
+        if target_start is None:
+            target_start = target_join_point[1] < wall_join_point[1]
         return self.make_flux_line_wire(
             start=target_join_point,
             end=wall_join_point,
@@ -721,7 +741,7 @@ class DivertorBuilder(Builder):
 
         return body
 
-    def build_xyz(self, degree: float = 360.0) -> list[PhysicalComponent]:
+    def build_xyz(self, degree: float = 360.0) -> list[Component]:
         """
         Build the x-y-z components of the divertor.
         """  # noqa: DOC201

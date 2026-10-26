@@ -210,8 +210,8 @@ tfv_config = {
 
 # %%
 model = EUDEMOFuelCycleModel(tfv_config, {})
-model.run(time_dicts[0])
-model.plot()
+result = model.run(time_dicts[0])
+result.plot()
 
 # %% [markdown]
 # Now, let's run the fuel cycle model for all the timelines we generated

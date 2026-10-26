@@ -11,6 +11,7 @@ cross-section.
 
 import numba as nb
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import EPS
 from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
@@ -147,7 +148,12 @@ def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
 
 @nb.jit(nopython=True, cache=True)
 def _get_working_coords(
-    xc: float, zc: float, x: float, z: float, d_xc: float, d_zc: float
+    xc: float,
+    zc: float,
+    x: float | npt.NDArray,
+    z: float | npt.NDArray,
+    d_xc: float,
+    d_zc: float,
 ) -> tuple[float, float, float, float, float]:
     """
     Convert coil and global coordinates to working coordinates.

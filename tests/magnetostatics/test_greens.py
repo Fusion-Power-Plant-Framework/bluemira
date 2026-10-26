@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 
+import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import pytest
@@ -428,3 +429,27 @@ class TestGreensEdgeCases:
     def test_greens_at_small_distance_from_point(self, small_point):
         print(greens_dbz_dx(*small_point))
         np.testing.assert_allclose(0.00025, greens_dbz_dx(*small_point), atol=1e-6)
+
+
+def test_old_plot():
+    x = np.linspace(0, 0.1, 500)
+    z = np.zeros_like(x)
+    coil_x, coil_z = 4, 4
+
+    psi = greens_psi(coil_x, coil_z, x, z)
+    dpsi_dx = greens_dpsi_dx(coil_x, coil_z, x, z)
+    dpsi_dz = greens_dpsi_dz(coil_x, coil_x, x, z)
+    bx = greens_Bx(coil_x, coil_z, x, z)
+    bz = greens_Bz(coil_x, coil_z, x, z)
+    old_bz = old_greens_Bz(coil_x, coil_z, x, z)
+
+    for r in [psi, dpsi_dx, dpsi_dz, bx]:
+        f, ax = plt.subplots()
+        ax.plot(x, 1e6 * r)
+        plt.show()
+
+    f, ax = plt.subplots()
+    ax.plot(x, bz, label="Bz")
+    ax.plot(x, old_bz, ls="--", label="old Bz")
+    ax.legend()
+    plt.show()

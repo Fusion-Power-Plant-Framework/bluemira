@@ -10,7 +10,7 @@ Numerical vertical stability control - still not quite there!
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -53,12 +53,10 @@ class DummyController:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """  # noqa: DOC201
-        try:
-            float(x)
-        except TypeError:
-            return np.zeros_like(x)
-        else:
+        x_arr = np.asarray(x)
+        if x_arr.ndim == 0:
             return 0.0
+        return np.zeros_like(x_arr, dtype=np.float64)
 
     @staticmethod
     def Bz(
@@ -68,12 +66,10 @@ class DummyController:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """  # noqa: DOC201
-        try:
-            float(x)
-        except TypeError:
-            return np.zeros_like(x)
-        else:
+        x_arr = np.asarray(x)
+        if x_arr.ndim == 0:
             return 0.0
+        return np.zeros_like(x_arr, dtype=np.float64)
 
 
 class VirtualController(CoilGroup):
@@ -97,7 +93,7 @@ class VirtualController(CoilGroup):
             Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),
         )
 
-    def feedback_current(self) -> npt.NDArray[np.float64]:
+    def feedback_current(self) -> float:
         """
         Calculate feedback currents to compensate for a radial field at the
         centre of the plasma. (Vertical stability)
@@ -106,14 +102,15 @@ class VirtualController(CoilGroup):
         \t:math:`\\Bigr|_{\\substack{X_{cur}, Z_{cur}}}`
         """  # noqa: DOC201
         xcur, zcur = self.eq.effective_centre()
+        bx_vac = self.coilset.Bx(xcur, zcur)
+        bx_feedback = self.Bx_response(xcur, zcur)
+        return -self.gz * bx_vac / bx_feedback
 
-        return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
-
-    def adjust_currents(self, d_current: float):
+    def adjust_currents(self, d_current: float | npt.NDArray[np.float64]):
         """
         Adjust the currents in the virtual control coils.
         """
-        self.current += d_current
+        self.current = np.asarray(self.current) + d_current
 
     def stabilise(self):
         """
@@ -123,8 +120,14 @@ class VirtualController(CoilGroup):
         currents = self.feedback_current()
         self.adjust_currents(currents)
 
-    def psi(self) -> npt.NDArray[np.float64]:
+    def psi(
+        self,
+        x: npt.ArrayLike | None = None,
+        z: npt.ArrayLike | None = None,
+    ) -> npt.NDArray[np.float64]:
         """
         Get the psi array of the VirtualController
         """  # noqa: DOC201
-        return self.current * self._pgreen
+        if x is None and z is None:
+            return np.asarray(self.current) * self._pgreen
+        return np.asarray(super().psi(cast("npt.NDArray", x), cast("npt.NDArray", z)))

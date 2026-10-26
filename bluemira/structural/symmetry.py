@@ -39,19 +39,9 @@ class CyclicSymmetry:
         The list of left and right DOF ids
     """
 
-    def __init__(self, geometry: Geometry, cycle_sym_ids: list[list[int], list[int]]):
+    def __init__(self, geometry: Geometry, cycle_sym_ids: list[list[int]]):
         self.geometry = geometry
         self.cycle_sym_ids = cycle_sym_ids
-
-        # Constructors
-        self.t_block = None
-        self.t_matrix = None
-        self.left_nodes = None
-        self.right_nodes = None
-        self.theta = None
-        self.n = None
-        self.axis = None
-        self.selections = None
 
         if self.cycle_sym_ids:
             self._prepare_cyclic_symmetry()
