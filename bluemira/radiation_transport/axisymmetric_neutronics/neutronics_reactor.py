@@ -12,10 +12,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum, auto
+from pathlib import Path
 from typing import TYPE_CHECKING
+
+import matplotlib.pyplot as plt
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.display.plotter import plot_2d
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
 )
@@ -94,12 +98,26 @@ class AxisymmetricNeutronicsReactor(ABC):
             or self.default_discretisations(comp.parent().name)
             for comp in all_comps
         ]
-        return AxisymmetricNeutronicsGeomManager.from_list_of_components(
+        desplined_geometry = AxisymmetricNeutronicsGeomManager.from_list_of_components(
             components=all_comps,
             discretisations=discretisations,
             overlap_tolerance=self.config.get("overlap_tolerance", 1e-10),
             gap_tolerance=self.config.get("gap_tolerance", 1e-6),
         )
+
+        plot_comparisons = self.config.get("plot_comparisons", False)
+        if plot_comparisons:
+            neutronics_output_path = Path(
+                self.config.get("neutronics_output_path", "./outputs/")
+            )
+            self.plot_desplining_comparisons(
+                orig_comps=[comp.get_component("xz") for comp in all_comps],
+                desplined_comps=desplined_geometry.component().get_component(
+                    "xz", first=False
+                ),
+                output_path=neutronics_output_path,
+            )
+        return desplined_geometry
 
     def plot_2d(self, *args, **kwargs):
         """
@@ -113,6 +131,60 @@ class AxisymmetricNeutronicsReactor(ABC):
         show = kwargs.pop("show", True)
         ax = kwargs.pop("ax", None)
         return self.geometry.plot_2d(*args, ax=ax, show=show, **kwargs)
+
+    @staticmethod
+    def plot_desplining_comparisons(
+        orig_comps: list[Component],
+        desplined_comps: list[Component],
+        output_path: Path | None = None,
+    ):
+        """
+        Create comparison plots in the xz plane before and after
+        desplining components.
+
+        Raises
+        ------
+        ValueError
+            if original and desplined components do not have the
+            same length
+        """
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        if len(orig_comps) != len(desplined_comps):
+            raise ValueError(
+                "original and desplined components must have the same length."
+            )
+
+        fig, axes = plt.subplots(
+            1,
+            2,
+            figsize=(12, 6),
+            sharex=True,
+            sharey=True,
+        )
+
+        for orig_comp, desplined_comp in zip(
+            orig_comps,
+            desplined_comps,
+            strict=True,
+        ):
+            orig_comp.plot_2d(ax=axes[0], show=False)
+            for wire in orig_comp.leaves[0].shape.boundary:
+                plot_2d(wire.vertexes.T, ax=axes[0], show=False)
+
+            desplined_comp.plot_2d(ax=axes[1], show=False)
+            for wire in desplined_comp.leaves[0].shape.boundary:
+                plot_2d(wire.vertexes.T, ax=axes[1], show=False)
+
+        axes[0].set_title("Original")
+        axes[1].set_title("Desplined")
+
+        fig.tight_layout()
+
+        plot_path = output_path / "desplining_comparisons.png"
+        fig.savefig(plot_path, bbox_inches="tight")
+
+        bluemira_print(f"Plotted desplining comparisons as {plot_path}")
 
     @abstractmethod
     def get_all_components(
