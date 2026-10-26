@@ -10,7 +10,7 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 
@@ -36,7 +36,18 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from bluemira.equilibria.coils._grouping import CoilGroup
-    from bluemira.equilibria.plasma import NoPlasmaCoil, PlasmaCoil
+
+
+class BxBzT(Protocol):
+    """An object that has Bx and Bz methods"""
+
+    def Bx(
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
+
+    def Bz(
+        self, x: npt.ArrayLike, z: npt.ArrayLike
+    ) -> float | npt.NDArray[np.float64]: ...
 
 
 class CoilGroupFieldsMixin:
@@ -247,7 +258,7 @@ class CoilGroupFieldsMixin:
         """  # noqa: DOC201
         return np.hypot(self.Bx(x, z), self.Bz(x, z))
 
-    def F(self, eqcoil: CoilGroup | PlasmaCoil | NoPlasmaCoil) -> np.ndarray:
+    def F(self, eqcoil: BxBzT) -> np.ndarray:
         """
         Calculate the force response at the coil centre including the coil
         self-force.

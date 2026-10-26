@@ -414,7 +414,7 @@ class CoilForceConstraints(UpdateableConstraint):
         current = cc.current
         non_zero = np.nonzero(current)[0]
         if non_zero.size:
-            fp[non_zero] = cc.F(cc)[non_zero] / current[non_zero][:, None]
+            fp[non_zero] = cc.F(equilibrium)[non_zero] / current[non_zero][:, None]
         return fp
 
     def f_constraint(self) -> CoilForceConstraintFunction:
