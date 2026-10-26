@@ -23,7 +23,7 @@ jobs:
           sparse-checkout: .github
           path: temp
       - name: "Get information about the current run"
-        uses: Fusion-Power-Plant-Framework/fppf-actions/get-workflow-origin@a6dd369021515269789428796f491a0fa67ea6f5
+        uses: Fusion-Power-Plant-Framework/fppf-actions/get-workflow-origin@12d5284c9baf30770e46880c8d4350928e540212
         id: workflow-run-info
       - name: Checkout
         if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
