@@ -63,7 +63,7 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.16.4",
+    "ruff==0.17.2",
     "sphinx<8.2",
     "sphinx-autoapi",
     "sphinx_copybutton",
@@ -196,7 +196,7 @@ ignore = [
     # should remove
     "ERA",  # remove commented out code
     "SLF001",  # private method use
-
+    "pytest-fixture-autouse",
 ]
 
 [tool.ruff.lint.isort]
