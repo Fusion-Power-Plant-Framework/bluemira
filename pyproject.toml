@@ -196,7 +196,7 @@ ignore = [
     # should remove
     "ERA",  # remove commented out code
     "SLF001",  # private method use
-
+    "pytest-fixture-autouse",
 ]
 
 [tool.ruff.lint.isort]
