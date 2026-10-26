@@ -610,8 +610,8 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         self,
         equilibrium: FixedPlasmaEquilibrium,
         ax=None,
-        plasma=True,  # noqa: FBT002
         *,
+        plasma=True,
         field: EqBPlotParam = EqBPlotParam.PSI,
     ):
         super().__init__(ax)
