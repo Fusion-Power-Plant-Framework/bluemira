@@ -18,7 +18,7 @@ babel==2.18.0
     #   matproplib
 blosc2==4.14.1
     # via tables
-certifi==2026.7.22
+certifi==2026.10.23
     # via
     #   httpcore
     #   httpx
@@ -45,7 +45,7 @@ csl-reference==0.1.2
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==5.1.1
+cyclopts==5.3.0
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -55,7 +55,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.66.1
+fonttools==4.67.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -80,7 +80,7 @@ idna==3.20
     #   anyio
     #   httpx
     #   requests
-imageio==2.38.0
+imageio==2.38.1
     # via bluemira (pyproject.toml)
 joblib==1.6.0
     # via scikit-learn
@@ -107,7 +107,7 @@ meshio==5.3.5
     # via bluemira (pyproject.toml)
 msgpack==1.2.3
     # via blosc2
-narwhals==2.26.0
+narwhals==2.27.1
     # via scikit-learn
 ndindex==1.10.1
     # via blosc2
@@ -149,13 +149,13 @@ packaging==26.3
     #   matplotlib
     #   pooch
     #   tables
-pandas==3.0.6
+pandas==3.1.0
     # via seaborn
 periodictable==2.1.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-pillow==12.3.0
+pillow==13.0.0
     # via
     #   imageio
     #   matplotlib
@@ -164,7 +164,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.12.3
+platformdirs==4.13.5
     # via
     #   pint
     #   pooch
@@ -174,14 +174,14 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.13.5
+pydantic==2.14.1
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.46.5
+pydantic-core==2.50.1
     # via pydantic
 pygments==2.21.0
     # via
@@ -191,11 +191,11 @@ pyparsing==3.3.3
     # via
     #   matplotlib
     #   periodictable
-python-dateutil==2.9.0.post0
+python-dateutil==3.0.0
     # via
     #   matplotlib
     #   pandas
-pyvista==0.49.0
+pyvista==0.49.1
     # via bluemira (pyproject.toml)
 pyvista-validation==0.2.2
     # via pyvista
@@ -247,6 +247,8 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via pydantic
+tzdata==2026.5
+    # via python-dateutil
 urllib3==2.8.0
     # via requests
 vtk==9.3.1
