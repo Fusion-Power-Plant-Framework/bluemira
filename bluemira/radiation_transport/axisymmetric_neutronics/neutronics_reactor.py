@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from bluemira.base.reactor import Reactor
 
 
-class NeutronincsModel(Enum):
+class NeutronicsModel(Enum):
     """
     Enumeration of different model to be
     considered for neutronics simulations.
@@ -71,7 +71,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         self,
         neutronics_config: dict,
         params: dict | ParameterFrame,
-        model: NeutronincsModel,
+        model: NeutronicsModel,
         reactor: Reactor,
     ):
         bluemira_print("Creating axisymmetric CSG neutronics model")
@@ -188,7 +188,7 @@ class AxisymmetricNeutronicsReactor(ABC):
 
     @abstractmethod
     def get_all_components(
-        self, reactor: Reactor, model: NeutronincsModel = NeutronincsModel.SIMPLE
+        self, reactor: Reactor, model: NeutronicsModel = NeutronicsModel.SIMPLE
     ) -> list[Component]:
         """
         Get all relevant components for the reactor
