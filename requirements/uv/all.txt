@@ -46,6 +46,10 @@ bleach==6.4.0
     # via nbconvert
 blosc2==4.11.0
     # via tables
+cachetools==7.2.6
+    # via ocp-tessellate
+cad-viewer-widget==4.2.0
+    # via jupyter-cadquery
 certifi==2026.7.22
     # via
     #   httpcore
@@ -84,10 +88,14 @@ cycler==0.12.1
     # via matplotlib
 cyclopts==4.23.2
     # via pyvista
+dataclasses-json==0.6.7
+    # via pygltflib
 debugpy==1.8.21
     # via ipykernel
 defusedxml==0.7.1
     # via nbconvert
+deprecated==1.3.1
+    # via pygltflib
 distlib==0.4.3
     # via virtualenv
 docstring-parser==0.18.0
@@ -148,7 +156,9 @@ idna==3.19
 imageio==2.37.4
     # via bluemira (pyproject.toml)
 imagesize==2.0.0
-    # via sphinx
+    # via
+    #   ocp-tessellate
+    #   sphinx
 importlib-metadata==9.0.0
     # via
     #   jupyter-cache
@@ -167,7 +177,9 @@ ipython==9.16.1
 ipython-pygments-lexers==1.1.1
     # via ipython
 ipywidgets==8.1.9
-    # via rich
+    # via
+    #   cad-viewer-widget
+    #   rich
 isoduration==20.11.0
     # via jsonschema
 jedi==0.20.0
@@ -201,6 +213,8 @@ jupyter-builder==1.2.2
     #   notebook
 jupyter-cache==1.0.1
     # via myst-nb
+jupyter-cadquery==5.2.0
+    # via bluemira (pyproject.toml)
 jupyter-client==8.9.1
     # via
     #   ipykernel
@@ -230,7 +244,10 @@ jupyter-server==2.20.0
 jupyter-server-terminals==0.5.4
     # via jupyter-server
 jupyterlab==4.6.3
-    # via notebook
+    # via
+    #   cad-viewer-widget
+    #   jupyter-cadquery
+    #   notebook
 jupyterlab-pygments==0.3.0
     # via nbconvert
 jupyterlab-server==2.28.0
@@ -261,6 +278,8 @@ markupsafe==3.0.3
     # via
     #   jinja2
     #   nbconvert
+marshmallow==3.26.2
+    # via dataclasses-json
 matplotlib==3.11.1
     # via
     #   bluemira (pyproject.toml)
@@ -289,7 +308,9 @@ msgpack==1.2.1
 mypy==2.3.1
     # via bluemira (pyproject.toml)
 mypy-extensions==1.1.0
-    # via mypy
+    # via
+    #   mypy
+    #   typing-inspect
 myst-nb==1.4.0
     # via bluemira (pyproject.toml)
 myst-parser==5.1.0
@@ -335,6 +356,7 @@ numpy==2.2.6
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
+    #   cad-viewer-widget
     #   contourpy
     #   coolprop
     #   eqdsk
@@ -346,6 +368,7 @@ numpy==2.2.6
     #   numba
     #   numexpr
     #   numpydantic
+    #   ocp-tessellate
     #   pandas
     #   periodictable
     #   polyscope
@@ -354,8 +377,20 @@ numpy==2.2.6
     #   scipy
     #   seaborn
     #   tables
+    #   threejs-materials
 numpydantic==1.10.0
     # via matproplib
+ocp-tessellate==3.6.3
+    # via
+    #   jupyter-cadquery
+    #   ocp-viewer-core
+ocp-viewer-core==1.1.2
+    # via jupyter-cadquery
+orjson==3.13.0
+    # via
+    #   cad-viewer-widget
+    #   jupyter-cadquery
+    #   ocp-viewer-core
 overrides==7.7.0
     # via jupyter-server
 packaging==26.3
@@ -366,6 +401,7 @@ packaging==26.3
     #   jupyterlab
     #   jupyterlab-server
     #   jupytext
+    #   marshmallow
     #   matplotlib
     #   nbconvert
     #   pooch
@@ -390,7 +426,9 @@ pillow==12.3.0
     # via
     #   imageio
     #   matplotlib
+    #   ocp-viewer-core
     #   pyvista
+    #   threejs-materials
 pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
@@ -400,6 +438,7 @@ platformdirs==4.11.3
     #   jupyter-core
     #   pint
     #   pooch
+    #   threejs-materials
     #   virtualenv
 pluggy==1.6.0
     # via
@@ -440,6 +479,8 @@ pydantic==2.13.4
     #   numpydantic
 pydantic-core==2.46.4
     # via pydantic
+pygltflib==1.16.5
+    # via threejs-materials
 pygments==2.21.0
     # via
     #   ipython
@@ -451,6 +492,7 @@ pygments==2.21.0
     #   sphinx
 pyparsing==3.3.2
     # via
+    #   cad-viewer-widget
     #   matplotlib
     #   periodictable
 pytest==9.1.1
@@ -509,6 +551,7 @@ requests==2.34.2
     #   jupyterlab-server
     #   pooch
     #   sphinx
+    #   threejs-materials
 rfc3339-validator==0.1.4
     # via
     #   jsonschema
@@ -604,6 +647,8 @@ threadpoolctl==3.6.0
     # via
     #   blosc2
     #   scikit-learn
+threejs-materials==1.2.5
+    # via ocp-viewer-core
 tinycss2==1.5.1
     # via bleach
 tomli==2.4.1
@@ -646,6 +691,7 @@ typing-extensions==4.16.0
     #   jupyterlab
     #   mypy
     #   myst-nb
+    #   ocp-tessellate
     #   pint
     #   polyscope
     #   pydantic
@@ -654,7 +700,10 @@ typing-extensions==4.16.0
     #   referencing
     #   sqlalchemy
     #   typeguard
+    #   typing-inspect
     #   typing-inspection
+typing-inspect==0.9.0
+    # via dataclasses-json
 typing-inspection==0.4.4
     # via pydantic
 tzdata==2026.3
@@ -674,14 +723,20 @@ vtk==9.3.1
 wcwidth==0.8.2
     # via prompt-toolkit
 webcolors==25.10.0
-    # via jsonschema
+    # via
+    #   jsonschema
+    #   ocp-tessellate
 webencodings==0.6.1
     # via
     #   bleach
     #   tinycss2
 websocket-client==1.9.0
     # via jupyter-server
+websockets==17.3
+    # via ocp-viewer-core
 widgetsnbextension==4.0.16
     # via ipywidgets
+wrapt==2.5.1
+    # via deprecated
 zipp==4.1.0
     # via importlib-metadata
