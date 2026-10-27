@@ -77,7 +77,7 @@ class TGeometryParameterisationOptVariables(OptVariablesFrame):
 
 
 class TestGeometryParameterisation:
-    def test_subclass(self):
+    def setup_method(self):
         class TestPara(GeometryParameterisation[TGeometryParameterisationOptVariables]):
             optvar_cls: type[TGeometryParameterisationOptVariables] = (
                 TGeometryParameterisationOptVariables
@@ -93,8 +93,24 @@ class TestGeometryParameterisation:
                     ])
                 )
 
-        t = TestPara()
-        assert t.name == "TestPara"
+        self.test_para = TestPara
+
+    def test_subclass(self):
+        assert self.test_para().name == "TestPara"
+
+    def test_initialisation_from_frame(self):
+        param = self.test_para(TGeometryParameterisationOptVariables())
+        assert param.variables.a.value == 0
+        vars_ = TGeometryParameterisationOptVariables()
+        vars_.adjust_variable("a", 2, strict_bounds=False)
+        param = self.test_para(vars_)
+        assert param.variables.a.value == 2
+
+    def test_initialisation_from_dict(self):
+        param = self.test_para()
+        assert param.variables.a.value == 0
+        param = self.test_para({"a": {"value": 2}})
+        assert param.variables.a.value == 2
 
 
 class TestPrincetonD:

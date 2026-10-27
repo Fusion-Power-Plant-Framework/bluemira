@@ -49,6 +49,7 @@ from bluemira.utilities.opt_variables import (
     ov,
 )
 from bluemira.utilities.plot_tools import str_to_latex
+from bluemira.utilities.tools import cross_2d_3d
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -114,11 +115,13 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         if variables is None:
             variables = self.optvar_cls()
         elif isinstance(variables, dict):
-            variables = self.optvar_cls().update_from_dict(variables)
-        elif not isinstance(variables, type(self.optvar_cls)):
+            _vars = self.optvar_cls()
+            _vars.adjust_variables(variables, strict_bounds=False)
+            variables = _vars
+        elif not isinstance(variables, self.optvar_cls):
             bluemira_warn(
                 f"{self.name}: expected variables of type "
-                f"{type(self.optvar_cls)}, got {type(variables).__name__}. "
+                f"{self.optvar_cls}, got {type(variables).__name__}. "
                 "Using default values."
             )
             variables = self.optvar_cls()
@@ -3032,7 +3035,7 @@ def solve_fillet(p1, t1, p2, t2, radius):
     b = _normalize(b)
 
     # orient bisector consistently
-    if np.cross(t1, t2) < 0:
+    if cross_2d_3d(t1, t2) < 0:
         b = -b
 
     # distance from intersection to center
