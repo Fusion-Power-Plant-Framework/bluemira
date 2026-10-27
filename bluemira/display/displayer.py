@@ -46,7 +46,8 @@ class ViewerBackend(Enum):
         with suppress(NameError):
             if (
                 chosen != "freecad"
-                and type(get_ipython()).__name__ == "ZMQInteractiveShell"
+                and type(get_ipython()).__name__  # noqa: F821 # type:ignore[ty:unresolved-reference]
+                == "ZMQInteractiveShell"
             ):
                 return cls["jupyter".upper()]  # Jupyter notebook or qtconsole
         return cls[chosen]

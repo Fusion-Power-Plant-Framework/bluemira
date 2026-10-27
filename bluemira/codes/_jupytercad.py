@@ -11,10 +11,10 @@ from typing import TYPE_CHECKING
 import numpy as np
 from jupyter_cadquery import show
 
-import bluemira.codes._geometryapi as cadapi
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
+    import bluemira.codes._geometryapi as cadapi
     from bluemira.display.palettes import ColorPalette
 
 
@@ -44,7 +44,7 @@ def show_cad(
     *,
     show_gui_panels: bool = True,
     remove_names: bool = True,
-    **kwargs,
+    **kwargs,  # noqa: ARG001
 ):
     """
     The implementation of the display API for FreeCAD parts.
@@ -90,11 +90,11 @@ def show_cad(
         if transparency:
             opts["alphas"].append(1 - p["transparency"])
     for op in list(opts.keys()):
-        if len(opts[op]) != len(parts):
+        if len(opts[op]) != len(parts_list):
             opts.pop(op)
-    if not remove_names and None not in labels and len(labels) == len(parts):
-        opts["names"] = [clean_name(l, f"{i}") for i, l in enumerate(labels)]
-    show(*parts, tools=show_gui_panels, **opts)
+    if not remove_names and None not in labels and len(labels) == len(parts_list):
+        opts["names"] = [clean_name(lab, f"{i}") for i, lab in enumerate(labels)]
+    show(*parts_list, tools=show_gui_panels, **opts)
 
 
 def clean_name(label: str, index_label: str) -> str:
