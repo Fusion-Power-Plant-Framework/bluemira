@@ -117,10 +117,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             _vars = self.optvar_cls()
             _vars.adjust_variables(variables, strict_bounds=False)
             variables = _vars
-        elif not isinstance(variables, type(self.optvar_cls)):
+        elif not isinstance(variables, self.optvar_cls):
             bluemira_warn(
                 f"{self.name}: expected variables of type "
-                f"{type(self.optvar_cls)}, got {type(variables).__name__}. "
+                f"{self.optvar_cls}, got {type(variables).__name__}. "
                 "Using default values."
             )
             variables = self.optvar_cls()
