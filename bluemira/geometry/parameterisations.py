@@ -49,6 +49,7 @@ from bluemira.utilities.opt_variables import (
     ov,
 )
 from bluemira.utilities.plot_tools import str_to_latex
+from bluemira.utilities.tools import cross_2d_3d
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -3034,7 +3035,7 @@ def solve_fillet(p1, t1, p2, t2, radius):
     b = _normalize(b)
 
     # orient bisector consistently
-    if np.cross(t1, t2) < 0:
+    if cross_2d_3d(t1, t2) < 0:
         b = -b
 
     # distance from intersection to center
