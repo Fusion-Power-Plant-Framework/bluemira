@@ -1936,28 +1936,53 @@ def signed_distance(
             \\text{positive estimate of overlap length} & \\text{if overlap exists}
         \\end{cases}
     """
+    # Ensure both origin and target are BluemiraWires for ease
+    if isinstance(origin, Coordinates):
+        origin = BluemiraWire(make_polygon(origin))
+    if isinstance(target, Coordinates):
+        target = BluemiraWire(make_polygon(target))
     d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
     if d == 0.0:  # noqa: RUF069
         if len(vectors) <= 1:
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0
-        # There are multiple intersections: the wires are overlapping
-        # For now, without boolean operations, get an estimate of the intersection
-        # length
-        length = 0
-        for i in range(1, len(vectors)):
-            p1 = vectors[i - 1][0]
-            p2 = vectors[i][0]
 
-            length += np.sqrt(
-                (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
-            )
-
-        # TODO @je-cook: Use a boolean difference operation to get the lengths of the
-        # overlapping wire segment(s)
-        # 3590
-        return length
+        # overlap_wires = boolean_cut(origin, target)
+        cond1 = origin.is_closed()
+        cond2 = target.is_closed()
+        if cond1 and cond2:
+            overlap_shapes = boolean_common(BluemiraFace(origin), BluemiraFace(target))
+            d = 0
+            for shape in overlap_shapes:
+                d += max(signed_distance_2D_polygon(origin.vertexes, shape.vertexes))
+        elif not (cond1 or cond2):
+            # both are open, most likely use case
+            cut_target_wires = boolean_cut(target, origin)
+            cut_origin_wires = boolean_cut(origin, target)
+            target_wires = []
+            origin_wires = []
+            for target_wire, origin_wire in zip(
+                cut_target_wires, cut_origin_wires, strict=True
+            ):
+                for intercept_points in vectors:
+                    sp = target_wire.start_point().points
+                    ep = target_wire.end_point().points
+                    if (sp in intercept_points) and (ep in intercept_points):
+                        target_wires += [target_wire]
+                    sp = origin_wire.start_point().points
+                    ep = origin_wire.end_point().points
+                    if (sp in intercept_points) and (ep in intercept_points):
+                        origin_wires += [origin_wire]
+                # this gets all the intersection wires for origin and target, not sure
+                # how to effectively calculate the max distance between them?
+                # for now just average of wire intersection lengths
+                d = 0
+                for wire1, wire2 in zip(origin_wires, target_wires, strict=True):
+                    d += np.mean(wire1.length, wire2.length)
+        # else:
+        # not sure how to handle this as can easily end up with wrong wires
+        return d
     # There are no intersections, return minimum distance
     return -d
 
