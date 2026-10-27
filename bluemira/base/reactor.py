@@ -23,7 +23,7 @@ from typing import (
 
 from rich.progress import track
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, ComponentT
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.tools import (
@@ -349,7 +349,7 @@ class ComponentManager(BaseManager[ComponentT]):
         )
 
 
-class Reactor(BaseManager):
+class Reactor(BaseManager[Component]):
     """
     Base class for reactor definitions.
 
