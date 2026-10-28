@@ -22,6 +22,7 @@ from scipy.interpolate import interp1d
 from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display.plotter import Zorder, plot_2d, plot_coordinates
+from bluemira.equilibria.find_legs import NumNull, split
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
@@ -444,6 +445,8 @@ class CoreRadiation(Radiation):
         # Store the midplane profiles
         self.profiles = midplane_profiles
 
+        self.lcfs = self.eq.get_LCFS()
+
     def calculate_mp_radiation_profile(self):
         """
         1D profile of the line radiation loss at the mid-plane
@@ -701,6 +704,13 @@ class ScrapeOffLayerRadiation(Radiation):
         self.separatrix = self.eq.get_separatrix()
         self.z_mp = float(self.points["o_point"]["z"])
         if self.eq.is_double_null:
+            if len(self.separatrix) != 2:  # noqa: PLR2004
+                self.separatrix = split(
+                    self.separatrix
+                    if isinstance(self.separatrix, Coordinates)
+                    else self.separatrix[0],
+                    NumNull.DN,
+                )
             # The two halves
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
