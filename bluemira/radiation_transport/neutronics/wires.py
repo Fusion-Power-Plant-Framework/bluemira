@@ -18,14 +18,13 @@ import numpy as np
 from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
-
-    from bluemira.geometry.coordinates import Coordinates
 
 
 class StraightLineInfo(NamedTuple):
@@ -67,7 +66,7 @@ class WireInfo:
     # 3662
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[npt.NDArray[np.float64]]  # 2 normalised directional vectors xyz
+    tangents: Sequence[npt.NDArray]  # 2 normalised directional vectors xyz
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
@@ -80,7 +79,7 @@ class WireInfo:
 
     @classmethod
     def from_2P(  # noqa: N802
-        cls, start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
+        cls, start_point: npt.NDArray | Coordinates, end_point: npt.NDArray | Coordinates
     ) -> WireInfo:
         """
         Create the WireInfo for a straight line (i.e. one where the key_points is of
@@ -91,12 +90,13 @@ class WireInfo:
         :
             A WireInfo representing the straight-line.
         """
-        direction = np.array(end_point) - np.array(start_point)
-        normed_dir = np.array(direction) / np.linalg.norm(direction)
-        return cls(
-            StraightLineInfo(np.array(start_point), np.array(end_point)),
-            [normed_dir, normed_dir],
-        )
+        if isinstance(start_point, np.ndarray):
+            start_point = Coordinates(start_point)
+        if isinstance(end_point, np.ndarray):
+            end_point = Coordinates(end_point)
+        direction = end_point.xyz - start_point.xyz
+        normed_dir = direction / np.linalg.norm(direction)
+        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
 
 
 class WireInfoList:
@@ -163,12 +163,12 @@ class WireInfoList:
         )
 
     @property
-    def start_point(self):
+    def start_point(self) -> Coordinates:
         """The start_point for the entire series of wires"""
         return self.info_list[0].key_points[0]
 
     @start_point.setter
-    def start_point(self, new_start_point: npt.NDArray[np.float64]):
+    def start_point(self, new_start_point: Coordinates):
         """
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
@@ -176,12 +176,12 @@ class WireInfoList:
         self.info_list[0].key_points = old_kp._replace(start_point=new_start_point)
 
     @property
-    def end_point(self):
+    def end_point(self) -> Coordinates:
         """The end_point for the entire series of wires"""
         return self.info_list[-1].key_points[1]
 
     @end_point.setter
-    def end_point(self, new_end_point):
+    def end_point(self, new_end_point: Coordinates):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
         old_kp = self.info_list[-1].key_points
         self.info_list[-1].key_points = old_kp._replace(end_point=new_end_point)

@@ -46,7 +46,6 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    import bluemira.codes._geometryapi as cadapi
     from bluemira.codes.openmc.material import MaterialsLibrary
     from bluemira.geometry.coordinates import Coordinates
     from bluemira.radiation_transport.neutronics.geometry import (
