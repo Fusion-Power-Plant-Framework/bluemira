@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
+import mcio
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -23,8 +24,14 @@ from bluemira.display.plotter import plot_2d
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
 )
+from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
+    to_mcio_material,
+)
 
 if TYPE_CHECKING:
+    from matproplib.conditions import OperationalConditions
+    from openmc.model.model import Model
+
     from bluemira.base.components import Component
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.base.reactor import Reactor
@@ -186,6 +193,63 @@ class AxisymmetricNeutronicsReactor(ABC):
         fig.savefig(plot_path, bbox_inches="tight")
 
         bluemira_print(f"Plotted desplining comparisons as {plot_path}")
+
+    def run_mcio(
+        self,
+        op_cond: OperationalConditions,
+    ) -> Model:
+        """
+        Runs MCIO interface to create openmc geometry for neutronics
+
+        Returns
+        -------
+        openmc.model.model.Model
+        """
+        all_desplined_components = self.geometry.get_all_components()
+
+        all_names = [comp.name for comp in all_desplined_components]
+        all_ocp_solids = [
+            comp.get_component("xyz").children[0].shape.shape.wrapped
+            for comp in all_desplined_components
+        ]
+
+        all_materials = [
+            comp.get_component("xyz").children[0].material
+            for comp in all_desplined_components
+        ]
+
+        # set up empty decomposer (you can also add step files and ocp
+        # solids if you like)
+        decomposer = mcio.decompose.Decomposer()
+
+        for mat_number, (solid, mat, name) in enumerate(
+            zip(all_ocp_solids, all_materials, all_names, strict=True)
+        ):
+            # Renames MCIO material to the accepted format, e.g. "m0", "m1", ...
+            mcio_material = to_mcio_material(mat, op_cond, mat_number)
+            decomposer.add_solid(solid, name=name, material=mcio_material)
+
+        # run decomposer to generate void and model
+        decomposer.run()
+
+        # get the openmc model
+        openmc_model = decomposer.model.openmc_model
+
+        # Export xml files
+        xml_path = self.config.get("neutronics_output_path", "./csg_outputs/")
+        openmc_model.export_to_xml(xml_path)
+
+        # Plot xml
+        ax = openmc_model.plot(
+            basis="xz",
+            color_by="cell",
+            origin=(0.0, 0.0, 0.0),  # centre: x, y, z
+            width=(30, 30.0),  # total X width, total Z width
+            pixels=(2000, 2000),
+        )
+        ax.figure.savefig(f"{xml_path}/csg_plot.png")
+
+        return openmc_model
 
     @abstractmethod
     def get_all_components(self, reactor: Reactor) -> list[Component]:
