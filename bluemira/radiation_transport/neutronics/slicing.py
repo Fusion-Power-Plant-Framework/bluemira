@@ -172,12 +172,15 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         Function to record the arc of a circle as a WireInfo, with the appropriate
         tangents and BluemiraWire.
         """  # noqa: DOC201
+        import bluemira.codes._geometryapi as cadapi
+
+        data = cadapi.get_edge_data(edge.shape)
         return WireInfo(
             CircleInfo(
                 start_vec,
                 end_vec,
-                np.array(edge.Curve.Center),
-                edge.Curve.Radius,
+                data["centre"],
+                data["radius"],
             ),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,

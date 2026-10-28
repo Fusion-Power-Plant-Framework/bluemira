@@ -1423,7 +1423,7 @@ class BlanketCellStack:
             Incorrect number of edges on external wire
         """
         # check exterior wire is correct
-        ext_curve_comp = cast("cadapi.apiWire", pre_cell.exterior_wire.shape)
+        ext_curve_comp = pre_cell.exterior_wire.edges
         if len(ext_curve_comp) != 1:
             raise TypeError("Incorrect type of BluemiraWire parsed in.")
         if ext_curve_comp[0].edge_type() is not CurveType.LINE:

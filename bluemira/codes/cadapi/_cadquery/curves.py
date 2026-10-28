@@ -55,6 +55,15 @@ def get_edge_type(edge: apiEdge | apiWire) -> CurveType:
     return CurveType(cq_edge.geomType())
 
 
+def get_edge_data(edge: apiEdge | apiWire) -> dict[str, float]:
+    ct = get_edge_type(edge)
+    cq_edge = edge.Edges()[0] if isinstance(edge, apiWire) else edge
+
+    if ct == CurveType.CIRCLE:
+        return {"centre": cq_edge.Center, "radius": cq_edge.radius}
+    raise NotImplementedError
+
+
 def make_bezier(
     points: list | np.ndarray,
     first_parameter: float | None = None,

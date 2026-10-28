@@ -1150,7 +1150,23 @@ def get_edge_type(edge: apiEdge) -> CurveType:
     :
         Curve type
     """
-    return EDGE_TYPE_TO_ENUM[edge.Curve]
+    fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
+
+    return EDGE_TYPE_TO_ENUM[type(fc_edge.Curve)]
+
+
+def get_edge_data(
+    edge: apiEdge | apiWire,
+) -> dict[str, tuple[float, float, float] | float]:
+    ft = get_edge_type(edge)
+    fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
+
+    if ft == CurveType.CIRCLE:
+        return {
+            "centre": tuple(fc_edge.Curve.Center),
+            "radius": fc_edge.Curve.Radius,
+        }
+    raise NotImplementedError
 
 
 # ======================================================================================
