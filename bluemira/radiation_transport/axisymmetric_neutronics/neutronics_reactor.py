@@ -15,7 +15,6 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
 import mcio
 
 from bluemira.base.look_and_feel import bluemira_print
@@ -26,6 +25,9 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
     to_mcio_material,
+)
+from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
+    plot_desplining_comparisons,
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.tallies import (
     add_default_tallies,
