@@ -10,7 +10,7 @@ Materials for generalised neutronics
 import json
 from pathlib import Path
 
-import mcio.material.Material
+import mcio
 from matproplib import material
 from matproplib.conditions import OperationalConditions
 from matproplib.properties.dependent import Density
@@ -65,6 +65,8 @@ def to_mcio_material(
             for fraction, dpp in zip(fractions, densities, strict=True)
         )
         density_unit = units[0]
+
+    density_unit = str(density_unit)
 
     if density_unit in {"kg/m³", "kg/m3", "kilogram / meter ** 3"}:
         density *= 1e-3
