@@ -252,6 +252,12 @@ class AxisymmetricNeutronicsReactor(ABC):
         # get the openmc model
         openmc_model = decomposer.model.openmc_model
 
+        # Add Tallies
+        bluemira_print("Adding Tallies")
+        self.add_tallies(openmc_model)
+        # optional
+        self.customised_tallies(openmc_model)
+
         # Export xml files
         xml_path = self.config.get("neutronics_output_path", "./csg_outputs/")
         openmc_model.export_to_xml(xml_path)
@@ -267,13 +273,9 @@ class AxisymmetricNeutronicsReactor(ABC):
         )
         ax.figure.savefig(f"{xml_path}/csg_plot.png")
 
-        self.add_tallies(openmc_model)
-        # optional
-        self.customised_tallies(openmc_model)
-
         return openmc_model
 
-    def add_tallies(self, model: openmc.Model) -> None:
+    def add_tallies(self, model: openmc.Model):
         """Add tallies to the OpenMC model."""
 
         def add_mcio_tally(
