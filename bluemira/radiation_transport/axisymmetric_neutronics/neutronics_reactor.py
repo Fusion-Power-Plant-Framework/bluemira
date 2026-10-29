@@ -261,6 +261,15 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.customised_tallies(openmc_model)
 
         # Export xml files
+        # Reuse equivalent filter objects across all tallies to avoid OpenMC
+        # reassigning filter IDs during XML export and triggering IDWarning.
+        unique_filters = {}
+
+        for tally in openmc_model.tallies:
+            tally.filters = [
+                unique_filters.setdefault(filter_, filter_) for filter_ in tally.filters
+            ]
+
         xml_path = self.config.get("neutronics_output_path", "./csg_outputs/")
         openmc_model.export_to_xml(xml_path)
 

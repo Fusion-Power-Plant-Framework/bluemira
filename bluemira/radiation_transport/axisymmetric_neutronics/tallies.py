@@ -17,6 +17,7 @@ def add_default_tallies(
     material_name_mapping: dict[str, str],
 ):
     """Add default tallies to the OpenMC model."""
+    particle_filters: dict[tuple[str, ...], openmc.ParticleFilter] = {}
 
     def add_mcio_tally(
         tally_class,
@@ -29,12 +30,15 @@ def add_default_tallies(
             particles=list(particles),
         )
 
+        particle_filter = particle_filters.get(particles)
+
+        if particle_filter is None:
+            particle_filter = openmc.ParticleFilter(list(particles))
+            particle_filters[particles] = particle_filter
+
         tally = openmc.Tally(name=name)
         tally.scores = mcio_tally.openmc_tally_score
-        tally.filters = [
-            openmc.ParticleFilter(list(particles)),
-            *filters,
-        ]
+        tally.filters = [particle_filter, *filters]
         model.tallies.append(tally)
 
     # All cells in the OpenMC model
