@@ -304,7 +304,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         # Components remain distinct even when they share a material.
         component_cells = {
             component_name: [cell for cell in all_cells if cell.name == component_name]
-            for component_name in self.material_mapping
+            for component_name in self.material_name_mapping
         }
 
         # Create a cell filter for each component with matching cells.
