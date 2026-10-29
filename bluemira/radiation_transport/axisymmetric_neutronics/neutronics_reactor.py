@@ -253,7 +253,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         # Add Tallies
         bluemira_print("Adding Tallies")
         add_default_tallies(
-            openmc_model=openmc_model, material_name_mapping=self.material_name_mapping
+            model=openmc_model, material_name_mapping=self.material_name_mapping
         )
         # optional
         self.customised_tallies(openmc_model)
