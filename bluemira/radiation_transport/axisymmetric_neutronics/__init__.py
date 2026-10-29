@@ -15,6 +15,7 @@ from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.neutronics_reactor import (
     AxisymmetricNeutronicsReactor,
+    NeutronicsModel,
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.tally import (
     add_default_tallies,
@@ -23,6 +24,7 @@ from bluemira.radiation_transport.axisymmetric_neutronics.tally import (
 __all__ = [
     "AxisymmetricNeutronicsGeomManager",
     "AxisymmetricNeutronicsReactor",
+    "NeutronicsModel",
     "add_default_tallies",
     "to_mcio_material",
 ]
