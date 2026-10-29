@@ -268,6 +268,9 @@ class AxisymmetricNeutronicsReactor(ABC):
         ax.figure.savefig(f"{xml_path}/csg_plot.png")
 
         self.add_tallies(openmc_model)
+        # optional
+        self.customised_tallies(openmc_model)
+
         return openmc_model
 
     def add_tallies(self, model: openmc.Model) -> None:
