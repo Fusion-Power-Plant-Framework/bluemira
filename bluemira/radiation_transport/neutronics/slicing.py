@@ -750,7 +750,7 @@ class DivertorWireAndExteriorCurve:
             a normal vector pointing in the direction of this line.
         """
         # Get the anchor point as an array of shape = (2,)
-        anchor = np.squeeze(self.convex_segments[prev_idx].end_point.xz)
+        anchor = self.convex_segments[prev_idx].end_point[::2]
         # force the directions to point outwards.
         unnormed_dir = anchor - self.center_point
         direct = unnormed_dir / np.linalg.norm(unnormed_dir)
@@ -811,10 +811,11 @@ class DivertorWireAndExteriorCurve:
             )
 
         # initial cut point
-        start_pt = np.squeeze(self.convex_segments[0][0].key_points[0].xyz)
+        start_pt = np.array(self.convex_segments[0][0].key_points[0], dtype=np.float64)
         add_cut_points(
             *calculate_plane_dir(
-                start_pt, np.asarray([starting_cut[0], 0.0, starting_cut[-1]])
+                start_pt,
+                np.array([starting_cut[0], 0.0, starting_cut[-1]], dtype=np.float64),
             )
         )
 
@@ -824,10 +825,11 @@ class DivertorWireAndExteriorCurve:
             add_cut_points(plane, c_dir)
 
         # final cut point
-        end_pt = np.squeeze(self.convex_segments[-1][-1].key_points[1].xyz)
+        end_pt = np.array(self.convex_segments[-1][-1].key_points[1], dtype=np.float64)
         add_cut_points(
             *calculate_plane_dir(
-                end_pt, np.asarray([ending_cut[0], 0.0, ending_cut[-1]])
+                end_pt,
+                np.array([ending_cut[0], 0.0, ending_cut[-1]], dtype=np.float64),
             )
         )
 
