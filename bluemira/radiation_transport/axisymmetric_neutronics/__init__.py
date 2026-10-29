@@ -17,7 +17,7 @@ from bluemira.radiation_transport.axisymmetric_neutronics.neutronics_reactor imp
     AxisymmetricNeutronicsReactor,
     NeutronicsModel,
 )
-from bluemira.radiation_transport.axisymmetric_neutronics.tally import (
+from bluemira.radiation_transport.axisymmetric_neutronics.tallies import (
     add_default_tallies,
 )
 

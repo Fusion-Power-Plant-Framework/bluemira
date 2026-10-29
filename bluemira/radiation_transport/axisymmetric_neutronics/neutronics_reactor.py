@@ -27,7 +27,7 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
     to_mcio_material,
 )
-from bluemira.radiation_transport.axisymmetric_neutronics.tally import (
+from bluemira.radiation_transport.axisymmetric_neutronics.tallies import (
     add_default_tallies,
 )
 
