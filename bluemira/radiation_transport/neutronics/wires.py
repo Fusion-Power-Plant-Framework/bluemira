@@ -71,11 +71,7 @@ class WireInfo:
 
     def reverse(self) -> WireInfo:
         """Flip the wire's direction"""  # noqa: DOC201
-        return type(self)(
-            self.key_points.reverse(),
-            [-np.asarray(t) for t in self.tangents[::-1]],
-            None,
-        )
+        return type(self)(self.key_points.reverse(), self.tangents[::-1], None)
 
     @classmethod
     def from_2P(  # noqa: N802

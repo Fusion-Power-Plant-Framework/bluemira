@@ -158,7 +158,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         BluemiraWire.
         """  # noqa: DOC201
         return WireInfo(
-            StraightLineInfo(start_vec, end_vec),
+            StraightLineInfo(np.array(start_vec), np.array(end_vec)),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
@@ -174,8 +174,11 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         tangents and BluemiraWire.
         """  # noqa: DOC201
         data = cadapi.get_edge_data(edge.shape)
+
         return WireInfo(
-            CircleInfo(start_vec, end_vec, data["centre"], data["radius"]),
+            CircleInfo(
+                np.array(start_vec), np.array(end_vec), data["centre"], data["radius"]
+            ),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
@@ -186,7 +189,10 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         edge = w_edge.edges[0]
 
         # Create aliases for easier referring to variables.
-        current_start, current_end = edge.start_point(), edge.end_point()
+        current_start, current_end = (
+            np.squeeze(edge.start_point().xyz),
+            np.squeeze(edge.end_point().xyz),
+        )
 
         # Get the info about this segment of uwire
         match value := edge.edge_type():
