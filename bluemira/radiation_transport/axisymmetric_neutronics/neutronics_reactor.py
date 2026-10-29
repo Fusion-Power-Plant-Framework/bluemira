@@ -17,6 +17,11 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import mcio
+import openmc
+from mcio.tally import (
+    EnergyDepositionTally,
+    VolumeFluenceTally,
+)
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -90,6 +95,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.params = make_parameter_frame(params, self.param_cls)
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
+        self.material_name_mapping = None
 
     def get_desplined_geometry(
         self, reactor: Reactor
@@ -221,15 +227,26 @@ class AxisymmetricNeutronicsReactor(ABC):
         # set up empty decomposer (you can also add step files and ocp
         # solids if you like)
         decomposer = mcio.decompose.Decomposer()
+        material_name_mapping = {}
 
+        # NOTE: Every solid should have its own unique MCIO material name,
+        # even if multiple solids use the same original material.
+        bluemira_print("Adding solids to the decomposer")
         for mat_number, (solid, mat, name) in enumerate(
             zip(all_ocp_solids, all_materials, all_names, strict=True)
         ):
             # Renames MCIO material to the accepted format, e.g. "m0", "m1", ...
-            mcio_material = to_mcio_material(mat, op_cond, mat_number)
+            mcio_material = to_mcio_material(mat, op_cond, mat_number + 1)
             decomposer.add_solid(solid, name=name, material=mcio_material)
 
+            # Map original component name to MCIO material name
+            material_name_mapping[name] = mcio_material.name
+
+        # save material mapping
+        self.material_name_mapping = material_name_mapping
+
         # run decomposer to generate void and model
+        bluemira_print("Running decomposer")
         decomposer.run()
 
         # get the openmc model
@@ -240,6 +257,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         openmc_model.export_to_xml(xml_path)
 
         # Plot xml
+        bluemira_print("Plotting MCIO generated CSG model")
         ax = openmc_model.plot(
             basis="xz",
             color_by="cell",
@@ -249,7 +267,91 @@ class AxisymmetricNeutronicsReactor(ABC):
         )
         ax.figure.savefig(f"{xml_path}/csg_plot.png")
 
+        self.add_tallies(openmc_model)
         return openmc_model
+
+    def add_tallies(self, model: openmc.Model) -> None:
+        """Add tallies to the OpenMC model."""
+
+        def add_mcio_tally(
+            tally_class,
+            name,
+            filters,
+            particles=("neutron",),
+        ):
+            mcio_tally = tally_class(
+                comment=name,
+                particles=list(particles),
+            )
+
+            tally = openmc.Tally(name=name)
+            tally.scores = mcio_tally.openmc_tally_score
+            tally.filters = [openmc.ParticleFilter(list(particles)), *filters]
+            model.tallies.append(tally)
+
+        # All cells in the OpenMC model
+        all_cells = list(model.geometry.get_all_cells().values())
+
+        # -----------------------------------------------
+        # Cell filters
+        # -----------------------------------------------
+        # Map each component name to its OpenMC cells.
+        # Components remain distinct even when they share a material.
+        component_cells = {
+            component_name: [cell for cell in all_cells if cell.name == component_name]
+            for component_name in self.material_mapping
+        }
+
+        # Create a cell filter for each component with matching cells.
+        cell_filters = {
+            component_name: openmc.CellFilter(cells)
+            for component_name, cells in component_cells.items()
+            if cells
+        }
+
+        # Filter containing all cells.
+        cell_filter = openmc.CellFilter(all_cells)
+
+        # -----------------------------------------------
+        # Powers
+        # -----------------------------------------------
+        for component_name, component_filter in cell_filters.items():
+            add_mcio_tally(
+                EnergyDepositionTally,
+                f"{component_name} power",
+                [component_filter],
+            )
+
+        add_mcio_tally(
+            EnergyDepositionTally,
+            "total power",
+            [cell_filter],
+        )
+
+        # -----------------------------------------------
+        # Neutron flux
+        # -----------------------------------------------
+        add_mcio_tally(
+            VolumeFluenceTally,
+            "neutron flux in every cell",
+            [cell_filter],
+        )
+
+        # -----------------------------------------------
+        # Tritium breeding ratio (TBR)
+        # -----------------------------------------------
+        tbr_tally = openmc.Tally(name="TBR")
+        tbr_tally.scores = ["(n,Xt)"]
+        model.tallies.append(tbr_tally)
+
+    @abstractmethod
+    def customised_tallies(self, model):
+        """
+        Abstract Methods for user to be able
+        to add customised tallies for their particular
+        reactor
+        """
+        ...
 
     @abstractmethod
     def get_all_components(self, reactor: Reactor) -> list[Component]:
