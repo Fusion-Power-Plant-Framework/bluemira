@@ -17,11 +17,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import mcio
-import openmc
-from mcio.tally import (
-    EnergyDepositionTally,
-    VolumeFluenceTally,
-)
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -31,6 +26,9 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
     to_mcio_material,
+)
+from bluemira.radiation_transport.axisymmetric_neutronics.tally import (
+    add_default_tallies,
 )
 
 if TYPE_CHECKING:
@@ -254,7 +252,9 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         # Add Tallies
         bluemira_print("Adding Tallies")
-        self.add_tallies(openmc_model)
+        add_default_tallies(
+            openmc_model=openmc_model, material_name_mapping=self.material_name_mapping
+        )
         # optional
         self.customised_tallies(openmc_model)
 
@@ -274,80 +274,6 @@ class AxisymmetricNeutronicsReactor(ABC):
         ax.figure.savefig(f"{xml_path}/csg_plot.png")
 
         return openmc_model
-
-    def add_tallies(self, model: openmc.Model):
-        """Add tallies to the OpenMC model."""
-
-        def add_mcio_tally(
-            tally_class,
-            name,
-            filters,
-            particles=("neutron",),
-        ):
-            mcio_tally = tally_class(
-                comment=name,
-                particles=list(particles),
-            )
-
-            tally = openmc.Tally(name=name)
-            tally.scores = mcio_tally.openmc_tally_score
-            tally.filters = [openmc.ParticleFilter(list(particles)), *filters]
-            model.tallies.append(tally)
-
-        # All cells in the OpenMC model
-        all_cells = list(model.geometry.get_all_cells().values())
-
-        # -----------------------------------------------
-        # Cell filters
-        # -----------------------------------------------
-        # Map each component name to its OpenMC cells.
-        # Components remain distinct even when they share a material.
-        component_cells = {
-            component_name: [cell for cell in all_cells if cell.name == component_name]
-            for component_name in self.material_name_mapping
-        }
-
-        # Create a cell filter for each component with matching cells.
-        cell_filters = {
-            component_name: openmc.CellFilter(cells)
-            for component_name, cells in component_cells.items()
-            if cells
-        }
-
-        # Filter containing all cells.
-        cell_filter = openmc.CellFilter(all_cells)
-
-        # -----------------------------------------------
-        # Powers
-        # -----------------------------------------------
-        for component_name, component_filter in cell_filters.items():
-            add_mcio_tally(
-                EnergyDepositionTally,
-                f"{component_name} power",
-                [component_filter],
-            )
-
-        add_mcio_tally(
-            EnergyDepositionTally,
-            "total power",
-            [cell_filter],
-        )
-
-        # -----------------------------------------------
-        # Neutron flux
-        # -----------------------------------------------
-        add_mcio_tally(
-            VolumeFluenceTally,
-            "neutron flux in every cell",
-            [cell_filter],
-        )
-
-        # -----------------------------------------------
-        # Tritium breeding ratio (TBR)
-        # -----------------------------------------------
-        tbr_tally = openmc.Tally(name="TBR")
-        tbr_tally.scores = ["(n,Xt)"]
-        model.tallies.append(tbr_tally)
 
     @abstractmethod
     def customised_tallies(self, model):
