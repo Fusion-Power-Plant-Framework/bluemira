@@ -23,17 +23,17 @@ from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
     DetectedRadiation,
     FirstWallRadiationSolver,
-    _electron_density_and_temperature_sol_decay,
-    _ion_front_distance,
-    _make_wall_detectors,
-    _radiative_loss_function_values,
-    _target_temperature,
-    _upstream_temperature,
+    electron_density_and_temperature_sol_decay,
     get_impurity_data,
     grid_interpolator,
     interpolated_field_values,
+    ion_front_distance,
     linear_interpolator,
+    make_wall_detectors,
     pfr_filter,
+    radiative_loss_function_values,
+    target_temperature,
+    upstream_temperature,
 )
 
 TEST_PATH = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
@@ -248,7 +248,7 @@ class TestCoreRadiation:
         assert ne_sol_imp[0] > ne_sol_imp[-1]
 
     def test_key_temperatures(self):
-        t_u = _upstream_temperature(
+        t_u = upstream_temperature(
             b_pol=self.source.sol_rad.b_pol_sep_omp,
             b_tot=self.source.sol_rad.b_tot_sep_omp,
             lambda_q_near=self.source.params.fw_lambda_q_near_omp.value,
@@ -262,7 +262,7 @@ class TestCoreRadiation:
         t_u_eV = constants.raw_uc(t_u, "keV", "eV")
         f_ion_t = self.source.params.f_ion_t.value_as("eV")
 
-        t_tar_det = _target_temperature(
+        t_tar_det = target_temperature(
             self.source.params.P_sep.value,
             t_u_eV,
             self.source.params.n_e_sep.value,
@@ -278,7 +278,7 @@ class TestCoreRadiation:
             self.source.sol_rad.b_tot_out_tar,
         )
 
-        t_tar_no_det = _target_temperature(
+        t_tar_no_det = target_temperature(
             self.source.params.P_sep.value,
             t_u_eV,
             3e10,
@@ -300,7 +300,7 @@ class TestCoreRadiation:
     def test_sol_decay(self):
         t_u = self.source.params.T_e_sep.value_as("keV")
         n_u = self.source.params.n_e_sep.value
-        decayed_t, decayed_n = _electron_density_and_temperature_sol_decay(
+        decayed_t, decayed_n = electron_density_and_temperature_sol_decay(
             t_u,
             n_u,
             self.source.params.fw_lambda_q_near_omp.value,
@@ -311,7 +311,7 @@ class TestCoreRadiation:
         assert decayed_n[0] > decayed_n[-1]
 
     def test_ion_front_distance(self):
-        distance = _ion_front_distance(
+        distance = ion_front_distance(
             6,
             -9,
             self.source.eq,
@@ -384,7 +384,7 @@ class TestCoreRadiation:
         l_ref = np.array([imp_data_l_ref[0], imp_data_l_ref[2], imp_data_l_ref[4]])
         tvals = np.array([imp_data_t_ref[1], imp_data_t_ref[3]])
         lvals = np.array([imp_data_l_ref[1], imp_data_l_ref[3]])
-        l1 = _radiative_loss_function_values(tvals, t_ref, l_ref)
+        l1 = radiative_loss_function_values(tvals, t_ref, l_ref)
         np.testing.assert_allclose(l1, lvals, rtol=2e-1)
 
     def test_pfr_filter(self):
@@ -399,7 +399,7 @@ class TestCoreRadiation:
         raysect = pytest.importorskip("raysect")
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
-        wall_detectors = _make_wall_detectors(
+        wall_detectors = make_wall_detectors(
             self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
         )
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)

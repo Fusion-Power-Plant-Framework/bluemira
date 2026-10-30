@@ -79,7 +79,7 @@ class WallDetector:
     y_vector: Vector3D
 
 
-def _upstream_temperature(
+def upstream_temperature(
     b_pol: float,
     b_tot: float,
     lambda_q_near: float,
@@ -146,7 +146,7 @@ def _upstream_temperature(
     return raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
 
 
-def _target_temperature(
+def target_temperature(
     p_sol: float,
     t_u: float,
     n_u: float,
@@ -240,7 +240,7 @@ def _target_temperature(
     return f_ion_t if roots.dtype == complex else roots[np.nonzero(roots > t_crit)[0][0]]
 
 
-def _specific_point_temperature(
+def specific_point_temperature(
     x_p: float,
     z_p: float,
     t_u: float,
@@ -334,7 +334,7 @@ def _specific_point_temperature(
     return ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
 
-def _electron_density_and_temperature_sol_decay(
+def electron_density_and_temperature_sol_decay(
     t_sep: float,
     n_sep: float,
     lambda_q_near: float,
@@ -425,7 +425,7 @@ def _electron_density_and_temperature_sol_decay(
     return te_sol, ne_sol
 
 
-def _gaussian_decay(
+def gaussian_decay(
     max_value: float, min_value: float, no_points: float, *, decay: bool = True
 ) -> np.ndarray:
     """
@@ -471,7 +471,7 @@ def _gaussian_decay(
     return dec_param
 
 
-def _exponential_decay(
+def exponential_decay(
     max_value: float, min_value: float, no_points: float, *, decay: bool = False
 ) -> np.ndarray:
     """
@@ -510,7 +510,7 @@ def _exponential_decay(
     return a[1] + (b[1] - a[1]) * (np.log(arg) / np.log(base))
 
 
-def _ion_front_distance(
+def ion_front_distance(
     x_strike: float,
     z_strike: float,
     eq: Equilibrium,
@@ -574,7 +574,7 @@ def _ion_front_distance(
     return abs(z_strike - x_pt_z) - abs(z_ext)
 
 
-def _calculate_zeff(
+def calculate_zeff(
     impurities_content: np.ndarray,
     imp_data_z_ref: np.ndarray,
     imp_data_t_ref: np.ndarray,
@@ -665,7 +665,7 @@ def _calculate_zeff(
     return zeff, avg_zeff, total_fraction, intermediate_values
 
 
-def _calculate_total_radiated_power(
+def calculate_total_radiated_power(
     x: np.ndarray, z: np.ndarray, p_rad: np.ndarray
 ) -> float:
     """
@@ -725,7 +725,7 @@ def _calculate_total_radiated_power(
     return p_total
 
 
-def _radiative_loss_function_values(
+def radiative_loss_function_values(
     te: np.ndarray, t_ref: np.ndarray, l_ref: np.ndarray
 ) -> np.ndarray:
     """
@@ -752,7 +752,7 @@ def _radiative_loss_function_values(
     return interp1d(t_ref, l_ref)(te)
 
 
-def _radiative_loss_function_plot(
+def radiative_loss_function_plot(
     t_ref: np.ndarray, lz_val: Iterable[np.ndarray], species: Iterable[str]
 ) -> plt.Axes:
     """
@@ -789,7 +789,7 @@ def _radiative_loss_function_plot(
     return ax
 
 
-def _calculate_line_radiation_loss(
+def calculate_line_radiation_loss(
     ne: np.ndarray, p_loss_f: np.ndarray, species_frac: float
 ) -> np.ndarray:
     """
@@ -1049,7 +1049,7 @@ class DetectedRadiation:
 
 
 # Adapted functions from Stuart
-def _detect_radiation(
+def detect_radiation(
     wall_detectors: list[WallDetector],
     n_samples: int,
     world: World,
@@ -1179,7 +1179,7 @@ def _detect_radiation(
     )
 
 
-def _make_wall_detectors(
+def make_wall_detectors(
     wall_r, wall_z, max_wall_len, x_width, *, plot=False
 ) -> list[WallDetector]:
     """
@@ -1473,10 +1473,10 @@ class FirstWallRadiationSolver:
             parent=world,
             material=emitter,
         )
-        self.wall_detectors = _make_wall_detectors(
+        self.wall_detectors = make_wall_detectors(
             self.fw_shape.x, self.fw_shape.z, max_wall_len, x_width, plot=verbose
         )
-        self.wall_loads = _detect_radiation(
+        self.wall_loads = detect_radiation(
             self.wall_detectors, n_samples, world, verbose=verbose
         )
 
