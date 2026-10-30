@@ -76,7 +76,7 @@ def test_filtering_in_or_out():
 
 def test_calculate_zeff():
     """
-    Test the _calculate_zeff function with known inputs and expected outputs.
+    Test the calculate_zeff function with known inputs and expected outputs.
     """
     # Inputs
     impurities_content = np.array([0.01])
