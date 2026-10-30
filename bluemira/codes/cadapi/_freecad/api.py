@@ -1143,7 +1143,8 @@ EDGE_TYPE_TO_ENUM = {
 
 
 def get_edge_type(edge: apiEdge) -> CurveType:
-    """Get curve type from edge
+    """
+    Get curve type from edge
 
     Returns
     -------
@@ -1156,13 +1157,13 @@ def get_edge_type(edge: apiEdge) -> CurveType:
 
 
 class CircleEdgeDT(TypedDict):
+    """Circle Edge data type"""
+
     centre: tuple[float, float, float]
     radius: float
 
 
-def get_edge_data(
-    edge: apiEdge | apiWire,
-) -> CircleEdgeDT:
+def get_edge_data(edge: apiEdge | apiWire) -> CircleEdgeDT:
     ft = get_edge_type(edge)
     fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
 

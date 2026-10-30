@@ -31,7 +31,6 @@ from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _geometryapi as cadapi
-from bluemira.codes.cadapi._base_types import CurveType
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
@@ -48,7 +47,7 @@ if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeoT
     from bluemira.geometry.plane import BluemiraPlane
 
-CurveType = cadapi.CurveType  # noqa: F811
+CurveType = cadapi.CurveType
 
 
 @cadapi.catch_caderr(GeometryError)
