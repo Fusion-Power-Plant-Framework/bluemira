@@ -8,19 +8,19 @@ import numpy as np
 import pytest
 
 from bluemira.radiation_transport.radiation_tools import (
-    _calculate_line_radiation_loss,
-    _calculate_total_radiated_power,
-    _calculate_zeff,
-    _exponential_decay,
-    _gaussian_decay,
+    calculate_line_radiation_loss,
+    calculate_total_radiated_power,
+    calculate_zeff,
+    exponential_decay,
     filtering_in_or_out,
+    gaussian_decay,
     interpolated_field_values,
     linear_interpolator,
 )
 
 
 def test_gaussian_decay():
-    decayed_val = _gaussian_decay(10, 1, 50)
+    decayed_val = gaussian_decay(10, 1, 50)
     gap_1 = decayed_val[0] - decayed_val[1]
     gap_2 = decayed_val[1] - decayed_val[2]
     gap_3 = decayed_val[-2] - decayed_val[-1]
@@ -28,7 +28,7 @@ def test_gaussian_decay():
 
 
 def test_exponential_decay():
-    decayed_val = _exponential_decay(10, 1, 50, decay=True)
+    decayed_val = exponential_decay(10, 1, 50, decay=True)
     gap_1 = decayed_val[0] - decayed_val[1]
     gap_2 = decayed_val[1] - decayed_val[2]
     gap_3 = decayed_val[-2] - decayed_val[-1]
@@ -39,7 +39,7 @@ def test_calculate_line_radiation_loss():
     ne = 1e20
     p_loss = 1e-31
     frac = 0.01
-    rad = _calculate_line_radiation_loss(ne, p_loss, frac)
+    rad = calculate_line_radiation_loss(ne, p_loss, frac)
     assert rad == pytest.approx(10, abs=1e-3)
 
 
@@ -86,7 +86,7 @@ def test_calculate_zeff():
     te = [np.array([0, 5, 10])]
 
     # Calling function
-    zeff, avg_zeff, total_fraction, intermediate_values = _calculate_zeff(
+    zeff, avg_zeff, total_fraction, intermediate_values = calculate_zeff(
         impurities_content, imp_data_z_ref, imp_data_t_ref, impurity_symbols, te
     )
 
@@ -119,7 +119,7 @@ def test_calculate_total_radiated_power():
     p_rad = np.array([1.0, 1.0, 1.0, 1.0])
 
     # Calling the function
-    p_total = _calculate_total_radiated_power(x, z, p_rad)
+    p_total = calculate_total_radiated_power(x, z, p_rad)
 
     # Expected total radiated power
     expected_volume = np.pi * (2.0**2 - 1.0**2) * (2.0 - 1.0)
