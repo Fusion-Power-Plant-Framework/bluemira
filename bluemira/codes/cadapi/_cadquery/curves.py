@@ -12,6 +12,7 @@ ellipse, arcs).
 from __future__ import annotations
 
 import math
+from typing import TypedDict
 
 import cadquery as cq
 import numpy as np
@@ -55,12 +56,17 @@ def get_edge_type(edge: apiEdge | apiWire) -> CurveType:
     return CurveType(cq_edge.geomType())
 
 
-def get_edge_data(edge: apiEdge | apiWire) -> dict[str, float]:
+class CircleEdgeDT(TypedDict):
+    centre: tuple[float, ...]
+    radius: float
+
+
+def get_edge_data(edge: apiEdge | apiWire) -> CircleEdgeDT:
     ct = get_edge_type(edge)
     cq_edge = edge.Edges()[0] if isinstance(edge, apiWire) else edge
 
     if ct == CurveType.CIRCLE:
-        return {"centre": cq_edge.Center, "radius": cq_edge.radius}
+        return {"centre": tuple(cq_edge.Center()), "radius": cq_edge.radius()}
     raise NotImplementedError
 
 

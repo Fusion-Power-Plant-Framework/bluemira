@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict
 from unittest import mock
 
 import FreeCAD  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
@@ -1155,9 +1155,14 @@ def get_edge_type(edge: apiEdge) -> CurveType:
     return EDGE_TYPE_TO_ENUM[type(fc_edge.Curve)]
 
 
+class CircleEdgeDT(TypedDict):
+    centre: tuple[float, float, float]
+    radius: float
+
+
 def get_edge_data(
     edge: apiEdge | apiWire,
-) -> dict[str, tuple[float, float, float] | float]:
+) -> CircleEdgeDT:
     ft = get_edge_type(edge)
     fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
 
