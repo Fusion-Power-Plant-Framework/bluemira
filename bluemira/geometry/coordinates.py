@@ -2169,7 +2169,9 @@ def convex_2d_hull_coordinates(coordinates: Coordinates) -> Coordinates:
     return Coordinates(filtered_points)
 
 
-def choose_direction(vector: npt.NDArray, lower_pt: npt.NDArray, higher_pt: npt.NDArray):
+def choose_direction(
+    vector: npt.NDArray, lower_pt: npt.NDArray, higher_pt: npt.NDArray
+) -> npt.NDArray:
     """
     Flip the vector to the correct side (multiply by +1 or -1) so that
     when lower_pt is projected onto the vector, it has a smaller value than

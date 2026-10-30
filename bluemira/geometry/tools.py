@@ -1697,7 +1697,7 @@ def is_convex(points: npt.NDArray):
     """
     if np.shape(points)[1] == 3:  # noqa: PLR2004
         points = np.array(points)[:, ::2]  # squash 3D points down to 2D
-    return len(np.unique(points, axis=0)) == ConvexHull(points).nsimplex
+    return len(np.unique(points, axis=0)) == ConvexHull(np.squeeze(points)).nsimplex
 
 
 # # =============================================================================

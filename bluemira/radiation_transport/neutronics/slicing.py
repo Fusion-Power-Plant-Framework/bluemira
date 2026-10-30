@@ -158,7 +158,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         BluemiraWire.
         """  # noqa: DOC201
         return WireInfo(
-            StraightLineInfo(np.array(start_vec), np.array(end_vec)),
+            StraightLineInfo(start_vec, end_vec),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
@@ -176,9 +176,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         data = cadapi.get_edge_data(edge.shape)
 
         return WireInfo(
-            CircleInfo(
-                np.array(start_vec), np.array(end_vec), data["centre"], data["radius"]
-            ),
+            CircleInfo(start_vec, end_vec, data["centre"], data["radius"]),
             [edge.tangent_at(0), edge.tangent_at(1)],
             wire,
         )
@@ -189,10 +187,7 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
         edge = w_edge.edges[0]
 
         # Create aliases for easier referring to variables.
-        current_start, current_end = (
-            np.squeeze(edge.start_point().xyz),
-            np.squeeze(edge.end_point().xyz),
-        )
+        current_start, current_end = edge.start_point(), edge.end_point()
 
         # Get the info about this segment of uwire
         match value := edge.edge_type():
@@ -224,12 +219,12 @@ def check_and_breakdown_wire(wire: BluemiraWire) -> WireInfoList:
             wire_container.append(wire_info)
             continue
         distance_to_start = np.linalg.norm(
-            wire_container[-1].key_points.end_point.xyz
-            - wire_info.key_points.start_point.xyz
+            np.asarray(wire_container[-1].key_points.end_point)
+            - np.asarray(wire_info.key_points.start_point)
         )
         distance_to_end = np.linalg.norm(
-            wire_container[-1].key_points.end_point.xyz
-            - wire_info.key_points.end_point.xyz
+            np.asarray(wire_container[-1].key_points.end_point)
+            - np.asarray(wire_info.key_points.end_point)
         )
         if distance_to_end < distance_to_start:
             wire_info = wire_info.reverse()
@@ -756,7 +751,7 @@ class DivertorWireAndExteriorCurve:
             a normal vector pointing in the direction of this line.
         """
         # Get the anchor point as an array of shape = (2,)
-        anchor = self.convex_segments[prev_idx].end_point[::2]
+        anchor = np.squeeze(self.convex_segments[prev_idx].end_point.xyz)[::2]
         # force the directions to point outwards.
         unnormed_dir = anchor - self.center_point
         direct = unnormed_dir / np.linalg.norm(unnormed_dir)
@@ -817,7 +812,7 @@ class DivertorWireAndExteriorCurve:
             )
 
         # initial cut point
-        start_pt = np.array(self.convex_segments[0][0].key_points[0], dtype=np.float64)
+        start_pt = np.squeeze(self.convex_segments[0][0].key_points[0].xyz)
         add_cut_points(
             *calculate_plane_dir(
                 start_pt,
@@ -831,7 +826,7 @@ class DivertorWireAndExteriorCurve:
             add_cut_points(plane, c_dir)
 
         # final cut point
-        end_pt = np.array(self.convex_segments[-1][-1].key_points[1], dtype=np.float64)
+        end_pt = np.squeeze(self.convex_segments[-1][-1].key_points[1].xyz)
         add_cut_points(
             *calculate_plane_dir(
                 end_pt,
@@ -966,7 +961,6 @@ class DivertorWireAndExteriorCurve:
             tangent = self.convex_segments[-1][-1].tangents[1][::2]
             tangent = choose_direction(tangent, self.center_point, last_point)
             ending_cut = last_point + tangent
-
         pre_cell_list = []
         for i, (vv_segment, exterior_segment) in enumerate(
             zip(
@@ -980,8 +974,8 @@ class DivertorWireAndExteriorCurve:
             cw_line = (
                 WireInfoList([interior_wire.pop(0)])
                 if np.allclose(
-                    exterior_segment.end_point,
-                    interior_wire.start_point,
+                    exterior_segment.end_point.xyz,
+                    interior_wire.start_point.xyz,
                     rtol=0,
                     atol=EPS_FREECAD,
                 )
@@ -1000,8 +994,8 @@ class DivertorWireAndExteriorCurve:
             ccw_line = (
                 WireInfoList([interior_wire.pop(-1)])
                 if np.allclose(
-                    interior_wire.end_point,
-                    exterior_segment.start_point,
+                    interior_wire.end_point.xyz,
+                    exterior_segment.start_point.xyz,
                     rtol=0,
                     atol=EPS_FREECAD,
                 )

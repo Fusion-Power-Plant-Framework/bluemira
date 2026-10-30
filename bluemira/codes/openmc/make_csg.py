@@ -629,7 +629,13 @@ def blanket_and_divertor_outer_regions(
     return blanket_outer, divertor_outer
 
 
-def plasma_void(csg, blanket, divertor, *, control_id: bool = False) -> openmc.Region:
+def plasma_void(
+    csg,
+    blanket: BlanketCellArray,
+    divertor: DivertorCellArray,
+    *,
+    control_id: bool = False,
+) -> openmc.Region:
     """Get the plasma chamber's poloidal cross-section
 
     Raises
@@ -850,7 +856,10 @@ class BluemiraNeutronicsCSG:
         slope = dz / dr
         z_intercept = -slope * point1[0] + point1[-1]
         return openmc.ZCone(
-            z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name
+            z0=z_intercept.item(),
+            r2=slope.item() ** -2,
+            surface_id=surface_id,
+            name=name,
         )
 
     def surface_from_straight_line(
@@ -1940,37 +1949,37 @@ class DivertorCellStack:
         #         raise ValueError("Expected a contiguous stack of cells!")
 
     @property
-    def interior_surfaces(self):
+    def interior_surfaces(self) -> list[tuple[openmc.Surface]]:
         """Get interior surfaces"""
         return self.cell_stack[0].interior_surfaces
 
     @property
-    def exterior_surfaces(self):
+    def exterior_surfaces(self) -> list[tuple[openmc.Surface]]:
         """Get exterior surfaces"""
         return self.cell_stack[-1].exterior_surfaces
 
     @property
-    def ccw_surface(self):
+    def ccw_surface(self) -> openmc.Surface:
         """Get counter clockwise surface"""
         return self.cell_stack[-1].ccw_surface
 
     @property
-    def cw_surface(self):
+    def cw_surface(self) -> openmc.Surface:
         """Get clockwise surface"""
         return self.cell_stack[-1].cw_surface
 
     @property
-    def exterior_wire(self):
+    def exterior_wire(self) -> WireInfoList:
         """Alias to find the outermost cell's exterior_wire"""
         return self.cell_stack[-1].exterior_wire
 
     @property
-    def interior_wire(self):
+    def interior_wire(self) -> WireInfoList:
         """Alias to find the innermost cell's interior_wire"""
         return self.cell_stack[0].interior_wire
 
     @property
-    def interfaces(self):
+    def interfaces(self) -> list[list[tuple[openmc.Surface]]]:
         """
         All of the radial surfaces, including the innermost (exposed to plasma) and
         outermost (facing the vacuum vessel); arranged in that order (from innermost to
@@ -2205,7 +2214,7 @@ class DivertorCellArray:
             super().__repr__().replace(" at ", f" of {len(self)} DivertorCellStacks at")
         )
 
-    def interior_surfaces(self) -> list[openmc.Surface]:
+    def interior_surfaces(self) -> list[tuple[openmc.Surface]]:
         """
         Get all of the innermost (plasm-facing) surface.
         Runs clockwise.
@@ -2214,7 +2223,7 @@ class DivertorCellArray:
             chain.from_iterable([surf_stack[0] for surf_stack in self.radial_surfaces])
         )
 
-    def exterior_surfaces(self) -> list[openmc.Surface]:
+    def exterior_surfaces(self) -> list[tuple[openmc.Surface]]:
         """
         Get all of the outermost (vacuum-vessel-facing) surface.
         Runs clockwise.

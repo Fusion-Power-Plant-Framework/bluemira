@@ -93,10 +93,9 @@ class PreCellStage:
         # )
         in_wire = make_polygon(np.array([i_high, i_end]).T, closed=False)
         vv_wire = make_polygon(
-            np.array([
-                self.divertor[0].vv_wire.end_point,
-                old_vv_wire.end_point().xyz.flatten(),
-            ]).T,
+            np.concatenate(
+                [self.divertor[0].vv_wire.end_point, old_vv_wire.end_point()], axis=1
+            ),
             closed=False,
         )
         ex_wire = make_polygon(
@@ -119,10 +118,10 @@ class PreCellStage:
         # )
         in_wire = make_polygon(np.array([i_start, i_high]).T, closed=False)
         vv_wire = make_polygon(
-            np.array([
-                old_vv_wire.start_point().xyz.flatten(),
-                self.divertor[-1].vv_wire.start_point,
-            ]).T,
+            np.concatenate(
+                [old_vv_wire.start_point(), self.divertor[-1].vv_wire.start_point],
+                axis=1,
+            ),
             closed=False,
         )
         ex_wire = make_polygon(
@@ -243,11 +242,9 @@ class NeutronicsReactor(ABC):
             blanket_wire,
             vacuum_vessel_wire,
         ) = self._get_wires_from_components(divertor, blanket, vacuum_vessel)
-
         self.geom = ReactorGeometry(
             divertor_wire, panel_points, blanket_wire, vacuum_vessel_wire
         )
-
         self._pre_cell_stage = self._create_pre_cell_stage(
             blanket_discretisation, divertor_discretisation, snap_to_horizontal_angle
         )
@@ -265,9 +262,11 @@ class NeutronicsReactor(ABC):
                 self.geom.divertor_wire, self.geom.boundary, self.geom.vacuum_vessel_wire
             ),
         )
+
         divertor = cutting.divertor.make_divertor_pre_cell_array(
             discretisation_level=divertor_discretisation
         )
+
         first, last = divertor.exterior_vertices()[(0, -1),]
 
         blanket = cutting.blanket.make_quadrilateral_pre_cell_array(

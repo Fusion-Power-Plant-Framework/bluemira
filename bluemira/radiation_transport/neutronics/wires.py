@@ -43,7 +43,7 @@ class CircleInfo(NamedTuple):
 
     start_point: Coordinates
     end_point: Coordinates
-    center: Iterable[float]  # 3D coordinates
+    center: Sequence[float]  # 3D coordinates
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:
@@ -150,17 +150,17 @@ class WireInfoList:
         """
         # assume continuity, which is already enforced during initialisation, so we
         # should be fine.
-        return np.array(
+        return np.concatenate(
             [
                 self.info_list[0].key_points[0],
                 *(seg.key_points[1] for seg in self.info_list),
             ],
-            dtype=float,
-        )
+            axis=1,
+        ).T
 
     @property
     def start_point(self) -> Coordinates:
-        """The start_point for the entire series of wires"""
+        """The start_point for the entire series    of wires"""
         return self.info_list[0].key_points[0]
 
     @start_point.setter
@@ -197,7 +197,7 @@ class WireInfoList:
         """
         wire_list = []
         for info in self:
-            start_end = np.array(info.key_points[:2])
+            start_end = np.squeeze(info.key_points[:2])  # type: ignore[ty:no-matching-overload]
             if info.wire:
                 # quick way to get the wire back without doing any computation is by
                 # directly copying.
