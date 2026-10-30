@@ -5,6 +5,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """constants used for the neutronics module"""
 
+from typing import overload
+
+import numpy as np
 import numpy.typing as npt
 from periodictable import elements
 
@@ -13,6 +16,7 @@ from bluemira.base.constants import (
     HE_MOLAR_MASS,
     NEUTRON_MOLAR_MASS,
     N_AVOGADRO,
+    ArrayLike,
     raw_uc,
 )
 from bluemira.geometry.constants import D_TOLERANCE
@@ -21,7 +25,15 @@ from bluemira.plasma_physics.reactions import E_DT_fusion
 DTOL_CM = raw_uc(D_TOLERANCE, "m", "cm")
 
 
-def to_cm(m):
+@overload
+def to_cm(m: float) -> float: ...
+@overload
+def to_cm(m: int) -> float: ...
+@overload
+def to_cm(m: np.ndarray) -> np.ndarray: ...
+@overload
+def to_cm(m: ArrayLike) -> ArrayLike: ...
+def to_cm(m: ArrayLike) -> ArrayLike:
     """
     Converter for m to cm
 
@@ -38,7 +50,15 @@ def to_cm(m):
     return raw_uc(m, "m", "cm")
 
 
-def to_m(cm):
+@overload
+def to_m(cm: float) -> float: ...
+@overload
+def to_m(cm: int) -> float: ...
+@overload
+def to_m(cm: np.ndarray) -> np.ndarray: ...
+@overload
+def to_m(cm: ArrayLike) -> ArrayLike: ...
+def to_m(cm: ArrayLike) -> ArrayLike:
     """
     Converter for cm to m
 
@@ -55,7 +75,15 @@ def to_m(cm):
     return raw_uc(cm, "cm", "m")
 
 
-def to_cm3(m3):
+@overload
+def to_cm3(m3: float) -> float: ...
+@overload
+def to_cm3(m3: int) -> float: ...
+@overload
+def to_cm3(m3: np.ndarray) -> np.ndarray: ...
+@overload
+def to_cm3(m3: ArrayLike) -> ArrayLike: ...
+def to_cm3(m3: ArrayLike) -> ArrayLike:
     """
     Converter for m3 to cm3
 

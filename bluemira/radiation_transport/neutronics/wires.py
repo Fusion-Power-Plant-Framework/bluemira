@@ -18,6 +18,7 @@ import numpy as np
 from numpy import typing as npt
 
 from bluemira.geometry.constants import EPS_FREECAD
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.tools import make_circle_arc_3P, make_polygon
 from bluemira.geometry.wire import BluemiraWire
@@ -29,8 +30,8 @@ if TYPE_CHECKING:
 class StraightLineInfo(NamedTuple):
     """Key information about a straight line"""
 
-    start_point: Iterable[float]  # 3D coordinates
-    end_point: Iterable[float]  # 3D coordinates
+    start_point: Coordinates
+    end_point: Coordinates
 
     def reverse(self) -> StraightLineInfo:
         """Flip the wire's direction"""  # noqa: DOC201
@@ -40,9 +41,9 @@ class StraightLineInfo(NamedTuple):
 class CircleInfo(NamedTuple):
     """Arc of a Circle, LESS THAN 180°"""
 
-    start_point: npt.NDArray  # 3D coordinates
-    end_point: npt.NDArray  # 3D coordinates
-    center: npt.NDArray  # 3D coordinates
+    start_point: Coordinates
+    end_point: Coordinates
+    center: Sequence[float]  # 3D coordinates
     radius: float  # scalar
 
     def reverse(self) -> CircleInfo:
@@ -65,20 +66,16 @@ class WireInfo:
     # 3662
 
     key_points: StraightLineInfo | CircleInfo  # 2 points of xyz/ CircleInfo
-    tangents: Sequence[npt.NDArray[np.float64]]  # 2 normalised directional vectors xyz
+    tangents: Sequence[npt.NDArray]  # 2 normalised directional vectors xyz
     wire: BluemiraWire | None = None
 
     def reverse(self) -> WireInfo:
         """Flip the wire's direction"""  # noqa: DOC201
-        return type(self)(
-            self.key_points.reverse(),
-            [-np.asarray(t) for t in self.tangents[::-1]],
-            None,
-        )
+        return type(self)(self.key_points.reverse(), self.tangents[::-1], None)
 
     @classmethod
     def from_2P(  # noqa: N802
-        cls, start_point: npt.NDArray[np.float64], end_point: npt.NDArray[np.float64]
+        cls, start_point: npt.NDArray | Coordinates, end_point: npt.NDArray | Coordinates
     ) -> WireInfo:
         """
         Create the WireInfo for a straight line (i.e. one where the key_points is of
@@ -89,12 +86,13 @@ class WireInfo:
         :
             A WireInfo representing the straight-line.
         """
-        direction = np.array(end_point) - np.array(start_point)
-        normed_dir = np.array(direction) / np.linalg.norm(direction)
-        return cls(
-            StraightLineInfo(np.array(start_point), np.array(end_point)),
-            [normed_dir, normed_dir],
-        )
+        if isinstance(start_point, np.ndarray):
+            start_point = Coordinates(start_point)
+        if isinstance(end_point, np.ndarray):
+            end_point = Coordinates(end_point)
+        direction = end_point.xyz - start_point.xyz
+        normed_dir = direction / np.linalg.norm(direction)
+        return cls(StraightLineInfo(start_point, end_point), [normed_dir, normed_dir])
 
 
 class WireInfoList:
@@ -152,21 +150,21 @@ class WireInfoList:
         """
         # assume continuity, which is already enforced during initialisation, so we
         # should be fine.
-        return np.array(
+        return np.concatenate(
             [
                 self.info_list[0].key_points[0],
                 *(seg.key_points[1] for seg in self.info_list),
             ],
-            dtype=float,
-        )
+            axis=1,
+        ).T
 
     @property
-    def start_point(self):
-        """The start_point for the entire series of wires"""
+    def start_point(self) -> Coordinates:
+        """The start_point for the entire series    of wires"""
         return self.info_list[0].key_points[0]
 
     @start_point.setter
-    def start_point(self, new_start_point: npt.NDArray[np.float64]):
+    def start_point(self, new_start_point: Coordinates):
         """
         Set the start_point to somewhere new. Note this doesn't change the tangents.
         """
@@ -174,12 +172,12 @@ class WireInfoList:
         self.info_list[0].key_points = old_kp._replace(start_point=new_start_point)
 
     @property
-    def end_point(self):
+    def end_point(self) -> Coordinates:
         """The end_point for the entire series of wires"""
         return self.info_list[-1].key_points[1]
 
     @end_point.setter
-    def end_point(self, new_end_point):
+    def end_point(self, new_end_point: Coordinates):
         """Set the end_point to somewhere new. Note this doesn't change the tangents."""
         old_kp = self.info_list[-1].key_points
         self.info_list[-1].key_points = old_kp._replace(end_point=new_end_point)
@@ -199,7 +197,7 @@ class WireInfoList:
         """
         wire_list = []
         for info in self:
-            start_end = np.array(info.key_points[:2])
+            start_end = np.squeeze(info.key_points[:2])  # type: ignore[ty:no-matching-overload]
             if info.wire:
                 # quick way to get the wire back without doing any computation is by
                 # directly copying.
