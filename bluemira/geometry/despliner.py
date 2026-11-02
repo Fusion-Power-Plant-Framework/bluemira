@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -123,8 +121,7 @@ def despline_xz_face(
     name: str = "",
     parent_name: str = "",
     *,
-    max_side_length: float = 0.1,
-    min_side_length: float = 0.001,
+    max_area_difference: float = 0.05,
 ) -> BluemiraFace:
     """
     Despline relevant splined edges in xz face.
@@ -139,12 +136,9 @@ def despline_xz_face(
     discretisation
         Discretisation for splined boundary (the total boundary of the
         face that has splined face is discretised).
-    max_side_length
-        Maximum length of wire edges, in metres, used to warn
-        when the requested discretisation may be insufficient.
-    min_side_length
-        Minimum length of wire edges, in metres. A warning is
-        issued if any side is shorter than this length.
+    max_area_difference
+        Maximum relative area difference between the original and
+        desplined face before issuing a warning.
 
     Returns
     -------
@@ -170,29 +164,6 @@ def despline_xz_face(
             byedges=True,
         )
 
-        side_lengths = np.linalg.norm(np.diff(points, axis=1), axis=0)
-
-        max_edge_length = np.max(side_lengths)
-        min_edge_length = np.min(side_lengths)
-
-        if max_edge_length > max_side_length:
-            bluemira_warn(
-                f"{name} for {parent_name},"
-                f" xz boundary wire {i}:"
-                f" Maximum edge length is {max_edge_length:.4f} m,"
-                f" exceeding the specified limit of {max_side_length} m."
-                " Consider increasing the discretisation."
-            )
-
-        if min_edge_length < min_side_length:
-            bluemira_warn(
-                f"{name} for {parent_name},"
-                f" xz boundary wire {i}:"
-                f" Minimum edge length is {min_edge_length:.6f} m,"
-                f" below the specified limit of {min_side_length} m."
-                " Consider reducing the discretisation."
-            )
-
         boundaries.append(
             make_polygon(
                 points,
@@ -200,7 +171,20 @@ def despline_xz_face(
             )
         )
 
-    return BluemiraFace(
+    new_face = BluemiraFace(
         boundaries,
         label=xz_face.label,
     )
+
+    relative_area_difference = abs(new_face.area / xz_face.area - 1)
+
+    if relative_area_difference > max_area_difference:
+        bluemira_warn(
+            f"{name} for {parent_name}:"
+            f" Desplining the xz face results in an area difference"
+            f" of {relative_area_difference:.1%}."
+            " Consider increasing the discretisation to better"
+            " preserve the geometric fidelity."
+        )
+
+    return new_face
