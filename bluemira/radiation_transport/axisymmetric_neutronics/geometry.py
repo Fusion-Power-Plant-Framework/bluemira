@@ -52,7 +52,8 @@ class AxisymmetricNeutronicsCompData:
 
         Returns
         -------
-        Component
+        :
+            Component
         """
         xz_component = Component(
             "xz",
@@ -121,7 +122,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
         Returns
         -------
-        list[str]
+        :
             Names of components whose XZ faces touch the XZ face of ``comp``.
         """
         comp_xz_face = comp.get_component("xz").children[0].shape
@@ -166,7 +167,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
         Returns
         -------
-        AxisymmetricNeutronicsGeomManager
+        :
             Manager containing the processed neutronics components.
 
         Raises
@@ -293,7 +294,8 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
         Returns
         -------
-        list[Component]
+        :
+            list of components
         """
         return self.component().children
 
@@ -362,7 +364,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
         Returns
         -------
-        list[AxisymmetricNeutronicsCompData]
+        :
             Neutronics component data with updated desplined XZ faces.
         """
         comps_by_name = {comp.name: comp for comp in neutronics_comps}
@@ -421,7 +423,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
         Returns
         -------
-        list[AxisymmetricNeutronicsCompData]
+        :
             Neutronics components with updated desplined XZ faces.
         """
         comps_by_name = {comp.name: comp for comp in neutronics_comps}

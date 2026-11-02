@@ -30,7 +30,7 @@ def check_face_has_splines(bm_face: BluemiraFace) -> bool:
 
     Returns
     -------
-    bool
+    :
         True if the face has splines, else False.
     """
     face = bm_face.shape
@@ -70,7 +70,7 @@ def check_face_has_revolution(bm_face: BluemiraFace) -> bool:
 
     Returns
     -------
-    bool
+    :
         True if the face is of a revolution type, else False.
     """
     face = bm_face.shape
@@ -92,7 +92,7 @@ def check_solid_has_revolution(bm_solid: BluemiraSolid) -> bool:
 
     Returns
     -------
-    bool
+    :
         True if the solid has REVOLUTION faces, else False.
     """
     return any(check_face_has_revolution(face) for face in bm_solid.faces)
@@ -109,7 +109,7 @@ def check_solid_has_splines(bm_solid: BluemiraSolid) -> bool:
 
     Returns
     -------
-    bool
+    :
         True if the solid has splines, else False.
     """
     return any(check_face_has_splines(face) for face in bm_solid.faces)
@@ -142,7 +142,7 @@ def despline_xz_face(
 
     Returns
     -------
-    BluemiraFace
+    :
         BluemiraFace with desplined boundaries.
     """
     boundaries = []

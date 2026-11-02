@@ -91,7 +91,8 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         Returns
         -------
-        AxisymmetricNeutronicsGeomManager
+        :
+            Neutronics Geometry Manager
         """
         all_comps = self.get_all_components(reactor)
         discretisations = [

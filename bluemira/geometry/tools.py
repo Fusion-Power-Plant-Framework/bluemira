@@ -2460,7 +2460,7 @@ def repair_overlapping_geos(
 
     Returns
     -------
-    BluemiraSolid | BluemiraFace
+    :
         Repaired geo_1.
 
     Raises
@@ -2522,7 +2522,7 @@ def repair_gaps_between_faces(
 
     Returns
     -------
-    list[BluemiraFace]
+    :
         Faces with neighbouring boundaries sewn together.
 
     Raises
@@ -2564,7 +2564,7 @@ def check_touching_geos(
 
     Returns
     -------
-    bool
+    :
         True if the geometries touch within tolerance without overlapping,
         otherwise False.
 
