@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import matplotlib.pyplot as plt
 
 from bluemira.base.look_and_feel import bluemira_print
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.display.plotter import plot_2d
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
@@ -26,6 +26,7 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 
 if TYPE_CHECKING:
     from bluemira.base.components import Component
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.base.reactor import Reactor
 
 
@@ -70,14 +71,14 @@ class AxisymmetricNeutronicsReactor(ABC):
     def __init__(
         self,
         neutronics_config: dict,
-        params: dict | ParameterFrame,
+        params: ParameterFrameLike,
         model: NeutronicsModel,
         reactor: Reactor,
     ):
         bluemira_print("Creating axisymmetric CSG neutronics model")
 
         self.config = neutronics_config
-        self.params = params
+        self.params = make_parameter_frame(params, self.param_cls)
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
 
