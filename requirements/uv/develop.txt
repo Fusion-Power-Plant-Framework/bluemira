@@ -505,8 +505,9 @@ typing-extensions==4.16.0
 typing-inspection==0.4.4
     # via pydantic
 tzdata==2026.5
-    # via pandas
-    # via python-dateutil
+    # via
+    #   pandas
+    #   python-dateutil
 urllib3==2.8.0
     # via requests
 virtualenv==21.14.13
