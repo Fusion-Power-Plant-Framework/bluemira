@@ -139,7 +139,7 @@ class TestCoreRadiation:
 
     def test_collect_flux_tubes(self):
         psi = np.linspace(1, 1.5, 5)
-        ft = self.source.core_rad.collect_flux_tubes(psi)
+        ft, _idx = self.source.core_rad.collect_flux_tubes(psi)
         assert len(ft) == 5
 
     def test_rho_core(self):

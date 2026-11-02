@@ -964,13 +964,18 @@ def pfr_filter(
 
     # Closing the domain
     if len(domains_x) != 1:
-        if not np.isclose(domains_z[0][-1], domains_z[1][0], atol=atol):
-            domains_x[1] = domains_x[1][::-1]
-            domains_z[1] = domains_z[1][::-1]
+        # Direction should be away from x-point on LFS (0), towards x-point on HFS (1)
+        expected_dir = [
+            domains_z[0][0] * fact - domains_z[0][-1] * fact > 0,
+            domains_z[1][0] * fact - domains_z[1][-1] * fact < 0,
+        ]
+        for i, drtn in enumerate(expected_dir):
+            # Reverse if not expeted direction
+            if not drtn:
+                domains_x[i] = domains_x[i][::-1]
+                domains_z[i] = domains_z[i][::-1]
         domains_x[1] = np.append(domains_x[1], domains_x[0][0])
         domains_z[1] = np.append(domains_z[1], domains_z[0][0])
-        domains_x[1] = np.insert(domains_x[1], 0, domains_x[0][-1])
-        domains_z[1] = np.insert(domains_z[1], 0, domains_z[0][-1])
 
     return np.concatenate(domains_x), np.concatenate(domains_z)
 
