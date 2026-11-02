@@ -148,8 +148,6 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         discretisations: list[int],
         overlap_tolerance: float = 1e-10,
         gap_tolerance: float = 1e-2,
-        max_side_length: float = 0.15,
-        min_side_length: float = 0.001,
     ) -> AxisymmetricNeutronicsGeomManager:
         """Create a neutronics geometry manager from components.
 
@@ -163,12 +161,6 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             Tolerance used when checking whether XZ faces are touching.
         gap_tolerance
             Tolerance used when checking for gaps between components.
-        max_side_length
-            Maximum length of wire edges, in metres, used to warn
-            when the requested discretisation may be insufficient.
-        min_side_length
-            Minimum length of wire edges, in metres. A warning is
-            issued if any side is shorter than this length.
 
         Returns
         -------
