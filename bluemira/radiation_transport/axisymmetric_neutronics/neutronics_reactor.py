@@ -19,6 +19,7 @@ import mcio
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.codes.openmc.tallying import openmc_tallies_using_mcio
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
 )
@@ -27,9 +28,6 @@ from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
 )
 from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
     plot_desplining_comparisons,
-)
-from bluemira.radiation_transport.axisymmetric_neutronics.tallies import (
-    add_default_tallies,
 )
 
 if TYPE_CHECKING:
@@ -254,7 +252,7 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         # Add Tallies
         bluemira_print("Adding Tallies")
-        add_default_tallies(
+        openmc_tallies_using_mcio(
             model=openmc_model, material_name_mapping=self.material_name_mapping
         )
         # optional
