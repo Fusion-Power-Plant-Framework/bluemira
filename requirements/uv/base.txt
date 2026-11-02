@@ -2,7 +2,7 @@
 #    uv pip compile pyproject.toml --resolution=highest --python-version=3.11 --extra pinned -o requirements/uv/base.txt
 annotated-types==0.8.0
     # via pydantic
-anyio==4.15.1
+anyio==4.16.0
     # via httpx
 anytree==2.13.0
     # via bluemira (pyproject.toml)
@@ -25,7 +25,7 @@ certifi==2026.10.23
     #   requests
 charset-normalizer==3.5.2
     # via requests
-citeproc-py==0.11.1
+citeproc-py==0.12.1
     # via csl-reference
 click==8.5.0
     # via
@@ -45,7 +45,7 @@ csl-reference==0.1.2
     # via matproplib
 cycler==0.12.1
     # via matplotlib
-cyclopts==5.3.0
+cyclopts==5.3.2
     # via pyvista
 docstring-parser==0.18.0
     # via cyclopts
@@ -55,7 +55,7 @@ flexcache==0.3
     # via pint
 flexparser==0.4
     # via pint
-fonttools==4.67.0
+fonttools==4.68.0
     # via matplotlib
 fortranformat==2.0.3
     # via
@@ -105,9 +105,9 @@ mdurl==0.1.2
     # via markdown-it-py
 meshio==5.3.5
     # via bluemira (pyproject.toml)
-msgpack==1.2.3
+msgpack==1.2.4
     # via blosc2
-narwhals==2.27.1
+narwhals==2.28.0
     # via scikit-learn
 ndindex==1.10.1
     # via blosc2
@@ -149,7 +149,7 @@ packaging==26.3
     #   matplotlib
     #   pooch
     #   tables
-pandas==2.3.3
+pandas==3.1.0
     # via seaborn
 periodictable==2.1.0
     # via
@@ -164,7 +164,7 @@ pint==0.25.3
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-platformdirs==4.13.5
+platformdirs==4.14.3
     # via
     #   pint
     #   pooch
@@ -174,14 +174,14 @@ py-cpuinfo==9.0.0
     # via tables
 pyclipper==1.4.0
     # via bluemira (pyproject.toml)
-pydantic==2.14.1
+pydantic==2.14.2
     # via
     #   bluemira (pyproject.toml)
     #   blosc2
     #   csl-reference
     #   matproplib
     #   numpydantic
-pydantic-core==2.50.1
+pydantic-core==2.50.2
     # via pydantic
 pygments==2.21.0
     # via
@@ -191,13 +191,11 @@ pyparsing==3.3.3
     # via
     #   matplotlib
     #   periodictable
-python-dateutil==3.0.0
+python-dateutil==4.0.0
     # via
     #   matplotlib
     #   pandas
-pytz==2026.3.post1
-    # via pandas
-pyvista==0.49.1
+pyvista==0.49.2
     # via bluemira (pyproject.toml)
 pyvista-validation==0.2.2
     # via pyvista
@@ -219,12 +217,10 @@ scipy==1.17.1
     #   bluemira (pyproject.toml)
     #   pint
     #   scikit-learn
-scooby==0.12.0
+scooby==0.12.1
     # via pyvista
 seaborn==0.13.2
     # via bluemira (pyproject.toml)
-six==1.17.0
-    # via python-dateutil
 tables==3.11.1
     # via bluemira (pyproject.toml)
 tabulate==0.10.0
@@ -249,10 +245,8 @@ typing-extensions==4.16.0
     #   typing-inspection
 typing-inspection==0.4.4
     # via pydantic
-tzdata==2026.5
-    # via
-    #   pandas
-    #   python-dateutil
+tzdata==2026.6
+    # via python-dateutil
 urllib3==2.8.0
     # via requests
 vtk==9.3.1
