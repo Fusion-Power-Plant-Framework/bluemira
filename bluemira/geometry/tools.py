@@ -2529,46 +2529,15 @@ def repair_gaps_between_faces(
     ------
     TypeError
         If geo_1 and geos_2 are not BluemiraFace Objects.
-    ValueError
-        If only one geo is given, if sewing results in a null shape, or if
-        sewing splits a single face into multiple faces.
     """
-    try:
-        import cadquery as cq  # noqa: PLC0415
-        from OCP.BRepBuilderAPI import BRepBuilderAPI_Sewing  # noqa: PLC0415
-
-    except ImportError:
-        bluemira_warn("Gap repair requires CadQuery. Skipping gap repair.")
-        return geos
-
     if not all(isinstance(geo, BluemiraFace) for geo in geos):
         raise TypeError("All geometries must be BluemiraFace objects")
 
-    n_geo_min = 2
-    if len(geos) < n_geo_min:
-        raise ValueError("At least two faces are required")
-
-    sewing = BRepBuilderAPI_Sewing(tolerance)
-
-    for geo in geos:
-        sewing.Add(geo.shape.wrapped)
-
-    sewing.Perform()
-
-    repaired_faces = []
-    for geo in geos:
-        if sewing.IsModified(geo.shape.wrapped):
-            mod_shape = cq.Shape.cast(sewing.Modified(geo.shape.wrapped))
-            faces = mod_shape.Faces()
-            if len(faces) == 0:
-                raise ValueError("Sewing operation resulted in a null shape.")
-            if len(faces) > 1:
-                raise ValueError("Sewing operation split a face into multiple faces.")
-            repaired_faces.append(convert(faces[0]))
-        else:
-            repaired_faces.append(geo)
-
-    return repaired_faces
+    cadapi_geos = [geo.shape for geo in geos]
+    sewed_geos = cadapi.repair_gaps_between_faces(
+        shapes=cadapi_geos, tolerance=tolerance
+    )
+    return [convert(geo) for geo in sewed_geos]
 
 
 # ======================================================================================
