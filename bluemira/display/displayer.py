@@ -40,7 +40,7 @@ class ViewerBackend(Enum):
     @property
     def DEFAULT(cls):  # noqa: N802
         """Default viewer based on backend availability"""
-        return cls[os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").upper()]
+        return cls[os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "cadquery").upper()]
 
     @lru_cache(2)
     def get_module(self):
