@@ -157,7 +157,7 @@ def make_gif(folder: str, figname: str, file_format: str = "png", *, clean: bool
         ],
         key=lambda x: int(find_digit.findall(x.name)[-1]),
     )
-    imageio.mimsave(  # type: ignore[ty:no-matching-overload]
+    imageio.mimsave(
         Path(folder, f"{figname}.gif"),
         [imageio.imread(fp) for fp in ims],
         "GIF-FI",
