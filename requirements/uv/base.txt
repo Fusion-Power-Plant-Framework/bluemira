@@ -149,8 +149,10 @@ packaging==26.3
     #   matplotlib
     #   pooch
     #   tables
-pandas==3.1.0
-    # via seaborn
+pandas==2.3.3
+    # via
+    #   bluemira (pyproject.toml)
+    #   seaborn
 periodictable==2.1.0
     # via
     #   bluemira (pyproject.toml)
@@ -195,6 +197,8 @@ python-dateutil==4.0.0
     # via
     #   matplotlib
     #   pandas
+pytz==2026.6
+    # via pandas
 pyvista==0.49.2
     # via bluemira (pyproject.toml)
 pyvista-validation==0.2.2
@@ -246,7 +250,9 @@ typing-extensions==4.16.0
 typing-inspection==0.4.4
     # via pydantic
 tzdata==2026.6
-    # via python-dateutil
+    # via
+    #   pandas
+    #   python-dateutil
 urllib3==2.8.0
     # via requests
 vtk==9.3.1
