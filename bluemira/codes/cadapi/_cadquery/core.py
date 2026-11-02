@@ -2708,7 +2708,7 @@ def repair_gaps_between_faces(
 
     Returns
     -------
-    list[apiFace]
+    :
         Faces with neighbouring boundaries sewn together.
 
     Raises
