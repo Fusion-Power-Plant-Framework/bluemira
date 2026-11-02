@@ -170,11 +170,6 @@ def pytest_configure(config):
         else Path(get_bluemira_path("", subfolder="generated_data"), "test_data")
     )
 
-    config.addinivalue_line(
-        "markers",
-        "cadquery_only: test requires the CadQuery geometry backend",
-    )
-
 
 def pytest_collection_modifyitems(items):
     """
