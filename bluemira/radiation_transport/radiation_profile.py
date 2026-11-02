@@ -169,7 +169,7 @@ class Radiation:
             return [self.eq.get_flux_surface(psi) for psi in psi_n], []
         fluxtubes = []
         idx = []
-        # If a flux surface is found that is outside of the LCFS
+        # If a flux surface, expected inside the LCFS, is found outside
         # (see find_flux_surf) return the index of that flux surface
         # rather than raising an error.
         for i, psi in enumerate(psi_n):
