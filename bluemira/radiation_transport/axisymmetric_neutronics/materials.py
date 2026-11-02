@@ -28,7 +28,8 @@ def to_mcio_material(
 
     Returns
     -------
-    mcio.material.Material
+    :
+        mcio material
 
     Raises
     ------
