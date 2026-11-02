@@ -514,15 +514,15 @@ class CoreRadiation(Radiation):
             self.profiles.psi_n, core_clip=True
         )
         if len(remove_idx) > 0:
-            self.profiles.psi_n = [
+            self.profiles.psi_n = np.array([
                 val for i, val in enumerate(self.profiles.psi_n) if i not in remove_idx
-            ]
-            self.profiles.ne = [
+            ])
+            self.profiles.ne = np.array([
                 val for i, val in enumerate(self.profiles.ne) if i not in remove_idx
-            ]
-            self.profiles.te = [
+            ])
+            self.profiles.te = np.array([
                 val for i, val in enumerate(self.profiles.te) if i not in remove_idx
-            ]
+            ])
 
         # Calculate poloidal density profile for each flux tube
         self.ne_pol = [
