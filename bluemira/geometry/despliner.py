@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import numpy as np
-
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
