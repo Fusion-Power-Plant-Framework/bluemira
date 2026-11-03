@@ -19,7 +19,7 @@ from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, TypedDict
 from unittest import mock
 
 import FreeCAD  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
@@ -33,6 +33,8 @@ from FreeCAD import (  # type: ignore[ty:unresolved-import] # type: ignore[impor
     Base,
 )
 from matplotlib import colors
+
+from bluemira.codes.cadapi._base_types import CurveType
 
 try:
     from pivy import coin, quarter
@@ -1122,6 +1124,55 @@ def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.n
         For planar faces, the normal is the same everywhere.
     """
     return np.array(face.normalAt(alpha_1, alpha_2))
+
+
+EDGE_TYPE_TO_ENUM = {
+    Part.Line: CurveType.LINE,
+    Part.LineSegment: CurveType.LINE,
+    Part.Circle: CurveType.CIRCLE,
+    Part.ArcOfCircle: CurveType.CIRCLE,
+    Part.Ellipse: CurveType.ELLIPSE,
+    Part.ArcOfEllipse: CurveType.ELLIPSE,
+    Part.ArcOfHyperbola: CurveType.HYPERBOLA,
+    Part.Hyperbola: CurveType.HYPERBOLA,
+    Part.ArcOfParabola: CurveType.PARABOLA,
+    Part.Parabola: CurveType.PARABOLA,
+    Part.BezierCurve: CurveType.BEZIER,
+    Part.BSplineCurve: CurveType.BSPLINE,
+}
+
+
+def get_edge_type(edge: apiEdge) -> CurveType:
+    """
+    Get curve type from edge
+
+    Returns
+    -------
+    :
+        Curve type
+    """
+    fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
+
+    return EDGE_TYPE_TO_ENUM[type(fc_edge.Curve)]
+
+
+class CircleEdgeDT(TypedDict):
+    """Circle Edge data type"""
+
+    centre: tuple[float, float, float]
+    radius: float
+
+
+def get_edge_data(edge: apiEdge | apiWire) -> CircleEdgeDT:
+    ft = get_edge_type(edge)
+    fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
+
+    if ft == CurveType.CIRCLE:
+        return {
+            "centre": tuple(fc_edge.Curve.Center),
+            "radius": fc_edge.Curve.Radius,
+        }
+    raise NotImplementedError
 
 
 # ======================================================================================

@@ -167,7 +167,7 @@ def calculate_new_circle(
     new_circle_info:
         An instance of CircleInfo representing the new (scaled) arc of circle.
     """
-    old_pts = np.asarray(old_circle_info[:2], dtype=float)
+    old_pts = np.squeeze(old_circle_info[:2])  # type: ignore[ty:no-matching-overload]
     new_chord_vector = np.diff(new_points, axis=0)
     old_chord_vector = np.diff(old_pts, axis=0)
     scale_factor = np.linalg.norm(new_chord_vector) / np.linalg.norm(old_chord_vector)
@@ -182,7 +182,12 @@ def calculate_new_circle(
     # chord should stay on the same side of the center after transformation.
     new_center = pick_higher_point(center1, center2, old_radius_vector)
 
-    return CircleInfo(new_points[0], new_points[1], new_center, new_radius)
+    return CircleInfo(
+        Coordinates(new_points[0]),
+        Coordinates(new_points[1]),
+        new_center,  # type: ignore[ty:invalid-argument-type]
+        new_radius,
+    )
 
 
 class PreCell:
@@ -610,7 +615,7 @@ class PreCellArray:
         """
         return super().__repr__().replace(" at ", f" of {len(self)} PreCells at ")
 
-    def copy(self):
+    def copy(self) -> PreCellArray:
         """
         Each element of the new_copy.pre_cells list points to the same
         items as the self.pre_cells
@@ -744,32 +749,37 @@ class DivertorPreCell:
             *(w.key_points[0] for w in self.interior_wire),
             self.interior_wire[-1].key_points[1],
         ])
-
         # assumed normalised
-        cw_dir = choose_direction(
-            np.asarray(self.cw_wall[0].tangents[0], dtype=float),
-            np.asarray(self.cw_wall.end_point, dtype=float),
-            np.asarray(self.cw_wall.start_point, dtype=float),
+        cw_dir = np.squeeze(
+            choose_direction(
+                self.cw_wall[0].tangents[0].T,
+                self.cw_wall.end_point.xyz,
+                self.cw_wall.start_point.xyz,
+            )
         )
-        ccw_dir = choose_direction(
-            np.asarray(self.ccw_wall[0].tangents[1], dtype=float),
-            np.asarray(self.ccw_wall.start_point, dtype=float),
-            np.asarray(self.ccw_wall.end_point, dtype=float),
+        ccw_dir = np.squeeze(
+            choose_direction(
+                self.ccw_wall[0].tangents[1].T,
+                self.ccw_wall.start_point.xyz,
+                self.ccw_wall.end_point.xyz,
+            )
         )
 
         cw_norm = CCW_90 @ cw_dir
-        cw_anchor = self.cw_wall.start_point
+        cw_anchor = np.squeeze(self.cw_wall.start_point.xyz)
         ccw_norm = CW_90 @ ccw_dir
-        ccw_anchor = self.ccw_wall.end_point
+        ccw_anchor = np.squeeze(self.ccw_wall.end_point.xyz)
 
         def unit(new_dir: npt.NDArray[np.float64]):
             return new_dir / np.linalg.norm(new_dir)
 
         shifted_pts = [
-            pt
+            np.squeeze(pt)
             + unit(
                 np.array([cw_dir, ccw_dir]).T
-                @ ratio_of_distances(pt, cw_anchor, cw_norm, ccw_anchor, ccw_norm)[::-1]
+                @ ratio_of_distances(
+                    np.squeeze(pt), cw_anchor, cw_norm, ccw_anchor, ccw_norm
+                )[::-1]
             )
             * thickness
             for pt in int_wire_pts

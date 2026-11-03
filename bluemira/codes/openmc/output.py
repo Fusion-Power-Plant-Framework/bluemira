@@ -188,7 +188,7 @@ class OpenMCCSGResult(OpenMCResultBase):
     cell_arrays: CellStage
     src_rate: float
     statepoint: openmc.StatePoint
-    statepoint_file: str | Path
+    statepoint_file: Path
     cell_names: dict
     cell_vols: dict  # [m^3]
     mat_names: dict
