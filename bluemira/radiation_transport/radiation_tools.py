@@ -26,6 +26,9 @@ from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, check_ccw, in_polygon
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    _process_first_wall,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -116,7 +119,7 @@ def upstream_temperature(
     k_0:
         Material's conductivity
     firstwall_geom:
-        First wall geometry
+        First wall geometry - coords should be CCW
     connection_length:
         connection length from the midplane to the target
 
@@ -281,7 +284,7 @@ def specific_point_temperature(
     k_0:
         Material's conductivity
     firstwall_geom:
-        first wall geometry
+        first wall geometry - coords should be CCW
     connection_length:
         connection length from the midplane to the target
     lfs:
@@ -1322,7 +1325,7 @@ def make_wall_detectors(
     return wall_detectors
 
 
-def plot_radiation_loads(
+def _plot_radiation_loads(
     radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
 ):
     """
@@ -1453,7 +1456,7 @@ class FirstWallRadiationSolver:
     def __init__(self, source_func: Callable, firstwall_shape: Coordinates):
         self.rad_source = source_func
         self.rad_3d = AxisymmetricMapper(self.rad_source)
-        self.fw_shape = firstwall_shape
+        self.fw_shape = _process_first_wall(firstwall_shape)
         self.wall_detectors = None
         self.wall_loads = None
 
@@ -1531,7 +1534,7 @@ class FirstWallRadiationSolver:
 
     def plot(self):
         """Plot the radiation on the wall [MW/m^2]."""
-        plot_radiation_loads(
+        _plot_radiation_loads(
             self.rad_3d,
             self.wall_detectors,
             self.wall_loads,

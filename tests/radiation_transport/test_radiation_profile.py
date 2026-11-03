@@ -109,8 +109,8 @@ class TestCoreRadiation:
             confinement_time_core=cls.config["confinement_core"],
             confinement_time_sol=cls.config["confinement_sol"],
         )
-        source.analyse(firstwall_geom=fw_shape)
-        source.rad_map(fw_shape)
+        source.analyse()
+        source.rad_map()
 
         cls.profiles = profiles
         cls.source = source
@@ -401,7 +401,7 @@ class TestCoreRadiation:
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
         wall_detectors = make_wall_detectors(
-            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH, plot=True
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
         )
         assert all(detector.y_width <= max_wall_len for detector in wall_detectors)
         assert all(np.isclose(detector.x_width, X_WIDTH) for detector in wall_detectors)

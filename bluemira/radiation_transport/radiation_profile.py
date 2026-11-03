@@ -29,6 +29,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.error import RadiationTransportError
 from bluemira.radiation_transport.flux_surfaces_maker import (
+    _process_first_wall,
     analyse_first_wall_flux_surfaces,
 )
 from bluemira.radiation_transport.radiation_tools import (
@@ -54,7 +55,6 @@ if TYPE_CHECKING:
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.flux_surfaces import PartialOpenFluxSurface
-    from bluemira.equilibria.grid import Grid
     from bluemira.radiation_transport.midplane_temperature_density import (
         MidplaneProfiles,
     )
@@ -697,12 +697,15 @@ class ScrapeOffLayerRadiation(Radiation):
         self,
         eq: Equilibrium,
         params: RadiationSourceParams,
+        firstwall_geom: Coordinates,
         x_sep_omp: float,
         x_sep_imp: float | None = None,
         dx_omp: np.ndarray | float | None = None,
         dx_imp: np.ndarray | float | None = None,
     ):
         super().__init__(eq, params)
+
+        self.firstwall_geom = _process_first_wall(firstwall_geom)
 
         # Constructors - The mid-plane radii
         self.x_sep_omp = x_sep_omp
@@ -715,7 +718,7 @@ class ScrapeOffLayerRadiation(Radiation):
         # Separatrix parameters
         self.collect_separatrix_parameters()
 
-    def calculate_sol_distribution(self, firstwall_geom: Coordinates) -> dict[str, Any]:  # noqa: D102
+    def calculate_sol_distribution(self) -> dict[str, Any]:  # noqa: D102
         raise NotImplementedError
 
     def collect_x_and_o_point_coordinates(self):
@@ -1065,7 +1068,6 @@ class ScrapeOffLayerRadiation(Radiation):
         x_strike: float,
         z_strike: float,
         main_ext: float,
-        firstwall_geom: Coordinates,
         pfr_ext: float | None = None,
         rec_ext: float | None = None,
         *,
@@ -1091,8 +1093,6 @@ class ScrapeOffLayerRadiation(Radiation):
         main_ext: float
             extension of the radiation region from the x-point
             towards the main plasma [m]
-        firstwall_geom:
-            first wall geometry
         pfr_ext:
             extension of the radiation region from the x-point
             towards private flux region [m]
@@ -1219,7 +1219,7 @@ class ScrapeOffLayerRadiation(Radiation):
             self.points["o_point"]["z"],
             self.params.k_0.value,
             sep_corrector,
-            firstwall_geom,
+            self.firstwall_geom,
             lfs=lfs,
         )
 
@@ -1308,7 +1308,7 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return t_pol, n_pol
 
-    def radiation_distribution_plot(self, flux_tubes, power_density, firstwall, ax=None):
+    def radiation_distribution_plot(self, flux_tubes, power_density, ax=None):
         """
         2D plot of the radiation power distribution.
 
@@ -1324,8 +1324,6 @@ class ScrapeOffLayerRadiation(Radiation):
             list of arrays containing the power radiation density of the
             points lying on the specified flux tubes.
             expected len(flux_tubes) = len(power_density)
-        firstwall: Grid
-            first wall geometry
 
         Returns
         -------
@@ -1343,7 +1341,7 @@ class ScrapeOffLayerRadiation(Radiation):
         p_min = min(min(p) for p in power)
         p_max = max(max(p) for p in power)
 
-        plot_coordinates(firstwall, ax=ax, linewidth=0.5, fill=False)
+        plot_coordinates(self.firstwall_geom, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
             separatrix = [separatrix]
@@ -1506,7 +1504,9 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         dx_omp: np.ndarray | float | None = None,
         dx_imp: np.ndarray | float | None = None,
     ):
-        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
+        super().__init__(
+            eq, params, firstwall_geom, x_sep_omp, x_sep_imp, dx_omp, dx_imp
+        )
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1559,7 +1559,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             r_sep_mp=self.r_sep_omp,
             z_mp=self.z_mp,
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            firstwall_geom=self.firstwall_geom,
         )
 
         self.t_imp = upstream_temperature(
@@ -1571,21 +1571,14 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             r_sep_mp=self.r_sep_imp,
             z_mp=self.z_mp,
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            firstwall_geom=self.firstwall_geom,
         )
 
-    def calculate_sol_distribution(
-        self, firstwall_geom: Coordinates
-    ) -> dict[str, tuple[list[np.ndarray], list[np.ndarray]]]:
+    def calculate_sol_distribution(self):
         """
         Temperature and density profiles calculation.
         For each scrape-off layer sector, it gives temperature
         and density profile along each flux tube.
-
-        Parameters
-        ----------
-        firstwall_geom: grid
-            first wall geometry
 
         Returns
         -------
@@ -1608,7 +1601,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 x_strike=getattr(self, f"x_strike_{side}"),
                 z_strike=getattr(self, f"z_strike_{side}"),
                 main_ext=self.params.main_ext.value,
-                firstwall_geom=firstwall_geom,
                 pfr_ext=None,
                 rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
@@ -1777,15 +1769,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         # Calculate the total radiated power
         return calculate_total_radiated_power(self.x_tot, self.z_tot, self.rad_tot)
 
-    def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
+    def plot_poloidal_radiation_distribution(self):
         """
         Plot poloidal radiation distribution
         within the scrape-off layer
-
-        Parameters
-        ----------
-        firstwall_geom:
-            first wall geometry
         """
         self.radiation_distribution_plot(
             [
@@ -1800,7 +1787,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 self.total_rad_lfs_up,
                 self.total_rad_hfs_up,
             ],
-            firstwall_geom,
         )
 
 
@@ -1847,7 +1833,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         x_sep_omp: float,
         dx_omp: np.ndarray | float | None = None,
     ):
-        super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
+        super().__init__(eq, params, firstwall_geom, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1894,21 +1880,16 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             r_sep_mp=self.r_sep_omp,
             z_mp=self.points["o_point"]["z"],
             k_0=self.params.k_0.value,
-            firstwall_geom=firstwall_geom,
+            firstwall_geom=self.firstwall_geom,
         )
 
     def calculate_sol_distribution(
-        self, firstwall_geom: Coordinates
+        self,
     ) -> dict[str, tuple[list[np.ndarray], list[np.ndarray]]]:
         """
         Temperature and density profiles calculation.
         For each scrape-off layer sector, it gives temperature
         and density profile along each flux tube.
-
-        Parameters
-        ----------
-        firstwall_geom:
-            first wall geometry
 
         Returns
         -------
@@ -1925,7 +1906,6 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 x_strike=getattr(self, f"x_strike_{side}"),
                 z_strike=getattr(self, f"z_strike_{side}"),
                 main_ext=1,
-                firstwall_geom=firstwall_geom,
                 pfr_ext=None,
                 rec_ext=self.params.rec_ext_out_leg.value,
                 x_point_rad=False,
@@ -2025,20 +2005,14 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             functools.reduce(operator.iadd, [self.total_rad_lfs, self.total_rad_hfs], [])
         )
 
-    def plot_poloidal_radiation_distribution(self, firstwall_geom: Coordinates):
+    def plot_poloidal_radiation_distribution(self):
         """
         Plot poloidal radiation distribution
         within the scrape-off layer
-
-        Parameters
-        ----------
-        firstwall_geom:
-            first wall geometry
         """
         self.radiation_distribution_plot(
             [self.flux_tubes_lfs, self.flux_tubes_hfs],
             [self.total_rad_lfs, self.total_rad_hfs],
-            firstwall_geom,
         )
 
 
@@ -2119,6 +2093,7 @@ class RadiationSource:
 
         # Initialising the `FluxSurfaceMaker`
         (
+            self.firstwall,
             self.dx_omp,
             self.dx_imp,
             self.flux_surfaces,
@@ -2132,16 +2107,11 @@ class RadiationSource:
         )
 
     def analyse(
-        self, firstwall_geom: Coordinates
+        self,
     ) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
         """
         Using core radiation model and SOL radiation model
         to calculate the radiation source at all points
-
-        Parameters
-        ----------
-        firstwall_geom:
-            The closed first wall geometry
 
         Returns
         -------
@@ -2165,7 +2135,7 @@ class RadiationSource:
                 self.flux_surfaces,
                 self.imp_content_sol,
                 self.imp_data_sol,
-                firstwall_geom,
+                self.firstwall,
                 self.x_sep_omp,
                 cast("float", self.x_sep_imp),
                 self.dx_omp,
@@ -2178,7 +2148,7 @@ class RadiationSource:
                 self.flux_surfaces,
                 self.imp_content_sol,
                 self.imp_data_sol,
-                firstwall_geom,
+                self.firstwall,
                 self.x_sep_omp,
                 self.dx_omp,
             )
@@ -2333,7 +2303,7 @@ class RadiationSource:
         f = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         return interpolated_field_values(x, z, f)
 
-    def rad_map(self, firstwall_geom: Coordinates):
+    def rad_map(self):
         """
         Mapping all the radiation values associated to all the points
         as three arrays containing x coordinates, z coordinates and
@@ -2350,7 +2320,7 @@ class RadiationSource:
         """
         self.core_rad.calculate_core_radiation_map()
 
-        t_and_n_sol_profiles = self.sol_rad.calculate_sol_distribution(firstwall_geom)
+        t_and_n_sol_profiles = self.sol_rad.calculate_sol_distribution()
         rad_sector_profiles = self.sol_rad.calculate_sol_radiation_distribution(
             **t_and_n_sol_profiles
         )
