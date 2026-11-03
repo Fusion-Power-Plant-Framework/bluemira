@@ -921,7 +921,9 @@ def grid_interpolator(
 
 
 def pfr_filter(
-    separatrix: Iterable[Coordinates] | Coordinates, x_point_z: float
+    separatrix: Iterable[Coordinates] | Coordinates,
+    x_point_z: float,
+    atol: float = 0.01,
 ) -> tuple[np.ndarray, ...]:
     """
     To filter out from the radiation interpolation domain the private flux regions
@@ -932,6 +934,8 @@ def pfr_filter(
         Object containing x and z coordinates of each separatrix half
     x_point_z:
         z coordinates of the x-point [m]
+    atol:
+        Tolerance used in relation to x_point_z and closing PFR region
 
     Returns
     -------
@@ -946,8 +950,9 @@ def pfr_filter(
     if isinstance(separatrix, Coordinates):
         separatrix = [separatrix]
     # Selecting points between null and targets (avoiding the x-point singularity)
+
     z_ind = [
-        np.nonzero((halves.z * fact) < (x_point_z * fact - 0.01))
+        np.nonzero((halves.z * fact) < (x_point_z * fact - atol))
         for halves in separatrix
     ]
     domains_x = [
@@ -957,8 +962,18 @@ def pfr_filter(
         halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix, strict=False)
     ]
 
+    # Closing the domain
     if len(domains_x) != 1:
-        # Closing the domain
+        # Direction should be away from x-point on LFS (0), towards x-point on HFS (1)
+        expected_dir = [
+            domains_z[0][0] * fact - domains_z[0][-1] * fact > 0,
+            domains_z[1][0] * fact - domains_z[1][-1] * fact < 0,
+        ]
+        for i, drtn in enumerate(expected_dir):
+            # Reverse if not expeted direction
+            if not drtn:
+                domains_x[i] = domains_x[i][::-1]
+                domains_z[i] = domains_z[i][::-1]
         domains_x[1] = np.append(domains_x[1], domains_x[0][0])
         domains_z[1] = np.append(domains_z[1], domains_z[0][0])
 

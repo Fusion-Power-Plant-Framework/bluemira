@@ -22,6 +22,8 @@ from scipy.interpolate import interp1d
 from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display.plotter import Zorder, plot_2d, plot_coordinates
+from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find_legs import NumNull, split
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
@@ -138,7 +140,12 @@ class Radiation:
         self.params = params
         self.eq = eq
 
-    def collect_flux_tubes(self, psi_n: np.ndarray) -> list[Coordinates]:
+    def collect_flux_tubes(
+        self,
+        psi_n: np.ndarray,
+        *,
+        core_clip: bool = False,
+    ) -> tuple[list[Coordinates], list[int]]:
         """
         Collect flux tubes according to the normalised psi.
         For now only used for the core as for the SoL the
@@ -149,13 +156,31 @@ class Radiation:
         ----------
         psi_n:
             normalised psi
+        core_clip:
+            remove any flux tubes not within the core
 
         Returns
         -------
-        flux tubes:
+        fluxtubes:
             list of flux tubes
+        idx:
+            list of the indicies for any flux tubes not within the core
         """
-        return [self.eq.get_flux_surface(psi) for psi in psi_n]
+        if not core_clip:
+            return [self.eq.get_flux_surface(psi) for psi in psi_n], []
+        fluxtubes = []
+        idx = []
+        # If a flux surface, expected inside the LCFS, is found outside
+        # (see find_flux_surf) return the index of that flux surface
+        # rather than raising an error.
+        for i, psi in enumerate(psi_n):
+            try:
+                tube = self.eq.get_flux_surface(psi)
+            except EquilibriaError:
+                idx.append(i)
+            else:
+                fluxtubes.append(tube)
+        return fluxtubes, idx
 
     @staticmethod
     def flux_tube_pol_t(
@@ -444,6 +469,8 @@ class CoreRadiation(Radiation):
         # Store the midplane profiles
         self.profiles = midplane_profiles
 
+        self.lcfs = self.eq.get_LCFS()
+
     def calculate_mp_radiation_profile(self):
         """
         1D profile of the line radiation loss at the mid-plane
@@ -482,7 +509,21 @@ class CoreRadiation(Radiation):
             and for each closed flux line in the core.
         """
         # Collect closed flux tubes within the separatrix
-        self.flux_tubes = self.collect_flux_tubes(self.profiles.psi_n)
+        # If a flux surface is found outside of the LCFS,
+        # use the returned indices to remove it from profiles.
+        self.flux_tubes, remove_idx = self.collect_flux_tubes(
+            self.profiles.psi_n, core_clip=True
+        )
+        if len(remove_idx) > 0:
+            self.profiles.psi_n = np.array([
+                val for i, val in enumerate(self.profiles.psi_n) if i not in remove_idx
+            ])
+            self.profiles.ne = np.array([
+                val for i, val in enumerate(self.profiles.ne) if i not in remove_idx
+            ])
+            self.profiles.te = np.array([
+                val for i, val in enumerate(self.profiles.te) if i not in remove_idx
+            ])
 
         # Calculate poloidal density profile for each flux tube
         self.ne_pol = [
@@ -701,6 +742,13 @@ class ScrapeOffLayerRadiation(Radiation):
         self.separatrix = self.eq.get_separatrix()
         self.z_mp = float(self.points["o_point"]["z"])
         if self.eq.is_double_null:
+            if len(self.separatrix) != 2:  # noqa: PLR2004
+                self.separatrix = split(
+                    self.separatrix
+                    if isinstance(self.separatrix, Coordinates)
+                    else self.separatrix[0],
+                    NumNull.DN,
+                )
             # The two halves
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
