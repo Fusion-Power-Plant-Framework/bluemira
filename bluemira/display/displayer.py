@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import os
 from abc import ABC, abstractmethod
+from contextlib import suppress
 from enum import Enum
 from functools import lru_cache
 from typing import TYPE_CHECKING, ClassVar, cast
@@ -35,12 +36,21 @@ class ViewerBackend(Enum):
     FREECAD = "bluemira.codes.cadapi._freecad.api"
     POLYSCOPE = "bluemira.codes._polyscope"
     CADQUERY = "bluemira.codes.cadapi._cadquery"
+    JUPYTER = "bluemira.codes._jupytercad"
 
     @classmethod  # type: ignore[ty:invalid-argument-type]
     @property
     def DEFAULT(cls):  # noqa: N802
         """Default viewer based on backend availability"""
-        return cls[os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").upper()]
+        chosen = os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad").upper()
+        with suppress(NameError):
+            if (
+                chosen != "freecad"
+                and type(get_ipython()).__name__  # noqa: F821 # type:ignore[ty:unresolved-reference]
+                == "ZMQInteractiveShell"
+            ):
+                return cls["jupyter".upper()]  # Jupyter notebook or qtconsole
+        return cls[chosen]
 
     @lru_cache(2)
     def get_module(self):

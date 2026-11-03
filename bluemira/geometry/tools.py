@@ -10,7 +10,7 @@ Useful functions for bluemira geometries.
 
 from __future__ import annotations
 
-import datetime
+import datetime as dt
 import enum
 import functools
 import inspect
@@ -163,7 +163,7 @@ def _make_debug_file(name: str) -> Path:
         path = Path.cwd() / "naughty_geometry"
         Path.mkdir(path, exist_ok=True)
 
-    now = datetime.datetime.now()
+    now = dt.datetime.now()
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
     ts_name = fmt_string.format(name, timestamp, "")
