@@ -677,7 +677,7 @@ class ScrapeOffLayerRadiation(Radiation):
         # Separatrix parameters
         self.collect_separatrix_parameters()
 
-    def calculate_sol_distribution(self, firstwall_geom: Coordinates) -> dict[str, Any]:  # noqa: D102
+    def calculate_sol_distribution(self) -> dict[str, Any]:  # noqa: D102
         raise NotImplementedError
 
     def collect_x_and_o_point_coordinates(self):

@@ -31,6 +31,7 @@ def analyse_first_wall_flux_surfaces(
     dx_mp: float = 0.001,
     source_sol_dl: float | None = None,
 ) -> tuple[
+    Coordinates,
     np.ndarray,
     np.ndarray | None,
     tuple[list[PartialOpenFluxSurface], ...],
@@ -53,6 +54,8 @@ def analyse_first_wall_flux_surfaces(
 
     Returns
     -------
+    first_wall:
+        Coordinates of the first wall after processing
     dx_omp:
         The midplane spatial resolution between flux surfaces at the outboard [m]
     dx_imp:
