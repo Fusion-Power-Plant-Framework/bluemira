@@ -143,7 +143,8 @@ class Radiation:
     def collect_flux_tubes(
         self,
         psi_n: np.ndarray,
-        core_clip: bool = False,  # noqa: FBT001, FBT002
+        *,
+        core_clip: bool = False,
     ) -> tuple[list[Coordinates], list[int]]:
         """
         Collect flux tubes according to the normalised psi.
