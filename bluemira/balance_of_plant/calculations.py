@@ -45,7 +45,8 @@ def cryo_power(
 
     Returns
     -------
-    Total power required to cool cryogenic components
+    :
+        Total power required to cool cryogenic components
 
     Note
     ----
