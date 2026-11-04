@@ -152,7 +152,7 @@ periodictable==2.1.0
     # via
     #   bluemira (pyproject.toml)
     #   matproplib
-pillow==12.3.0
+pillow==13.0.0
     # via
     #   imageio
     #   matplotlib
