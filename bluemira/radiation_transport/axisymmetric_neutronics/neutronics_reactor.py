@@ -46,14 +46,16 @@ class NeutronicsModel(Enum):
     ADVANCED = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"{cls.__name__} has no type {value}. "
-                f"Please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object):
+        if isinstance(value, str):
+            member = cls.__members__.get(value.upper())
+            if member is not None:
+                return member
+
+        raise ValueError(
+            f"{cls.__name__} has no type {value}. "
+            f"Please select from {tuple(cls.__members__)}"
+        ) from None
 
 
 @dataclass
@@ -113,7 +115,11 @@ class AxisymmetricNeutronicsReactor(ABC):
                 self.config.get("neutronics_output_path", "./outputs/")
             )
             self.plot_desplining_comparisons(
-                orig_comps=[comp.get_component("xz") for comp in all_comps],
+                orig_comps=[
+                    xz_comp
+                    for comp in all_comps
+                    if (xz_comp := comp.get_component("xz")) is not None
+                ],
                 desplined_comps=desplined_geometry.component().get_component(
                     "xz", first=False
                 ),
@@ -132,7 +138,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         """
         show = kwargs.pop("show", True)
         ax = kwargs.pop("ax", None)
-        return self.geometry.plot_2d(*args, ax=ax, show=show, **kwargs)
+        return self.geometry.plot_2d(*args, ax=ax, show=show, **kwargs)  # type: ignore[unresolved-attribute]
 
     @staticmethod
     def plot_desplining_comparisons(
@@ -150,6 +156,9 @@ class AxisymmetricNeutronicsReactor(ABC):
             if original and desplined components do not have the
             same length
         """
+        if output_path is None:
+            raise ValueError("output_path must be provided.")
+
         output_path.mkdir(parents=True, exist_ok=True)
 
         if len(orig_comps) != len(desplined_comps):
