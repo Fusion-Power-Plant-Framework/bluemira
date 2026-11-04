@@ -138,7 +138,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         """
         show = kwargs.pop("show", True)
         ax = kwargs.pop("ax", None)
-        return self.geometry.plot_2d(*args, ax=ax, show=show, **kwargs)  # type: ignore[unresolved-attribute]
+        return self.geometry.plot_2d(*args, ax=ax, show=show, **kwargs)
 
     @staticmethod
     def plot_desplining_comparisons(
