@@ -357,9 +357,13 @@ class Solver(CodesSolver):
         """
         lz_ref, z_ref = Impurities[impurity].read_impurity_files(("lz", "z"))
 
+        def _filter(data):
+            ct = f"{confinement_time_ms:.1f}"
+            return ct in data.content and ("tau[ms]" in data.content or ct == "inf")
+
         t_ref = filter(lambda lz: lz.content == "Te[eV]", lz_ref)
-        lz_ref = filter(lambda lz: f"{confinement_time_ms:.1f}" in lz.content, lz_ref)
-        z_av_ref = filter(lambda z: f"{confinement_time_ms:.1f}" in z.content, z_ref)
+        lz_ref = filter(_filter, lz_ref)
+        z_av_ref = filter(_filter, z_ref)
         return (
             np.array(next(t_ref).data, dtype=float),
             np.array(next(lz_ref).data, dtype=float),
