@@ -31,8 +31,6 @@ from bluemira.geometry.tools import (
 if TYPE_CHECKING:
     from matproplib.material import Material
 
-    from bluemira.geometry.face import BluemiraFace
-
 
 @dataclass
 class AxisymmetricNeutronicsCompData:
