@@ -409,7 +409,7 @@ polyscope==2.6.1
     # via bluemira (pyproject.toml)
 pooch==1.9.0
     # via pyvista
-pre-commit==4.6.2
+pre-commit==4.7.0
     # via bluemira (pyproject.toml)
 prometheus-client==0.26.0
     # via jupyter-server

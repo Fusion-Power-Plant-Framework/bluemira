@@ -304,7 +304,7 @@ pluggy==1.6.0
     #   pytest-cov
 pooch==1.9.0
     # via pyvista
-pre-commit==4.6.2
+pre-commit==4.7.0
     # via bluemira (pyproject.toml)
 prompt-toolkit==3.0.53
     # via ipython
