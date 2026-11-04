@@ -42,9 +42,7 @@ def check_face_has_splines(bm_face: BluemiraFace) -> bool:
     if face_type in {"BSPLINE", "BEZIER", "BSplineSurface", "BezierSurface"}:
         return True
 
-    edges = (
-        face.Edges() if hasattr(face, "Edges") and callable(face.Edges) else face.Edges
-    )
+    edges = face.Edges()  # type: ignore[operator]
 
     for edge in edges:
         edge_type = (
