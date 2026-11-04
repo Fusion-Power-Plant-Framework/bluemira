@@ -29,7 +29,6 @@ from bluemira.geometry.tools import (
 )
 
 if TYPE_CHECKING:
-    from matplotlib.axes import Axes
     from matproplib.material import Material
 
 
@@ -492,15 +491,3 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 repaired_pairs.add(pair)
 
         return neutronics_comps
-
-    def plot_2d(self, *args, **kwargs) -> Axes:
-        """
-        Redeclared to make the inherited method explicitly visible
-        to the static type checker used in GitHub Actions.
-
-        Returns
-        -------
-        :
-            The axes with the plotted data.
-        """
-        return super().plot_2d(*args, **kwargs)
