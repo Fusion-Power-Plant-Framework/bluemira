@@ -283,7 +283,7 @@ periodictable==2.1.0
     #   matproplib
 pexpect==4.9.0
     # via ipython
-pillow==12.3.0
+pillow==13.0.0
     # via
     #   imageio
     #   matplotlib
