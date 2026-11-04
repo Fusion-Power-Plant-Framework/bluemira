@@ -20,6 +20,7 @@ from bluemira.geometry.despliner import (
     check_solid_has_revolution,
     despline_xz_face,
 )
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     check_touching_geos,
     repair_gaps_between_faces,
@@ -29,8 +30,6 @@ from bluemira.geometry.tools import (
 
 if TYPE_CHECKING:
     from matproplib.material import Material
-
-    from bluemira.geometry.face import BluemiraFace
 
 
 @dataclass
@@ -124,8 +123,17 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         -------
         :
             Names of components whose XZ faces touch the XZ face of ``comp``.
+
+        Raises
+        ------
+        ValueError
+            if xz component is not found
         """
-        comp_xz_face = comp.get_component("xz").children[0].shape
+        comp_xz = comp.get_component("xz")
+        if comp_xz is None:
+            raise ValueError(f"Component 'xz' not found in {comp.name}")
+
+        comp_xz_face = comp_xz.children[0].shape
 
         touching_components = []
 
@@ -133,7 +141,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             if other_comp.name == comp.name:
                 continue
 
-            other_xz_face = other_comp.get_component("xz").children[0].shape
+            other_xz = other_comp.get_component("xz")
+            if other_xz is None:
+                raise ValueError(f"Component 'xz' not found in {other_comp.name}")
+
+            other_xz_face = other_xz.children[0].shape
 
             if check_touching_geos(
                 comp_xz_face,
@@ -196,7 +208,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         bluemira_print("Desplining xz components.")
         for comp, dscrt in zip(components, discretisations, strict=True):
             xz_component = comp.get_component("xz")
+            if xz_component is None:
+                raise ValueError("xz component not found")
             xyz_component = comp.get_component("xyz")
+            if xyz_component is None:
+                raise ValueError("xyz component not found")
 
             # only consider one sub-component
             if len(xz_component.children) > 1:
@@ -216,6 +232,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             ):
                 desplined_xz_face = face
             else:
+                if xz_component.parent is None:
+                    raise ValueError(
+                        f"xz component has no parent for {xz_component.name}"
+                    )
+
                 desplined_xz_face = despline_xz_face(
                     xz_face=face,
                     discretisation=dscrt,
@@ -268,11 +289,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             component_tree.add_child(component)
 
             # Calculate and store the relative volume difference.
+            if (comp_xyz := component.get_component("xyz")) is None:
+                raise ValueError("Component 'xyz' not found")
+
             relative_volume_difference = (
-                abs(
-                    component.get_component("xyz").children[0].shape.volume
-                    - neutronics_comp.original_volume
-                )
+                abs(comp_xyz.children[0].shape.volume - neutronics_comp.original_volume)
                 / neutronics_comp.original_volume
             )
 
@@ -315,12 +336,17 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         tolerance
             Minimum intersection area considered to be an overlap.
 
+        Raises
+        ------
+        ValueError
+            if xyz component is not found
         """
         all_comps = self.get_all_components()
 
         for i, comp_a in enumerate(all_comps):
-            xyz_a = comp_a.get_component("xyz")
             name_a = comp_a.name
+            if (xyz_a := comp_a.get_component("xyz")) is None:
+                raise ValueError(f"Component 'xyz' not found for {name_a}")
             xyz_a_solid = xyz_a.children[0].shape
 
             for _, comp_b in enumerate(
@@ -329,7 +355,8 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             ):
                 # assumes only one xz child
                 name_b = comp_b.name
-                xyz_b = comp_b.get_component("xyz")
+                if (xyz_b := comp_b.get_component("xyz")) is None:
+                    raise ValueError(f"Component 'xyz' not found for {name_b}")
                 xyz_b_solid = xyz_b.children[0].shape
                 intersection = xyz_a_solid.shape.intersect(xyz_b_solid.shape)
                 intersection_vol = intersection.Volume()
@@ -366,6 +393,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         -------
         :
             Neutronics component data with updated desplined XZ faces.
+
+        Raises
+        ------
+        TypeError
+            if repair_overlapping_geos() does not return a BluemiraFace
         """
         comps_by_name = {comp.name: comp for comp in neutronics_comps}
 
@@ -392,10 +424,17 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                     f"Running overlap fixing."
                 )
 
-                neutronics_comp.desplined_xz_face = repair_overlapping_geos(
+                repaired_face = repair_overlapping_geos(
                     face_a,
                     [face for _, face, _ in overlapping],
                 )
+
+                if not isinstance(repaired_face, BluemiraFace):
+                    raise TypeError(
+                        "Expected BluemiraFace from repair_overlapping_geos()"
+                    )
+
+                neutronics_comp.desplined_xz_face = repaired_face
 
         return neutronics_comps
 
