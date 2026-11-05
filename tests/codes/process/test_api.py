@@ -35,16 +35,20 @@ def test_impurities():
 
 
 @pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
-def test_impurity_datafiles():
-    confinement_time_ms = 0.1
+@pytest.mark.parametrize("confinement_time_ms", [0.1, 1.0, 10.0, 100.0, 1000.0, np.inf])
+def test_impurity_datafiles(confinement_time_ms):
     lz, z = api.Impurities["H"].read_impurity_files(("lz", "z"))
     z2, lz2 = api.Impurities["H"].read_impurity_files(("z", "lz"))
 
-    lz_ref = filter(lambda _lz: f"{confinement_time_ms:.1f}" in _lz.content, lz)
-    lz2_ref = filter(lambda _lz: f"{confinement_time_ms:.1f}" in _lz.content, lz2)
+    def _filter(data):
+        ct = f"{confinement_time_ms:.1f}"
+        return ct in data.content and ("tau[ms]" in data.content or ct == "inf")
 
-    z_ref = filter(lambda _z: f"{confinement_time_ms:.1f}" in _z.content, z)
-    z2_ref = filter(lambda _z: f"{confinement_time_ms:.1f}" in _z.content, z2)
+    lz_ref = filter(_filter, lz)
+    lz2_ref = filter(_filter, lz2)
+
+    z_ref = filter(_filter, z)
+    z2_ref = filter(_filter, z2)
 
     np.testing.assert_allclose(
         np.array(next(lz_ref).data, dtype=float),
