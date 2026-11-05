@@ -29,6 +29,9 @@ def plot_desplining_comparisons(
         if original and desplined components do not have the
         same length
     """
+    if output_path is None:
+        raise ValueError("output_path must be provided.")
+
     output_path.mkdir(parents=True, exist_ok=True)
 
     if len(orig_comps) != len(desplined_comps):
