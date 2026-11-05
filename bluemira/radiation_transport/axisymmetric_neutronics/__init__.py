@@ -17,10 +17,14 @@ from bluemira.radiation_transport.axisymmetric_neutronics.neutronics_reactor imp
     AxisymmetricNeutronicsReactor,
     NeutronicsModel,
 )
+from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
+    plot_desplining_comparisons,
+)
 
 __all__ = [
     "AxisymmetricNeutronicsGeomManager",
     "AxisymmetricNeutronicsReactor",
     "NeutronicsModel",
+    "plot_desplining_comparisons",
     "to_mcio_material",
 ]

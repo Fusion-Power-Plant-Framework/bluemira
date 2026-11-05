@@ -19,11 +19,9 @@ import mcio
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.codes.openmc.tallying import openmc_tallies_using_mcio
-from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
+from bluemira.radiation_transport.axisymmetric_neutronics import (
     AxisymmetricNeutronicsGeomManager,
-)
-from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
+    plot_desplining_comparisons,
     to_mcio_material,
 )
 
@@ -90,6 +88,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
         self.material_name_mapping = None
+        self.material_library = None  # No need
 
     def get_desplined_geometry(
         self, reactor: Reactor
@@ -121,7 +120,7 @@ class AxisymmetricNeutronicsReactor(ABC):
             neutronics_output_path = Path(
                 self.config.get("neutronics_output_path", "./outputs/")
             )
-            self.plot_desplining_comparisons(
+            plot_desplining_comparisons(
                 orig_comps=[
                     xz_comp
                     for comp in all_comps
@@ -244,42 +243,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         bluemira_print("Running decomposer")
         decomposer.run()
 
-        # get the openmc model
-        openmc_model = decomposer.model.openmc_model
-
-        # Add Tallies
-        bluemira_print("Adding Tallies")
-        openmc_tallies_using_mcio(
-            model=openmc_model, material_name_mapping=self.material_name_mapping
-        )
-        # optional
-        self.customised_tallies(openmc_model)
-
-        # Export xml files
-        # Reuse equivalent filter objects across all tallies to avoid OpenMC
-        # reassigning filter IDs during XML export and triggering IDWarning.
-        unique_filters = {}
-
-        for tally in openmc_model.tallies:
-            tally.filters = [
-                unique_filters.setdefault(filter_, filter_) for filter_ in tally.filters
-            ]
-
-        xml_path = self.config.get("neutronics_output_path", "./csg_outputs/")
-        openmc_model.export_to_xml(xml_path)
-
-        # Plot xml
-        bluemira_print("Plotting MCIO generated CSG model")
-        ax = openmc_model.plot(
-            basis="xz",
-            color_by="cell",
-            origin=(0.0, 0.0, 0.0),  # centre: x, y, z
-            width=(30, 30.0),  # total X width, total Z width
-            pixels=(2000, 2000),
-        )
-        ax.figure.savefig(f"{xml_path}/csg_plot.png")
-
-        return openmc_model
+        return decomposer.model.openmc_model
 
     @abstractmethod
     def customised_tallies(self, model):
