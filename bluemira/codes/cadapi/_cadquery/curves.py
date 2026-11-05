@@ -66,7 +66,7 @@ def get_edge_data(edge: apiEdge | apiWire) -> CircleEdgeDT:
     cq_edge = edge.Edges()[0] if isinstance(edge, apiWire) else edge
 
     if ct == CurveType.CIRCLE:
-        return {"centre": tuple(cq_edge.Center()), "radius": cq_edge.radius()}
+        return {"centre": tuple(cq_edge.arcCenter()), "radius": cq_edge.radius()}
     raise NotImplementedError
 
 
