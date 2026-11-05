@@ -7,7 +7,6 @@
 import numpy as np
 import pytest
 
-from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.despliner import (
     check_face_has_splines,
     check_solid_has_revolution,
