@@ -149,13 +149,14 @@ def openmc_tallies_using_mcio(
     }
 
     cell_filters = {
-        component_name: openmc.CellFilter(cells)
-        for component_name, cells in component_cells.items()
+        component_name: openmc.CellFilter(cells, id=filter_id)
+        for filter_id, (component_name, cells) in enumerate(
+            component_cells.items(), start=1
+        )
         if cells
     }
 
-    # Filter for the entire reactor
-    cell_filter = openmc.CellFilter(all_cells)
+    cell_filter = openmc.CellFilter(all_cells, id=len(cell_filters) + 1)
 
     tallies = []
 
