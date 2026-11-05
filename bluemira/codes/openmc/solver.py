@@ -902,8 +902,7 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         cross_section_xml: str,
         eq: Equilibrium,
         source: NeutronSourceCreator,
-        csg_reactor: AxisymmetricNeutronicsReactor,
-        op_cond: OperationalConditions,
+        csg_model: openmc.Model,
     ):
         super().__init__(
             codes_name,
@@ -912,31 +911,23 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
             source,
             materials=None,
         )
-        self.neutronics_reactor = csg_reactor
-        self.op_cond = op_cond
-        self.material_name_mapping = csg_reactor.material_name_mapping
+        self.mcio_model = csg_model
 
     @staticmethod
     def _create_geometry():
-        """Create an empty geometry; MCIO creates the actual geometry."""
+        """Create an empty geometry; MCIO provides the actual geometry."""
         universe = openmc.Universe(name="Empty Universe")
         geometry = openmc.Geometry(universe)
         return universe, geometry
 
     def _create_model(self, settings: openmc.Settings) -> openmc.Model:
-        """Create the OpenMC model using MCIO."""
-        model = self.neutronics_reactor.run_mcio(op_cond=self.op_cond)
-
-        # Apply settings
-        model.settings = settings
-
-        # Store model, geometry and universe
-        self.model = model
-        self.geometry = model.geometry
+        """Return the pre-built MCIO model with settings applied."""
+        self.mcio_model.settings = settings
+        self.geometry = self.mcio_model.geometry
         self.universe = self.geometry.root_universe
-        self.materials = model.materials
+        self.materials = self.mcio_model.materials
 
-        return model
+        return self.mcio_model
 
     @staticmethod
     def _create_tallies(
@@ -965,12 +956,12 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         debug: bool = False,
     ) -> tuple[openmc.Model, PlotConfig]:
         """
-        Plot an OpenMC run.
+        Prepare the existing OpenMC model for plotting.
 
-        Return
-        ------
+        Returns
+        -------
         :
-            Model and Plot Config
+            Model and plot configuration.
         """
         settings = self._base_setup(
             run_mode,
@@ -990,12 +981,10 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
     @property
     def volume(self):
         """
-        Volume
-
         Return
         ------
         :
-            volume
+            the universe volume.
         """
         return self.universe.volume
 
@@ -1009,7 +998,6 @@ class OpenMCmcioCSGTeardown(CodesTeardown):
         codes_name: str,
     ):
         super().__init__(None, codes_name)
-
         self.out_path = out_path
 
     @staticmethod
@@ -1077,22 +1065,28 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 
         self.csg_reactor = csg_reactor
         self.op_cond = op_cond
-        self.materials = None
+        self.mcio_model = self.csg_reactor.run_mcio(op_cond=self.op_cond)
         self.customised_tallies = customised_tallies
 
-        # MCIO tally function operates on the completed OpenMC model.
-        def tally_function(model: openmc.Model) -> list[TALLY_RETURN_TYPE]:
-            tallies = openmc_tallies_using_mcio(
-                model=model,
-                material_name_mapping=self.csg_reactor.material_name_mapping,
-            )
+        self.tally_function = cast(
+            "TallyFunctionType",
+            self._create_tally_function,
+        )
 
-            if self.customised_tallies is not None:
-                tallies.extend(self.customised_tallies(model))
+    def _create_tally_function(
+        self,
+        *_args,
+    ) -> list[TALLY_RETURN_TYPE]:
+        """Create default and customised MCIO tally specifications."""
+        tallies = openmc_tallies_using_mcio(
+            model=self.mcio_model,
+            material_name_mapping=self.csg_reactor.material_name_mapping,
+        )
 
-            return tallies
+        if self.customised_tallies is not None:
+            tallies.extend(self.customised_tallies(self.mcio_model))
 
-        self.tally_function = cast("TallyFunctionType", tally_function)
+        return tallies
 
     def _single_run(
         self,
@@ -1102,21 +1096,16 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         *,
         debug=False,
     ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float] | None:
+
         self._setup = self.setup_cls(
             self.name,
             str(runtime_params.cross_section_xml),
             self.eq,
             self.source,
-            self.csg_reactor,
-            self.op_cond,
+            self.mcio_model,
         )
-
         self._run = self.run_cls(self.out_path, self.name)
-
-        self._teardown = self.teardown_cls(
-            self.out_path,
-            self.name,
-        )
+        self._teardown = self.teardown_cls(self.out_path, self.name)
 
         return cast(
             "CSGRunResult",
