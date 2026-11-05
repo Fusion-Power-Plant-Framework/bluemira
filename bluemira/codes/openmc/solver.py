@@ -1067,16 +1067,18 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         self.op_cond = op_cond
         self.mcio_model = self.csg_reactor.run_mcio(op_cond=self.op_cond)
         self.customised_tallies = customised_tallies
+        self._tallies = self._create_tallies()
 
         self.tally_function = cast(
             "TallyFunctionType",
-            self._create_tally_function,
+            self._get_tally_function,
         )
 
-    def _create_tally_function(
-        self,
-        *_args,
-    ) -> list[TALLY_RETURN_TYPE]:
+    def _get_tally_function(self, *_args) -> list[TALLY_RETURN_TYPE]:
+        """Return cached tally specifications."""
+        return self._tallies
+
+    def _create_tallies(self) -> list[TALLY_RETURN_TYPE]:
         """Create default and customised MCIO tally specifications."""
         tallies = openmc_tallies_using_mcio(
             model=self.mcio_model,
