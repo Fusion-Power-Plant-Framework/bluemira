@@ -61,6 +61,9 @@ if TYPE_CHECKING:
     from matproplib.conditions import OperationalConditions
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.radiation_transport.axisymmetric_neutronics import (
+        AxisymmetricNeutronicsReactor,
+    )
     from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
         NeutronicsReactor,
     )
@@ -877,4 +880,94 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         return cast(
             "DAGMCRunResult",
             super()._single_run(run_mode, source_params, runtime_params, debug=debug),
+        )
+
+
+MCIO_TallyFunctionType = Callable[
+    [openmc.Model],
+    list[TALLY_RETURN_TYPE],
+]
+
+
+class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
+    """Setup for OpenMC CSG run with MCIO."""
+
+    def __init__(
+        self,
+        codes_name: str,
+        cross_section_xml: str,
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
+        csg_reactor: AxisymmetricNeutronicsReactor,
+        op_cond: OperationalConditions,
+    ):
+        super().__init__(
+            codes_name,
+            cross_section_xml,
+            eq,
+            source,
+            materials=None,
+        )
+        self.neutronics_reactor = csg_reactor
+        self.op_cond = op_cond
+        self.material_name_mapping = csg_reactor.material_name_mapping
+
+    @staticmethod
+    def _create_geometry():
+        """Create an empty geometry; MCIO creates the actual geometry."""
+        universe = openmc.Universe(name="Empty Universe")
+        geometry = openmc.Geometry(universe)
+        return universe, geometry
+
+    def _create_model(self, settings: openmc.Settings) -> openmc.Model:
+        """Create the OpenMC model using MCIO."""
+        model = self.neutronics_reactor.run_mcio(op_cond=self.op_cond)
+
+        # Apply settings
+        model.settings = settings
+
+        # Store model, geometry and universe
+        self.model = model
+        self.geometry = model.geometry
+        self.universe = self.geometry.root_universe
+        self.materials = model.materials
+
+        return model
+
+    @staticmethod
+    def _create_tallies(
+        tally_function: MCIO_TallyFunctionType,
+        model: openmc.Model,
+    ) -> openmc.Tallies:
+        """Create MCIO tallies using the completed OpenMC model."""
+        tallies_list = []
+
+        for name, scores, filters in tally_function(model):
+            tally = openmc.Tally(name=name)
+            tally.scores = [scores]
+
+            if filters is not None:
+                tally.filters = filters
+
+            tallies_list.append(tally)
+
+        return openmc.Tallies(tallies_list)
+
+    def plot(
+        self, run_mode, runtime_params, *, debug: bool = False
+    ) -> tuple[openmc.Model, PlotConfig]:
+        """Plot an OpenMC run."""
+        settings = self._base_setup(
+            run_mode,
+            runtime_params.rel_max_lost_particles,
+            runtime_params.max_lost_particles,
+            debug=debug,
+        )
+
+        model = self._create_model(settings)
+
+        return model, PlotConfig(
+            width=[30.0, 30.0],
+            pixels=[2000, 2000],
+            basis="xz",
         )
