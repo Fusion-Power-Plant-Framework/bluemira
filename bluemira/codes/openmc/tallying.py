@@ -129,78 +129,74 @@ def dagmc_tallys(
 def openmc_tallies_using_mcio(
     model: openmc.Model,
     material_name_mapping: dict[str, str],
-):
-    """Add default tallies to the OpenMC model."""
-    particle_filters: dict[tuple[str, ...], openmc.ParticleFilter] = {}
+) -> list[TALLY_RETURN_TYPE]:
+    """
+    Tallies for mcio csg workflow
 
-    def add_mcio_tally(
-        tally_class,
-        name: str,
-        filters: list,
-        particles: tuple[str, ...] = ("neutron",),
-    ) -> None:
-        mcio_tally = tally_class(
-            comment=name,
-            particles=list(particles),
-        )
-
-        particle_filter = particle_filters.get(particles)
-
-        if particle_filter is None:
-            particle_filter = openmc.ParticleFilter(list(particles))
-            particle_filters[particles] = particle_filter
-
-        tally = openmc.Tally(name=name)
-        tally.scores = mcio_tally.openmc_tally_score
-        tally.filters = [particle_filter, *filters]
-        model.tallies.append(tally)
-
-    # All cells in the OpenMC model
+    Returns
+    -------
+    :
+        default OpenMC tallies using MCIO definitions.
+    """
     all_cells = list(model.geometry.get_all_cells().values())
 
     # -----------------------------------------------
-    # Cell filters
+    # Cell filters for individual components
     # -----------------------------------------------
-    # Map each component name to its OpenMC cells.
-    # Components remain distinct even when they share a material.
     component_cells = {
         component_name: [cell for cell in all_cells if cell.name == component_name]
         for component_name in material_name_mapping
     }
 
-    # Create a filter for each component with matching cells.
     cell_filters = {
         component_name: openmc.CellFilter(cells)
         for component_name, cells in component_cells.items()
         if cells
     }
 
-    # Filter containing all cells
+    # Filter for the entire reactor
     cell_filter = openmc.CellFilter(all_cells)
 
+    tallies = []
+
     # -----------------------------------------------
-    # Powers
+    # Energy deposition / power
     # -----------------------------------------------
     for component_name, component_filter in cell_filters.items():
-        add_mcio_tally(
-            EnergyDepositionTally,
-            f"{component_name} power",
-            [component_filter],
+        tallies.append(
+            EnergyDepositionTally(
+                name=f"{component_name}_power",
+                filters=[component_filter],
+                material_name_mapping=material_name_mapping,
+            )
         )
 
-    add_mcio_tally(
-        EnergyDepositionTally,
-        "total power",
-        [cell_filter],
+    tallies.append(
+        EnergyDepositionTally(
+            name="total_power",
+            filters=[cell_filter],
+            material_name_mapping=material_name_mapping,
+        )
     )
 
     # -----------------------------------------------
     # Neutron flux
     # -----------------------------------------------
-    add_mcio_tally(
-        VolumeFluenceTally,
-        "neutron flux in every cell",
-        [cell_filter],
+    neutron_filter = openmc.ParticleFilter(["neutron"])
+
+    for component_name, component_filter in cell_filters.items():
+        tallies.append(
+            VolumeFluenceTally(
+                name=f"{component_name}_neutron_flux",
+                filters=[component_filter, neutron_filter],
+            )
+        )
+
+    tallies.append(
+        VolumeFluenceTally(
+            name="total_neutron_flux",
+            filters=[cell_filter, neutron_filter],
+        )
     )
 
     # -----------------------------------------------
@@ -208,4 +204,6 @@ def openmc_tallies_using_mcio(
     # -----------------------------------------------
     tbr_tally = openmc.Tally(name="TBR")
     tbr_tally.scores = ["(n,Xt)"]
-    model.tallies.append(tbr_tally)
+    tallies.append(tbr_tally)
+
+    return tallies
