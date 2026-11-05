@@ -183,7 +183,7 @@ def openmc_tallies_using_mcio(
     # -----------------------------------------------
     # Neutron flux
     # -----------------------------------------------
-    neutron_filter = openmc.ParticleFilter(["neutron"])
+    neutron_filter = openmc.ParticleFilter(["neutron"], id=len(cell_filters) + 2)
 
     for component_name, component_filter in cell_filters.items():
         tallies.append(
