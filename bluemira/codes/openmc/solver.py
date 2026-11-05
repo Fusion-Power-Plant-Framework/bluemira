@@ -240,10 +240,8 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         return settings
 
-    def _create_model(
-        self, settings: openmc.Settings, tallies: openmc.Tallies | None = None
-    ) -> openmc.Model:
-        model = openmc.Model(geometry=self.geometry, tallies=tallies, settings=settings)
+    def _create_model(self, settings: openmc.Settings) -> openmc.Model:
+        model = openmc.Model(geometry=self.geometry, settings=settings)
         if isinstance(self.materials, MaterialsLibrary):
             model.materials = self.materials.get_all_materials()
         else:
@@ -295,10 +293,15 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         settings.photon_transport = runtime_params.photon_transport
         settings.electron_treatment = runtime_params.electron_treatment
 
-        tallies = self._create_tallies(tally_function)
+        model = self._create_model(settings)
+
+        model.tallies = self._create_tallies(
+            tally_function,
+            model,
+        )
 
         return (
-            self._create_model(settings, tallies),
+            model,
             SourceInfo(source_rate, source_t_rate),
         )
 
