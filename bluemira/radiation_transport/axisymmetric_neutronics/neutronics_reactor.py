@@ -19,10 +19,14 @@ import mcio
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.radiation_transport.axisymmetric_neutronics import (
+from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
-    plot_desplining_comparisons,
+)
+from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
     to_mcio_material,
+)
+from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
+    plot_desplining_comparisons,
 )
 
 if TYPE_CHECKING:

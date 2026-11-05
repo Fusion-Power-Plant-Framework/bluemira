@@ -958,9 +958,20 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         return openmc.Tallies(tallies_list)
 
     def plot(
-        self, run_mode, runtime_params, *, debug: bool = False
+        self,
+        run_mode,
+        runtime_params,
+        *_args,
+        debug: bool = False,
     ) -> tuple[openmc.Model, PlotConfig]:
-        """Plot an OpenMC run."""
+        """
+        Plot an OpenMC run.
+
+        Return
+        ------
+        :
+            Model and Plot Config
+        """
         settings = self._base_setup(
             run_mode,
             runtime_params.rel_max_lost_particles,
@@ -975,6 +986,18 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
             pixels=[2000, 2000],
             basis="xz",
         )
+
+    @property
+    def volume(self):
+        """
+        Volume
+
+        Return
+        ------
+        :
+            volume
+        """
+        return self.universe.volume
 
 
 class OpenMCmcioCSGTeardown(CodesTeardown):
