@@ -26,9 +26,6 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
     to_mcio_material,
 )
-from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
-    plot_desplining_comparisons,
-)
 
 if TYPE_CHECKING:
     from matproplib.conditions import OperationalConditions
