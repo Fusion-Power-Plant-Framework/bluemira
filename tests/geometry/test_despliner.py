@@ -7,11 +7,11 @@
 import numpy as np
 import pytest
 
-from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.despliner import (
+    check_face_has_splines,
     check_solid_has_revolution,
     check_solid_has_splines,
-    despline_xz_component,
+    despline_xz_face,
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -159,8 +159,8 @@ def test_check_solid_has_revolution(request, fixture, expected):
 
 
 @pytest.fixture
-def splined_d_shape_component():
-    """Create a component containing a D-shaped face with a spline edge."""
+def splined_d_face():
+    """Create a D-shaped face with a spline edge."""
     straight = make_polygon(
         [
             [0, 0, 0],
@@ -181,37 +181,7 @@ def splined_d_shape_component():
 
     boundary = BluemiraWire([*straight.edges, spline])
     boundary.close()
-    face = BluemiraFace(boundary)
-
-    xz_component = Component(
-        "xz",
-        children=[
-            PhysicalComponent(
-                name="d_shape",
-                shape=face,
-            )
-        ],
-    )
-
-    xyz_component = Component(
-        "xyz",
-        children=[
-            PhysicalComponent(
-                name="d_shape",
-                shape=revolve_shape(
-                    face,
-                    base=(0, 0, 0),
-                    direction=(0, 0, 1),
-                    degree=360.0,
-                ),
-            )
-        ],
-    )
-
-    return Component(
-        "test_component",
-        children=[xz_component, xyz_component],
-    )
+    return BluemiraFace(boundary)
 
 
 @pytest.mark.cadquery_only
@@ -219,19 +189,16 @@ def splined_d_shape_component():
     "discretisation",
     [20, 25, 50],
 )
-def test_despline_xz_component(splined_d_shape_component, discretisation):
+def test_despline_xz_face(splined_d_face, discretisation):
     """
-    Test despline_xz_component() is correctly desplining
+    Test despline_xz_face() is correctly desplining
     xz face with splines
     """
-    desplined_component = despline_xz_component(
-        component=splined_d_shape_component, discretisation=discretisation
+    desplined_xz_face = despline_xz_face(
+        xz_face=splined_d_face, discretisation=discretisation
     )
 
-    desplined_xz_face = desplined_component.get_component("xz").get_component_properties(
-        "shape"
-    )
-    assert check_solid_has_splines(desplined_xz_face) is False
+    assert check_face_has_splines(desplined_xz_face) is False
 
     xz_boundaries = desplined_xz_face.boundary
 
