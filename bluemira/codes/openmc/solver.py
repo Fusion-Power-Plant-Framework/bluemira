@@ -53,7 +53,11 @@ from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.codes.openmc.tallying import csg_filter_cells, dagmc_tallys
+from bluemira.codes.openmc.tallying import (
+    csg_filter_cells,
+    dagmc_tallys,
+    openmc_tallies_using_mcio,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 
 if TYPE_CHECKING:
@@ -576,11 +580,11 @@ class OpenMCCSGTeardown(CodesTeardown):
     ) -> tuple[OpenMCCSGResult, NeutronicsOutputParams]:
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
-            universe,
-            self.cell_arrays,
-            source_info.rate,
-            source_info.triton_rate,
-            Path(statepoint_file),
+            universe=universe,
+            src_rate=source_info.rate,
+            src_triton_rate=source_info.triton_rate,
+            statepoint_file=Path(statepoint_file),
+            cell_arrays=self.cell_arrays,
         )
         output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
 
@@ -970,4 +974,133 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
             width=[30.0, 30.0],
             pixels=[2000, 2000],
             basis="xz",
+        )
+
+
+class OpenMCmcioCSGTeardown(CodesTeardown):
+    """Teardown task for OpenMC solver using MCIO."""
+
+    def __init__(
+        self,
+        out_path: str,
+        codes_name: str,
+    ):
+        super().__init__(None, codes_name)
+
+        self.out_path = out_path
+
+    @staticmethod
+    def run(
+        universe: openmc.Universe,
+        source_info: SourceInfo,
+        statepoint_file: str | Path,
+    ) -> tuple[OpenMCCSGResult, NeutronicsOutputParams]:
+        """Run stage for teardown task."""
+        result = OpenMCCSGResult.from_run(
+            universe=universe,
+            src_rate=source_info.rate,
+            src_triton_rate=source_info.triton_rate,
+            statepoint_file=Path(statepoint_file),
+        )
+
+        output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
+
+        return result, output_params
+
+    @staticmethod
+    def plot(_universe, _source_info, fig: FigureData, **_kwargs):
+        """Plot stage for teardown task."""
+        fig_obj = fig.axis.get_figure()
+
+        if isinstance(fig_obj, Figure):
+            fig_obj.savefig(fig.path)
+
+        return fig.axis
+
+    @staticmethod
+    def volume(
+        universe: openmc.Universe,
+        _source_params,
+        _statepoint_file,
+    ) -> dict[int, float]:
+        """Stochastic volume stage for teardown task."""
+        return {
+            cell.id: raw_uc(
+                np.nan if cell.volume is None else cell.volume,
+                "cm^3",
+                "m^3",
+            )
+            for cell in universe.cells.values()
+        }
+
+
+class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
+    """Solver for OpenMC CSG neutronics using MCIO."""
+
+    setup_cls: type[OpenMCmcioCSGSetup] = OpenMCmcioCSGSetup
+    teardown_cls: type[OpenMCmcioCSGTeardown] = OpenMCmcioCSGTeardown
+
+    def __init__(
+        self,
+        params: dict | ParameterFrame,
+        build_config: OpenMCBuildConfig,
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
+        csg_reactor: AxisymmetricNeutronicsReactor,
+        op_cond: OperationalConditions,
+        customised_tallies: MCIO_TallyFunctionType | None = None,
+    ):
+        super().__init__(params, build_config, eq, source)
+
+        self.csg_reactor = csg_reactor
+        self.op_cond = op_cond
+        self.materials = None
+        self.customised_tallies = customised_tallies
+
+        # MCIO tally function operates on the completed OpenMC model.
+        def tally_function(model: openmc.Model) -> list[TALLY_RETURN_TYPE]:
+            tallies = openmc_tallies_using_mcio(
+                model=model,
+                material_name_mapping=self.csg_reactor.material_name_mapping,
+            )
+
+            if self.customised_tallies is not None:
+                tallies.extend(self.customised_tallies(model))
+
+            return tallies
+
+        self.tally_function = cast("TallyFunctionType", tally_function)
+
+    def _single_run(
+        self,
+        run_mode: OpenMCRunModes,
+        source_params: PlasmaSourceParameters,
+        runtime_params: OpenMCSimulationRuntimeParameters,
+        *,
+        debug=False,
+    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float] | None:
+        self._setup = self.setup_cls(
+            self.name,
+            str(runtime_params.cross_section_xml),
+            self.eq,
+            self.source,
+            self.csg_reactor,
+            self.op_cond,
+        )
+
+        self._run = self.run_cls(self.out_path, self.name)
+
+        self._teardown = self.teardown_cls(
+            self.out_path,
+            self.name,
+        )
+
+        return cast(
+            "CSGRunResult",
+            super()._single_run(
+                run_mode,
+                source_params,
+                runtime_params,
+                debug=debug,
+            ),
         )

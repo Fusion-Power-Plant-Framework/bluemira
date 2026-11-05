@@ -99,6 +99,8 @@ def neutronics_code_solver(
     op_cond: OperationalConditions,
     tally_function=None,
     module: str = "OPENMC",
+    *,
+    use_mcio: bool = False,
 ) -> CodesSolver:
     """
     Neutronics solver
@@ -118,6 +120,16 @@ def neutronics_code_solver(
         The solver object to be run
     """
     neutron = get_code_interface(module)
+    if use_mcio:
+        return neutron.MCIOCSGSolver(
+            params,
+            build_config,
+            eq,
+            source,
+            neutronics_model,
+            op_cond,
+            tally_function,
+        )
     return neutron.CSGSolver(
         params, build_config, eq, source, neutronics_model, op_cond, tally_function
     )

@@ -185,7 +185,7 @@ class OpenMCCSGResult(OpenMCResultBase):
     damage: dict
 
     universe: openmc.Universe
-    cell_arrays: CellStage
+
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: Path
@@ -195,14 +195,17 @@ class OpenMCCSGResult(OpenMCResultBase):
     photon_heat_flux: dict | None = None
     """Photon heat flux"""
 
+    cell_arrays: CellStage | None = None
+    """None for mcio workflow for now"""
+
     @classmethod
     def from_run(
         cls,
         universe: openmc.Universe,
-        cell_arrays: CellStage,
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: Path,
+        cell_arrays: CellStage | None = None,
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -249,12 +252,20 @@ class OpenMCCSGResult(OpenMCResultBase):
         e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
         mult_power = cls.multiplication_power(e_mult, dt_n_power)
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        damage = cls._load_damage(
-            statepoint, cell_names, cell_vols, cell_arrays, src_rate
-        )
-        max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
-        peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
-        peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+
+        if cell_arrays is not None:
+            damage = cls._load_damage(
+                statepoint, cell_names, cell_vols, cell_arrays, src_rate
+            )
+
+            max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
+            peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
+            peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            damage = {}
+            peak_bb_fe_damage = None
+            peak_bb_fe_damage_err = None
 
         return cls(
             universe=universe,
@@ -694,10 +705,18 @@ class NeutronicsOutputParams(ParameterFrame):
         """
         source = "OpenMC CSG"
 
-        peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
-        peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
-        peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
-        peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        if result.cell_arrays is not None:
+            peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
+            peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
+            peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
+            peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            peak_eurofer_dpa = None
+            peak_bb_iron_dpa = None
+            peak_vv_iron_dpa = None
+            peak_div_cu_dpa = None
+
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),
