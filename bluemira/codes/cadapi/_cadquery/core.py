@@ -2691,6 +2691,57 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
     return result
 
 
+def repair_gaps_between_faces(
+    shapes: list[apiFace],
+    tolerance: float = 1e-2,
+) -> list[apiFace]:
+    """
+    Repair small gaps between neighbouring Faces which should touch.
+
+    Parameters
+    ----------
+    shapes:
+        Faces whose neighbouring boundaries should coincide.
+    tolerance:
+        maximum distance between boundaries that OpenCascade is
+        allowed to treat as coincident and sew together.
+
+    Returns
+    -------
+    :
+        Faces with neighbouring boundaries sewn together.
+
+    Raises
+    ------
+    ValueError
+        If only one face is given, if sewing results in a null shape, or if
+        sewing splits a single face into multiple faces.
+    """
+    n_min = 2
+    if len(shapes) < n_min:
+        raise ValueError("At least two faces are required")
+
+    sewing = BRepBuilderAPI_Sewing(tolerance)
+    for s in shapes:
+        sewing.Add(s.wrapped)
+    sewing.Perform()
+
+    repaired_faces = []
+    for shape in shapes:
+        if sewing.IsModified(shape.wrapped):
+            mod_shape = cq.Shape.cast(sewing.Modified(shape.wrapped))
+            faces = mod_shape.Faces()
+            if len(faces) == 0:
+                raise ValueError("Sewing operation resulted in a null shape.")
+            if len(faces) > 1:
+                raise ValueError("Sewing operation split a face into multiple faces.")
+            repaired_faces.append(faces[0])
+        else:
+            repaired_faces.append(shape)
+
+    return repaired_faces
+
+
 __all__ = [
     "apiFace",
     "area",
@@ -2737,6 +2788,7 @@ __all__ = [
     "ordered_vertexes",
     "orientation",
     "point_inside_shape",
+    "repair_gaps_between_faces",
     "reverse_shape",
     "revolve_shape",
     "rotate_shape",

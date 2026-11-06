@@ -171,6 +171,22 @@ def pytest_configure(config):
     )
 
 
+def pytest_collection_modifyitems(items):
+    """
+    Skip tests marked ``cadquery_only`` when using the FreeCAD backend.
+    """
+    if os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery":
+        return
+
+    skip = pytest.mark.skip(
+        reason="Test requires the CadQuery geometry backend",
+    )
+
+    for item in items:
+        if "cadquery_only" in item.keywords:
+            item.add_marker(skip)
+
+
 @pytest.fixture(autouse=True)
 def _plot_show_and_close(request):
     """Fixture to show and close plots
