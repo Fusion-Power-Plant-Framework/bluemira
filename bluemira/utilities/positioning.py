@@ -11,7 +11,7 @@ A collection of tools used for position interpolation.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -24,8 +24,6 @@ from bluemira.utilities.error import PositionerError
 from bluemira.utilities.tools import is_num
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     import numpy.typing as npt
 
 
