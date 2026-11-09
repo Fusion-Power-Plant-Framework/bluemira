@@ -274,9 +274,7 @@ packaging==26.3
     #   tables
     #   virtualenv
 pandas==2.3.3
-    # via
-    #   bluemira (pyproject.toml)
-    #   seaborn
+    # via seaborn
 parso==0.8.7
     # via jedi
 pathspec==1.1.1
@@ -480,7 +478,7 @@ traitlets==5.16.1
     #   matplotlib-inline
     #   nbclient
     #   nbformat
-ty==0.0.95
+ty==0.0.98
     # via bluemira (pyproject.toml)
 typeguard==4.6.0
     # via bluemira (pyproject.toml)
