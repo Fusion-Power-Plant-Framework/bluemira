@@ -15,6 +15,7 @@ to be imperfect.
 Assumption: `BluemiraGeo` objects are "static".
 
 Options:
+
 - Continue with recreating the shapes
   - Pros:
     - We can track labels throughout the creation of geometry
