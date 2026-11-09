@@ -1,10 +1,8 @@
 [![DOI](https://zenodo.org/badge/355588311.svg)](https://zenodo.org/badge/latestdoi/355588311) [![docs](https://readthedocs.org/projects/bluemira/badge/?version=latest)](https://bluemira.readthedocs.io/en/latest) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
 
-
 # Bluemira
 
 ![image](documentation/source/bluemira_intro_mosaic.png)
-
 
 `Bluemira` is an integrated inter-disciplinary design tool for future fusion reactors. It
 incorporates several modules, some of which rely on other codes, to carry out a range of
@@ -25,11 +23,13 @@ We have created some indepth examples using `bluemira`.
 The `bluemira` team has been working hard since mid-2021 to combine `BLUEPRINT` and `MIRA` into a single reactor design framework. We took the opportunity to embark upon a significant refactor of both code bases, delivering improved functionality, code quality, and hopefully maintainability.
 
 In addition, we have created templates and examples;
+
 - [bluemira-template-project](https://github.com/Fusion-Power-Plant-Framework/bluemira-template-project): A template for a new `Bluemira` reactor project
 - [bluemira-spherical-tokamak](https://github.com/Fusion-Power-Plant-Framework/bluemira-spherical-tokamak): Spherical Tokamak example for `Bluemira`
 - [bluemira-stellarator](https://github.com/Fusion-Power-Plant-Framework/bluemira-stellarator): Stellarator design using `Bluemira`, Simsopt and `PROCESS`
 
 and separate packages that others may find useful;
+
 - [eqdsk](https://github.com/Fusion-Power-Plant-Framework/eqdsk): g-eqdsk reading and writing with identification and conversion between COCOS versions
 - [matproplib](https://github.com/Fusion-Power-Plant-Framework/matproplib): A Materials Property library
 - [tokamak-neutron-source](https://github.com/Fusion-Power-Plant-Framework/tokamak-neutron-source): A tool to create an arbitrary parametric tokamak neutron source
@@ -45,7 +45,6 @@ Below is an overview of our development roadmap for 2026/27:
     </picture>
   </a>
 </p>
-
 
 ## Modules
 
@@ -159,6 +158,7 @@ The documentation is built with Sphinx. In addition the API documentation is cre
 `sphinx-apidoc`.
 
 To build the html documentation execute this command:
+
 ```shell
 sphinx-build documentation/source documentation/build
 ```

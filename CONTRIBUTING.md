@@ -71,6 +71,7 @@ attributes and methods relatively low.
 
 Python can run relatively slowly when compared with compiled languages,
 and in key areas we use a couple of tricks to speed things up:
+
 - Using `__slots__` on classes to save memory
 - Using `numba` just-in-time compilation to speed up certain bottleneck calculations
 
@@ -98,6 +99,7 @@ For the first case, it is probably best you don't do this...
 If `ruff` breaks your one-line or chain calls into multiple lines, consider breaking these down for readability.
 
 In some cases, it is nicer to turn off the auto-formatting. You can do this as follows:
+
 ```python
 # fmt: off
 default_params = [
@@ -138,6 +140,7 @@ A full list of accepted abbreviations can be found in the `pyproject.toml` file 
 
 We try to stick to descriptive `lower_case_snake_case` argument and local variable names with the general rule that names less than three characters should not be used.
 This is not a hard rule, and there are some notable exceptions:
+
 - `i`, `j`, `k` for integers (e.g. looping, indexing)
 - `m`, `n` for integers (e.g. array sizes)
 - `x`, `y`, `z`, `r` for floats or arrays describing coordinates
@@ -280,7 +283,6 @@ If you have some private data that you would like to test against please contact
    These tests allow the production of a figure after all tests in a class have been run.
    Without this mark figures are shown and closed after every test.
    Useful for visual comparison of similar parameterisations of a test.
-
 
 ## Releases and Packaging
 

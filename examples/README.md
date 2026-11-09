@@ -50,6 +50,7 @@ This is described in [this article](https://github.com/microsoft/vscode-jupyter/
 ## Running Notebooks in Jupyter Notebook v7.x (nb7)
 
 Previous versions of Jupyter Notebook (a.k.a nb classic) will open python scripts and markdown documents as notebooks by default. From v7 onwards, to open and run a text notebook (.py or .md extension) as a notebook in Jupyter:
+
 - right-click on the file,
 - select "Notebook" in the drop down menu.
 

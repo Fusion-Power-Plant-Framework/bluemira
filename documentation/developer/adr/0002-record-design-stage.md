@@ -21,6 +21,7 @@ We want `Builder` to have a minimum set of `Parameters`.
 `design_stage` presently only handles printing logic for entry and exit to an operation.
 
 Options:
+
 - Do nothing
 - Add a `DesignStage` class which handles the `["run", "read", "mock"]` logic for `Builder`
 
