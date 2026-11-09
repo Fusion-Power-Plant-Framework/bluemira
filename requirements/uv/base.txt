@@ -150,9 +150,7 @@ packaging==26.3
     #   pooch
     #   tables
 pandas==2.3.3
-    # via
-    #   bluemira (pyproject.toml)
-    #   seaborn
+    # via seaborn
 periodictable==2.1.0
     # via
     #   bluemira (pyproject.toml)
