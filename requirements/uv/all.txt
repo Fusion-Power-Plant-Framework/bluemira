@@ -375,9 +375,7 @@ packaging==26.3
     #   tables
     #   virtualenv
 pandas==2.3.3
-    # via
-    #   bluemira (pyproject.toml)
-    #   seaborn
+    # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.7
@@ -669,7 +667,7 @@ urllib3==2.8.0
     # via requests
 virtualenv==21.15.2
     # via pre-commit
-vtk==9.3.1
+vtk==9.7.2
     # via
     #   bluemira (pyproject.toml)
     #   pyvista

@@ -274,9 +274,7 @@ packaging==26.3
     #   tables
     #   virtualenv
 pandas==2.3.3
-    # via
-    #   bluemira (pyproject.toml)
-    #   seaborn
+    # via seaborn
 parso==0.8.7
     # via jedi
 pathspec==1.1.1
@@ -512,7 +510,7 @@ urllib3==2.8.0
     # via requests
 virtualenv==21.15.2
     # via pre-commit
-vtk==9.3.1
+vtk==9.7.2
     # via
     #   bluemira (pyproject.toml)
     #   pyvista
