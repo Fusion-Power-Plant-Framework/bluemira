@@ -13,6 +13,7 @@ At present access to information relevant to a given `Component` is difficult / 
 to retrieve. In many situations we want short-hand access to these characteristics / attributes / properties.
 
 Options:
+
 - `Component` is more "active" and directly has e.g. properties and methods to retrieve information
 - `ComponentManager` is used to provide access to information relating to an abstract `Component`
   - At the `ReactorDesigner` level or `Component` level.
