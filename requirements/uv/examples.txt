@@ -308,9 +308,7 @@ packaging==26.3
     #   pooch
     #   tables
 pandas==2.3.3
-    # via
-    #   bluemira (pyproject.toml)
-    #   seaborn
+    # via seaborn
 pandocfilters==1.5.1
     # via nbconvert
 parso==0.8.7
