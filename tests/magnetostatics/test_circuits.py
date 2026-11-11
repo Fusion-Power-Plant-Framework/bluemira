@@ -11,12 +11,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from scipy.interpolate import UnivariateSpline, interp1d
+from scipy.spatial.distance import cdist
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates, vector_lengthnorm
 from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, TripleArc
-from bluemira.geometry.tools import make_circle
+from bluemira.geometry.tools import make_circle, make_circle_arc_3P, make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarPolyhedralXSCircuit,
@@ -25,6 +27,7 @@ from bluemira.magnetostatics.circuits import (
     generate_rect_xs_wire_sources,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.semianalytic_2d import (
     semianalytic_Bx,
     semianalytic_Bz,
@@ -32,6 +35,37 @@ from bluemira.magnetostatics.semianalytic_2d import (
 )
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 from tests.magnetostatics.setup_methods import make_xs_from_bd, plane_setup
+
+
+def _line_and_big_arc() -> BluemiraWire:
+    """D-shape: inboard line and a > 180° outboard arc, edges not head-to-tail."""
+    line = make_polygon([[2, 0, -3], [2, 0, 3]])  # upwards
+    arc = make_circle_arc_3P([2, 0, 3], [7, 0, 0], [2, 0, -3])  # top -> bottom
+    return BluemiraWire([line, arc])
+
+
+def _rectangle_mixed_edges() -> BluemiraWire:
+    """Rectangle whose edges all point in inconsistent directions."""
+    p = [[3, 0, -2], [3, 0, 2], [6, 0, 2], [6, 0, -2]]
+    return BluemiraWire([
+        make_polygon([p[1], p[0]]),
+        make_polygon([p[1], p[2]]),
+        make_polygon([p[3], p[2]]),
+        make_polygon([p[3], p[0]]),
+    ])
+
+
+def _pacman() -> BluemiraWire:
+    """Two lines and a reversed 270° arc."""
+    c, r = np.array([6, 0, 0]), 2
+    s = c + r * np.array([np.cos(np.pi / 4), 0, np.sin(np.pi / 4)])
+    m = c + r * np.array([-1, 0, 0])
+    e = c + r * np.array([np.cos(np.pi / 4), 0, -np.sin(np.pi / 4)])
+    return BluemiraWire([
+        make_polygon([s, c]),
+        make_polygon([c, e]),
+        make_circle_arc_3P(e, m, s),
+    ])
 
 
 class TestGenerateWireSources:
@@ -55,31 +89,105 @@ class TestGenerateWireSources:
         "a2": {"value": 40},
     }
 
-    p_inputs = (pd_inputs, ta_inputs, pf_inputs)
-    parameterisations = (PrincetonD, TripleArc, PictureFrame)
-
-    @pytest.mark.parametrize(
-        ("parameterisation", "inputs"), zip(parameterisations, p_inputs, strict=True)
+    shape_makers = (
+        pytest.param(
+            lambda: PrincetonD(TestGenerateWireSources.pd_inputs).create_shape(),
+            id="PrincetonD",
+        ),
+        pytest.param(
+            lambda: TripleArc(TestGenerateWireSources.ta_inputs).create_shape(),
+            id="TripleArc",
+        ),
+        pytest.param(
+            lambda: PictureFrame(TestGenerateWireSources.pf_inputs).create_shape(),
+            id="PictureFrame",
+        ),
+        pytest.param(lambda: PictureFrame().create_shape(), id="PictureFrame_default"),
+        pytest.param(_line_and_big_arc, id="line_and_big_arc"),
+        pytest.param(_rectangle_mixed_edges, id="rectangle_mixed_edges"),
+        pytest.param(_pacman, id="pacman"),
     )
-    def test_generate_wire_sources(self, parameterisation, inputs):
-        shape = parameterisation(inputs).create_shape()
-        source = generate_rect_xs_wire_sources(shape, 0.2, 0.4, current=1e6, ndiscr=20)
+
+    breadth, depth, current = 0.1, 0.2, 1e6
+
+    @staticmethod
+    def _reference(shape, breadth, depth, current):
+        ndiscr = 100
+        coords = shape.discretise(ndiscr=ndiscr, byedges=True)
+        coords.set_ccw([0, 1, 0])
+        return ArbitraryPlanarRectangularXSCircuit(coords, breadth, depth, current)
+
+    @staticmethod
+    def _points_away_from(shape, n=40, clearance=0.5):
+        coords = shape.discretise(ndiscr=200, byedges=True)
+        rng = np.random.default_rng(1)
+        points = np.array([
+            rng.uniform(coords.x.min() - 2, coords.x.max() + 2, n),
+            rng.uniform(-2, 2, n),
+            rng.uniform(coords.z.min() - 2, coords.z.max() + 2, n),
+        ])
+        keep = cdist(coords.xyz.T, points.T).min(axis=0) > clearance
+        return points[:, keep]
+
+    @pytest.mark.parametrize("make_shape", shape_makers)
+    def test_field_matches_discretised_reference(self, make_shape):
+        shape = make_shape()
+        source = generate_rect_xs_wire_sources(
+            shape, self.breadth, self.depth, self.current, ndiscr=200
+        )
+        reference = self._reference(shape, self.breadth, self.depth, self.current)
+
+        points = self._points_away_from(shape)
+        field = source.field(*points)
+        ref_field = reference.field(*points)
+        np.testing.assert_allclose(
+            field, ref_field, rtol=0.0, atol=1.8e-2 * np.max(np.abs(ref_field))
+        )
+
+    @pytest.mark.parametrize("make_shape", shape_makers)
+    def test_current_flows_clockwise_about_y(self, make_shape):
+        shape = make_shape()
+        source = generate_rect_xs_wire_sources(
+            shape, self.breadth, self.depth, self.current, ndiscr=20
+        )
+        centre = shape.center_of_mass
+        assert source.field(*centre)[1] < 0
+
+    def test_edge_directions_do_not_matter(self):
+        p = [[3, 0, -2], [6, 0, -2], [6, 0, 2], [3, 0, 2]]
+        consistent = make_polygon(p, closed=True)
+        mixed = _rectangle_mixed_edges()
+
+        args = (self.breadth, self.depth, self.current)
+        points = self._points_away_from(consistent)
+        np.testing.assert_allclose(
+            generate_rect_xs_wire_sources(mixed, *args).field(*points),
+            generate_rect_xs_wire_sources(consistent, *args).field(*points),
+        )
+
+    def test_non_planar_wire_raises(self):
+        wire = make_polygon([[3, 0, 0], [6, 0, 0], [6, 1, 3], [3, 0, 3]], closed=True)
+        with pytest.raises(MagnetostaticsError):
+            generate_rect_xs_wire_sources(wire, self.breadth, self.depth, self.current)
+
+    @pytest.mark.parametrize("make_shape", shape_makers)
+    def test_helmholtz_cage_plot(self, make_shape):
+        shape = make_shape()
+        source = generate_rect_xs_wire_sources(
+            shape, self.breadth, self.depth, self.current
+        )
         source = HelmholtzCage(source, n_TF=12)
 
-        points = shape.discretise(ndiscr=20, byedges=True)
-        xmin = points.x.min() - 1.0
-        xmax = points.x.max() + 1.0
-        zmin = points.z.min() - 1.0
-        zmax = points.z.max() + 1.0
-        x = np.linspace(xmin, xmax, 50)
-        z = np.linspace(zmin, zmax, 50)
+        coords = shape.discretise(ndiscr=20, byedges=True)
+        x = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, 20)
+        z = np.linspace(coords.z.min() - 1.0, coords.z.max() + 1.0, 20)
         xx, zz = np.meshgrid(x, z)
-        xz_fields = source.field(xx, np.zeros_like(xx), zz)
-        xz_fields = np.sqrt(np.sum(xz_fields**2, axis=0))
+        b = source.field(xx, np.zeros_like(xx), zz)
+        b = np.sqrt(np.sum(b**2, axis=0))
 
         source.plot()
         ax = plt.gca()
-        ax.contourf(xx, xz_fields, zz, zdir="y", offset=0.0)
+        ax.contourf(xx, b, zz, zdir="y", offset=0.0)
         plt.show()
 
 

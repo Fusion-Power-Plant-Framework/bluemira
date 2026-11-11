@@ -8,6 +8,7 @@
 Three-dimensional current source terms.
 """
 
+import itertools
 from copy import deepcopy
 from typing import cast
 
@@ -18,8 +19,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.cadapi._base_types import CurveType
 from bluemira.geometry.coordinates import (
     Coordinates,
-    get_angle_between_points,
-    get_angle_between_vectors,
     in_polygon,
     rotation_matrix,
     rotation_matrix_v1v2,
@@ -260,37 +259,51 @@ class PlanarCircuit(SourceGroup):
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
 
 
-def _daisy_chain_edge_reversals(shape: BluemiraWire) -> list[bool]:
+def _orient_wire_edges(
+    shape: BluemiraWire, ndiscr: int
+) -> tuple[tuple[BluemiraWire, ...], list[Coordinates]]:
     """
-    Determine, for each edge in the wire, whether it must be reversed so that
-    the edges are daisy-chained in a consistent orientation.
+    Discretise each edge of a wire and daisy-chain the points head-to-tail.
 
-    Parameters
-    ----------
-    shape:
-        BluemiraWire whose edges to check
+    Closed wires are oriented such that the current flows clockwise about
+    [0, 1, 0] (i.e. counter-clockwise in the x-z plane, with x right and z up,
+    as per `Coordinates.check_ccw([0, 1, 0])`).
 
     Returns
     -------
-    :
-        List of flags, one per edge, True if the edge is reversed
+    edges:
+        The (connectivity-ordered) edges of the wire
+    coords:
+        The oriented discretised Coordinates of each edge
+
+    Notes
+    -----
+    Wire edges are connectivity-ordered, but each edge's own direction is
+    arbitrary. Everything is derived from the discretised points, so the
+    orientation is self-consistent irrespective of the CAD backend.
     """
-    reference = shape.center_of_mass
-    # Daisy-chain because wire orientation issues
-    reversals = []
-    for i, edge in enumerate(shape.edges):
-        s = edge.start_point().xyz.reshape(-1)
-        e = edge.end_point().xyz.reshape(-1)
-        if i == 0:
-            cw = get_angle_between_vectors(s - reference, e - reference, signed=True) < 0
-            reversals.append(cw)
-        else:
-            rev = np.allclose(e, shape.edges[i - 1].start_point().xyz.reshape(-1))
-            if reversals[i - 1]:
-                reversals.append(not rev)
-            else:
-                reversals.append(rev)
-    return reversals
+    edges = shape.edges
+    coords = [edge.discretise(ndiscr=max(ndiscr, 3), byedges=False) for edge in edges]
+
+    # The first edge must end where the second edge begins
+    if len(coords) > 1 and (
+        coords[1].distance_to(coords[0].points[0]).min()
+        < coords[1].distance_to(coords[0].points[-1]).min()
+    ):
+        coords[0].reverse()
+    # Subsequent edges must start where the previous edge ends
+    for prev, cur in itertools.pairwise(coords):
+        d = cur.distance_to(prev.points[-1])
+        if d[-1] < d[0]:
+            cur.reverse()
+
+    if shape.is_closed():
+        loop = Coordinates(np.hstack([c.xyz for c in coords]))
+        if not loop.check_ccw([0, 1, 0]):
+            for c in coords:
+                c.reverse()
+
+    return edges, coords
 
 
 def generate_rect_xs_wire_sources(
@@ -298,7 +311,7 @@ def generate_rect_xs_wire_sources(
 ) -> SourceGroup:
     """
     Generate a SourceGroup of Rectangular cross-section current sources from
-    a BluemiraWire.
+    a planar x-z BluemiraWire.
 
     Parameters
     ----------
@@ -320,14 +333,16 @@ def generate_rect_xs_wire_sources(
 
     Raises
     ------
+    MagnetostaticsError
+        If the wire is not planar
     ValueError
-        TODO
+        If an edge has an unrecognised curve type
 
     Notes
     -----
     Experimental feature..
-    Wires must be x-z planar
-    Current is assumed to flow clock-wise about [0, 1, 0]
+    For closed wires, current is assumed to flow clock-wise about [0, 1, 0]
+    For open wires, current flows in the daisy-chained direction of the wire.
     Circle arcs and straight edges are well-handled.
     Bsplines resort to discretisation
     Tangency between subsequent sources is not checked for, or corrected for in the
@@ -335,22 +350,27 @@ def generate_rect_xs_wire_sources(
     If your wire has Bsplines, consider using `ArbitraryPlanarRectangularXSCircuit`
     instead.
     """
-    # Check for planar wire
-    normal = np.array([0, 1, 0])
-    reversals = _daisy_chain_edge_reversals(shape)
+    edges, edge_coords = _orient_wire_edges(shape, ndiscr)
+
+    all_points = Coordinates(np.hstack([c.xyz for c in edge_coords]))
+    if not all_points.is_planar:
+        raise MagnetostaticsError(
+            "The input shape for generate_rect_xs_wire_sources must be planar."
+        )
+
+    normal = np.asarray(all_points.normal_vector, dtype=float)
 
     sources = []
-    for i, edge in enumerate(shape.edges):
-        match shape.edge_type(i):
+    for edge, coords in zip(edges, edge_coords, strict=True):
+        points = coords.points
+        start, end = points[0], points[-1]
+        match edge.edge_type():
             case CurveType.LINE:
-                ds = edge.end_point().xyz.reshape(-1) - edge.start_point().xyz.reshape(
-                    -1
-                )
+                ds = end - start
                 t_vec = np.cross(ds / np.linalg.norm(ds), normal)
-
                 source = [
                     TrapezoidalPrismCurrentSource(
-                        origin=edge.center_of_mass,
+                        origin=start + 0.5 * ds,
                         ds=ds,
                         normal=normal,
                         t_vec=t_vec,
@@ -362,35 +382,26 @@ def generate_rect_xs_wire_sources(
                     )
                 ]
             case CurveType.CIRCLE:
-                data = shape.edge_data(i)
-                centroid = np.array(data["centre"])
-                if reversals[i]:
-                    start = edge.end_point().xyz.reshape(-1)
-                    end = edge.start_point().xyz.reshape(-1)
-
-                else:
-                    start = edge.start_point().xyz.reshape(-1)
-                    end = edge.end_point().xyz.reshape(-1)
-                angle = np.rad2deg(get_angle_between_points(start, centroid, end))
-                start_angle = -np.rad2deg(
-                    np.arctan2(centroid[2] - start[2], centroid[0] - start[0])
-                )
-
-                source = CircularArcCurrentSource(
-                    origin=[0, 0, 0],
-                    ds=[-1, 0, 0],
-                    radius=data["radius"],
-                    dtheta=angle,
-                    normal=[0, 0, 1],
-                    t_vec=[0, 1, 0],
-                    breadth=breadth,
-                    depth=depth,
-                    current=current,
-                )
-
-                source.rotate(start_angle, axis=normal)
-                source.translate(centroid)
-                source = [source]
+                data = edge.edge_data()
+                centre = np.array(data["centre"], dtype=float)
+                radius = data["radius"]
+                axis = np.cross(points[0] - centre, points[1] - centre)
+                axis /= np.linalg.norm(axis)
+                d_start = (start - centre) / np.linalg.norm(start - centre)
+                # Local frame: arc sweeps from ds towards normal, about t_vec
+                source = [
+                    CircularArcCurrentSource(
+                        origin=centre,
+                        ds=d_start,
+                        normal=np.cross(axis, d_start),
+                        t_vec=axis,
+                        breadth=breadth,
+                        depth=depth,
+                        radius=radius,
+                        dtheta=np.rad2deg(edge.length / radius),
+                        current=current,
+                    )
+                ]
             case (
                 CurveType.BSPLINE
                 | CurveType.BEZIER
@@ -399,13 +410,13 @@ def generate_rect_xs_wire_sources(
                 | CurveType.PARABOLA
             ):
                 source = ArbitraryPlanarRectangularXSCircuit(
-                    edge.discretise(ndiscr=ndiscr, byedges=False),
+                    coords,
                     breadth=breadth,
                     depth=depth,
                     current=current,
                 ).sources
-            case _:
-                raise ValueError(f"Unrecognised curve type {edge.edge_type}")
+            case unknown:
+                raise ValueError(f"Unrecognised curve type {unknown}")
         sources.extend(source)
 
     return SourceGroup(sources)
