@@ -26,6 +26,7 @@ from mpi4py import MPI
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.magnetostatics.fem_utils import _show_plotter
 from bluemira.mesh.error import MeshConversionError
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ def plot_dolfinx_mesh(mesh, *, show: bool = True):
     plotter.add_mesh(grid, show_edges=True)
     plotter.view_xy()  # type: ignore[ty:missing-argument]
     if show:
-        plotter.show()
+        _show_plotter(plotter)
     return plotter
 
 

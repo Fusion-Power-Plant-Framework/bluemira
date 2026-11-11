@@ -39,6 +39,7 @@ from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.display.displayer import ViewerBackend
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -47,6 +48,16 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 old_m_to_m = gmshio.model_to_mesh
+
+
+def _show_plotter(plotter):
+    """Display a Pyvista plotter using the appropriate viewer backend."""
+    plotter.show(
+        jupyter_backend="trame"
+        if ViewerBackend.DEFAULT is ViewerBackend.JUPYTER
+        else None
+    )
+    plotter.show()
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
@@ -380,7 +391,7 @@ def pyvista_plot_show_save(filename: str = "field.svg"):
         if pyvista.OFF_SCREEN:
             plotter.screenshot(filename)
         else:
-            plotter.show()
+            _show_plotter(plotter)
 
 
 def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg"):
@@ -796,5 +807,5 @@ def quick_plot(mesh: Mesh):
         show_edges=True,
         line_width=2,
     )
-    plotter.view_xy()
-    plotter.show()
+    plotter.renderer.view_xy()
+    _show_plotter(plotter)
