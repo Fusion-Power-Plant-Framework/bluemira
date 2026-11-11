@@ -57,7 +57,6 @@ def _show_plotter(plotter):
         if ViewerBackend.DEFAULT is ViewerBackend.JUPYTER
         else None
     )
-    plotter.show()
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
