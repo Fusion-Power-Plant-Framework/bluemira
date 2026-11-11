@@ -35,6 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     EqCoilsetOptimisationProblem,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+from bluemira.optimisation.error import OptimisationError
 
 if TYPE_CHECKING:
     from bluemira.equilibria import Equilibrium
@@ -42,6 +43,23 @@ if TYPE_CHECKING:
     from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
     from bluemira.equilibria.run import MovingCurrentBoundStrategy
     from bluemira.utilities.positioning import PositionMapper
+
+
+def _check_positions_finite(vector: npt.NDArray[np.float64]) -> None:
+    """
+    Stop before non-finite coil positions from the position optimiser reach the
+    coilset and geometry, where they fail with an unrelated error.
+
+    Raises
+    ------
+    OptimisationError
+        If any normalised coil position is NaN or infinite
+    """
+    if not np.all(np.isfinite(vector)):
+        raise OptimisationError(
+            "The position optimiser proposed non-finite normalised coil positions "
+            f"{vector}. It has broken down: check its termination conditions."
+        )
 
 
 class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
@@ -161,6 +179,7 @@ class NestedCoilsetPositionCOP(EqCoilsetOptimisationProblem):
 
     def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function to minimise."""  # noqa: DOC201
+        _check_positions_finite(vector)
         pos_map = self.position_mapper.to_xz_dict(vector)
         self.coilset.set_optimisation_state(coil_position_map=pos_map)
 
@@ -288,6 +307,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         :
             The largest figure of merit.
         """
+        _check_positions_finite(vector)
         pos_map = self.position_mapper.to_xz_dict(vector)
 
         if self.debug[0]:
