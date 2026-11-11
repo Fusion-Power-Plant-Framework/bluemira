@@ -15,6 +15,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.cadapi._base_types import CurveType
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_angle_between_points,
@@ -31,7 +32,11 @@ from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSourc
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
-__all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
+__all__ = [
+    "ArbitraryPlanarRectangularXSCircuit",
+    "HelmholtzCage",
+    "generate_rect_xs_wire_sources",
+]
 
 
 class PlanarCircuit(SourceGroup):
@@ -298,7 +303,7 @@ def generate_rect_xs_wire_sources(
     instead.
     """
     # Check for planar wire
-    normal = [0, 1, 0]  # extract normal vector
+    normal = np.array([0, 1, 0])
     # Check for tangency between edges...
     reference = shape.center_of_mass
     # Daisy-chain because wire orientation issues
@@ -318,62 +323,71 @@ def generate_rect_xs_wire_sources(
 
     sources = []
     for i, edge in enumerate(shape.edges):
-        curve = edge._shape.Edges[0].Curve
-        if curve.TypeId == "Part::GeomLine":
-            ds = edge.end_point().xyz.reshape(-1) - edge.start_point().xyz.reshape(-1)
-            t_vec = np.cross(ds / np.linalg.norm(ds), normal)
+        match shape.edge_type(i):
+            case CurveType.LINE:
+                ds = edge.end_point().xyz.reshape(-1) - edge.start_point().xyz.reshape(
+                    -1
+                )
+                t_vec = np.cross(ds / np.linalg.norm(ds), normal)
 
-            source = [
-                TrapezoidalPrismCurrentSource(
-                    origin=edge.center_of_mass,
-                    ds=ds,
-                    normal=normal,
-                    t_vec=t_vec,
+                source = [
+                    TrapezoidalPrismCurrentSource(
+                        origin=edge.center_of_mass,
+                        ds=ds,
+                        normal=normal,
+                        t_vec=t_vec,
+                        breadth=breadth,
+                        depth=depth,
+                        alpha=0.0,
+                        beta=0.0,
+                        current=current,
+                    )
+                ]
+            case CurveType.CIRCLE:
+                data = shape.edge_data(i)
+                centroid = np.array(data["centre"])
+                if reversals[i]:
+                    start = edge.end_point().xyz.reshape(-1)
+                    end = edge.start_point().xyz.reshape(-1)
+
+                else:
+                    start = edge.start_point().xyz.reshape(-1)
+                    end = edge.end_point().xyz.reshape(-1)
+                angle = np.rad2deg(get_angle_between_points(start, centroid, end))
+                start_angle = -np.rad2deg(
+                    np.arctan2(centroid[2] - start[2], centroid[0] - start[0])
+                )
+
+                source = CircularArcCurrentSource(
+                    origin=[0, 0, 0],
+                    ds=[-1, 0, 0],
+                    radius=data["radius"],
+                    dtheta=angle,
+                    normal=[0, 0, 1],
+                    t_vec=[0, 1, 0],
                     breadth=breadth,
                     depth=depth,
-                    alpha=0.0,
-                    beta=0.0,
                     current=current,
                 )
-            ]
-        elif curve.TypeId == "Part::GeomCircle":
-            centroid = np.array([curve.Center.x, curve.Center.y, curve.Center.z])
-            if reversals[i]:
-                start = edge.end_point().xyz.reshape(-1)
-                end = edge.start_point().xyz.reshape(-1)
 
-            else:
-                start = edge.start_point().xyz.reshape(-1)
-                end = edge.end_point().xyz.reshape(-1)
-            angle = np.rad2deg(get_angle_between_points(start, centroid, end))
-            start_angle = -np.rad2deg(
-                np.arctan2(centroid[2] - start[2], centroid[0] - start[0])
-            )
-
-            source = CircularArcCurrentSource(
-                origin=[0, 0, 0],
-                ds=[-1, 0, 0],
-                radius=curve.Radius,
-                dtheta=angle,
-                normal=[0, 0, 1],
-                t_vec=[0, 1, 0],
-                breadth=breadth,
-                depth=depth,
-                current=current,
-            )
-
-            source.rotate(start_angle, axis=normal)
-            source.translate(centroid)
-            source = [source]
-        elif curve.TypeId == "Part::GeomBSplineCurve":
-            source = ArbitraryPlanarRectangularXSCircuit(
-                edge.discretise(ndiscr=ndiscr),
-                breadth=breadth,
-                depth=depth,
-                current=current,
-            ).sources
-        else:
-            raise ValueError(f"Unrecognised curve type {edge._shape.Curve.TypeId}")
+                source.rotate(start_angle, axis=normal)
+                source.translate(centroid)
+                source = [source]
+            case (
+                CurveType.BSPLINE
+                | CurveType.BEZIER
+                | CurveType.ELLIPSE
+                | CurveType.HYPERBOLA
+                | CurveType.PARABOLA
+            ):
+                source = ArbitraryPlanarRectangularXSCircuit(
+                    edge.discretise(ndiscr=ndiscr, byedges=False),
+                    breadth=breadth,
+                    depth=depth,
+                    current=current,
+                ).sources
+            case _:
+                raise ValueError(f"Unrecognised curve type {edge.edge_type}")
         sources.extend(source)
 
     return SourceGroup(sources)
