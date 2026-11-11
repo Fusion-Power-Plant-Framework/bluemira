@@ -223,6 +223,18 @@ class TestParameterFrame:
         )
         assert self.frame.age.source != "a test"
 
+    def test_update_values_stores_whole_number_float_as_int_for_int_parameter(self):
+        self.frame.update_values({"age": 18.0, "height": 2.0})
+
+        assert self.frame.age.value == 18
+        assert isinstance(self.frame.age.value, int)
+        assert isinstance(self.frame.height.value, float)
+
+    def test_update_values_does_not_round_fractional_float_for_int_parameter(self):
+        self.frame.update_values({"age": 18.5})
+
+        assert self.frame.age.value == pytest.approx(18.5)
+
     def test_update_using_values_edits_frames_values(self):
         self.frame.update({"height": 160.4})
 

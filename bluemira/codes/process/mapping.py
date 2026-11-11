@@ -11,7 +11,6 @@ PROCESS mappings
 from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {
-    "n_TF": ("n_tf_coils", "dimensionless"),
     "TF_ripple_limit": ("ripple_b_tf_plasma_edge_max", "%"),
     "C_Ejima": ("ejima_coeff", "dimensionless"),
     "e_nbi": ("e_beam_kev", "keV"),
@@ -19,8 +18,6 @@ IN_mappings = {
     "eta_nb": ("eta_beam_injector_wall_plug", "dimensionless"),
     "e_mult": ("f_p_blkt_multiplication", "dimensionless"),
     "tk_cr_vv": ("dr_cryostat", "m"),
-    "tk_tf_front_ib": ("dr_tf_plasma_case", "m"),
-    "tk_tf_side": ("dx_tf_side_case_min", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
     "q_0": ("q0", "dimensionless"),
     "m_s_limit": ("m_s_limit", "dimensionless"),
@@ -113,6 +110,9 @@ OUT_mappings = {
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
+    "n_TF": ("n_tf_coils", "dimensionless"),
+    "tk_tf_front_ib": ("dr_tf_plasma_case", "m"),
+    "tk_tf_side": ("dx_tf_side_case_min", "m"),
     "tau_flattop": (("t_burn_min", "t_plant_pulse_burn"), "s"),
     "P_el_net": (("p_plant_electric_net_required_mw", "p_plant_electric_net_mw"), "MW"),
     "tk_bb_ib": ("dr_blkt_inboard", "m"),

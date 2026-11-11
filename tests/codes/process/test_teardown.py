@@ -68,6 +68,23 @@ class TestTeardown:
             3.37836
         )
 
+    def test_read_takes_tf_coil_count_and_case_walls_from_mfile(self):
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+        teardown.params.update_values({
+            "n_TF": 18,
+            "tk_tf_front_ib": 0.04,
+            "tk_tf_side": 0.1,
+        })
+
+        with file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF):
+            teardown.read()
+
+        # Expected values come from ./test_data/mfile_data.json
+        assert teardown.params.n_TF.value == 16
+        assert isinstance(teardown.params.n_TF.value, int)
+        assert teardown.params.tk_tf_front_ib.value == pytest.approx(0.06)
+        assert teardown.params.tk_tf_side.value == pytest.approx(0.05)
+
     def test_read_unknown_outputs_set_to_nan(self):
         """
         If a variable no longer exists in PROCESS we assume its OBS_VARS
