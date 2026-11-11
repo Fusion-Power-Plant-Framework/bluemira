@@ -257,7 +257,7 @@ class PlanarCircuit(SourceGroup):
 
 def generate_rect_xs_wire_sources(
     shape: BluemiraWire, breadth: float, depth: float, current: float, ndiscr: int = 20
-):
+) -> SourceGroup:
     """
     Generate a SourceGroup of Rectangular cross-section current sources from
     a BluemiraWire.
@@ -274,6 +274,16 @@ def generate_rect_xs_wire_sources(
         Current flowing in the current source
     ndiscr:
         Discretisation to use for BSplines
+
+    Returns
+    -------
+    :
+        SourceGroup of current sources
+
+    Raises
+    ------
+    ValueError
+        TODO
 
     Notes
     -----
@@ -357,7 +367,7 @@ def generate_rect_xs_wire_sources(
             source = [source]
         elif curve.TypeId == "Part::GeomBSplineCurve":
             source = ArbitraryPlanarRectangularXSCircuit(
-                edge.discretize(ndiscr=ndiscr),
+                edge.discretise(ndiscr=ndiscr),
                 breadth=breadth,
                 depth=depth,
                 current=current,

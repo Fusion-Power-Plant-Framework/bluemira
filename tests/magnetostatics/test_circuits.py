@@ -49,8 +49,8 @@ class TestGenerateWireSources:
         "x1": {"value": 4},
         "dz": {"value": 0},
         "sl": {"value": 6.5},
-        "f1": {"value": 3},
-        "f2": {"value": 4},
+        "r1": {"value": 3},
+        "r2": {"value": 4},
         "a1": {"value": 20},
         "a2": {"value": 40},
     }
@@ -58,15 +58,15 @@ class TestGenerateWireSources:
     p_inputs = (pd_inputs, ta_inputs, pf_inputs)
     parameterisations = (PrincetonD, TripleArc, PictureFrame)
 
-    @pytest.mark.parametrize(  # ruff: PT006
-        ("parameterisation", "inputs"), zip(parameterisations, p_inputs)
+    @pytest.mark.parametrize(
+        ("parameterisation", "inputs"), zip(parameterisations, p_inputs, strict=True)
     )
     def test_generate_wire_sources(self, parameterisation, inputs):
         shape = parameterisation(inputs).create_shape()
         source = generate_rect_xs_wire_sources(shape, 0.2, 0.4, current=1e6, ndiscr=20)
         source = HelmholtzCage(source, n_TF=12)
 
-        points = shape.discretize(ndiscr=20, byedges=True)
+        points = shape.discretise(ndiscr=20, byedges=True)
         xmin = points.x.min() - 1.0
         xmax = points.x.max() + 1.0
         zmin = points.z.min() - 1.0
