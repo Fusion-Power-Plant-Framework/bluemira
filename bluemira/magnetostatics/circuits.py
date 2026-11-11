@@ -260,6 +260,39 @@ class PlanarCircuit(SourceGroup):
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
 
 
+def _daisy_chain_edge_reversals(shape: BluemiraWire) -> list[bool]:
+    """
+    Determine, for each edge in the wire, whether it must be reversed so that
+    the edges are daisy-chained in a consistent orientation.
+
+    Parameters
+    ----------
+    shape:
+        BluemiraWire whose edges to check
+
+    Returns
+    -------
+    :
+        List of flags, one per edge, True if the edge is reversed
+    """
+    reference = shape.center_of_mass
+    # Daisy-chain because wire orientation issues
+    reversals = []
+    for i, edge in enumerate(shape.edges):
+        s = edge.start_point().xyz.reshape(-1)
+        e = edge.end_point().xyz.reshape(-1)
+        if i == 0:
+            cw = get_angle_between_vectors(s - reference, e - reference, signed=True) < 0
+            reversals.append(cw)
+        else:
+            rev = np.allclose(e, shape.edges[i - 1].start_point().xyz.reshape(-1))
+            if reversals[i - 1]:
+                reversals.append(not rev)
+            else:
+                reversals.append(rev)
+    return reversals
+
+
 def generate_rect_xs_wire_sources(
     shape: BluemiraWire, breadth: float, depth: float, current: float, ndiscr: int = 20
 ) -> SourceGroup:
@@ -304,22 +337,7 @@ def generate_rect_xs_wire_sources(
     """
     # Check for planar wire
     normal = np.array([0, 1, 0])
-    # Check for tangency between edges...
-    reference = shape.center_of_mass
-    # Daisy-chain because wire orientation issues
-    reversals = []
-    for i, edge in enumerate(shape.edges):
-        s = edge.start_point().xyz.reshape(-1)
-        e = edge.end_point().xyz.reshape(-1)
-        if i == 0:
-            cw = get_angle_between_vectors(s - reference, e - reference, signed=True) < 0
-            reversals.append(cw)
-        else:
-            rev = np.allclose(e, shape.edges[i - 1].start_point().xyz.reshape(-1))
-            if reversals[i - 1]:
-                reversals.append(not rev)
-            else:
-                reversals.append(rev)
+    reversals = _daisy_chain_edge_reversals(shape)
 
     sources = []
     for i, edge in enumerate(shape.edges):
