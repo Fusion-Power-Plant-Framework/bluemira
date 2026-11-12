@@ -179,7 +179,7 @@ class TestGenerateWireSources:
         source = HelmholtzCage(source, n_TF=12)
 
         coords = shape.discretise(ndiscr=20, byedges=True)
-        n = 50
+        n = 20
         x = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, n)
         z = np.linspace(coords.z.min() - 1.0, coords.z.max() + 1.0, n)
         xx, zz = np.meshgrid(x, z)
@@ -190,7 +190,7 @@ class TestGenerateWireSources:
         levels = np.linspace(0, b.max(), 20)
         ax.contourf(xx, b, zz, zdir="y", offset=0.0, levels=levels, cmap="magma")
         plt.show()
-        x1 = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, 100)
+        x1 = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, 50)
         bt = source.field(x1, np.zeros_like(x1), np.zeros_like(x1))[1]
         f, ax = plt.subplots()
         ax.plot(x1, -bt)
