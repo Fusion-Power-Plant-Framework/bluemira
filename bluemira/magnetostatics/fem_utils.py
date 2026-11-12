@@ -12,17 +12,18 @@ from __future__ import annotations
 
 import functools
 from collections.abc import Callable, Sequence
-from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, cast
 from unittest.mock import patch
 
+import dolfinx
 import gmsh
 import matplotlib.pyplot as plt
 import matplotlib.tri as tr
 import numpy as np
+import pyvista
 import ufl
-from dolfinx import cpp, default_scalar_type, geometry, plot
+from dolfinx import cpp, default_scalar_type, geometry
 from dolfinx.fem import (
     Constant,
     Expression,
@@ -48,15 +49,6 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
 old_m_to_m = gmshio.model_to_mesh
-
-
-def _show_plotter(plotter):
-    """Display a Pyvista plotter using the appropriate viewer backend."""
-    plotter.show(
-        jupyter_backend="trame"
-        if ViewerBackend.DEFAULT is ViewerBackend.JUPYTER
-        else None
-    )
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
@@ -366,59 +358,6 @@ def integrate_f(
         if tag is None
         else assemble_scalar(form(f * dx(tag)))
     )
-
-
-# Plotting method for scalar field.
-# Not really clear how to manage pyvista plots. Left here just as reference
-# for a better future implementation.
-@contextmanager
-def pyvista_plot_show_save(filename: str = "field.svg"):
-    """Show or save figure from pyvista
-
-    Yields
-    ------
-    :
-        the pyvista plotter
-    """
-    import pyvista  # noqa: PLC0415
-
-    plotter = pyvista.Plotter(off_screen=pyvista.OFF_SCREEN)
-
-    try:
-        yield plotter
-    finally:
-        if pyvista.OFF_SCREEN:
-            plotter.screenshot(filename)
-        else:
-            _show_plotter(plotter)
-
-
-def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg"):
-    """
-    Plot a scalar field given by the dolfinx function "field" in pyvista or in a file.
-
-    Parameters
-    ----------
-    field:
-        function to be plotted
-    filename:
-        file in which the plot is stored
-
-    Notes
-    -----
-    if pyvista.OFF_SCREEN is False the plot is shown on the screen, otherwise
-    the file with the plot is saved.
-    """
-    import pyvista  # noqa: PLC0415
-
-    with pyvista_plot_show_save(filename) as plotter:
-        V = field.function_space  # noqa: N806
-        degree = V.ufl_element().degree()
-        field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V.mesh if degree == 0 else V))
-        field_grid.point_data["Field"] = field.x.array
-        field_grid.set_active_scalars("Field")
-        warp = field_grid.warp_by_scalar("Field", factor=1)
-        _actor = plotter.add_mesh(warp, show_edges=True)
 
 
 def error_L2(  # noqa: N802
@@ -755,56 +694,141 @@ def compute_B_from_Psi(
     return B
 
 
-def plot_meshtags(
+# Plotting functions
+
+
+def _show_plotter(plotter):
+    """Display a PyVista plotter using the appropriate viewer backend."""
+    plotter.show(
+        jupyter_backend=(
+            "trame" if ViewerBackend.DEFAULT is ViewerBackend.JUPYTER else None
+        )
+    )
+
+
+def _add_grid_to_plotter(
+    plotter,
+    grid,
+    *,
+    color: str | None = None,
+    show_edges: bool = True,
+    line_width: float | None = None,
+    show_scalar_bar: bool = True,
+):
+    """Add a mesh grid to a PyVista plotter."""
+    mesh_options = {
+        "show_edges": show_edges,
+        "show_scalar_bar": show_scalar_bar,
+    }
+
+    if color is not None:
+        mesh_options["color"] = color
+
+    if line_width is not None:
+        mesh_options["line_width"] = line_width
+
+    plotter.add_mesh(grid, **mesh_options)
+    plotter.renderer.view_xy()
+
+
+def _plot_grid(
+    grid,
+    *,
+    show: bool = True,
+    filename: str | None = None,
+    color: str | None = None,
+    line_width: float | None = None,
+    show_scalar_bar: bool = False,
+):
+    """Create and display or return a PyVista plotter for a grid."""
+    plotter = pyvista.Plotter(off_screen=pyvista.OFF_SCREEN)
+
+    _add_grid_to_plotter(
+        plotter,
+        grid,
+        color=color,
+        line_width=line_width,
+        show_scalar_bar=show_scalar_bar,
+    )
+
+    if filename is not None and pyvista.OFF_SCREEN:
+        plotter.screenshot(filename)
+    elif show:
+        _show_plotter(plotter)
+
+
+def plot_mesh(
     mesh: Mesh,
     meshtags: cpp.mesh.MeshTags_float64 | cpp.mesh.MeshTags_int32 | None = None,
-    filename: str = "meshtags.svg",
+    *,
+    show: bool = True,
+    filename: str | None = None,
 ):
     """
-    Plot dolfinx mesh with markers using pyvista.
+    Plot a Bluemira mesh using PyVista, optionally displaying cell markers.
+
+    The function-space VTK conversion is used to avoid diagonal lines
+    appearing on quadrilateral meshes (PyVista issue #6630).
 
     Parameters
     ----------
     mesh:
-        Mesh
+        Bluemira mesh.
     meshtags:
-        Mesh tags
+        Optional DOLFINx cell tags.
+    show:
+        Whether to display the plot immediately.
     filename:
-        Full path for plot save
+        Optional path for saving an off-screen screenshot.
+
+    Returns
+    -------
+    pyvista.Plotter
+        The PyVista plotter.
     """
-    # Create VTK mesh
-    import pyvista  # noqa: PLC0415
+    space = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
+    grid = pyvista.UnstructuredGrid(vtk_mesh(space))
 
-    cells, types, x = plot.vtk_mesh(mesh)
-    grid = pyvista.UnstructuredGrid(cells, types, x)
-
-    # Attach the cells tag data to the pyvita grid
     if meshtags is not None:
-        grid.cell_data["Marker"] = meshtags.values
+        num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+        grid.cell_data["Marker"] = meshtags.values[meshtags.indices < num_local_cells]
         grid.set_active_scalars("Marker")
 
-    with pyvista_plot_show_save(filename) as plotter:
-        plotter.add_mesh(grid, show_edges=True, show_scalar_bar=False)
-        plotter.view_xy()
-
-
-def quick_plot(mesh: Mesh):
-    """..."""
-    import dolfinx  # noqa: PLC0415
-    import pyvista  # noqa: PLC0415
-
-    space = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
-
-    cells, types, x = dolfinx.plot.vtk_mesh(space)
-
-    grid = pyvista.UnstructuredGrid(cells, types, x)
-
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(
+    return _plot_grid(
         grid,
-        color="white",
-        show_edges=True,
+        show=show,
+        filename=filename,
+        color="white" if meshtags is None else None,
         line_width=2,
     )
-    plotter.renderer.view_xy()
-    _show_plotter(plotter)
+
+
+def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg"):
+    """
+    Plot a scalar field given by the dolfinx function "field" in pyvista or in a file.
+
+    Parameters
+    ----------
+    field:
+        function to be plotted
+    filename:
+        file in which the plot is stored
+
+    Notes
+    -----
+    if pyvista.OFF_SCREEN is False the plot is shown on the screen, otherwise
+    the file with the plot is saved.
+    """
+    V = field.function_space  # noqa: N806
+    degree = V.ufl_element().degree()
+
+    if degree == 0:
+        field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V.mesh, V.mesh.topology.dim))
+        field_grid.cell_data["Field"] = field.x.array
+    else:
+        field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V))
+        field_grid.point_data["Field"] = field.x.array
+
+    field_grid.set_active_scalars("Field")
+    warp = field_grid.warp_by_scalar("Field", factor=1)
+    _plot_grid(warp, show=True, filename=filename)
