@@ -340,7 +340,6 @@ def generate_rect_xs_wire_sources(
 
     Notes
     -----
-    Experimental feature..
     For closed wires, current is assumed to flow clock-wise about [0, 1, 0]
     For open wires, current flows in the daisy-chained direction of the wire.
     Circle arcs and straight edges are well-handled.
