@@ -10,7 +10,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, cast, overload
 
 import bluemira.codes._geometryapi as cadapi
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
@@ -333,6 +333,14 @@ class BluemiraWire(BluemiraGeo):
             et = tuple(cadapi.get_edge_type(e.shape) for e in edges)
             return et[0] if len(et) == 1 else et
         return cadapi.get_edge_type(edges[ind].shape)
+
+    @overload
+    def edge_data(self, ind: int) -> cadapi.CircleEdgeDT: ...
+
+    @overload
+    def edge_data(
+        self, ind: None = None
+    ) -> cadapi.CircleEdgeDT | tuple[cadapi.CircleEdgeDT, ...]: ...
 
     def edge_data(
         self, ind: int | None = None

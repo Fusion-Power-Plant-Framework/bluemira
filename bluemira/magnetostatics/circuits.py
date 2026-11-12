@@ -10,7 +10,6 @@ Three-dimensional current source terms.
 
 import itertools
 from copy import deepcopy
-from typing import cast
 
 import numpy as np
 import numpy.typing as npt
@@ -65,7 +64,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._process_planar_shape(shape)
         betas, alphas = self._get_betas_alphas(shape)
 
-        normal = cast("npt.NDArray", shape.normal_vector)
+        normal = np.asarray(shape.normal_vector, dtype=float)
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
@@ -84,7 +83,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *cast("tuple[Coordinates, ...]", xs_args),
+                    *xs_args,  # type:ignore[ty:invalid-argument-type]
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -105,7 +104,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *cast("tuple[float, ...]", xs_args),  # type:ignore[ty:invalid-argument-type]
+                    *xs_args,  # type:ignore[ty:invalid-argument-type]
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -186,7 +185,7 @@ class PlanarCircuit(SourceGroup):
             Tranformed coordinates.
         """
         coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
-        normal_vector = cast("npt.NDArray", coords.normal_vector)
+        normal_vector = np.asarray(coords.normal_vector, dtype=float)
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
             return coords
         coords.translate(-np.array(coords.center_of_mass))
@@ -381,7 +380,7 @@ def generate_rect_xs_wire_sources(
                     )
                 ]
             case CurveType.CIRCLE:
-                data = edge.edge_data()
+                data = edge.edge_data(0)
                 centre = np.array(data["centre"], dtype=float)
                 radius = data["radius"]
                 axis = np.cross(points[0] - centre, points[1] - centre)

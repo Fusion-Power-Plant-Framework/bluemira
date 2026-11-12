@@ -29,6 +29,7 @@ import numpy.typing as npt
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource, PrismEndCapMixin
 from bluemira.magnetostatics.tools import process_xyz_array
+from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
 
@@ -488,6 +489,8 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         show_coord_sys: bool
             Whether or not to plot the coordinate systems
         """
+        if ax is None:
+            ax = Plot3D()
         super().plot(ax=ax, show_coord_sys=show_coord_sys)
         p1 = self._origin - 0.5 * self._dcm[1]
         p2 = self._origin + 0.5 * self._dcm[1]
