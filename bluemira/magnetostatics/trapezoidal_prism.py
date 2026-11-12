@@ -15,6 +15,13 @@ including corrections from:
 .. doi:: 10.1002/jnm.675
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+
 import numba as nb
 import numpy as np
 import numpy.typing as npt
@@ -22,6 +29,7 @@ import numpy.typing as npt
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource, PrismEndCapMixin
 from bluemira.magnetostatics.tools import process_xyz_array
+from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
 
@@ -469,3 +477,23 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         ]
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
+
+    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs):  # noqa: ARG002
+        """
+        Plot the CurrentSource.
+
+        Parameters
+        ----------
+        ax: Union[None, Axes]
+            The matplotlib axes to plot on
+        show_coord_sys: bool
+            Whether or not to plot the coordinate systems
+        """
+        if ax is None:
+            ax = Plot3D()
+        super().plot(ax=ax, show_coord_sys=show_coord_sys)
+        p1 = self._origin - 0.5 * self._dcm[1]
+        p2 = self._origin + 0.5 * self._dcm[1]
+        points = np.array([p1, p2])
+        ax.plot(*points.T, color="r")
+        ax.plot([points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r")

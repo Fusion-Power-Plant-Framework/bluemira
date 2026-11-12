@@ -8,26 +8,33 @@
 Three-dimensional current source terms.
 """
 
+import itertools
 from copy import deepcopy
-from typing import cast
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes.cadapi._base_types import CurveType
 from bluemira.geometry.coordinates import (
     Coordinates,
     in_polygon,
     rotation_matrix,
     rotation_matrix_v1v2,
 )
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSource
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
-__all__ = ["ArbitraryPlanarRectangularXSCircuit", "HelmholtzCage"]
+__all__ = [
+    "ArbitraryPlanarRectangularXSCircuit",
+    "HelmholtzCage",
+    "generate_rect_xs_wire_sources",
+]
 
 
 class PlanarCircuit(SourceGroup):
@@ -57,7 +64,7 @@ class PlanarCircuit(SourceGroup):
         shape = self._process_planar_shape(shape)
         betas, alphas = self._get_betas_alphas(shape)
 
-        normal = cast("npt.NDArray", shape.normal_vector)
+        normal = np.asarray(shape.normal_vector, dtype=float)
 
         # Set up geometry, calculating all trapezoidal prism sources
         self.shape = shape.T
@@ -76,7 +83,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *cast("tuple[Coordinates, ...]", xs_args),
+                    *xs_args,  # type:ignore[ty:invalid-argument-type]
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -97,7 +104,7 @@ class PlanarCircuit(SourceGroup):
                     d_l,
                     normal,
                     t_vec,
-                    *cast("tuple[float, ...]", xs_args),  # type:ignore[ty:invalid-argument-type]
+                    *xs_args,  # type:ignore[ty:invalid-argument-type]
                     alpha=alpha,
                     beta=beta,
                     current=current,
@@ -178,7 +185,7 @@ class PlanarCircuit(SourceGroup):
             Tranformed coordinates.
         """
         coords = shape if isinstance(shape, Coordinates) else Coordinates(shape)
-        normal_vector = cast("npt.NDArray", coords.normal_vector)
+        normal_vector = np.asarray(coords.normal_vector, dtype=float)
         if abs(normal_vector[1]) == 1.0:  # noqa: RUF069
             return coords
         coords.translate(-np.array(coords.center_of_mass))
@@ -249,6 +256,168 @@ class PlanarCircuit(SourceGroup):
         # reverse second axis if clockwise
         ind = (slice(None), slice(None, None, -1)) if self._clockwise else slice(None)
         return in_polygon(point[0], point[2], self._t_shape.xz[ind].T)
+
+
+def _orient_wire_edges(
+    shape: BluemiraWire, ndiscr: int
+) -> tuple[tuple[BluemiraWire, ...], list[Coordinates]]:
+    """
+    Discretise each edge of a wire and daisy-chain the points head-to-tail.
+
+    Closed wires are oriented such that the current flows clockwise about
+    [0, 1, 0] (i.e. counter-clockwise in the x-z plane, with x right and z up,
+    as per `Coordinates.check_ccw([0, 1, 0])`).
+
+    Returns
+    -------
+    edges:
+        The (connectivity-ordered) edges of the wire
+    coords:
+        The oriented discretised Coordinates of each edge
+
+    Notes
+    -----
+    Wire edges are connectivity-ordered, but each edge's own direction is
+    arbitrary. Everything is derived from the discretised points, so the
+    orientation is self-consistent irrespective of the CAD backend.
+    """
+    edges = shape.edges
+    coords = [edge.discretise(ndiscr=max(ndiscr, 3), byedges=False) for edge in edges]
+
+    # The first edge must end where the second edge begins
+    if len(coords) > 1 and (
+        coords[1].distance_to(coords[0].points[0]).min()
+        < coords[1].distance_to(coords[0].points[-1]).min()
+    ):
+        coords[0].reverse()
+    # Subsequent edges must start where the previous edge ends
+    for prev, cur in itertools.pairwise(coords):
+        d = cur.distance_to(prev.points[-1])
+        if d[-1] < d[0]:
+            cur.reverse()
+
+    if shape.is_closed():
+        loop = Coordinates(np.hstack([c.xyz for c in coords]))
+        if not loop.check_ccw([0, 1, 0]):
+            for c in coords:
+                c.reverse()
+
+    return edges, coords
+
+
+def generate_rect_xs_wire_sources(
+    shape: BluemiraWire, breadth: float, depth: float, current: float, ndiscr: int = 20
+) -> SourceGroup:
+    """
+    Generate a SourceGroup of Rectangular cross-section current sources from
+    a planar x-z BluemiraWire.
+
+    Parameters
+    ----------
+    shape:
+        BluemiraWire to use when generating the current sources
+    breadth:
+        Breadth of the rectangular cross-section
+    depth:
+        Depth of the rectangular cross-section
+    current:
+        Current flowing in the current source
+    ndiscr:
+        Discretisation to use for BSplines
+
+    Returns
+    -------
+    :
+        SourceGroup of current sources
+
+    Raises
+    ------
+    MagnetostaticsError
+        If the wire is not planar
+    ValueError
+        If an edge has an unrecognised curve type
+
+    Notes
+    -----
+    For closed wires, current is assumed to flow clock-wise about [0, 1, 0]
+    For open wires, current flows in the daisy-chained direction of the wire.
+    Circle arcs and straight edges are well-handled.
+    Bsplines resort to discretisation
+    Tangency between subsequent sources is not checked for, or corrected for in the
+    case of a straight edge transition to a BSpline.
+    If your wire has Bsplines, consider using `ArbitraryPlanarRectangularXSCircuit`
+    instead.
+    """
+    edges, edge_coords = _orient_wire_edges(shape, ndiscr)
+
+    all_points = Coordinates(np.hstack([c.xyz for c in edge_coords]))
+    if not all_points.is_planar:
+        raise MagnetostaticsError(
+            "The input shape for generate_rect_xs_wire_sources must be planar."
+        )
+
+    normal = np.asarray(all_points.normal_vector, dtype=float)
+
+    sources = []
+    for edge, coords in zip(edges, edge_coords, strict=True):
+        points = coords.points
+        start, end = points[0], points[-1]
+        match edge.edge_type():
+            case CurveType.LINE:
+                ds = end - start
+                t_vec = np.cross(ds / np.linalg.norm(ds), normal)
+                source = [
+                    TrapezoidalPrismCurrentSource(
+                        origin=start + 0.5 * ds,
+                        ds=ds,
+                        normal=normal,
+                        t_vec=t_vec,
+                        breadth=breadth,
+                        depth=depth,
+                        alpha=0.0,
+                        beta=0.0,
+                        current=current,
+                    )
+                ]
+            case CurveType.CIRCLE:
+                data = edge.edge_data(0)
+                centre = np.array(data["centre"], dtype=float)
+                radius = data["radius"]
+                axis = np.cross(points[0] - centre, points[1] - centre)
+                axis /= np.linalg.norm(axis)
+                d_start = (start - centre) / np.linalg.norm(start - centre)
+                # Local frame: arc sweeps from ds towards normal, about t_vec
+                source = [
+                    CircularArcCurrentSource(
+                        origin=centre,
+                        ds=d_start,
+                        normal=np.cross(axis, d_start),
+                        t_vec=axis,
+                        breadth=breadth,
+                        depth=depth,
+                        radius=radius,
+                        dtheta=np.rad2deg(edge.length / radius),
+                        current=current,
+                    )
+                ]
+            case (
+                CurveType.BSPLINE
+                | CurveType.BEZIER
+                | CurveType.ELLIPSE
+                | CurveType.HYPERBOLA
+                | CurveType.PARABOLA
+            ):
+                source = ArbitraryPlanarRectangularXSCircuit(
+                    coords,
+                    breadth=breadth,
+                    depth=depth,
+                    current=current,
+                ).sources
+            case unknown:
+                raise ValueError(f"Unrecognised curve type {unknown}")
+        sources.extend(source)
+
+    return SourceGroup(sources)
 
 
 class ArbitraryPlanarRectangularXSCircuit(PlanarCircuit):
