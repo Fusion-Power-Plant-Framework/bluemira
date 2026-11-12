@@ -127,3 +127,21 @@ class TestTrapezoidalPrismCurrentSource:
             angle2,
             current=1.0,
         )
+
+    @pytest.mark.parametrize(
+        "vector", [[], [1.0], [1.0, 2.0], [1.0, 2.0, 3.0, 4.0], [[1.0, 2.0, 3.0]]]
+    )
+    def test_error_on_bad_translation_vector(self, vector):
+        source = TrapezoidalPrismCurrentSource(
+            np.array([0, 0, 0]),
+            np.array([0, 0, 1]),
+            np.array([1, 0, 0]),
+            np.array([0, 1, 0]),
+            0.5,
+            0.1,
+            10,
+            10,
+            current=1.0,
+        )
+        with pytest.raises(MagnetostaticsError):
+            source.translate(vector)

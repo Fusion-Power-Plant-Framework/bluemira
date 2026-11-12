@@ -135,7 +135,7 @@ class CrossSectionCurrentSource(CurrentSource):
         super().set_current(current)
         self._rho = current / self._area
 
-    def rotate(self, angle: float, axis: np.ndarray | str):
+    def rotate(self, angle: float, axis: npt.NDArray[np.float64] | str):
         """
         Rotate the CurrentSource about an axis.
 
@@ -159,7 +159,17 @@ class CrossSectionCurrentSource(CurrentSource):
         ----------
         vector:
             Translation vector
+
+        Raises
+        ------
+        MagnetostaticsError
+            If the translation vector is not of length 3
         """
+        vector = np.asarray(vector, dtype=float)
+        if vector.shape != (3,):
+            raise MagnetostaticsError(
+                f"Translation vector must be of shape (3,), not {vector.shape}."
+            )
         self._origin += vector
         self._points = np.array([p + vector for p in self._points], dtype=object)
 

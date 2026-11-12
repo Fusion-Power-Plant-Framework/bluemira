@@ -334,7 +334,9 @@ class BluemiraWire(BluemiraGeo):
             return et[0] if len(et) == 1 else et
         return cadapi.get_edge_type(edges[ind].shape)
 
-    def edge_data(self, ind: int | None = None) -> cadapi.CircleEdgeDT:
+    def edge_data(
+        self, ind: int | None = None
+    ) -> cadapi.CircleEdgeDT | tuple[cadapi.CircleEdgeDT, ...]:
         """Get the data for the edge(s) the wire is made from
 
         Parameters
