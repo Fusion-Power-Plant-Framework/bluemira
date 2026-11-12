@@ -14,9 +14,10 @@ including corrections from:
 
 .. doi:: 10.1002/jnm.675
 """
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -476,7 +477,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 

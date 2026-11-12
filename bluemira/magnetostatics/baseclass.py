@@ -160,7 +160,7 @@ class CrossSectionCurrentSource(CurrentSource):
         vector:
             Translation vector
         """
-        self._origin = self._origin + vector
+        self._origin += vector
         self._points = np.array([p + vector for p in self._points], dtype=object)
 
     def _local_to_global(self, points: np.ndarray) -> np.ndarray:
