@@ -787,7 +787,7 @@ def plot_mesh(
         The PyVista plotter.
     """
     space = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
-    grid = pyvista.UnstructuredGrid(vtk_mesh(space))
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(space))
 
     if meshtags is not None:
         num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
