@@ -163,7 +163,9 @@ class CrossSectionCurrentSource(CurrentSource):
         self._origin += vector
         self._points = np.array([p + vector for p in self._points], dtype=object)
 
-    def _local_to_global(self, points: np.ndarray) -> np.ndarray:
+    def _local_to_global(
+        self, points: npt.NDArray[np.float64]
+    ) -> npt.NDArray[np.float64]:
         """
         Convert local x', y', z' point coordinates to global x, y, z point coordinates.
 
