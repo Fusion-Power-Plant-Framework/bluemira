@@ -3,7 +3,10 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
+from unittest import mock
+
 import numpy as np
+import pytest
 
 from bluemira.equilibria import Breakdown, Equilibrium
 from bluemira.equilibria.coils import Coil, CoilSet
@@ -16,11 +19,14 @@ from bluemira.equilibria.optimisation.constraints import (
     VerticalFieldConstraint,
 )
 from bluemira.equilibria.optimisation.problem import (
+    NestedCoilsetPositionCOP,
+    PulsedNestedPositionCOP,
     TikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.optimisation import Algorithm
+from bluemira.optimisation.error import OptimisationError
 from tests._helpers import add_plot_title
 
 
@@ -108,3 +114,18 @@ def test_vertical_field_constraint():
     coilset = opt_problem.optimise()
 
     np.testing.assert_allclose(eq.Bz(9.0, 0.0), -0.75, rtol=1e-6)
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [NestedCoilsetPositionCOP.objective, PulsedNestedPositionCOP.sub_opt_objective],
+)
+@pytest.mark.parametrize("bad", [np.nan, np.inf])
+def test_position_COP_raises_OptimisationError_given_non_finite_positions(
+    objective, bad
+):
+    problem = mock.Mock()
+
+    with pytest.raises(OptimisationError, match="non-finite normalised coil positions"):
+        objective(problem, np.array([0.5, bad]))
+    problem.position_mapper.to_xz_dict.assert_not_called()
