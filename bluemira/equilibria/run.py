@@ -715,6 +715,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         Limiter to use when solving equilibria
     """
 
+    PF_CURRENT_MARGIN = 1.1
+    """Factor on a PF coil's current that the coil is sized for"""
+    PF_RESIZE_ITER_MAX = 5
+    """Most times the PF coils are resized to the currents they carry"""
+    PF_RESIZE_RTOL = 1e-2
+    """Relative change in PF coil size below which the sizes have settled"""
+
     def __init__(
         self,
         params: ParameterFrame,
@@ -799,6 +806,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         psi_bd_orig = self._get_psi_premag()
         self.coilset = optimised_coilset
         self.run_premagnetisation()
+        self._size_pf_coils_to_carried_currents(sub_opt_problems)
         if (psi_premag := self._get_psi_premag()) < psi_bd_orig - 2.0:
             bluemira_warn(
                 "Breakdown flux significantly lower with optimised coil positions: "
@@ -824,7 +832,9 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         max_pf_currents = np.max(pf_currents, axis=0)
         # Relax the max currents a bit to avoid oscillation
         max_pf_current = self.eq_config.peak_PF_current_factor * self.params.I_p.value
-        max_pf_currents = np.clip(1.1 * max_pf_currents, 0, max_pf_current)
+        max_pf_currents = np.clip(
+            self.PF_CURRENT_MARGIN * max_pf_currents, 0, max_pf_current
+        )
 
         for problem in sub_opt_problems:
             pf_coiltype = problem.eq.coilset.get_coiltype("PF")
@@ -840,3 +850,59 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         consolidated_coilset.fix_size = True
         consolidated_coilset.get_control_coils().current = 0
         return consolidated_coilset
+
+    def _size_pf_coils_to_carried_currents(
+        self, sub_opt_problems: list[EqCoilsetOptimisationProblem]
+    ):
+        """
+        Size the PF coils for the currents they carry, re-converging until the sizes
+        settle.
+
+        :meth:`_consolidate_coilset` sizes the PF coils for their currents at the end
+        of the position optimisation, which are solved on the plasma as it then stands.
+        Converged, the equilibria (and the breakdown) can carry much less current.
+
+        Each PF coil is sized for :attr:`PF_CURRENT_MARGIN` times the largest current
+        it carries at breakdown, start and end of flat-top, but is never made larger.
+        Every snapshot the coils were sized from fits in the new sizes, so the
+        equilibria and breakdown are converged again from there.
+        """
+        snapshot_names = (self.BREAKDOWN, self.SOF, self.EOF)
+        cs_coiltype = cast("CoilSet", self.coilset.get_coiltype("CS"))
+        max_cs_currents = cs_coiltype.get_max_current(0.0)
+
+        for _ in range(self.PF_RESIZE_ITER_MAX):
+            sizes = _get_pf_control_coils(self.coilset).get_max_current()
+            carried = np.max(
+                [
+                    np.abs(_get_pf_control_coils(self.snapshots[name].coilset).current)
+                    for name in snapshot_names
+                ],
+                axis=0,
+            )
+            new_sizes = np.minimum(self.PF_CURRENT_MARGIN * carried, sizes)
+            if np.allclose(new_sizes, sizes, rtol=self.PF_RESIZE_RTOL, atol=0):
+                return
+
+            _get_pf_control_coils(self.coilset)._resize(new_sizes)
+            for problem in sub_opt_problems:
+                _get_pf_control_coils(problem.eq.coilset)._resize(new_sizes)
+                problem.set_current_bounds(np.concatenate([new_sizes, max_cs_currents]))
+                # The coils' responses were computed for their old sizes
+                problem.eq._remap_greens()
+                problem.targets(problem.eq, I_not_dI=True, fixed_coils=False)
+                problem.update_magnetic_constraints(I_not_dI=True, fixed_coils=False)
+
+            for name in snapshot_names:
+                del self.snapshots[name]
+            self.converge_and_snapshot(sub_opt_problems)
+            self.run_premagnetisation()
+
+        bluemira_warn(
+            f"The PF coil sizes had not settled after {self.PF_RESIZE_ITER_MAX} "
+            "resizes to the currents the coils carry."
+        )
+
+
+def _get_pf_control_coils(coilset: CoilSet) -> CoilSet:
+    return cast("CoilSet", coilset.get_coiltype("PF")).get_control_coils()
