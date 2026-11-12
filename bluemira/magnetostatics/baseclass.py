@@ -151,7 +151,7 @@ class CrossSectionCurrentSource(CurrentSource):
         self._points = np.array([p @ r for p in self._points], dtype=object)
         self._dcm @= r
 
-    def translate(self, vector):
+    def translate(self, vector: npt.NDArray[np.float64]):
         """
         Translate the CurrentSource.
 
