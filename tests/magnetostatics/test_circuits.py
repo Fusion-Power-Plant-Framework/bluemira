@@ -108,7 +108,7 @@ class TestGenerateWireSources:
         pytest.param(_pacman, id="pacman"),
     )
 
-    breadth, depth, current = 0.1, 0.2, 1e6
+    breadth, depth, current = 0.1, 0.2, 15e6
 
     @staticmethod
     def _reference(shape, breadth, depth, current):
@@ -179,15 +179,21 @@ class TestGenerateWireSources:
         source = HelmholtzCage(source, n_TF=12)
 
         coords = shape.discretise(ndiscr=20, byedges=True)
-        x = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, 20)
-        z = np.linspace(coords.z.min() - 1.0, coords.z.max() + 1.0, 20)
+        n = 50
+        x = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, n)
+        z = np.linspace(coords.z.min() - 1.0, coords.z.max() + 1.0, n)
         xx, zz = np.meshgrid(x, z)
-        b = source.field(xx, np.zeros_like(xx), zz)
-        b = np.sqrt(np.sum(b**2, axis=0))
+        b = abs(source.field(xx, np.zeros_like(xx), zz)[1])
 
         source.plot()
         ax = plt.gca()
-        ax.contourf(xx, b, zz, zdir="y", offset=0.0)
+        levels = np.linspace(0, b.max(), 20)
+        ax.contourf(xx, b, zz, zdir="y", offset=0.0, levels=levels, cmap="magma")
+        plt.show()
+        x1 = np.linspace(coords.x.min() - 1.0, coords.x.max() + 1.0, 100)
+        bt = source.field(x1, np.zeros_like(x1), np.zeros_like(x1))[1]
+        f, ax = plt.subplots()
+        ax.plot(x1, -bt)
         plt.show()
 
 
