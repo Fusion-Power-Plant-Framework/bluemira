@@ -172,7 +172,8 @@ class Teardown(CodesTeardown):
             param = getattr(self.params, bm_name)
             if output_value is None or param.value is None:
                 continue
-            output_value = raw_uc(output_value, mapping.unit, param.unit)
+            if mapping.unit is not None:
+                output_value = raw_uc(output_value, mapping.unit, param.unit)
             if not np.isclose(output_value, param.value):
                 bluemira_warn(
                     f"{bm_name} is {param.value} in bluemira but {output_value} in "
