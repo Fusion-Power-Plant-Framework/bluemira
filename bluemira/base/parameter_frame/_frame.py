@@ -180,10 +180,15 @@ class ParameterFrame:
             ) from ae
 
     def update_values(self, new_values: dict[str, ParameterValueType], source: str = ""):
-        """Update the given parameter values."""
+        """Update the given parameter values.
+
+        Enforces types to be the same as parameter definition eg ``Parameter[int]``.
+        Floats and ints are automatically converted.
+        """
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
-            param.set_value(value, source)
+            value_types = get_args(self._types[key]) if key in self._types else ()
+            param.set_value(param._type_check(key, value, value_types), source)
 
     def update_from_dict(self, new_values: dict[str, ParamDictT], source: str = ""):
         """Update from a dictionary representation of a ``ParameterFrame``"""
