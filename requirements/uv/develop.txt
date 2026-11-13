@@ -271,6 +271,7 @@ packaging==26.3
     #   pytest
     #   sphinx
     #   tables
+    #   virtualenv
 pandas==2.3.3
     # via seaborn
 parso==0.8.7

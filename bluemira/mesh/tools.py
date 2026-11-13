@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import dolfinx
 import meshio
 import numpy as np
 import pyvista
@@ -26,6 +27,7 @@ from mpi4py import MPI
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.magnetostatics.fem_utils import _plot_grid
 from bluemira.mesh.error import MeshConversionError
 
 if TYPE_CHECKING:
@@ -47,28 +49,29 @@ BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
 
 
-def plot_dolfinx_mesh(mesh, *, show: bool = True):
+def plot_dolfinx_mesh(
+    mesh: dolfinx.mesh.Mesh,
+    *,
+    show: bool = True,
+):
     """
-    Plots the mesh structure, including nodes and faces.
+    Plot an existing DOLFINx mesh using PyVista.
 
     Parameters
     ----------
-    show : bool, optional
-        Flag to display the plot immediately (default is True).
+    mesh:
+        DOLFINx mesh.
+    show:
+        Whether to display the plot immediately.
 
     Returns
     -------
     pyvista.Plotter
-        The PyVista plotter object with the mesh visualization.
+        The PyVista plotter.
     """
-    plotter = pyvista.Plotter()
-    tdim = mesh.topology.dim
-    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, tdim))
-    plotter.add_mesh(grid, show_edges=True)
-    plotter.view_xy()  # type: ignore[ty:missing-argument]
-    if show:
-        plotter.show()
-    return plotter
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
+
+    return _plot_grid(grid, show=show)
 
 
 def msh_to_xdmf(

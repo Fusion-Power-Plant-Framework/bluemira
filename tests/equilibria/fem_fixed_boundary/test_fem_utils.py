@@ -22,7 +22,7 @@ from bluemira.magnetostatics.fem_utils import (
     integrate_f,
     model_to_mesh,
 )
-from bluemira.mesh.meshing import Mesh
+from bluemira.mesh import meshing
 
 
 def create_test_mesh(dl: float = 2, lcar: float = 0.1):
@@ -42,13 +42,13 @@ def create_test_mesh(dl: float = 2, lcar: float = 0.1):
     mesh_comm = MPI.COMM_WORLD
 
     meshfiles = [Path(data_dir, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
-    m = Mesh(meshfile=meshfiles)
-    m(c_universe, dim=2)
+    with meshing.GmshSession():
+        m = meshing.Mesh(meshfile=meshfiles)
+        m(c_universe, dim=2)
 
-    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+        (mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
 
-    gmsh.write("Mesh.msh")
-    gmsh.finalize()
+        gmsh.write("Mesh.msh")
 
     return (mesh, ct, ft), labels
 
