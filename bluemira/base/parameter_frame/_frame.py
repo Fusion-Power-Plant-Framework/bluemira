@@ -182,14 +182,13 @@ class ParameterFrame:
     def update_values(self, new_values: dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values.
 
-        A whole-number float given to a parameter typed ``Parameter[int]`` is
-        stored as an int, as it is when the frame is created (external codes
-        report integers such as ``n_TF`` as floats).
+        Enforces types to be the same as parameter definition eg ``Parameter[int]``.
+        Floats and ints are automatically converted.
         """
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
             value_types = get_args(self._types[key]) if key in self._types else ()
-            param.set_value(_integral_float_to_int(value, value_types), source)
+            param.set_value(param._type_check(key, value, value_types), source)
 
     def update_from_dict(self, new_values: dict[str, ParamDictT], source: str = ""):
         """Update from a dictionary representation of a ``ParameterFrame``"""
@@ -571,24 +570,6 @@ class ParameterFrame:
             The formatted ParameterFrame
         """
         return self.tabulate()
-
-
-def _integral_float_to_int(value: Any, value_types: tuple[type, ...]) -> Any:
-    """
-    Returns
-    -------
-    :
-        The value as an int if it is a whole-number float and the parameter
-        is typed int (and not float), else the value unchanged.
-    """
-    if (
-        int in value_types
-        and float not in value_types
-        and isinstance(value, float)
-        and value.is_integer()
-    ):
-        return int(value)
-    return value
 
 
 def _validate_parameter_field(

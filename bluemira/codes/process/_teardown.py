@@ -13,6 +13,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
@@ -154,8 +155,30 @@ class Teardown(CodesTeardown):
         ``recv == True``.
         """
         mfile = self._read_mfile(path)
+        self._warn_on_input_discontinuity(mfile.data, path)
         self._update_params_with_outputs(mfile.data, recv_all=recv_all)
         self.ordered_radial_build = mfile.ordered_radial_build
+
+    def _warn_on_input_discontinuity(self, outputs: dict[str, Any], path: str | Path):
+        """
+        Warn if the MFile's value of an input that PROCESS does not change
+        differs from the bluemira parameter's value: the MFile was then not
+        run with this design's inputs (e.g. one from another design, read in
+        'read' mode).
+        """
+        for bm_name in CONTINUITY_CHECKED_INPUTS:
+            mapping = self.params.mappings[bm_name]
+            output_value = outputs.get(mapping.out_name)
+            param = getattr(self.params, bm_name)
+            if output_value is None or param.value is None:
+                continue
+            output_value = raw_uc(output_value, mapping.unit, param.unit)
+            if not np.isclose(output_value, param.value):
+                bluemira_warn(
+                    f"{bm_name} is {param.value} in bluemira but {output_value} in "
+                    f"the {self._name} output '{path}': the output was not run "
+                    f"with bluemira's {bm_name}."
+                )
 
     def _read_mfile(self, path: str | Path):
         """
@@ -218,6 +241,11 @@ class Teardown(CodesTeardown):
         )
         return output_value
 
+
+CONTINUITY_CHECKED_INPUTS = ("n_TF",)
+"""
+Inputs PROCESS does not change: its output must hold bluemira's value.
+"""
 
 ONLY_READ_FROM_FILE = (
     "dz_blkt_upper",
