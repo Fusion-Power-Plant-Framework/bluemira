@@ -35,9 +35,9 @@ class FuelCycleFlow:
     Parameters
     ----------
     t:
-        Time vector
+        Time vector [s]
     in_flow:
-        Mass flow vector
+        Mass flow vector [kg/s]
     t_duration:
         Flow duration [s]
     """
