@@ -122,15 +122,16 @@ class TestGetNormal:
         _c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
         # Create the mesh (by default, mesh is stored in the file Mesh.msh")
-        meshing.Mesh(
-            meshfile=[
-                Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-            ]
-        )(c_universe, dim=2)
+        with meshing.GmshSession():
+            meshing.Mesh(
+                meshfile=[
+                    Path(tmp_path, p).as_posix()
+                    for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+                ]
+            )(c_universe, dim=2)
 
-        (mesh, ct, _ft), labels = model_to_mesh(gmsh.model, gdim=2)
-        gmsh.write("Mesh.msh")
-        gmsh.finalize()
+            (mesh, ct, _ft), labels = model_to_mesh(gmsh.model, gdim=2)
+            gmsh.write("Mesh.msh")
 
         em_solver = FemMagnetostatic2d(2)
         em_solver.set_mesh(mesh, ct)
