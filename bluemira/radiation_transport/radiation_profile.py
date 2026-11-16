@@ -2156,7 +2156,9 @@ class RadiationSource:
         self.lcfs = self.eq.get_LCFS()
 
         # Get Electron density and electron temperature profile at the mid-plane.
-        self.midplane_profiles = midplane_profiles(self.params, self.eq)
+        # Equilibrium determines the minimum allowable psi_n value
+        # (affects flux surface contour finding)
+        self.midplane_profiles = midplane_profiles(self.params, np.min(eq.psi_norm()))
 
         # Initialising the `FluxSurfaceMaker`
         (
