@@ -68,6 +68,40 @@ class TestTeardown:
             3.37836
         )
 
+    @pytest.mark.parametrize(("run_func", "n_TF"), [("read", 18), ("readall", 16)])
+    def test_read_func_warns_given_mfile_n_TF_differs_from_bluemira(
+        self, run_func, n_TF
+    ):
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+        teardown.params.update_values({"n_TF": 18})
+
+        with (
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+            mock.patch(f"{self.MODULE_REF}.bluemira_warn") as bm_warn,
+        ):
+            getattr(teardown, run_func)()
+
+        # The MFile has 16 TF coils (./test_data/mfile_data.json)
+        assert any(
+            "n_TF is 18 in bluemira but 16" in call.args[0]
+            for call in bm_warn.call_args_list
+        )
+        # read keeps bluemira's value (n_TF is send-only), readall takes the MFile's
+        assert teardown.params.n_TF.value == n_TF
+        assert isinstance(teardown.params.n_TF.value, int)
+
+    def test_read_does_not_warn_given_mfile_n_TF_matches_bluemira(self):
+        teardown = Teardown(self.default_pf, None, utils.READ_DIR)
+
+        with (
+            file_exists(Path(utils.READ_DIR, "MFILE.DAT"), self.IS_FILE_REF),
+            mock.patch(f"{self.MODULE_REF}.bluemira_warn") as bm_warn,
+        ):
+            teardown.read()
+
+        assert teardown.params.n_TF.value == 16
+        assert not any("n_TF is" in call.args[0] for call in bm_warn.call_args_list)
+
     def test_read_unknown_outputs_set_to_nan(self):
         """
         If a variable no longer exists in PROCESS we assume its OBS_VARS
