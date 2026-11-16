@@ -629,7 +629,7 @@ traitlets==5.16.1
     #   nbclient
     #   nbconvert
     #   nbformat
-ty==0.0.98
+ty==0.0.102
     # via bluemira (pyproject.toml)
 typeguard==4.6.0
     # via bluemira (pyproject.toml)
