@@ -711,23 +711,22 @@ def _add_grid_to_plotter(
     grid,
     *,
     color: str | None = None,
+    edge_color: str | None = None,
     show_edges: bool = True,
-    line_width: float | None = None,
+    line_width: float | None = 1.0,
     show_scalar_bar: bool = True,
+    cmap: str | None = None,
 ):
     """Add a mesh grid to a PyVista plotter."""
-    mesh_options = {
-        "show_edges": show_edges,
-        "show_scalar_bar": show_scalar_bar,
-    }
-
-    if color is not None:
-        mesh_options["color"] = color
-
-    if line_width is not None:
-        mesh_options["line_width"] = line_width
-
-    plotter.add_mesh(grid, **mesh_options)
+    plotter.add_mesh(
+        grid,
+        color=color,
+        edge_color=edge_color,
+        show_edges=show_edges,
+        line_width=line_width,
+        show_scalar_bar=show_scalar_bar,
+        cmap=cmap,
+    )
     plotter.renderer.view_xy()
 
 
@@ -736,20 +735,12 @@ def _plot_grid(
     *,
     show: bool = True,
     filename: str | None = None,
-    color: str | None = None,
-    line_width: float | None = None,
-    show_scalar_bar: bool = False,
+    **mesh_options,
 ):
     """Create and display or return a PyVista plotter for a grid."""
     plotter = pyvista.Plotter(off_screen=pyvista.OFF_SCREEN)
 
-    _add_grid_to_plotter(
-        plotter,
-        grid,
-        color=color,
-        line_width=line_width,
-        show_scalar_bar=show_scalar_bar,
-    )
+    _add_grid_to_plotter(plotter, grid, **mesh_options)
 
     if filename is not None and pyvista.OFF_SCREEN:
         plotter.screenshot(filename)
@@ -763,6 +754,10 @@ def plot_mesh(
     *,
     show: bool = True,
     filename: str | None = None,
+    color: str = "lightblue",
+    edge_color: str = "darkslategray",
+    line_width: float = 1.0,
+    cmap: str = "viridis",
 ):
     """
     Plot a Bluemira mesh using PyVista, optionally displaying cell markers.
@@ -780,11 +775,6 @@ def plot_mesh(
         Whether to display the plot immediately.
     filename:
         Optional path for saving an off-screen screenshot.
-
-    Returns
-    -------
-    pyvista.Plotter
-        The PyVista plotter.
     """
     space = dolfinx.fem.functionspace(mesh, ("Lagrange", 1))
     grid = pyvista.UnstructuredGrid(*vtk_mesh(space))
@@ -794,12 +784,14 @@ def plot_mesh(
         grid.cell_data["Marker"] = meshtags.values[meshtags.indices < num_local_cells]
         grid.set_active_scalars("Marker")
 
-    return _plot_grid(
+    _plot_grid(
         grid,
         show=show,
         filename=filename,
-        color="white" if meshtags is None else None,
-        line_width=2,
+        color=color if meshtags is None else None,
+        edge_color=edge_color,
+        line_width=line_width,
+        cmap=cmap if meshtags is not None else None,
     )
 
 

@@ -200,7 +200,7 @@ with meshing.GmshSession():
         gdim=2,
     )
 
-plot_mesh(quad_mesh, quad_cell_tags)
+plot_mesh(quad_mesh)
 
 # %% [markdown]
 # The `element_type` option can also be set to `"tri"` to request triangular
@@ -221,7 +221,7 @@ with meshing.GmshSession():
         gdim=2,
     )
 
-plot_mesh(tri_mesh, tri_cell_tags)
+plot_mesh(tri_mesh)
 
 
 # %% [markdown]
@@ -256,7 +256,7 @@ with meshing.GmshSession():
         gmsh.model, gdim=2
     )
 
-plot_mesh(second_order_mesh, second_order_cell_tags)
+plot_mesh(second_order_mesh)
 
 
 # %% [markdown]
@@ -342,7 +342,7 @@ with meshing.GmshSession():
         gmsh.model, gdim=3
     )
 
-plot_mesh(volume_mesh, volume_cell_tags)
+plot_mesh(volume_mesh)
 
 # %% [markdown]
 # ## 7. Structured hexahedral meshes
@@ -389,7 +389,7 @@ with meshing.GmshSession():
         gdim=3,
     )
 
-plot_mesh(hex_mesh, hex_cell_tags)
+plot_mesh(hex_mesh)
 
 
 # %% [markdown]
@@ -438,7 +438,7 @@ with meshing.GmshSession():
         gdim=3,
     )
 
-plot_mesh(tf_mesh, tf_cell_tags)
+plot_mesh(tf_mesh)
 
 
 # %% [markdown]
