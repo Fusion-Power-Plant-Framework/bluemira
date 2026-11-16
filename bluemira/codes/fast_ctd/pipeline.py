@@ -21,7 +21,7 @@ from bluemira.base.look_and_feel import (
 from bluemira.codes.fast_ctd._guard import fast_ctd_guard
 
 with contextlib.suppress(ImportError):
-    from fast_ctd import (  # type: ignore[ty:unresolved-import]
+    from fast_ctd import (  # type: ignore[ty:import-not-found]
         check_watertight,
         dagmc_to_vtk,
         decode_tightness_checks,

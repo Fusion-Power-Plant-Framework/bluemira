@@ -386,7 +386,7 @@ class MaximiseSelector(RipplePointSelector):
         self.solver.update_cage(tf_wire)
 
         def f_max_ripple(vector):
-            point = self._wire.value_at(vector)  # type: ignore[ty:unresolved-attribute]
+            point = self._wire.value_at(vector)  # type: ignore[ty:missing-union-attribute]
             return -self.solver.ripple(*point)
 
         result = optimise(
@@ -544,7 +544,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """  # noqa: DOC201
         return [self._ripple_constraint]
 
-    def optimise(self) -> GeometryParameterisation:  # type: ignore[ty:invalid-method-override]
+    def optimise(self) -> GeometryParameterisation:  # type: ignore[ty:incompatible-method-override]
         """
         Solve the GeometryOptimisationProblem.
 

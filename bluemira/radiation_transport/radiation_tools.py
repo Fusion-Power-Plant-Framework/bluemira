@@ -43,10 +43,10 @@ try:  # noqa: PLW0717
     from raysect.core import Point3D, Vector3D, rotate_basis, translate
     from raysect.optical import World
     from raysect.optical.material import (
-        VolumeTransform,  # type: ignore[ty:unresolved-import]
+        VolumeTransform,  # type: ignore[ty:import-not-found]
     )
     from raysect.optical.observer import PowerPipeline0D
-    from raysect.optical.observer.nonimaging.pixel import (  # type: ignore[ty:unresolved-import]
+    from raysect.optical.observer.nonimaging.pixel import (  # type: ignore[ty:import-not-found]
         Pixel,
     )
     from raysect.primitive import Cylinder

@@ -69,11 +69,8 @@ class Builder(abc.ABC):
         self.name = self.build_config.get(
             "name", self.__class__.__name__.removesuffix("Builder")
         )
-        self.build = _timing(  # type: ignore[ty:invalid-assignment]
-            self.build,
-            "Built in",
-            f"Building {self.name}",
-            debug_info_str=not verbose,
+        self.build = _timing(
+            self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
         )
 
     @property

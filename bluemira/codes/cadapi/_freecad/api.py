@@ -22,14 +22,14 @@ from types import DynamicClassAttribute
 from typing import TYPE_CHECKING, Protocol, TypedDict
 from unittest import mock
 
-import FreeCAD  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
-import BOPTools.JoinAPI  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
-import BOPTools.SplitAPI  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
-import DraftGeomUtils  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
-import FreeCADGui  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
-import Part  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+import FreeCAD  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import BOPTools.JoinAPI  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import BOPTools.SplitAPI  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import DraftGeomUtils  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import FreeCADGui  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import Part  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
 import numpy as np
-from FreeCAD import (  # type: ignore[ty:unresolved-import] # type: ignore[import-not-found]
+from FreeCAD import (  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
     Base,
 )
 from matplotlib import colors

@@ -24,7 +24,7 @@ except ImportError:
     pass
 
 try:
-    import Part  # FreeCAD only  # type: ignore[ty:unresolved-import]
+    import Part  # FreeCAD only  # type: ignore[ty:import-not-found]
 except ImportError:
     Part = None
 

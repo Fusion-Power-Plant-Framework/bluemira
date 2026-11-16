@@ -70,7 +70,7 @@ class LogLevel(Enum):
                 return cls(value)
             return cls.CRITICAL
         try:
-            return cls[value.upper()]  # type: ignore [ty:unresolved-attribute]
+            return cls[value.upper()]  # type: ignore [ty:missing-attribute]
         except (KeyError, AttributeError):
             raise LogsError(
                 f"Unknown severity level: {value}. Choose from: {(*cls._member_names_,)}"
@@ -212,9 +212,9 @@ class BluemiraRichHandler(RichHandler):
             record=record, traceback=traceback, message_renderable=message_renderable
         )
         if getattr(record, "_flushing", False):
-            self.console._flushing = True  # type: ignore[ty:unresolved-attribute]
+            self.console._flushing = True  # type: ignore[ty:missing-attribute]
             return log_renderable
-        self.console._flushing = False  # type: ignore[ty:unresolved-attribute]
+        self.console._flushing = False  # type: ignore[ty:missing-attribute]
         if getattr(record, "_clean", True):
             return log_renderable
         return Panel(

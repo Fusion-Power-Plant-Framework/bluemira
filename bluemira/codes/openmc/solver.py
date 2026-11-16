@@ -395,12 +395,12 @@ class OpenMCCSGSetup(OpenMCBaseSetup):
         )
 
     @property
-    def tally_mats(self) -> Sequence[openmc.Material]:  # type: ignore[ty:invalid-property-type-override]
+    def tally_mats(self) -> Sequence[openmc.Material]:  # type: ignore[ty:incompatible-property-override]
         """Tally materials"""
         return list(self.mat_list(self.materials))
 
     @property
-    def tally_geom(self) -> CellStage:  # type: ignore[ty:invalid-property-type-override]
+    def tally_geom(self) -> CellStage:  # type: ignore[ty:incompatible-property-override]
         """Tally geometry"""
         return self.cell_arrays
 
@@ -453,12 +453,12 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         return universe, geometry
 
     @property
-    def tally_mats(self) -> list[openmc.Material]:  # type: ignore[ty:invalid-property-type-override]
+    def tally_mats(self) -> list[openmc.Material]:  # type: ignore[ty:incompatible-property-override]
         """Tally materials"""
         return self.materials
 
     @property
-    def tally_geom(self) -> openmc.Geometry:  # type: ignore[ty:invalid-property-type-override]
+    def tally_geom(self) -> openmc.Geometry:  # type: ignore[ty:incompatible-property-override]
         """Tally geometry"""
         return self.geometry
 
@@ -670,7 +670,7 @@ class TallyFunctionType(Protocol):
 class OpenMCNeutronicsSolver(CodesSolver, ABC):
     """OpenMC 2D neutronics solver"""
 
-    params: OpenMCNeutronicsSolverParams  # type:ignore [ty:invalid-attribute-override]
+    params: OpenMCNeutronicsSolverParams  # type:ignore [ty:incompatible-attribute-override]
     setup_cls: type[OpenMCBaseSetup]
     teardown_cls: type[CodesTeardown]
     _setup: OpenMCBaseSetup
@@ -726,7 +726,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 
         source_params = PlasmaSourceParameters.from_parameterframe(self.params)
         runtime_params = OpenMCSimulationRuntimeParameters(**{
-            k.name: self.build_config[k.name]  # type: ignore[ty:invalid-key]
+            k.name: self.build_config[k.name]  # type: ignore[ty:non-literal-typed-dict-key]
             for k in fields(OpenMCSimulationRuntimeParameters)
             if k.name in self.build_config
         })
@@ -770,8 +770,8 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
 class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC CSG neutronics"""
 
-    setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup  # type: ignore[ty:invalid-mutable-override]
-    teardown_cls: type[OpenMCCSGTeardown] = OpenMCCSGTeardown  # type: ignore[ty:invalid-mutable-override]
+    setup_cls: type[OpenMCCSGSetup] = OpenMCCSGSetup  # type: ignore[ty:incompatible-mutable-override]
+    teardown_cls: type[OpenMCCSGTeardown] = OpenMCCSGTeardown  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -837,7 +837,7 @@ class OpenMCCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC DAGMC neutronics"""
 
-    setup_cls: type[OpenMCDAGSetup] = OpenMCDAGSetup  # type: ignore[ty:invalid-mutable-override]
+    setup_cls: type[OpenMCDAGSetup] = OpenMCDAGSetup  # type: ignore[ty:incompatible-mutable-override]
     teardown_cls: type[CodesTeardown] = OpenMCDAGTeardown
 
     def __init__(

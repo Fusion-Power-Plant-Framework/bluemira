@@ -261,7 +261,7 @@ def torus_from_3points(
     p2 = (float(point2[0]), 0.0, float(point2[-1]))
     p3 = (float(point3[0]), 0.0, float(point3[-1]))
     circle = make_circle_arc_3P(p1, p2, p3)
-    cad_circle = circle.shape.OrderedEdges[0].Curve  # type: ignore[ty:unresolved-attribute]
+    cad_circle = circle.shape.OrderedEdges[0].Curve  # type: ignore[ty:missing-union-attribute]
     center, radius = cad_circle.Center, cad_circle.Radius
     return torus_from_circle(
         [center[0], center[-1]], radius, surface_id=surface_id, name=name

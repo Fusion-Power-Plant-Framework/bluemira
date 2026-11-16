@@ -16,17 +16,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 from pyclipper import (
-    ET_CLOSEDPOLYGON,  # type: ignore[ty:unresolved-import]
-    ET_OPENROUND,  # type: ignore[ty:unresolved-import]
-    ET_OPENSQUARE,  # type: ignore[ty:unresolved-import]
-    JT_MITER,  # type: ignore[ty:unresolved-import]
-    JT_ROUND,  # type: ignore[ty:unresolved-import]
-    JT_SQUARE,  # type: ignore[ty:unresolved-import]
-    PolyTreeToPaths,  # type: ignore[ty:unresolved-import]
-    PyPolyNode,  # type: ignore[ty:unresolved-import]
-    PyclipperOffset,  # type: ignore[ty:unresolved-import]
-    scale_from_clipper,  # type: ignore[ty:unresolved-import]
-    scale_to_clipper,  # type: ignore[ty:unresolved-import]
+    ET_CLOSEDPOLYGON,  # type: ignore[ty:import-not-found]
+    ET_OPENROUND,  # type: ignore[ty:import-not-found]
+    ET_OPENSQUARE,  # type: ignore[ty:import-not-found]
+    JT_MITER,  # type: ignore[ty:import-not-found]
+    JT_ROUND,  # type: ignore[ty:import-not-found]
+    JT_SQUARE,  # type: ignore[ty:import-not-found]
+    PolyTreeToPaths,  # type: ignore[ty:import-not-found]
+    PyPolyNode,  # type: ignore[ty:import-not-found]
+    PyclipperOffset,  # type: ignore[ty:import-not-found]
+    scale_from_clipper,  # type: ignore[ty:import-not-found]
+    scale_to_clipper,  # type: ignore[ty:import-not-found]
 )
 
 from bluemira.base.look_and_feel import bluemira_warn
