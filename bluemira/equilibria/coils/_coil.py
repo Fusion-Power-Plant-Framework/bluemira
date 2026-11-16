@@ -479,10 +479,7 @@ class Coil(CoilFieldsMixin):
             self._flag_sizefix = value
 
     def assign_material(
-        self,
-        j_max: float = NBTI_J_MAX,
-        b_max: float = NBTI_B_MAX,
-        resistance: float = 0,
+        self, j_max: float = NBTI_J_MAX, b_max: float = NBTI_B_MAX, resistance: float = 0
     ) -> None:
         """
         Assigns EM material properties to coil

@@ -125,11 +125,7 @@ class _CQPlacement:
     def multVec(self, vec) -> _Vector:
         """Apply rotation + translation; returns a Base.Vector-compatible vector."""
         v = np.asarray(list(vec) if hasattr(vec, "__iter__") else [vec], dtype=float)
-        out = self._rot_matrix() @ v + np.array([
-            self.Base.x,
-            self.Base.y,
-            self.Base.z,
-        ])
+        out = self._rot_matrix() @ v + np.array([self.Base.x, self.Base.y, self.Base.z])
         return _Vector(*out)
 
     def inverse(self):
@@ -173,9 +169,7 @@ Base = _BaseModule()
 
 
 def make_placement(
-    base=(0.0, 0.0, 0.0),
-    axis=(0.0, 0.0, 1.0),
-    angle: float = 0.0,
+    base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), angle: float = 0.0
 ) -> _CQPlacement:
     """Create a placement.  *angle* is in degrees (FreeCAD convention)."""
     return _CQPlacement(base=list(base), axis=list(axis), angle_rad=math.radians(angle))
@@ -246,8 +240,7 @@ def move_placement(placement: _CQPlacement, vector) -> None:
 
 
 def make_plane(
-    base: Iterable[float] = (0.0, 0.0, 0.0),
-    axis: Iterable[float] = (0.0, 0.0, 1.0),
+    base: Iterable[float] = (0.0, 0.0, 0.0), axis: Iterable[float] = (0.0, 0.0, 1.0)
 ) -> _CQPlane:
     """Create a plane from a base point and normal axis (axis is normalized)."""
     n = np.asarray(axis, dtype=float)

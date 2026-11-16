@@ -27,11 +27,9 @@ import BOPTools.JoinAPI  # type: ignore[ty:import-not-found] # type: ignore[impo
 import BOPTools.SplitAPI  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
 import DraftGeomUtils  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
 import FreeCADGui  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
-import Part  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
+import Part  # type: ignore[ty:import-not-found]
 import numpy as np
-from FreeCAD import (  # type: ignore[ty:import-not-found] # type: ignore[import-not-found]
-    Base,
-)
+from FreeCAD import Base  # type: ignore[ty:import-not-found]
 from matplotlib import colors
 
 from bluemira.codes.cadapi._base_types import CurveType
@@ -477,11 +475,7 @@ def interpolate_bspline(
     return wire
 
 
-def make_bspline_g1_blend(
-    edge1: apiEdge,
-    edge2: apiEdge,
-    scale=0.2,
-) -> apiWire:
+def make_bspline_g1_blend(edge1: apiEdge, edge2: apiEdge, scale=0.2) -> apiWire:
     """
     Create a G1-continuous B-spline blend between two edges.
 
@@ -1168,10 +1162,7 @@ def get_edge_data(edge: apiEdge | apiWire) -> CircleEdgeDT:
     fc_edge = edge.Edges[0] if isinstance(edge, apiWire) else edge
 
     if ft == CurveType.CIRCLE:
-        return {
-            "centre": tuple(fc_edge.Curve.Center),
-            "radius": fc_edge.Curve.Radius,
-        }
+        return {"centre": tuple(fc_edge.Curve.Center), "radius": fc_edge.Curve.Radius}
     raise NotImplementedError
 
 
@@ -2971,8 +2962,7 @@ def change_placement(geo: apiShape, placement: apiPlacement):
 # Plane creation and manipulations
 # ======================================================================================
 def make_plane(
-    base: Iterable[float] = (0.0, 0.0, 0.0),
-    axis: Iterable[float] = (0.0, 0.0, 1.0),
+    base: Iterable[float] = (0.0, 0.0, 0.0), axis: Iterable[float] = (0.0, 0.0, 1.0)
 ) -> apiPlane:
     """
     Creates a FreeCAD plane with a given location and normal

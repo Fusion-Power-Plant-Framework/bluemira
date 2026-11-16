@@ -289,8 +289,7 @@ class EquispacedSelector(RipplePointSelector):
                 )
             )
             cut_wire = cast(
-                "list[BluemiraWire] | BluemiraWire",
-                boolean_cut(wire, cut_face),
+                "list[BluemiraWire] | BluemiraWire", boolean_cut(wire, cut_face)
             )
             wire = cut_wire[0] if isinstance(cut_wire, list) else cut_wire
         self.points = wire.discretise(byedges=True, ndiscr=self.n_rip_points)

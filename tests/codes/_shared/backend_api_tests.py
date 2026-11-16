@@ -54,12 +54,7 @@ class BackendApiTestsBase:
 
     cadapi: ModuleType  # set by each concrete subclass
 
-    square_points = (
-        (0.0, 0.0, 0.0),
-        (1.0, 0.0, 0.0),
-        (1.0, 1.0, 0.0),
-        (0.0, 1.0, 0.0),
-    )
+    square_points = ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (1.0, 1.0, 0.0), (0.0, 1.0, 0.0))
     closed_square_points = (
         (0.0, 0.0, 0.0),
         (1.0, 0.0, 0.0),
@@ -469,10 +464,7 @@ class BackendApiTestsBase:
         orig_pts = sorted(
             map(
                 tuple,
-                [
-                    self.cadapi.start_point(original),
-                    self.cadapi.end_point(original),
-                ],
+                [self.cadapi.start_point(original), self.cadapi.end_point(original)],
             )
         )
         recon_pts = sorted(

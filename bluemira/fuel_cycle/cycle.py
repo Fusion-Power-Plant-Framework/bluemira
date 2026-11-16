@@ -620,9 +620,7 @@ class EUDEMOFuelCycleResults:
         """
         ax = kwargs.get("ax", plt.gca())
         ax.plot(
-            self.DEMO_t,
-            self.tbreed(self.TBR, self.m_T_req),
-            label="Total T inventory",
+            self.DEMO_t, self.tbreed(self.TBR, self.m_T_req), label="Total T inventory"
         )
 
         (c,) = ax.plot(

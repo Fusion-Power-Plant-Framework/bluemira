@@ -111,9 +111,7 @@ class ScipyOptimiser(Optimiser):
     def _set_parameters(self, opt_parameters: Mapping[str, int | float]) -> None:
         """Initialise the optimiser's parameters."""
         self._opt_parameters = _make_alg_params(
-            opt_parameters,
-            self._config.param_cls,
-            self._config.condition_overrides,
+            opt_parameters, self._config.param_cls, self._config.condition_overrides
         )
 
     def add_eq_constraint(
@@ -180,10 +178,7 @@ class ScipyOptimiser(Optimiser):
         else:
             self._eq_constraints.append(
                 NonlinearConstraint(
-                    fun=f_constraint,
-                    lb=-tolerance,
-                    ub=tolerance,
-                    jac=df_constraint,
+                    fun=f_constraint, lb=-tolerance, ub=tolerance, jac=df_constraint
                 )
             )
 

@@ -180,11 +180,7 @@ class TestPrincetonDDiscrete:
 
         x1 = 3.57638
         s = PrincetonDDiscrete(
-            {
-                "x1": {"value": x1},
-                "x2": {"value": 15.8237},
-                "dz": {"value": 0.0940193},
-            },
+            {"x1": {"value": x1}, "x2": {"value": 15.8237}, "dz": {"value": 0.0940193}},
             n_TF=16,
             tf_wp_depth=1.155285492290215,
             tf_wp_width=0.8420220709276258,
@@ -336,10 +332,7 @@ class TestPrincetonDDiscrete:
     )
     def test_tough_one(self, frenet, transition):
         shape = sweep_shape(
-            self.wp_xs2.boundary,
-            self.fail_shape,
-            frenet=frenet,
-            transition=transition,
+            self.wp_xs2.boundary, self.fail_shape, frenet=frenet, transition=transition
         )
 
         # This does... sometimes
@@ -358,10 +351,7 @@ class TestPrincetonDDiscrete:
     )
     def test_sausages(self, frenet, transition):
         shape = sweep_shape(
-            self.wp_xs2.boundary,
-            self.fail_shape,
-            frenet=frenet,
-            transition=transition,
+            self.wp_xs2.boundary, self.fail_shape, frenet=frenet, transition=transition
         )
 
         # This does... sometimes

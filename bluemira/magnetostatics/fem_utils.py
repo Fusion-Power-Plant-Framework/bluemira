@@ -730,13 +730,7 @@ def _add_grid_to_plotter(
     plotter.renderer.view_xy()
 
 
-def _plot_grid(
-    grid,
-    *,
-    show: bool = True,
-    filename: str | None = None,
-    **mesh_options,
-):
+def _plot_grid(grid, *, show: bool = True, filename: str | None = None, **mesh_options):
     """Create and display or return a PyVista plotter for a grid."""
     plotter = pyvista.Plotter(off_screen=pyvista.OFF_SCREEN)
 

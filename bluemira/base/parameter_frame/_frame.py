@@ -27,10 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
     from types import GenericAlias
 
-    from bluemira.base.parameter_frame.typed import (
-        ParameterFrameLike,
-        ParameterFrameT,
-    )
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
 
 
@@ -303,10 +300,7 @@ class ParameterFrame:
 
     @classmethod
     def from_json(
-        cls: type[ParameterFrameT],
-        json_in: str | Any,
-        *,
-        allow_unknown: bool = False,
+        cls: type[ParameterFrameT], json_in: str | Any, *, allow_unknown: bool = False
     ) -> ParameterFrameT:
         """Initialise an instance from a JSON file, string, or reader.
 

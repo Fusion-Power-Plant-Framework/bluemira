@@ -59,9 +59,7 @@ __all__ = [
 
 
 def fitfunc(
-    func: DFuncT,
-    data: npt.NDArray[np.float64],
-    order: int | None = None,
+    func: DFuncT, data: npt.NDArray[np.float64], order: int | None = None
 ) -> npt.NDArray[np.float64]:
     """
     Uses scipy's curve_fit to fit 1-D data to a custom function
@@ -127,10 +125,7 @@ def pshape(shape: ShapeFunction, psinorm: float, psio: float, psix: float) -> fl
 
 @nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure(
-    psi_norm: npt.NDArray[np.float64],
-    psio: float,
-    psix: float,
-    shape: ShapeFunction,
+    psi_norm: npt.NDArray[np.float64], psio: float, psix: float, shape: ShapeFunction
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because

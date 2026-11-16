@@ -265,23 +265,11 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         return openmc.Tallies(tallies_list)
 
     @abstractmethod
-    def plot(
-        self,
-        run_mode,
-        runtime_params,
-        *args,
-        debug: bool = False,
-    ):
+    def plot(self, run_mode, runtime_params, *args, debug: bool = False):
         """Plot an openmc run"""
 
     @abstractmethod
-    def volume(
-        self,
-        run_mode,
-        runtime_params,
-        *args,
-        debug: bool = False,
-    ):
+    def volume(self, run_mode, runtime_params, *args, debug: bool = False):
         """Volume calculation on openmc run"""
 
     def run(
@@ -469,12 +457,7 @@ class OpenMCDAGSetup(OpenMCBaseSetup):
         return self._plot(run_mode, runtime_params, debug=debug)
 
     def volume(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
-        **_kwargs,
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
     ) -> tuple[openmc.Model, None]:
         """Volume calculation on openmc run"""
         return self._volume(

@@ -210,9 +210,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return func
 
     def set_mesh(
-        self,
-        mesh: dolfinx.mesh.Mesh,
-        boundaries: dolfinx.mesh.Mesh | str | None = None,
+        self, mesh: dolfinx.mesh.Mesh, boundaries: dolfinx.mesh.Mesh | str | None = None
     ):
         """
         Set the mesh for the solver

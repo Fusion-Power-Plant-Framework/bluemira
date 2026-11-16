@@ -55,10 +55,7 @@ from OCP.XCAFDoc import (
 )
 from OCP.gp import gp_Ax1, gp_Dir, gp_Pnt, gp_Trsf, gp_Vec
 
-from bluemira.codes.cadapi._cadquery.aliases import (
-    _ANGLE_PARALLEL_TOL,
-    apiShape,
-)
+from bluemira.codes.cadapi._cadquery.aliases import _ANGLE_PARALLEL_TOL, apiShape
 from bluemira.codes.cadapi._cadquery.core import make_compound
 from bluemira.codes.error import CadQueryError
 
@@ -390,10 +387,7 @@ def _scale_shape(shape: apiShape, factor: float) -> apiShape:
 
 
 def import_cad(
-    file,
-    filetype=None,
-    unit_scale: str = "m",
-    **kwargs,
+    file, filetype=None, unit_scale: str = "m", **kwargs
 ) -> list[tuple[apiShape, str]]:
     """Import CAD from file. Returns list of (shape, label) tuples."""
     file = Path(file)

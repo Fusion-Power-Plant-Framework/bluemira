@@ -15,9 +15,13 @@ from bluemira.geometry.wire import BluemiraWire
 
 class TestOrientation:
     def test_wire(self):
-        wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
-        )
+        wire = cadapi.make_polygon([
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 0, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+        ])
 
         bm_wire = BluemiraWire(wire)
         assert bm_wire.boundary[0].Orientation == wire.Orientation
@@ -30,9 +34,13 @@ class TestOrientation:
         assert bm_wire.shape.Orientation == wire.Orientation
 
     def test_face(self):
-        wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
-        )
+        wire = cadapi.make_polygon([
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 0, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+        ])
         face = cadapi.apiFace(wire)
         bm_face = BluemiraFace._create(face)
 
@@ -44,9 +52,13 @@ class TestOrientation:
         assert bm_face.shape.Orientation == face.Orientation
 
     def test_face_with_hole(self):
-        wire = cadapi.make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1], [0, 0, 0]],
-        )
+        wire = cadapi.make_polygon([
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 0, 1],
+            [0, 0, 1],
+            [0, 0, 0],
+        ])
         circle = cadapi.make_circle(radius=10, axis=[0, 1, 0])
         face = cadapi.apiFace([circle, wire])
         bm_face = BluemiraFace._create(face)

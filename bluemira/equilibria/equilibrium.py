@@ -384,13 +384,7 @@ class FixedPlasmaEquilibrium(MHDState):
         """
         Writes the FixedPlasmaEquilibrium Object to an eqdsk file
         """
-        eqdsk = super()._prepare_eqdsk(
-            data,
-            filename,
-            header,
-            directory,
-            filetype,
-        )
+        eqdsk = super()._prepare_eqdsk(data, filename, header, directory, filetype)
         eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
         eqdsk = eqdsk.to_cocos(to_cocos)
         eqdsk.write(
@@ -928,13 +922,7 @@ class Breakdown(CoilSetMHDState):
             "Please note that for Breakdown class, chosen to_cocos is used and "
             "eqdsk.identify() check is not performed."
         )
-        eqdsk = super()._prepare_eqdsk(
-            data,
-            filename,
-            header,
-            directory,
-            filetype,
-        )
+        eqdsk = super()._prepare_eqdsk(data, filename, header, directory, filetype)
         # Can not use identify method for breakdown, so assume input
         eqdsk._cocos = COCOS(to_cocos)
         out_path = (
@@ -1456,11 +1444,7 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
             qpsi_calcmode = QpsiCalcMode.ZEROS
 
         eqdsk = super()._prepare_eqdsk(
-            self.to_dict(qpsi_calcmode, to_cocos),
-            filename,
-            header,
-            directory,
-            filetype,
+            self.to_dict(qpsi_calcmode, to_cocos), filename, header, directory, filetype
         )
         eqdsk.identify(as_cocos=BLUEMIRA_DEFAULT_COCOS, qpsi_positive=False)
         eqdsk = eqdsk.to_cocos(to_cocos)
@@ -1510,16 +1494,9 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         :
             Recalculated jtor.
         """
-        o_points, x_points = self.get_OX_points(
-            psi=psi_plasma,
-            force_update=True,
-        )
+        o_points, x_points = self.get_OX_points(psi=psi_plasma, force_update=True)
         return self.profiles.jtor(
-            grid.x,
-            grid.z,
-            psi_plasma,
-            o_points=o_points,
-            x_points=x_points,
+            grid.x, grid.z, psi_plasma, o_points=o_points, x_points=x_points
         )
 
     def reset_grid(

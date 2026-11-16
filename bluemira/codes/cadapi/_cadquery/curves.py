@@ -94,11 +94,7 @@ def make_bezier(
     return cq.Wire.assembleEdges([edge])
 
 
-def make_bspline_g1_blend(
-    edge1: apiEdge,
-    edge2: apiEdge,
-    scale: float = 0.2,
-) -> apiWire:
+def make_bspline_g1_blend(edge1: apiEdge, edge2: apiEdge, scale: float = 0.2) -> apiWire:
     """Create a G1-continuous cubic Bézier blend wire between two edges.
 
     Port of ``_freecad.api.make_bspline_g1_blend``. Connects the end of
@@ -308,9 +304,7 @@ def _freecad_ax2(center, axis, x_direction=None):
         x = np.asarray(x_direction, dtype=float)
     x /= np.linalg.norm(x)
     return gp_Ax2(
-        gp_Pnt(*[float(v) for v in center]),
-        gp_Dir(*n.tolist()),
-        gp_Dir(*x.tolist()),
+        gp_Pnt(*[float(v) for v in center]), gp_Dir(*n.tolist()), gp_Dir(*x.tolist())
     )
 
 
@@ -338,12 +332,7 @@ def make_circle(
     return cq.Wire.assembleEdges([edge])
 
 
-def make_circle_arc_3P(
-    p1,
-    p2,
-    p3,
-    axis=None,
-) -> apiWire:
+def make_circle_arc_3P(p1, p2, p3, axis=None) -> apiWire:
     """Create an arc of circle through three points.
 
     When *axis* is given, it overrides the natural plane normal derived from

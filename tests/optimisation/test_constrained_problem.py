@@ -323,9 +323,6 @@ def test_alkylation_problem(algorithm):
 
     assert np.round(abs(result.f_x)) == ALKYLATION_DATA.true_f_x
     np.testing.assert_allclose(
-        np.round(result.x, decimals=1),
-        ALKYLATION_DATA.true_x,
-        atol=0.0,
-        rtol=0.0033,
+        np.round(result.x, decimals=1), ALKYLATION_DATA.true_x, atol=0.0, rtol=0.0033
     )
     assert result.constraints_satisfied

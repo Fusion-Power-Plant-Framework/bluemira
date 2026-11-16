@@ -141,10 +141,7 @@ class Radiation:
         self.eq = eq
 
     def collect_flux_tubes(
-        self,
-        psi_n: np.ndarray,
-        *,
-        core_clip: bool = False,
+        self, psi_n: np.ndarray, *, core_clip: bool = False
     ) -> tuple[list[Coordinates], list[int]]:
         """
         Collect flux tubes according to the normalised psi.
@@ -759,14 +756,8 @@ class ScrapeOffLayerRadiation(Radiation):
             sep = cast("Coordinates", self.separatrix)
             ob_ind = np.nonzero(sep.x > self.points["x_point"]["x"])
             ib_ind = np.nonzero(sep.x < self.points["x_point"]["x"])
-            self.sep_ob = Coordinates({
-                "x": sep.x[ob_ind],
-                "z": sep.z[ob_ind],
-            })
-            self.sep_ib = Coordinates({
-                "x": sep.x[ib_ind],
-                "z": sep.z[ib_ind],
-            })
+            self.sep_ob = Coordinates({"x": sep.x[ob_ind], "z": sep.z[ob_ind]})
+            self.sep_ib = Coordinates({"x": sep.x[ib_ind], "z": sep.z[ib_ind]})
         # To move away from the mathematical separatrix which would
         # give infinite connection length
         self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector_omp.value
@@ -2106,9 +2097,7 @@ class RadiationSource:
             source_sol_dl=source_sol_dl,
         )
 
-    def analyse(
-        self,
-    ) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
+    def analyse(self) -> tuple[CoreRadiation, ScrapeOffLayerRadiation]:
         """
         Using core radiation model and SOL radiation model
         to calculate the radiation source at all points

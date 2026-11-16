@@ -77,7 +77,7 @@ def make_Li4SiO4_mat(li_enrich_ao, packing_fraction=0.642) -> Material:
         name="lithium_orthosilicate",
         elements={"Li": 4 / 9, "Si28": 1 / 9, "O16": 4 / 9},
         properties=props(
-            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3"),  # type: ignore[ty:invalid-argument-type]
+            density=(packing_fraction * (3.28 + 0.06 * (1.0 - li_enrich_ao)), "g/cm^3")  # type: ignore[ty:invalid-argument-type]
         ),
         converters=_openmc_config(
             enrichment=li_enrich_ao * 100,

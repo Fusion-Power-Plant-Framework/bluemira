@@ -928,9 +928,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             Bx response
         """
         return self._sum(
-            np.asarray(super().Bx_response(x, z)),
-            sum_coils=sum_coils,
-            control=control,
+            np.asarray(super().Bx_response(x, z)), sum_coils=sum_coils, control=control
         )
 
     def Bz_response(
@@ -961,9 +959,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             Bz response
         """
         return self._sum(
-            np.asarray(super().Bz_response(x, z)),
-            sum_coils=sum_coils,
-            control=control,
+            np.asarray(super().Bz_response(x, z)), sum_coils=sum_coils, control=control
         )
 
     def dB_d_response(

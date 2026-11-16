@@ -392,13 +392,7 @@ class CoilGroupPlotter(Plotter):
                     else:
                         current_fcolor = self.facecolors
 
-                self._plot_coil(
-                    x_b,
-                    z_b,
-                    ct,
-                    fill=True,
-                    facecolor=current_fcolor,
-                )
+                self._plot_coil(x_b, z_b, ct, fill=True, facecolor=current_fcolor)
                 if subcoil:
                     _qx_b, _qz_b = qb[i]
                     for ind in range(_qx_b.shape[0]):
@@ -1570,14 +1564,10 @@ class EquilibriumComparisonPostOptPlotter(EquilibriumComparisonBasePlotter):
             ax.set_aspect("equal")
             if self.diag_ops.interpolation_grid is InterpGrid.BOTH:
                 self.reference.grid.plot(
-                    ax=ax,
-                    plot_type=GridPlotType.EDGE,
-                    zorder=Zorder.CONSTRAINT.value,
+                    ax=ax, plot_type=GridPlotType.EDGE, zorder=Zorder.CONSTRAINT.value
                 )
                 self.eq.grid.plot(
-                    ax=ax,
-                    plot_type=GridPlotType.EDGE,
-                    zorder=Zorder.CONSTRAINT.value,
+                    ax=ax, plot_type=GridPlotType.EDGE, zorder=Zorder.CONSTRAINT.value
                 )
 
 

@@ -287,11 +287,7 @@ sof_opt_problem = MinimalCurrentCOP(
     constraints=[sof_psi_boundary, x_point],
 )
 
-iterator = PicardIterator(
-    sof_opt_problem,
-    fixed_coils=True,
-    relaxation=0.2,
-)
+iterator = PicardIterator(sof_opt_problem, fixed_coils=True, relaxation=0.2)
 iterator()
 
 

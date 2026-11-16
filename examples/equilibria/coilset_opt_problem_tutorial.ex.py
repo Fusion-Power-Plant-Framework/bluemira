@@ -46,10 +46,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.diagnostics import (
-    PicardDiagnostic,
-    PicardDiagnosticOptions,
-)
+from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.optimisation.constraints import (

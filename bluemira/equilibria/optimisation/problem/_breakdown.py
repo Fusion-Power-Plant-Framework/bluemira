@@ -225,10 +225,7 @@ class BreakdownCOP(EqCoilsetOptimisationProblem):
         self._c_psi_mat: npt.NDArray[np.float64] = np.array(
             self.coilset.psi_response(*breakdown_strategy.breakdown_point, control=True)
         )
-        self._args = {
-            "c_psi_mat": self._c_psi_mat,
-            "scale": self.scale,
-        }
+        self._args = {"c_psi_mat": self._c_psi_mat, "scale": self.scale}
 
     def optimise(
         self,

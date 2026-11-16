@@ -12,11 +12,7 @@ from matproplib.library.tungsten import PlanseeTungsten
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import (
-    interpolate_bspline,
-    make_polygon,
-    revolve_shape,
-)
+from bluemira.geometry.tools import interpolate_bspline, make_polygon, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
@@ -24,22 +20,14 @@ from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
 
 
 def line(a, b):
-    return make_polygon({
-        "x": [a[0], b[0]],
-        "y": [0, 0],
-        "z": [a[1], b[1]],
-    })
+    return make_polygon({"x": [a[0], b[0]], "y": [0, 0], "z": [a[1], b[1]]})
 
 
 def spline(points):
     points = np.asarray(points)
 
     return interpolate_bspline(
-        Coordinates({
-            "x": points[:, 0],
-            "y": np.zeros(len(points)),
-            "z": points[:, 1],
-        })
+        Coordinates({"x": points[:, 0], "y": np.zeros(len(points)), "z": points[:, 1]})
     )
 
 
@@ -50,31 +38,21 @@ def nontouching_pair():
     # Solid 1
     xz_face_1 = BluemiraFace(
         make_polygon(
-            [
-                (0.4, 0.0, 0.5),
-                (0.8, 0.0, 0.5),
-                (0.8, 0.0, 1.5),
-                (0.4, 0.0, 1.5),
-            ],
+            [(0.4, 0.0, 0.5), (0.8, 0.0, 0.5), (0.8, 0.0, 1.5), (0.4, 0.0, 1.5)],
             closed=True,
         ),
         label="xz face 1",
     )
 
     xyz_shape_1 = revolve_shape(
-        xz_face_1,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
+        xz_face_1, base=(0, 0, 0), direction=(0, 0, 1), degree=360.0
     )
 
     xz_comp_1 = Component(
         "xz",
         children=[
             PhysicalComponent(
-                name="xz_1_phys",
-                shape=xz_face_1,
-                material=PlanseeTungsten(),
+                name="xz_1_phys", shape=xz_face_1, material=PlanseeTungsten()
             )
         ],
     )
@@ -83,9 +61,7 @@ def nontouching_pair():
         "xyz",
         children=[
             PhysicalComponent(
-                name="xyz_1_phys",
-                shape=xyz_shape_1,
-                material=PlanseeTungsten(),
+                name="xyz_1_phys", shape=xyz_shape_1, material=PlanseeTungsten()
             )
         ],
     )
@@ -96,43 +72,27 @@ def nontouching_pair():
     # Solid 2
     xz_face_2 = BluemiraFace(
         make_polygon(
-            [
-                (1.0, 0.0, 0.5),
-                (1.6, 0.0, 0.5),
-                (1.6, 0.0, 1.5),
-                (1.0, 0.0, 1.5),
-            ],
+            [(1.0, 0.0, 0.5), (1.6, 0.0, 0.5), (1.6, 0.0, 1.5), (1.0, 0.0, 1.5)],
             closed=True,
         ),
         label="xz face 2",
     )
 
     xyz_shape_2 = revolve_shape(
-        xz_face_2,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
+        xz_face_2, base=(0, 0, 0), direction=(0, 0, 1), degree=360.0
     )
 
     xz_comp_2 = Component(
         "xz",
         children=[
-            PhysicalComponent(
-                name="xz_2_phys",
-                shape=xz_face_2,
-                material=Be12Ti(),
-            )
+            PhysicalComponent(name="xz_2_phys", shape=xz_face_2, material=Be12Ti())
         ],
     )
 
     xyz_comp_2 = Component(
         "xyz",
         children=[
-            PhysicalComponent(
-                name="xyz_2_phys",
-                shape=xyz_shape_2,
-                material=Be12Ti(),
-            )
+            PhysicalComponent(name="xyz_2_phys", shape=xyz_shape_2, material=Be12Ti())
         ],
     )
 
@@ -146,30 +106,12 @@ def nontouching_pair():
 def touching_splined_pair():
     """Two components sharing the same splined boundary."""
 
-    p_left = [
-        (0.40, 0.50),
-        (0.44, 0.75),
-        (0.46, 1.00),
-        (0.44, 1.25),
-        (0.40, 1.50),
-    ]
+    p_left = [(0.40, 0.50), (0.44, 0.75), (0.46, 1.00), (0.44, 1.25), (0.40, 1.50)]
 
     # Exact shared spline between Solid_1 and Solid_2
-    p_shared = [
-        (0.94, 0.50),
-        (0.91, 0.75),
-        (0.90, 1.00),
-        (0.91, 1.25),
-        (0.94, 1.50),
-    ]
+    p_shared = [(0.94, 0.50), (0.91, 0.75), (0.90, 1.00), (0.91, 1.25), (0.94, 1.50)]
 
-    p_right = [
-        (1.60, 0.50),
-        (1.54, 0.75),
-        (1.50, 1.00),
-        (1.54, 1.25),
-        (1.60, 1.50),
-    ]
+    p_right = [(1.60, 0.50), (1.54, 0.75), (1.50, 1.00), (1.54, 1.25), (1.60, 1.50)]
 
     # Solid 1
     xz_face_1 = BluemiraFace(
@@ -183,19 +125,14 @@ def touching_splined_pair():
     )
 
     xyz_shape_1 = revolve_shape(
-        xz_face_1,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
+        xz_face_1, base=(0, 0, 0), direction=(0, 0, 1), degree=360.0
     )
 
     xz_comp_1 = Component(
         "xz",
         children=[
             PhysicalComponent(
-                name="xz_1_phys",
-                shape=xz_face_1,
-                material=PlanseeTungsten(),
+                name="xz_1_phys", shape=xz_face_1, material=PlanseeTungsten()
             )
         ],
     )
@@ -204,9 +141,7 @@ def touching_splined_pair():
         "xyz",
         children=[
             PhysicalComponent(
-                name="xyz_1_phys",
-                shape=xyz_shape_1,
-                material=PlanseeTungsten(),
+                name="xyz_1_phys", shape=xyz_shape_1, material=PlanseeTungsten()
             )
         ],
     )
@@ -226,31 +161,20 @@ def touching_splined_pair():
     )
 
     xyz_shape_2 = revolve_shape(
-        xz_face_2,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360.0,
+        xz_face_2, base=(0, 0, 0), direction=(0, 0, 1), degree=360.0
     )
 
     xz_comp_2 = Component(
         "xz",
         children=[
-            PhysicalComponent(
-                name="xz_2_phys",
-                shape=xz_face_2,
-                material=Be12Ti(),
-            )
+            PhysicalComponent(name="xz_2_phys", shape=xz_face_2, material=Be12Ti())
         ],
     )
 
     xyz_comp_2 = Component(
         "xyz",
         children=[
-            PhysicalComponent(
-                name="xyz_2_phys",
-                shape=xyz_shape_2,
-                material=Be12Ti(),
-            )
+            PhysicalComponent(name="xyz_2_phys", shape=xyz_shape_2, material=Be12Ti())
         ],
     )
 
@@ -273,30 +197,18 @@ class TestNeutronicsGeometryManager:
             ("nontouching_pair", 1, []),
         ],
     )
-    def test_check_touching(
-        self,
-        pair_fixture,
-        index,
-        expected,
-        request,
-    ):
+    def test_check_touching(self, pair_fixture, index, expected, request):
         components = request.getfixturevalue(pair_fixture)
 
         assert (
             AxisymmetricNeutronicsGeomManager.check_touching(
-                components[index],
-                components,
-                overlap_tolerance=1e-6,
+                components[index], components, overlap_tolerance=1e-6
             )
             == expected
         )
 
     @pytest.mark.parametrize(
-        "pair_fixture",
-        [
-            "touching_splined_pair",
-            "nontouching_pair",
-        ],
+        "pair_fixture", ["touching_splined_pair", "nontouching_pair"]
     )
     def test_from_list_of_components(self, pair_fixture, request, monkeypatch):
         components = request.getfixturevalue(pair_fixture)

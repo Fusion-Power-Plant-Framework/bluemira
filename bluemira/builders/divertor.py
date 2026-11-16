@@ -426,15 +426,9 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
         idx_outer = np.argmax(self.x_limits)
 
         wall_join_point = (
-            np.array([
-                self.x_limits[idx_inner],
-                self.z_limits[idx_inner],
-            ])
+            np.array([self.x_limits[idx_inner], self.z_limits[idx_inner]])
             if label == self.INNER_BAFFLE
-            else np.array([
-                self.x_limits[idx_outer],
-                self.z_limits[idx_outer],
-            ])
+            else np.array([self.x_limits[idx_outer], self.z_limits[idx_outer]])
         )
 
         baffle_type = (
@@ -455,9 +449,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
             )
         if baffle_type == self.STRAIGHT_BAFFLE:
             return self._make_straight_baffle(
-                label,
-                wall_join_point,
-                target_baffle_join_point,
+                label, wall_join_point, target_baffle_join_point
             )
         target_gradient = grad_xz(target_baffle_join_point, target_dome_join_point)
         return self._make_circular_baffle(
@@ -466,9 +458,7 @@ class DivertorDesigner(Designer[tuple[BluemiraWire, ...]]):
 
     @staticmethod
     def _make_straight_baffle(
-        label: str,
-        wall_join_point: np.ndarray,
-        target_join_point: np.ndarray,
+        label: str, wall_join_point: np.ndarray, target_join_point: np.ndarray
     ) -> BluemiraWire:
         """
         Make a baffle using straight line shape.

@@ -11,9 +11,7 @@ from typing import TYPE_CHECKING
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import (
-    make_polygon,
-)
+from bluemira.geometry.tools import make_polygon
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -157,22 +155,11 @@ def despline_xz_face(
                 " the final number of edges in the desplined wire."
             )
 
-        points = wire.discretise(
-            ndiscr=discretisation,
-            byedges=True,
-        )
+        points = wire.discretise(ndiscr=discretisation, byedges=True)
 
-        boundaries.append(
-            make_polygon(
-                points,
-                closed=wire.is_closed(),
-            )
-        )
+        boundaries.append(make_polygon(points, closed=wire.is_closed()))
 
-    new_face = BluemiraFace(
-        boundaries,
-        label=xz_face.label,
-    )
+    new_face = BluemiraFace(boundaries, label=xz_face.label)
 
     relative_area_difference = abs(new_face.area / xz_face.area - 1)
 

@@ -27,9 +27,7 @@ if TYPE_CHECKING:
 
 
 def make_mutual_inductance_matrix(
-    coilset: CoilSet,
-    *,
-    square_coil: bool = False,
+    coilset: CoilSet, *, square_coil: bool = False
 ) -> np.ndarray:
     """
     Calculate the mutual inductance matrix of a coilset.

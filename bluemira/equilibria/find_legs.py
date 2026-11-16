@@ -375,10 +375,7 @@ def split(septrx: Coordinates, n_null: NumNull):
 
     # Split into two in the other divertor region
     idx = septrx.argmin(points[1]) + 1
-    septrxs = [
-        Coordinates(septrx._array[:, :idx]),
-        Coordinates(septrx._array[:, idx:]),
-    ]
+    septrxs = [Coordinates(septrx._array[:, :idx]), Coordinates(septrx._array[:, idx:])]
     # Sort and set direction
     septrxs.sort(key=lambda septrx: -septrx.length)
     [lp.set_ccw() for lp in septrxs]
@@ -783,12 +780,7 @@ def calculate_connection_length(
         target_z = div_target_start_point.z.item()
         psi_val = eq.psi(target_x, target_z)
         xfs, zfs = find_flux_surface_through_point(
-            eq.x,
-            eq.z,
-            np.asarray(eq.psi()),
-            target_x,
-            target_z,
-            psi_val,
+            eq.x, eq.z, np.asarray(eq.psi()), target_x, target_z, psi_val
         )
         f_s = Coordinates({"x": xfs, "z": zfs})
 

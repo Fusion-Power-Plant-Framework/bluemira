@@ -29,9 +29,7 @@ if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
 
 
-def calculate_rzip_stability_criterion(
-    eq: Equilibrium,
-) -> float:
+def calculate_rzip_stability_criterion(eq: Equilibrium) -> float:
     """
     Calculate the rzip stability criterion for a given equilibrium and coilset
 
@@ -100,10 +98,7 @@ class RZIp:
         reduced_coilset = cs.get_uncontrolled_coils()
         self.ind_mat = make_mutual_inductance_matrix(reduced_coilset, square_coil=False)
 
-    def __call__(
-        self,
-        eq: Equilibrium,
-    ) -> float:
+    def __call__(self, eq: Equilibrium) -> float:
         """
         Parameters
         ----------

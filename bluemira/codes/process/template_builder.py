@@ -24,10 +24,7 @@ from bluemira.codes.process.equation_variable_mapping import (
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from bluemira.codes.process.equation_variable_mapping import (
-        Constraint,
-        Objective,
-    )
+    from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
     from bluemira.codes.process.model_mapping import (
         PROCESSModel,
         PROCESSOptimisationAlgorithm,

@@ -49,11 +49,7 @@ BOUNDARY_SUFFIX = "boundaries.xdmf"
 LINKFILE_SUFFIX = "linkfile.json"
 
 
-def plot_dolfinx_mesh(
-    mesh: dolfinx.mesh.Mesh,
-    *,
-    show: bool = True,
-):
+def plot_dolfinx_mesh(mesh: dolfinx.mesh.Mesh, *, show: bool = True):
     """
     Plot an existing DOLFINx mesh using PyVista.
 
@@ -228,10 +224,7 @@ def _check_dimensions(dimensions: Sequence[int] | int) -> tuple[int, ...]:
 
 
 def _export_domain(
-    mesh: Any,
-    file_prefix: str,
-    directory: str,
-    dimensions: Sequence[int] | int,
+    mesh: Any, file_prefix: str, directory: str, dimensions: Sequence[int] | int
 ) -> None:
     """
     Export the domain of a mesh to XDMF.
@@ -265,10 +258,7 @@ def _export_domain(
 
 
 def _export_boundaries(
-    mesh: Any,
-    file_prefix: str,
-    directory: str,
-    dimensions: Sequence[int] | int,
+    mesh: Any, file_prefix: str, directory: str, dimensions: Sequence[int] | int
 ) -> None:
     """
     Export the boundaries of a mesh to XDMF.

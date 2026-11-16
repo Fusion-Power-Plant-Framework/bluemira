@@ -219,16 +219,7 @@ class CollocationGrid:
         Maximum z grid coordinate [m]
     """
 
-    __slots__ = (
-        "x",
-        "x_1d",
-        "x_max",
-        "x_min",
-        "z",
-        "z_1d",
-        "z_max",
-        "z_min",
-    )
+    __slots__ = ("x", "x_1d", "x_max", "x_min", "z", "z_1d", "z_max", "z_min")
 
     def __init__(
         self, x_min: float, x_max: float, z_min: float, z_max: float, nx: int, nz: int

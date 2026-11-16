@@ -58,27 +58,20 @@ class AxisymmetricNeutronicsCompData:
             "xz",
             children=[
                 PhysicalComponent(
-                    name=self.name,
-                    shape=self.desplined_xz_face,
-                    material=self.material,
+                    name=self.name, shape=self.desplined_xz_face, material=self.material
                 )
             ],
         )
 
         xyz_shape = revolve_shape(
-            self.desplined_xz_face,
-            base=(0, 0, 0),
-            direction=(0, 0, 1),
-            degree=360.0,
+            self.desplined_xz_face, base=(0, 0, 0), direction=(0, 0, 1), degree=360.0
         )
 
         xyz_component = Component(
             "xyz",
             children=[
                 PhysicalComponent(
-                    name=self.name,
-                    shape=xyz_shape,
-                    material=self.material,
+                    name=self.name, shape=xyz_shape, material=self.material
                 )
             ],
         )
@@ -89,19 +82,13 @@ class AxisymmetricNeutronicsCompData:
 class AxisymmetricNeutronicsGeomManager(ComponentManager):
     """Manage components used to construct the neutronics geometry."""
 
-    def __init__(
-        self,
-        component: Component,
-        volume_differences: dict[str, float],
-    ):
+    def __init__(self, component: Component, volume_differences: dict[str, float]):
         super().__init__(component)
         self.volume_differences = volume_differences
 
     @staticmethod
     def check_touching(
-        comp: Component,
-        components: list[Component],
-        overlap_tolerance: float,
+        comp: Component, components: list[Component], overlap_tolerance: float
     ) -> list[str]:
         """Return the names of components whose XZ faces touch ``comp``.
 
@@ -147,11 +134,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
             other_xz_face = other_xz.children[0].shape
 
-            if check_touching_geos(
-                comp_xz_face,
-                other_xz_face,
-                overlap_tolerance,
-            ):
+            if check_touching_geos(comp_xz_face, other_xz_face, overlap_tolerance):
                 touching_components.append(other_comp.name)
 
         return touching_components
@@ -249,9 +232,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                     name=comp.name,
                     original_volume=solid.volume,
                     touching_components=cls.check_touching(
-                        comp,
-                        components,
-                        overlap_tolerance,
+                        comp, components, overlap_tolerance
                     ),
                     desplined_xz_face=desplined_xz_face,
                     material=material,
@@ -267,13 +248,11 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         bluemira_print("Checking for possible overlaps and fixing them.")
 
         overlap_fixed_neutronics_comps = cls.fix_xz_overlaps(
-            all_neutronics_comps,
-            overlap_tolerance=overlap_tolerance,
+            all_neutronics_comps, overlap_tolerance=overlap_tolerance
         )
 
         gap_fixed_neutronics_comps = cls.fix_xz_gaps(
-            overlap_fixed_neutronics_comps,
-            gap_tolerance=gap_tolerance,
+            overlap_fixed_neutronics_comps, gap_tolerance=gap_tolerance
         )
 
         # ---------------------------------------------------------
@@ -304,10 +283,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 f"{relative_volume_difference:.4%}"
             )
 
-        return cls(
-            component_tree,
-            volume_differences,
-        )
+        return cls(component_tree, volume_differences)
 
     def get_all_components(self) -> list[Component]:
         """
@@ -320,10 +296,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
         """
         return self.component().children
 
-    def inspect_xyz_overlaps(
-        self,
-        tolerance: float = 1e-10,
-    ):
+    def inspect_xyz_overlaps(self, tolerance: float = 1e-10):
         """
         Inspect all xyz solids to ensure that there is no overlap
         Touching is allowed.
@@ -349,10 +322,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 raise ValueError(f"Component 'xyz' not found for {name_a}")
             xyz_a_solid = xyz_a.children[0].shape
 
-            for _, comp_b in enumerate(
-                all_comps[i + 1 :],
-                start=i + 1,
-            ):
+            for _, comp_b in enumerate(all_comps[i + 1 :], start=i + 1):
                 # assumes only one xz child
                 name_b = comp_b.name
                 if (xyz_b := comp_b.get_component("xyz")) is None:
@@ -425,8 +395,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 )
 
                 repaired_face = repair_overlapping_geos(
-                    face_a,
-                    [face for _, face, _ in overlapping],
+                    face_a, [face for _, face, _ in overlapping]
                 )
 
                 if not isinstance(repaired_face, BluemiraFace):
@@ -478,10 +447,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 touching_comp = comps_by_name[touching_name]
 
                 repaired_a, repaired_b = repair_gaps_between_faces(
-                    [
-                        neutronics_comp.desplined_xz_face,
-                        touching_comp.desplined_xz_face,
-                    ],
+                    [neutronics_comp.desplined_xz_face, touching_comp.desplined_xz_face],
                     tolerance=gap_tolerance,
                 )
 

@@ -10,9 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, NoReturn
 
 import numpy as np
-from scipy.optimize._numdiff import (  # noqa: PLC2701
-    approx_derivative as _approx_derivative,
-)
+from scipy.optimize._numdiff import approx_derivative as _approx_derivative  # noqa: PLC2701
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationError
@@ -89,10 +87,7 @@ def _process_slsqp(res: OptimizeResult) -> np.ndarray:
     if res.status == 9:  # noqa: PLR2004
         bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
         return res.x
-    _log_and_raise(
-        "SLSQP",
-        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
-    )
+    _log_and_raise("SLSQP", codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}")
 
 
 def _process_cobyla(res: OptimizeResult) -> np.ndarray:
@@ -118,8 +113,7 @@ def _process_cobyla(res: OptimizeResult) -> np.ndarray:
         bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
         return res.x
     _log_and_raise(
-        "COBYLA",
-        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
+        "COBYLA", codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}"
     )
 
 
@@ -136,8 +130,7 @@ def _process_cobyqa(res: OptimizeResult) -> np.ndarray:
         bluemira_warn(f"{codes.get(res.status)}, returning inoptimal result.")
         return res.x
     _log_and_raise(
-        "COBYQA",
-        codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}",
+        "COBYQA", codes.get(res.status, NO_CODE) + f"\n\n{res.message}{res!s}"
     )
 
 

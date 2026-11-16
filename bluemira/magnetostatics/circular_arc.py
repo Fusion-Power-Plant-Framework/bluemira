@@ -30,11 +30,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
-from bluemira.magnetostatics.tools import (
-    integrate,
-    jit_llc4,
-    process_xyz_array,
-)
+from bluemira.magnetostatics.tools import integrate, jit_llc4, process_xyz_array
 
 __all__ = ["CircularArcCurrentSource"]
 

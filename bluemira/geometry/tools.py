@@ -2445,8 +2445,7 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
 # Approximately fix the overlap of two overlapping geos
 # ======================================================================================
 def repair_overlapping_geos(
-    geo_1: BluemiraSolid | BluemiraFace,
-    geos_2: list[BluemiraSolid | BluemiraFace],
+    geo_1: BluemiraSolid | BluemiraFace, geos_2: list[BluemiraSolid | BluemiraFace]
 ) -> BluemiraSolid | BluemiraFace:
     """
     Fix the overlap of geo_1 with a list of geometries in geos_2 by first
@@ -2508,8 +2507,7 @@ def repair_overlapping_geos(
 # Approximately fix the gap between two geos which are supposed to be touching
 # ======================================================================================
 def repair_gaps_between_faces(
-    geos: list[BluemiraFace],
-    tolerance: float = 1e-2,
+    geos: list[BluemiraFace], tolerance: float = 1e-2
 ) -> list[BluemiraFace]:
     """
     Repair small gaps between neighbouring BluemiraFaces which should touch.

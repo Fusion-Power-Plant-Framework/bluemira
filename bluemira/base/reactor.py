@@ -179,8 +179,7 @@ class BaseManager(abc.ABC, Generic[ComponentT]):
 
 
 def _init_construction_param_values(
-    c_params: ConstructionParams | None,
-    kwargs: ConstructionParams | dict[str, Any],
+    c_params: ConstructionParams | None, kwargs: ConstructionParams | dict[str, Any]
 ) -> ConstructionParamValues:
     c_params = cast("ConstructionParams", c_params or {})
     possible_keys = ConstructionParams.__annotations__.keys()

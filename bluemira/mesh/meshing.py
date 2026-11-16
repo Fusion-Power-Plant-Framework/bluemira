@@ -25,24 +25,11 @@ if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
 
 
-MESH_EXTENSIONS = {
-    ".geo",
-    ".geo_unrolled",
-    ".msh",
-    ".xdmf",
-    ".h5",
-    ".ini",
-}
+MESH_EXTENSIONS = {".geo", ".geo_unrolled", ".msh", ".xdmf", ".h5", ".ini"}
 
-ELEMENT_TYPE_BY_DIM = {
-    2: {"tri", "quad"},
-    3: {"tet", "hex"},
-}
+ELEMENT_TYPE_BY_DIM = {2: {"tri", "quad"}, 3: {"tet", "hex"}}
 
-MESH_STRATEGY = {
-    "structured",
-    "unstructured",
-}
+MESH_STRATEGY = {"structured", "unstructured"}
 
 
 @dataclass
@@ -94,8 +81,7 @@ def _import_brep(obj: BluemiraGeo) -> list[tuple[int, int]]:
 
 
 def _get_entities_recursive(
-    dim_tags: list[tuple[int, int]],
-    target_dim: int,
+    dim_tags: list[tuple[int, int]], target_dim: int
 ) -> list[tuple[int, int]]:
     """
     Get entities of ``target_dim`` belonging to the supplied Gmsh entities.
@@ -120,10 +106,7 @@ def _get_entities_recursive(
             continue
 
         boundary = gmsh.model.getBoundary(
-            [dim_tag],
-            combined=False,
-            oriented=False,
-            recursive=False,
+            [dim_tag], combined=False, oriented=False, recursive=False
         )
 
         pending.extend(boundary)
@@ -131,9 +114,7 @@ def _get_entities_recursive(
     return sorted(entities)
 
 
-def _apply_mesh_sizes(
-    entities: list[GmshEntity],
-) -> None:
+def _apply_mesh_sizes(entities: list[GmshEntity]) -> None:
     """
     Apply mesh sizes to final Gmsh points.
 
@@ -147,15 +128,11 @@ def _apply_mesh_sizes(
         if entity.lcar is None:
             continue
 
-        points = _get_entities_recursive(
-            entity.dim_tags,
-            target_dim=0,
-        )
+        points = _get_entities_recursive(entity.dim_tags, target_dim=0)
 
         for _, point_tag in points:
             point_sizes[point_tag] = min(
-                point_sizes.get(point_tag, entity.lcar),
-                entity.lcar,
+                point_sizes.get(point_tag, entity.lcar), entity.lcar
             )
 
     points_by_size: dict[float, list[tuple[int, int]]] = {}
@@ -164,10 +141,7 @@ def _apply_mesh_sizes(
         points_by_size.setdefault(size, []).append((0, point_tag))
 
     for size, points in points_by_size.items():
-        gmsh.model.mesh.setSize(
-            points,
-            size,
-        )
+        gmsh.model.mesh.setSize(points, size)
 
 
 def _apply_physical_group(entity: GmshEntity):
@@ -262,10 +236,7 @@ def _apply_element_type(entities: list[GmshEntity]) -> None:
             continue
 
         if strategy == "structured":
-            gmsh.model.mesh.set_transfinite_automatic(
-                [(2, surface_tag)],
-                recombine=True,
-            )
+            gmsh.model.mesh.set_transfinite_automatic([(2, surface_tag)], recombine=True)
         else:
             gmsh.model.mesh.set_recombine(2, surface_tag)
 
@@ -277,10 +248,7 @@ def _apply_element_type(entities: list[GmshEntity]) -> None:
         hex_volumes.append(volume_tag)
 
         if strategy == "structured":
-            gmsh.model.mesh.set_transfinite_automatic(
-                [(3, volume_tag)],
-                recombine=True,
-            )
+            gmsh.model.mesh.set_transfinite_automatic([(3, volume_tag)], recombine=True)
         else:
             bluemira_warn(
                 "Unstructured meshing with hexahedral elements is not enabled "
@@ -305,10 +273,7 @@ def _fragment_entities(entities: list[GmshEntity]) -> None:
     if len(input_dim_tags) <= 1:
         return
 
-    _, out_map = gmsh.model.occ.fragment(
-        objectDimTags=input_dim_tags,
-        toolDimTags=[],
-    )
+    _, out_map = gmsh.model.occ.fragment(objectDimTags=input_dim_tags, toolDimTags=[])
 
     gmsh.model.occ.synchronize()
 
@@ -338,12 +303,7 @@ def _mesh_brep_objects(objects: list[BluemiraGeo]) -> list[GmshEntity]:
     for obj in objects:
         dim_tags = _import_brep(obj)
 
-        entities.append(
-            GmshEntity(
-                source=obj,
-                dim_tags=dim_tags,
-            )
-        )
+        entities.append(GmshEntity(source=obj, dim_tags=dim_tags))
 
     gmsh.model.occ.synchronize()
 
@@ -512,10 +472,7 @@ class Mesh:
             or obj.mesh_options.mesh_strategy != "unstructured"
         )
 
-    def _collect_geometry_objects(
-        self,
-        shape: BluemiraGeo,
-    ) -> list[BluemiraGeo]:
+    def _collect_geometry_objects(self, shape: BluemiraGeo) -> list[BluemiraGeo]:
         """
         Collect geometry requiring independent Gmsh provenance.
 
@@ -548,10 +505,7 @@ class Mesh:
 
         return objects
 
-    def _collect_meshable_objects(
-        self,
-        comp: Component | Meshable,
-    ) -> list[BluemiraGeo]:
+    def _collect_meshable_objects(self, comp: Component | Meshable) -> list[BluemiraGeo]:
         """
         Collect geometry objects that need independent Gmsh provenance.
 
@@ -568,10 +522,7 @@ class Mesh:
         TypeError
             If ``comp`` is neither a Component nor a Meshable object.
         """
-        from bluemira.base.components import (  # noqa: PLC0415
-            Component,
-            PhysicalComponent,
-        )
+        from bluemira.base.components import Component, PhysicalComponent  # noqa: PLC0415
 
         objects = []
         seen = set()

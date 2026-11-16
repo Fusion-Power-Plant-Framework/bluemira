@@ -408,10 +408,7 @@ def generate_rect_xs_wire_sources(
                 | CurveType.PARABOLA
             ):
                 source = ArbitraryPlanarRectangularXSCircuit(
-                    coords,
-                    breadth=breadth,
-                    depth=depth,
-                    current=current,
+                    coords, breadth=breadth, depth=depth, current=current
                 ).sources
             case unknown:
                 raise ValueError(f"Unrecognised curve type {unknown}")
