@@ -32,6 +32,7 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
     _process_first_wall,
     analyse_first_wall_flux_surfaces,
 )
+from bluemira.radiation_transport.midplane_temperature_density import midplane_profiles
 from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
     calculate_total_radiated_power,
@@ -2094,8 +2095,6 @@ class RadiationSource:
         The equilibrium defining flux surfaces.
     firstwall_shape:
         BluemiraWire defining the first wall.
-    midplane_profiles:
-        Electron density and electron temperature profile at the mid-plane.
     core_impurities:
         The dictionary of impurities in the core (e.g. 'H') and their fractions
         (e.g. 1E-2).
@@ -2129,7 +2128,6 @@ class RadiationSource:
         eq: Equilibrium,
         firstwall_shape: Coordinates,
         params: ParameterFrameLike,
-        midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
         confinement_time_core: float = np.inf,
@@ -2157,7 +2155,8 @@ class RadiationSource:
         self.imp_data_sol = impurity_data_sol
         self.lcfs = self.eq.get_LCFS()
 
-        self.midplane_profiles = midplane_profiles
+        # Get Electron density and electron temperature profile at the mid-plane.
+        self.midplane_profiles = midplane_profiles(self.params, self.eq)
 
         # Initialising the `FluxSurfaceMaker`
         (
