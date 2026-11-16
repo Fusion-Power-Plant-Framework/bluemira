@@ -43,9 +43,7 @@ from pathlib import Path
 import gmsh
 import matplotlib.pyplot as plt
 import numpy as np
-import pyvista
 from dolfinx.io import XDMFFile
-from dolfinx.plot import vtk_mesh
 from matplotlib.axes import Axes
 from mpi4py import MPI
 
@@ -62,7 +60,7 @@ from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
-    pyvista_plot_show_save,
+    plot_mesh,
 )
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.mesh import meshing
@@ -171,14 +169,13 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
 
 with warnings.catch_warnings() as w:
     warnings.simplefilter("error", UserWarning)
-    try:  # noqa: PLW0717
-        with pyvista_plot_show_save("cell_tags.png") as plotter:
-            grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
-            num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
-            grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
-            grid.set_active_scalars("Marker")
-            actor = plotter.add_mesh(grid, show_edges=True)
-            plotter.view_xy()
+    try:
+        plot_mesh(
+            mesh,
+            ct,
+            filename="cell_tags.png",
+            cmap="viridis",
+        )
     except UserWarning:
         # Pyvista segfaults if a screen is not available
         bluemira_error("Can't view with pyvista, no framebuffer found")
