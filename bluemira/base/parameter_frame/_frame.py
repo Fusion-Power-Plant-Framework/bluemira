@@ -459,7 +459,7 @@ class ParameterFrame:
             The tabulated data as column headers and a list of rows
         """
         try:
-            pkey = keys.index("Parameter")  # type:ignore[ty:unresolved-attribute]
+            pkey = keys.index("Parameter")  # type:ignore[ty:missing-union-attribute]
         except (ValueError, AttributeError):
             pkey = None
 

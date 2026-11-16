@@ -210,7 +210,7 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -283,7 +283,7 @@ class LimiterPlotter(Plotter):
     Utility class for plotting Limiter objects
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, limiter, ax=None, **kwargs):
         super().__init__(ax, subplots=EqSubplots.XZ)
@@ -317,7 +317,7 @@ class CoilGroupPlotter(Plotter):
         Whether to plot force vectors, and if so the array of force vectors
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -547,7 +547,7 @@ class PlasmaCoilPlotter(Plotter):
         The ax on which to plot the PlasmaCoil. (plt.gca() default)
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, plasma_coil, ax=None, **kwargs):
         super().__init__(ax, subplots=EqSubplots.XZ)
@@ -600,7 +600,7 @@ class EquilibriumPlotterMixin:
             raise NotImplementedError(
                 "Toroidal field not available for FixedPlasmaEquilibrium"
             )
-        B_comp = self.eq.Bt(self.eq.x) if not poloidal else self.eq.Bp()  # type: ignore[ty:unresolved-attribute]
+        B_comp = self.eq.Bt(self.eq.x) if not poloidal else self.eq.Bp()  # type: ignore[ty:missing-union-attribute]
         levels = np.linspace(1e-36, np.amax(B_comp), nlevels)
         c = self.ax.contourf(self.eq.x, self.eq.z, B_comp, levels=levels, cmap=cmap)
         cbar = plt.colorbar(c)
@@ -650,12 +650,12 @@ class EquilibriumPlotterMixin:
                 bluemira_warn("Unable to find lcfs")
 
 
-class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:invalid-mutable-override]
+class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:incompatible-mutable-override]
     """
     Utility class for FixedPlasmaEquilibrium plotting
     """
 
-    eq: FixedPlasmaEquilibrium  # type: ignore[ty:invalid-mutable-override]
+    eq: FixedPlasmaEquilibrium  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -704,12 +704,12 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: 
         )
 
 
-class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:invalid-mutable-override]
+class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):  # type: ignore[ty:incompatible-mutable-override]
     """
     Utility class for Equilibrium plotting
     """
 
-    eq: Equilibrium  # type: ignore[ty:invalid-mutable-override]
+    eq: Equilibrium  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -1586,7 +1586,7 @@ class BreakdownPlotter(Plotter):
     Utility class for Breakdown plotting
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -1661,7 +1661,7 @@ class XZLPlotter(Plotter):
     Utility class for plotting L constraints
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, xzl_mapper, ax: Axes | None = None):
         super().__init__(ax, subplots=EqSubplots.XZ)
@@ -1699,7 +1699,7 @@ class RegionPlotter(Plotter):
     Utility class for plotting 2-D L constraints
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, region_mapper, ax: Axes | None = None):
         super().__init__(ax, subplots=EqSubplots.XZ)
@@ -1723,7 +1723,7 @@ class CorePlotter(Plotter):
     profiles.
     """
 
-    ax: list[Axes]  # type: ignore[ty:invalid-mutable-override]
+    ax: list[Axes]  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, results: CoreResults, ax=None, eq_name: str | None = None):
         num_plots = len(results.__dict__)
@@ -1752,7 +1752,7 @@ class CorePlotter2(Plotter):
     Utility class for plotting plasma equilibrium cross-core profiles.
     """
 
-    ax: list[Axes]  # type: ignore[ty:invalid-mutable-override]
+    ax: list[Axes]  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, eq: Equilibrium, ax=None, n: int = 50):
         super().__init__(ax, subplots=EqSubplots.VS_X, nrows=3, ncols=1)
@@ -1794,7 +1794,7 @@ class ProfilePlotter(Plotter):
     Utility class for plotting profile objects
     """
 
-    ax: Axes  # type: ignore[ty:invalid-mutable-override]
+    ax: Axes  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, profiles: Profile, ax=None):
         super().__init__(ax, subplots=EqSubplots.VS_PSI_NORM)

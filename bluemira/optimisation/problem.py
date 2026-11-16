@@ -68,10 +68,10 @@ class OptimisationProblemBase:
             true if the given method is a member of this base class else false
         """
         try:
-            this_f = getattr(cls, f.__name__)  # type: ignore[ty:unresolved-attribute]
+            this_f = getattr(cls, f.__name__)  # type: ignore[ty:missing-attribute]
         except AttributeError:
             return False
-        return f.__func__ is not this_f  # type: ignore[ty:unresolved-attribute]
+        return f.__func__ is not this_f  # type: ignore[ty:missing-attribute]
 
 
 class OptimisationProblem(abc.ABC, OptimisationProblemBase):

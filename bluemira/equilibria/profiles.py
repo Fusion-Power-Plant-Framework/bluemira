@@ -317,7 +317,7 @@ class SinglePowerFunc(ShapeFunction):
         super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
         return singlepowerfunc(x, *args)
 
 
@@ -335,7 +335,7 @@ class DoublePowerFunc(ShapeFunction):
         super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
         return doublepowerfunc(x, *args)
 
 
@@ -353,7 +353,7 @@ class LaoPolynomialFunc(ShapeFunction):
         super().__init__(coeffs_arr)
 
     @staticmethod
-    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:invalid-attribute-override]
+    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:incompatible-attribute-override]
         return laopoly(x, *args)
 
 
@@ -373,7 +373,7 @@ class LuxonExpFunc(ShapeFunction):
             raise ValueError("The Luxon function only has one coefficient.")
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:
         return luxonexp(x, *args)
 
 
@@ -807,7 +807,7 @@ class CustomProfile(Profile):
         from p' and ff'.
     """
 
-    I_p: float | None  # type: ignore[ty:invalid-attribute-override]
+    I_p: float | None  # type: ignore[ty:incompatible-attribute-override]
 
     def __init__(
         self,

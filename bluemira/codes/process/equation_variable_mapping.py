@@ -58,8 +58,8 @@ class ConstraintSelection:
     """
 
     _value_: int
-    requires_variables: tuple[int] = field(default_factory=tuple)
-    requires_values: tuple[str] = field(default_factory=tuple)
+    requires_variables: tuple[int] = field(default_factory=tuple)  # type: ignore[ty:no-matching-overload]
+    requires_values: tuple[str] = field(default_factory=tuple)  # type: ignore[ty:no-matching-overload]
     description: str = ""
 
 

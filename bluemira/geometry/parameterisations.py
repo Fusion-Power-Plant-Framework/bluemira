@@ -653,7 +653,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def create_shape(
         self, label: str = "", n_points: int = 2000, *, with_tangency: bool = False
@@ -1174,7 +1174,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1538,7 +1538,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1804,7 +1804,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -2567,7 +2567,7 @@ class PictureFrame(
         for leg in ["inner", "upper", "lower", "outer"]
         for var in ["", "_vars"]
     )
-    optvar_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -2803,7 +2803,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints = 8
-    optvar_cls: type[ProcessDOptVariables] = ProcessDOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[ProcessDOptVariables] = ProcessDOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -3240,7 +3240,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 4
-    optvar_cls: type[SimpleCarabinerOptVariables] = SimpleCarabinerOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[SimpleCarabinerOptVariables] = SimpleCarabinerOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, variables: SimpleCarabinerOptVariables | VarDictT | None = None):
         super().__init__(variables)

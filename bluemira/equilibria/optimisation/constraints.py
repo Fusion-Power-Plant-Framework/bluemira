@@ -861,7 +861,7 @@ class DPsiDxConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dx_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:invalid-method-override]
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:incompatible-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
 
@@ -921,7 +921,7 @@ class DPsiDzConstraint(AbsoluteMagneticConstraint):
         """
         return np.asarray(coilset.dpsi_dz_response(self.x, self.z, control=True))
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:invalid-method-override]
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:  # type: ignore[ty:incompatible-method-override]
         """
         Calculate the value of the constraint in an Equilibrium.
 

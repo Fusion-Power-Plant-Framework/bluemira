@@ -125,7 +125,7 @@ class PlasmodSolverParams(MappedParameterFrame):
         return asdict(self._defaults)
 
     @classmethod
-    def from_defaults(cls) -> Self:  # type: ignore[ty:invalid-method-override]
+    def from_defaults(cls) -> Self:  # type: ignore[ty:incompatible-method-override]
         """
         Initialise from defaults
         """
