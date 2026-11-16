@@ -76,11 +76,20 @@ def midplane_profiles(params: ParameterFrameLike) -> MidplaneProfiles:
     Temperature and density are assumed to be constant along a
     single flux tube.
 
+    Parameters
+    ----------
+    params:
+        Parameters defining the pedestal positions, profile exponents,
+        densities [1/m³], temperatures, and radial sampling.
+
     Returns
     -------
     :
-        Electron density and electron temperature as function of rho, from the magnetic
-        axis to the separatrix along the midplane.
+        Electron density [1/m³], temperature [keV], and the profile coordinate
+        ``psi_n = rho²`` (an assumed radius-to-flux mapping, not an equilibrium
+        flux calculation). Profiles use the common pedestal radius
+        :math:`\\rho_p=(\\rho_{p,n}+\\rho_{p,T})/2`; see
+        :func:`core_electron_density_temperature_profile`.
     """
     params = make_parameter_frame(params, MidplaneProfilesParams, allow_unknown=True)
     rho_ped = (params.rho_ped_n.value + params.rho_ped_t.value) / 2
@@ -163,10 +172,31 @@ def core_electron_density_temperature_profile(
 
     Notes
     -----
-    The region that extends through the plasma core until its
-    outer layer is referred as core.
-    The region that extends from the pedestal to the separatrix
-    is referred as pedestal.
+    With :math:`\\rho=r/a`, the core profiles, for
+    :math:`0<\\rho\\leq\\rho_p`, are
+
+    .. math::
+
+        n_e(\\rho)=n_{e,p}+(n_{e,0}-n_{e,p})
+        [1-(\\rho/\\rho_p)^2]^{\\alpha_n},
+
+    .. math::
+
+        T_e(\\rho)=T_{e,p}+(T_{e,0}-T_{e,p})
+        [1-(\\rho/\\rho_p)^{\\beta_T}]^{\\alpha_T}.
+
+    In the mantle, :math:`\\rho_p<\\rho<1`, either quantity
+    :math:`f\\in\\{n_e,T_e\\}` is linearly interpolated:
+
+    .. math::
+
+        f(\\rho)=f_{sep}+(f_p-f_{sep})\\frac{1-\\rho}{1-\\rho_p}.
+
+    Subscripts 0, p, and sep denote axis, pedestal, and separatrix values.
+    ``t_beta`` supplies :math:`\\beta_T`. Densities are in [1/m³] and
+    temperatures are converted to [keV]. The returned flux coordinate is
+    the model assumption :math:`\\psi_N=\\rho^2`. Input radii must lie
+    strictly between 0 and 1, with :math:`0<\\rho_p<1`.
     """
     i_core = np.nonzero((rho_core > 0) & (rho_core <= rho_ped))[0]
     te0_keV = cast("float", params.T_e_0.value_as("keV"))

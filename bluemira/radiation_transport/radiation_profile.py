@@ -197,7 +197,18 @@ class Radiation:
         main_chamber_rad: bool = False,
     ) -> np.ndarray:
         """
-        Along a single flux tube, it assigns different temperature values.
+        Assign the model temperature profile along a single flux tube.
+
+        In the core :math:`T_e(s)=T_{e,mp}`. In the SOL, the default is
+        also constant, with selected radiation-region indices replaced by
+        :func:`~bluemira.radiation_transport.radiation_tools.gaussian_decay`
+        between ``t_rad_in`` and ``t_rad_out``. The recycling region is
+        held at ``t_tar``, unless ``x_point_rad`` selects
+        :func:`~bluemira.radiation_transport.radiation_tools.exponential_decay`
+        from ``0.95 * t_rad_out`` to ``t_tar``. Main-chamber radiation
+        replaces the remaining points by a linear interpolation in point
+        index, not arc length. These are prescribed profiles, not a
+        parallel heat-transport solution.
 
         Parameters
         ----------
@@ -279,7 +290,17 @@ class Radiation:
         main_chamber_rad: bool = False,
     ) -> np.ndarray:
         """
-        Along a single flux tube, it assigns different density values.
+        Assign the model density profile along a single flux tube.
+
+        In the core :math:`n_e(s)=n_{e,mp}`. In the SOL, selected
+        radiation/recycling indices are filled using
+        :func:`~bluemira.radiation_transport.radiation_tools.gaussian_decay`
+        between their prescribed boundary densities. The recycling start
+        is adjusted by the last radiation-region density increment when
+        that region has multiple points. Main-chamber radiation uses a
+        linear interpolation in point index, not arc length, from
+        ``ne_mp`` to ``n_rad_in``. This is a prescribed profile, not a
+        particle-balance solution.
 
         Parameters
         ----------
@@ -473,8 +494,19 @@ class CoreRadiation(Radiation):
 
     def calculate_mp_radiation_profile(self):
         """
-        1D profile of the line radiation loss at the mid-plane
-        from the magnetic axis to the separatrix
+        Calculate the midplane radiation density from axis to separatrix.
+
+        For each impurity species z, store
+
+        .. math::
+
+            p_z=10^{-6}f_z n_e^2 L_z(T_e)\\quad[\\mathrm{MW\\,m^{-3}}],
+
+        where :math:`f_z=n_z/n_e` is its number fraction and
+        :math:`L_z` is the tabulated loss coefficient [W m³], interpolated by
+        :func:`~.radiative_loss_function_values`.
+        The loss includes bremsstrahlung as supplied by the impurity data; see
+        :func:`~.calculate_line_radiation_loss`.
         """
         # Radiative loss function values for each impurity species
         loss_f = [
@@ -501,6 +533,11 @@ class CoreRadiation(Radiation):
         """
         Build poloidal distribution (distribution along the field lines) of
         line radiation loss in the plasma core.
+
+        The species radiation density is :math:`p_z=10^{-6}f_z n_e^2L_z(T_e)`
+        [MW/m³], as in :meth:`calculate_mp_radiation_profile`. Density and
+        temperature, and hence radiation density, are constant on each
+        closed flux surface in this model.
 
         Returns
         -------
@@ -915,20 +952,31 @@ class ScrapeOffLayerRadiation(Radiation):
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at midplane.
-        It uses the customised version for the mid-plane of the exponential
-        decay law described in "electron_density_and_temperature_sol_decay".
+        It uses the midplane prescription in
+        :func:`~bluemira.radiation_transport.radiation_tools.electron_density_and_temperature_sol_decay`:
+
+        .. math::
+
+            T_e=T_{sep}e^{-\\Delta R/\\lambda_T},\\qquad
+            n_e=n_{sep}e^{-\\Delta R/\\lambda_n},\\qquad
+            \\lambda_T=\\frac72\\lambda_{q,near},\\quad
+            \\lambda_n=\\frac13\\lambda_T.
+
+        Only the near-SOL length enters these profiles; the far-SOL
+        length is passed to the helper for its resolution warning.
 
         Parameters
         ----------
         te_sep:
-            electron temperature at the separatrix [keV]
+            Electron temperature at the separatrix [eV]. If omitted, the
+            configured temperature is converted to eV.
         omp:
             outer mid-plane. Default value True. If False it stands for inner mid-plane
 
         Returns
         -------
         te_sol:
-            radial decayed temperatures through the SoL at the mid-plane. Unit [keV]
+            Radially decayed temperatures through the SOL at the midplane [eV].
         ne_sol:
             radial decayed densities through the SoL at the mid-plane. Unit [1/m^3]
         """
@@ -955,10 +1003,20 @@ class ScrapeOffLayerRadiation(Radiation):
         self, x_p: float, z_p: float, t_p: float, t_u: float, *, lfs: bool = True
     ) -> tuple[np.ndarray, ...]:
         """
-        Calculation of electron density and electron temperature profiles
-        across the SoL, starting from any point on the separatrix.
-        (The z coordinate is the same. While the x coordinate changes)
-        Using the equation to calculate T(s||).
+        Calculate radial SOL profiles starting at a separatrix point.
+
+        The local density follows the constant electron-pressure assumption
+        :math:`n_p T_p=n_{sep}T_u`, so :math:`n_p=n_{sep}T_u/T_p`.
+        Poloidal flux conservation gives the radial expansion
+
+        .. math::
+
+            f_p=\\frac{R_u B_{p,u}}{R_p B_{p,p}}.
+
+        Here u denotes the corrected midplane separatrix location and p
+        the requested point. The radial profiles use
+        :func:`~bluemira.radiation_transport.radiation_tools.electron_density_and_temperature_sol_decay`
+        with this expansion and the configured decay-length factors.
 
         Parameters
         ----------
@@ -1032,7 +1090,17 @@ class ScrapeOffLayerRadiation(Radiation):
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at the target.
-        From the pressure balance, considering friction losses.
+        The target is defined as
+
+        .. math::
+
+            n_t=\\frac{f_m}{2}n_{div},\\qquad
+            T_t=\\begin{cases}T_{det},&\\text{detached},\\\\
+            T_{div},&\\text{otherwise}.\\end{cases}
+
+        The factor two is the model's target pressure reduction. No
+        additional :math:`T_{div}/T_t` density scaling is applied when
+        detached. In detached mode ``f_m`` is overridden with 0.1.
 
         Parameters
         ----------
@@ -1043,8 +1111,9 @@ class ScrapeOffLayerRadiation(Radiation):
             temperature of the flux tubes at the entrance of the recycling region,
             assumed to be corresponding to the divertor plane [eV]
         f_m:
-            fractional loss of pressure due to friction.
-            It can vary between 0 and 1.
+            Retained pressure fraction after friction, between 0 and 1
+        detachment:
+            Use the configured detached target temperature and set ``f_m=0.1``.
 
         Returns
         -------
@@ -1623,9 +1692,13 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         hfs_up: tuple[list[np.ndarray], list[np.ndarray]],
     ) -> dict[str, list[list[np.ndarray]]]:
         """
-        Radiation profiles calculation.
-        For each scrape-off layer sector, it gives the
-        radiation profile along each flux tube.
+        Calculate each species' radiation profile along each SOL flux tube.
+
+        Use :math:`p_z=10^{-6}f_z n_e^2L_z(T_e)` [MW/m³], with impurity
+        fraction :math:`f_z=n_z/n_e` and loss coefficient :math:`L_z`
+        [W m³]. See :meth:`CoreRadiation.calculate_mp_radiation_profile`
+        for the loss-function interpolation and conventions. Species
+        contributions are retained separately, not summed here.
 
         Parameters
         ----------
@@ -1924,9 +1997,13 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         **_kwargs: Any,
     ) -> dict[str, list[list[np.ndarray]]]:
         """
-        Radiation profiles calculation.
-        For each scrape-off layer sector, it gives the
-        radiation profile along each flux tube.
+        Calculate each species' radiation profile along each SOL flux tube.
+
+        Use :math:`p_z=10^{-6}f_z n_e^2L_z(T_e)` [MW/m³], with impurity
+        fraction :math:`f_z=n_z/n_e` and loss coefficient :math:`L_z`
+        [W m³]. See :meth:`CoreRadiation.calculate_mp_radiation_profile`
+        for the loss-function interpolation and conventions. Species
+        contributions are retained separately, not summed here.
 
         Parameters
         ----------

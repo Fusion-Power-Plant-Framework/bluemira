@@ -353,8 +353,25 @@ class ChargedParticleSolver:
         on the wall at the mid-plane.
         _analyse_SN and _analyse_DN assume, in the area in proximity of
         the mid-plane, where the outermost flux tube is open, that the
-        remaining power of from the exponential decay is deposited on
+        remaining power from the exponential decay is deposited on
         the wall perpendicularly.
+
+        For each target branch, the implemented mapping is
+
+        .. math::
+
+            q_{\\perp,t}=f_t q_{\\parallel,u}
+            \\frac{B_{p,t}}{B_u}\\sin\\alpha_t,
+
+        where :math:`f_t` is the configured target power fraction,
+        :math:`\\alpha_t` is the poloidal wall incidence angle [rad],
+        and subscripts u and t denote midplane and wall values.
+        See :meth:`_q_par` for the upstream exponential profile.
+        Power not intercepted by traced tubes is spread uniformly over
+        the unconnected midplane wall region using
+        :math:`q_{\\perp,miss}=P_{miss}/(2\\pi R_{wall}L_{wall})`.
+        The area uses the midplane wall radius and poloidal arc length,
+        rather than an exact surface-of-revolution integral.
         """
         (self.first_wall, self.imp_int, self.omp_int) = self._process_first_wall(
             first_wall
@@ -604,12 +621,42 @@ class ChargedParticleSolver:
 
     def _q_par(self, x, dx, B, Bp, *, outboard=True):
         """
-        Calculate the parallel power at the midplane.
+        Calculate the parallel heat-flux density at the midplane.
+
+        Parameters
+        ----------
+        x:
+            Midplane major radius [m].
+        dx:
+            Positive radial distance from the separatrix [m].
+        B:
+            Total midplane magnetic-field magnitude [T].
+        Bp:
+            Poloidal midplane magnetic-field magnitude [T].
+        outboard:
+            Select outboard, rather than inboard, power decay lengths.
 
         Returns
         -------
         :
-            parallel power at the midplane
+            Parallel heat-flux density [MW/m²], before target power splitting.
+
+        Notes
+        -----
+        The near- and far-SOL exponential profiles are normalised by their
+        decay lengths:
+
+        .. math::
+
+            q_{\\parallel,u}(x)=\\frac{B_u}{2\\pi x B_{p,u}}
+            \\left[\\frac{P_n}{\\lambda_n}e^{-\\Delta x/\\lambda_n}
+            +\\frac{P_f}{\\lambda_f}e^{-\\Delta x/\\lambda_f}\\right],
+
+        where :math:`P_n=f_n P_{sep}`, :math:`P_f=(1-f_n)P_{sep}`,
+        :math:`f_n` is ``f_p_sol_near``, and :math:`P_{sep}` is
+        ``P_sep_particle`` [MW]. The selected near/far decay lengths
+        :math:`\\lambda_n,\\lambda_f` are in metres. Positive radius,
+        nonzero poloidal field, and positive decay lengths are assumed.
         """
         p_sol_near = self.params.P_sep_particle * self.params.f_p_sol_near
         p_sol_far = self.params.P_sep_particle * (1 - self.params.f_p_sol_near)

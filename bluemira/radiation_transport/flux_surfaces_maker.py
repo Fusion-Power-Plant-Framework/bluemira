@@ -373,7 +373,16 @@ def _make_flux_surfaces(
     Returns
     -------
     :
-        The PartialOpenFluxSurface that passes through the point.
+        The two partial open flux surfaces that pass through the point,
+        split at the midplane, or None for a rejected closed contour.
+
+    Notes
+    -----
+    A flux surface is traced as the contour
+    :math:`\\psi(R,Z)=\\psi(x,z)`, since the poloidal field is tangent
+    to constant poloidal-flux contours. A closed contour is treated as
+    spuriously closed when its length exceeds 1.05 times the LCFS
+    perimeter; this is a numerical heuristic, not a physical criterion.
     """
     coords_arr = find_flux_surface_through_point(
         equilibrium.x, equilibrium.z, equilibrium.psi(), x, z, equilibrium.psi(x, z)
@@ -407,10 +416,12 @@ def _make_flux_surfaces_ibob(
     """
     Make the flux surfaces on the inboard or outboard.
 
-    Note: this function opens flux surfaces outside the LCFS
-    with closed coords. This is too avoid errors resulting from
-    open flux surfaces that appear closed because
-    they do not extend off the grid.
+    This function opens flux surfaces outside the LCFS with closed
+    coordinates; see :func:`_make_flux_surfaces` for the contour equation
+    and closure heuristic. Midplane seeds are spaced according to
+    :math:`R_i=R_{sep}+s\\,i\\,\\Delta R`, for integer :math:`i\\geq1`,
+    where :math:`s=+1` outboard and :math:`s=-1` inboard, and
+    :math:`\\Delta R` is ``dx_mp`` [m]. Seeding stops before the wall.
 
     Returns
     -------
