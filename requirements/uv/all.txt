@@ -408,6 +408,7 @@ packaging==26.3
     #   pytest
     #   sphinx
     #   tables
+    #   virtualenv
 pandas==2.3.3
     # via seaborn
 pandocfilters==1.5.1
