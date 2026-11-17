@@ -48,6 +48,7 @@ from bluemira.codes.openmc.output import (
     NeutronicsOutputParams,
     OpenMCCSGResult,
     OpenMCDAGMCResult,
+    OpenMCmcioCSGResult,
 )
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
@@ -147,6 +148,7 @@ NeutronSourceCreator: TypeAlias = Callable[
     tuple[openmc.SourceBase | Sequence[openmc.SourceBase], float, float],
 ]
 CSGRunResult: TypeAlias = tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]
+MCIORunResult: TypeAlias = tuple[OpenMCmcioCSGResult, ParameterFrame] | dict[int, float]
 DAGMCRunResult: TypeAlias = tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
 NeutronicsRunResult: TypeAlias = (
     tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
@@ -998,16 +1000,16 @@ class OpenMCmcioCSGTeardown(CodesTeardown):
         universe: openmc.Universe,
         source_info: SourceInfo,
         statepoint_file: str | Path,
-    ) -> tuple[OpenMCCSGResult, NeutronicsOutputParams]:
+    ) -> tuple[OpenMCmcioCSGResult, NeutronicsOutputParams]:
         """Run stage for teardown task."""
-        result = OpenMCCSGResult.from_run(
+        result = OpenMCmcioCSGResult.from_run(
             universe=universe,
             src_rate=source_info.rate,
             src_triton_rate=source_info.triton_rate,
             statepoint_file=Path(statepoint_file),
         )
 
-        output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
+        output_params = NeutronicsOutputParams.from_openmc_mcio_csg_result(result)
 
         return result, output_params
 
@@ -1090,7 +1092,7 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         runtime_params: OpenMCSimulationRuntimeParameters,
         *,
         debug=False,
-    ) -> tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float] | None:
+    ) -> tuple[OpenMCmcioCSGResult, ParameterFrame] | dict[int, float] | None:
 
         self._setup = self.setup_cls(
             self.name,
@@ -1103,7 +1105,7 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         self._teardown = self.teardown_cls(self.out_path, self.name)
 
         return cast(
-            "CSGRunResult",
+            "MCIORunResult",
             super()._single_run(
                 run_mode,
                 source_params,
