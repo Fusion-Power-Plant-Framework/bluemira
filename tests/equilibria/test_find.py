@@ -12,10 +12,13 @@ import numpy as np
 import pytest
 
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria import find
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     _in_plasma,
     find_LCFS_separatrix,
+    find_first_closed_flux_surface_psi_n,
     find_local_minima,
     inv_2x2_matrix,
 )
@@ -150,6 +153,87 @@ class TestFindLCFSSeparatrix:
         assert lcfs.closed
         assert np.isclose(lcfs.length, lcfs_length, rtol=1e-4)
         assert np.isclose(sep.length, sep_length, rtol=1e-4)
+
+
+FIRST_CLOSED_EQS = ["EUDEMO_equilibrium.json", "SH_test_file.json"]
+
+
+class TestFindFirstClosedFluxSurfacePsiN:
+    @classmethod
+    def setup_class(cls):
+        cls.eqs = {}
+        for name in FIRST_CLOSED_EQS:
+            eq = Equilibrium.from_eqdsk(
+                Path(DATA, name), from_cocos=3, qpsi_positive=False
+            )
+            psi = eq.psi()
+            o_points, x_points = eq.get_OX_points(psi)
+            cls.eqs[name] = (eq, psi, o_points, x_points)
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    @pytest.mark.parametrize("tol", [1e-4, 1e-6, 1e-8])
+    def test_transition_found(self, name, tol):
+        eq, psi, o_points, x_points = self.eqs[name]
+        psi_n = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points, psi_n_tol=tol
+        )
+        assert 0.0 < psi_n < 0.05
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    def test_tolerances_converge(self, name):
+        eq, psi, o_points, x_points = self.eqs[name]
+        coarse = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points, psi_n_tol=1e-4
+        )
+        fine = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points, psi_n_tol=1e-8
+        )
+        assert fine <= coarse
+        assert coarse - fine <= 1e-4
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    def test_without_ox_points(self, name):
+        eq, psi, o_points, x_points = self.eqs[name]
+        with_points = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points
+        )
+        without_points = find_first_closed_flux_surface_psi_n(eq.x, eq.z, psi)
+        assert np.isclose(with_points, without_points, rtol=0, atol=1e-6)
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    def test_upper_bound_too_low_is_expanded(self, name):
+        eq, psi, o_points, x_points = self.eqs[name]
+        default = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points
+        )
+        expanded = find_first_closed_flux_surface_psi_n(
+            eq.x, eq.z, psi, o_points=o_points, x_points=x_points, psi_n_max=1e-5
+        )
+        assert np.isclose(default, expanded, rtol=0, atol=1e-6)
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    def test_returns_zero_if_surface_found_at_axis(self, name, monkeypatch):
+        eq, psi, o_points, x_points = self.eqs[name]
+        monkeypatch.setattr(find, "find_flux_surf", lambda *_, **__: None)
+        assert (
+            find_first_closed_flux_surface_psi_n(  # noqa: RUF069
+                eq.x, eq.z, psi, o_points=o_points, x_points=x_points
+            )
+            == 0.0
+        )
+
+    @pytest.mark.parametrize("name", FIRST_CLOSED_EQS)
+    def test_raises_if_no_surface_found(self, name, monkeypatch):
+        eq, psi, o_points, x_points = self.eqs[name]
+
+        def always_fail(*_, **__):
+            raise EquilibriaError("no surface")
+
+        monkeypatch.setattr(find, "find_flux_surf", always_fail)
+        with pytest.raises(EquilibriaError):
+            find_first_closed_flux_surface_psi_n(
+                eq.x, eq.z, psi, o_points=o_points, x_points=x_points
+            )
 
 
 class TestInPlasma:

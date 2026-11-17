@@ -918,6 +918,90 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
+def find_first_closed_flux_surface_psi_n(
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
+    o_points: list[Opoint] | Opoint | None = None,
+    x_points: list[Xpoint]
+    | list[Lpoint]
+    | list[Xpoint | Lpoint]
+    | Xpoint
+    | Lpoint
+    | None = None,
+    *,
+    psi_n_tol: float = 1e-6,
+    psi_n_max: float = 0.05,
+) -> float:
+    """
+    Find the smallest normalised psi value for which a flux surface around the
+    O-point can be found (the "first" closed flux surface next to the magnetic axis).
+
+    Parameters
+    ----------
+    x:
+        The spatial x coordinates of the grid points [m]
+    z:
+        The spatial z coordinates of the grid points [m]
+    psi:
+        The poloidal magnetic flux map [V.s/rad]
+    o_points:
+        The O-points in the psi map
+    x_points:
+        The X-points in the psi map
+    psi_n_tol:
+        The normalised psi tolerance to use
+    psi_n_max:
+        Upper bound of the search range. A flux surface must be found at this value.
+
+    Returns
+    -------
+    :
+        The smallest normalised psi value (to within psi_n_tol) for which a flux
+        surface can be found
+
+    Raises
+    ------
+    EquilibriaError
+        If no flux surface can be found at psi_n_max
+
+    Notes
+    -----
+    As psi_n -> 0, the flux surfaces shrink onto the O-point and, given the finite
+    grid resolution, eventually can no longer be found (an EquilibriaError is
+    raised by :func:`find_flux_surf`). This bisects on the transition between
+    the two, assuming that every value above it succeeds and every value below it
+    fails.
+    """
+    o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
+
+    def surface_found(psi_norm: float) -> bool:
+        try:
+            find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
+        except EquilibriaError:
+            return False
+        return True
+
+    high = psi_n_max  # Must succeed
+    while not surface_found(high):
+        high *= 2
+        if high > 1.0:
+            raise EquilibriaError("No flux surface found at psi_n = 1.0. ")
+
+    low = 0.0  # Assumed to fail (contour collapses to the O-point)
+    if surface_found(low):
+        return low
+
+    while high - low > psi_n_tol:
+        middle = 0.5 * (low + high)
+        if surface_found(middle):
+            high = middle
+        else:
+            low = middle
+
+    return high
+
+
 def two_point_angled_line(
     centre_point: PsiPoint | Coordinates | np.ndarray,
     edge_point: PsiPoint | Coordinates | np.ndarray,
