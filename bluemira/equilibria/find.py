@@ -963,7 +963,7 @@ def find_first_closed_flux_surface_psi_n(
     Raises
     ------
     EquilibriaError
-        If no flux surface can be found at psi_n_max
+        If no flux surface is found at psi_n >= 1.0
 
     Notes
     -----
@@ -982,11 +982,11 @@ def find_first_closed_flux_surface_psi_n(
             return False
         return True
 
-    high = psi_n_max  # Must succeed
+    high = psi_n_max
     while not surface_found(high):
         high *= 2
         if high > 1.0:
-            raise EquilibriaError("No flux surface found at psi_n = 1.0. ")
+            raise EquilibriaError("No flux surface found at psi_n >= 1.0.")
 
     low = 0.0  # Assumed to fail (contour collapses to the O-point)
     if surface_found(low):
