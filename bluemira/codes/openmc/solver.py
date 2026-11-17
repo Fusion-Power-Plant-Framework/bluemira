@@ -302,11 +302,10 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         model = self._create_model(settings)
 
-        if not model.tallies:
-            model.tallies = self._create_tallies(
-                tally_function,
-                model,
-            )
+        if model.tallies is None:
+            model.tallies = openmc.Tallies()
+
+        model.tallies.extend(self._create_tallies(tally_function))
 
         return (
             model,
@@ -930,12 +929,17 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
 
         return self.mcio_model
 
-    @staticmethod
-    def _create_tallies(
-        model: openmc.Model,
-    ) -> openmc.Tallies:
-        """Return tallies already attached to the MCIO model."""
-        return model.tallies
+    def _create_tallies(self, tally_function: TallyFunctionType) -> openmc.Tallies:
+        """Create tallies from the solver's tally specifications."""
+        tallies = openmc.Tallies()
+
+        for name, score, filters in tally_function(self.mcio_model):
+            tally = openmc.Tally(name=name)
+            tally.filters = filters
+            tally.scores = [score]
+            tallies.append(tally)
+
+        return tallies
 
     def plot(
         self,
