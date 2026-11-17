@@ -313,7 +313,7 @@ class ChargedParticleSolver:
         # If there are multiple points on the wall then use Wire class
         # to calculate the length
         if len(xyz_wall_mp[0]) > 1:
-            reg_wire = make_polygon(xyz_wall.T)
+            reg_wire = make_polygon(xyz_wall_mp.T)
             return xyz_wall_mp[0], xyz_wall_mp[2], reg_wire.length
 
         # If the first intersection for the lower and upper flux is the same point
@@ -324,7 +324,7 @@ class ChargedParticleSolver:
                 return idx + 1
             return idx - 1
 
-        if np.isclose(theta_max_lower, theta_max_lower):
+        if np.isclose(theta_max_lower, theta_max_upper):
             theta_max_lower = theta_lower[
                 next_intersection(theta_lower, theta_max_lower)
             ]
