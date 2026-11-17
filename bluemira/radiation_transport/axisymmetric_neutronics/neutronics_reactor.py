@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import mcio
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+from OCP.gp import gp_Pnt, gp_Trsf
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -151,51 +153,23 @@ class AxisymmetricNeutronicsReactor(ABC):
         return self.geometry.plot("xz", *args, ax=ax, show=show, **kwargs)
 
     @staticmethod
-    def plot_desplining_comparisons(
-        orig_comps: list[Component],
-        desplined_comps: list[Component],
-        output_path: Path | None = None,
-    ):
+    def _scale_solid_to_cm(solid):
         """
-        Create comparison plots in the xz plane before and after
-        desplining components.
+        Scale an OCC solid from metres to centimetres.
 
-        Raises
-        ------
-        ValueError
-            if original and desplined components do not have the
-            same length
+        Returns
+        -------
+        :
+            Scaled OCC shape with coordinates in centimetres.
         """
-        if output_path is None:
-            raise ValueError("output_path must be provided.")
+        transform = gp_Trsf()
+        transform.SetScale(gp_Pnt(0, 0, 0), 100.0)
 
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        if len(orig_comps) != len(desplined_comps):
-            raise ValueError(
-                "original and desplined components must have the same length."
-            )
-
-        fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
-
-        for orig_comp, desplined_comp in zip(orig_comps, desplined_comps, strict=True):
-            orig_comp.plot_2d(ax=axes[0], show=False)
-            for wire in orig_comp.leaves[0].shape.boundary:
-                plot_2d(wire.vertexes.T, ax=axes[0], show=False)
-
-            desplined_comp.plot_2d(ax=axes[1], show=False)
-            for wire in desplined_comp.leaves[0].shape.boundary:
-                plot_2d(wire.vertexes.T, ax=axes[1], show=False)
-
-        axes[0].set_title("Original")
-        axes[1].set_title("Desplined")
-
-        fig.tight_layout()
-
-        plot_path = output_path / "desplining_comparisons.png"
-        fig.savefig(plot_path, bbox_inches="tight")
-
-        bluemira_print(f"Plotted desplining comparisons as {plot_path}")
+        return BRepBuilderAPI_Transform(
+            solid,
+            transform,
+            copy=True,
+        ).Shape()
 
     def run_mcio(
         self,
@@ -212,8 +186,12 @@ class AxisymmetricNeutronicsReactor(ABC):
         all_desplined_components = self.geometry.get_all_components()
 
         all_names = [comp.name for comp in all_desplined_components]
+
+        # Convert OCC solids from metres to centimetres for OpenMC uses
         all_ocp_solids = [
-            comp.get_component("xyz").children[0].shape.shape.wrapped
+            self._scale_solid_to_cm(
+                comp.get_component("xyz").children[0].shape.shape.wrapped
+            )
             for comp in all_desplined_components
         ]
 
