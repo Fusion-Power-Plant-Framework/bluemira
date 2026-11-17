@@ -168,7 +168,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         return BRepBuilderAPI_Transform(
             solid,
             transform,
-            copy=True,
+            theCopyGeom=True,
         ).Shape()
 
     def run_mcio(
