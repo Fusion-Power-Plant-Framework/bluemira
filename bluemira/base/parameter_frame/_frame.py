@@ -27,10 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Iterator, Sequence
     from types import GenericAlias
 
-    from bluemira.base.parameter_frame.typed import (
-        ParameterFrameLike,
-        ParameterFrameT,
-    )
+    from bluemira.base.parameter_frame.typed import ParameterFrameLike, ParameterFrameT
     from bluemira.base.reactor_config import ConfigParams
 
 
@@ -303,10 +300,7 @@ class ParameterFrame:
 
     @classmethod
     def from_json(
-        cls: type[ParameterFrameT],
-        json_in: str | Any,
-        *,
-        allow_unknown: bool = False,
+        cls: type[ParameterFrameT], json_in: str | Any, *, allow_unknown: bool = False
     ) -> ParameterFrameT:
         """Initialise an instance from a JSON file, string, or reader.
 
@@ -459,7 +453,7 @@ class ParameterFrame:
             The tabulated data as column headers and a list of rows
         """
         try:
-            pkey = keys.index("Parameter")  # type:ignore[ty:unresolved-attribute]
+            pkey = keys.index("Parameter")  # type:ignore[ty:missing-union-attribute]
         except (ValueError, AttributeError):
             pkey = None
 

@@ -229,8 +229,7 @@ def reactivity(
     if not isinstance(method, ReactivityMethod):
         method = ReactivityMethod[method.replace("-", "_").upper()]
     mapping: dict[
-        ReactivityMethod,
-        Callable[[float | np.ndarray, Reactions], float | np.ndarray],
+        ReactivityMethod, Callable[[float | np.ndarray, Reactions], float | np.ndarray]
     ] = {
         ReactivityMethod.BOSCH_HALE: _reactivity_bosch_hale,
         ReactivityMethod.PLASMOD: _reactivity_plasmod,

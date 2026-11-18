@@ -63,20 +63,20 @@ dev = [
     "pytest-html",
     "pytest-metadata",
     "pytest-json-report",
-    "ruff==0.16.4",
+    "ruff==0.17.5",
     "sphinx<8.2",
     "sphinx-autoapi",
     "sphinx_copybutton",
     "sphinx-rtd-theme>=2.0.0",
     "sybil",
-    "ty==0.0.91",
+    "ty==0.0.102",
 ]
 examples = ["notebook", "jupytext", "rich[jupyter]", "jupyter-cadquery>=5", "pyvista[jupyter]"]
 pinned = [
     "nlopt==2.11.0",
-    "numba==0.67.0",
+    "numba==0.68.1",
     "numpy==2.2.6",
-    "matplotlib==3.11.1",
+    "matplotlib==3.11.2",
     "scipy==1.17.1",
     "vtk==9.3.1",  # needed for uv resolution
 ]
@@ -87,7 +87,7 @@ process = ["process @ git+https://github.com/ukaea/process@v3.4.1"]
 openmc = [
     "openmc>=0.14.0, !=0.15.3",  # conda-forge only (not on PyPI) — install the conda env first
     "pandas<3.0.0", # openmc < 0.16 doesnt work with pandas >= 3.0.0
-    "openmc_data==2.5.0",
+    "openmc_data==2.6.0",
     "tokamak-neutron-source >=0.1.4",
 ]
 polyscope = ["polyscope"]
@@ -169,6 +169,7 @@ exclude = [
 
 [tool.ruff.format]
 preview = true
+skip-magic-trailing-comma = true
 
 [tool.ruff.lint]
 preview = true
@@ -199,11 +200,12 @@ ignore = [
     # should remove
     "ERA",  # remove commented out code
     "SLF001",  # private method use
-
+    "pytest-fixture-autouse",
 ]
 
 [tool.ruff.lint.isort]
 case-sensitive = true
+split-on-trailing-comma = false
 known-first-party = ["bluemira"]
 force-to-top = ["freecad", "FreeCAD"]
 

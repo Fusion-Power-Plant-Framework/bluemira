@@ -136,9 +136,7 @@ class TrustConstrParams:
 
 
 def _make_alg_params(
-    user_params: Mapping[str, int | float],
-    param_cls: type,
-    overrides: dict[str, str],
+    user_params: Mapping[str, int | float], param_cls: type, overrides: dict[str, str]
 ) -> Mapping[str, int | float]:
     """
     Algorithm parameter factory.
@@ -179,8 +177,7 @@ def _make_alg_params(
 
 
 def _filter_to_scipy_options(
-    params: Mapping[str, int | float],
-    param_cls: type,
+    params: Mapping[str, int | float], param_cls: type
 ) -> Mapping[str, int | float]:
     """Strip *params* down to the keys ``param_cls`` declares.
 

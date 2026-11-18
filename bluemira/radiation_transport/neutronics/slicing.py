@@ -123,8 +123,7 @@ def cut_curve(
         elif alpha < beta:  # alpha is expected to be larger than beta.
             used_alpha += 1.0
         param_range = np.asarray(
-            np.linspace(used_alpha, beta, discretisation_level) % 1.0,
-            dtype=np.float64,
+            np.linspace(used_alpha, beta, discretisation_level) % 1.0, dtype=np.float64
         )
         yield param_range[::-1] if reverse else param_range
 
@@ -829,8 +828,7 @@ class DivertorWireAndExteriorCurve:
         end_pt = np.squeeze(self.convex_segments[-1][-1].key_points[1].xyz)
         add_cut_points(
             *calculate_plane_dir(
-                end_pt,
-                np.array([ending_cut[0], 0.0, ending_cut[-1]], dtype=np.float64),
+                end_pt, np.array([ending_cut[0], 0.0, ending_cut[-1]], dtype=np.float64)
             )
         )
 

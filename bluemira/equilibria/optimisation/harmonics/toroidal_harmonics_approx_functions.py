@@ -1015,10 +1015,7 @@ def toroidal_harmonic_approximation(
 
     # TODO @clmould: this will be updated in #4471
     collocation = collocation_points(
-        eq.get_LCFS(),
-        PointType.GRID_POINTS,
-        n_points=5,
-        use_mask=True,
+        eq.get_LCFS(), PointType.GRID_POINTS, n_points=5, use_mask=True
     )
 
     true_coilset_psi, fixed_psi, collocation_psi = _separate_psi_contributions(
@@ -1038,9 +1035,7 @@ def toroidal_harmonic_approximation(
     ]
 
     n_degrees_of_freedom = _set_n_degrees_of_freedom(
-        n_degrees_of_freedom,
-        len(mode_values),
-        len(th_params.th_coil_names),
+        n_degrees_of_freedom, len(mode_values), len(th_params.th_coil_names)
     )
 
     # Starting error for comparison

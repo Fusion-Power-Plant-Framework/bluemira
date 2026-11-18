@@ -43,11 +43,7 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.analysis import EqAnalysis
-from bluemira.equilibria.diagnostics import (
-    EqDiagnosticOptions,
-    EqSubplots,
-    PsiPlotType,
-)
+from bluemira.equilibria.diagnostics import EqDiagnosticOptions, EqSubplots, PsiPlotType
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find_legs import LegFlux
 from bluemira.equilibria.optimisation.constraints import (
@@ -63,13 +59,8 @@ from bluemira.equilibria.optimisation.harmonics.toroidal_harmonics_approx_functi
     toroidal_harmonic_approximation,
     toroidal_harmonic_grid_and_coil_setup,
 )
-from bluemira.equilibria.optimisation.problem._tikhonov import (  # noqa: PLC2701
-    TikhonovCurrentCOP,
-)
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
-)
+from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP  # noqa: PLC2701
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%
 # Get equilibrium data and plot
@@ -129,8 +120,7 @@ plt.show()
 # the TH amplitudes from our approximation.
 # %%
 th_constraint = ToroidalHarmonicConstraint(
-    th_result=th_result,
-    constraint_type="equality",
+    th_result=th_result, constraint_type="equality"
 )
 # Ensure the control coils are set appropriately
 # - could within the TH approx. region must have
@@ -205,13 +195,8 @@ th_move_legs_eq = deepcopy(ref_eq)
 
 th_move_legs = TikhonovCurrentCOP(
     eq=th_move_legs_eq,
-    targets=MagneticConstraintSet([
-        inner_leg,
-        outer_leg,
-    ]),
-    constraints=[
-        th_constraint,
-    ],
+    targets=MagneticConstraintSet([inner_leg, outer_leg]),
+    constraints=[th_constraint],
     gamma=1e-8,
 )
 
@@ -248,8 +233,7 @@ plt.show()
 
 # %%
 diag_ops = EqDiagnosticOptions(
-    psi_diff=PsiPlotType.PSI_ABS_DIFF,
-    split_psi_plots=EqSubplots.XZ_COMPONENT_PSI,
+    psi_diff=PsiPlotType.PSI_ABS_DIFF, split_psi_plots=EqSubplots.XZ_COMPONENT_PSI
 )
 eq_analysis = EqAnalysis(
     input_eq=th_move_legs_eq, diag_ops=diag_ops, reference_eq=ref_eq

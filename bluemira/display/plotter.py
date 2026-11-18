@@ -388,7 +388,7 @@ class BasePlotter(ABC):
         self.ax.set_xlabel(offset.format(X_LABEL))
         self.ax.set_ylabel(offset.format(Y_LABEL))
         if hasattr(self.ax, "set_zlabel"):
-            self.ax.set_zlabel(offset.format(Z_LABEL))  # type: ignore[ty:call-non-callable]
+            self.ax.set_zlabel(offset.format(Z_LABEL))  # type: ignore[ty:not-callable]
 
     def plot_2d(
         self,
@@ -664,7 +664,7 @@ class FacePlotter(BasePlotter):
     def _make_plot_3d(self):
         if self.options.show_faces:
             poly = art3d.Poly3DCollection([self._data], **self.options.face_options)
-            self.ax.add_collection3d(poly)  # type: ignore[ty:unresolved-attribute]
+            self.ax.add_collection3d(poly)  # type: ignore[ty:missing-attribute]
 
         for plotter in self._wplotters:
             plotter._ax = self.ax

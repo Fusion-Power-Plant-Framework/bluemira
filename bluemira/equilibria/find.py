@@ -788,7 +788,7 @@ def find_flux_surface_through_point(
 
     if isinstance(point_psi, np.ndarray):
         point_psi = point_psi.item()
-    flux_contours = get_contours(x, z, psi, point_psi)
+    flux_contours = get_contours(x, z, psi, cast("float", point_psi))
 
     error = [f_min(*group.T) for group in flux_contours]
 

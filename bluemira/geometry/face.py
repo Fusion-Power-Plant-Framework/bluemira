@@ -63,7 +63,7 @@ class BluemiraFace(BluemiraGeo):
         for w in cadapi.wires(self.shape):
             yield BluemiraWire(w)
 
-    def copy(self) -> BluemiraFace:  # type: ignore[ty:invalid-method-override]
+    def copy(self) -> BluemiraFace:  # type: ignore[ty:incompatible-method-override]
         """Make a copy of the BluemiraFace
 
         Returns

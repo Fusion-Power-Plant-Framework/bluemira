@@ -59,9 +59,7 @@ __all__ = [
 
 
 def fitfunc(
-    func: DFuncT,
-    data: npt.NDArray[np.float64],
-    order: int | None = None,
+    func: DFuncT, data: npt.NDArray[np.float64], order: int | None = None
 ) -> npt.NDArray[np.float64]:
     """
     Uses scipy's curve_fit to fit 1-D data to a custom function
@@ -127,10 +125,7 @@ def pshape(shape: ShapeFunction, psinorm: float, psio: float, psix: float) -> fl
 
 @nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure(
-    psi_norm: npt.NDArray[np.float64],
-    psio: float,
-    psix: float,
-    shape: ShapeFunction,
+    psi_norm: npt.NDArray[np.float64], psio: float, psix: float, shape: ShapeFunction
 ) -> npt.NDArray[np.float64]:
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -317,7 +312,7 @@ class SinglePowerFunc(ShapeFunction):
         super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
         return singlepowerfunc(x, *args)
 
 
@@ -335,7 +330,7 @@ class DoublePowerFunc(ShapeFunction):
         super().__init__(args)
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args: float) -> float | npt.NDArray:
         return doublepowerfunc(x, *args)
 
 
@@ -353,7 +348,7 @@ class LaoPolynomialFunc(ShapeFunction):
         super().__init__(coeffs_arr)
 
     @staticmethod
-    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:invalid-attribute-override]
+    def _dfunc(x: npt.NDArray, *args: float) -> npt.NDArray:  # type: ignore[ty:incompatible-attribute-override]
         return laopoly(x, *args)
 
 
@@ -373,7 +368,7 @@ class LuxonExpFunc(ShapeFunction):
             raise ValueError("The Luxon function only has one coefficient.")
 
     @staticmethod
-    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:  # type: ignore[ty:invalid-mutable-override]
+    def _dfunc(x: float | npt.NDArray, *args) -> float | npt.NDArray:
         return luxonexp(x, *args)
 
 
@@ -807,7 +802,7 @@ class CustomProfile(Profile):
         from p' and ff'.
     """
 
-    I_p: float | None  # type: ignore[ty:invalid-attribute-override]
+    I_p: float | None  # type: ignore[ty:incompatible-attribute-override]
 
     def __init__(
         self,

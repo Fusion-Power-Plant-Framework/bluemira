@@ -174,15 +174,7 @@ print(entities)
 
 # %%
 square = BluemiraFace(
-    tools.make_polygon(
-        [
-            [0, 0, 0],
-            [4, 0, 0],
-            [4, 4, 0],
-            [0, 4, 0],
-        ],
-        closed=True,
-    ),
+    tools.make_polygon([[0, 0, 0], [4, 0, 0], [4, 4, 0], [0, 4, 0]], closed=True),
     label="square",
 )
 
@@ -196,8 +188,7 @@ square.mesh_options = {
 with meshing.GmshSession():
     meshing.Mesh()(square, dim=2)
     (quad_mesh, quad_cell_tags, quad_facet_tags), quad_labels = model_to_mesh(
-        gmsh.model,
-        gdim=2,
+        gmsh.model, gdim=2
     )
 
 plot_mesh(quad_mesh)
@@ -208,17 +199,12 @@ plot_mesh(quad_mesh)
 # elements and the default meshing strategy.
 
 # %%
-square.mesh_options = {
-    "lcar": 0.5,
-    "physical_group": "square",
-    "element_type": "tri",
-}
+square.mesh_options = {"lcar": 0.5, "physical_group": "square", "element_type": "tri"}
 
 with meshing.GmshSession():
     meshing.Mesh()(square, dim=2)
     (tri_mesh, tri_cell_tags, tri_facet_tags), tri_labels = model_to_mesh(
-        gmsh.model,
-        gdim=2,
+        gmsh.model, gdim=2
     )
 
 plot_mesh(tri_mesh)
@@ -244,10 +230,7 @@ plot_mesh(tri_mesh)
 
 # %%
 settings = meshing.MeshSettings(
-    element_order=2,
-    mesh_size_min=0.1,
-    mesh_size_max=0.2,
-    optimise=True,
+    element_order=2, mesh_size_min=0.1, mesh_size_max=0.2, optimise=True
 )
 
 with meshing.GmshSession():
@@ -286,16 +269,10 @@ print(second_order_cell_tags.values)
 # the Gmsh model.
 
 # %%
-msh_to_xdmf(
-    "Mesh.msh",
-    dimensions=(0, 2),
-    directory=directory,
-)
+msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
 mesh, boundaries, subdomains, labels = import_mesh(
-    "Mesh",
-    directory=directory,
-    subdomains=True,
+    "Mesh", directory=directory, subdomains=True
 )
 
 print(mesh.geometry.x)
@@ -318,23 +295,12 @@ plot_dolfinx_mesh(mesh)
 
 # %%
 square_3d = BluemiraFace(
-    tools.make_polygon(
-        [
-            [0, 0, 0],
-            [4, 0, 0],
-            [4, 0, 4],
-            [0, 0, 4],
-        ],
-        closed=True,
-    ),
+    tools.make_polygon([[0, 0, 0], [4, 0, 0], [4, 0, 4], [0, 0, 4]], closed=True),
     label="square",
 )
 
 cube = tools.extrude_shape(square_3d, vec=[0, 4, 0])
-cube.mesh_options = {
-    "lcar": 0.5,
-    "physical_group": "cube",
-}
+cube.mesh_options = {"lcar": 0.5, "physical_group": "cube"}
 
 with meshing.GmshSession():
     meshing.Mesh()(cube, dim=3)
@@ -356,15 +322,7 @@ plot_mesh(volume_mesh)
 
 # %%
 square_hex = BluemiraFace(
-    tools.make_polygon(
-        [
-            [0, 0, 0],
-            [4, 0, 0],
-            [4, 0, 4],
-            [0, 0, 4],
-        ],
-        closed=True,
-    ),
+    tools.make_polygon([[0, 0, 0], [4, 0, 0], [4, 0, 4], [0, 0, 4]], closed=True),
     label="square",
 )
 
@@ -385,8 +343,7 @@ cube_hex.mesh_options = {
 with meshing.GmshSession():
     meshing.Mesh()(cube_hex, dim=3)
     (hex_mesh, hex_cell_tags, hex_facet_tags), hex_labels = model_to_mesh(
-        gmsh.model,
-        gdim=3,
+        gmsh.model, gdim=3
     )
 
 plot_mesh(hex_mesh)
@@ -421,22 +378,13 @@ cross_section = tools.make_polygon(
     closed=True,
 )
 
-tf_winding_pack = tools.sweep_shape(
-    cross_section,
-    tf_centreline,
-)
+tf_winding_pack = tools.sweep_shape(cross_section, tf_centreline)
 
-tf_winding_pack.mesh_options = {
-    "lcar": 0.8,
-    "physical_group": "tf_winding_pack",
-}
+tf_winding_pack.mesh_options = {"lcar": 0.8, "physical_group": "tf_winding_pack"}
 
 with meshing.GmshSession():
     meshing.Mesh()(tf_winding_pack, dim=3)
-    (tf_mesh, tf_cell_tags, tf_facet_tags), tf_labels = model_to_mesh(
-        gmsh.model,
-        gdim=3,
-    )
+    (tf_mesh, tf_cell_tags, tf_facet_tags), tf_labels = model_to_mesh(gmsh.model, gdim=3)
 
 plot_mesh(tf_mesh)
 

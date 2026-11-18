@@ -26,9 +26,7 @@ from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
 from bluemira.codes.utilities import get_code_interface
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, check_ccw, in_polygon
-from bluemira.radiation_transport.flux_surfaces_maker import (
-    _process_first_wall,
-)
+from bluemira.radiation_transport.flux_surfaces_maker import _process_first_wall
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable, Sequence
@@ -42,13 +40,9 @@ try:  # noqa: PLW0717
     from cherab.tools.emitters import RadiationFunction
     from raysect.core import Point3D, Vector3D, rotate_basis, translate
     from raysect.optical import World
-    from raysect.optical.material import (
-        VolumeTransform,  # type: ignore[ty:unresolved-import]
-    )
+    from raysect.optical.material import VolumeTransform  # type: ignore[ty:import-not-found]
     from raysect.optical.observer import PowerPipeline0D
-    from raysect.optical.observer.nonimaging.pixel import (  # type: ignore[ty:unresolved-import]
-        Pixel,
-    )
+    from raysect.optical.observer.nonimaging.pixel import Pixel  # type: ignore[ty:import-not-found]
     from raysect.primitive import Cylinder
 except ImportError:
     bluemira_error("Cherab not installed")
@@ -924,9 +918,7 @@ def grid_interpolator(
 
 
 def pfr_filter(
-    separatrix: Iterable[Coordinates] | Coordinates,
-    x_point_z: float,
-    atol: float = 0.01,
+    separatrix: Iterable[Coordinates] | Coordinates, x_point_z: float, atol: float = 0.01
 ) -> tuple[np.ndarray, ...]:
     """
     To filter out from the radiation interpolation domain the private flux regions

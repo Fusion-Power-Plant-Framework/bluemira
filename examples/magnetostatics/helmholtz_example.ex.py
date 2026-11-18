@@ -289,11 +289,7 @@ b_t_circular_arc = analytical_tf_cage2.field(
 one_over_r = analytical_tf_cage1.field(x_c, 0, 0)[1] * x_c * 1 / x_line
 f, ax = plt.subplots()
 ax.plot(x_line, b_t_trapezoids, label="Trapezoidal Prism")
-ax.plot(
-    x_line,
-    b_t_circular_arc,
-    label="Circular Arc",
-)
+ax.plot(x_line, b_t_circular_arc, label="Circular Arc")
 ax.plot(x_line, one_over_r, label=r"$\propto 1/r$", linestyle="dashed")
 ax.plot([2.5, 2.5], [-6, 27], color="k", ls="-.", alpha=0.5)
 ax.plot([3.5, 3.5], [-6, 27], color="k", ls="-.", alpha=0.5)

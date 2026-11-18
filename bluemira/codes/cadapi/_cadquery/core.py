@@ -23,11 +23,7 @@ from typing import TYPE_CHECKING, Literal, cast
 import cadquery as cq
 import numpy as np
 from OCP.BRep import BRep_Builder, BRep_Tool
-from OCP.BRepAdaptor import (
-    BRepAdaptor_CompCurve,
-    BRepAdaptor_Curve,
-    BRepAdaptor_Surface,
-)
+from OCP.BRepAdaptor import BRepAdaptor_CompCurve, BRepAdaptor_Curve, BRepAdaptor_Surface
 from OCP.BRepAlgoAPI import (
     BRepAlgoAPI_BuilderAlgo,
     BRepAlgoAPI_Check,
@@ -77,16 +73,7 @@ from OCP.TopAbs import (
 from OCP.TopExp import TopExp_Explorer
 from OCP.TopTools import TopTools_HSequenceOfShape, TopTools_ListOfShape
 from OCP.TopoDS import TopoDS, TopoDS_Compound
-from OCP.gp import (
-    gp_Ax1,
-    gp_Ax2,
-    gp_Dir,
-    gp_Pln,
-    gp_Pnt,
-    gp_Pnt2d,
-    gp_Trsf,
-    gp_Vec,
-)
+from OCP.gp import gp_Ax1, gp_Ax2, gp_Dir, gp_Pln, gp_Pnt, gp_Pnt2d, gp_Trsf, gp_Vec
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.cadapi._cadquery.aliases import (
@@ -356,9 +343,7 @@ def revolve_shape(
         if isinstance(shape, cq.Face):
             axis_start = cq.Vector(*base)
             axis_end = cq.Vector(
-                base[0] + direction[0],
-                base[1] + direction[1],
-                base[2] + direction[2],
+                base[0] + direction[0], base[1] + direction[1], base[2] + direction[2]
             )
             outer_wire = shape.outerWire()
             inner_wires = shape.innerWires()
@@ -368,10 +353,7 @@ def revolve_shape(
         # Wire / Edge: use OCC directly to get a Shell without end-caps.
         n = np.asarray(direction, dtype=float)
         n /= np.linalg.norm(n)
-        axis = gp_Ax1(
-            gp_Pnt(*[float(x) for x in base]),
-            gp_Dir(*n.tolist()),
-        )
+        axis = gp_Ax1(gp_Pnt(*[float(x) for x in base]), gp_Dir(*n.tolist()))
         maker = BRepPrimAPI_MakeRevol(shape.wrapped, axis, math.radians(degree))
         maker.Build()
         return cq.Shape.cast(maker.Shape())
@@ -628,11 +610,7 @@ def _sewn_solid(solid: apiSolid, tolerance: float = 1e-3) -> apiSolid:
 
 
 def offset_wire(
-    wire: apiWire,
-    thickness: float,
-    join: str = "intersect",
-    *,
-    open_wire: bool = True,
+    wire: apiWire, thickness: float, join: str = "intersect", *, open_wire: bool = True
 ) -> apiWire:
     """
     Offset *wire* by *thickness* in its plane.
@@ -1559,11 +1537,7 @@ def rotate_shape(
     return _apply_trsf_inplace(shape, trsf)
 
 
-def mirror_shape(
-    shape: apiShape,
-    base,
-    direction,
-) -> apiShape:
+def mirror_shape(shape: apiShape, base, direction) -> apiShape:
     """Return a mirrored copy of the shape about the plane defined by base+direction."""
     pnt = gp_Pnt(*[float(x) for x in base])
     n = np.asarray(direction, dtype=float)
@@ -2084,11 +2058,7 @@ def boolean_fragments(
 
 
 def loft(
-    profiles,
-    *,
-    solid: bool = False,
-    ruled: bool = False,
-    closed: bool = False,
+    profiles, *, solid: bool = False, ruled: bool = False, closed: bool = False
 ) -> apiShape:
     """Loft through a sequence of profiles.
 
@@ -2497,10 +2467,7 @@ def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> ap
         if not is_closed:
             sp = _vector_to_numpy(wire_edges[0].startPoint())
             ep = _vector_to_numpy(wire_edges[-1].endPoint())
-            skip_keys = {
-                tuple(round(c, 8) for c in sp),
-                tuple(round(c, 8) for c in ep),
-            }
+            skip_keys = {tuple(round(c, 8) for c in sp), tuple(round(c, 8) for c in ep)}
 
         seen: set[tuple] = set()
         exp_v = TopExp_Explorer(wire.wrapped, TopAbs_VERTEX)
@@ -2610,8 +2577,7 @@ def _piece_source_map(
 
 
 def _grow_keepers_by_overlap(
-    keepers: list[apiShape],
-    unique_pieces: list[tuple[apiShape, set[int]]],
+    keepers: list[apiShape], unique_pieces: list[tuple[apiShape, set[int]]]
 ) -> None:
     """Add shared-overlap pieces that touch already-kept pieces, layer by layer
     (pieces with N sources grow from pieces with N-1 sources). Mutates
@@ -2692,8 +2658,7 @@ def join_connect(shapes: list, dist_tolerance: float = 1e-4) -> apiShape:
 
 
 def repair_gaps_between_faces(
-    shapes: list[apiFace],
-    tolerance: float = 1e-2,
+    shapes: list[apiFace], tolerance: float = 1e-2
 ) -> list[apiFace]:
     """
     Repair small gaps between neighbouring Faces which should touch.

@@ -433,11 +433,7 @@ def greens_dbz_dx(
     inv_g2 = g2**-1
     inv_g2_2 = g2**-2
 
-    p1 = np.where(
-        logic_or,
-        0,
-        -MU_0_4PI * (k + e * g1 * inv_g2) * g3r * g3**-1.5,
-    )
+    p1 = np.where(logic_or, 0, -MU_0_4PI * (k + e * g1 * inv_g2) * g3r * g3**-1.5)
     p2 = np.where(
         logic_or,
         0,

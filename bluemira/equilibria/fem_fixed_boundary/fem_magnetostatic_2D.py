@@ -210,9 +210,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return func
 
     def set_mesh(
-        self,
-        mesh: dolfinx.mesh.Mesh,
-        boundaries: dolfinx.mesh.Mesh | str | None = None,
+        self, mesh: dolfinx.mesh.Mesh, boundaries: dolfinx.mesh.Mesh | str | None = None
     ):
         """
         Set the mesh for the solver
@@ -301,7 +299,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         super().define_g(g, dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
 
         dof_points = self.V.tabulate_dof_coordinates()
-        self.g.x.array[:] = self._g_func(dof_points)  # type: ignore[ty:unresolved-attribute]
+        self.g.x.array[:] = self._g_func(dof_points)  # type: ignore[ty:missing-union-attribute]
 
     def set_profiles(
         self,
@@ -388,7 +386,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                 " first, using set_profiles(p_prime, ff_prime)."
             )
 
-    def solve(  # type: ignore[ty:invalid-method-override]
+    def solve(  # type: ignore[ty:incompatible-method-override]
         self,
         *,
         plot: bool = False,

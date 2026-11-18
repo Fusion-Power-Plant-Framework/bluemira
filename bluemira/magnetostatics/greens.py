@@ -550,9 +550,7 @@ def greens_dbz_dx(
 
     e, k = _elliptic_integrals(k2)
     dK_dk2, dE_dk2 = _elliptic_derivatives(  # noqa: N806
-        e,
-        k,
-        k2,
+        e, k, k2
     )
 
     d2_is_zero = np.isclose(d2, 0.0)
@@ -597,11 +595,7 @@ def greens_all(
     zc: float | np.ndarray,
     x: float | np.ndarray,
     z: float | np.ndarray,
-) -> tuple[
-    float | np.ndarray,
-    float | np.ndarray,
-    float | np.ndarray,
-]:
+) -> tuple[float | np.ndarray, float | np.ndarray, float | np.ndarray]:
     """
     Calculate poloidal flux, radial field, and vertical field together.
 

@@ -27,9 +27,7 @@ if TYPE_CHECKING:
 
 
 def make_mutual_inductance_matrix(
-    coilset: CoilSet,
-    *,
-    square_coil: bool = False,
+    coilset: CoilSet, *, square_coil: bool = False
 ) -> np.ndarray:
     """
     Calculate the mutual inductance matrix of a coilset.
@@ -139,7 +137,7 @@ def _get_symmetric_coils(
         for j, sym_coil in enumerate(sym_stack):
             if np.allclose(coil, sym_coil[0], rtol=rtol):
                 sym_stack[j][1] += 1  # type: ignore[ty:unsupported-operator]
-                sym_coil[2].append(i)  # type: ignore[ty:unresolved-attribute]
+                sym_coil[2].append(i)  # type: ignore[ty:missing-union-attribute]
                 break
 
         else:

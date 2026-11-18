@@ -252,14 +252,7 @@ def _quad_helper(
     with warnings.catch_warnings():
         warnings.filterwarnings("error", category=IntegrationWarning)
 
-        result = quad(
-            func,
-            lower,
-            upper,
-            args=args,
-            points=points,
-            limit=limit,
-        )[0]
+        result = quad(func, lower, upper, args=args, points=points, limit=limit)[0]
 
     if not np.isfinite(result):
         raise MagnetostaticsIntegrationError(
@@ -333,8 +326,7 @@ def integrate(
         *(
             np.pi * n
             for n in range(
-                int(np.floor(lower / np.pi)) - 1,
-                int(np.ceil(upper / np.pi)) + 1,
+                int(np.floor(lower / np.pi)) - 1, int(np.ceil(upper / np.pi)) + 1
             )
         ),
     })
@@ -352,14 +344,7 @@ def integrate(
             if bb <= aa:
                 continue
 
-            result += _quad_helper(
-                func,
-                aa,
-                bb,
-                tuple(args),
-                sign=1.0,
-                limit=200,
-            )
+            result += _quad_helper(func, aa, bb, tuple(args), sign=1.0, limit=200)
 
     except (
         IntegrationWarning,

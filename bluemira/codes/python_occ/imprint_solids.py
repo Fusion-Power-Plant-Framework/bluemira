@@ -28,9 +28,7 @@ if TYPE_CHECKING:
 
 try:
     from OCC.Core.BOPAlgo import BOPAlgo_MakeConnected
-    from OCC.Core.TopTools import (
-        TopTools_ListIteratorOfListOfShape,  # type: ignore[ty:unresolved-import]
-    )
+    from OCC.Core.TopTools import TopTools_ListIteratorOfListOfShape  # type: ignore[ty:import-not-found]
     from OCC.Core.TopoDS import TopoDS_Face, TopoDS_Solid  # noqa: TC002
     from OCC.Extend.TopologyUtils import TopologyExplorer
 except ImportError:

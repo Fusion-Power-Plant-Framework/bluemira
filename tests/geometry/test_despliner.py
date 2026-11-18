@@ -28,10 +28,7 @@ from bluemira.geometry.wire import BluemiraWire
 @pytest.fixture
 def unit_box():
     face = BluemiraFace(
-        make_polygon(
-            [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-            closed=True,
-        )
+        make_polygon([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]], closed=True)
     )
     return extrude_shape(face, [0, 0, 1])
 
@@ -59,41 +56,24 @@ def bspline_surface_extruded():
 
 @pytest.fixture
 def bspline_xz_extruded():
-    points = {
-        "x": [0.0, 1.0, 0.0, -1.0, 0.0],
-        "y": 0,
-        "z": [1.0, 0.0, -1.0, 0.0, 1.0],
-    }
+    points = {"x": [0.0, 1.0, 0.0, -1.0, 0.0], "y": 0, "z": [1.0, 0.0, -1.0, 0.0, 1.0]}
     return extrude_shape(
-        BluemiraFace(interpolate_bspline(points, closed=True)),
-        [0, 1, 0],
+        BluemiraFace(interpolate_bspline(points, closed=True)), [0, 1, 0]
     )
 
 
 @pytest.fixture
 def bspline_xy_extruded():
-    points = {
-        "x": [0.0, 1.0, 0.0, -1.0, 0.0],
-        "y": [1.0, 0.0, -1.0, 0.0, 1.0],
-        "z": 0,
-    }
+    points = {"x": [0.0, 1.0, 0.0, -1.0, 0.0], "y": [1.0, 0.0, -1.0, 0.0, 1.0], "z": 0}
     return extrude_shape(
-        BluemiraFace(interpolate_bspline(points, closed=True)),
-        [0, 0, 1],
+        BluemiraFace(interpolate_bspline(points, closed=True)), [0, 0, 1]
     )
 
 
 @pytest.fixture
 def bezier_yz_extruded():
-    points = {
-        "x": 0,
-        "y": [0.0, 1.0, 0.0, -1.0, 0.0],
-        "z": [1.0, 0.0, -1.0, 0.0, 1.0],
-    }
-    return extrude_shape(
-        BluemiraFace(make_bezier(points, closed=True)),
-        [1, 0, 0],
-    )
+    points = {"x": 0, "y": [0.0, 1.0, 0.0, -1.0, 0.0], "z": [1.0, 0.0, -1.0, 0.0, 1.0]}
+    return extrude_shape(BluemiraFace(make_bezier(points, closed=True)), [1, 0, 0])
 
 
 @pytest.mark.cadquery_only
@@ -117,11 +97,7 @@ def test_check_solid_has_splines(request, fixture, expected):
 
 @pytest.fixture
 def solid_with_surfaces_of_revolution():
-    curve = make_bezier({
-        "x": [1.0, 1.5, 2.0],
-        "y": 0,
-        "z": [-1.0, 0.0, 1.0],
-    })
+    curve = make_bezier({"x": [1.0, 1.5, 2.0], "y": 0, "z": [-1.0, 0.0, 1.0]})
 
     closure = make_polygon({
         "x": [2.0, 0.0, 0.0, 1.0],
@@ -131,12 +107,7 @@ def solid_with_surfaces_of_revolution():
 
     face = BluemiraFace(BluemiraWire([curve, closure]))
 
-    return revolve_shape(
-        face,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=360,
-    )
+    return revolve_shape(face, base=(0, 0, 0), direction=(0, 0, 1), degree=360)
 
 
 @pytest.mark.cadquery_only
@@ -161,15 +132,7 @@ def test_check_solid_has_revolution(request, fixture, expected):
 @pytest.fixture
 def splined_d_face():
     """Create a D-shaped face with a spline edge."""
-    straight = make_polygon(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [1, 0, 1],
-            [0, 0, 1],
-        ],
-        closed=False,
-    )
+    straight = make_polygon([[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=False)
 
     spline = interpolate_bspline([
         [0, 0, 1],
@@ -185,10 +148,7 @@ def splined_d_face():
 
 
 @pytest.mark.cadquery_only
-@pytest.mark.parametrize(
-    "discretisation",
-    [20, 25, 50],
-)
+@pytest.mark.parametrize("discretisation", [20, 25, 50])
 def test_despline_xz_face(splined_d_face, discretisation):
     """
     Test despline_xz_face() is correctly desplining

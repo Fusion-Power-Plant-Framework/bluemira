@@ -255,10 +255,7 @@ def _calc_Bp2_int(
 
 
 def _calc_p_int(
-    p: npt.NDArray[np.float64],
-    x: npt.NDArray[np.float64],
-    dx: float,
-    dz: float,
+    p: npt.NDArray[np.float64], x: npt.NDArray[np.float64], dx: float, dz: float
 ) -> float:
     """
     Calculates the volume integral of plasma pressure.

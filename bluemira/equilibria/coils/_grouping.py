@@ -781,12 +781,12 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("_current_radius")
 
     @property
-    def _quad_x(self):  # type: ignore[ty:invalid-property-type-override]
+    def _quad_x(self):  # type: ignore[ty:incompatible-property-override]
         """Coil x quadratures"""
         return self.__quad_getter("_quad_x")
 
     @property
-    def _quad_z(self):  # type: ignore[ty:invalid-property-type-override]
+    def _quad_z(self):  # type: ignore[ty:incompatible-property-override]
         """Coil z quadratures"""
         return self.__quad_getter("_quad_z")
 
@@ -801,7 +801,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__quad_getter("_quad_dz")
 
     @property
-    def _quad_weighting(self):  # type: ignore[ty:invalid-property-type-override]
+    def _quad_weighting(self):  # type: ignore[ty:incompatible-property-override]
         """Coil quadrature weightings"""
         return self.__quad_getter("_quad_weighting")
 
@@ -936,14 +936,14 @@ class Circuit(CoilGroup):
         self.current = self._get_current()
 
     @CoilGroup.current.setter
-    def current(self, values: float | Sequence[float]):  # type: ignore[ty:invalid-property-type-override]
+    def current(self, values: float | Sequence[float]):  # type: ignore[ty:incompatible-property-override]
         """
         Set current for circuit
         """
         if isinstance(values, Sequence):
             # Force the same value of current for all coils
             values = values[0]
-        self._CoilGroup__setter("current", values)  # type: ignore[ty:unresolved-attribute]
+        self._CoilGroup__setter("current", values)  # type: ignore[ty:missing-attribute]
 
 
 class SymmetricCircuit(Circuit):
@@ -1059,7 +1059,7 @@ class SymmetricCircuit(Circuit):
         self.z = values[1]
 
     @Circuit.x.setter
-    def x(self, new_x: float | npt.NDArray):  # type: ignore[ty:invalid-property-type-override]
+    def x(self, new_x: float | npt.NDArray):  # type: ignore[ty:incompatible-property-override]
         """
         Set x coordinate of each coil
         """
@@ -1069,7 +1069,7 @@ class SymmetricCircuit(Circuit):
         self.symmetric_group.x -= self._symmetrise()[0]  # type: ignore[ty:invalid-assignment]
 
     @Circuit.z.setter
-    def z(self, new_z: float | npt.NDArray):  # type: ignore[ty:invalid-property-type-override]
+    def z(self, new_z: float | npt.NDArray):  # type: ignore[ty:incompatible-property-override]
         """
         Set z coordinate of each coil
         """
@@ -1297,14 +1297,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return CoilSet(*coils)
 
     @property
-    def area(self) -> float:  # type: ignore[ty:invalid-property-type-override]
+    def area(self) -> float:  # type: ignore[ty:incompatible-property-override]
         """
         Cross sectional area of CoilSet
         """
         return np.sum(super().area)
 
     @property
-    def volume(self) -> float:  # type: ignore[ty:invalid-property-type-override]
+    def volume(self) -> float:  # type: ignore[ty:incompatible-property-override]
         """
         Volume of Coilset
         """
@@ -1356,7 +1356,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         Automatically sets all coils that are not implicitly passive to control coils
         """  # noqa: DOC201
         instance = super().from_group_vecs(eqdsk)
-        instance.control = [  # type: ignore[ty:unresolved-attribute]
+        instance.control = [  # type: ignore[ty:missing-attribute]
             coil.name
             for coil in instance._get_coiltype(*control_coiltypes)
             if coil.name is not None

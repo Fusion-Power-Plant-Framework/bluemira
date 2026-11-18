@@ -184,9 +184,7 @@ class TestEllipticalFunctionsRegression:
         [np.pi / 6, np.pi / 4, np.pi / 3, np.pi / 2, np.pi],
     ]
     for _ in range(5):  # Tested with 80000, no failures
-        fixtures.extend([
-            rng.uniform(-2, 2, 10),
-        ])
+        fixtures.extend([rng.uniform(-2, 2, 10)])
 
     @pytest.mark.parametrize("m", fixtures)
     def test_ellipe_nb(self, m):
@@ -243,10 +241,7 @@ class TestGreenFieldsRegression2:
             )
         )
 
-    @pytest.mark.parametrize(
-        ("case", "xc", "zc", "x", "z"),
-        fixtures,
-    )
+    @pytest.mark.parametrize(("case", "xc", "zc", "x", "z"), fixtures)
     @pytest.mark.parametrize(
         ("new_greens_func", "old_greens_func"),
         [
@@ -258,16 +253,7 @@ class TestGreenFieldsRegression2:
             (greens_dpsi_dz, old_greens_dpsi_dz),
         ],
     )
-    def test_greens_func(
-        self,
-        case,
-        xc,
-        zc,
-        x,
-        z,
-        new_greens_func,
-        old_greens_func,
-    ):
+    def test_greens_func(self, case, xc, zc, x, z, new_greens_func, old_greens_func):
         self.runner(new_greens_func, old_greens_func, case, xc, zc, x, z)
 
     @pytest.mark.xfail(
@@ -386,14 +372,7 @@ class TestGreenFieldsRegression2:
 
 class TestGreensEdgeCases:
     @pytest.mark.parametrize(
-        "func",
-        [
-            greens_psi,
-            greens_dpsi_dz,
-            greens_dpsi_dx,
-            greens_Bx,
-            greens_dbz_dx,
-        ],
+        "func", [greens_psi, greens_dpsi_dz, greens_dpsi_dx, greens_Bx, greens_dbz_dx]
     )
     @pytest.mark.parametrize("axis_point", [[1, 1, 0, 0]])
     def test_greens_on_axis(self, func, axis_point):

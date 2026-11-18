@@ -178,9 +178,7 @@ def pytest_collection_modifyitems(items):
     if os.environ.get("BLUEMIRA_GEOMETRY_BACKEND", "freecad") == "cadquery":
         return
 
-    skip = pytest.mark.skip(
-        reason="Test requires the CadQuery geometry backend",
-    )
+    skip = pytest.mark.skip(reason="Test requires the CadQuery geometry backend")
 
     for item in items:
         if "cadquery_only" in item.keywords:

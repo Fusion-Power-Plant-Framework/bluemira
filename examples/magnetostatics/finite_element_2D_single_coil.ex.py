@@ -170,12 +170,7 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
 with warnings.catch_warnings() as w:
     warnings.simplefilter("error", UserWarning)
     try:
-        plot_mesh(
-            mesh,
-            ct,
-            filename="cell_tags.png",
-            cmap="viridis",
-        )
+        plot_mesh(mesh, ct, filename="cell_tags.png", cmap="viridis")
     except UserWarning:
         # Pyvista segfaults if a screen is not available
         bluemira_error("Can't view with pyvista, no framebuffer found")

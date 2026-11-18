@@ -37,11 +37,7 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
-from bluemira.equilibria.coils import (
-    Circuit,
-    Coil,
-    CoilSet,
-)
+from bluemira.equilibria.coils import Circuit, Coil, CoilSet
 from bluemira.equilibria.diagnostics import PicardDiagnostic, PicardDiagnosticOptions
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
@@ -54,10 +50,7 @@ from bluemira.equilibria.optimisation.problem import (
     UnconstrainedTikhonovCurrentGradientCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
-from bluemira.equilibria.solve import (
-    DudsonConvergence,
-    PicardIterator,
-)
+from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 plot_defaults()
 
@@ -95,13 +88,7 @@ for n, d in coil_dict.items():
     else:
         count.append(len(d["1"]["R"]))
         for i, (r1, z1, r2, z2) in enumerate(
-            zip(
-                d["1"]["R"],
-                d["1"]["Z"],
-                d["2"]["R"],
-                d["2"]["Z"],
-                strict=False,
-            )
+            zip(d["1"]["R"], d["1"]["Z"], d["2"]["R"], d["2"]["Z"], strict=False)
         ):
             coil_up = Coil(
                 r1,
@@ -187,18 +174,14 @@ constraints_set = MagneticConstraintSet(constraints_list)
 
 # %%
 current_opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
-    eq,
-    targets=constraints_set,
-    gamma=1e-8,
+    eq, targets=constraints_set, gamma=1e-8
 )
 
 program = PicardIterator(
     current_opt_problem,
     fixed_coils=True,
     diagnostic_plotting=PicardDiagnosticOptions(PicardDiagnostic.EQ),
-    convergence=DudsonConvergence(
-        1.0e-3,
-    ),
+    convergence=DudsonConvergence(1.0e-3),
     relaxation=0.0,  # FreeGSNKE blend = 0.0
     maxiter=50,
 )

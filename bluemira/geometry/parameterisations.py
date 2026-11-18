@@ -42,12 +42,7 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import (
-    OptVariable,
-    OptVariablesFrame,
-    VarDictT,
-    ov,
-)
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 from bluemira.utilities.plot_tools import str_to_latex
 from bluemira.utilities.tools import cross_2d_3d
 
@@ -653,7 +648,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PrincetonDOptVariables] = PrincetonDOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def create_shape(
         self, label: str = "", n_points: int = 2000, *, with_tangency: bool = False
@@ -1174,7 +1169,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[TripleArcOptVaribles] = TripleArcOptVaribles  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1538,7 +1533,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 1
-    optvar_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[SextupleArcOptVariables] = SextupleArcOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -1804,7 +1799,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
 
     __slots__ = ()
-    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PolySplineOptVariables] = PolySplineOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -2567,7 +2562,7 @@ class PictureFrame(
         for leg in ["inner", "upper", "lower", "outer"]
         for var in ["", "_vars"]
     )
-    optvar_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[PictureFrameOptVariables] = PictureFrameOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(
         self,
@@ -2803,7 +2798,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints = 8
-    optvar_cls: type[ProcessDOptVariables] = ProcessDOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[ProcessDOptVariables] = ProcessDOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def f_ineq_constraint(self) -> npt.NDArray[np.float64]:
         """
@@ -2872,10 +2867,7 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
 
         return gradient
 
-    def create_shape(
-        self,
-        label: str = "",
-    ) -> BluemiraWire:
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the Process D geometry.
 
@@ -2902,19 +2894,11 @@ class ProcessD(GeometryParameterisation[ProcessDOptVariables]):
             ),
             # Outboard lower
             self._make_arc(
-                center=(x2, 0, 0),
-                a=x3 - x2 - offset,
-                b=-z4 - offset,
-                start=-90,
-                end=0,
+                center=(x2, 0, 0), a=x3 - x2 - offset, b=-z4 - offset, start=-90, end=0
             ),
             # Outboard upper
             self._make_arc(
-                center=(x2, 0, 0),
-                a=x3 - x2 - offset,
-                b=z2 - offset,
-                start=0,
-                end=90,
+                center=(x2, 0, 0), a=x3 - x2 - offset, b=z2 - offset, start=0, end=90
             ),
             # Inboard upper
             self._make_arc(
@@ -3163,11 +3147,7 @@ class SimpleCarabinerOptVariables(OptVariablesFrame):
     """
 
     x1: OptVariable = ov(
-        "x1",
-        3.0,
-        lower_bound=1.5,
-        upper_bound=10,
-        description="Inner limb radius",
+        "x1", 3.0, lower_bound=1.5, upper_bound=10, description="Inner limb radius"
     )
     z1: OptVariable = ov(
         "z1",
@@ -3177,11 +3157,7 @@ class SimpleCarabinerOptVariables(OptVariablesFrame):
         description="Vertical position of the inner limb start point",
     )
     dz: OptVariable = ov(
-        "dz",
-        0.0,
-        lower_bound=-1.0,
-        upper_bound=1.0,
-        description="Vertical offset",
+        "dz", 0.0, lower_bound=-1.0, upper_bound=1.0, description="Vertical offset"
     )
     r1: OptVariable = ov(
         "r1", 1.0, lower_bound=0.5, upper_bound=3, description="1st arc radius"
@@ -3193,18 +3169,10 @@ class SimpleCarabinerOptVariables(OptVariablesFrame):
         "r3", 1.5, lower_bound=0.5, upper_bound=3, description="3rd arc radius"
     )
     a1: OptVariable = ov(
-        "a1",
-        90,
-        lower_bound=70,
-        upper_bound=120,
-        description="1st arc angle [degrees]",
+        "a1", 90, lower_bound=70, upper_bound=120, description="1st arc angle [degrees]"
     )
     a2: OptVariable = ov(
-        "a2",
-        100,
-        lower_bound=70,
-        upper_bound=120,
-        description="2nd arc angle [degrees]",
+        "a2", 100, lower_bound=70, upper_bound=120, description="2nd arc angle [degrees]"
     )
 
 
@@ -3240,7 +3208,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
 
     __slots__ = ()
     n_ineq_constraints: int = 4
-    optvar_cls: type[SimpleCarabinerOptVariables] = SimpleCarabinerOptVariables  # type: ignore[ty:invalid-mutable-override]
+    optvar_cls: type[SimpleCarabinerOptVariables] = SimpleCarabinerOptVariables  # type: ignore[ty:incompatible-mutable-override]
 
     def __init__(self, variables: SimpleCarabinerOptVariables | VarDictT | None = None):
         super().__init__(variables)
@@ -3285,10 +3253,7 @@ class SimpleCarabiner(GeometryParameterisation[SimpleCarabinerOptVariables]):
 
         wires = []
         for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
-            zip(
-                *_my_get_centres([a1, a2], [r1, r2], x1, z1, 0),
-                strict=True,
-            ),
+            zip(*_my_get_centres([a1, a2], [r1, r2], x1, z1, 0), strict=True)
         ):
             arc = make_circle(
                 ri,

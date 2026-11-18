@@ -385,7 +385,4 @@ def user_banner() -> list[str]:
     list[str]
         The text for the banner containing user and platform information
     """
-    return [
-        f"User             : {getuser()}",
-        f"Platform         : {get_platform()}",
-    ]
+    return [f"User             : {getuser()}", f"Platform         : {get_platform()}"]

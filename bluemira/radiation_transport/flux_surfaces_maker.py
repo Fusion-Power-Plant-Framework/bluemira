@@ -147,11 +147,7 @@ def _analyse_DN(
     yz_plane,
     dl: float | None = None,
 ) -> tuple[
-    np.ndarray,
-    np.ndarray,
-    tuple[list[PartialOpenFluxSurface], ...],
-    float,
-    float,
+    np.ndarray, np.ndarray, tuple[list[PartialOpenFluxSurface], ...], float, float
 ]:
     """
     Calculation for the case of double nulls.

@@ -104,11 +104,7 @@ def line(a, b):
     BluemiraWire
         Straight wire connecting the two points.
     """
-    return make_polygon({
-        "x": [a[0], b[0]],
-        "y": [0, 0],
-        "z": [a[1], b[1]],
-    })
+    return make_polygon({"x": [a[0], b[0]], "y": [0, 0], "z": [a[1], b[1]]})
 
 
 def spline(p):
@@ -127,11 +123,7 @@ def spline(p):
     p = np.array(p)
 
     return interpolate_bspline(
-        Coordinates({
-            "x": p[:, 0],
-            "y": np.zeros(len(p)),
-            "z": p[:, 1],
-        })
+        Coordinates({"x": p[:, 0], "y": np.zeros(len(p)), "z": p[:, 1]})
     )
 
 
@@ -154,15 +146,9 @@ def plot_face(face, ax, color, alpha=0.65, *, show_vertices: bool = True):
     q = FacePlotter()
     q.options.view = "xz"
 
-    q.options.face_options = {
-        "color": color,
-        "alpha": alpha,
-    }
+    q.options.face_options = {"color": color, "alpha": alpha}
 
-    q.options.wire_options = {
-        "color": "black",
-        "linewidth": 1,
-    }
+    q.options.wire_options = {"color": "black", "linewidth": 1}
 
     q.plot_2d(face, ax=ax, show=False)
 
@@ -208,22 +194,10 @@ def visualise_desplining(original, desplined):
 # and then create the face.
 # %%
 # Full right boundary of xz face
-p = [
-    (1.00, 0.00),
-    (0.94, 0.50),
-    (0.90, 1.00),
-    (0.94, 1.50),
-    (1.00, 2.00),
-]
+p = [(1.00, 0.00), (0.94, 0.50), (0.90, 1.00), (0.94, 1.50), (1.00, 2.00)]
 
 # Left boundary of xz face
-p_left = [
-    (0.00, 0.00),
-    (-0.06, 0.50),
-    (-0.10, 1.00),
-    (-0.06, 1.50),
-    (0.00, 2.00),
-]
+p_left = [(0.00, 0.00), (-0.06, 0.50), (-0.10, 1.00), (-0.06, 1.50), (0.00, 2.00)]
 
 xz_face_1 = BluemiraFace(
     BluemiraWire([
@@ -244,10 +218,7 @@ xz_face_1 = BluemiraFace(
 # %%
 face_1_desplined = despline_xz_face(xz_face_1, 15)
 
-visualise_desplining(
-    xz_face_1,
-    face_1_desplined,
-)
+visualise_desplining(xz_face_1, face_1_desplined)
 
 # %% [markdown]
 # ## Toy Model - 2 (Two faces touching each other)
@@ -273,22 +244,10 @@ visualise_desplining(
 # %%
 
 # Right boundary of face 2
-p_right = [
-    (1.60, 0.50),
-    (1.54, 0.75),
-    (1.50, 1.00),
-    (1.54, 1.25),
-    (1.60, 1.50),
-]
+p_right = [(1.60, 0.50), (1.54, 0.75), (1.50, 1.00), (1.54, 1.25), (1.60, 1.50)]
 
 # Small face touches only the middle part
-p_shared = [
-    (0.94, 0.50),
-    (0.91, 0.75),
-    (0.90, 1.00),
-    (0.91, 1.25),
-    (0.94, 1.50),
-]
+p_shared = [(0.94, 0.50), (0.91, 0.75), (0.90, 1.00), (0.91, 1.25), (0.94, 1.50)]
 
 
 xz_face_2 = BluemiraFace(
@@ -301,10 +260,7 @@ xz_face_2 = BluemiraFace(
     label="xz face 2",
 )
 
-face_2_desplined = despline_xz_face(
-    xz_face_2,
-    10,
-)
+face_2_desplined = despline_xz_face(xz_face_2, 10)
 
 # %% [markdown]
 # Let's visualise what happened
@@ -314,12 +270,7 @@ overlap = boolean_common(face_1_desplined, face_2_desplined)
 
 fig = plt.figure(figsize=(16, 6))
 
-gs = fig.add_gridspec(
-    1,
-    3,
-    width_ratios=[1, 1, 0.5],
-    wspace=0.28,
-)
+gs = fig.add_gridspec(1, 3, width_ratios=[1, 1, 0.5], wspace=0.28)
 
 ax0 = fig.add_subplot(gs[0])
 ax1 = fig.add_subplot(gs[1])
@@ -347,10 +298,7 @@ ax1.set_title("Overlap after desplining")
 q = FacePlotter()
 q.options.view = "xz"
 
-q.options.face_options = {
-    "color": "gold",
-    "alpha": 1.0,
-}
+q.options.face_options = {"color": "gold", "alpha": 1.0}
 
 q.options.show_wires = False
 
@@ -406,24 +354,13 @@ plt.show()
 # repaired XZ face for face 2 whose boundary now follows that of
 # face 1 along the overlapping region.
 # %%
-face_2_repaired = repair_overlapping_geos(
-    face_2_desplined,
-    [face_1_desplined],
-)
+face_2_repaired = repair_overlapping_geos(face_2_desplined, [face_1_desplined])
 
-overlap = boolean_common(
-    face_1_desplined,
-    face_2_desplined,
-)
+overlap = boolean_common(face_1_desplined, face_2_desplined)
 
 fig = plt.figure(figsize=(16, 6))
 
-gs = fig.add_gridspec(
-    1,
-    4,
-    width_ratios=[1, 1, 0.18, 1],
-    wspace=0.28,
-)
+gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 0.18, 1], wspace=0.28)
 
 ax0 = fig.add_subplot(gs[0])
 ax1 = fig.add_subplot(gs[1])
@@ -452,10 +389,7 @@ ax1.set_title("Overlap after desplining")
 q = FacePlotter()
 q.options.view = "xz"
 
-q.options.face_options = {
-    "color": "gold",
-    "alpha": 1.0,
-}
+q.options.face_options = {"color": "gold", "alpha": 1.0}
 
 q.options.show_wires = False
 
@@ -502,19 +436,11 @@ plt.show()
 # face 2 along the overlapping region.
 # %%
 # %%
-face_1_repaired = repair_overlapping_geos(
-    face_1_desplined,
-    [face_2_desplined],
-)
+face_1_repaired = repair_overlapping_geos(face_1_desplined, [face_2_desplined])
 
 fig = plt.figure(figsize=(16, 6))
 
-gs = fig.add_gridspec(
-    1,
-    4,
-    width_ratios=[1, 1, 0.18, 1],
-    wspace=0.28,
-)
+gs = fig.add_gridspec(1, 4, width_ratios=[1, 1, 0.18, 1], wspace=0.28)
 
 ax0 = fig.add_subplot(gs[0])
 ax1 = fig.add_subplot(gs[1])
@@ -543,10 +469,7 @@ ax1.set_title("Overlap after desplining")
 q = FacePlotter()
 q.options.view = "xz"
 
-q.options.face_options = {
-    "color": "gold",
-    "alpha": 1.0,
-}
+q.options.face_options = {"color": "gold", "alpha": 1.0}
 
 q.options.show_wires = False
 
@@ -563,17 +486,9 @@ ax_zoom.set_yticks([])
 
 
 # Repaired: face 2 gets priority
-plot_face(
-    face_1_repaired,
-    ax2,
-    "mediumseagreen",
-)
+plot_face(face_1_repaired, ax2, "mediumseagreen")
 
-plot_face(
-    face_2_desplined,
-    ax2,
-    "salmon",
-)
+plot_face(face_2_desplined, ax2, "salmon")
 
 ax2.set_title("Repaired")
 
@@ -614,31 +529,13 @@ plt.show()
 # ### faces 3 and 4
 # %%
 # Shared boundary
-p_shared_3 = [
-    (1.00, 0.50),
-    (1.06, 0.75),
-    (1.10, 1.00),
-    (1.06, 1.25),
-    (1.00, 1.50),
-]
+p_shared_3 = [(1.00, 0.50), (1.06, 0.75), (1.10, 1.00), (1.06, 1.25), (1.00, 1.50)]
 
 # Left boundary of XZ face 3
-p_left_3 = [
-    (0.15, 0.00),
-    (0.09, 0.50),
-    (0.05, 1.00),
-    (0.09, 1.50),
-    (0.15, 2.00),
-]
+p_left_3 = [(0.15, 0.00), (0.09, 0.50), (0.05, 1.00), (0.09, 1.50), (0.15, 2.00)]
 
 # Right boundary of XZ face 4
-p_right_4 = [
-    (1.60, 0.50),
-    (1.66, 0.75),
-    (1.70, 1.00),
-    (1.66, 1.25),
-    (1.60, 1.50),
-]
+p_right_4 = [(1.60, 0.50), (1.66, 0.75), (1.70, 1.00), (1.66, 1.25), (1.60, 1.50)]
 
 
 # XZ face 3
@@ -669,81 +566,34 @@ face_4 = BluemiraFace(
 # %% [markdown]
 # Despline, and plot comparisons
 # %%
-face_3_desplined = despline_xz_face(
-    face_3,
-    20,
-)
+face_3_desplined = despline_xz_face(face_3, 20)
 
-face_4_desplined = despline_xz_face(
-    face_4,
-    60,
-)
+face_4_desplined = despline_xz_face(face_4, 60)
 
-overlap_3_4 = boolean_common(
-    face_3_desplined,
-    face_4_desplined,
-)
+overlap_3_4 = boolean_common(face_3_desplined, face_4_desplined)
 
 fig, ax = plt.subplots(1, 3, figsize=(12, 5))
 
 
 # Original: touching exactly
-plot_face(
-    face_3,
-    ax[0],
-    "cornflowerblue",
-    show_vertices=False,
-)
-plot_face(
-    face_4,
-    ax[0],
-    "salmon",
-    show_vertices=False,
-)
+plot_face(face_3, ax[0], "cornflowerblue", show_vertices=False)
+plot_face(face_4, ax[0], "salmon", show_vertices=False)
 
 ax[0].set_title("Original")
 
 
 # After different desplining
-plot_face(
-    face_3_desplined,
-    ax[1],
-    "cornflowerblue",
-    show_vertices=False,
-)
-plot_face(
-    face_4_desplined,
-    ax[1],
-    "salmon",
-    show_vertices=False,
-)
+plot_face(face_3_desplined, ax[1], "cornflowerblue", show_vertices=False)
+plot_face(face_4_desplined, ax[1], "salmon", show_vertices=False)
 # Highlight overlap in gold
 if overlap_3_4:
     for region in overlap_3_4:
-        plot_face(
-            region,
-            ax[1],
-            "gold",
-            alpha=1.0,
-            show_vertices=False,
-        )
+        plot_face(region, ax[1], "gold", alpha=1.0, show_vertices=False)
 ax[1].set_title("Gaps and overlaps after desplining")
 
 # Zoomed-in gap
-plot_face(
-    face_3_desplined,
-    ax[2],
-    "cornflowerblue",
-    alpha=1.0,
-    show_vertices=False,
-)
-plot_face(
-    face_4_desplined,
-    ax[2],
-    "salmon",
-    alpha=1.0,
-    show_vertices=False,
-)
+plot_face(face_3_desplined, ax[2], "cornflowerblue", alpha=1.0, show_vertices=False)
+plot_face(face_4_desplined, ax[2], "salmon", alpha=1.0, show_vertices=False)
 
 ax[2].set_title("Gap (zoomed in)")
 
@@ -778,83 +628,36 @@ plt.show()
 # Let's see how this works for our two desplined faces. First, run the
 # overlap fixer as before.
 # %%
-face_4_repaired = repair_overlapping_geos(
-    face_4_desplined,
-    [face_3_desplined],
-)
+face_4_repaired = repair_overlapping_geos(face_4_desplined, [face_3_desplined])
 # %% [markdown]
 # Now, sew, and plot comparisons
 # %%
 
 xz_repaired_3, xz_repaired_4 = repair_gaps_between_faces(
-    [
-        face_3_desplined,
-        face_4_repaired,
-    ],
-    tolerance=1e-2,
+    [face_3_desplined, face_4_repaired], tolerance=1e-2
 )
 _, ax = plt.subplots(1, 4, figsize=(20, 5))
 
 # Before repairing
-plot_face(
-    face_3_desplined,
-    ax[0],
-    "cornflowerblue",
-    show_vertices=True,
-)
-plot_face(
-    face_4_repaired,
-    ax[0],
-    "salmon",
-    show_vertices=True,
-)
+plot_face(face_3_desplined, ax[0], "cornflowerblue", show_vertices=True)
+plot_face(face_4_repaired, ax[0], "salmon", show_vertices=True)
 ax[0].set_title("Before repairing")
 
 # Before repairing - zoomed in
-plot_face(
-    face_3_desplined,
-    ax[1],
-    "cornflowerblue",
-    show_vertices=True,
-)
-plot_face(
-    face_4_repaired,
-    ax[1],
-    "salmon",
-    show_vertices=True,
-)
+plot_face(face_3_desplined, ax[1], "cornflowerblue", show_vertices=True)
+plot_face(face_4_repaired, ax[1], "salmon", show_vertices=True)
 ax[1].set_title("Before repairing (zoomed in)")
 ax[1].set_xlim(0.9, 1.2)
 ax[1].set_ylim(0.75, 1.2)
 
 # After repairing
-plot_face(
-    xz_repaired_3,
-    ax[2],
-    "cornflowerblue",
-    show_vertices=True,
-)
-plot_face(
-    xz_repaired_4,
-    ax[2],
-    "salmon",
-    show_vertices=True,
-)
+plot_face(xz_repaired_3, ax[2], "cornflowerblue", show_vertices=True)
+plot_face(xz_repaired_4, ax[2], "salmon", show_vertices=True)
 ax[2].set_title("After repairing")
 
 # After repairing - zoomed in
-plot_face(
-    xz_repaired_3,
-    ax[3],
-    "cornflowerblue",
-    show_vertices=True,
-)
-plot_face(
-    xz_repaired_4,
-    ax[3],
-    "salmon",
-    show_vertices=True,
-)
+plot_face(xz_repaired_3, ax[3], "cornflowerblue", show_vertices=True)
+plot_face(xz_repaired_4, ax[3], "salmon", show_vertices=True)
 ax[3].set_title("After repairing (zoomed in)")
 ax[3].set_xlim(0.9, 1.2)
 ax[3].set_ylim(0.75, 1.2)

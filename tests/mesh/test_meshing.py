@@ -31,102 +31,56 @@ def clean_gmsh():
 
 
 def make_square_surface(
-    lcar: float,
-    *,
-    surface_lcar: float | None = None,
+    lcar: float, *, surface_lcar: float | None = None
 ) -> BluemiraFace:
     poly = tools.make_polygon(
-        [
-            [0, 0, 0],
-            [1, 0, 0],
-            [1, 0, 1],
-            [0, 0, 1],
-        ],
-        closed=True,
-        label="poly",
+        [[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]], closed=True, label="poly"
     )
-    poly.mesh_options = {
-        "lcar": lcar,
-        "physical_group": "poly",
-    }
+    poly.mesh_options = {"lcar": lcar, "physical_group": "poly"}
 
     surface = BluemiraFace(poly, label="surf")
-    surface.mesh_options = {
-        "physical_group": "coil",
-    }
+    surface.mesh_options = {"physical_group": "coil"}
 
     if surface_lcar is not None:
-        surface.mesh_options = {
-            "lcar": surface_lcar,
-            "physical_group": "coil",
-        }
+        surface.mesh_options = {"lcar": surface_lcar, "physical_group": "coil"}
 
     return surface
 
 
 def make_box(x0: float, x1: float):
     rectangle = tools.make_polygon(
-        [
-            [x0, x1, x1, x0],
-            [0, 0, 10, 10],
-            [0, 0, 0, 0],
-        ],
-        closed=True,
+        [[x0, x1, x1, x0], [0, 0, 10, 10], [0, 0, 0, 0]], closed=True
     )
 
-    return tools.extrude_shape(
-        BluemiraFace(rectangle),
-        [0, 0, 10],
-    )
+    return tools.extrude_shape(BluemiraFace(rectangle), [0, 0, 10])
 
 
 def make_cylinder():
-    circle = tools.make_circle(
-        radius=5,
-        center=[0, 0, 0],
-    )
+    circle = tools.make_circle(radius=5, center=[0, 0, 0])
 
-    return tools.extrude_shape(
-        BluemiraFace(circle),
-        [0, 0, 10],
-    )
+    return tools.extrude_shape(BluemiraFace(circle), [0, 0, 10])
 
 
 def make_two_solid_component(shape_a, shape_b) -> Component:
     universe = Component("universe")
 
-    PhysicalComponent(
-        "shape_a",
-        shape=shape_a,
-        parent=universe,
-    )
-    PhysicalComponent(
-        "shape_b",
-        shape=shape_b,
-        parent=universe,
-    )
+    PhysicalComponent("shape_a", shape=shape_a, parent=universe)
+    PhysicalComponent("shape_b", shape=shape_b, parent=universe)
 
     return universe
 
 
-def physical_groups_by_name(
-    dim: int,
-) -> dict[str, set[tuple[int, int]]]:
+def physical_groups_by_name(dim: int) -> dict[str, set[tuple[int, int]]]:
     return {
         gmsh.model.getPhysicalName(group_dim, tag): {
             (group_dim, int(entity_tag))
-            for entity_tag in gmsh.model.getEntitiesForPhysicalGroup(
-                group_dim,
-                tag,
-            )
+            for entity_tag in gmsh.model.getEntitiesForPhysicalGroup(group_dim, tag)
         }
         for group_dim, tag in gmsh.model.getPhysicalGroups(dim)
     }
 
 
-def assert_entities_have_elements(
-    dim_tags: list[tuple[int, int]],
-) -> None:
+def assert_entities_have_elements(dim_tags: list[tuple[int, int]]) -> None:
     for dim_tag in dim_tags:
         _, element_tags, _ = gmsh.model.mesh.getElements(*dim_tag)
 
@@ -225,10 +179,7 @@ def test_mesh_requires_initialised_gmsh(tmp_path):
     surface = make_square_surface(lcar=0.5)
     meshfile = (tmp_path / "Mesh.msh").as_posix()
 
-    with pytest.raises(
-        RuntimeError,
-        match="Gmsh is not initialised",
-    ):
+    with pytest.raises(RuntimeError, match="Gmsh is not initialised"):
         meshing.Mesh(meshfile=meshfile)(surface)
 
 
@@ -237,14 +188,7 @@ def test_mesh_requires_initialised_gmsh(tmp_path):
 # -----------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    ("lcar", "nodes_num"),
-    [
-        (0.1, 40),
-        (0.25, 16),
-        (0.5, 8),
-    ],
-)
+@pytest.mark.parametrize(("lcar", "nodes_num"), [(0.1, 40), (0.25, 16), (0.5, 8)])
 def test_mesh_poly(lcar, nodes_num, tmp_path):
     surface = make_square_surface(lcar)
     meshfile = (tmp_path / "Mesh.msh").as_posix()
@@ -252,54 +196,24 @@ def test_mesh_poly(lcar, nodes_num, tmp_path):
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(meshfile=meshfile)(surface)
 
-    msh_to_xdmf(
-        "Mesh.msh",
-        dimensions=(0, 1),
-        directory=tmp_path,
-    )
+    msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=tmp_path)
 
-    _, boundaries, _, labels = import_mesh(
-        "Mesh",
-        directory=tmp_path,
-        subdomains=True,
-    )
+    _, boundaries, _, labels = import_mesh("Mesh", directory=tmp_path, subdomains=True)
 
     assert (boundaries.values == labels["poly"]).sum() == nodes_num
 
 
-@pytest.mark.parametrize(
-    ("lcar", "nodes_num"),
-    [
-        (0.1, 40),
-        (0.25, 16),
-        (0.5, 8),
-    ],
-)
-def test_finer_surface_lcar_overrides_boundary_lcar(
-    lcar,
-    nodes_num,
-    tmp_path,
-):
-    surface = make_square_surface(
-        lcar,
-        surface_lcar=lcar / 2,
-    )
+@pytest.mark.parametrize(("lcar", "nodes_num"), [(0.1, 40), (0.25, 16), (0.5, 8)])
+def test_finer_surface_lcar_overrides_boundary_lcar(lcar, nodes_num, tmp_path):
+    surface = make_square_surface(lcar, surface_lcar=lcar / 2)
     meshfile = (tmp_path / "Mesh.msh").as_posix()
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(meshfile=meshfile)(surface)
 
-    msh_to_xdmf(
-        "Mesh.msh",
-        dimensions=(0, 1),
-        directory=tmp_path,
-    )
+    msh_to_xdmf("Mesh.msh", dimensions=(0, 1), directory=tmp_path)
 
-    _, boundaries, _, labels = import_mesh(
-        "Mesh",
-        directory=tmp_path,
-        subdomains=True,
-    )
+    _, boundaries, _, labels = import_mesh("Mesh", directory=tmp_path, subdomains=True)
 
     assert (boundaries.values == labels["poly"]).sum() == 2 * nodes_num
 
@@ -311,18 +225,12 @@ def test_finer_surface_lcar_overrides_boundary_lcar(
 
 def test_mesh_3d_solid(tmp_path):
     cylinder = make_cylinder()
-    cylinder.mesh_options = {
-        "lcar": 1.0,
-        "physical_group": "cylinder",
-    }
+    cylinder.mesh_options = {"lcar": 1.0, "physical_group": "cylinder"}
 
     meshfile = (tmp_path / "cylinder.msh").as_posix()
 
     with meshing.GmshSession(logfile=None):
-        entities = meshing.Mesh(meshfile=meshfile)(
-            cylinder,
-            dim=3,
-        )
+        entities = meshing.Mesh(meshfile=meshfile)(cylinder, dim=3)
 
         volumes = gmsh.model.getEntities(3)
 
@@ -337,10 +245,7 @@ def test_mesh_3d_solid(tmp_path):
         assert dim == 3
         assert gmsh.model.getPhysicalName(dim, physical_tag) == "cylinder"
 
-        grouped_volumes = gmsh.model.getEntitiesForPhysicalGroup(
-            dim,
-            physical_tag,
-        )
+        grouped_volumes = gmsh.model.getEntitiesForPhysicalGroup(dim, physical_tag)
 
         assert grouped_volumes.tolist() == [volumes[0][1]]
 
@@ -353,33 +258,19 @@ def test_mesh_3d_solid(tmp_path):
     assert (tmp_path / "cylinder.msh").exists()
 
 
-def test_mesh_3d_overlapping_solids_preserves_provenance(
-    tmp_path,
-):
+def test_mesh_3d_overlapping_solids_preserves_provenance(tmp_path):
     box_a = make_box(0, 10)
     box_b = make_box(5, 15)
 
-    box_a.mesh_options = {
-        "lcar": 2.0,
-        "physical_group": "box_a",
-    }
-    box_b.mesh_options = {
-        "lcar": 1.0,
-        "physical_group": "box_b",
-    }
+    box_a.mesh_options = {"lcar": 2.0, "physical_group": "box_a"}
+    box_b.mesh_options = {"lcar": 1.0, "physical_group": "box_b"}
 
-    universe = make_two_solid_component(
-        box_a,
-        box_b,
-    )
+    universe = make_two_solid_component(box_a, box_b)
 
     meshfile = (tmp_path / "overlapping_boxes.msh").as_posix()
 
     with meshing.GmshSession(logfile=None):
-        entities = meshing.Mesh(meshfile=meshfile)(
-            universe,
-            dim=3,
-        )
+        entities = meshing.Mesh(meshfile=meshfile)(universe, dim=3)
 
         volumes = gmsh.model.getEntities(3)
 
@@ -387,10 +278,7 @@ def test_mesh_3d_overlapping_solids_preserves_provenance(
 
         by_name = {entity.physical_group: set(entity.dim_tags) for entity in entities}
 
-        assert set(by_name) == {
-            "box_a",
-            "box_b",
-        }
+        assert set(by_name) == {"box_a", "box_b"}
 
         assert len(by_name["box_a"]) == 2
         assert len(by_name["box_b"]) == 2
@@ -408,33 +296,19 @@ def test_mesh_3d_overlapping_solids_preserves_provenance(
         assert_entities_have_elements(volumes)
 
 
-def test_mesh_3d_touching_solids_are_conforming(
-    tmp_path,
-):
+def test_mesh_3d_touching_solids_are_conforming(tmp_path):
     box_a = make_box(0, 10)
     box_b = make_box(10, 20)
 
-    box_a.mesh_options = {
-        "lcar": 2.0,
-        "physical_group": "box_a",
-    }
-    box_b.mesh_options = {
-        "lcar": 1.0,
-        "physical_group": "box_b",
-    }
+    box_a.mesh_options = {"lcar": 2.0, "physical_group": "box_a"}
+    box_b.mesh_options = {"lcar": 1.0, "physical_group": "box_b"}
 
-    universe = make_two_solid_component(
-        box_a,
-        box_b,
-    )
+    universe = make_two_solid_component(box_a, box_b)
 
     meshfile = (tmp_path / "touching_boxes.msh").as_posix()
 
     with meshing.GmshSession(logfile=None):
-        entities = meshing.Mesh(meshfile=meshfile)(
-            universe,
-            dim=3,
-        )
+        entities = meshing.Mesh(meshfile=meshfile)(universe, dim=3)
 
         volumes = gmsh.model.getEntities(3)
 
@@ -449,18 +323,12 @@ def test_mesh_3d_touching_solids_are_conforming(
 
         boundary_a = set(
             gmsh.model.getBoundary(
-                list(by_name["box_a"]),
-                combined=False,
-                oriented=False,
-                recursive=False,
+                list(by_name["box_a"]), combined=False, oriented=False, recursive=False
             )
         )
         boundary_b = set(
             gmsh.model.getBoundary(
-                list(by_name["box_b"]),
-                combined=False,
-                oriented=False,
-                recursive=False,
+                list(by_name["box_b"]), combined=False, oriented=False, recursive=False
             )
         )
 
@@ -497,10 +365,7 @@ def test_mesh_settings_defaults():
         {"mesh_size_min": -0.1},
         {"mesh_size_max": 0},
         {"mesh_size_max": -1},
-        {
-            "mesh_size_min": 2.0,
-            "mesh_size_max": 1.0,
-        },
+        {"mesh_size_min": 2.0, "mesh_size_max": 1.0},
     ],
 )
 def test_mesh_settings_reject_invalid_values(kwargs):
@@ -516,16 +381,10 @@ def test_mesh_uses_default_settings_when_none_are_given():
 
 def test_mesh_preserves_supplied_settings():
     settings = meshing.MeshSettings(
-        algorithm_2d=5,
-        element_order=2,
-        mesh_size_max=0.5,
-        optimise=False,
+        algorithm_2d=5, element_order=2, mesh_size_max=0.5, optimise=False
     )
 
-    mesh = meshing.Mesh(
-        meshfile="Mesh.msh",
-        settings=settings,
-    )
+    mesh = meshing.Mesh(meshfile="Mesh.msh", settings=settings)
 
     assert mesh.settings is settings
 
@@ -543,10 +402,9 @@ def test_mesh_applies_gmsh_settings(tmp_path):
     )
 
     with meshing.GmshSession(logfile=None):
-        meshing.Mesh(
-            meshfile=(tmp_path / "mesh.msh").as_posix(),
-            settings=settings,
-        )(surface, dim=2)
+        meshing.Mesh(meshfile=(tmp_path / "mesh.msh").as_posix(), settings=settings)(
+            surface, dim=2
+        )
 
         assert gmsh.option.get_number("Mesh.Algorithm") == 5
         assert gmsh.option.get_number("Mesh.Algorithm3D") == 4
@@ -556,9 +414,7 @@ def test_mesh_applies_gmsh_settings(tmp_path):
         assert gmsh.option.get_number("Mesh.Optimize") == 0
 
 
-def test_default_settings_replace_previous_custom_settings(
-    tmp_path,
-):
+def test_default_settings_replace_previous_custom_settings(tmp_path):
     surface = make_square_surface(lcar=1.0)
 
     custom = meshing.MeshSettings(
@@ -585,8 +441,7 @@ def test_default_settings_replace_previous_custom_settings(
         assert gmsh.option.get_number("Mesh.Optimize") == 0
 
         meshing.Mesh(
-            modelname="default",
-            meshfile=(tmp_path / "default.msh").as_posix(),
+            modelname="default", meshfile=(tmp_path / "default.msh").as_posix()
         )(surface)
 
         assert gmsh.option.get_number("Mesh.Algorithm") == 6
@@ -598,25 +453,17 @@ def test_default_settings_replace_previous_custom_settings(
 
 
 @pytest.mark.parametrize("order", [1, 2])
-def test_element_order_is_applied(
-    order,
-    tmp_path,
-):
+def test_element_order_is_applied(order, tmp_path):
     surface = make_square_surface(lcar=0.25)
 
-    settings = meshing.MeshSettings(
-        element_order=order,
-    )
+    settings = meshing.MeshSettings(element_order=order)
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
-            meshfile=(tmp_path / f"order_{order}.msh").as_posix(),
-            settings=settings,
+            meshfile=(tmp_path / f"order_{order}.msh").as_posix(), settings=settings
         )(surface, dim=2)
 
-        element_types, _, _ = gmsh.model.mesh.getElements(
-            dim=2,
-        )
+        element_types, _, _ = gmsh.model.mesh.getElements(dim=2)
 
         generated_orders = {
             gmsh.model.mesh.getElementProperties(element_type)[2]
@@ -626,18 +473,14 @@ def test_element_order_is_applied(
         assert generated_orders == {order}
 
 
-def test_smaller_mesh_size_max_creates_finer_mesh(
-    tmp_path,
-):
+def test_smaller_mesh_size_max_creates_finer_mesh(tmp_path):
     coarse_surface = make_square_surface(lcar=10.0)
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
             modelname="coarse",
             meshfile=(tmp_path / "coarse.msh").as_posix(),
-            settings=meshing.MeshSettings(
-                mesh_size_max=0.5,
-            ),
+            settings=meshing.MeshSettings(mesh_size_max=0.5),
         )(coarse_surface, dim=2)
 
         coarse_elements = number_of_elements(2)
@@ -648,9 +491,7 @@ def test_smaller_mesh_size_max_creates_finer_mesh(
         meshing.Mesh(
             modelname="fine",
             meshfile=(tmp_path / "fine.msh").as_posix(),
-            settings=meshing.MeshSettings(
-                mesh_size_max=0.1,
-            ),
+            settings=meshing.MeshSettings(mesh_size_max=0.1),
         )(fine_surface, dim=2)
 
         fine_elements = number_of_elements(2)
@@ -664,24 +505,17 @@ def test_mesh_size_min_is_applied(tmp_path):
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
             meshfile=(tmp_path / "mesh.msh").as_posix(),
-            settings=meshing.MeshSettings(
-                mesh_size_min=0.2,
-            ),
+            settings=meshing.MeshSettings(mesh_size_min=0.2),
         )(surface, dim=2)
 
         assert gmsh.option.get_number("Mesh.MeshSizeMin") == pytest.approx(0.2)
 
 
 @pytest.mark.parametrize("algorithm", [5, 6])
-def test_2d_mesh_algorithms_generate_mesh(
-    algorithm,
-    tmp_path,
-):
+def test_2d_mesh_algorithms_generate_mesh(algorithm, tmp_path):
     surface = make_square_surface(lcar=0.25)
 
-    settings = meshing.MeshSettings(
-        algorithm_2d=algorithm,
-    )
+    settings = meshing.MeshSettings(algorithm_2d=algorithm)
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
@@ -694,19 +528,11 @@ def test_2d_mesh_algorithms_generate_mesh(
 
 
 @pytest.mark.parametrize("algorithm", [1, 4])
-def test_3d_mesh_algorithms_generate_mesh(
-    algorithm,
-    tmp_path,
-):
+def test_3d_mesh_algorithms_generate_mesh(algorithm, tmp_path):
     cylinder = make_cylinder()
-    cylinder.mesh_options = {
-        "lcar": 1.0,
-        "physical_group": "cylinder",
-    }
+    cylinder.mesh_options = {"lcar": 1.0, "physical_group": "cylinder"}
 
-    settings = meshing.MeshSettings(
-        algorithm_3d=algorithm,
-    )
+    settings = meshing.MeshSettings(algorithm_3d=algorithm)
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
@@ -718,26 +544,14 @@ def test_3d_mesh_algorithms_generate_mesh(
         assert number_of_elements(3) > 0
 
 
-@pytest.mark.parametrize(
-    ("optimise", "expected"),
-    [
-        (True, 1),
-        (False, 0),
-    ],
-)
-def test_optimise_setting_is_applied(
-    optimise,
-    expected,
-    tmp_path,
-):
+@pytest.mark.parametrize(("optimise", "expected"), [(True, 1), (False, 0)])
+def test_optimise_setting_is_applied(optimise, expected, tmp_path):
     surface = make_square_surface(lcar=0.25)
 
     with meshing.GmshSession(logfile=None):
         meshing.Mesh(
             meshfile=(tmp_path / "mesh.msh").as_posix(),
-            settings=meshing.MeshSettings(
-                optimise=optimise,
-            ),
+            settings=meshing.MeshSettings(optimise=optimise),
         )(surface, dim=2)
 
         assert gmsh.option.get_number("Mesh.Optimize") == expected
@@ -752,47 +566,26 @@ def make_polygon_face(points, label, lcar):
     """Create a face with a named physical group and target mesh size."""
     wire = tools.make_polygon(points, closed=True, label=label)
     face = BluemiraFace(wire, label=label)
-    face.mesh_options = {
-        "lcar": lcar,
-        "physical_group": label,
-    }
+    face.mesh_options = {"lcar": lcar, "physical_group": label}
     return face
 
 
 def make_nested_rectangle_component(lcar):
     """Build a rectangular ring and its inner region as separate faces."""
     outer = tools.make_polygon(
-        [
-            [0, 0, 0],
-            [4, 0, 0],
-            [4, 0, 4],
-            [0, 0, 4],
-        ],
-        closed=True,
-        label="pf_outer",
+        [[0, 0, 0], [4, 0, 0], [4, 0, 4], [0, 0, 4]], closed=True, label="pf_outer"
     )
     inner = tools.make_polygon(
-        [
-            [0.15, 0, 0.15],
-            [3.85, 0, 0.15],
-            [3.85, 0, 3.85],
-            [0.15, 0, 3.85],
-        ],
+        [[0.15, 0, 0.15], [3.85, 0, 0.15], [3.85, 0, 3.85], [0.15, 0, 3.85]],
         closed=True,
         label="pf_inner",
     )
 
     ring = BluemiraFace([outer, inner], label="pf_outer")
-    ring.mesh_options = {
-        "lcar": lcar / 2,
-        "physical_group": "pf_outer",
-    }
+    ring.mesh_options = {"lcar": lcar / 2, "physical_group": "pf_outer"}
 
     core = BluemiraFace(inner, label="pf_inner")
-    core.mesh_options = {
-        "lcar": lcar,
-        "physical_group": "pf_inner",
-    }
+    core.mesh_options = {"lcar": lcar, "physical_group": "pf_inner"}
 
     component = Component("pf_coil")
     PhysicalComponent("outer_region", ring, parent=component)
@@ -822,33 +615,19 @@ def test_mesh_nested_rectangles_with_thin_outer_region(lcar):
 def make_square_with_circular_inclusion(lcar):
     """Build a square ring around a circular region."""
     square = tools.make_polygon(
-        [
-            [-1, 0, -1],
-            [1, 0, -1],
-            [1, 0, 1],
-            [-1, 0, 1],
-        ],
+        [[-1, 0, -1], [1, 0, -1], [1, 0, 1], [-1, 0, 1]],
         closed=True,
         label="square_boundary",
     )
     circle = tools.make_circle(
-        radius=0.35,
-        center=[0, 0, 0],
-        label="circle_boundary",
-        axis=(0, 1, 0),
+        radius=0.35, center=[0, 0, 0], label="circle_boundary", axis=(0, 1, 0)
     )
 
     ring = BluemiraFace([square, circle], label="square_region")
-    ring.mesh_options = {
-        "lcar": lcar,
-        "physical_group": "square_region",
-    }
+    ring.mesh_options = {"lcar": lcar, "physical_group": "square_region"}
 
     disk = BluemiraFace(circle, label="circular_region")
-    disk.mesh_options = {
-        "lcar": lcar / 8,
-        "physical_group": "circular_region",
-    }
+    disk.mesh_options = {"lcar": lcar / 8, "physical_group": "circular_region"}
 
     component = Component("square_with_circle")
     PhysicalComponent("square_region", ring, parent=component)
@@ -943,43 +722,25 @@ def gmsh_mock(monkeypatch):
     mesh = Mock()
 
     monkeypatch.setattr(
-        meshing,
-        "gmsh",
-        SimpleNamespace(
-            model=SimpleNamespace(
-                mesh=mesh,
-            )
-        ),
+        meshing, "gmsh", SimpleNamespace(model=SimpleNamespace(mesh=mesh))
     )
 
     return mesh
 
 
-def make_entity(
-    *,
-    dim_tags,
-    element_type=None,
-    mesh_strategy="unstructured",
-):
+def make_entity(*, dim_tags, element_type=None, mesh_strategy="unstructured"):
     source = SimpleNamespace(
         mesh_options=meshing.MeshOptions(
-            element_type=element_type,
-            mesh_strategy=mesh_strategy,
+            element_type=element_type, mesh_strategy=mesh_strategy
         )
     )
 
-    return meshing.GmshEntity(
-        source=source,
-        dim_tags=dim_tags,
-    )
+    return meshing.GmshEntity(source=source, dim_tags=dim_tags)
 
 
 def test_none_element_type_is_ignored(gmsh_mock):
     """Entities with no element_type configured are ignored."""
-    entity = make_entity(
-        dim_tags=[(2, 1)],
-        element_type=None,
-    )
+    entity = make_entity(dim_tags=[(2, 1)], element_type=None)
 
     meshing._apply_element_type([entity])
 
@@ -989,67 +750,39 @@ def test_none_element_type_is_ignored(gmsh_mock):
 
 def test_invalid_mesh_strategy_raises():
     """An unsupported mesh strategy is rejected."""
-    entity = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-        mesh_strategy="banana",
-    )
+    entity = make_entity(dim_tags=[(2, 1)], element_type="quad", mesh_strategy="banana")
 
-    with pytest.raises(
-        meshing.MeshOptionsError,
-        match="Unsupported mesh_strategy",
-    ):
+    with pytest.raises(meshing.MeshOptionsError, match="Unsupported mesh_strategy"):
         meshing._apply_element_type([entity])
 
 
 def test_no_dim_tags_raises():
     """Element type options cannot be applied to empty entities."""
-    entity = make_entity(
-        dim_tags=[],
-        element_type="quad",
-    )
+    entity = make_entity(dim_tags=[], element_type="quad")
 
-    with pytest.raises(
-        meshing.MeshOptionsError,
-        match="no Gmsh entities were found",
-    ):
+    with pytest.raises(meshing.MeshOptionsError, match="no Gmsh entities were found"):
         meshing._apply_element_type([entity])
 
 
 def test_quad_not_allowed_on_volume():
     """Quad elements cannot be assigned to a volume."""
-    entity = make_entity(
-        dim_tags=[(3, 7)],
-        element_type="quad",
-    )
+    entity = make_entity(dim_tags=[(3, 7)], element_type="quad")
 
-    with pytest.raises(
-        meshing.MeshOptionsError,
-        match="incompatible with dimension 3",
-    ):
+    with pytest.raises(meshing.MeshOptionsError, match="incompatible with dimension 3"):
         meshing._apply_element_type([entity])
 
 
 def test_hex_not_allowed_on_surface():
     """Hex elements cannot be assigned to surfaces."""
-    entity = make_entity(
-        dim_tags=[(2, 7)],
-        element_type="hex",
-    )
+    entity = make_entity(dim_tags=[(2, 7)], element_type="hex")
 
-    with pytest.raises(
-        meshing.MeshOptionsError,
-        match="incompatible with dimension 2",
-    ):
+    with pytest.raises(meshing.MeshOptionsError, match="incompatible with dimension 2"):
         meshing._apply_element_type([entity])
 
 
 def test_tet_not_allowed_on_surface():
     """Tet elements cannot be assigned to surfaces."""
-    entity = make_entity(
-        dim_tags=[(2, 7)],
-        element_type="tet",
-    )
+    entity = make_entity(dim_tags=[(2, 7)], element_type="tet")
 
     with pytest.raises(meshing.MeshOptionsError):
         meshing._apply_element_type([entity])
@@ -1057,10 +790,7 @@ def test_tet_not_allowed_on_surface():
 
 def test_tri_not_allowed_on_volume():
     """Tri elements cannot be assigned to volumes."""
-    entity = make_entity(
-        dim_tags=[(3, 7)],
-        element_type="tri",
-    )
+    entity = make_entity(dim_tags=[(3, 7)], element_type="tri")
 
     with pytest.raises(meshing.MeshOptionsError):
         meshing._apply_element_type([entity])
@@ -1072,9 +802,7 @@ def test_structured_tri_warns(monkeypatch):
     monkeypatch.setattr(meshing, "bluemira_warn", warning)
 
     entity = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="tri",
-        mesh_strategy="structured",
+        dim_tags=[(2, 1)], element_type="tri", mesh_strategy="structured"
     )
 
     meshing._apply_element_type([entity])
@@ -1088,9 +816,7 @@ def test_structured_tet_warns(monkeypatch):
     monkeypatch.setattr(meshing, "bluemira_warn", warning)
 
     entity = make_entity(
-        dim_tags=[(3, 1)],
-        element_type="tet",
-        mesh_strategy="structured",
+        dim_tags=[(3, 1)], element_type="tet", mesh_strategy="structured"
     )
 
     meshing._apply_element_type([entity])
@@ -1101,9 +827,7 @@ def test_structured_tet_warns(monkeypatch):
 def test_quad_unstructured_sets_recombine(gmsh_mock):
     """Unstructured quad surfaces request recombination"""
     entity = make_entity(
-        dim_tags=[(2, 42)],
-        element_type="quad",
-        mesh_strategy="unstructured",
+        dim_tags=[(2, 42)], element_type="quad", mesh_strategy="unstructured"
     )
 
     meshing._apply_element_type([entity])
@@ -1114,25 +838,19 @@ def test_quad_unstructured_sets_recombine(gmsh_mock):
 def test_quad_structured_sets_transfinite(gmsh_mock):
     """Structured quad surfaces use transfinite meshing."""
     entity = make_entity(
-        dim_tags=[(2, 42)],
-        element_type="quad",
-        mesh_strategy="structured",
+        dim_tags=[(2, 42)], element_type="quad", mesh_strategy="structured"
     )
 
     meshing._apply_element_type([entity])
 
     gmsh_mock.set_transfinite_automatic.assert_called_once_with(
-        [(2, 42)],
-        recombine=True,
+        [(2, 42)], recombine=True
     )
 
 
 def test_tri_generates_no_surface_constraints(gmsh_mock):
     """Tri surface meshing requires no extra constraints."""
-    entity = make_entity(
-        dim_tags=[(2, 12)],
-        element_type="tri",
-    )
+    entity = make_entity(dim_tags=[(2, 12)], element_type="tri")
 
     meshing._apply_element_type([entity])
 
@@ -1143,25 +861,18 @@ def test_tri_generates_no_surface_constraints(gmsh_mock):
 def test_hex_structured_sets_transfinite(gmsh_mock):
     """Structured hex volumes use transfinite meshing."""
     entity = make_entity(
-        dim_tags=[(3, 8)],
-        element_type="hex",
-        mesh_strategy="structured",
+        dim_tags=[(3, 8)], element_type="hex", mesh_strategy="structured"
     )
 
     meshing._apply_element_type([entity])
 
-    gmsh_mock.set_transfinite_automatic.assert_called_once_with(
-        [(3, 8)],
-        recombine=True,
-    )
+    gmsh_mock.set_transfinite_automatic.assert_called_once_with([(3, 8)], recombine=True)
 
 
 def test_hex_unstructured_currently_no_api_calls(gmsh_mock):
     """Unstructured hex requests not implemented."""
     entity = make_entity(
-        dim_tags=[(3, 8)],
-        element_type="hex",
-        mesh_strategy="unstructured",
+        dim_tags=[(3, 8)], element_type="hex", mesh_strategy="unstructured"
     )
 
     meshing._apply_element_type([entity])
@@ -1172,15 +883,9 @@ def test_hex_unstructured_currently_no_api_calls(gmsh_mock):
 
 def test_same_tag_same_options_allowed(gmsh_mock):
     """Identical mesh options may be applied to the same entity."""
-    e1 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-    )
+    e1 = make_entity(dim_tags=[(2, 1)], element_type="quad")
 
-    e2 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-    )
+    e2 = make_entity(dim_tags=[(2, 1)], element_type="quad")
 
     meshing._apply_element_type([e1, e2])
 
@@ -1189,35 +894,20 @@ def test_same_tag_same_options_allowed(gmsh_mock):
 
 def test_same_surface_conflicting_element_type_raises():
     """Conflicting element types on the same surface are rejected."""
-    e1 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-    )
+    e1 = make_entity(dim_tags=[(2, 1)], element_type="quad")
 
-    e2 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="tri",
-    )
+    e2 = make_entity(dim_tags=[(2, 1)], element_type="tri")
 
-    with pytest.raises(
-        meshing.MeshOptionsError,
-        match="Conflicting mesh options",
-    ):
+    with pytest.raises(meshing.MeshOptionsError, match="Conflicting mesh options"):
         meshing._apply_element_type([e1, e2])
 
 
 def test_same_surface_conflicting_strategy_raises():
     """Conflicting mesh strategies on the same surface are rejected."""
-    e1 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-        mesh_strategy="structured",
-    )
+    e1 = make_entity(dim_tags=[(2, 1)], element_type="quad", mesh_strategy="structured")
 
     e2 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-        mesh_strategy="unstructured",
+        dim_tags=[(2, 1)], element_type="quad", mesh_strategy="unstructured"
     )
 
     with pytest.raises(meshing.MeshOptionsError):
@@ -1226,10 +916,7 @@ def test_same_surface_conflicting_strategy_raises():
 
 def test_dimension_one_entities_are_ignored(gmsh_mock):
     """Unsupported dimensions are silently ignored."""
-    entity = make_entity(
-        dim_tags=[(1, 99)],
-        element_type="quad",
-    )
+    entity = make_entity(dim_tags=[(1, 99)], element_type="quad")
 
     meshing._apply_element_type([entity])
 
@@ -1239,15 +926,9 @@ def test_dimension_one_entities_are_ignored(gmsh_mock):
 
 def test_same_numeric_tag_in_different_dimensions_not_conflict(gmsh_mock):
     """Surface and volume tags are tracked independently."""
-    e1 = make_entity(
-        dim_tags=[(2, 1)],
-        element_type="quad",
-    )
+    e1 = make_entity(dim_tags=[(2, 1)], element_type="quad")
 
-    e2 = make_entity(
-        dim_tags=[(3, 1)],
-        element_type="hex",
-    )
+    e2 = make_entity(dim_tags=[(3, 1)], element_type="hex")
 
     meshing._apply_element_type([e1, e2])
 

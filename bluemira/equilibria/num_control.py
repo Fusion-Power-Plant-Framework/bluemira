@@ -121,9 +121,7 @@ class VirtualController(CoilGroup):
         self.adjust_currents(currents)
 
     def psi(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> npt.NDArray[np.float64]:
         """
         Get the psi array of the VirtualController

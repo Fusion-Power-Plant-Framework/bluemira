@@ -95,70 +95,32 @@ def _debug_plot(test_class, source):
     fig, ax = plt.subplots(figsize=(12, 6))
 
     # Reference solutions
-    ax.plot(
-        test_class.Bx_ref,
-        color="navy",
-        lw=6,
-        label="Bx reference",
-    )
+    ax.plot(test_class.Bx_ref, color="navy", lw=6, label="Bx reference")
 
-    ax.plot(
-        test_class.Bz_ref,
-        color="darkred",
-        lw=6,
-        label="Bz reference",
-    )
+    ax.plot(test_class.Bz_ref, color="darkred", lw=6, label="Bz reference")
 
     bx_colors = plt.cm.Blues(np.linspace(0.4, 1.0, len(test_class.ANGLES)))
     by_colors = plt.cm.Greens(np.linspace(0.4, 1.0, len(test_class.ANGLES)))
     bz_colors = plt.cm.Reds(np.linspace(0.4, 1.0, len(test_class.ANGLES)))
 
-    linestyles = [
-        "-",
-        "--",
-        "-.",
-        ":",
-        (0, (3, 1, 1, 1)),
-        (0, (5, 2)),
-    ]
+    linestyles = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 2))]
 
     for i, angle in enumerate(test_class.ANGLES):
-        Bx, By, Bz = test_class._field_for_angle(
-            source_obj,
-            angle,
-        )
+        Bx, By, Bz = test_class._field_for_angle(source_obj, angle)
 
         ls = linestyles[i % len(linestyles)]
 
-        ax.plot(
-            Bx,
-            color=bx_colors[i],
-            linestyle=ls,
-            label=f"Bx {angle}°",
-        )
+        ax.plot(Bx, color=bx_colors[i], linestyle=ls, label=f"Bx {angle}°")
 
-        ax.plot(
-            By,
-            color=by_colors[i],
-            linestyle=ls,
-            label=f"By {angle}°",
-        )
+        ax.plot(By, color=by_colors[i], linestyle=ls, label=f"By {angle}°")
 
-        ax.plot(
-            Bz,
-            color=bz_colors[i],
-            linestyle=ls,
-            label=f"Bz {angle}°",
-        )
+        ax.plot(Bz, color=bz_colors[i], linestyle=ls, label=f"Bz {angle}°")
 
     ax.set_title(f"{source} field comparison")
     ax.set_xlabel("Boundary index")
     ax.set_ylabel("Field [T]")
     ax.grid(visible=True)
-    ax.legend(
-        ncol=3,
-        fontsize="small",
-    )
+    ax.legend(ncol=3, fontsize="small")
 
     fig.tight_layout()
     plt.show()
@@ -217,37 +179,15 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
         x = cls.border_rectangle.x
         z = cls.border_rectangle.z
 
-        cls.Bx_ref = cls.current * semianalytic_Bx(
-            cls.xc,
-            cls.zc,
-            x,
-            z,
-            cls.dx,
-            cls.dz,
-        )
+        cls.Bx_ref = cls.current * semianalytic_Bx(cls.xc, cls.zc, x, z, cls.dx, cls.dz)
 
-        cls.Bz_ref = cls.current * semianalytic_Bz(
-            cls.xc,
-            cls.zc,
-            x,
-            z,
-            cls.dx,
-            cls.dz,
-        )
+        cls.Bz_ref = cls.current * semianalytic_Bz(cls.xc, cls.zc, x, z, cls.dx, cls.dz)
 
     @classmethod
     def _make_boundary_points(cls, n_edge=50):
-        x_horizontal = np.linspace(
-            cls.xc - cls.dx,
-            cls.xc + cls.dx,
-            n_edge,
-        )
+        x_horizontal = np.linspace(cls.xc - cls.dx, cls.xc + cls.dx, n_edge)
 
-        z_vertical = np.linspace(
-            cls.zc - cls.dz,
-            cls.zc + cls.dz,
-            n_edge,
-        )
+        z_vertical = np.linspace(cls.zc - cls.dz, cls.zc + cls.dz, n_edge)
 
         x = np.concatenate([
             x_horizontal,
@@ -263,11 +203,7 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
             z_vertical[::-1],
         ])
 
-        return Coordinates({
-            "x": x,
-            "y": np.zeros_like(x),
-            "z": z,
-        })
+        return Coordinates({"x": x, "y": np.zeros_like(x), "z": z})
 
     def _field_for_angle(self, source, angle):
         points = deepcopy(self.border_rectangle)
@@ -285,49 +221,28 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_Bx_matches_axisymmetric_solution(self, source, angle):
-        Bx, _, _ = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        Bx, _, _ = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            Bx,
-            self.Bx_ref,
-            rtol=0.0,
-            atol=5e-7,
-            err_msg=f"{source=}, {angle=}",
+            Bx, self.Bx_ref, rtol=0.0, atol=5e-7, err_msg=f"{source=}, {angle=}"
         )
 
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_By_is_zero(self, source, angle):
-        _, By, _ = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        _, By, _ = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            By,
-            0.0,
-            rtol=0.0,
-            atol=6e-10,
-            err_msg=f"{source=}, {angle=}",
+            By, 0.0, rtol=0.0, atol=6e-10, err_msg=f"{source=}, {angle=}"
         )
 
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_Bz_matches_axisymmetric_solution(self, source, angle):
-        _, _, Bz = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        _, _, Bz = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            Bz,
-            self.Bz_ref,
-            rtol=0.0,
-            atol=6e-10,
-            err_msg=f"{source=}, {angle=}",
+            Bz, self.Bz_ref, rtol=0.0, atol=6e-10, err_msg=f"{source=}, {angle=}"
         )
 
     def test_mirror_singularity(self):
@@ -400,23 +315,9 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
         x = cls.border_rectangle.x
         z = cls.border_rectangle.z
 
-        cls.Bx_ref = cls.current * semianalytic_Bx(
-            cls.xc,
-            cls.zc,
-            x,
-            z,
-            cls.dx,
-            cls.dz,
-        )
+        cls.Bx_ref = cls.current * semianalytic_Bx(cls.xc, cls.zc, x, z, cls.dx, cls.dz)
 
-        cls.Bz_ref = cls.current * semianalytic_Bz(
-            cls.xc,
-            cls.zc,
-            x,
-            z,
-            cls.dx,
-            cls.dz,
-        )
+        cls.Bz_ref = cls.current * semianalytic_Bz(cls.xc, cls.zc, x, z, cls.dx, cls.dz)
         cls.border_rectangle.rotate(base=(0, 0, 0), direction=(1, 0, 0), degree=90)
         cls.border_rectangle.translate((cls.r_0, cls.zc, cls.zc))
         cls.border_rectangle.rotate(
@@ -429,17 +330,9 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
 
     @classmethod
     def _make_boundary_points(cls, n_edge=50):
-        x_horizontal = np.linspace(
-            cls.xc - cls.dx,
-            cls.xc + cls.dx,
-            n_edge,
-        )
+        x_horizontal = np.linspace(cls.xc - cls.dx, cls.xc + cls.dx, n_edge)
 
-        z_vertical = np.linspace(
-            cls.zc - cls.dz,
-            cls.zc + cls.dz,
-            n_edge,
-        )
+        z_vertical = np.linspace(cls.zc - cls.dz, cls.zc + cls.dz, n_edge)
 
         x = np.concatenate([
             x_horizontal,
@@ -455,11 +348,7 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
             z_vertical[::-1],
         ])
 
-        return Coordinates({
-            "x": x,
-            "y": np.zeros_like(x),
-            "z": z,
-        })
+        return Coordinates({"x": x, "y": np.zeros_like(x), "z": z})
 
     def _field_for_angle(self, source, angle):
         points = deepcopy(self.border_rectangle)
@@ -477,49 +366,28 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_Bx_matches_axisymmetric_solution(self, source, angle):
-        Bx, _, _ = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        Bx, _, _ = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            Bx,
-            self.Bx_ref,
-            rtol=0.0,
-            atol=5e-7,
-            err_msg=f"{source=}, {angle=}",
+            Bx, self.Bx_ref, rtol=0.0, atol=5e-7, err_msg=f"{source=}, {angle=}"
         )
 
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_By_is_zero(self, source, angle):
-        _, By, _ = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        _, By, _ = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            By,
-            0.0,
-            rtol=0.0,
-            atol=6e-10,
-            err_msg=f"{source=}, {angle=}",
+            By, 0.0, rtol=0.0, atol=6e-10, err_msg=f"{source=}, {angle=}"
         )
 
     @pytest.mark.parametrize("source", ["arc", "two_halves"])
     @pytest.mark.parametrize("angle", ANGLES)
     def test_Bz_matches_axisymmetric_solution(self, source, angle):
-        _, _, Bz = self._field_for_angle(
-            getattr(self, source),
-            angle,
-        )
+        _, _, Bz = self._field_for_angle(getattr(self, source), angle)
 
         np.testing.assert_allclose(
-            Bz,
-            self.Bz_ref,
-            rtol=0.0,
-            atol=4e-9,
-            err_msg=f"{source=}, {angle=}",
+            Bz, self.Bz_ref, rtol=0.0, atol=4e-9, err_msg=f"{source=}, {angle=}"
         )
 
     def test_mirror_singularity(self):
@@ -580,10 +448,7 @@ class TestCircularArcCurrentSourceSuperposition:
 
     @staticmethod
     def rotate_arc_basis(
-        ds0: np.ndarray,
-        normal0: np.ndarray,
-        t_vec: np.ndarray,
-        start_angle_deg: float,
+        ds0: np.ndarray, normal0: np.ndarray, t_vec: np.ndarray, start_angle_deg: float
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Rotate the local arc start basis about the ring axis.
@@ -610,10 +475,7 @@ class TestCircularArcCurrentSourceSuperposition:
         cls = TestCircularArcCurrentSourceSuperposition
 
         ds, normal, t_vec = cls.rotate_arc_basis(
-            ds0=ds0,
-            normal0=normal0,
-            t_vec=t_vec,
-            start_angle_deg=start_angle_deg,
+            ds0=ds0, normal0=normal0, t_vec=t_vec, start_angle_deg=start_angle_deg
         )
 
         return CircularArcCurrentSource(
@@ -752,12 +614,7 @@ class TestCircularArcCurrentSourceSuperposition:
         b_a = source_a.field(*point)
         b_b = source_b.field(*point)
 
-        np.testing.assert_allclose(
-            b_a,
-            b_b,
-            rtol=cls.rtol,
-            atol=cls.atol,
-        )
+        np.testing.assert_allclose(b_a, b_b, rtol=cls.rtol, atol=cls.atol)
 
     @staticmethod
     def assert_sources_close_at_points(source_a, source_b, points):
@@ -786,20 +643,10 @@ class TestCircularArcCurrentSourceSuperposition:
 
     @pytest.mark.parametrize("point", test_points)
     @pytest.mark.parametrize(("ds0", "normal0", "t_vec"), axis_bases)
-    def test_full_ring_equals_two_half_rings(
-        self,
-        point,
-        ds0,
-        normal0,
-        t_vec,
-    ):
+    def test_full_ring_equals_two_half_rings(self, point, ds0, normal0, t_vec):
         """360 degree ring == 180 degree + 180 degree, for multiple axes."""
         full_ring = self.make_arc(
-            ds0=ds0,
-            normal0=normal0,
-            t_vec=t_vec,
-            start_angle_deg=0.0,
-            dtheta_deg=360.0,
+            ds0=ds0, normal0=normal0, t_vec=t_vec, start_angle_deg=0.0, dtheta_deg=360.0
         )
 
         half_rings = self.make_decomposed_arc(
@@ -815,20 +662,10 @@ class TestCircularArcCurrentSourceSuperposition:
 
     @pytest.mark.parametrize("point", test_points)
     @pytest.mark.parametrize(("ds0", "normal0", "t_vec"), axis_bases)
-    def test_full_ring_equals_four_quarter_rings(
-        self,
-        point,
-        ds0,
-        normal0,
-        t_vec,
-    ):
+    def test_full_ring_equals_four_quarter_rings(self, point, ds0, normal0, t_vec):
         """360 degree ring == 4 x 90 degree arcs, for multiple axes."""
         full_ring = self.make_arc(
-            ds0=ds0,
-            normal0=normal0,
-            t_vec=t_vec,
-            start_angle_deg=0.0,
-            dtheta_deg=360.0,
+            ds0=ds0, normal0=normal0, t_vec=t_vec, start_angle_deg=0.0, dtheta_deg=360.0
         )
 
         quarter_rings = self.make_decomposed_arc(
@@ -844,20 +681,10 @@ class TestCircularArcCurrentSourceSuperposition:
 
     @pytest.mark.parametrize("point", test_points)
     @pytest.mark.parametrize(("ds0", "normal0", "t_vec"), axis_bases)
-    def test_full_ring_equals_eight_octant_rings(
-        self,
-        point,
-        ds0,
-        normal0,
-        t_vec,
-    ):
+    def test_full_ring_equals_eight_octant_rings(self, point, ds0, normal0, t_vec):
         """360 degree ring == 8 x 45 degree arcs, for multiple axes."""
         full_ring = self.make_arc(
-            ds0=ds0,
-            normal0=normal0,
-            t_vec=t_vec,
-            start_angle_deg=0.0,
-            dtheta_deg=360.0,
+            ds0=ds0, normal0=normal0, t_vec=t_vec, start_angle_deg=0.0, dtheta_deg=360.0
         )
 
         octant_rings = self.make_decomposed_arc(
@@ -886,12 +713,7 @@ class TestCircularArcCurrentSourceSuperposition:
         ],
     )
     def test_arc_field_is_finite_at_exact_singularity_points(
-        self,
-        ds0,
-        normal0,
-        t_vec,
-        start_angle_deg,
-        dtheta_deg,
+        self, ds0, normal0, t_vec, start_angle_deg, dtheta_deg
     ):
         """
         Arc field should remain finite at exact singularity probe points.
@@ -934,13 +756,7 @@ class TestCircularArcCurrentSourceSuperposition:
         ],
     )
     def test_decomposed_arc_field_is_finite_at_exact_singularity_points(
-        self,
-        ds0,
-        normal0,
-        t_vec,
-        start_angle_deg,
-        dtheta_deg,
-        n_segments,
+        self, ds0, normal0, t_vec, start_angle_deg, dtheta_deg, n_segments
     ):
         """
         Decomposed sources should remain finite at exact singularity points.

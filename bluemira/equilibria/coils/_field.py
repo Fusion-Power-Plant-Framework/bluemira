@@ -538,7 +538,7 @@ class CoilGroupFieldsMixin:
             _quad_weight = self._quad_weighting
 
         ind = np.nonzero(_quad_weight)  # type: ignore[ty:invalid-argument-type]
-        out = np.zeros((*x.shape, *_quad_x.shape))  # type: ignore[ty:unresolved-attribute]
+        out = np.zeros((*x.shape, *_quad_x.shape))  # type: ignore[ty:missing-union-attribute]
 
         out[*(slice(None) for _ in x.shape), *ind] = greens(
             _quad_x[ind][np.newaxis],  # type: ignore[ty:not-subscriptable]
@@ -928,9 +928,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             Bx response
         """
         return self._sum(
-            np.asarray(super().Bx_response(x, z)),
-            sum_coils=sum_coils,
-            control=control,
+            np.asarray(super().Bx_response(x, z)), sum_coils=sum_coils, control=control
         )
 
     def Bz_response(
@@ -961,9 +959,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
             Bz response
         """
         return self._sum(
-            np.asarray(super().Bz_response(x, z)),
-            sum_coils=sum_coils,
-            control=control,
+            np.asarray(super().Bz_response(x, z)), sum_coils=sum_coils, control=control
         )
 
     def dB_d_response(

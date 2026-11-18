@@ -47,7 +47,7 @@ class ModelSelection:
     """
 
     _value_: int
-    requires_values: tuple[str] = field(default_factory=tuple)
+    requires_values: tuple[str] = field(default_factory=tuple)  # type:ignore[ty:no-matching-overload]
     description: str = ""
     _switches: list[str] | None = field(repr=False, default=None)
 

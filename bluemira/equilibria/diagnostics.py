@@ -306,7 +306,7 @@ class PicardDiagnosticOptions:
             def noop(*args, **kwargs):  # noqa: ARG001
                 return
 
-            self.update_figure = self.make_gif = self.finalise_plots = noop  # type: ignore[ty:invalid-assignment]
+            self.update_figure = self.make_gif = self.finalise_plots = noop
 
         else:
             self.f, ax = plt.subplots(

@@ -469,23 +469,15 @@ class ChargedParticleSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(self.first_wall)
 
-        (
-            x_omp,
-            z_omp,
-            x_lfs_down_inter,
-            z_lfs_down_inter,
-            alpha_lfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ob_down)
+        (x_omp, z_omp, x_lfs_down_inter, z_lfs_down_inter, alpha_lfs_down) = (
+            self._get_arrays(self.flux_surfaces_ob_down)
+        )
         _, _, x_lfs_up_inter, z_lfs_up_inter, alpha_lfs_up = self._get_arrays(
             self.flux_surfaces_ob_up
         )
-        (
-            x_imp,
-            z_imp,
-            x_hfs_down_inter,
-            z_hfs_down_inter,
-            alpha_hfs_down,
-        ) = self._get_arrays(self.flux_surfaces_ib_down)
+        (x_imp, z_imp, x_hfs_down_inter, z_hfs_down_inter, alpha_hfs_down) = (
+            self._get_arrays(self.flux_surfaces_ib_down)
+        )
         _, _, x_hfs_up_inter, z_hfs_up_inter, alpha_hfs_up = self._get_arrays(
             self.flux_surfaces_ib_up
         )

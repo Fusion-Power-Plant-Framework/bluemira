@@ -295,10 +295,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             debug[entry].append([lcfs, value])
 
     def sub_opt_objective(
-        self,
-        vector: npt.NDArray[np.float64],
-        *,
-        verbose: bool = False,
+        self, vector: npt.NDArray[np.float64], *, verbose: bool = False
     ) -> float:
         """Run the sub-optimisations
 
@@ -354,10 +351,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         :
             Results of the sub-optimisations.
         """
-        return self.sub_opt_objective(
-            vector,
-            verbose=verbose,
-        )
+        return self.sub_opt_objective(vector, verbose=verbose)
 
     def _get_initial_vector(self) -> npt.NDArray[np.float64]:
         """

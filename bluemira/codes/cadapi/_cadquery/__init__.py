@@ -78,13 +78,7 @@ def __getattr__(name: str):
     # ``getattr``. The dispatcher in ``_geometryapi`` and a handful of tests
     # rely on this. Fall through to the submodules before declaring the
     # name unimplemented.
-    from bluemira.codes.cadapi._cadquery import (  # noqa: PLC0415
-        core,
-        curves,
-        display,
-        io,
-        placement,
-    )
+    from bluemira.codes.cadapi._cadquery import core, curves, display, io, placement  # noqa: PLC0415
 
     for _mod in (core, placement, curves, display, io):
         if hasattr(_mod, name):

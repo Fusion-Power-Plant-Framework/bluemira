@@ -293,9 +293,7 @@ class PlasmaCoil:
 
     @treat_xz_array
     def dBx(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Radial magnetic field at x, z
@@ -356,9 +354,7 @@ class PlasmaCoil:
 
     @treat_xz_array
     def dBz(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Vertical magnetic field at x, z
@@ -594,9 +590,7 @@ class NoPlasmaCoil:
         return self._return_zeros(x, z)
 
     def dBx(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Radial magnetic field at x, z
@@ -620,9 +614,7 @@ class NoPlasmaCoil:
         return self._return_zeros(x, z)
 
     def dBz(
-        self,
-        x: npt.ArrayLike | None = None,
-        z: npt.ArrayLike | None = None,
+        self, x: npt.ArrayLike | None = None, z: npt.ArrayLike | None = None
     ) -> float | npt.NDArray[np.float64]:
         """
         Vertical magnetic field at x, z

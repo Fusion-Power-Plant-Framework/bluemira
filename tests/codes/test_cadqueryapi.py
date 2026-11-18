@@ -57,12 +57,7 @@ def _closed_square(side: float = 1.0, origin=(0.0, 0.0, 0.0)):
 def _make_box(s=1):
     return cadapi.extrude_shape(
         cadapi.make_face(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (s, 0, 0),
-                (s, s, 0),
-                (0, s, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (s, 0, 0), (s, s, 0), (0, s, 0)]).close()
         ),
         (0, 0, s),
     )
@@ -179,11 +174,7 @@ class TestSaveCadMeshFormats:
 
     @pytest.mark.parametrize(
         ("alias", "expected"),
-        [
-            ("stl", "STL"),
-            ("gltf", "GLTRANSMISSION"),
-            ("glb", "GLTRANSMISSION"),
-        ],
+        [("stl", "STL"), ("gltf", "GLTRANSMISSION"), ("glb", "GLTRANSMISSION")],
     )
     def test_cadfiletype_resolves_aliases(self, alias, expected):
         assert cadapi.CADFileType(alias).name == expected
@@ -436,10 +427,7 @@ class TestInternalHelpers:
         vertical_line = cadapi.make_polygon([(radius, 0, 0), (radius, 0, height)])
         cylinder_surface = (
             cadapi.revolve_shape(  # revolve vertical line to create cylinder
-                vertical_line,
-                base=(0, 0, 0),
-                direction=(0, 0, 1),
-                degree=360,
+                vertical_line, base=(0, 0, 0), direction=(0, 0, 1), degree=360
             )
         )
 
@@ -479,13 +467,7 @@ class TestInternalHelpers:
         Test the strict planar path.
         Create a square in the XY plane and attempt to create a face from the wire.
         """
-        points = [
-            (0, 0, 0),
-            (1, 0, 0),
-            (1, 1, 0),
-            (0, 1, 0),
-            (0, 0, 0),
-        ]
+        points = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0), (0, 0, 0)]
 
         wire = cadapi.make_polygon(points)  # planar square wire
 
@@ -785,12 +767,7 @@ class TestInternalHelpers:
 
     def test_edge_junction_pairs(self):
         """Test pairwise list of edges"""
-        wire = cadapi.make_polygon([
-            (0, 0, 0),
-            (1, 0, 0),
-            (1, 1, 0),
-            (0, 1, 0),
-        ]).close()
+        wire = cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]).close()
 
         pairs = cadapi._edge_junction_pairs(wire)
 
@@ -812,12 +789,7 @@ class TestInternalHelpers:
     @patch(f"{CORE}.is_closed")
     @patch(f"{CORE}.ordered_edges")
     def test_edge_junction_pairs_mocked(
-        self,
-        mock_ordered_edges,
-        mock_is_closed,
-        edges,
-        is_closed,
-        expected_pairs,
+        self, mock_ordered_edges, mock_is_closed, edges, is_closed, expected_pairs
     ):
         mock_ordered_edges.return_value = edges
         mock_is_closed.return_value = is_closed
@@ -831,24 +803,14 @@ class TestInternalHelpers:
     def test_planar_wire_returns_normal(self):
         """_get_planar_normal returns correct normal for valid planar wire."""
         result = cadapi._get_planar_normal(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 0),
-                (0, 1, 0),
-            ])
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)])
         )
         assert result == (0, 0, 1)
 
     def test_non_planar_wire_returns_none(self):
         """_get_planar_normal returns none for a non-planar wire."""
         result = cadapi._get_planar_normal(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 1),
-                (0, 1, 0),
-            ])
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 1), (0, 1, 0)])
         )
         assert result is None
 
@@ -901,21 +863,13 @@ class TestInternalHelpers:
     def test_wire_is_straight_multi_straight(self):
         """False for multiple straight lines."""
         assert not cadapi._wire_is_straight(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (2, 0, 0),
-            ])
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (2, 0, 0)])
         )
 
     def test_wire_is_straight_curved(self):
         """False for curved line."""
         assert not cadapi._wire_is_straight(
-            cadapi.make_circle_arc_3P(
-                (0, 0, 0),
-                (5, 5, 0),
-                (10, 0, 0),
-            )
+            cadapi.make_circle_arc_3P((0, 0, 0), (5, 5, 0), (10, 0, 0))
         )
 
     # ---- _wire_is_planar -----------------------------------------------
@@ -923,23 +877,13 @@ class TestInternalHelpers:
     def test_wire_is_planar_closed(self):
         """True for 2D flat shape."""
         assert cadapi._wire_is_planar(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 0),
-                (0, 1, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]).close()
         )
 
     def test_wire_is_planar_non_planar(self):
         """False for non-planar shape."""
         assert not cadapi._wire_is_planar(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 1),
-                (0, 1, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 1), (0, 1, 0)]).close()
         )
 
     # ---- _occ_face_area -----------------------------------------------
@@ -947,12 +891,7 @@ class TestInternalHelpers:
     def test_occ_face_area_square(self):
         """Simple area calculation on square."""
         square = cadapi.make_face(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 0),
-                (0, 1, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]).close()
         )
         assert cadapi._occ_face_area(square.wrapped) == pytest.approx(1.0)
 
@@ -964,24 +903,14 @@ class TestInternalHelpers:
     def test_cq_area_prop_face(self):
         """Area property on standard face."""
         square = cadapi.make_face(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (1, 0, 0),
-                (1, 1, 0),
-                (0, 1, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)]).close()
         )
         assert convert(square).area == pytest.approx(1.0)
 
     def test_cq_area_prop_face_with_holes(self):
         """Area property on face with holes."""
         square = cadapi.make_face(
-            cadapi.make_polygon([
-                (0, 0, 0),
-                (2, 0, 0),
-                (2, 2, 0),
-                (0, 2, 0),
-            ]).close()
+            cadapi.make_polygon([(0, 0, 0), (2, 0, 0), (2, 2, 0), (0, 2, 0)]).close()
         )
         circle = cadapi.make_face(cadapi.make_circle(radius=0.5, center=(1, 1, 0)))
         assert convert(cadapi.boolean_cut(square, circle)[0]).area == pytest.approx(
@@ -1188,12 +1117,7 @@ class TestInternalHelpers:
     def test_split_wire_by_closed_tools_no_intersection(self):
         """Unchanged wire if the tool doesn't overlap."""
         wire = cadapi.make_polygon([(0, 0, 0), (1, 0, 0)])
-        tool = cadapi.make_polygon([
-            (2, 0, 0),
-            (4, 0, 0),
-            (4, 2, 0),
-            (2, 2, 0),
-        ]).close()
+        tool = cadapi.make_polygon([(2, 0, 0), (4, 0, 0), (4, 2, 0), (2, 2, 0)]).close()
 
         result = cadapi._split_wire_by_closed_tools(wire, [tool])
 
@@ -1368,12 +1292,7 @@ class TestInternalHelpers:
         )
 
     @pytest.mark.parametrize(
-        "axis",
-        [
-            ([1.0, 0.0, 0.0]),
-            ([-1.0, 0.0, 0.0]),
-            ([2.0, 0.0, 0.0]),
-        ],
+        "axis", [([1.0, 0.0, 0.0]), ([-1.0, 0.0, 0.0]), ([2.0, 0.0, 0.0])]
     )
     def test_freecad_ax2_fallback_projection(self, axis):
         """Axis parallel to global x, fallback to project global y."""
@@ -1395,9 +1314,7 @@ class TestInternalHelpers:
         x_direction = [1.0, 1.0, 0.0]
 
         ax2 = cadapi._freecad_ax2(
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 1.0],
-            x_direction=x_direction,
+            [0.0, 0.0, 0.0], [0.0, 0.0, 1.0], x_direction=x_direction
         )
 
         expected_x = np.array(x_direction)
@@ -1498,40 +1415,19 @@ class TestInternalHelpers:
         ("src", "dst", "expected_axis", "expected_angle"),
         [
             # 90 deg rotation: revolves around +z
-            (
-                [1.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0],
-                [0.0, 0.0, 1.0],
-                np.pi / 2,
-            ),
+            ([1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], np.pi / 2),
             # 90 deg rotation: revolves around -z
-            (
-                [0.0, 1.0, 0.0],
-                [1.0, 0.0, 0.0],
-                [0.0, 0.0, -1.0],
-                np.pi / 2,
-            ),
+            ([0.0, 1.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, -1.0], np.pi / 2),
             # 45 deg rotation in xy plane
-            (
-                [1.0, 0.0, 0.0],
-                [1.0, 1.0, 0.0],
-                [0.0, 0.0, 1.0],
-                np.pi / 4,
-            ),
+            ([1.0, 0.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0], np.pi / 4),
             # 90 deg rotation: revolves around -y
-            (
-                [1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0],
-                [0.0, -1.0, 0.0],
-                np.pi / 2,
-            ),
+            ([1.0, 0.0, 0.0], [0.0, 0.0, 1.0], [0.0, -1.0, 0.0], np.pi / 2),
         ],
     )
     def test_rotation_to_align_standard(self, src, dst, expected_axis, expected_angle):
         """Standard rotations."""
         axis, angle = cadapi._rotation_to_align(
-            np.array(src, dtype=float),
-            np.array(dst, dtype=float),
+            np.array(src, dtype=float), np.array(dst, dtype=float)
         )
 
         assert angle == pytest.approx(expected_angle, abs=1e-9)
@@ -1540,8 +1436,7 @@ class TestInternalHelpers:
     def test_rotation_to_align_parallel(self):
         """Parallel vectors return default axis and angle."""
         axis, angle = cadapi._rotation_to_align(
-            np.array([1.0, 2.0, 3.0]),
-            np.array([1.0, 2.0, 3.0]),
+            np.array([1.0, 2.0, 3.0]), np.array([1.0, 2.0, 3.0])
         )
 
         assert angle == pytest.approx(0.0)
@@ -1550,8 +1445,7 @@ class TestInternalHelpers:
     def test_rotation_to_align_anti_parallel_x_dominant(self):
         """180 deg flip - source vec in dominant in x."""
         axis, angle = cadapi._rotation_to_align(
-            np.array([1.0, 0.0, 0.0]),
-            np.array([-1.0, 0.0, 0.0]),
+            np.array([1.0, 0.0, 0.0]), np.array([-1.0, 0.0, 0.0])
         )
 
         assert angle == pytest.approx(np.pi)
@@ -1563,8 +1457,7 @@ class TestInternalHelpers:
     def test_rotation_to_align_anti_parallel_y_dominant(self):
         """180 deg flip - source vec not dominant in x."""
         axis, angle = cadapi._rotation_to_align(
-            np.array([0.0, 1.0, 0.0]),
-            np.array([0.0, -1.0, 0.0]),
+            np.array([0.0, 1.0, 0.0]), np.array([0.0, -1.0, 0.0])
         )
 
         assert angle == pytest.approx(np.pi)
@@ -1576,8 +1469,7 @@ class TestInternalHelpers:
     def test_rotation_to_align_unnormalized_inputs(self):
         """Non-unit vectors yield same alignment."""
         axis, angle = cadapi._rotation_to_align(
-            np.array([2.0, 0.0, 0.0]),
-            np.array([0.0, 5.0, 0.0]),
+            np.array([2.0, 0.0, 0.0]), np.array([0.0, 5.0, 0.0])
         )
 
         assert angle == pytest.approx(np.pi / 2, abs=1e-9)

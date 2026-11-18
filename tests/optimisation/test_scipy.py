@@ -12,9 +12,7 @@ from scipy.optimize import OptimizeResult
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._scipy import ScipyOptimiser
 from bluemira.optimisation._tools import process_scipy_result
-from bluemira.optimisation.error import (
-    OptimisationError,
-)
+from bluemira.optimisation.error import OptimisationError
 from tests.optimisation.tools import rosenbrock
 
 
@@ -116,15 +114,7 @@ class TestScipyOptimiser:
             result.x, [1.0, 4.742999, 3.821149, 1.379408], rtol=1e-4
         )
 
-    @pytest.mark.parametrize(
-        "alg",
-        [
-            "L_BFGS_B",
-            "NELDER_MEAD",
-            "POWELL",
-            "TNC",
-        ],
-    )
+    @pytest.mark.parametrize("alg", ["L_BFGS_B", "NELDER_MEAD", "POWELL", "TNC"])
     def test_optimisationerror_adding_eq_constraint_on_unsupported_algorithm_scipy(
         self, alg
     ):
@@ -151,15 +141,7 @@ class TestScipyOptimiser:
         np.testing.assert_equal(result, -1)
         np.testing.assert_equal(grad, 2)
 
-    @pytest.mark.parametrize(
-        "alg",
-        [
-            "L_BFGS_B",
-            "NELDER_MEAD",
-            "POWELL",
-            "TNC",
-        ],
-    )
+    @pytest.mark.parametrize("alg", ["L_BFGS_B", "NELDER_MEAD", "POWELL", "TNC"])
     def test_optimisationerror_adding_ineq_constraint_on_unsupported_algorithm_scipy(
         self, alg
     ):
@@ -221,12 +203,7 @@ class TestScipyOptimiser:
         assert len(caplog.records) == 1
 
     @pytest.mark.parametrize(
-        ("alg", "status"),
-        [
-            ("SLSQP", 9),
-            ("COBYLA", 2),
-            ("COBYQA", 5),
-        ],
+        ("alg", "status"), [("SLSQP", 9), ("COBYLA", 2), ("COBYQA", 5)]
     )
     def test_warning_given_inoptimal_solution_scipy(self, alg, status, caplog):
         res = OptimizeResult(x=np.array([1.0]), status=status, success=False, message="")
