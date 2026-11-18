@@ -452,6 +452,34 @@ class BiotSavartFilament(CurrentSource):
         """Segment mid-points of the first (reference) Coordinates."""
         return self._points[: self._n_ref] + 0.5 * self.ref_d_l
 
+    @staticmethod
+    def _process_points(x, y, z) -> tuple[npt.NDArray[np.float64], tuple[int, ...]]:
+        """
+        Returns
+        -------
+        points:
+            The coordinates as (n, 3) points
+        shape:
+            The shape of the input coordinates, () for a single point
+
+        Raises
+        ------
+        MagnetostaticsError
+            If the coordinates are not of equal shape, or have more than 2 dimensions
+        """
+        x, y, z = (np.asarray(c, dtype=float) for c in (x, y, z))
+        if not x.shape == y.shape == z.shape or x.ndim > 2:  # noqa: PLR2004
+            raise MagnetostaticsError(
+                "Coordinates must be floats or 1-D or 2-D arrays of equal shape."
+            )
+        shape = () if x.shape == (1,) else x.shape
+        return np.stack([x, y, z], axis=-1).reshape(-1, 3), shape
+
+    def _evaluate(self, kernel, x, y, z) -> npt.NDArray[np.float64]:
+        points, shape = self._process_points(x, y, z)
+        values = kernel(points, self._points, self._d_l, self._radius)
+        return MU_0_4PI * self.current * values.T.reshape(3, *shape)
+
     @process_xyz_array
     def potential(
         self,
