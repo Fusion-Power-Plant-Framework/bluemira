@@ -905,6 +905,7 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         eq: Equilibrium,
         source: NeutronSourceCreator,
         csg_model: openmc.Model,
+        bounding_box: Sequence[float] | None = None,
     ):
         super().__init__(
             codes_name,
@@ -914,6 +915,7 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
             materials=None,
         )
         self.mcio_model = csg_model
+        self.bounding_box = bounding_box
 
     @staticmethod
     def _create_geometry():
@@ -944,34 +946,10 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         return tallies
 
     def plot(
-        self,
-        run_mode,
-        runtime_params,
-        *_args,
-        debug: bool = False,
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
     ) -> tuple[openmc.Model, PlotConfig]:
-        """
-        Prepare the existing OpenMC model for plotting.
-
-        Returns
-        -------
-        :
-            Model and plot configuration.
-        """
-        settings = self._base_setup(
-            run_mode,
-            runtime_params.rel_max_lost_particles,
-            runtime_params.max_lost_particles,
-            debug=debug,
-        )
-
-        model = self._create_model(settings)
-
-        return model, PlotConfig(
-            width=[30.0, 30.0],
-            pixels=[2000, 2000],
-            basis="xz",
-        )
+        """Plot an openmc run"""
+        return self._plot(run_mode, runtime_params, self.bounding_box, debug=debug)
 
     @property
     def volume(self):
@@ -1060,7 +1038,9 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 
         self.csg_reactor = csg_reactor
         self.op_cond = op_cond
-        self.mcio_model = self.csg_reactor.run_mcio(op_cond=self.op_cond)
+        self.mcio_model, self.bounding_box = self.csg_reactor.run_mcio(
+            op_cond=self.op_cond
+        )
         self.customised_tallies = customised_tallies
         self._tallies = self._create_tallies()
 
@@ -1100,6 +1080,7 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
             self.eq,
             self.source,
             self.mcio_model,
+            self.bounding_box,
         )
         self._run = self.run_cls(self.out_path, self.name)
         self._teardown = self.teardown_cls(self.out_path, self.name)

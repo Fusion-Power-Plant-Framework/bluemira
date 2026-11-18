@@ -32,6 +32,8 @@ from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from matproplib.conditions import OperationalConditions
     from openmc.model.model import Model
 
@@ -171,10 +173,37 @@ class AxisymmetricNeutronicsReactor(ABC):
             theCopyGeom=True,
         ).Shape()
 
+    @staticmethod
+    def _get_global_bounding_box(
+        components: Sequence[Component],
+    ) -> Sequence[float] | None:
+        """
+        Calculate the global bounding box in metres.
+
+        Returns
+        -------
+        :
+            global bounding box in metres
+        """
+        if not components:
+            return None
+
+        boxes = [
+            comp.get_component("xyz").children[0].shape.bounding_box
+            for comp in components
+        ]
+
+        r_min = min(box.x_min for box in boxes)
+        r_max = max(box.x_max for box in boxes)
+        z_min = min(box.z_min for box in boxes)
+        z_max = max(box.z_max for box in boxes)
+
+        return z_max, z_min, r_max, r_min
+
     def run_mcio(
         self,
         op_cond: OperationalConditions,
-    ) -> Model:
+    ) -> tuple[Model, Sequence[float] | None]:
         """
         Runs MCIO interface to create openmc geometry for neutronics
 
@@ -185,6 +214,9 @@ class AxisymmetricNeutronicsReactor(ABC):
         """
         all_desplined_components = self.geometry.get_all_components()
 
+        # Calculate global bounding box (m)
+        bounding_box = self._get_global_bounding_box(all_desplined_components)
+
         all_names = [comp.name for comp in all_desplined_components]
 
         # Convert OCC solids from metres to centimetres for OpenMC uses
@@ -194,6 +226,10 @@ class AxisymmetricNeutronicsReactor(ABC):
             )
             for comp in all_desplined_components
         ]
+        # all_ocp_solids = [
+        #     comp.get_component("xyz").children[0].shape.shape.wrapped
+        #     for comp in all_desplined_components
+        # ]
 
         all_materials = [
             comp.get_component("xyz").children[0].material
@@ -203,6 +239,10 @@ class AxisymmetricNeutronicsReactor(ABC):
         # set up empty decomposer (you can also add step files and ocp
         # solids if you like)
         decomposer = mcio.decompose.Decomposer()
+        # Manipulate Void generation in mcio
+        decomposer.decom_params.void_max_recursion_depth = 5
+        decomposer.decom_params.void_min_width = 50
+
         material_name_mapping = {}
 
         # NOTE: Every solid should have its own unique MCIO material name,
@@ -225,7 +265,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         bluemira_print("Running decomposer")
         decomposer.run()
 
-        return decomposer.model.openmc_model
+        return decomposer.model.openmc_model, bounding_box
 
     @abstractmethod
     def customised_tallies(self, model):
