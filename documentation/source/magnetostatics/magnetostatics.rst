@@ -80,12 +80,6 @@ surface of the filament.
     :name: fig:biotsavart
 
 
-.. Note::
-    The discretisation of geometry input should be carefully checked. In general, many
-    points will give better approximations to long, thin wires.
-
-
-
 Semi-analytical
 ###############
 
