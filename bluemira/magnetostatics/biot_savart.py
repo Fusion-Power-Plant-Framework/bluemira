@@ -20,10 +20,12 @@ from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsError
-from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
+from bluemira.magnetostatics.tools import process_coords_array
 from bluemira.utilities.plot_tools import Plot3D
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import numpy.typing as npt
     from matplotlib.pyplot import Axes
 
@@ -476,12 +478,25 @@ class BiotSavartFilament(CurrentSource):
         shape = () if x.shape == (1,) else x.shape
         return np.stack([x, y, z], axis=-1).reshape(-1, 3), shape
 
-    def _evaluate(self, kernel, x, y, z) -> npt.NDArray[np.float64]:
+    def _evaluate(
+        self,
+        kernel: Callable[
+            [
+                npt.NDArray[np.float64],
+                npt.NDArray[np.float64],
+                npt.NDArray[np.float64],
+                float,
+            ],
+            npt.NDArray[np.float64],
+        ],
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
         points, shape = self._process_points(x, y, z)
         values = kernel(points, self._points, self._d_l, self._radius)
         return MU_0_4PI * self.current * values.T.reshape(3, *shape)
 
-    @process_xyz_array
     def potential(
         self,
         x: float | npt.NDArray[np.float64],
