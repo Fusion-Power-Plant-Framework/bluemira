@@ -234,10 +234,6 @@ class AxisymmetricNeutronicsReactor(ABC):
             )
             for comp in all_desplined_components
         ]
-        # all_ocp_solids = [
-        #     comp.get_component("xyz").children[0].shape.shape.wrapped
-        #     for comp in all_desplined_components
-        # ]
 
         all_materials = [
             comp.get_component("xyz").children[0].material
