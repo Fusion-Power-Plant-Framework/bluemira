@@ -420,8 +420,10 @@ class BiotSavartFilament(CurrentSource):
     ):
         if not radius > 0:
             raise MagnetostaticsError(f"Radius must be positive, not {radius}.")
-        arrays = arrays if isinstance(arrays, list) else [arrays]
-        self._arrays = [np.asarray(process_coords_array(a), dtype=float) for a in arrays]
+        array_list = arrays if isinstance(arrays, list) else [arrays]
+        self._arrays = [
+            np.asarray(process_coords_array(a), dtype=float) for a in array_list
+        ]
 
         starts, d_ls = [], []
         for xyz in self._arrays:
