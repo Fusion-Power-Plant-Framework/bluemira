@@ -252,10 +252,7 @@ def _potential_kernel(
 
 @nb.njit(cache=True)
 def _neumann(
-    starts: npt.NDArray[np.float64],
-    d_l: npt.NDArray[np.float64],
-    n_ref: int,
-    gmd: float,
+    starts: npt.NDArray[np.float64], d_l: npt.NDArray[np.float64], n_ref: int, gmd: float
 ) -> float:
     """
     Sum of the Neumann double integrals between the first n_ref (reference)
