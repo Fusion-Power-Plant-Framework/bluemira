@@ -14,9 +14,9 @@ from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
+from magnetostatics.error import MagnetostaticsError
 
 from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
@@ -419,50 +419,28 @@ class BiotSavartFilament(CurrentSource):
         radius: float,
         current: float = 1.0,
     ):
-        arr_list = [arrays] if not isinstance(arrays, list) else arrays
-        arrays_processed = [process_coords_array(array) for array in arr_list]
+        if not radius > 0:
+            raise MagnetostaticsError(f"Radius must be positive, not {radius}.")
+        arrays = arrays if isinstance(arrays, list) else [arrays]
+        self._arrays = [np.asarray(process_coords_array(a), dtype=float) for a in arrays]
 
-        # Handle list of Coordinates/arrays (potentially of different sizes)
-        d_ls, mids_points = [], []
-        points = []
-        for i, xyz in enumerate(arrays_processed):
+        starts, d_ls = [], []
+        for xyz in self._arrays:
             d_l = np.diff(xyz, axis=0)
-            self._check_discretisation(d_l)
+            keep = np.any(d_l != 0, axis=1)  # Drop repeated points
+            if not np.any(keep):
+                raise MagnetostaticsError("Each filament needs two distinct points.")
+            starts.append(xyz[:-1][keep])
+            d_ls.append(d_l[keep])
 
-            mid_points = xyz[:-1, :] + 0.5 * d_l
-            d_ls.append(d_l)
-            points.append(xyz[:-1, :])
-            mids_points.append(mid_points)
-            if i == 0:
-                # Take the first Coordinates as a reference for inductance calculation
-                self.ref_mid_points = mid_points
-                self.ref_d_l = d_l
-
-                lengths = np.sqrt(np.sum(d_l**2, axis=1))
-                self.length = np.sum(lengths)
-                self.length_scale = np.min(lengths)
-
-        # Assemble arrays and vector
+        self._n_ref = len(d_ls[0])  # The first Coordinates is the reference
+        self._points = np.vstack(starts)
         self._d_l = np.vstack(d_ls)
-        self._d_l_hat = np.linalg.norm(self._d_l, axis=1)
-        self._mid_points = np.vstack(mids_points)
-        self._points = np.vstack(points)
-        self._arrays = arrays_processed
         self._radius = radius
         self.current = current
-
-    @staticmethod
-    def _check_discretisation(d_l: npt.NDArray[np.float64]):
-        """
-        Check the discretisation of the array.
-        """
-        lengths = np.sqrt(np.sum(d_l**2, axis=1))
-        total = np.sum(lengths)
-        max_d_l = np.max(lengths)
-        if max_d_l > 0.03 * total:
-            bluemira_warn("Biot-Savart discretisation possibly insufficient.")
-        # TODO @CoronelBuendia: Improve check and modify discretisation
-        # 3651
+        ref_lengths = np.linalg.norm(self.ref_d_l, axis=1)
+        self.length = float(np.sum(ref_lengths))
+        self.length_scale = float(np.min(ref_lengths))
 
     @process_xyz_array
     def potential(
