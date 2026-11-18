@@ -552,41 +552,40 @@ class BiotSavartFilament(CurrentSource):
         Returns
         -------
         :
-            The total inductance (including self-inductance of reference Coordinates) [H]
+            The total inductance (including self-inductance of the reference
+            Coordinates) [H]
 
         Notes
         -----
-        \t:math:`\\dfrac{\\mu_{0}}{4\\pi}\\oint \\dfrac{d\\mathbf{x_{1}} \\cdot d\\mathbf{r_{x}}}{|\\mathbf{x_{1}}-\\mathbf{x_{2}}|}`
+        \t:math:`L = \\dfrac{\\mu_0}{4\\pi}\\sum_{i \\in ref}\\sum_{j}\\int_i\\int_j \\dfrac{d\\mathbf{l}_i \\cdot d\\mathbf{l}_j}{|\\mathbf{r}_{ij}|}`
 
-        https://arxiv.org/pdf/1204.1486.pdf
+        evaluated in closed form for every pair of straight segments, between the
+        first (reference) Coordinates and all the Coordinates. The finite radius
+        is accounted for with the geometric mean distance of a round conductor,
+        :math:`g = a e^{-1/4}`, by replacing :math:`|\\mathbf{r}_{ij}|^2` with
+        :math:`|\\mathbf{r}_{ij}|^2 + g^2`. This gives the round wire
+        self-inductance :math:`\\frac{\\mu_0 L}{2\\pi}(\\ln(2L/a) - 3/4)` for a
+        long straight segment, and differs from the thin filament result by
+        :math:`O(a^2/d^2)` for conductors a distance d apart. As each pair is
+        exact, the result does not depend on how straight runs of conductor are
+        discretised.
 
-        You probably shouldn't use this if you are actually interested in the
-        inductance of an arbitrarily shaped Coordinates...
+        The closed form for each pair of segments follows Campbell (1915) and
+        Grover (1946); the geometric mean distance treatment follows Rosa (1908).
+
+        References
+        ----------
+        G. A. Campbell, "Mutual inductances of circuits composed of straight
+        wires", Phys. Rev. 5, 452-458 (1915), https://doi.org/10.1103/PhysRev.5.452
+
+        F. W. Grover, "Inductance Calculations: Working Formulas and Tables",
+        Van Nostrand (1946); Dover reprint (2004)
+
+        E. B. Rosa, "The self and mutual inductances of linear conductors",
+        Bull. Bur. Stand. 4, 301-344 (1908)
         """  # noqa: W505, E501
-        # TODO @CoronelBuendia: Validate inductance calculate properly and compare stored
-        # energy of systems
-        # 3652
-        inductance = 0
-        for _i, (x1, dx1) in enumerate(
-            zip(self.ref_mid_points, self.ref_d_l, strict=False)
-        ):
-            # We create a mask to drop the point where x1 == x2
-            r = x1 - self._mid_points
-            mask = np.sum(r**2, axis=1) > 0.5 * self.length_scale
-            inductance += np.sum(
-                np.dot(dx1, self._d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
-            )
-
-        # Self-inductance correction (Y = 0.5 for homogenous current distribution)
-        # Equation 6 of https://arxiv.org/pdf/1204.1486.pdf
-        error_tail = 0
-        a, b = self._radius, 0.5 * self.length_scale
-        if b > 10 * a:
-            # Equation A.4 of https://arxiv.org/pdf/1204.1486.pdf
-            error_tail = a**2 / b**2 - 3 / (8 * b**4) * (a**4 - 2 * a**2)
-        l_hat_0 = self.length * (2 * np.log(2 * b / a) + 0.5) + error_tail
-
-        return MU_0_4PI * (inductance + l_hat_0)
+        gmd = self._radius * np.exp(-0.25)
+        return MU_0_4PI * _neumann(self._points, self._d_l, self._n_ref, gmd)
 
     def rotate(self, angle: float, axis: str | np.ndarray):
         """
