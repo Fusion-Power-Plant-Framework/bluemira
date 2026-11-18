@@ -442,6 +442,16 @@ class BiotSavartFilament(CurrentSource):
         self.length = float(np.sum(ref_lengths))
         self.length_scale = float(np.min(ref_lengths))
 
+    @property
+    def ref_d_l(self) -> npt.NDArray[np.float64]:
+        """Segment vectors of the first (reference) Coordinates."""
+        return self._d_l[: self._n_ref]
+
+    @property
+    def ref_mid_points(self) -> npt.NDArray[np.float64]:
+        """Segment mid-points of the first (reference) Coordinates."""
+        return self._points[: self._n_ref] + 0.5 * self.ref_d_l
+
     @process_xyz_array
     def potential(
         self,
