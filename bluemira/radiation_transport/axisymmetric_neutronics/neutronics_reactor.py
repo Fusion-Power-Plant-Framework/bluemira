@@ -203,6 +203,8 @@ class AxisymmetricNeutronicsReactor(ABC):
     def run_mcio(
         self,
         op_cond: OperationalConditions,
+        mcio_void_max_recursion_depth: int = 5,
+        mcio_void_min_width_cm: float = 50,
     ) -> tuple[Model, Sequence[float] | None]:
         """
         Runs MCIO interface to create openmc geometry for neutronics
@@ -211,6 +213,12 @@ class AxisymmetricNeutronicsReactor(ABC):
         -------
         :
             openmc Model
+
+        Note
+        ------
+        You can try to manipulate number of void cell generation
+        in mcio using mcio_void_max_recursion_depth and
+        mcio_void_min_width
         """
         all_desplined_components = self.geometry.get_all_components()
 
@@ -239,9 +247,10 @@ class AxisymmetricNeutronicsReactor(ABC):
         # set up empty decomposer (you can also add step files and ocp
         # solids if you like)
         decomposer = mcio.decompose.Decomposer()
+
         # Manipulate Void generation in mcio
-        decomposer.decom_params.void_max_recursion_depth = 5
-        decomposer.decom_params.void_min_width = 50
+        decomposer.decom_params.void_max_recursion_depth = mcio_void_max_recursion_depth
+        decomposer.decom_params.void_min_width = mcio_void_min_width_cm
 
         material_name_mapping = {}
 
