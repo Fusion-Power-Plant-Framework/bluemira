@@ -16,12 +16,11 @@ import numba as nb
 import numpy as np
 from magnetostatics.error import MagnetostaticsError
 
-from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
+from bluemira.base.constants import MU_0, MU_0_4PI
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
-from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
 
 if TYPE_CHECKING:
@@ -499,26 +498,19 @@ class BiotSavartFilament(CurrentSource):
         z:
             The z coordinate(s) of the points at which to calculate the potential
 
-
         Returns
         -------
         :
-            The vector potential at the point due to the arbitrarily shaped Coordinates
-        """
-        point = np.array([x, y, z])
-        r = point - self._points
-        r_mag = tools.norm(r, axis=1)
-        r_mag[r_mag < EPS] = EPS
-        core = r_mag / self._radius
-        core[r_mag > self._radius] = 1
+            The vector potential {Ax, Ay, Az} at the point(s) [V.s/m]
 
-        # The below einsum operation is equivalent to:
-        # self.current * np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
-        return np.einsum(
-            "i, ji, ... -> j", core, self._d_l / r_mag[None], ONE_4PI * self.current
-        )
+        Notes
+        -----
+        Exact for each straight segment (outside the conductor):
 
-    @process_xyz_array
+        \t:math:`\\dfrac{\\mu_{0} I}{4\\pi}\\hat{e}\\left[\\sinh^{-1}\\dfrac{t_1}{\\rho}-\\sinh^{-1}\\dfrac{t_2}{\\rho}\\right]`
+        """  # noqa: W505, E501
+        return self._evaluate(_potential_kernel, x, y, z)
+
     def field(
         self,
         x: float | npt.NDArray[np.float64],
@@ -540,29 +532,18 @@ class BiotSavartFilament(CurrentSource):
         Returns
         -------
         :
-            The field at the point(s) due to the arbitrarily shaped Coordinates
+            The field {Bx, By, Bz} at the point(s) [T]
 
         Notes
         -----
-        \t:math:`\\dfrac{\\mu_{0}}{4\\pi}\\oint \\dfrac{Idl \\times\\mathbf{r^{'}}}{|\\mathbf{r^{'}}|^{3}}`
+        Exact for each straight segment (outside the conductor):
 
-        This is the original Biot-Savart equation, without centre-averaged
-        smoothing. Do not use for values near the coil current centreline.
+        \t:math:`\\dfrac{\\mu_{0} I}{4\\pi \\rho^2}\\hat{e}\\times\\mathbf{r}\\left[\\dfrac{t_1}{\\sqrt{\\rho^2+t_1^2}}-\\dfrac{t_2}{\\sqrt{\\rho^2+t_2^2}}\\right]`
+
+        Inside the conductor, :math:`\\rho` is replaced by the conductor radius in
+        the scalar factors, recovering a uniform current density wire.
         """  # noqa: W505, E501
-        point = np.array([x, y, z])
-        r = point - self._mid_points
-        r3 = np.linalg.norm(r, axis=1) ** 3
-
-        ds = np.cross(self._d_l, r)
-
-        # Coil core correction
-        d_l_hat = self._d_l_hat[:, None]
-        ds_mag = np.linalg.norm(ds / d_l_hat, axis=1)
-        ds_mag = np.tile(ds_mag, (3, 1)).T
-        ds_mag[ds_mag < EPS] = EPS
-        core = ds_mag**2 / self._radius**2
-        core[ds_mag > self._radius] = 1
-        return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
+        return self._evaluate(_field_kernel, x, y, z)
 
     def inductance(self) -> float:
         """
