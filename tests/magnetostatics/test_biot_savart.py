@@ -385,12 +385,7 @@ class TestSelfInductance:
 
         diff = 100 * (ind2 - ind3) / ind2
         cm = ax[3].contourf(
-            xx,
-            yy,
-            diff,
-            levels=np.linspace(-0.5, 0.5, 21),
-            cmap="RdBu_r",
-            extend="both",
+            xx, yy, diff, levels=np.linspace(-0.5, 0.5, 21), cmap="RdBu_r", extend="both"
         )
         ax[3].set_title("(K - BS) / K")
         f.colorbar(cm, ax=ax[3]).set_label("%")
