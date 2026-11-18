@@ -14,12 +14,12 @@ from typing import TYPE_CHECKING
 
 import numba as nb
 import numpy as np
-from magnetostatics.error import MagnetostaticsError
 
 from bluemira.base.constants import MU_0, MU_0_4PI
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CurrentSource
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities.plot_tools import Plot3D
 
@@ -601,9 +601,6 @@ class BiotSavartFilament(CurrentSource):
         r = rotation_matrix(np.deg2rad(angle), axis).T
         self._points @= r
         self._d_l @= r
-        self._mid_points @= r
-        self.ref_d_l @= r
-        self.ref_mid_points @= r
         self._arrays = [array @ r for array in self._arrays]
 
     def plot(
