@@ -9,6 +9,7 @@ from itertools import pairwise
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from matplotlib.colors import LogNorm
 from scipy.integrate import quad
 
 from bluemira.base.constants import MU_0, MU_0_4PI
@@ -81,18 +82,37 @@ def plot_errors(x, z, analytical, numerical, errors, error_labels):
     component. Not a test.
     """
     plot_defaults()
-    f, ax = plt.subplots(3, 4)
+    f, ax = plt.subplots(
+        3, 3, figsize=(12, 12), sharex=True, sharey=True, layout="constrained"
+    )
     for row, name in enumerate(["x", "z", "p"]):
-        ax[row, 0].contourf(x, z, analytical[row])
-        ax[row, 0].set_title(f"$B_{{{name}}}$ Green's function")
-        ax[row, 1].contourf(x, z, numerical[row])
-        ax[row, 1].set_title(f"$B_{{{name}}}$ Biot-Savart")
-        cm = ax[row, 2].contourf(x, z, errors[row])
+        # The field diverges at the coil, so the colour scale is clipped to the bulk
+        b_max = np.percentile(np.abs(analytical[row]), 99)
+        levels = np.linspace(0 if name == "p" else -b_max, b_max, 21)
+        for col, (values, label) in enumerate([
+            (analytical[row], "Green's function"),
+            (numerical[row], "Biot-Savart"),
+        ]):
+            cm = ax[row, col].contourf(x, z, values, levels=levels, extend="both")
+            ax[row, col].set_title(f"$B_{{{name}}}$ {label} [T]")
+        f.colorbar(cm, ax=ax[row, :2])
+        err_max = np.percentile(np.abs(errors[row]), 99)
+        cm = ax[row, 2].contourf(
+            x,
+            z,
+            errors[row],
+            levels=np.linspace(-err_max, err_max, 21),
+            cmap="RdBu_r",
+            extend="both",
+        )
         ax[row, 2].set_title(error_labels[row])
-        f.colorbar(cm, ax[row, 3])
-        for col in range(3):
-            ax[row, col].set_aspect("equal")
-        ax[row, 3].set_aspect(20)
+        f.colorbar(cm, ax=ax[row, 2])
+    for a in ax.flat:
+        a.set_aspect("equal")
+    for a in ax[-1]:
+        a.set_xlabel("x [m]")
+    for a in ax[:, 0]:
+        a.set_ylabel("z [m]")
 
 
 class TestCircularLoopField:
@@ -128,16 +148,16 @@ class TestCircularLoopField:
             (100 * (bx2 - bx) / b_max, 100 * (bz2 - bz) / b_max, 100 * (bp2 - bp) / bp),
             ("Error / max $B_p$ [%]", "Error / max $B_p$ [%]", "Relative error [%]"),
         )
-        np.testing.assert_allclose(bx2, bx, rtol=0, atol=5e-5 * b_max)
-        np.testing.assert_allclose(bz2, bz, rtol=0, atol=2e-4 * b_max)
-        np.testing.assert_allclose(bp2, bp, rtol=1e-4)
-        np.testing.assert_allclose(by2, 0, atol=1e-12 * b_max)
+        np.testing.assert_allclose(bx2, bx, rtol=0, atol=2e-5 * b_max)
+        np.testing.assert_allclose(bz2, bz, rtol=0, atol=1e-4 * b_max)
+        np.testing.assert_allclose(bp2, bp, rtol=5e-5)
+        np.testing.assert_allclose(by2, 0, atol=1e-14 * b_max)
 
     def test_on_axis_field(self):
         z = np.linspace(-10, 10, 100)
         _, _, bz = self.filament.field(np.zeros_like(z), np.zeros_like(z), z)
         expected = MU_0 * self.x_coil**2 / (2 * (z**2 + self.x_coil**2) ** 1.5)
-        np.testing.assert_allclose(bz, expected, rtol=1e-5)
+        np.testing.assert_allclose(bz, expected, rtol=3e-6)
 
 
 class TestCircularLoop:
@@ -154,8 +174,8 @@ class TestCircularLoop:
         bx2, by2, bz2 = self.filament.field(x, np.zeros_like(x), z)
         scale = np.hypot(bx, bz)[mask].max()
         assert np.max(np.abs(bx2 - bx)[mask]) < 2e-4 * scale
-        assert np.max(np.abs(bz2 - bz)[mask]) < 2e-4 * scale
-        assert np.max(np.abs(by2)) < 1e-12
+        assert np.max(np.abs(bz2 - bz)[mask]) < 1e-4 * scale
+        assert np.max(np.abs(by2)) < 1e-12 * scale
 
     def test_field_on_axis(self):
         z = np.linspace(-10, 10, 51)
@@ -169,7 +189,7 @@ class TestCircularLoop:
             f = BiotSavartFilament(circle(self.loop_radius, n), 1e-6)
             errors.append(abs(f.field(0, 0, 0)[2] / Bz_coil_axis(self.loop_radius) - 1))
         ratios = np.array(errors[:-1]) / np.array(errors[1:])
-        np.testing.assert_allclose(ratios, 4, rtol=0.05)
+        np.testing.assert_allclose(ratios, 4, rtol=0.015)
 
     def test_curl_potential_equals_field(self):
         theta = np.linspace(0, 2 * np.pi, 41)
@@ -330,8 +350,7 @@ class TestSelfInductance:
     def test_circular_inductance_map(self):
         """
         Overview of the inductance of circular coils over a range of coil and wire
-        radii, compared with the elliptic and Kirchhoff formulae. Includes the small
-        coils affected by the near-segment cutoff (see the xfail test below).
+        radii, compared with the elliptic and Kirchhoff formulae.
         """
         n = 25
         radii = np.linspace(1, 100, n)
@@ -345,8 +364,11 @@ class TestSelfInductance:
                 ind2[i, j] = circular_coil_inductance_kirchhoff(r, rc)
                 ind3[i, j] = BiotSavartFilament(filament, rc).inductance()
 
-        levels = np.linspace(np.amin(ind), np.amax(ind), 20)
-        f, ax = plt.subplots(1, 4)
+        # The inductance spans orders of magnitude; the elliptic formula falls below
+        # the scale where it breaks down for thick conductors
+        norm = LogNorm(min(ind2.min(), ind3.min()), max(ind2.max(), ind3.max()))
+        levels = np.logspace(np.log10(norm.vmin), np.log10(norm.vmax), 21)
+        f, ax = plt.subplots(1, 4, figsize=(18, 5), sharey=True, layout="constrained")
         xx, yy = np.meshgrid(radii, rci, indexing="ij")
         for a, values, title in zip(
             ax[:3],
@@ -354,60 +376,55 @@ class TestSelfInductance:
             ("Elliptic", "Kirchhoff", "Biot-Savart"),
             strict=True,
         ):
-            a.contourf(xx, yy, values, levels=levels)
+            cm = a.contourf(xx, yy, values, levels=levels, norm=norm, extend="both")
             a.set_title(title)
-        for a in ax:
-            a.set_xlabel("radius [m]")
-            a.set_ylabel("filament radius [m]")
+        decades = 10.0 ** np.arange(
+            np.ceil(np.log10(norm.vmin)), np.log10(norm.vmax) + 1
+        )
+        f.colorbar(cm, ax=ax[:3], ticks=decades).set_label("Inductance [H]")
 
         diff = 100 * (ind2 - ind3) / ind2
-        cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-5, 5, 100))
+        cm = ax[3].contourf(
+            xx,
+            yy,
+            diff,
+            levels=np.linspace(-0.5, 0.5, 21),
+            cmap="RdBu_r",
+            extend="both",
+        )
         ax[3].set_title("(K - BS) / K")
-        f.colorbar(cm).set_label("%")
-        plt.subplots_adjust(wspace=0.5)
+        f.colorbar(cm, ax=ax[3]).set_label("%")
+        for a in ax:
+            a.set_xlabel("Coil radius [m]")
+        ax[0].set_ylabel("Conductor radius [m]")
 
         r2 = 1 - np.sum((ind2 - ind3) ** 2) / np.sum((ind2 - np.average(ind2)) ** 2)
-        assert r2 > 0.998
+        assert r2 > 0.99999
 
     @pytest.mark.parametrize("radius", [5, 10, 100])
     @pytest.mark.parametrize(
-        ("r_over_a", "rtol"), [(10, 0.05), (100, 0.03), (1000, 0.02)]
+        ("r_over_a", "rtol"), [(10, 3e-4), (100, 3e-3), (1000, 3e-3)]
     )
     def test_circular_inductance(self, radius: float, r_over_a: float, rtol: float):
         """
         Compare with Kirchhoff's formula, mu_0 R (ln(8R/a) - 7/4), for a uniform
-        current density. The filament systematically underestimates it by a few %.
+        current density. With 50 segments, the polygon approximation of the circle
+        limits the agreement to ~0.15 %.
         """
         a = radius / r_over_a
         inductance = BiotSavartFilament(self._circle(radius), a).inductance()
         expected = circular_coil_inductance_kirchhoff(radius, a)
         np.testing.assert_allclose(inductance, expected, rtol=rtol)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason="Segments shorter than ~0.5 m: the near-segment cutoff compares a "
-        "squared distance with a length, and excludes neighbouring segments",
-    )
     def test_circular_inductance_small_coil(self):
         inductance = BiotSavartFilament(self._circle(1.0), 0.01).inductance()
         expected = circular_coil_inductance_kirchhoff(1.0, 0.01)
-        np.testing.assert_allclose(inductance, expected, rtol=0.03)
+        np.testing.assert_allclose(inductance, expected, rtol=3e-3)
 
+    # For c = 10, dl = 12 a is longer than the sides, so it is not discretised further
+    @pytest.mark.parametrize("discretise", [False, True])
     @pytest.mark.parametrize(
-        ("c", "discretise", "rtol"),
-        [
-            (10, False, 0.13),
-            (20, False, 0.11),
-            (40, False, 0.09),
-            (80, False, 0.075),
-            (160, False, 0.065),
-            # dl = 12 a is longer than the sides, so this is not discretised further
-            (10, True, 0.13),
-            (20, True, 0.04),
-            (40, True, 0.01),
-            (80, True, 0.02),
-            (160, True, 0.025),
-        ],
+        ("c", "rtol"), [(10, 2e-2), (20, 7e-3), (40, 3e-3), (80, 1.2e-3), (160, 5e-4)]
     )
     def test_square_inductance(self, c: float, discretise: bool, rtol: float):  # noqa: FBT001
         """
@@ -462,7 +479,7 @@ class TestInductance:
     def test_circular_loop(self, loop_radius, a):
         f = BiotSavartFilament(circle(loop_radius, 150), a)
         np.testing.assert_allclose(
-            f.inductance(), circular_coil_inductance_kirchhoff(loop_radius, a), rtol=2e-3
+            f.inductance(), circular_coil_inductance_kirchhoff(loop_radius, a), rtol=3e-4
         )
 
     def test_circular_loop_converges_with_fine_discretisation(self):
@@ -474,7 +491,7 @@ class TestInductance:
             for n in (200, 800, 2000)
         ]
         assert errors[0] > errors[1]
-        assert errors[2] < 1e-5
+        assert errors[2] < 5e-6
 
     @pytest.mark.parametrize("seed", range(5))
     def test_skew_segments_match_numerical_neumann(self, seed):
@@ -598,7 +615,7 @@ class TestElementaryPhysics:
         scale = np.linalg.norm(func(*point)) / np.linalg.norm(point) + np.sum(
             np.abs(terms)
         )
-        assert abs(sum(terms)) < 1e-6 * scale
+        assert abs(sum(terms)) < 1e-9 * scale
 
     def test_dipole_far_field(self):
         """Far from a small loop, B and A are those of a magnetic dipole."""
@@ -611,10 +628,10 @@ class TestElementaryPhysics:
             b_dip = MU_0_4PI * (3 * (m @ r_hat) * r_hat - m) / r_mag**3
             a_dip = MU_0_4PI * np.cross(m, r) / r_mag**3
             np.testing.assert_allclose(
-                f.field(*r), b_dip, rtol=1e-3, atol=1e-4 * np.abs(b_dip).max()
+                f.field(*r), b_dip, rtol=1e-4, atol=1e-5 * np.abs(b_dip).max()
             )
             np.testing.assert_allclose(
-                f.potential(*r), a_dip, rtol=1e-3, atol=1e-4 * np.abs(a_dip).max()
+                f.potential(*r), a_dip, rtol=1e-4, atol=1e-5 * np.abs(a_dip).max()
             )
 
     def test_helmholtz_pair(self):
@@ -624,9 +641,9 @@ class TestElementaryPhysics:
         upper = lower + np.array([0, 0, loop_radius])
         f = BiotSavartFilament([lower, upper], 1e-4)
         expected = (4 / 5) ** 1.5 * MU_0 / loop_radius
-        np.testing.assert_allclose(f.field(0, 0, 0)[2], expected, rtol=1e-4)
+        np.testing.assert_allclose(f.field(0, 0, 0)[2], expected, rtol=2e-5)
         # The field is uniform to fourth order near the centre
-        np.testing.assert_allclose(f.field(0, 0, 0.1)[2], expected, rtol=1e-5)
+        np.testing.assert_allclose(f.field(0, 0, 0.1)[2], expected, rtol=2e-6)
 
     def test_long_solenoid(self):
         """Centre of a finite solenoid: B = mu_0 n I L / sqrt(L^2 + 4 R^2)."""
@@ -639,7 +656,7 @@ class TestElementaryPhysics:
         ]
         f = BiotSavartFilament(helix, 1e-3)
         expected = MU_0 * turns / length * length / np.hypot(length, 2 * loop_radius)
-        np.testing.assert_allclose(f.field(0, 0, 0)[2], expected, rtol=2e-3)
+        np.testing.assert_allclose(f.field(0, 0, 0)[2], expected, rtol=5e-5)
 
     def test_mirror_symmetry(self):
         """A planar loop's field is mirror symmetric through its plane."""
@@ -781,7 +798,7 @@ class TestElementaryPhysics:
         # d L / d ln(a) -> -mu_0 P / (2 pi) for a thin wire of perimeter P
         perimeter = np.sum(np.linalg.norm(np.diff(self.loop, axis=0), axis=1))
         slope = (values[2] - values[1]) / np.log(0.01 / 0.03)
-        np.testing.assert_allclose(slope, -MU_0 * perimeter / (2 * np.pi), rtol=2e-2)
+        np.testing.assert_allclose(slope, -MU_0 * perimeter / (2 * np.pi), rtol=5e-3)
 
 
 class TestAPI:
