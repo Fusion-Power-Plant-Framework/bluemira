@@ -48,7 +48,7 @@ seem to work. Under the hood, this is probably being scaled
 somehow.
 
 See:
-    https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/Cl`ipperOffset/Properties/ArcTolerance.htm
+    https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/Properties/ArcTolerance.htm
     https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
 """
 
