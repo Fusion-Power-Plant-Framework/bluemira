@@ -9,9 +9,10 @@ on:
 
 jobs:
   linter:
-    runs-on: ubuntu-latest
+    runs-on: &runner ubuntu-24.04
     steps:
-      - name: Checkout
+      - &checkout
+        name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
@@ -40,12 +41,11 @@ jobs:
           exit "$exit_code"
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: *runner
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Checkout bluemira-private-data
+      - *checkout
+      - &checkout_priv
+        name: Checkout bluemira-private-data
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: ${{ !github.event.pull_request.head.repo.fork }}
         with:
@@ -80,16 +80,16 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
+        os: [*runner]
         python-version: ["3.11", "3.12"]
         with-process: ["v3.4.1", "process_disabled"]
         backend: ["cadquery"]
         include:
-          - os: "ubuntu-latest"
+          - os: *runner
             python-version: "3.11"
             with-process: "process_disabled"
             backend: "freecad"
-          - os: "ubuntu-latest"
+          - os: *runner
             python-version: "3.12"
             with-process: "process_disabled"
             backend: "freecad"
@@ -97,16 +97,8 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Checkout bluemira-private-data
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: ${{ !github.event.pull_request.head.repo.fork }}
-        with:
-          repository: "Fusion-Power-Plant-Framework/bluemira-private-data"
-          ssh-key: ${{ secrets.BLUEMIRA_PRIVATE_DATA_DEPLOY_KEY }}
-          path: "./bluemira-private-data"
+      - *checkout
+      - *checkout_priv
 
       - name: Move bluemira-private-data
         working-directory: "/home/runner/work/"
