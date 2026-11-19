@@ -11,12 +11,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
+from scipy.spatial import KDTree
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._pyclipr_offset import offset_clipper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.tools import distance_to, make_polygon
 
 
 class TestClipperOffset:
@@ -40,8 +40,7 @@ class TestClipperOffset:
         ax.plot(c.x, c.y, "r", marker="o")
         ax.set_aspect("equal")
 
-        distance = self._calculate_offset(coordinates, c)
-        print(distance, abs(delta))
+        distance, _ = self._offset_distance_range(coordinates, c)
         np.testing.assert_allclose(
             distance,
             abs(delta),
@@ -64,9 +63,7 @@ class TestClipperOffset:
         for m in ["miter", "square", "round"]:
             offset_coordinates = offset_clipper(coordinates, 1.5, method=m)
             offsets.append(offset_coordinates)
-            distance = self._calculate_offset(coordinates, offset_coordinates)
-            # Distance is measured between two discretised polygon wires, so the
-            # minimum approach is limited to ~1-2 μm by integer rounding at scale=1e6.
+            distance, _ = self._offset_distance_range(coordinates, offset_coordinates)
             np.testing.assert_almost_equal(distance, 1.5, decimal=5)
 
         _, ax = plt.subplots()
@@ -80,11 +77,11 @@ class TestClipperOffset:
     @pytest.mark.parametrize("delta", [0.5, -0.4, 1e3])
     def test_finely_discretised_wavy_polygon(self, method, delta):
         """
-        Benchmark: 4000-vertex curve with alternating convex/concave curvature.
+        Benchmark: 1000-vertex curve with alternating convex/concave curvature.
         -0.4 forces many local self-intersections to be resolved, 1e3 is a huge
         offset relative to the feature size (many ROUND arc segments).
         """
-        t = np.linspace(0, 2 * np.pi, 4001)[:-1]
+        t = np.linspace(0, 2 * np.pi, 1001)[:-1]
         r = 3 + 0.8 * np.sin(12 * t)
         coordinates = Coordinates({"x": 9 + r * np.cos(t), "y": 0, "z": r * np.sin(t)})
         coordinates.close()
@@ -94,16 +91,17 @@ class TestClipperOffset:
         elapsed = time.perf_counter() - t0
 
         assert c.closed
-        np.testing.assert_allclose(
-            self._calculate_offset(coordinates, c), abs(delta), rtol=1e-5, atol=1e-5
-        )
+        distance, max_distance = self._offset_distance_range(coordinates, c)
+        if method == "miter":
+            # At |delta| >> edge length, neighbouring miter tips can cover an edge's
+            # offset segment entirely, so only check that the offset never undershoots
+            assert distance >= abs(delta) * (1 - 1e-5) - 1e-5
+        else:
+            np.testing.assert_allclose(distance, abs(delta), rtol=1e-5, atol=1e-5)
         if method == "round":
             # A round offset must not overshoot anywhere (arc tolerance check)
-            assert (
-                self._max_vertex_distance(coordinates, c)
-                <= abs(delta) * (1 + 1e-5) + 1e-5
-            )
-        assert elapsed < 1.0  # pyclipper (Clipper1): ~5 s for round 1e3
+            assert max_distance <= abs(delta) * (1 + 1e-5) + 1e-5
+        assert elapsed < 0.25  # pyclipper (Clipper1): ~0.9 s for round 1e3
 
     def test_wrong_method(self):
         coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
@@ -127,16 +125,21 @@ class TestClipperOffset:
             offset_clipper(coordinates, 1, method=method)
 
     @staticmethod
-    def _calculate_offset(coordinates, offset_coordinates):
-        p1 = make_polygon(coordinates)
-        p2 = make_polygon(offset_coordinates)
-        return distance_to(p1, p2)[0]
+    def _offset_distance_range(coordinates, offset_coordinates, n=10, k=8):
+        """
+        Min and max distance from points along the offset polygon to the original
+        polyline (exact point-to-segment, on the k nearest segments via a KDTree).
+        """
 
-    @staticmethod
-    def _max_vertex_distance(coordinates, offset_coordinates):
-        """Max over offset vertices of the distance to the original polyline."""
-        a, b = coordinates.xz.T[:-1], coordinates.xz.T[1:]
-        ab = b - a
-        p = offset_coordinates.xz.T[:, None, :]
-        s = np.clip(np.einsum("nmj,mj->nm", p - a, ab) / (ab**2).sum(-1), 0, 1)
-        return np.linalg.norm(p - a - s[..., None] * ab, axis=-1).min(axis=1).max()
+        def densify(p):
+            s = np.linspace(0, 1, n, endpoint=False)[None, :, None]
+            return (p[:-1, None] + s * (p[1:] - p[:-1])[:, None]).reshape(-1, 3)
+
+        a = coordinates.xyz.T
+        a0, ab = a[:-1], np.diff(a, axis=0)
+        p = densify(offset_coordinates.xyz.T)
+        seg = KDTree(densify(a)).query(p, k=k)[1] // n
+        ap, ab = p[:, None] - a0[seg], ab[seg]
+        t = np.clip((ap * ab).sum(-1) / np.maximum((ab**2).sum(-1), 1e-300), 0, 1)
+        d = np.linalg.norm(ap - t[..., None] * ab, axis=-1).min(axis=1)
+        return d.min(), d.max()

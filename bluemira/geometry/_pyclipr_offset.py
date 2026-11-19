@@ -19,40 +19,49 @@ from pyclipr import ClipperOffset, EndType, JoinType
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix_v1v2
 from bluemira.geometry.error import GeometryError
 
 __all__ = ["offset_clipper"]
 
 
+_CLIPPER_SCALE = 1e8
 """
-Scale factor for pyclipr integer coordinates.
+Scale factor for pyclipr integer coordinates [integer units per metre].
 
-pyclipr's default (2^31 ~ 2.1e9) is chosen for maximum precision in boolean
-operations, but for offset operations it causes the ``JoinType.ROUND``
-arc-segment count to explode.
+Gives a 10 nm grid (D_TOLERANCE / 1000). pyclipr scales the coordinates and
+delta by this, but not ``arcTolerance`` (see ``_CLIPPER_ARC_ABS_TOL``), so the
+number of arc segments, and hence the runtime, does not depend on it.
 """
-_CLIPPER_SCALE = 1_000_000
 
+_CLIPPER_MAX_INT = 2.0**52
 """
-Scales the arc tolerance to the offset distance. The documentation is not
-entirely clear in this regard, and the default value in pyclipr is 0.0 and
-causes all sorts of failures (not 0.25 as documented, which was tested and
-found to be too slow).
+Upper bound on scaled ``max|coord| + |delta|``. Clipper2 does not range-check
+offsets and does its offset arithmetic in float64, so the scale is reduced for
+very large geometry / offsets to keep integer coordinates exact.
+"""
 
-Here we scale the offset distance by a factor of 1.0, which seems to work well
-across a range of offsets (balance between runtime and accuracy).
+_CLIPPER_ARC_ABS_TOL = 0.1 * D_TOLERANCE
+"""
+Maximum deviation of a ``JoinType.Round`` arc from the true arc [m].
 
-10.0 also generally works, but scaling to the offset scale does not
-seem to work. Under the hood, this is probably being scaled
-somehow.
+Clipper2 uses ``min(pi / acos(1 - arcTol / |delta|), |delta| * pi)`` steps per
+360 degrees, with ``arcTol`` and ``delta`` both in integer units. A value of 0
+falls back to ``arcTol = 0.002 * |delta|`` (too coarse), and a fixed value in
+integer units makes the step count grow with sqrt(|delta|) (too slow for large
+offsets), so we set the tolerance in metres and convert it to integer units.
 
 See:
     https://www.angusj.com/clipper2/Docs/Units/Clipper.Offset/Classes/ClipperOffset/Properties/ArcTolerance.htm
     https://github.com/drlukeparry/pyclipr/blob/ddb529d3f8f7e8be2ac6a37f79b6ade09ca17e5e/python/pyclipr/module.cpp#L807
 """
 
-_CLIPPER_ARC_SCALE = 1.0
+_CLIPPER_ARC_REL_TOL = 1e-6
+"""
+Arc tolerance relative to |delta|, used for large offsets where it exceeds
+``_CLIPPER_ARC_ABS_TOL``. Caps the arc steps at ~2200 per 360 degrees.
+"""
 
 
 class OffsetClipperMethodType(Enum):
@@ -112,11 +121,7 @@ def offset_clipper(
 
 
 class PyCliprOffsetter:
-    def __init__(
-        self,
-        method: OffsetClipperMethodType,
-        miter_limit: float = 2.0,
-    ):
+    def __init__(self, method: OffsetClipperMethodType, miter_limit: float = 2.0):
         self.miter_limit = miter_limit
         self.offset_scale = _CLIPPER_SCALE
         match method:
@@ -208,10 +213,15 @@ class PyCliprOffsetter:
         pco = ClipperOffset()
 
         pco.miterLimit = self.miter_limit
-        pco.scaleFactor = int(self.offset_scale)
+        scale = min(
+            self.offset_scale, _CLIPPER_MAX_INT / (np.abs(path).max() + abs(delta))
+        )
+        pco.scaleFactor = scale
 
-        # NOTE: Scales the arc tolerance to the offset distance. See docstring
-        pco.arcTolerance = abs(delta) * _CLIPPER_ARC_SCALE
+        # NOTE: arcTolerance is in (unscaled) integer units. See docstrings
+        pco.arcTolerance = (
+            max(_CLIPPER_ARC_ABS_TOL, _CLIPPER_ARC_REL_TOL * abs(delta)) * scale
+        )
 
         pco.addPath(path, self._jt, self._et)
         offset_result = pco.execute(delta)
