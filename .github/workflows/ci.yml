@@ -80,7 +80,7 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ["ubuntu-latest"]
+        os: ["ubuntu-24.04"]
         python-version: ["3.11", "3.12"]
         with-process: ["v3.4.1", "process_disabled"]
         backend: ["cadquery"]

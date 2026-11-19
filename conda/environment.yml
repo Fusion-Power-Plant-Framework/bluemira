@@ -36,7 +36,6 @@ dependencies:
   - h5py==3.13.0
   - pytools==2025.2.5
   - vtk==9.3.1
-  - llvm-openmp==23.1.5
   - libopenblas
   - pythonocc-core
   - cadquery=2.7.0
