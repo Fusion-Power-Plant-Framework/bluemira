@@ -72,14 +72,16 @@ class OffsetClipperMethodType(Enum):
     MITER = auto()
 
     @classmethod
-    def _missing_(cls, value: str | OffsetClipperMethodType) -> OffsetClipperMethodType:
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise GeometryError(
-                f"{cls.__name__} has no method {value}."
-                f"please select from {(*cls._member_names_,)}"
-            ) from None
+    def _missing_(cls, value: object) -> OffsetClipperMethodType:
+        if isinstance(value, str):
+            try:
+                return cls[value.upper()]
+            except KeyError:
+                raise GeometryError(
+                    f"{cls.__name__} has no method {value}."
+                    f"please select from {(*cls._member_names_,)}"
+                ) from None
+        return super()._missing_(value)
 
 
 def offset_clipper(
@@ -127,13 +129,12 @@ class PyCliprOffsetter:
         match method:
             case OffsetClipperMethodType.SQUARE:
                 self._jt = JoinType.Square
-                self._et = EndType.Polygon
             case OffsetClipperMethodType.ROUND:
                 self._jt = JoinType.Round
-                self._et = EndType.Polygon
             case OffsetClipperMethodType.MITER:
                 self._jt = JoinType.Miter
-                self._et = EndType.Polygon
+
+        self._et = EndType.Polygon
 
     @staticmethod
     def _transform_coords_to_path(coords: Coordinates) -> np.ndarray:
@@ -178,7 +179,7 @@ class PyCliprOffsetter:
             The offset Coordinates array
         """
         orig_com = orig_coords.center_of_mass
-        orig_norm_v = orig_coords.normal_vector
+        orig_norm_v = _normal_vector(orig_coords)
 
         res_coords_t = _pyclippath_to_coordinates(result)
 
@@ -224,16 +225,16 @@ class PyCliprOffsetter:
         )
 
         pco.addPath(path, self._jt, self._et)
-        offset_result = pco.execute(delta)
+        offset_paths: list[npt.NDArray[np.float64]] = pco.execute(delta)
 
-        if len(offset_result) == 1:
-            offset_result = offset_result[0]
-        elif len(offset_result) > 1:
+        if len(offset_paths) == 1:
+            offset_result = offset_paths[0]
+        elif len(offset_paths) > 1:
             bluemira_warn(
                 f"Offset operation with delta={delta} has produced multiple 'islands';"
                 " using the biggest one!"
             )
-            offset_result = max(offset_result, key=len)
+            offset_result = max(offset_paths, key=len)
         else:
             raise GeometryError("Offset operation failed to produce any geometry.")
 
@@ -301,10 +302,11 @@ def _transform_coordinates_to_xz(
         y-axis
     """
     coordinates.translate(base)
-    if np.isclose(abs(coordinates.normal_vector[1]), 1.0, rtol=0.0, atol=EPS):
+    normal = _normal_vector(coordinates)
+    if np.isclose(abs(normal[1]), 1.0, rtol=0.0, atol=EPS):
         return coordinates
 
-    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))
+    r = rotation_matrix_v1v2(normal, np.array(direction))
     x, y, z = r.T @ coordinates
 
     return Coordinates({"x": x, "y": y, "z": z})
@@ -333,11 +335,31 @@ def _transform_coordinates_to_original(
     :
         The offset Coordinates array in the original plane
     """
-    r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(original_normal))
+    r = rotation_matrix_v1v2(_normal_vector(coordinates), np.array(original_normal))
     x, y, z = r.T @ coordinates
     coordinates = Coordinates({"x": x, "y": y, "z": z})
     coordinates.translate(base)
     return coordinates
+
+
+def _normal_vector(coordinates: Coordinates) -> np.ndarray:
+    """
+    Get the normal vector of planar Coordinates.
+
+    Returns
+    -------
+    :
+        The normal vector of the Coordinates
+
+    Raises
+    ------
+    GeometryError
+        If the Coordinates have no normal vector
+    """
+    normal = coordinates.normal_vector
+    if normal is None:
+        raise GeometryError("Cannot offset Coordinates without a normal vector.")
+    return normal
 
 
 def _pyclippath_to_coordinates(path: np.ndarray, *, close=True) -> Coordinates:
