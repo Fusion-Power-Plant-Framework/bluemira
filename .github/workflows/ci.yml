@@ -9,7 +9,7 @@ on:
 
 jobs:
   linter:
-    runs-on: ubuntu-latest
+    runs-on: &runner ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,7 +40,7 @@ jobs:
           exit "$exit_code"
 
   docs:
-    runs-on: ubuntu-latest
+    runs-on: *runner
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -80,16 +80,16 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ["ubuntu-24.04"]
+        os: [*runner]
         python-version: ["3.11", "3.12"]
         with-process: ["v3.4.1", "process_disabled"]
         backend: ["cadquery"]
         include:
-          - os: "ubuntu-latest"
+          - os: *runner
             python-version: "3.11"
             with-process: "process_disabled"
             backend: "freecad"
-          - os: "ubuntu-latest"
+          - os: *runner
             python-version: "3.12"
             with-process: "process_disabled"
             backend: "freecad"
