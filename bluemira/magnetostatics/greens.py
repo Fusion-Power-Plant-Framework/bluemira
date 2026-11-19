@@ -712,10 +712,9 @@ def circular_coil_inductance_elliptic(
         K(m)-E(m)\\right],
 
     where :math:`r` is the coil radius [m], :math:`r_c` is the conductor
-    radius [m], :math:`\\mu_0` is the vacuum permeability, and :math:`K`
-    and :math:`E` use the elliptic *parameter* convention defined in the
-    module docstring. The expression above records the implemented
-    :math:`m^2` prefactor, with
+    radius [m], and :math:`K`  and :math:`E` use the elliptic *parameter*
+    convention defined in the  module docstring. The expression
+    above records the implemented :math:`m^2` prefactor, with
 
     .. math::
 
@@ -755,9 +754,7 @@ def circular_coil_inductance_kirchhoff(
 
     Here :math:`r` and :math:`r_c` are the coil and conductor radii [m],
     with :math:`r_c \\ll r`. The internal-inductance term :math:`1/4`
-    assumes uniform current density in the circular conductor; this is not
-    the high-frequency skin-current limit. :math:`\\mu_0` is the vacuum
-    permeability.
+    assumes uniform current density in the circular conductor.
     """
     return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
 
@@ -771,9 +768,9 @@ def square_coil_inductance_kirchhoff(
     Parameters
     ----------
     radius:
-        The radius of the square coil
+        The radius of the square coil [m]
     width:
-        The width of the coil cross-section
+        The width of the coil cross-section [m]
     height:
         The height of the coil cross-section [m]
 
@@ -790,6 +787,6 @@ def square_coil_inductance_kirchhoff(
         -\\frac{1}{2}\\right].
 
     Here :math:`r`, :math:`w`, and :math:`h` denote ``radius``, ``width``,
-    and ``height`` in metres, and :math:`\\mu_0` is the vacuum permeability.
+    and ``height`` in metres.
     """
     return MU_0 * radius * (np.log(8 * radius / (width + height)) - 0.5)
