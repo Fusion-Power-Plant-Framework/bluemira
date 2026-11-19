@@ -57,8 +57,15 @@ def _full_x_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
     """
     Calculate the P_x primitive integral.
 
-    \t:math:`P_{x}(R, Z) = \\int_{0}^{\\pi}[R_{0}+cos(\\phi)ln(R_{0}+R`
-    \t:math:`-cos(\\phi))]cos(\\phi)d\\phi`
+    .. math::
+
+        P_x(R,Z)=\\int_0^\\pi
+        [D+\\cos\\phi\\ln(D+R-\\cos\\phi)]\\cos\\phi\\,d\\phi,
+
+    where :math:`D=\\sqrt{R^2+1-2R\\cos\\phi+Z^2}` and R and Z are
+    the dimensionless working coordinates in :func:`semianalytic_Bx`.
+    The returned integrand combines the four corners with signs
+    :math:`(+,-,-,+)`; angular integration is performed by the caller.
 
     Returns
     -------
@@ -110,9 +117,13 @@ def _full_z_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) ->
     """
     Calculate the P_z primitive integral at all 4 corner combinations
 
-    \t:math:`P_{z}(R, Z) = \\int_{0}^{\\pi} [Zln(R_{0}+R-cos(\\phi)`
-    \t:math:`+\\dfrac{1}{2}cos(\\phi)ln(\\dfrac{R_{0}-Z}{R_{0}+Z})`
-    \t:math:`-sin(\\phi)arctan(\\dfrac{Z[R-cos(\\phi)]}{R_{0}sin(\\phi)})]d\\phi`
+    .. math::
+
+        P_z(R,Z)=\\int_0^\\pi F_z(\\phi,R,Z)\\,d\\phi,
+
+    with :math:`F_z` defined in :func:`semianalytic_psi`. The returned
+    integrand combines the four corners with signs :math:`(+,-,-,+)`;
+    angular integration is performed by the caller.
 
     Returns
     -------
@@ -264,8 +275,16 @@ def semianalytic_Bx(
 
     Notes
     -----
-    \t:math:`B_{x}=\\dfrac{\\mu_{0}Jx}{2\\pi}\\sum^{2}_{i=1}(-1)^{i+j}`
-    \t:math:`P_x(R_{i},Z_{j})`
+    .. math::
+
+        B_x=\\frac{\\mu_0 Jx}{2\\pi}
+        \\sum_{i=1}^2\\sum_{j=1}^2(-1)^{i+j}P_x(R_i,Z_j).
+
+    Here :math:`J=1/(4d_{xc}d_{zc})` is the uniform unit-current
+    density, :math:`R_{1,2}=(x_c\\mp d_{xc})/x`, and
+    :math:`Z_{1,2}=(z_c-z\\mp d_{zc})/x`. The primitive
+    :math:`P_x` is defined in ``_full_x_integrand``; the response is
+    in [T/A].
 
     References
     ----------
@@ -317,8 +336,16 @@ def semianalytic_Bz(
 
     Notes
     -----
-    \t:math:`B_{z}=\\dfrac{\\mu_{0}Jx}{2\\pi}\\sum^{2}_{i=1}(-1)^{i+j}`
-    \t:math:`P_z(R_{i},Z_{j})`
+    .. math::
+
+        B_z=\\frac{\\mu_0 Jx}{2\\pi}
+        \\sum_{i=1}^2\\sum_{j=1}^2(-1)^{i+j}P_z(R_i,Z_j).
+
+    Here :math:`J`, :math:`R_i`, and :math:`Z_j` are defined in
+    :func:`semianalytic_Bx`, and
+    :math:`P_z(R,Z)=\\int_0^\\pi F_z(\\phi,R,Z)\\,d\\phi`, with
+    :math:`F_z` given in :func:`semianalytic_psi`. The response is
+    in [T/A].
 
     References
     ----------
@@ -340,7 +367,10 @@ def semianalytic_Bz(
 @jit_llc7
 def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
     """
-    Integrand for psi = xBz
+    Integrand for the radial flux integral, d(psi)/dx = x Bz.
+
+    The current-density and permeability factors are applied by
+    :func:`semianalytic_psi`, after integration.
 
     Returns
     -------
@@ -394,13 +424,44 @@ def semianalytic_psi(
 
     Notes
     -----
-    The function returns
+    For uniform toroidal current density :math:`J=1/(4d_{xc}d_{zc})`
+    [A/m²], the returned flux per radian per ampere [Wb/A] is
 
     .. math::
-        2 \\times 10^{-7} {\\frac{1}{4 d_{xc} d_{zc}}} \\psi
 
-    The function integrates :math:`x B_z` to resolve psi. More analytical
-    approaches are possible and will no doubt be faster.
+        \\psi(x,z)=\\int_0^x r B_z(r,z)\\,dr
+        =\\frac{\\mu_0 J}{2\\pi}\\int_0^\\pi\\int_0^x
+        r^2\\sum_{i=1}^2\\sum_{j=1}^2(-1)^{i+j}
+        F_z(\\phi,R_i(r),Z_j(r))\\,dr\\,d\\phi,
+
+    where
+
+    .. math::
+
+        R_{1,2}(r)=\\frac{x_c\\mp d_{xc}}{r},\\qquad
+        Z_{1,2}(r)=\\frac{z_c-z\\mp d_{zc}}{r},
+
+    .. math::
+
+        D=\\sqrt{R^2+1-2R\\cos\\phi+Z^2},
+
+    .. math::
+
+        F_z(\\phi,R,Z)=Z\\ln(D+R-\\cos\\phi)
+        -\\cos\\phi\\ln(D+Z)
+        -\\sin\\phi\\arctan\\!\\left(
+        \\frac{Z(R-\\cos\\phi)}{D\\sin\\phi}\\right)
+        -\\frac12\\begin{cases}R,&R\\leq1,\\\\1/R,&R>1.\\end{cases}
+
+    This is the primitive evaluated by ``_partial_z_integrand`` away
+    from its special-case limits. The last, Z-independent term cancels
+    in the corner sum. The integration fixes :math:`\\psi(0,z)=0`;
+    it is not the pointwise product :math:`xB_z`. Positive coil
+    half-dimensions and positive calculation radius are assumed.
+
+    References
+    ----------
+    .. doi:: 10.1109/TMAG.2011.2167981
     """
     j_tor = 1 / (4 * d_xc * d_zc)  # Keep current out of the equation
     psi = n_integrate(

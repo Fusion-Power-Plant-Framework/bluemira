@@ -5,7 +5,34 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Green's functions mappings for psi, Bx, and Bz
+Green's functions for an axisymmetric circular filament carrying unit current.
+
+All coordinates are cylindrical, with ``x`` the radius [m] and ``z`` the
+height [m]. Responses are per ampere: flux per radian [Wb/A], field [T/A],
+and field gradient [T/(A m)]. The flux convention is
+:math:`B_x=-x^{-1}\\partial\\psi/\\partial z` and
+:math:`B_z=x^{-1}\\partial\\psi/\\partial x`.
+
+The equations below use the following shared quantities:
+
+.. math::
+
+    h=z-z_c,\\quad u=\\sqrt{(x+x_c)^2+h^2},\\quad
+    m=k^2=\\frac{4xx_c}{u^2},\\quad
+    v^2=x^2+x_c^2+h^2,\\quad w^2=x_c^2-x^2-h^2,
+
+.. math::
+
+    K(m)=\\int_0^{\\pi/2}\\frac{d\\theta}{\\sqrt{1-m\\sin^2\\theta}},
+    \\quad E(m)=\\int_0^{\\pi/2}\\sqrt{1-m\\sin^2\\theta}\\,d\\theta,
+
+.. math::
+
+    I_1=K(m)/u,\\qquad I_2=E(m)/[u^3(1-m)].
+
+Here :math:`\\mu_0` is the vacuum permeability. In the implementation,
+``m`` is clipped to ``[GREENS_ZERO, 1 - GREENS_ZERO]`` to regularise the
+elliptic integrals. This does not resolve the physical filament singularity.
 """
 
 import numba as nb
@@ -252,7 +279,7 @@ def greens_psi(
     -----
     .. math::
 
-        G_\\psi= \\frac{\\mu_0}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
+        G_\\psi= \\frac{\\mu_0 u}{4\\pi}[(2-k^2)K(k^2)-2E(k^2)]
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
 
@@ -533,6 +560,8 @@ def greens_dbz_dx(
     :math:`d^2=(x-x_c)^2+h^2`.
 
     The analytical axis value is 0.0. This is checked for as x <= 0.
+    Points for which ``d²`` or ``u²`` are numerically close to zero also
+    return zero as a numerical safeguard, not as a physical singular limit.
 
     Negative x or xc values are outside the intended domain.
     """
@@ -600,6 +629,8 @@ def greens_all(
     Calculate poloidal flux, radial field, and vertical field together.
 
     Geometry, masks, and elliptic integrals are each evaluated once.
+    The equations and axis limits are those of :func:`greens_psi`,
+    :func:`greens_Bx`, and :func:`greens_Bz`, respectively.
 
     Parameters
     ----------
@@ -671,17 +702,17 @@ def circular_coil_inductance_elliptic(
 
     .. math::
 
-        L = \\mu_{0} (2 r - r_c) \\Biggl((1 - k^2 / 2)~
-        \\int_0^{\\frac{\\pi}{2}} \\frac{d\\theta}{\\sqrt{1 - k~
-        \\sin (\\theta)^2}} - \\int_0^{\\frac{\\pi}{2}}~
-        \\sqrt{1 - k \\sin (\\theta)^2} \\, d\\theta\\Biggr)
+        L = \\mu_0(2r-r_c)\\left[\\left(1-\\frac{m^2}{2}\\right)
+        K(m)-E(m)\\right],
 
-    where :math:`r` is the radius, :math:`\\mu_{0}` is the vacuum
-    permeability, and
+    where :math:`r` is the coil radius [m], :math:`r_c` is the conductor
+    radius [m], and :math:`K`  and :math:`E` use the elliptic *parameter*
+    convention defined in the  module docstring. The expression
+    above records the implemented :math:`m^2` prefactor, with
 
     .. math::
 
-        k = \\max\\left(10^{-8}, \\min~
+        m = \\max\\left(10^{-8}, \\min~
         \\left(\\frac{4r(r - r_c)}{(2r - r_c)^2}~
         , 1.0 - 10^{-8}\\right)\\right)
     """
@@ -696,6 +727,8 @@ def circular_coil_inductance_kirchhoff(
     """
     Calculate the inductance of a circular coil by Kirchhoff's approximation.
 
+    Parameters
+    ----------
     radius:
         The radius of the circular coil
     rc:
@@ -711,9 +744,11 @@ def circular_coil_inductance_kirchhoff(
 
     .. math::
 
-        Inductance = \\mu_{0} * radius * (log(8 * radius / rc) - 2 + 0.25)
+        L = \\mu_0 r \\left[\\ln(8r/r_c)-2+\\frac{1}{4}\\right].
 
-    where :math:`\\mu_{0}` is the vacuum permeability
+    Here :math:`r` and :math:`r_c` are the coil and conductor radii [m],
+    with :math:`r_c \\ll r`. The internal-inductance term :math:`1/4`
+    assumes uniform current density in the circular conductor.
     """
     return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
 
@@ -724,23 +759,28 @@ def square_coil_inductance_kirchhoff(
     """
     Calculate the inductance of a square coil by Kirchhoff's approximation.
 
+    Parameters
+    ----------
     radius:
-        The radius of the square coil
+        The radius of the square coil [m]
     width:
-        The width of the coil cross-section
-    height
-        The height of the coil cross-section
+        The width of the coil cross-section [m]
+    height:
+        The height of the coil cross-section [m]
 
     Returns
     -------
-    The self-inductance of the square coil [H]
+    :
+        The self-inductance of the square coil [H]
 
     Notes
     -----
     .. math::
 
-        Inductance = \\mu_0 radius (ln(8\\frac{radius}{width + height}) - 0.5)
+        L = \\mu_0 r \\left[\\ln\\left(\\frac{8r}{w+h}\\right)
+        -\\frac{1}{2}\\right].
 
-    where :math:`\\mu_{0}` is the vacuum permeability
+    Here :math:`r`, :math:`w`, and :math:`h` denote ``radius``, ``width``,
+    and ``height`` in metres.
     """
     return MU_0 * radius * (np.log(8 * radius / (width + height)) - 0.5)
