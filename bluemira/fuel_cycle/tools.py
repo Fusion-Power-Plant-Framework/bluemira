@@ -304,11 +304,11 @@ def delay_decay(t: npt.NDArray, m_t_flow: npt.NDArray, tt_delay: float) -> npt.N
     Parameters
     ----------
     t:
-        The time vector [s]
+        The time vector [yr]
     m_t_flow:
         The mass flow vector [kg/s] [or any other unit same as return value]
     tt_delay:
-        The delay duration (scalar) [yr]
+        The delay duration (scalar) [s]
 
     Returns
     -------

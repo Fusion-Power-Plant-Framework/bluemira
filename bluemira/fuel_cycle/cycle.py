@@ -69,31 +69,31 @@ class EUDEMOFuelCycleModel:
     iterations: int
     A_global: float
 
-    m_T: np.ndarray
-    m_dot_release: float
-    m_T_in: np.ndarray
-    m_T_req: float
-    m_T_start: float
-    M_T_bred: float
-    M_T_stack: float
-    I_blanket: np.ndarray
-    I_plasma: np.ndarray
-    I_stack: np.ndarray
+    m_T: np.ndarray  # [kg]
+    m_dot_release: float  # [kg/yr]
+    m_T_in: np.ndarray  # [kg]
+    m_T_req: float  # [kg]
+    m_T_start: float  # [kg]
+    M_T_bred: float  # [kg]
+    M_T_stack: float  # [kg]
+    I_blanket: np.ndarray  # [kg]
+    I_plasma: np.ndarray  # [kg]
+    I_stack: np.ndarray  # [kg]
     I_tfv: np.ndarray
 
-    grate: np.ndarray
-    brate: np.ndarray
-    prate: np.ndarray
-    DEMO_rt: np.ndarray
-    DEMO_t: np.ndarray
-    DD_rate: np.ndarray
-    DT_rate: np.ndarray
+    grate: np.ndarray  # [kg/s]
+    brate: np.ndarray  # [kg/s]
+    prate: np.ndarray  # [kg/s]
+    DEMO_rt: np.ndarray  # [yrs]
+    DEMO_t: np.ndarray  # [yrs]
+    DD_rate: np.ndarray  # [1/s]
+    DT_rate: np.ndarray  # [1/s]
     bci: int
     arg_t_d: int | None
     arg_t_infl: int
-    t: np.ndarray
-    t_d: float
-    t_infl: float
+    t: np.ndarray  # [yrs]
+    t_d: float  # [yrs]
+    t_infl: float  # [yrs]
 
     def __init__(
         self,
@@ -182,22 +182,22 @@ class EUDEMOFuelCycleModel:
         Returns
         -------
         max_T:
-            maximum tritium inventory
+            maximum tritium inventory [kg]
         min_T:
-                minimum tritium inventory
+            minimum tritium inventory [kg]
         arg_t_d:
-
+            index of doubling time in time array [int]
         t_d:
-
+            doubling time
         arg_t_infl:
-
-         t_infl:
-
+            index of inflection time in time array [yrs]
+        t_infl:
+            inflection time [yrs]
         """
         n_bins = max(int(len(self.m_T) / 4500), 400)
         # Hand tweak to get findnoisylocals looking good
         max_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="max")  # noqa: N806
-        min_T = find_noisy_locals(self.m_T, x_bins=n_bins)  # noqa: N806
+        min_T = find_noisy_locals(self.m_T, x_bins=n_bins, mode="min")  # noqa: N806
         # self.max_T[1][-1] = self.max_T[1][-2]   #plothack
         self.m_T[-1] = max_T[1][-1]
         arg_t_d, t_d = self.calc_t_d()
@@ -276,9 +276,9 @@ class EUDEMOFuelCycleModel:
         Parameters
         ----------
         eta_b:
-            The retention efficiency parameter for the blanket
+            The retention efficiency parameter for the blanket [dimensionless]
         max_inventory:
-            The maximum inventory in the blanket
+            The maximum inventory in the blanket [kg]
 
         Returns
         -------
@@ -516,7 +516,7 @@ class EUDEMOFuelCycleModel:
         arg_t_infl:
             index of inflection time in time array
         :
-            inflection time
+            inflection time [yrs]
         """
         arg_t_infl = int(np.argmin(self.m_T))
         return arg_t_infl, self.t[arg_t_infl]
@@ -554,25 +554,25 @@ class EUDEMOFuelCycleModel:
 class EUDEMOFuelCycleResults:
     """Results of the demo fuel cycle calculation"""
 
-    TBR: float
+    TBR: float  # [dimensionless]
     DEMO_t: npt.NDArray
-    m_T_req: float
-    t: npt.NDArray
-    t_d: float
+    m_T_req: float  # [kg]
+    t: npt.NDArray  # [yrs]
+    t_d: float  # [yrs]
     arg_t_d: int | None
-    t_infl: float
+    t_infl: float  # [yrs]
     arg_t_infl: int
-    max_T: npt.NDArray  # noqa: N815
-    min_T: npt.NDArray  # noqa: N815
-    m_T: npt.NDArray
-    I_tfv: npt.NDArray
-    I_tfv_min: float
-    I_stack: npt.NDArray
-    I_plasma: npt.NDArray
-    I_blanket: npt.NDArray
-    brate: npt.NDArray
-    prate: npt.NDArray
-    m_dot_release: float
+    max_T: npt.NDArray  # [kg] # noqa: N815
+    min_T: npt.NDArray  # [kg] # noqa: N815
+    m_T: npt.NDArray  # [kg]
+    I_tfv: npt.NDArray  # [kg]
+    I_tfv_min: float  # [kg]
+    I_stack: npt.NDArray  # [kg]
+    I_plasma: npt.NDArray  # [kg]
+    I_blanket: npt.NDArray  # [kg]
+    brate: npt.NDArray  # [kg/s]
+    prate: npt.NDArray  # [kg/s]
+    m_dot_release: float  # [kg/yr]
 
     def tbreed(self, TBR: float, m_T_0: float) -> np.ndarray:
         """
