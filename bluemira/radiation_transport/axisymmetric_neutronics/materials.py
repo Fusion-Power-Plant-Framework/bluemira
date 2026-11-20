@@ -40,7 +40,7 @@ def to_mcio_material(
 
     # Composition
     composition = {
-        element: element_fraction.fraction
+        element: element_fraction.fraction  # type: ignore[ty:missing-union-attribute]
         for element, element_fraction in inp_material.elements.root.items()
     }
 
