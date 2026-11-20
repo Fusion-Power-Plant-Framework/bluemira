@@ -926,15 +926,15 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         """
         self.mcio_model.settings = settings
 
-        if self.geometry is None:
+        if self.mcio_model.geometry is None:
             raise ValueError("MCIO model has no geometry")
 
         self.geometry = self.mcio_model.geometry
-        root_universe = self.geometry.root_universe
-        if not isinstance(root_universe, openmc.Universe):  # Otherwise ty complains
+
+        if not isinstance(self.geometry.root_universe, openmc.Universe):
             raise TypeError("Expected an OpenMC CSG Universe")
 
-        self.universe = root_universe
+        self.universe = self.geometry.root_universe
         self.materials = self.mcio_model.materials
 
         return self.mcio_model
