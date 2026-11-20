@@ -18,7 +18,6 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.coordinates import Coordinates, check_ccw
 from bluemira.radiation_transport.midplane_temperature_density import (
     collect_rho_core_values,
-    midplane_profiles,
 )
 from bluemira.radiation_transport.radiation_profile import RadiationSource
 from bluemira.radiation_transport.radiation_tools import (
@@ -97,13 +96,10 @@ class TestCoreRadiation:
             "confinement_sol": 10,
         }
 
-        profiles = midplane_profiles(params=midplane_params)
-
         source = RadiationSource(
             eq=eq,
             firstwall_shape=fw_shape,
             params=cls.params,
-            midplane_profiles=profiles,
             core_impurities=cls.config["f_imp_core"],
             sol_impurities=cls.config["f_imp_sol"],
             confinement_time_core=cls.config["confinement_core"],
@@ -112,7 +108,7 @@ class TestCoreRadiation:
         source.analyse()
         source.rad_map()
 
-        cls.profiles = profiles
+        cls.profiles = source.midplane_profiles
         cls.source = source
         cls.fw_shape = fw_shape
 
