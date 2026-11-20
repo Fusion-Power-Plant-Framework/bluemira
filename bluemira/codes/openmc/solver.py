@@ -943,7 +943,7 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         """Create tallies from the solver's tally specifications."""
         tallies = openmc.Tallies()
 
-        for name, score, filters in tally_function(self.mcio_model):
+        for name, score, filters in tally_function(self.mcio_model):  # type: ignore[ty:no-matching-overload]
             tally = openmc.Tally(name=name)
             tally.filters = filters
             tally.scores = [score]
