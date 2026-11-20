@@ -738,7 +738,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         *,
         debug=False,
     ) -> (
-        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
         | dict[int, float]
         | None
     ):
@@ -999,8 +999,8 @@ class OpenMCmcioCSGTeardown(CodesTeardown):
 class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
     """Solver for OpenMC CSG neutronics using MCIO."""
 
-    setup_cls: type[OpenMCmcioCSGSetup] = OpenMCmcioCSGSetup
-    teardown_cls: type[OpenMCmcioCSGTeardown] = OpenMCmcioCSGTeardown
+    setup_cls: type[OpenMCBaseSetup] = OpenMCmcioCSGSetup
+    teardown_cls: type[CodesTeardown] = OpenMCmcioCSGTeardown
 
     def __init__(
         self,
@@ -1055,10 +1055,10 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
             self.eq,
             self.source,
             self.mcio_model,
-            self.bounding_box,
+            self.bounding_box,  # type: ignore[ty:too-many-positional-arguments]
         )
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(self.out_path, self.name)  # type: ignore[ty:invalid-argument-type]
 
         return cast(
             "MCIORunResult",

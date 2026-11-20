@@ -95,7 +95,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.params = make_parameter_frame(params, self.param_cls)
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
-        self.material_name_mapping = None
+        self.material_name_mapping = {}
         self.material_library = None  # No need
 
     def get_desplined_geometry(
@@ -245,8 +245,6 @@ class AxisymmetricNeutronicsReactor(ABC):
         decomposer.decom_params.void_max_recursion_depth = mcio_void_max_recursion_depth
         decomposer.decom_params.void_min_width = mcio_void_min_width_cm
 
-        material_name_mapping = {}
-
         # NOTE: Every solid should have its own unique MCIO material name,
         # even if multiple solids use the same original material.
         bluemira_print("Adding solids to the decomposer")
@@ -258,10 +256,7 @@ class AxisymmetricNeutronicsReactor(ABC):
             decomposer.add_solid(solid, name=name, material=mcio_material)
 
             # Map original component name to MCIO material name
-            material_name_mapping[name] = mcio_material.name
-
-        # save material mapping
-        self.material_name_mapping = material_name_mapping
+            self.material_name_mapping[name] = mcio_material.name
 
         # run decomposer to generate void and model
         bluemira_print("Running decomposer")
