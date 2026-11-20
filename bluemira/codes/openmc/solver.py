@@ -914,10 +914,27 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         return universe, geometry
 
     def _create_model(self, settings: openmc.Settings) -> openmc.Model:
-        """Return the pre-built MCIO model with settings applied."""
+        """
+        Return the pre-built MCIO model with settings applied.
+
+        Raises
+        ------
+        ValueError
+            if model does not have a geometry
+        TypeError
+            if model has a wrong geometry type
+        """
         self.mcio_model.settings = settings
+
+        if self.geometry is None:
+            raise ValueError("MCIO model has no geometry")
+
         self.geometry = self.mcio_model.geometry
-        self.universe = self.geometry.root_universe
+        root_universe = self.geometry.root_universe
+        if not isinstance(root_universe, openmc.Universe):  # Otherwise ty complains
+            raise TypeError("Expected an OpenMC CSG Universe")
+
+        self.universe = root_universe
         self.materials = self.mcio_model.materials
 
         return self.mcio_model
