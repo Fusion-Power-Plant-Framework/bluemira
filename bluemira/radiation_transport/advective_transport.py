@@ -19,11 +19,10 @@ from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.flux_surfaces_maker import (
     _clip_flux_surfaces,
@@ -310,11 +309,12 @@ class ChargedParticleSolver:
             :, (theta_wall < theta_max_upper) & (theta_wall > theta_max_lower)
         ]
 
-        # If there are multiple points on the wall then use Wire class
-        # to calculate the length
+        # If there are multiple points on the wall then
+        # calculate the length
         if len(xyz_wall_mp[0]) > 1:
-            reg_wire = make_polygon(xyz_wall_mp.T)
-            return xyz_wall_mp[0], xyz_wall_mp[2], reg_wire.length
+            ds = np.sqrt(np.diff(xyz_wall_mp[0]) ** 2 + np.diff(xyz_wall_mp[2]) ** 2)
+            length = np.sum(ds)
+            return xyz_wall_mp[0], xyz_wall_mp[2], float(length)
 
         # If the first intersection for the lower and upper flux is the same point
         # then use the angle between the two points closest to the the intersection
@@ -324,7 +324,7 @@ class ChargedParticleSolver:
                 return idx + 1
             return idx - 1
 
-        if np.isclose(theta_max_lower, theta_max_upper):
+        if np.isclose(np.abs(theta_max_lower), np.abs(theta_max_upper)):
             theta_max_lower = theta_lower[
                 next_intersection(theta_lower, theta_max_lower)
             ]
@@ -458,6 +458,20 @@ class ChargedParticleSolver:
         heat_flux_x_outb = miss_omp / outb_surf
         if hasattr(x_out_inter, "__len__"):
             heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+
+        bluemira_print(
+            "Charged Particle Solver Power Summary\n"
+            "---\n"
+            f"Expected power = {miss_omp + q_omp_int} MW\n"
+            "---\n"
+            f"Missing perpendicular power = {miss_omp} MW\n"
+            "---\n"
+            "Perpendicular heat flux depoisted at OMP points"
+            f" = {heat_flux_x_outb} MW/m^2\n"
+            "---\n"
+            "OB surface area with no flux intersections for"
+            f"perpendicular deposition = {outb_surf} m^2\n"
+        )
 
         return (
             np.concatenate([np.atleast_1d(x_out_inter), x_lfs_inter, x_hfs_inter]),
@@ -594,6 +608,27 @@ class ChargedParticleSolver:
         # Calculating mid-outboard and mid-inboard heat flux
         heat_flux_x_outb = miss_omp / outb_surf
         heat_flux_x_inb = miss_imp / inb_surf
+
+        bluemira_print(
+            "Charged Particle Solver Power Summary\n"
+            "---\n"
+            f"Expected IB power = {miss_imp + q_imp_int} MW\n"
+            f"Expected OB power = {miss_omp + q_omp_int} MW\n"
+            "---\n"
+            f"Missing perpendicular IB power = {miss_imp} MW\n"
+            f"Missing perpendicular OB power = {miss_omp} MW\n"
+            "---\n"
+            "Perpendicular heat flux deposited at IMP points"
+            f" = {heat_flux_x_inb} MW/m^2\n"
+            "Perpendicular heat flux depoisted at OMP points"
+            f" = {heat_flux_x_outb} MW/m^2\n"
+            "---\n"
+            "IB surface area with no flux intersections for"
+            f"perpendicular deposition = {inb_surf} m^2\n"
+            "OB surface area with no flux intersections for"
+            f"perpendicular deposition = {outb_surf} m^2\n"
+        )
+
         if hasattr(x_out_inter, "__len__"):
             heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
         if hasattr(x_in_inter, "__len__"):
