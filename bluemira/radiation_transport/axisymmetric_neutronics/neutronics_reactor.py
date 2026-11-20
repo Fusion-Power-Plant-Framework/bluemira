@@ -185,8 +185,9 @@ class AxisymmetricNeutronicsReactor(ABC):
             return None
 
         boxes = [
-            comp.get_component("xyz").children[0].shape.bounding_box
+            xyz.children[0].shape.bounding_box
             for comp in components
+            if (xyz := comp.get_component("xyz")) is not None
         ]
 
         r_min = min(box.x_min for box in boxes)
@@ -225,15 +226,15 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         # Convert OCC solids from metres to centimetres for OpenMC uses
         all_ocp_solids = [
-            self._scale_solid_to_cm(
-                comp.get_component("xyz").children[0].shape.shape.wrapped
-            )
+            self._scale_solid_to_cm(xyz.children[0].shape.shape.wrapped)
             for comp in all_desplined_components
+            if (xyz := comp.get_component("xyz")) is not None
         ]
 
         all_materials = [
-            comp.get_component("xyz").children[0].material
+            xyz.children[0].material
             for comp in all_desplined_components
+            if (xyz := comp.get_component("xyz")) is not None
         ]
 
         # set up empty decomposer (you can also add step files and ocp

@@ -11,13 +11,13 @@ import json
 from pathlib import Path
 
 import mcio
-from matproplib import material
 from matproplib.conditions import OperationalConditions
+from matproplib.material import Material
 from matproplib.properties.dependent import Density
 
 
 def to_mcio_material(
-    inp_material: material, op_cond: OperationalConditions, number: int | None = None
+    inp_material: Material, op_cond: OperationalConditions, number: int | None = None
 ) -> mcio.material.Material:
     """
     MCIO does not support matproplib. Hence we would need

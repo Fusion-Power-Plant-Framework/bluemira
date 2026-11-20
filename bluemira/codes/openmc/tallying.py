@@ -134,8 +134,17 @@ def openmc_tallies_using_mcio(
     -------
     :
         list of tallies
+
+    Raises
+    ------
+    ValueError
+        if the model does not have a geometry
     """
-    all_cells = list(model.geometry.get_all_cells().values())
+    geometry = model.geometry
+    if geometry is None:
+        raise ValueError("OpenMC model geometry is not defined.")
+
+    all_cells = list(geometry.get_all_cells().values())
 
     # -----------------------------------------------
     # Adapt OpenMC cells for MCIO

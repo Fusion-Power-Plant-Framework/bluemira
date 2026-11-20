@@ -182,8 +182,7 @@ class OpenMCCSGResult(OpenMCResultBase):
     total_power: float
     total_power_err: float
     mult_power: float
-    peak_bb_fe_damage: float
-    peak_bb_fe_damage_err: float
+
     fluxes: dict
     damage: dict
 
@@ -195,6 +194,9 @@ class OpenMCCSGResult(OpenMCResultBase):
     cell_names: dict
     cell_vols: dict  # [m^3]
     mat_names: dict
+    peak_bb_fe_damage: float | None = None
+    peak_bb_fe_damage_err: float | None = None
+
     photon_heat_flux: dict | None = None
     """Photon heat flux"""
 

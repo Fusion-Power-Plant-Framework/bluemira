@@ -59,8 +59,8 @@ class InDat:
 OBS_VARS = {}
 
 try:
-    from process.core.io.in_dat import InDat  # type: ignore[ ty:import-not-found, ty:invalid-assignment] # noqa: F401
-    from process.core.io.mfile import MFile  # type: ignore[ ty:import-not-found, ty:invalid-assignment] # noqa: F401
+    from process.core.io.in_dat import InDat  # noqa: F401
+    from process.core.io.mfile import MFile  # noqa: F401
     from process.core.io.obsolete_vars import OBS_VARS  # type: ignore[ ty:import-not-found]
     from process.models.physics.impurity_radiation import (  # type: ignore[ ty:import-not-found]
         ImpurityDataHeader,
@@ -224,7 +224,7 @@ def _nested_check(maybe_obsolete: str) -> str | list[str] | None:
         The newest process name or names
     """
     while maybe_obsolete in OBS_VARS:
-        maybe_obsolete = OBS_VARS[maybe_obsolete]  # type:ignore[ty:invalid-assignment]
+        maybe_obsolete = OBS_VARS[maybe_obsolete]
         if maybe_obsolete == "None":
             return None
         if isinstance(maybe_obsolete, list):
