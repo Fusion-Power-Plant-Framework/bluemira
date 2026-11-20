@@ -19,11 +19,10 @@ from numpy import typing as npt
 
 import bluemira.radiation_transport.flux_surfaces_maker as fsm
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.display.plotter import Zorder, plot_coordinates
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import make_polygon
 from bluemira.radiation_transport.error import AdvectionTransportError
 from bluemira.radiation_transport.flux_surfaces_maker import (
     _clip_flux_surfaces,
@@ -277,54 +276,79 @@ class ChargedParticleSolver:
 
         Returns
         -------
-        x_reg_inter:
-            the x region intersection point
-        z_reg_inter:
-            the z region intersection point
-        wire_length:
-            the length of the wire
+        :
+            x-coords for no intersection region
+        :
+            z-coords for no intersection region
+        length:
+            length of the no intersection region
 
         Raises
         ------
         AdvectionTransportError
             If first wall has not been initialized
         """
-        up_end_i = self.first_wall.argmin(np.array([x_up_inter[-1], 0, z_up_inter[-1]]))
-        down_end_i = self.first_wall.argmin(
-            np.array([x_down_inter[-1], 0, z_down_inter[-1]])
+        # Get wall xyz array and angle on poloidal plane
+        xyz_wall = (
+            self.first_wall.xyz[:, self.first_wall.x >= self._o_point.x]
+            if lfs
+            else self.first_wall.xyz[:, self.first_wall.x <= self._o_point.x]
         )
+        theta_wall = np.arctan2(xyz_wall[2], xyz_wall[0])
 
-        if up_end_i != down_end_i:
-            reg_i = np.nonzero(
-                (self.first_wall.z < self.first_wall.z[up_end_i])
-                & (self.first_wall.z >= self.first_wall.z[down_end_i])
-                & (
-                    (self.first_wall.x > self._o_point.x)
-                    if lfs
-                    else (self.first_wall.x < self._o_point.x)
-                )
-            )[0]
+        # Get angles of upper and lower intersection points closest to
+        # the OMP for LFS and the IMP for HFS
+        theta_lower = np.arctan2(z_down_inter, x_down_inter)
+        theta_upper = np.arctan2(z_up_inter, x_up_inter)
+        theta_max_lower = min(theta_lower, key=abs) if lfs else max(theta_lower, key=abs)
+        theta_max_upper = min(theta_upper, key=abs) if lfs else max(theta_upper, key=abs)
 
-            x_reg_inter = self.first_wall.x[reg_i]
-            z_reg_inter = self.first_wall.z[reg_i]
+        # xyz of wall points that fall between the upper an lower
+        # intersections at the midplane
+        xyz_wall_mp = xyz_wall[
+            :, (theta_wall < theta_max_upper) & (theta_wall > theta_max_lower)
+        ]
 
-            reg_wire = make_polygon(self.first_wall.T[reg_i])
-            wire_length = reg_wire.length
+        # If there are multiple points on the wall then
+        # calculate the length
+        if len(xyz_wall_mp[0]) > 1:
+            ds = np.sqrt(np.diff(xyz_wall_mp[0]) ** 2 + np.diff(xyz_wall_mp[2]) ** 2)
+            length = np.sum(ds)
+            return xyz_wall_mp[0], xyz_wall_mp[2], float(length)
 
-        else:
-            mid_i = self.first_wall.argmin(
-                np.array([x_down_inter[-1], 0, z_down_inter[-1]])
-            )
-            x_reg_inter = self.first_wall.x[mid_i]
-            z_reg_inter = self.first_wall.z[mid_i]
-            reg_wire = make_polygon([
-                [x_up_inter[-1], 0, z_up_inter[-1]],
-                [x_reg_inter, 0, z_reg_inter],
-                [x_down_inter[-1], 0, z_down_inter[-1]],
-            ])
-            wire_length = reg_wire.length
+        # If the first intersection for the lower and upper flux is the same point
+        # then use the angle between the two points closest to the the intersection
+        def next_intersection(theta, theta_max):
+            idx = np.argmin(np.abs(theta - theta_max))
+            if idx == 0:
+                return idx + 1
+            return idx - 1
 
-        return x_reg_inter, z_reg_inter, wire_length
+        if np.isclose(np.abs(theta_max_lower), np.abs(theta_max_upper)):
+            theta_max_lower = theta_lower[
+                next_intersection(theta_lower, theta_max_lower)
+            ]
+            theta_max_upper = theta_upper[
+                next_intersection(theta_upper, theta_max_upper)
+            ]
+
+        # If there one or less point on the wall then find the
+        # approximate distance along the wall between the intersections.
+        # Assume an ~ arc.
+        length = (
+            (theta_max_upper - theta_max_lower)
+            * 2
+            * np.pi
+            * x_up_inter[theta_upper == theta_max_upper]
+        )
+        if len(xyz_wall_mp[0]) > 0:
+            return xyz_wall_mp[0], xyz_wall_mp[2], float(length)
+
+        # and if there are no wall points between intersections...
+        lower_idx = np.where(xyz_wall[2] < 0)[0][np.argmax(xyz_wall[2, xyz_wall[2] < 0])]
+        upper_idx = np.where(xyz_wall[2] > 0)[0][np.argmin(xyz_wall[2, xyz_wall[2] > 0])]
+        mid_point = 0.5 * (xyz_wall[:, lower_idx] + xyz_wall[:, upper_idx])
+        return mid_point[0], mid_point[2], float(length)
 
     def analyse(self, first_wall: Coordinates):
         """
@@ -451,6 +475,20 @@ class ChargedParticleSolver:
         heat_flux_x_outb = miss_omp / outb_surf
         if hasattr(x_out_inter, "__len__"):
             heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
+
+        bluemira_print(
+            "Charged Particle Solver Power Summary\n"
+            "---\n"
+            f"Expected power = {miss_omp + q_omp_int} MW\n"
+            "---\n"
+            f"Missing perpendicular power = {miss_omp} MW\n"
+            "---\n"
+            "Perpendicular heat flux depoisted at OMP points"
+            f" = {heat_flux_x_outb} MW/m^2\n"
+            "---\n"
+            "OB surface area with no flux intersections for"
+            f"perpendicular deposition = {outb_surf} m^2\n"
+        )
 
         return (
             np.concatenate([np.atleast_1d(x_out_inter), x_lfs_inter, x_hfs_inter]),
@@ -579,6 +617,27 @@ class ChargedParticleSolver:
         # Calculating mid-outboard and mid-inboard heat flux
         heat_flux_x_outb = miss_omp / outb_surf
         heat_flux_x_inb = miss_imp / inb_surf
+
+        bluemira_print(
+            "Charged Particle Solver Power Summary\n"
+            "---\n"
+            f"Expected IB power = {miss_imp + q_imp_int} MW\n"
+            f"Expected OB power = {miss_omp + q_omp_int} MW\n"
+            "---\n"
+            f"Missing perpendicular IB power = {miss_imp} MW\n"
+            f"Missing perpendicular OB power = {miss_omp} MW\n"
+            "---\n"
+            "Perpendicular heat flux deposited at IMP points"
+            f" = {heat_flux_x_inb} MW/m^2\n"
+            "Perpendicular heat flux depoisted at OMP points"
+            f" = {heat_flux_x_outb} MW/m^2\n"
+            "---\n"
+            "IB surface area with no flux intersections for"
+            f"perpendicular deposition = {inb_surf} m^2\n"
+            "OB surface area with no flux intersections for"
+            f"perpendicular deposition = {outb_surf} m^2\n"
+        )
+
         if hasattr(x_out_inter, "__len__"):
             heat_flux_x_outb = [heat_flux_x_outb] * len(x_out_inter)
         if hasattr(x_in_inter, "__len__"):
