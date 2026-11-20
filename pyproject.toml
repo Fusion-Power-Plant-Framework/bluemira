@@ -89,6 +89,7 @@ openmc = [
     "pandas<3.0.0", # openmc < 0.16 doesnt work with pandas >= 3.0.0
     "openmc_data==2.6.0",
     "tokamak-neutron-source >=0.1.4",
+    "mcio @ git+https://github.com/ukaea/mcio@main"
 ]
 polyscope = ["polyscope"]
 radiation = ["cherab>=1.5"]  # conda-forge only (not on PyPI) — install the conda env first

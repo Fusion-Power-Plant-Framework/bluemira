@@ -7,5 +7,6 @@
 
 from bluemira.codes.openmc.solver import OpenMCCSGNeutronicsSolver as CSGSolver
 from bluemira.codes.openmc.solver import OpenMCDAGMCNeutronicsSolver as DAGMCSolver
+from bluemira.codes.openmc.solver import OpenMCmcioCSGNeutronicsSolver as MCIOCSGSolver
 
-__all__ = ["CSGSolver", "DAGMCSolver"]
+__all__ = ["CSGSolver", "DAGMCSolver", "MCIOCSGSolver"]

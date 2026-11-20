@@ -37,6 +37,9 @@ if TYPE_CHECKING:
         ZeroDNeutronicsResult,
     )
 
+MEAN_W = "mean(W)"
+FLUX_UNIT = "flux (m^-2)"
+
 
 def _get_std_dev_iloc(df):
     return df["std. dev."].iloc[0] if "std. dev." in df else 0
@@ -179,30 +182,35 @@ class OpenMCCSGResult(OpenMCResultBase):
     total_power: float
     total_power_err: float
     mult_power: float
-    peak_bb_fe_damage: float
-    peak_bb_fe_damage_err: float
+
     fluxes: dict
     damage: dict
 
     universe: openmc.Universe
-    cell_arrays: CellStage
+
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: Path
     cell_names: dict
     cell_vols: dict  # [m^3]
     mat_names: dict
+    peak_bb_fe_damage: float | None = None
+    peak_bb_fe_damage_err: float | None = None
+
     photon_heat_flux: dict | None = None
     """Photon heat flux"""
+
+    cell_arrays: CellStage | None = None
+    """None for mcio workflow for now"""
 
     @classmethod
     def from_run(
         cls,
         universe: openmc.Universe,
-        cell_arrays: CellStage,
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: Path,
+        cell_arrays: CellStage | None = None,
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -249,12 +257,20 @@ class OpenMCCSGResult(OpenMCResultBase):
         e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
         mult_power = cls.multiplication_power(e_mult, dt_n_power)
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        damage = cls._load_damage(
-            statepoint, cell_names, cell_vols, cell_arrays, src_rate
-        )
-        max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
-        peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
-        peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+
+        if cell_arrays is not None:
+            damage = cls._load_damage(
+                statepoint, cell_names, cell_vols, cell_arrays, src_rate
+            )
+
+            max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
+            peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
+            peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            damage = {}
+            peak_bb_fe_damage = None
+            peak_bb_fe_damage_err = None
 
         return cls(
             universe=universe,
@@ -644,6 +660,127 @@ class OpenMCDAGMCResult(OpenMCResultBase):
 
 
 @dataclass
+class OpenMCmcioCSGResult(OpenMCResultBase):
+    """Results extracted from an MCIO-generated OpenMC CSG model."""
+
+    tbr: float
+    tbr_err: float
+
+    e_mult: float
+    e_mult_err: float
+    mult_power: float
+
+    power: dict
+    fluxes: dict
+
+    universe: openmc.Universe
+    src_rate: float
+    statepoint: openmc.StatePoint
+    statepoint_file: Path
+
+    cell_names: dict
+    cell_vols: dict
+    mat_names: dict
+
+    @classmethod
+    def from_run(
+        cls,
+        universe: openmc.Universe,
+        src_rate: float,
+        src_triton_rate: float,
+        statepoint_file: Path,
+    ):
+        """
+        Create results from an MCIO OpenMC statepoint.
+
+        Raises
+        ------
+        ValueError
+            if total_power heating tally is missing
+        """
+        cell_names = {cell_id: cell.name for cell_id, cell in universe.cells.items()}
+
+        mat_names = {
+            cell.fill.id: cell.fill.name
+            for cell in universe.cells.values()
+            if cell.fill is not None
+        }
+
+        cell_vols = {
+            cell_id: raw_uc(cell.volume, "cm^3", "m^3")
+            if isinstance(cell.volume, float)
+            else None
+            for cell_id, cell in universe.cells.items()
+        }
+
+        statepoint = openmc.StatePoint(statepoint_file.as_posix())
+
+        tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
+
+        power = {}
+        fluxes = {}
+
+        total_power = None
+        total_power_err = None
+
+        for tally in statepoint.tallies.values():
+            df = tally.get_pandas_dataframe()
+            scores = tally.scores
+
+            if "heating" in scores:
+                df["mean(W)"] = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+                df["err.(W)"] = raw_uc(_get_std_dev_numpy(df) * src_rate, "eV/s", "W")
+
+                power[tally.name] = cls._convert_dict_contents(df.to_dict())
+
+                if tally.name == "total_power":
+                    total_power = df["mean(W)"].sum()
+                    total_power_err = np.sqrt((df["err.(W)"] ** 2).sum())
+
+            elif "flux" in scores:
+                df["cell_name"] = df["cell"].map(cell_names)
+                df["vol (m^3)"] = df["cell"].map(cell_vols)
+
+                df["flux (m^-2)"] = (
+                    raw_uc(df["mean"].to_numpy(), "cm", "m") * src_rate / df["vol (m^3)"]
+                )
+
+                df["%err."] = df.apply(get_percent_err, axis=1)
+
+                fluxes[tally.name] = cls._convert_dict_contents(df.to_dict())
+
+        if total_power is None:
+            raise ValueError(
+                "The total_power heating tally is missing from the statepoint."
+            )
+
+        dt_n_power = cls.dt_neuton_power(src_triton_rate)
+
+        e_mult = cls.energy_multiplication(dt_n_power, total_power)
+
+        e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
+
+        mult_power = cls.multiplication_power(e_mult, dt_n_power)
+
+        return cls(
+            universe=universe,
+            src_rate=src_rate,
+            statepoint_file=statepoint_file,
+            statepoint=statepoint,
+            cell_names=cell_names,
+            cell_vols=cell_vols,
+            mat_names=mat_names,
+            tbr=tbr,
+            tbr_err=tbr_err,
+            e_mult=e_mult,
+            e_mult_err=e_mult_err,
+            mult_power=mult_power,
+            power=power,
+            fluxes=fluxes,
+        )
+
+
+@dataclass
 class NeutronicsOutputParams(ParameterFrame):
     """
     Neutronics output parameters
@@ -688,16 +825,47 @@ class NeutronicsOutputParams(ParameterFrame):
         )
 
     @classmethod
+    def from_openmc_mcio_csg_result(cls, result: OpenMCmcioCSGResult):
+        """
+        Produce output parameters from an OpenMC MCIO CSG result.
+        """
+        source = "OpenMC MCIO CSG"
+
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", None, unit="W", source=source),
+            Parameter("P_n_divertor", None, unit="W", source=source),
+            Parameter("P_n_vessel", None, unit="W", source=source),
+            # No auxiliaries (e.g. HCD, port plugs modelled here)
+            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
+            Parameter("P_n_decay", 0.0, unit="W", source=source),
+            Parameter("peak_eurofer_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_bb_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", None, unit="dpa/fpy", source=source),
+        )
+
+    @classmethod
     def from_openmc_csg_result(cls, result: OpenMCCSGResult):
         """
         Produce output parameters from an OpenMC CSG result
         """
         source = "OpenMC CSG"
 
-        peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
-        peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
-        peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
-        peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        if result.cell_arrays is not None:
+            peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
+            peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
+            peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
+            peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            peak_eurofer_dpa = None
+            peak_bb_iron_dpa = None
+            peak_vv_iron_dpa = None
+            peak_div_cu_dpa = None
+
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),

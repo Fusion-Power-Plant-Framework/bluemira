@@ -48,12 +48,17 @@ from bluemira.codes.openmc.output import (
     NeutronicsOutputParams,
     OpenMCCSGResult,
     OpenMCDAGMCResult,
+    OpenMCmcioCSGResult,
 )
 from bluemira.codes.openmc.params import (
     OpenMCNeutronicsSolverParams,
     PlasmaSourceParameters,
 )
-from bluemira.codes.openmc.tallying import csg_filter_cells, dagmc_tallys
+from bluemira.codes.openmc.tallying import (
+    csg_filter_cells,
+    dagmc_tallys,
+    openmc_tallies_using_mcio,
+)
 from bluemira.equilibria.equilibrium import Equilibrium
 
 if TYPE_CHECKING:
@@ -61,6 +66,9 @@ if TYPE_CHECKING:
     from matproplib.conditions import OperationalConditions
 
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
+    from bluemira.radiation_transport.axisymmetric_neutronics import (
+        AxisymmetricNeutronicsReactor,
+    )
     from bluemira.radiation_transport.neutronics.neutronics_axisymmetric import (
         NeutronicsReactor,
     )
@@ -140,9 +148,11 @@ NeutronSourceCreator: TypeAlias = Callable[
     tuple[openmc.SourceBase | Sequence[openmc.SourceBase], float, float],
 ]
 CSGRunResult: TypeAlias = tuple[OpenMCCSGResult, ParameterFrame] | dict[int, float]
+MCIORunResult: TypeAlias = tuple[OpenMCmcioCSGResult, ParameterFrame] | dict[int, float]
 DAGMCRunResult: TypeAlias = tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
 NeutronicsRunResult: TypeAlias = (
-    tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
+    tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
+    | dict[int, float]
 )
 
 
@@ -240,10 +250,8 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         return settings
 
-    def _create_model(
-        self, settings: openmc.Settings, tallies: openmc.Tallies | None = None
-    ) -> openmc.Model:
-        model = openmc.Model(geometry=self.geometry, tallies=tallies, settings=settings)
+    def _create_model(self, settings: openmc.Settings) -> openmc.Model:
+        model = openmc.Model(geometry=self.geometry, settings=settings)
         if isinstance(self.materials, MaterialsLibrary):
             model.materials = self.materials.get_all_materials()
         else:
@@ -295,12 +303,14 @@ class OpenMCBaseSetup(CodesSetup, ABC):
         settings.photon_transport = runtime_params.photon_transport
         settings.electron_treatment = runtime_params.electron_treatment
 
-        tallies = self._create_tallies(tally_function)
+        model = self._create_model(settings)
 
-        return (
-            self._create_model(settings, tallies),
-            SourceInfo(source_rate, source_t_rate),
-        )
+        if model.tallies is not None:
+            model.tallies.extend(self._create_tallies(tally_function))
+        else:
+            model.tallies = self._create_tallies(tally_function)
+
+        return (model, SourceInfo(source_rate, source_t_rate))
 
     def _plot(
         self,
@@ -570,11 +580,11 @@ class OpenMCCSGTeardown(CodesTeardown):
     ) -> tuple[OpenMCCSGResult, NeutronicsOutputParams]:
         """Run stage for Teardown task"""
         result = OpenMCCSGResult.from_run(
-            universe,
-            self.cell_arrays,
-            source_info.rate,
-            source_info.triton_rate,
-            Path(statepoint_file),
+            universe=universe,
+            src_rate=source_info.rate,
+            src_triton_rate=source_info.triton_rate,
+            statepoint_file=Path(statepoint_file),
+            cell_arrays=self.cell_arrays,
         )
         output_params = NeutronicsOutputParams.from_openmc_csg_result(result)
 
@@ -699,7 +709,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     def execute(
         self, run_mode, *, debug=False
     ) -> (
-        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
         | dict[int, float]
         | None
     ):
@@ -729,7 +739,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
         *,
         debug=False,
     ) -> (
-        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
         | dict[int, float]
         | None
     ):
@@ -873,5 +883,202 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         self._teardown = self.teardown_cls(self.out_path, self.name)  # type: ignore[ty:invalid-argument-type]
         return cast(
             "DAGMCRunResult",
+            super()._single_run(run_mode, source_params, runtime_params, debug=debug),
+        )
+
+
+MCIO_TallyFunctionType = Callable[[openmc.Model], list[TALLY_RETURN_TYPE]]
+
+
+class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
+    """Setup for OpenMC CSG run with MCIO."""
+
+    def __init__(
+        self,
+        codes_name: str,
+        cross_section_xml: str,
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
+        csg_model: openmc.Model,
+        bounding_box: Sequence[float] | None = None,
+    ):
+        super().__init__(codes_name, cross_section_xml, eq, source, materials=None)
+        self.mcio_model = csg_model
+        self.bounding_box = bounding_box
+
+    @staticmethod
+    def _create_geometry():
+        """Create an empty geometry; MCIO provides the actual geometry."""
+        universe = openmc.Universe(name="Empty Universe")
+        geometry = openmc.Geometry(universe)
+        return universe, geometry
+
+    def _create_model(self, settings: openmc.Settings) -> openmc.Model:
+        """
+        Return the pre-built MCIO model with settings applied.
+
+        Raises
+        ------
+        ValueError
+            if model does not have a geometry
+        TypeError
+            if model has a wrong geometry type
+        """
+        self.mcio_model.settings = settings
+
+        if self.mcio_model.geometry is None:
+            raise ValueError("MCIO model has no geometry")
+
+        self.geometry = self.mcio_model.geometry
+
+        if not isinstance(self.geometry.root_universe, openmc.Universe):
+            raise TypeError("Expected an OpenMC CSG Universe")
+
+        self.universe = self.geometry.root_universe
+        self.materials = self.mcio_model.materials
+
+        return self.mcio_model
+
+    def _create_tallies(self, tally_function: TallyFunctionType) -> openmc.Tallies:
+        """Create tallies from the solver's tally specifications."""
+        tallies = openmc.Tallies()
+
+        for name, score, filters in tally_function(self.mcio_model):  # type: ignore[ty:no-matching-overload]
+            tally = openmc.Tally(name=name)
+            tally.filters = filters
+            tally.scores = [score]
+            tallies.append(tally)
+
+        return tallies
+
+    def plot(
+        self, run_mode, runtime_params, *_args, debug: bool = False, **_kwargs
+    ) -> tuple[openmc.Model, PlotConfig]:
+        """Plot an openmc run"""
+        return self._plot(run_mode, runtime_params, self.bounding_box, debug=debug)
+
+    @property
+    def volume(self):
+        """
+        Return
+        ------
+        :
+            the universe volume.
+        """
+        return self.universe.volume
+
+
+class OpenMCmcioCSGTeardown(CodesTeardown):
+    """Teardown task for OpenMC solver using MCIO."""
+
+    def __init__(self, out_path: str, codes_name: str):
+        super().__init__(None, codes_name)
+        self.out_path = out_path
+
+    @staticmethod
+    def run(
+        universe: openmc.Universe, source_info: SourceInfo, statepoint_file: str | Path
+    ) -> tuple[OpenMCmcioCSGResult, NeutronicsOutputParams]:
+        """Run stage for teardown task."""
+        result = OpenMCmcioCSGResult.from_run(
+            universe=universe,
+            src_rate=source_info.rate,
+            src_triton_rate=source_info.triton_rate,
+            statepoint_file=Path(statepoint_file),
+        )
+
+        output_params = NeutronicsOutputParams.from_openmc_mcio_csg_result(result)
+
+        return result, output_params
+
+    @staticmethod
+    def plot(_universe, _source_info, fig: FigureData, **_kwargs):
+        """Plot stage for teardown task."""
+        fig_obj = fig.axis.get_figure()
+
+        if isinstance(fig_obj, Figure):
+            fig_obj.savefig(fig.path)
+
+        return fig.axis
+
+    @staticmethod
+    def volume(
+        universe: openmc.Universe, _source_params, _statepoint_file
+    ) -> dict[int, float]:
+        """Stochastic volume stage for teardown task."""
+        return {
+            cell.id: raw_uc(
+                np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
+            )
+            for cell in universe.cells.values()
+        }
+
+
+class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
+    """Solver for OpenMC CSG neutronics using MCIO."""
+
+    setup_cls: type[OpenMCBaseSetup] = OpenMCmcioCSGSetup
+    teardown_cls: type[CodesTeardown] = OpenMCmcioCSGTeardown
+
+    def __init__(
+        self,
+        params: dict | ParameterFrame,
+        build_config: OpenMCBuildConfig,
+        eq: Equilibrium,
+        source: NeutronSourceCreator,
+        csg_reactor: AxisymmetricNeutronicsReactor,
+        op_cond: OperationalConditions,
+        customised_tallies: MCIO_TallyFunctionType | None = None,
+    ):
+        super().__init__(params, build_config, eq, source)
+
+        self.csg_reactor = csg_reactor
+        self.op_cond = op_cond
+        self.mcio_model, self.bounding_box = self.csg_reactor.run_mcio(
+            op_cond=self.op_cond
+        )
+        self.customised_tallies = customised_tallies
+        self._tallies = self._create_tallies()
+
+        self.tally_function = cast("TallyFunctionType", self._get_tally_function)
+
+    def _get_tally_function(self, *_args) -> list[TALLY_RETURN_TYPE]:
+        """Return cached tally specifications."""
+        return self._tallies
+
+    def _create_tallies(self) -> list[TALLY_RETURN_TYPE]:
+        """Create default and customised MCIO tally specifications."""
+        tallies = openmc_tallies_using_mcio(
+            model=self.mcio_model,
+            material_name_mapping=self.csg_reactor.material_name_mapping,
+        )
+
+        if self.customised_tallies is not None:
+            tallies.extend(self.customised_tallies(self.mcio_model))
+
+        return tallies
+
+    def _single_run(
+        self,
+        run_mode: OpenMCRunModes,
+        source_params: PlasmaSourceParameters,
+        runtime_params: OpenMCSimulationRuntimeParameters,
+        *,
+        debug=False,
+    ) -> tuple[OpenMCmcioCSGResult, ParameterFrame] | dict[int, float] | None:
+
+        self._setup = self.setup_cls(
+            self.name,
+            str(runtime_params.cross_section_xml),
+            self.eq,
+            self.source,
+            self.mcio_model,
+            self.bounding_box,  # type: ignore[ty:too-many-positional-arguments]
+        )
+        self._run = self.run_cls(self.out_path, self.name)
+        self._teardown = self.teardown_cls(self.out_path, self.name)  # type: ignore[ty:invalid-argument-type]
+
+        return cast(
+            "MCIORunResult",
             super()._single_run(run_mode, source_params, runtime_params, debug=debug),
         )
