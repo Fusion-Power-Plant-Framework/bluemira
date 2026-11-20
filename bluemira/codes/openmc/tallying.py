@@ -12,10 +12,7 @@ from typing import TYPE_CHECKING
 
 import openmc
 from mcio.cell import Cell as MCIOCell
-from mcio.tally import (
-    EnergyDepositionTally,
-    VolumeFluenceTally,
-)
+from mcio.tally import EnergyDepositionTally, VolumeFluenceTally
 
 if TYPE_CHECKING:
     from bluemira.codes.openmc.make_csg import CellStage
@@ -128,8 +125,7 @@ def dagmc_tallys(
 
 
 def openmc_tallies_using_mcio(
-    model: openmc.Model,
-    material_name_mapping: dict[str, str],
+    model: openmc.Model, material_name_mapping: dict[str, str]
 ) -> list[TALLY_RETURN_TYPE]:
     """
     Create default OpenMC tally specifications using MCIO definitions.
@@ -165,11 +161,7 @@ def openmc_tallies_using_mcio(
     def add_mcio_tally(mcio_tally):
         openmc_tally = mcio_tally.openmc_tally
 
-        tallies.append((
-            openmc_tally.name,
-            openmc_tally.scores[0],
-            openmc_tally.filters,
-        ))
+        tallies.append((openmc_tally.name, openmc_tally.scores[0], openmc_tally.filters))
 
     # -----------------------------------------------
     # Energy deposition / power
@@ -177,18 +169,10 @@ def openmc_tallies_using_mcio(
     for component_name, cells in component_cells.items():
         if cells:
             add_mcio_tally(
-                EnergyDepositionTally(
-                    cells=cells,
-                    comment=f"{component_name}_power",
-                )
+                EnergyDepositionTally(cells=cells, comment=f"{component_name}_power")
             )
 
-    add_mcio_tally(
-        EnergyDepositionTally(
-            cells=mcio_cells,
-            comment="total_power",
-        )
-    )
+    add_mcio_tally(EnergyDepositionTally(cells=mcio_cells, comment="total_power"))
 
     # -----------------------------------------------
     # Neutron flux
@@ -196,18 +180,10 @@ def openmc_tallies_using_mcio(
     for component_name, cells in component_cells.items():
         if cells:
             add_mcio_tally(
-                VolumeFluenceTally(
-                    cells=cells,
-                    comment=f"{component_name}_neutron_flux",
-                )
+                VolumeFluenceTally(cells=cells, comment=f"{component_name}_neutron_flux")
             )
 
-    add_mcio_tally(
-        VolumeFluenceTally(
-            cells=mcio_cells,
-            comment="total_neutron_flux",
-        )
-    )
+    add_mcio_tally(VolumeFluenceTally(cells=mcio_cells, comment="total_neutron_flux"))
 
     # -----------------------------------------------
     # Tritium breeding ratio (TBR)

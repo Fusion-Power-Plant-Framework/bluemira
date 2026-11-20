@@ -167,11 +167,7 @@ class AxisymmetricNeutronicsReactor(ABC):
         transform = gp_Trsf()
         transform.SetScale(gp_Pnt(0, 0, 0), 100.0)
 
-        return BRepBuilderAPI_Transform(
-            solid,
-            transform,
-            theCopyGeom=True,
-        ).Shape()
+        return BRepBuilderAPI_Transform(solid, transform, theCopyGeom=True).Shape()
 
     @staticmethod
     def _get_global_bounding_box(

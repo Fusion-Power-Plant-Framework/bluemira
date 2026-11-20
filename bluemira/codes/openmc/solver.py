@@ -309,10 +309,7 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         model.tallies.extend(self._create_tallies(tally_function))
 
-        return (
-            model,
-            SourceInfo(source_rate, source_t_rate),
-        )
+        return (model, SourceInfo(source_rate, source_t_rate))
 
     def _plot(
         self,
@@ -889,10 +886,7 @@ class OpenMCDAGMCNeutronicsSolver(OpenMCNeutronicsSolver):
         )
 
 
-MCIO_TallyFunctionType = Callable[
-    [openmc.Model],
-    list[TALLY_RETURN_TYPE],
-]
+MCIO_TallyFunctionType = Callable[[openmc.Model], list[TALLY_RETURN_TYPE]]
 
 
 class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
@@ -907,13 +901,7 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
         csg_model: openmc.Model,
         bounding_box: Sequence[float] | None = None,
     ):
-        super().__init__(
-            codes_name,
-            cross_section_xml,
-            eq,
-            source,
-            materials=None,
-        )
+        super().__init__(codes_name, cross_section_xml, eq, source, materials=None)
         self.mcio_model = csg_model
         self.bounding_box = bounding_box
 
@@ -965,19 +953,13 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
 class OpenMCmcioCSGTeardown(CodesTeardown):
     """Teardown task for OpenMC solver using MCIO."""
 
-    def __init__(
-        self,
-        out_path: str,
-        codes_name: str,
-    ):
+    def __init__(self, out_path: str, codes_name: str):
         super().__init__(None, codes_name)
         self.out_path = out_path
 
     @staticmethod
     def run(
-        universe: openmc.Universe,
-        source_info: SourceInfo,
-        statepoint_file: str | Path,
+        universe: openmc.Universe, source_info: SourceInfo, statepoint_file: str | Path
     ) -> tuple[OpenMCmcioCSGResult, NeutronicsOutputParams]:
         """Run stage for teardown task."""
         result = OpenMCmcioCSGResult.from_run(
@@ -1003,16 +985,12 @@ class OpenMCmcioCSGTeardown(CodesTeardown):
 
     @staticmethod
     def volume(
-        universe: openmc.Universe,
-        _source_params,
-        _statepoint_file,
+        universe: openmc.Universe, _source_params, _statepoint_file
     ) -> dict[int, float]:
         """Stochastic volume stage for teardown task."""
         return {
             cell.id: raw_uc(
-                np.nan if cell.volume is None else cell.volume,
-                "cm^3",
-                "m^3",
+                np.nan if cell.volume is None else cell.volume, "cm^3", "m^3"
             )
             for cell in universe.cells.values()
         }
@@ -1044,10 +1022,7 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
         self.customised_tallies = customised_tallies
         self._tallies = self._create_tallies()
 
-        self.tally_function = cast(
-            "TallyFunctionType",
-            self._get_tally_function,
-        )
+        self.tally_function = cast("TallyFunctionType", self._get_tally_function)
 
     def _get_tally_function(self, *_args) -> list[TALLY_RETURN_TYPE]:
         """Return cached tally specifications."""
@@ -1087,10 +1062,5 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
 
         return cast(
             "MCIORunResult",
-            super()._single_run(
-                run_mode,
-                source_params,
-                runtime_params,
-                debug=debug,
-            ),
+            super()._single_run(run_mode, source_params, runtime_params, debug=debug),
         )

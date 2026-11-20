@@ -122,13 +122,7 @@ def neutronics_code_solver(
     neutron = get_code_interface(module)
     if use_mcio:
         return neutron.MCIOCSGSolver(
-            params,
-            build_config,
-            eq,
-            source,
-            neutronics_model,
-            op_cond,
-            tally_function,
+            params, build_config, eq, source, neutronics_model, op_cond, tally_function
         )
     return neutron.CSGSolver(
         params, build_config, eq, source, neutronics_model, op_cond, tally_function

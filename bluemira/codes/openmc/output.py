@@ -37,6 +37,9 @@ if TYPE_CHECKING:
         ZeroDNeutronicsResult,
     )
 
+MEAN_W = "mean(W)"
+FLUX_UNIT = "flux (m^-2)"
+
 
 def _get_std_dev_iloc(df):
     return df["std. dev."].iloc[0] if "std. dev." in df else 0
@@ -723,16 +726,8 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
             scores = tally.scores
 
             if "heating" in scores:
-                df["mean(W)"] = raw_uc(
-                    df["mean"].to_numpy() * src_rate,
-                    "eV/s",
-                    "W",
-                )
-                df["err.(W)"] = raw_uc(
-                    _get_std_dev_numpy(df) * src_rate,
-                    "eV/s",
-                    "W",
-                )
+                df["mean(W)"] = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+                df["err.(W)"] = raw_uc(_get_std_dev_numpy(df) * src_rate, "eV/s", "W")
 
                 power[tally.name] = cls._convert_dict_contents(df.to_dict())
 
@@ -759,20 +754,11 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
 
         dt_n_power = cls.dt_neuton_power(src_triton_rate)
 
-        e_mult = cls.energy_multiplication(
-            dt_n_power,
-            total_power,
-        )
+        e_mult = cls.energy_multiplication(dt_n_power, total_power)
 
-        e_mult_err = cls.energy_multiplication(
-            dt_n_power,
-            total_power_err,
-        )
+        e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
 
-        mult_power = cls.multiplication_power(
-            e_mult,
-            dt_n_power,
-        )
+        mult_power = cls.multiplication_power(e_mult, dt_n_power)
 
         return cls(
             universe=universe,

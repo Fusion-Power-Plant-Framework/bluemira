@@ -37,19 +37,9 @@ def plot_desplining_comparisons(
     if len(orig_comps) != len(desplined_comps):
         raise ValueError("original and desplined components must have the same length.")
 
-    fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(12, 6),
-        sharex=True,
-        sharey=True,
-    )
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
 
-    for orig_comp, desplined_comp in zip(
-        orig_comps,
-        desplined_comps,
-        strict=True,
-    ):
+    for orig_comp, desplined_comp in zip(orig_comps, desplined_comps, strict=True):
         orig_comp.plot_2d(ax=axes[0], show=False)
         for wire in orig_comp.leaves[0].shape.boundary:
             plot_2d(wire.vertexes.T, ax=axes[0], show=False)

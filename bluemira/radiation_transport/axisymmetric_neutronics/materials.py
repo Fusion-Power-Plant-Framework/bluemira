@@ -17,9 +17,7 @@ from matproplib.properties.dependent import Density
 
 
 def to_mcio_material(
-    inp_material: material,
-    op_cond: OperationalConditions,
-    number: int | None = None,
+    inp_material: material, op_cond: OperationalConditions, number: int | None = None
 ) -> mcio.material.Material:
     """
     MCIO does not support matproplib. Hence we would need
@@ -117,7 +115,4 @@ def write_materials_json(materials: list[mcio.material.Material], filepath: Path
             "name": f"process_material_{number}",
         }
 
-    Path(filepath).write_text(
-        json.dumps(data, indent=4),
-        encoding="utf-8",
-    )
+    Path(filepath).write_text(json.dumps(data, indent=4), encoding="utf-8")
