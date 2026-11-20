@@ -151,7 +151,8 @@ CSGRunResult: TypeAlias = tuple[OpenMCCSGResult, ParameterFrame] | dict[int, flo
 MCIORunResult: TypeAlias = tuple[OpenMCmcioCSGResult, ParameterFrame] | dict[int, float]
 DAGMCRunResult: TypeAlias = tuple[OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
 NeutronicsRunResult: TypeAlias = (
-    tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame] | dict[int, float]
+    tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
+    | dict[int, float]
 )
 
 
@@ -304,10 +305,10 @@ class OpenMCBaseSetup(CodesSetup, ABC):
 
         model = self._create_model(settings)
 
-        if model.tallies is None:
-            model.tallies = openmc.Tallies()
-
-        model.tallies.extend(self._create_tallies(tally_function))
+        if model.tallies is not None:
+            model.tallies.extend(self._create_tallies(tally_function))
+        else:
+            model.tallies = self._create_tallies(tally_function)
 
         return (model, SourceInfo(source_rate, source_t_rate))
 
@@ -708,7 +709,7 @@ class OpenMCNeutronicsSolver(CodesSolver, ABC):
     def execute(
         self, run_mode, *, debug=False
     ) -> (
-        tuple[OpenMCCSGResult | OpenMCDAGMCResult, ParameterFrame]
+        tuple[OpenMCCSGResult | OpenMCDAGMCResult | OpenMCmcioCSGResult, ParameterFrame]
         | dict[int, float]
         | None
     ):
