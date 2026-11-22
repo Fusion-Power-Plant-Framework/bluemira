@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from bluemira.geometry.error import OutOfBoundsError
 from bluemira.geometry.optimisation.typed import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
@@ -52,10 +53,20 @@ def to_objective(
     :
         The objective function converted from a geometry objective function.
     """
+    worst = [0.0]  # largest finite objective value seen so far
 
     def f(x):
         geom.variables.set_values_from_norm(x)
-        return geom_objective(geom)
+        try:
+            value = geom_objective(geom)
+        except OutOfBoundsError as exc:
+            # No constructable geometry here. Penalise above the worst feasible
+            # value seen, growing with how far out of bounds we are, so a
+            # gradient-based optimiser is pushed back to the feasible region
+            # instead of crashing on the geometry build.
+            return (abs(worst[0]) + 1.0) * (1.0 + exc.excess)
+        worst[0] = max(worst[0], value)
+        return value
 
     return f
 
@@ -73,10 +84,22 @@ def to_optimiser_callable(
     :
         The optimiser function converted from a geometry optimiser function.
     """
+    state = {"shape": None, "worst": 0.0}  # last output shape, largest magnitude
 
     def f(x):
         geom.variables.set_values_from_norm(x)
-        return geom_callable(geom)
+        try:
+            value = geom_callable(geom)
+        except OutOfBoundsError as exc:
+            # See ``to_objective``: penalise (a constraint reads as strongly
+            # violated) rather than crash on the geometry build.
+            penalty = (state["worst"] + 1.0) * (1.0 + exc.excess)
+            return penalty if not state["shape"] else np.full(state["shape"], penalty)
+        arr = np.asarray(value, dtype=float)
+        state["shape"] = arr.shape
+        if arr.size:
+            state["worst"] = max(state["worst"], float(np.max(np.abs(arr))))
+        return value
 
     return f
 

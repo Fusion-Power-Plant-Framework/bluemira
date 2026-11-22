@@ -47,6 +47,21 @@ class GeometryParameterisationError(GeometryError):
     """
 
 
+class OutOfBoundsError(GeometryParameterisationError):
+    """A parameterisation was asked to build geometry outside its valid domain.
+
+    Raised by ``create_shape`` when the requested variables do not describe a
+    constructable shape (e.g. arc angles that sum past the symmetry limit).
+    Carries ``excess``: a dimensionless, non-negative measure of how far the
+    request is out of bounds, so an optimiser probing an infeasible point can
+    penalise proportionally and recover rather than crash.
+    """
+
+    def __init__(self, message: str, excess: float = 1.0):
+        super().__init__(message)
+        self.excess = max(float(excess), 0.0)
+
+
 class CoordinatesError(GeometryError):
     """
     Error class for use in Coordinates
