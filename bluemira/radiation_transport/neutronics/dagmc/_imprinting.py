@@ -51,16 +51,6 @@ def _require_cadquery_backend() -> None:
     """
     from bluemira.codes import _geometryapi as cadapi  # noqa: PLC0415
 
-    try:  # check if FreeCAD is active
-        import Part  # noqa: PLC0415
-    except ImportError:
-        Part = None  # noqa: N806
-
-    if Part is not None and cadapi.apiSolid is Part.Solid:
-        raise NotImplementedError(
-            "Solid imprinting is only supported with the CadQuery backend."
-        )
-
     try:  # check if CadQuery is active
         import cadquery as cq  # noqa: PLC0415
     except ImportError as exc:
