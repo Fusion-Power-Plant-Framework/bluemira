@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.constants import EPS, MU_0, MU_0_4PI, raw_uc
+from bluemira.magnetostatics.circuits import ArbitraryPlanarRectangularXSCircuit
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -123,6 +124,16 @@ class TestTrapezoidalPrismPolygonLoop:
     # Isosceles trapezoid: the legs join a ~58 degree mitre to a ~32 degree mitre,
     # so alpha != beta for those prisms
     trapezoid = np.array([[-3.0, -1.5], [3.0, -1.5], [1.5, 1.5], [-1.5, 1.5]])
+    # Irregular convex hexagon: every corner has a different mitre, so alpha != beta
+    # for every prism and each integration domain is offset from the prism centre
+    hexagon = np.array([
+        [-3.0, -4.0],
+        [2.5, -3.5],
+        [4.5, 0.0],
+        [2.0, 4.0],
+        [-2.0, 3.0],
+        [-4.5, -0.5],
+    ])
 
     points = (
         (0.0, 0.0, 0.0),
@@ -133,6 +144,18 @@ class TestTrapezoidalPrismPolygonLoop:
         (3.5, 0.5, 0.2),
         (2.0, 1.0, 2.0),
         (-1.0, -0.8, 1.5),
+    )
+    # Hexagon points, including points just outside and inside the loop next to
+    # the mitred joints, where the field is most sensitive to the prism positions
+    hexagon_points = (
+        (0.0, 0.0, 0.0),
+        (0.7, 0.4, -0.3),
+        (6.0, 0.5, 0.2),
+        (2.0, 0.1, 4.7),
+        (2.0, 0.0, 3.4),
+        (5.0, -0.1, 0.0),
+        (-3.2, 0.05, -4.6),
+        (-2.0, 0.1, 2.5),
     )
 
     @staticmethod
@@ -215,10 +238,10 @@ class TestTrapezoidalPrismPolygonLoop:
                     field += cls._filament_segment_field(point, start, end, i_fil)
         return field
 
-    def _check_field(self, polygon, point):
+    def _check_field(self, polygon, point, n_quad=12):
         point = np.array(point, dtype=float)
         field = sum(s.field(*point) for s in self._make_sources(polygon))
-        expected = self._analytical_field(polygon, point)
+        expected = self._analytical_field(polygon, point, n_quad=n_quad)
         np.testing.assert_allclose(
             field, expected, rtol=1e-8, atol=1e-10 * np.linalg.norm(expected)
         )
@@ -230,6 +253,34 @@ class TestTrapezoidalPrismPolygonLoop:
     @pytest.mark.parametrize("point", points)
     def test_trapezoid_field_against_analytical(self, point):
         self._check_field(self.trapezoid, point)
+
+    @pytest.mark.parametrize("point", hexagon_points)
+    def test_hexagon_field_against_analytical(self, point):
+        self._check_field(self.hexagon, point, n_quad=48)
+
+    @pytest.mark.parametrize("point", hexagon_points)
+    def test_hexagon_circuit_field_against_analytical(self, point):
+        corners = self._to_3d(self.hexagon)
+        circuit = ArbitraryPlanarRectangularXSCircuit(
+            np.vstack([corners, corners[:1]]).T, self.breadth, self.depth, self.current
+        )
+        point = np.array(point, dtype=float)
+        expected = self._analytical_field(self.hexagon, point, n_quad=48)
+        np.testing.assert_allclose(
+            circuit.field(*point),
+            expected,
+            rtol=1e-8,
+            atol=1e-10 * np.linalg.norm(expected),
+        )
+
+    def test_hexagon_prisms_meet_on_mitres(self):
+        sources = self._make_sources(self.hexagon)
+        assert all(abs(s._y_offset) > 1e-3 for s in sources)
+        for source, next_source in zip(sources, sources[1:] + sources[:1], strict=True):
+            # alpha end-cap of each prism == beta end-cap of the next one
+            end_cap = source._local_to_global(source._vertices)[[3, 2, 7, 6]]
+            start_cap = next_source._local_to_global(next_source._vertices)[[0, 1, 4, 5]]
+            np.testing.assert_allclose(end_cap, start_cap, rtol=0, atol=1e-12)
 
 
 class TestTrapezoidalPrismInfiniteRectangularConductor:
