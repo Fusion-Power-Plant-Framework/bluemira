@@ -636,7 +636,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         Returns
         -------
         :
-            The vector potential {Ax, Ay, Az} in [T.m]
+            The vector potential {Ax, Ay, Az} in [V.s/m]
 
         Notes
         -----
