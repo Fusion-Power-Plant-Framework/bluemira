@@ -16,9 +16,9 @@ including corrections from:
 
 The vector potential is calculated with the closed-form expression for the
 Newtonian potential of a uniform polyhedron (the trapezoidal prism is a hexahedron
-with planar faces), following e.g.:
+with planar faces), following:
 
-.. doi:: 10.1007/BF01228427
+.. doi:: 10.1007/BF00053511
 """
 
 from __future__ import annotations

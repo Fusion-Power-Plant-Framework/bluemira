@@ -12,16 +12,16 @@ from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 
-class TestTrapezoidalPrismBabicAykel:
+class TestTrapezoidalPrismBabicAkyel:
     """
     Verification test.
 
-    Babic and Aykel example
+    Babic and Akyel example
 
     .. doi:: 10.1002/jnm.594
     """
 
-    # Babic and Aykel example (single trapezoidal prism)
+    # Babic and Akyel example (single trapezoidal prism)
     source = TrapezoidalPrismCurrentSource(
         np.array([0, 0, 0]),
         np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
@@ -48,7 +48,7 @@ class TestTrapezoidalPrismBabicAykel:
     def test_paper_singularity_values(self, point, value, precision):
         field = self._paper_field(point)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # As per Babic and Aykel paper
+        # As per Babic and Akyel paper
         # Assume truncated last digit and not rounded...
         field_ndecimals = np.trunc(abs_field * 10**precision) / 10**precision
         assert field_ndecimals == pytest.approx(value, rel=0, abs=EPS)
@@ -56,7 +56,7 @@ class TestTrapezoidalPrismBabicAykel:
     def test_paper_inside_conductor(self):
         field = self._paper_field((0.5, 0.5, 0.5))
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # As per Babic and Aykel paper
+        # As per Babic and Akyel paper
         # Assume truncated last digit and not rounded...
         field_ndecimals = np.trunc(abs_field * 10**7) / 10**7
         assert field_ndecimals == pytest.approx(34.9969156, rel=0, abs=EPS)
@@ -91,7 +91,7 @@ class TestTrapezoidalPrismBabicAykel:
     def test_paper_vector_potential(self, point, value):
         field = self._paper_curl_vector_potential(point)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # As per Babic and Aykel paper. The tolerance is limited by the finite
+        # As per Babic and Akyel paper. The tolerance is limited by the finite
         # differences at (1, 1, 1), which lies on an edge of the prism, where the
         # field has a kink and central differences only converge linearly in h
         # (error ~2e-5 mT at h = 1e-6).
@@ -236,8 +236,9 @@ class TestTrapezoidalPrismInfiniteRectangularConductor:
     """
     Verification test against the classical 2-D analytical solution for an
     infinitely long straight conductor of rectangular cross-section with uniform
-    current density (e.g. Binns, Lawrenson & Trowbridge, "The Analytical and
-    Numerical Solution of Electric and Magnetic Fields", 1992).
+    current density. The reference B and A_z are the closed-form integrals of the
+    2-D line-current Green's function (B ~ 1/r, A_z ~ -ln r) over the rectangle,
+    evaluated as signed sums of their antiderivatives at the four corners.
 
     At the mid-plane of a very long prism, the field and the vector potential
     differences converge to the 2-D solution with an error O((r / L)^2).
