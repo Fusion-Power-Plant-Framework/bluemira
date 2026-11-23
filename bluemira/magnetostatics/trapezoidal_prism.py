@@ -540,6 +540,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         self._area = 4 * breadth * depth
         self.set_current(current)
         self._vertices = self._calculate_vertices()
+        self._points = self._calculate_points()
 
     def _xyzlocal_to_rql(
         self, x_local: float, y_local: float, z_local: float
@@ -697,8 +698,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         """
         return self._origin + self._y_offset * self._dcm[1]
 
-    @property
-    def _points(self) -> npt.NDArray[np.float64]:
+    def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
         Edge lines of the current source in global coordinates, for plotting.
 
@@ -726,6 +726,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         r = rotation_matrix(np.deg2rad(angle), axis).T
         self._origin @= r
         self._dcm @= r
+        self._points = self._calculate_points()
 
     def translate(self, vector: npt.NDArray[np.float64]):
         """
@@ -747,6 +748,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
                 f"Translation vector must be of shape (3,), not {vector.shape}."
             )
         self._origin += vector
+        self._points = self._calculate_points()
 
     def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs):  # noqa: ARG002
         """
