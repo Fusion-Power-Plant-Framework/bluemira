@@ -70,7 +70,7 @@ class MidplaneProfiles:
 
 
 def midplane_profiles(
-    params: ParameterFrameLike, psi_n_min: float | None = None
+    params: ParameterFrameLike, psi_n_min: float = 0.01
 ) -> MidplaneProfiles:
     """
     Calculate the core radiation source profiles.
