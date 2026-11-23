@@ -2160,11 +2160,7 @@ class RadiationSource:
         # Equilibrium determines the minimum allowable psi_n value
         # (affects flux surface contour finding)
         psi_n_min = find_first_closed_flux_surface_psi_n(
-            self.eq.x,
-            self.eq.z,
-            self.eq.psi(),
-            self.eq._o_points,
-            self.eq._x_points,
+            self.eq.x, self.eq.z, self.eq.psi(), self.eq._o_points, self.eq._x_points
         )
         self.midplane_profiles = midplane_profiles(self.params, psi_n_min)
 
