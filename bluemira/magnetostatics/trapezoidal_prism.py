@@ -370,7 +370,8 @@ def _signed_solid_angle_triangle(
     -------
     :
         The signed solid angle [sr], positive when the observation point lies
-        on the inner side of the triangle (as defined by right-handed ordering)
+        on the opposite side of the triangle to its right-handed normal
+        (r2 - r1) x (r3 - r1)
 
     Notes
     -----
@@ -418,13 +419,22 @@ def _polyhedron_inverse_distance_integral(
         \int_V \frac{dV}{R} = \frac{1}{2}\sum_f h_f
         \left[\sum_{e \in f} h_{fe} L_e - h_f \omega_f\right]
 
-    where :math:`h_f` is the signed distance from the point to the plane of face f,
-    :math:`h_{fe}` the signed in-plane distance from the projected point to the
-    line of edge e, :math:`L_e = \ln((R_1 + R_2 + l_e)/(R_1 + R_2 - l_e))`, and
-    :math:`\omega_f` the signed solid angle subtended by face f.
+    where:
 
-    All singular terms (point on a face plane, edge, or vertex) are multiplied by
-    a vanishing distance, and are hence set to 0.
+    - :math:`h_f` is the signed distance from the point to the plane of face f,
+      positive when the point is on the inner side of the face,
+    - :math:`h_{fe}` is the signed in-plane distance from the projection of the
+      point onto the plane of face f to the line of edge e, positive when the
+      projection is on the inner side of the edge,
+    - :math:`L_e = \ln((R_1 + R_2 + l_e)/(R_1 + R_2 - l_e))`, with :math:`R_1` and
+      :math:`R_2` the distances from the point to the ends of edge e, and
+      :math:`l_e` its length,
+    - :math:`\omega_f` is the signed solid angle subtended by face f, positive when
+      the point is on the inner side of the face.
+
+    :math:`L_e` is singular when the point lies on edge e (including its ends),
+    where :math:`h_{fe} = 0`, so the term is set to 0. :math:`\omega_f` is
+    discontinuous across the plane of face f, where :math:`h_f = 0`.
     """
     result = 0.0
     for face in faces:
@@ -437,9 +447,6 @@ def _polyhedron_inverse_distance_integral(
         normal = np.cross(r[1] - r[0], r[2] - r[0])
         normal /= np.linalg.norm(normal)
         h_f = np.dot(normal, r[0])
-        if h_f == 0.0:
-            # Point lies in the plane of the face: no contribution
-            continue
 
         edge_sum = 0.0
         for i in range(n_v):
@@ -449,7 +456,9 @@ def _polyhedron_inverse_distance_integral(
             # In-plane distance to the line of the edge (positive inside the face)
             h_fe = np.dot(np.cross(edge, normal), r[i]) / length
             r_sum = r_norm[i] + r_norm[j]
-            if h_fe != 0.0 and r_sum > length:
+            # r_sum == length iff the point lies on the edge, where h_fe = 0 and the
+            # (singular) term vanishes
+            if r_sum > length:
                 edge_sum += h_fe * np.log((r_sum + length) / (r_sum - length))
 
         # Solid angle of the face, by fan triangulation from the first vertex
