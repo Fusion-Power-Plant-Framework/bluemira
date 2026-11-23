@@ -2277,7 +2277,10 @@ class Equilibrium(CoilSetMHDState):  # noqa: PLR0904
         *,
         force_update: bool = False,
         o_point_fallback: OPointCalcOptions | None = None,
-    ) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
+    ) -> tuple[
+        list[Opoint] | Opoint,
+        list[Xpoint] | list[Lpoint] | list[Xpoint | Lpoint] | Xpoint | Lpoint,
+    ]:
         """
         Returns
         -------
