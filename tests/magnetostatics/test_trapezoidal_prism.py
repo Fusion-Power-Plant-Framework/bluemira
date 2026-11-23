@@ -7,7 +7,7 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import EPS, MU_0_4PI, raw_uc
+from bluemira.base.constants import EPS, MU_0, MU_0_4PI, raw_uc
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -230,6 +230,91 @@ class TestTrapezoidalPrismPolygonLoop:
     @pytest.mark.parametrize("point", points)
     def test_trapezoid_field_against_analytical(self, point):
         self._check_field(self.trapezoid, point)
+
+
+class TestTrapezoidalPrismInfiniteRectangularConductor:
+    """
+    Verification test against the classical 2-D analytical solution for an
+    infinitely long straight conductor of rectangular cross-section with uniform
+    current density (e.g. Binns, Lawrenson & Trowbridge, "The Analytical and
+    Numerical Solution of Electric and Magnetic Fields", 1992).
+
+    At the mid-plane of a very long prism, the field and the vector potential
+    differences converge to the 2-D solution with an error O((r / L)^2).
+    """
+
+    a, b = 0.3, 0.2  # half-widths of the cross-section [m]
+    current = 1e6  # [A]
+    length = 1e4  # [m]
+
+    # Current along global z, cross-section in x-y (t_vec = ds x normal)
+    source = TrapezoidalPrismCurrentSource(
+        np.zeros(3),
+        np.array([0, 0, length]),
+        np.array([0, -1, 0]),
+        np.array([1, 0, 0]),
+        a,
+        b,
+        0.0,
+        0.0,
+        current,
+    )
+    # Points outside, inside and far from the conductor (not on edge extensions)
+    points = ((0.7, 0.45), (0.1, 0.05), (-0.25, 0.13), (1.3, -2.1), (-0.4, -0.15))
+
+    def _corner_sum(self, func, x, y):
+        u1, u2 = x - self.a, x + self.a
+        v1, v2 = y - self.b, y + self.b
+        return func(u2, v2) - func(u1, v2) - func(u2, v1) + func(u1, v1)
+
+    def _field_2d(self, x, y):
+        k = MU_0 * self.current / (4 * self.a * self.b) / (2 * np.pi)
+
+        def f_bx(u, v):
+            return 0.5 * u * np.log(u**2 + v**2) + v * np.arctan(u / v)
+
+        def f_by(u, v):
+            return 0.5 * v * np.log(u**2 + v**2) + u * np.arctan(v / u)
+
+        return np.array([
+            -k * self._corner_sum(f_bx, x, y),
+            k * self._corner_sum(f_by, x, y),
+            0.0,
+        ])
+
+    def _vector_potential_2d(self, x, y):
+        k = MU_0 * self.current / (4 * self.a * self.b) / (2 * np.pi)
+
+        def f_az(u, v):
+            return 0.5 * (
+                u * v * np.log(u**2 + v**2)
+                - 3 * u * v
+                + u**2 * np.arctan(v / u)
+                + v**2 * np.arctan(u / v)
+            )
+
+        return -k * self._corner_sum(f_az, x, y)
+
+    @pytest.mark.parametrize("point", points)
+    def test_field(self, point):
+        field = self.source.field(*point, 0.0)
+        expected = self._field_2d(*point)
+        np.testing.assert_allclose(
+            field, expected, rtol=0, atol=1e-6 * np.linalg.norm(expected)
+        )
+
+    @pytest.mark.parametrize("point", points)
+    def test_vector_potential_difference(self, point):
+        # The 2-D vector potential is only defined up to a constant
+        ref_point = (2.0, 1.5)
+        potential = self.source.vector_potential(*point, 0.0)
+        ref_potential = self.source.vector_potential(*ref_point, 0.0)
+        np.testing.assert_allclose(potential[:2], 0.0, rtol=0, atol=EPS)
+        np.testing.assert_allclose(
+            potential[2] - ref_potential[2],
+            self._vector_potential_2d(*point) - self._vector_potential_2d(*ref_point),
+            rtol=5e-6,
+        )
 
 
 class TestTrapezoidalPrismCurrentSource:
