@@ -13,6 +13,12 @@ of rectangular cross-section, following equations as described in:
 including corrections from:
 
 .. doi:: 10.1002/jnm.675
+
+The vector potential is calculated with the closed-form expression for the
+Newtonian potential of a uniform polyhedron (the trapezoidal prism is a hexahedron
+with planar faces), following e.g.:
+
+.. doi:: 10.1007/BF01228427
 """
 
 from __future__ import annotations
@@ -305,6 +311,140 @@ def Bz_analytical_prism(
     )
 
 
+# Vertex indices of each face of the trapezoidal prism, ordered anti-clockwise
+# when viewed from outside the prism (i.e. right-handed about the outward normal).
+# See TrapezoidalPrismCurrentSource._calculate_vertices for the vertex numbering.
+_PRISM_FACES = np.array(
+    [
+        [0, 3, 2, 1],  # z' = -c
+        [4, 5, 6, 7],  # z' = +c
+        [0, 4, 7, 3],  # x' = -d
+        [1, 2, 6, 5],  # x' = +d
+        [0, 1, 5, 4],  # beta end-cap (current inlet)
+        [3, 7, 6, 2],  # alpha end-cap (current outlet)
+    ],
+    dtype=np.int64,
+)
+
+
+@nb.jit(nopython=True, cache=True)
+def _signed_solid_angle_triangle(
+    r1: npt.NDArray[np.float64], r2: npt.NDArray[np.float64], r3: npt.NDArray[np.float64]
+) -> float:
+    """
+    Signed solid angle subtended by a triangle at the origin.
+
+    Parameters
+    ----------
+    r1:
+        First vertex relative to the observation point (3)
+    r2:
+        Second vertex relative to the observation point (3)
+    r3:
+        Third vertex relative to the observation point (3)
+
+    Returns
+    -------
+    :
+        The signed solid angle [sr], positive when the observation point lies
+        on the inner side of the triangle (as defined by right-handed ordering)
+
+    Notes
+    -----
+    Van Oosterom & Strackee formula:
+
+    .. doi:: 10.1109/TBME.1983.325207
+    """
+    n1, n2, n3 = np.linalg.norm(r1), np.linalg.norm(r2), np.linalg.norm(r3)
+    numerator = np.dot(r1, np.cross(r2, r3))
+    denominator = (
+        n1 * n2 * n3 + np.dot(r1, r2) * n3 + np.dot(r2, r3) * n1 + np.dot(r3, r1) * n2
+    )
+    return 2.0 * np.arctan2(numerator, denominator)
+
+
+@nb.jit(nopython=True, cache=True)
+def _polyhedron_inverse_distance_integral(
+    vertices: npt.NDArray[np.float64],
+    faces: npt.NDArray[np.int64],
+    point: npt.NDArray[np.float64],
+) -> float:
+    r"""
+    Volume integral of 1/R over a polyhedron with planar faces, where R is the
+    distance to the observation point.
+
+    Parameters
+    ----------
+    vertices:
+        The vertices of the polyhedron (n_vertices, 3)
+    faces:
+        Vertex indices of each face, ordered anti-clockwise when viewed from
+        outside the polyhedron (n_faces, n_face_vertices)
+    point:
+        The observation point (3)
+
+    Returns
+    -------
+    :
+        The value of the integral [m^2]
+
+    Notes
+    -----
+    Valid inside, outside, and on the surface of the polyhedron.
+
+    .. math::
+        \int_V \frac{dV}{R} = \frac{1}{2}\sum_f h_f
+        \left[\sum_{e \in f} h_{fe} L_e - h_f \omega_f\right]
+
+    where :math:`h_f` is the signed distance from the point to the plane of face f,
+    :math:`h_{fe}` the signed in-plane distance from the projected point to the
+    line of edge e, :math:`L_e = \ln((R_1 + R_2 + l_e)/(R_1 + R_2 - l_e))`, and
+    :math:`\omega_f` the signed solid angle subtended by face f.
+
+    All singular terms (point on a face plane, edge, or vertex) are multiplied by
+    a vanishing distance, and are hence set to 0.
+    """
+    n_faces, n_face_vertices = faces.shape
+    result = 0.0
+    for f in range(n_faces):
+        # Vertex positions relative to the observation point
+        r = np.empty((n_face_vertices, 3))
+        for i in range(n_face_vertices):
+            r[i] = vertices[faces[f, i]] - point
+
+        # Outward unit normal of the (planar) face
+        normal = np.cross(r[1] - r[0], r[2] - r[0])
+        normal /= np.linalg.norm(normal)
+        h_f = np.dot(normal, r[0])
+
+        if h_f == 0.0:
+            # Point lies in the plane of the face: no contribution
+            continue
+
+        edge_sum = 0.0
+        for i in range(n_face_vertices):
+            r_a = r[i]
+            r_b = r[(i + 1) % n_face_vertices]
+            edge = r_b - r_a
+            length = np.linalg.norm(edge)
+            # Outward in-plane normal of the edge
+            m_e = np.cross(edge / length, normal)
+            h_fe = np.dot(m_e, r_a)
+            r_sum = np.linalg.norm(r_a) + np.linalg.norm(r_b)
+            denominator = r_sum - length
+            if h_fe != 0.0 and denominator > 0.0:
+                edge_sum += h_fe * np.log((r_sum + length) / denominator)
+
+        # Solid angle of the face, by fan triangulation
+        omega = 0.0
+        for i in range(1, n_face_vertices - 1):
+            omega += _signed_solid_angle_triangle(r[0], r[i], r[i + 1])
+
+        result += h_f * (edge_sum - h_f * omega)
+
+    return 0.5 * result
+
+
 class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource):
     """
     3-D trapezoidal prism current source with a rectangular cross-section and
@@ -368,6 +508,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         self._area = 4 * breadth * depth
         self.set_current(current)
         self._points = self._calculate_points()
+        self._vertices = self._calculate_vertices()
 
     def _xyzlocal_to_rql(
         self, x_local: float, y_local: float, z_local: float
@@ -441,6 +582,82 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         b_local = MU_0_4PI * self._rho * self._BxByBz(point)
         # Convert vector back to global coordinates
         return self._dcm.T @ b_local
+
+    @process_xyz_array
+    def vector_potential(
+        self,
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> float | npt.NDArray[np.float64]:
+        r"""
+        Calculate the vector potential at a point due to the current source.
+
+        Parameters
+        ----------
+        x:
+            The x coordinate(s) of the points at which to calculate the potential
+        y:
+            The y coordinate(s) of the points at which to calculate the potential
+        z:
+            The z coordinate(s) of the points at which to calculate the potential
+
+        Returns
+        -------
+        :
+            The vector potential {Ax, Ay, Az} in [T.m]
+
+        Notes
+        -----
+        The current density is uniform and along the local y coordinate, so in local
+        coordinates:
+
+        .. math::
+            A_y = \frac{\mu_0 J}{4\pi}\int_V \frac{dV}{R}, \quad A_x = A_z = 0
+
+        This is the potential whose curl is the Biot-Savart field of this source
+        (see the field method), and is valid inside the conductor.
+        """
+        point = np.array([x, y, z])
+        # Convert to local coordinates
+        point = self._global_to_local(np.array([point]))[0]
+        # Evaluate vector potential in local coordinates
+        a_y = _polyhedron_inverse_distance_integral(self._vertices, _PRISM_FACES, point)
+        a_local = MU_0_4PI * self._rho * np.array([0.0, a_y, 0.0])
+        # Convert vector back to global coordinates
+        return self._dcm.T @ a_local
+
+    def _calculate_vertices(self) -> npt.NDArray[np.float64]:
+        """
+        Calculate the vertices of the trapezoidal prism in local coordinates, as
+        used in the integration domain of the field calculation.
+
+        Returns
+        -------
+        :
+            The vertices (8, 3), numbered as in _PRISM_FACES
+
+        Notes
+        -----
+        Integration domain:
+            x' in [-d, d], z' in [-c, c],
+            y' in [-(x' + d) tan(beta) - b, (x' + d) tan(alpha) + b]
+        """
+        b = self._length
+        c = self._depth
+        d = self._breadth
+        y_lo = -2 * d * np.tan(self._beta) - b
+        y_hi = 2 * d * np.tan(self._alpha) + b
+        return np.array([
+            [-d, -b, -c],
+            [d, y_lo, -c],
+            [d, y_hi, -c],
+            [-d, b, -c],
+            [-d, -b, c],
+            [d, y_lo, c],
+            [d, y_hi, c],
+            [-d, b, c],
+        ])
 
     def _calculate_points(self) -> npt.NDArray[np.float64]:
         """
