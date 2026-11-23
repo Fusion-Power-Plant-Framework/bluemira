@@ -14,3 +14,7 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "06:00"
+    groups:
+      fppf-actions:
+        patterns:
+          - "Fusion-Power-Plant-Framework/fppf-actions/*"
