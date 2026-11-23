@@ -23,6 +23,7 @@ from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display.plotter import Zorder, plot_2d, plot_coordinates
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find import find_first_closed_flux_surface_psi_n
 from bluemira.equilibria.find_legs import NumNull, split
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
@@ -2158,7 +2159,14 @@ class RadiationSource:
         # Get Electron density and electron temperature profile at the mid-plane.
         # Equilibrium determines the minimum allowable psi_n value
         # (affects flux surface contour finding)
-        self.midplane_profiles = midplane_profiles(self.params, np.min(eq.psi_norm()))
+        psi_n_min = find_first_closed_flux_surface_psi_n(
+            self.eq.x,
+            self.eq.z,
+            self.eq.psi(),
+            self.eq._o_points,
+            self.eq._x_points,
+        )
+        self.midplane_profiles = midplane_profiles(self.params, psi_n_min)
 
         # Initialising the `FluxSurfaceMaker`
         (
