@@ -341,7 +341,12 @@ _PRISM_PLOT_EDGES = (
 
 @nb.jit(nopython=True, cache=True)
 def _signed_solid_angle_triangle(
-    r1: npt.NDArray[np.float64], r2: npt.NDArray[np.float64], r3: npt.NDArray[np.float64]
+    r1: npt.NDArray[np.float64],
+    r2: npt.NDArray[np.float64],
+    r3: npt.NDArray[np.float64],
+    n1: float,
+    n2: float,
+    n3: float,
 ) -> float:
     """
     Signed solid angle subtended by a triangle at the origin.
@@ -354,6 +359,12 @@ def _signed_solid_angle_triangle(
         Second vertex relative to the observation point (3)
     r3:
         Third vertex relative to the observation point (3)
+    n1:
+        Norm of r1
+    n2:
+        Norm of r2
+    n3:
+        Norm of r3
 
     Returns
     -------
@@ -367,7 +378,6 @@ def _signed_solid_angle_triangle(
 
     .. doi:: 10.1109/TBME.1983.325207
     """
-    n1, n2, n3 = np.linalg.norm(r1), np.linalg.norm(r2), np.linalg.norm(r3)
     numerator = np.dot(r1, np.cross(r2, r3))
     denominator = (
         n1 * n2 * n3 + np.dot(r1, r2) * n3 + np.dot(r2, r3) * n1 + np.dot(r3, r1) * n2
@@ -416,41 +426,38 @@ def _polyhedron_inverse_distance_integral(
     All singular terms (point on a face plane, edge, or vertex) are multiplied by
     a vanishing distance, and are hence set to 0.
     """
-    n_faces, n_face_vertices = faces.shape
     result = 0.0
-    for f in range(n_faces):
-        # Vertex positions relative to the observation point
-        r = np.empty((n_face_vertices, 3))
-        for i in range(n_face_vertices):
-            r[i] = vertices[faces[f, i]] - point
+    for face in faces:
+        n_v = len(face)
+        # Vertex positions relative to the observation point, and their distances
+        r = vertices[face] - point
+        r_norm = np.sqrt(np.sum(r**2, axis=1))
 
-        # Outward unit normal of the (planar) face
+        # Outward unit normal of the (planar) face, and distance to its plane
         normal = np.cross(r[1] - r[0], r[2] - r[0])
         normal /= np.linalg.norm(normal)
         h_f = np.dot(normal, r[0])
-
         if h_f == 0.0:
             # Point lies in the plane of the face: no contribution
             continue
 
         edge_sum = 0.0
-        for i in range(n_face_vertices):
-            r_a = r[i]
-            r_b = r[(i + 1) % n_face_vertices]
-            edge = r_b - r_a
+        for i in range(n_v):
+            j = (i + 1) % n_v
+            edge = r[j] - r[i]
             length = np.linalg.norm(edge)
-            # Outward in-plane normal of the edge
-            m_e = np.cross(edge / length, normal)
-            h_fe = np.dot(m_e, r_a)
-            r_sum = np.linalg.norm(r_a) + np.linalg.norm(r_b)
-            denominator = r_sum - length
-            if h_fe != 0.0 and denominator > 0.0:
-                edge_sum += h_fe * np.log((r_sum + length) / denominator)
+            # In-plane distance to the line of the edge (positive inside the face)
+            h_fe = np.dot(np.cross(edge, normal), r[i]) / length
+            r_sum = r_norm[i] + r_norm[j]
+            if h_fe != 0.0 and r_sum > length:
+                edge_sum += h_fe * np.log((r_sum + length) / (r_sum - length))
 
-        # Solid angle of the face, by fan triangulation
+        # Solid angle of the face, by fan triangulation from the first vertex
         omega = 0.0
-        for i in range(1, n_face_vertices - 1):
-            omega += _signed_solid_angle_triangle(r[0], r[i], r[i + 1])
+        for i in range(1, n_v - 1):
+            omega += _signed_solid_angle_triangle(
+                r[0], r[i], r[i + 1], r_norm[0], r_norm[i], r_norm[i + 1]
+            )
 
         result += h_f * (edge_sum - h_f * omega)
 
