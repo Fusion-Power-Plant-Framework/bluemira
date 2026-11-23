@@ -33,7 +33,9 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import MU_0_4PI
+from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource, PrismEndCapMixin
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.utilities.plot_tools import Plot3D
 
@@ -326,6 +328,16 @@ _PRISM_FACES = np.array(
     dtype=np.int64,
 )
 
+# Vertex index polylines tracing the edges of the trapezoidal prism, for plotting
+_PRISM_PLOT_EDGES = (
+    [0, 1, 5, 4, 0],  # beta end-cap
+    [3, 2, 6, 7, 3],  # alpha end-cap
+    [0, 3],
+    [1, 2],
+    [5, 6],
+    [4, 7],
+)
+
 
 @nb.jit(nopython=True, cache=True)
 def _signed_solid_angle_triangle(
@@ -491,7 +503,6 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         current: float,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
-        self._origin = origin
 
         length = np.linalg.norm(ds)
         self._check_angle_values(alpha, beta)
@@ -499,6 +510,11 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self._dcm = np.array([t_vec, ds / length, normal], dtype=float)
+        # The field integration domain is centred at y' = 0.5 * breadth *
+        # (tan(alpha) - tan(beta)) in the local coordinate system. Shift the local
+        # origin so that the prism is centred on the specified origin.
+        self._y_offset = 0.5 * breadth * (np.tan(alpha) - np.tan(beta))
+        self._origin = np.asarray(origin, dtype=float) - self._y_offset * self._dcm[1]
         self._length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
         self._breadth = breadth
         self._depth = depth
@@ -507,7 +523,6 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         # Current density
         self._area = 4 * breadth * depth
         self.set_current(current)
-        self._points = self._calculate_points()
         self._vertices = self._calculate_vertices()
 
     def _xyzlocal_to_rql(
@@ -630,7 +645,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
     def _calculate_vertices(self) -> npt.NDArray[np.float64]:
         """
         Calculate the vertices of the trapezoidal prism in local coordinates, as
-        used in the integration domain of the field calculation.
+        used in the integration domain of the field calculation and for plotting.
 
         Returns
         -------
@@ -659,41 +674,63 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
             [-d, b, c],
         ])
 
-    def _calculate_points(self) -> npt.NDArray[np.float64]:
+    @property
+    def _centre(self) -> npt.NDArray[np.float64]:
         """
-        Calculate extrema points of the current source for plotting and debugging.
+        The centre of the current source in global coordinates (the specified origin)
+        """
+        return self._origin + self._y_offset * self._dcm[1]
+
+    @property
+    def _points(self) -> npt.NDArray[np.float64]:
+        """
+        Edge lines of the current source in global coordinates, for plotting.
 
         Returns
         -------
         :
-            extrema points
+            Array of (n, 3) polylines
         """
-        b = self._halflength
-        c = self._depth
-        d = self._breadth
-        # Lower rectangle
-        p1 = np.array([-d, -b + d * np.tan(self._beta), -c])
-        p2 = np.array([d, -b - d * np.tan(self._beta), -c])
-        p3 = np.array([d, -b - d * np.tan(self._beta), c])
-        p4 = np.array([-d, -b + d * np.tan(self._beta), c])
+        global_vertices = self._local_to_global(self._vertices)
+        return np.array(
+            [global_vertices[edge] for edge in _PRISM_PLOT_EDGES], dtype=object
+        )
 
-        # Upper rectangle
-        p5 = np.array([-d, b - d * np.tan(self._alpha), -c])
-        p6 = np.array([d, b + d * np.tan(self._alpha), -c])
-        p7 = np.array([d, b + d * np.tan(self._alpha), c])
-        p8 = np.array([-d, b - d * np.tan(self._alpha), c])
+    def rotate(self, angle: float, axis: npt.NDArray[np.float64] | str):
+        """
+        Rotate the CurrentSource about an axis.
 
-        points = [
-            np.vstack([p1, p2, p3, p4, p1]),
-            np.vstack([p5, p6, p7, p8, p5]),
-            # Lines between rectangle corners
-            np.vstack([p1, p5]),
-            np.vstack([p2, p6]),
-            np.vstack([p3, p7]),
-            np.vstack([p4, p8]),
-        ]
+        Parameters
+        ----------
+        angle:
+            The rotation degree [degree]
+        axis:
+            The axis of rotation
+        """
+        r = rotation_matrix(np.deg2rad(angle), axis).T
+        self._origin @= r
+        self._dcm @= r
 
-        return np.array([self._local_to_global(p) for p in points], dtype=object)
+    def translate(self, vector: npt.NDArray[np.float64]):
+        """
+        Translate the CurrentSource.
+
+        Parameters
+        ----------
+        vector:
+            Translation vector
+
+        Raises
+        ------
+        MagnetostaticsError
+            If the translation vector is not of length 3
+        """
+        vector = np.asarray(vector, dtype=float)
+        if vector.shape != (3,):
+            raise MagnetostaticsError(
+                f"Translation vector must be of shape (3,), not {vector.shape}."
+            )
+        self._origin += vector
 
     def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False, **kwargs):  # noqa: ARG002
         """
@@ -708,9 +745,14 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         """
         if ax is None:
             ax = Plot3D()
-        super().plot(ax=ax, show_coord_sys=show_coord_sys)
-        p1 = self._origin - 0.5 * self._dcm[1]
-        p2 = self._origin + 0.5 * self._dcm[1]
+        super().plot(ax=ax, show_coord_sys=False)
+        centre = self._centre
+        if show_coord_sys:
+            ax.scatter(*centre, color="k")
+            for axis in self._dcm:
+                ax.quiver(*centre, *axis, length=1, color="r")
+        p1 = centre - 0.5 * self._dcm[1]
+        p2 = centre + 0.5 * self._dcm[1]
         points = np.array([p1, p2])
         ax.plot(*points.T, color="r")
         ax.plot([points[-1][0]], [points[-1][1]], [points[-1][2]], marker="^", color="r")
