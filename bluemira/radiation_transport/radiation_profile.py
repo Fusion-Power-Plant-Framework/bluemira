@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from scipy.interpolate import interp1d
 
 from bluemira.base import constants

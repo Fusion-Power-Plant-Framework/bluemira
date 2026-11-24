@@ -70,7 +70,7 @@ class MidplaneProfiles:
 
 
 def midplane_profiles(
-    params: ParameterFrameLike, psi_n_min: float = 0.01
+    params: ParameterFrameLike, psi_n_min: float = 0.01,
 ) -> MidplaneProfiles:
     """
     Calculate the core radiation source profiles.
@@ -115,7 +115,7 @@ def collect_rho_core_values(
     n_points_core_95: int,
     n_points_core_99: int,
     n_points_mantle: int,
-    psi_n_min: float = 0.01
+    psi_n_min: float = 0.01,
 ) -> np.ndarray:
     """
     Calculation of core dimensionless radial coordinate rho (between 0 and 1).
