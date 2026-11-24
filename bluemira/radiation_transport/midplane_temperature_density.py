@@ -115,7 +115,7 @@ def collect_rho_core_values(
     n_points_core_95: int,
     n_points_core_99: int,
     n_points_mantle: int,
-    psi_n_min: float | None = None,
+    psi_n_min: float = 0.01
 ) -> np.ndarray:
     """
     Calculation of core dimensionless radial coordinate rho (between 0 and 1).
@@ -142,7 +142,7 @@ def collect_rho_core_values(
     rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
     """
     # Plasma core for rho < rho_core
-    rho_min = np.sqrt(psi_n_min) if psi_n_min is not None else 0.01
+    rho_min = np.sqrt(psi_n_min)
     rho_core1 = np.linspace(rho_min, 0.95 * rho_ped, n_points_core_95)
     rho_core2 = np.linspace(0.95 * rho_ped, rho_ped, n_points_core_99)
     rho_core = np.append(rho_core1, rho_core2)
