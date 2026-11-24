@@ -21,23 +21,32 @@ comparing results to fields obtained by other methods; of the
 order of 10 µT/MA discrepancy at singular points. MC 2026
 """  # noqa: RUF002, yes I meant micro
 
+from itertools import pairwise
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import numpy.typing as npt
+from scipy import LowLevelCallable
 
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
-from bluemira.magnetostatics.tools import integrate, jit_llc4, process_xyz_array
+from bluemira.magnetostatics.tools import (
+    integrate,
+    jit_llc4,
+    jit_llc6,
+    process_xyz_array,
+)
 
 __all__ = ["CircularArcCurrentSource"]
 
 
 LOG_EPS = np.finfo(float).tiny
 TWO_PI = 2.0 * np.pi
+SPLIT_TOL = 1e-12  # [rad]
 
 # Full integrands free of singularities
 
@@ -417,6 +426,181 @@ def Bz_analytical_circular(
     )
 
 
+# Vector potential
+
+
+@nb.jit(nopython=True, cache=True)
+def _potential_primitive(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
+    """
+    Calculate the vector potential cross-section primitive at a corner.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the potential [m]
+    r_j:
+        The radius (inner or outer) of the coil [m]
+    z_k:
+        The z coordinate (upper or lower) of the coil [m]
+
+    Returns
+    -------
+    :
+        The value of the primitive at a single point
+
+    Notes
+    -----
+    Each term is skipped where its denominator is zero; its limit there is 0.
+    """
+    cos_psi = np.cos(psi)
+    c = r_pc * cos_psi
+    s = r_pc * np.sin(psi)
+    u = r_j - c
+    rho_sq = u**2 + s**2
+    q_sq = s**2 + z_k**2
+    dist = np.sqrt(rho_sq + z_k**2)
+
+    result = 0.5 * z_k * dist
+    if rho_sq > 0:
+        result += 0.5 * (r_j**2 - c**2 + s**2) * np.arcsinh(z_k / np.sqrt(rho_sq))
+    if q_sq > 0:
+        result += c * z_k * np.arcsinh(u / np.sqrt(q_sq))
+    if s != 0:
+        result -= c * s * np.arctan(u * z_k / (s * dist))
+    return result
+
+
+@nb.jit(nopython=True, cache=True)
+def _potential_kernel(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the integral of r'/R over the cross-section, at a given angle.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the potential [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The cross-section integral [m^2]
+    """
+    return (
+        _potential_primitive(psi, r_pc, r2, z1)
+        - _potential_primitive(psi, r_pc, r2, z2)
+        - _potential_primitive(psi, r_pc, r1, z1)
+        + _potential_primitive(psi, r_pc, r1, z2)
+    )
+
+
+@jit_llc6
+def ar_integrand(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the radial vector potential integrand.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the potential [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The result of the integrand at a single point
+    """
+    return -np.sin(psi) * _potential_kernel(psi, r_pc, r1, r2, z1, z2)
+
+
+@jit_llc6
+def at_integrand(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the tangential vector potential integrand.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the potential [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The result of the integrand at a single point
+    """
+    return np.cos(psi) * _potential_kernel(psi, r_pc, r1, r2, z1, z2)
+
+
+def _integrate_split(
+    func: LowLevelCallable, args: tuple[float, ...], bound1: float, bound2: float
+) -> float:
+    """
+    Integrate between bounds, always splitting at multiples of pi, where the
+    vector potential integrands can be kinked or sharply peaked.
+
+    Parameters
+    ----------
+    func:
+        The function to integrate
+    args:
+        The static arguments to the function
+    bound1:
+        The first integration bound [rad]
+    bound2:
+        The second integration bound [rad]
+
+    Returns
+    -------
+    :
+        The value of the integral of the function between the bounds
+    """
+    lower, upper = min(bound1, bound2), max(bound1, bound2)
+    n = np.arange(np.ceil(lower / np.pi), np.floor(upper / np.pi) + 1)
+    splits = n * np.pi
+    # Avoid slivers when a bound is a multiple of pi to within rounding
+    splits = splits[(splits - lower > SPLIT_TOL) & (upper - splits > SPLIT_TOL)]
+    result = sum(
+        integrate(func, args, a, b) for a, b in pairwise([lower, *splits, upper])
+    )
+    return np.sign(bound2 - bound1) * result
+
+
 class CircularArcCurrentSource(CrossSectionCurrentSource):
     """
     3-D circular arc prism current source with a rectangular cross-section and
@@ -631,6 +815,100 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
             b_local = MU_0_4PI * self._rho * b / 8
 
         return self._dcm.T @ b_local
+
+    def _vector_potential_local(
+        self, rp: float, tp: float, zp: float
+    ) -> npt.NDArray[np.float64]:
+        """
+        Calculate the vector potential at a point in local coordinates.
+
+        Returns
+        -------
+        :
+            (Ax, Ay, Az) at a point
+
+        Notes
+        -----
+        The potential is calculated without its leading mu_0 J / (4 pi) factor.
+        Az is 0.
+        """
+        args = (rp, *self._cylindrical_to_working(zp))
+        lower, upper = -tp, self._dtheta - tp
+
+        at = _integrate_split(at_integrand, args, lower, upper)
+        if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
+            ar = 0.0
+        else:
+            ar = _integrate_split(ar_integrand, args, lower, upper)
+
+        ax = ar * np.cos(tp) - at * np.sin(tp)
+        ay = ar * np.sin(tp) + at * np.cos(tp)
+
+        return np.array([ax, ay, 0.0])
+
+    @process_xyz_array
+    def vector_potential(
+        self,
+        x: float | npt.NDArray[np.float64],
+        y: float | npt.NDArray[np.float64],
+        z: float | npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        r"""
+        Calculate the vector potential at a point due to the current source.
+
+        Parameters
+        ----------
+        x:
+            The x coordinate(s) of the points at which to calculate the potential
+        y:
+            The y coordinate(s) of the points at which to calculate the potential
+        z:
+            The z coordinate(s) of the points at which to calculate the potential
+
+        Returns
+        -------
+        :
+            The vector potential {Ax, Ay, Az} in [V.s/m]
+
+        Notes
+        -----
+        With :math:`\psi = \phi' - \phi_{pc}` and uniform tangential current density:
+
+        .. math::
+            A_r &= -\frac{\mu_0 J}{4\pi}
+            \int_{-\phi_{pc}}^{\theta-\phi_{pc}} \sin\psi~G(\psi)~d\psi
+
+            A_t &= \frac{\mu_0 J}{4\pi}
+            \int_{-\phi_{pc}}^{\theta-\phi_{pc}} \cos\psi~G(\psi)~d\psi
+
+            G(\psi) &= \iint \frac{r'}{R}~dr'dz'
+            = -\sum_{j=1}^{2}\sum_{k=1}^{2}(-1)^{j+k} F(R_j, Z_k)
+
+            F &= \frac{Z_k D}{2} + \frac{R_j^2 - R_{pc}^2\cos 2\psi}{2}
+            \sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
+            + c Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}}
+            - c s\tan^{-1}\frac{u Z_k}{s D}
+
+        where :math:`c = R_{pc}\cos\psi`, :math:`s = R_{pc}\sin\psi`,
+        :math:`u = R_j - c`, and :math:`D = \sqrt{u^2 + s^2 + Z_k^2}`.
+
+        The integrands are bounded everywhere, including inside the conductor and
+        on its faces, edges and corners.
+
+        The curl of this potential is the field of this source. The potential of
+        an open arc is not divergence-free at its ends.
+
+        G is a difference of corner values, so precision reduces at points very far
+        from the source relative to the size of its cross-section.
+        """
+        point = np.array([x, y, z])
+        # Convert to local cylindrical coordinates
+        point = self._global_to_local(np.array([point]))[0]
+        rp, tp, zp = self._local_to_cylindrical(point)
+        # Calculate vector potential in local coordinates
+        a_local = MU_0_4PI * self._rho * self._vector_potential_local(rp, tp, zp)
+        # Convert vector back to global coordinates
+        return self._dcm.T @ a_local
 
     def _calculate_points(self) -> npt.NDArray[np.float64]:
         """

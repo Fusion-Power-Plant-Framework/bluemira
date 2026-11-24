@@ -12,8 +12,8 @@ import pytest
 from matplotlib import pyplot as plt
 from scipy.integrate import quad
 
-from bluemira.base.constants import EPS
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.base.constants import EPS, MU_0_4PI
+from bluemira.geometry.coordinates import Coordinates, rotation_matrix
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circular_arc import (
     CircularArcCurrentSource,
@@ -22,6 +22,8 @@ from bluemira.magnetostatics.circular_arc import (
     btc_integrand_full,
     bzc_integrand_full_p1,
 )
+from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.greens import greens_psi
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
@@ -927,3 +929,185 @@ class TestCircularArcCurrentSourceSuperposition:
         cb = fig.colorbar(cm, cax=cax)
         cb.set_label(r"$|\mathbf{B}|$ [T]")
         plt.show()
+
+
+class TestCircularArcVectorPotential:
+    R, B, D = 4.0, 0.5, 1.0
+    ANGLE = 130.0
+    CURRENT = 1e6
+
+    @classmethod
+    def _make_arc(cls, dtheta, start=0.0, breadth=B, depth=D):
+        t = np.deg2rad(start)
+        return CircularArcCurrentSource(
+            np.zeros(3),
+            np.array([np.cos(t), np.sin(t), 0.0]),
+            np.array([-np.sin(t), np.cos(t), 0.0]),
+            np.array([0.0, 0.0, 1.0]),
+            breadth,
+            depth,
+            cls.R,
+            dtheta,
+            cls.CURRENT,
+        )
+
+    @staticmethod
+    def _cylindrical(r, angle, z):
+        t = np.deg2rad(angle)
+        return np.array([r * np.cos(t), r * np.sin(t), z])
+
+    @classmethod
+    def _brute_force(cls, point, n_theta=200, n_xs=30):
+        """3-D Gauss-Legendre volume integral; for exterior points only."""
+        xt, wt = np.polynomial.legendre.leggauss(n_theta)
+        xs, ws = np.polynomial.legendre.leggauss(n_xs)
+        half_angle = 0.5 * np.deg2rad(cls.ANGLE)
+        t, r, z = np.meshgrid(
+            half_angle * (xt + 1), cls.R + cls.B * xs, cls.D * xs, indexing="ij"
+        )
+        weights = half_angle * wt[:, None, None] * ws[None, :, None] * ws
+        # The cross-section Jacobian cancels with the area in J = I / (4 B D)
+        x, y = r * np.cos(t), r * np.sin(t)
+        dist = np.sqrt((point[0] - x) ** 2 + (point[1] - y) ** 2 + (point[2] - z) ** 2)
+        dv = 0.25 * MU_0_4PI * cls.CURRENT * weights * r / dist
+        return np.array([-np.sum(dv * np.sin(t)), np.sum(dv * np.cos(t)), 0.0])
+
+    @staticmethod
+    def _curl(source, point, h=2e-3):
+        def a(p):
+            return source.vector_potential(*p)
+
+        # 4th order central difference; grad[i, j] = dA_j/dx_i
+        grad = np.array([
+            (8 * (a(point + e) - a(point - e)) - (a(point + 2 * e) - a(point - 2 * e)))
+            / (12 * h)
+            for e in h * np.eye(3)
+        ])
+        return np.array([
+            grad[1, 2] - grad[2, 1],
+            grad[2, 0] - grad[0, 2],
+            grad[0, 1] - grad[1, 0],
+        ])
+
+    @pytest.mark.parametrize(
+        "point", [(1, 2, 0.3), (0, 0, 0), (0, 0, 2), (-3, 4, 1), (6, 1, -2), (10, -4, 0)]
+    )
+    def test_brute_force(self, point):
+        np.testing.assert_allclose(
+            self._make_arc(self.ANGLE).vector_potential(*point),
+            self._brute_force(point),
+            rtol=1e-10,
+            atol=1e-14,
+        )
+
+    @pytest.mark.parametrize(
+        "point",
+        [
+            (1, 2, 0.3),
+            (6, 1, -2),
+            (-2, 3.2, 0.4),
+            # Inside the conductor
+            (2.5, 3.1, 0.2),
+            (3.9, 0.3, -0.6),
+        ],
+    )
+    def test_curl_is_field(self, point):
+        arc = self._make_arc(self.ANGLE)
+        point = np.array(point, dtype=float)
+        np.testing.assert_allclose(
+            self._curl(arc, point), arc.field(*point), rtol=0.0, atol=1e-8
+        )
+
+    @pytest.mark.parametrize(
+        ("r", "angle", "z"),
+        [
+            pytest.param(R - B, 45, 0, id="inner face"),
+            pytest.param(R, 45, D, id="top face"),
+            pytest.param(R - B, 45, D, id="inner edge"),
+            pytest.param(R + B, 45, -D, id="outer edge"),
+            pytest.param(R, 0, 0, id="start cap"),
+            pytest.param(R - B, 0, D, id="start corner"),
+            pytest.param(R + B, ANGLE, D, id="end corner"),
+            pytest.param(R, 180, 0, id="opposite start cap"),
+            pytest.param(R + B, 45 + 180, D, id="opposite edge"),
+            pytest.param(R + 2 * B, 45, D, id="top face extension"),
+            pytest.param(R - B, 45, 3 * D, id="inner face extension"),
+            pytest.param(0, 0, D, id="axis"),
+        ],
+    )
+    def test_singularities_continuous(self, r, angle, z):
+        arc = self._make_arc(self.ANGLE)
+        point = self._cylindrical(r, angle, z)
+        value = arc.vector_potential(*point)
+        assert np.all(np.isfinite(value))
+        for offset in 1e-7 * np.array([[0.3, 0.5, 0.7], [-0.7, 0.3, -0.5]]):
+            np.testing.assert_allclose(
+                arc.vector_potential(*(point + offset)), value, rtol=0.0, atol=1e-7
+            )
+
+    def test_zero_inner_radius(self):
+        arc = self._make_arc(self.ANGLE, breadth=self.R)
+        value = arc.vector_potential(0.0, 0.0, 0.0)
+        assert np.all(np.isfinite(value))
+        np.testing.assert_allclose(
+            arc.vector_potential(1e-7, 1e-7, 1e-7), value, rtol=0.0, atol=1e-7
+        )
+
+    @pytest.mark.parametrize("half_width", [0.5, 0.05, 0.005])
+    def test_full_circle_vs_greens(self, half_width):
+        circle = self._make_arc(360, breadth=half_width, depth=half_width)
+        x, z = 6.0, 0.5
+        xs, ws = np.polynomial.legendre.leggauss(8)
+        psi = sum(
+            0.25 * wi * wj * greens_psi(self.R + half_width * xi, half_width * xj, x, z)
+            for xi, wi in zip(xs, ws, strict=True)
+            for xj, wj in zip(xs, ws, strict=True)
+        )
+        np.testing.assert_allclose(
+            circle.vector_potential(x, 0.0, z),
+            [0.0, self.CURRENT * psi / x, 0.0],
+            rtol=1e-9,
+            atol=1e-14,
+        )
+
+    @pytest.mark.parametrize("angle", [ANGLE, 360.0])
+    @pytest.mark.parametrize(
+        "point", [(1, 2, 0.3), (2.5, 3.1, 0.2), (-3.5, 0, 0), (4, 0, 1)]
+    )
+    def test_superposition(self, angle, point):
+        split = 0.3 * angle
+        parts = (self._make_arc(split), self._make_arc(angle - split, start=split))
+        np.testing.assert_allclose(
+            sum(p.vector_potential(*point) for p in parts),
+            self._make_arc(angle).vector_potential(*point),
+            rtol=0.0,
+            atol=1e-9,
+        )
+
+    def test_rotate_translate(self):
+        reference = self._make_arc(self.ANGLE)
+        moved = self._make_arc(self.ANGLE)
+        moved.rotate(35, "x")
+        shift = np.array([1.0, -2.0, 3.0])
+        moved.translate(shift)
+        r = rotation_matrix(np.deg2rad(35), "x")
+        point = np.array([2.5, 3.1, 0.2])
+        np.testing.assert_allclose(
+            moved.vector_potential(*(r @ point + shift)),
+            r @ reference.vector_potential(*point),
+            rtol=0.0,
+            atol=1e-12,
+        )
+
+    def test_array_inputs(self):
+        arc = self._make_arc(self.ANGLE)
+        x, z = np.meshgrid([1.0, 4.0, 6.0], [0.0, 0.5], indexing="ij")
+        y = np.ones_like(x)
+        result = arc.vector_potential(x, y, z)
+        assert result.shape == (3, 3, 2)
+        np.testing.assert_array_equal(
+            result[:, 1, 1], arc.vector_potential(4.0, 1.0, 0.5)
+        )
+        np.testing.assert_array_equal(
+            result[:, :, 0], arc.vector_potential(x[:, 0], y[:, 0], z[:, 0])
+        )

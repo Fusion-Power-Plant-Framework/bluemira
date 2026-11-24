@@ -38,6 +38,7 @@ __all__ = [
     "jit_llc3",
     "jit_llc4",
     "jit_llc5",
+    "jit_llc6",
     "jit_llc7",
     "n_integrate",
     "process_coords_array",
@@ -166,6 +167,29 @@ def jit_llc7(f_integrand: Callable) -> LowLevelCallable:
     @nb.cfunc(float64(intc, CPointer(float64)))
     def wrapped(n, xx):  # noqa: ARG001
         return f_jitted(xx[0], xx[1], xx[2], xx[3], xx[4], xx[5], xx[6])
+
+    return LowLevelCallable(wrapped.ctypes)
+
+
+def jit_llc6(f_integrand: Callable) -> LowLevelCallable:
+    """
+    Decorator for 5-argument integrand function to a low-level callable.
+
+    Parameters
+    ----------
+    f_integrand:
+        The integrand function
+
+    Returns
+    -------
+    :
+        The decorated integrand function as a LowLevelCallable
+    """
+    f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
+
+    @nb.cfunc(float64(intc, CPointer(float64)))
+    def wrapped(n, xx):  # noqa: ARG001
+        return f_jitted(xx[0], xx[1], xx[2], xx[3], xx[4], xx[5])
 
     return LowLevelCallable(wrapped.ctypes)
 
