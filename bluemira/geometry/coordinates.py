@@ -29,7 +29,7 @@ from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
-from bluemira.utilities.tools import cross_2d, cross_2d_3d, json_writer
+from bluemira.utilities.tools import cross2d_numba, cross_2d, cross_2d_3d, json_writer
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -842,7 +842,7 @@ def check_linesegment(
 
     distance = np.sqrt(np.sum(a_b**2))
     # Numba doesn't like doing cross-products of things with size 2
-    cross = cross_2d(a_b, a_c)
+    cross = cross2d_numba(a_b, a_c)
     if np.abs(cross) > CROSS_P_TOL * distance:
         return False
     k_ac = np.dot(a_b, a_c)
