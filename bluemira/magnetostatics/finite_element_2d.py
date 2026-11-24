@@ -23,7 +23,7 @@ from dolfinx.fem import (
     functionspace,
     locate_dofs_topological,
 )
-from dolfinx.fem.petsc import LinearProblem
+from dolfinx.fem.problems import LinearProblem
 from dolfinx.mesh import locate_entities_boundary
 from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
 
@@ -186,6 +186,7 @@ class FemMagnetostatic2d:
             self.L,
             u=self.psi,
             bcs=bcs,
+            dtype=self.psi.dtype,
             # petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
         )
 
@@ -248,7 +249,7 @@ class FemMagnetostatic2d:
             )
 
         V_W0 = element(  # noqa: N806
-            base_eltype[0], self.mesh.ufl_cell().cellname(), base_eltype[1], shape=(2,)
+            base_eltype[0], self.mesh.ufl_cell().cellname, base_eltype[1], shape=(2,)
         )
         W0 = functionspace(self.mesh, V_W0)  # noqa: N806
 
@@ -263,7 +264,7 @@ class FemMagnetostatic2d:
                 -self.psi.dx(1) / (2 * np.pi * r),
                 self.psi.dx(0) / (2 * np.pi * r),
             )),
-            W0.element.interpolation_points(),
+            W0.element.interpolation_points,
         )
 
         B0.interpolate(B_expr)
@@ -272,7 +273,7 @@ class FemMagnetostatic2d:
             family = interpolation_eltype[0]
             degree = interpolation_eltype[1]
             V_W = element(  # noqa: N806
-                family, self.mesh.ufl_cell().cellname(), degree, shape=(2,)
+                family, self.mesh.ufl_cell().cellname, degree, shape=(2,)
             )
             W = functionspace(self.mesh, V_W)  # noqa: N806
             B = BluemiraFemFunction(W)

@@ -34,7 +34,7 @@ from dolfinx.fem import (
     functionspace,
     locate_dofs_topological,
 )
-from dolfinx.io import gmshio
+from dolfinx.io import gmsh as d_gmsh
 from dolfinx.mesh import entities_to_geometry
 from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-old_m_to_m = gmshio.model_to_mesh
+old_m_to_m = d_gmsh.model_to_mesh
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
@@ -89,7 +89,7 @@ def model_to_mesh(
 
     Notes
     -----
-    Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
+    Patches dolfinx.io.gmsh.model_to_mesh to allow non sequential dimensions
     """
     if isinstance(gdim, Sequence):
         dimensions = gdim
@@ -106,9 +106,9 @@ def model_to_mesh(
     }
 
     extr_geometry = functools.partial(
-        extract_geometry, gmshio.extract_geometry, dimensions
+        extract_geometry, d_gmsh.extract_geometry, dimensions
     )
-    with patch("dolfinx.io.gmshio.extract_geometry", new=extr_geometry):
+    with patch("dolfinx.io.gmsh.extract_geometry", new=extr_geometry):
         result = old_m_to_m(model, comm, rank, gdim, **kwargs)
     return result, labels
 
@@ -121,7 +121,7 @@ def extract_geometry(
     """
     Extract model geometry
 
-    Designed to call dolfinx.io.gmshio.extract_geometry but patch for non
+    Designed to call dolfinx.io.gmsh.extract_geometry but patch for non
     sequential dimensions
 
     Returns
@@ -556,7 +556,7 @@ def read_from_msh(
     gdim: int | tuple = 3,
     partitioner=None,
 ):
-    """Wraps `dolfinx.io.gmshio.read_from_msh` to patch dimensional reading
+    """Wraps `dolfinx.io.gmsh.read_from_msh` to patch dimensional reading
 
 
     Parameters
@@ -572,8 +572,8 @@ def read_from_msh(
     associated physical groups for cells and facets.
 
     """
-    with patch("dolfinx.io.gmshio.model_to_mesh", new=model_to_mesh):
-        return gmshio.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner)
+    with patch("dolfinx.io.gmsh.model_to_mesh", new=model_to_mesh):
+        return d_gmsh.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner)
 
 
 @dataclass
