@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Build
-        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@e612302ee8a26c88d92473aaad63ddf15ad6d5ae
+        uses: Fusion-Power-Plant-Framework/fppf-actions/build-action@2b028f07f05cb46a56faa5a52741fbc4f19584fd
         with:
           python-version: ${{ matrix.python-version }}
           clone-bluemira: "false"
