@@ -9,14 +9,39 @@ from copy import deepcopy
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
+from scipy.integrate import quad
 
 from bluemira.base.constants import EPS
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.circular_arc import (
+    CircularArcCurrentSource,
+    brc_integrand_full,
+    btc_integrand_full,
+    bzc_integrand_full_p1,
+)
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
+
+
+@pytest.mark.parametrize(
+    ("integrand", "args", "expected"),
+    [
+        # r_pc * cos(psi) ~ r_j: r_j - r_pc * cos(psi) + sqrt_term cancels
+        (brc_integrand_full, (2.0, 1.0, 0.0), -7.89615915421862e-08),
+        (btc_integrand_full, (2.0, 1.0, 0.0), -1.1821497603551907e-16),
+        # sqrt_term ~ z_k: -z_k + sqrt_term cancels
+        (bzc_integrand_full_p1, (1.0, 1.0, 1.0), 4.136709013221299e-08),
+    ],
+)
+def test_near_singular_integrands_avoid_log_cancellation(integrand, args, expected):
+    # References are the small-psi closed forms integrated over [1e-9, 2e-9]
+    # (neglected terms are O(psi**2)):
+    #   brc ~ 1 + 2 ln(2 psi**2), btc ~ psi (1 + 2 ln(2 psi**2)),
+    #   bzc_p1 ~ -ln(psi**2 / 2)
+    value = quad(integrand, 1e-9, 2e-9, args=args, epsabs=0)[0]
+    assert value == pytest.approx(expected, rel=1e-10)
 
 
 class TestCircularArcCurrentSource:
