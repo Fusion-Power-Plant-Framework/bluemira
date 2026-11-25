@@ -4,6 +4,7 @@
 from pathlib import Path
 
 import pytest
+from matplotlib.figure import Figure
 from matplotlib.pyplot import Axes
 
 from bluemira.base.error import BluemiraError
@@ -144,9 +145,9 @@ class TestEqAnalysis:
         plot_8 = eq_analysis_1.physics_info_table()
         plot_9 = eq_analysis_1.plot_compare_separatrix()
         plot_9b = eq_analysis_2.plot_compare_separatrix()
-        plot_10 = eq_analysis_1.plot_compare_psi()
-        plot_10b = eq_analysis_2.plot_compare_psi()
-        plot_11 = eq_analysis_3.plot_compare_psi()
+        plot_10a, plot_10b = eq_analysis_1.plot_compare_psi()
+        plot_10c, plot_10d = eq_analysis_2.plot_compare_psi()
+        plot_11a, plot_11b = eq_analysis_3.plot_compare_psi()
         plot_12_1, plot_12_2, plot_12_3 = eq_analysis_1.plot_target_flux(
             target, target_coords
         )
@@ -156,13 +157,13 @@ class TestEqAnalysis:
         assert len(plot_7_ax) == 18
         assert isinstance(plot_8, EqSummary)
         assert isinstance(plot_9, Axes)
-        assert plot_10 is None
-        assert plot_11 is None
+        assert isinstance(plot_10a, Figure)
+        assert isinstance(plot_11a, Figure)
+        assert isinstance(plot_10c, Figure)
         assert isinstance(plot_12_1, Axes)
         assert isinstance(plot_12_2, list)
         assert isinstance(plot_12_3[0], Coordinates)
         assert isinstance(plot_9b, Axes)
-        assert plot_10b is None
 
 
 class TestMultiEqAnalysis:

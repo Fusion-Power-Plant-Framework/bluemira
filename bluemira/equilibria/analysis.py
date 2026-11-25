@@ -817,9 +817,11 @@ class EqAnalysis:
         eq = self._get_input()
         ref = self._get_reference()
         diag_ops = diag_ops or self.diag_ops
-        return EquilibriumComparisonPostOptPlotter(
+        plotter = EquilibriumComparisonPostOptPlotter(
             equilibrium=eq, reference_equilibrium=ref, diag_ops=diag_ops, ax=ax
-        ).plot_compare_psi()
+        )
+        plotter.plot_compare_psi()
+        return plotter.f, plotter.ax
 
     def plot_compare_profiles(
         self,
