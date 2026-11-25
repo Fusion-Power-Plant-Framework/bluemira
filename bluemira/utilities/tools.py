@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import nlopt
+import numba as nb
 import numpy as np
 import numpy.typing as npt
 import vtk
@@ -766,6 +767,28 @@ def cross_2d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64 | np.ndarray:
     x = np.asarray(v1)
     y = np.asarray(v2)
     return x[..., 0] * y[..., 1] - x[..., 1] * y[..., 0]
+
+
+@nb.jit(cache=True, nopython=True)
+def cross2d_numba(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.float64 | np.ndarray:
+    """
+    Replace deprecated numba.np.extensions.cross2d
+
+    Parameters
+    ----------
+    v1:
+        2d vector
+    v2:
+        2d vector
+
+    Returns
+    -------
+    :
+        The cross product
+    """
+    x = np.asarray(v1)
+    y = np.asarray(v2)
+    return x[0] * y[1] - x[1] * y[0]
 
 
 def cross_2d_3d(v1: npt.ArrayLike, v2: npt.ArrayLike) -> np.ndarray | np.float64:
