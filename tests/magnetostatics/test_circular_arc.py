@@ -5,18 +5,117 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from copy import deepcopy
+from unittest.mock import patch
 
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
+from scipy.integrate import quad
 
 from bluemira.base.constants import EPS
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.circular_arc import (
+    CircularArcCurrentSource,
+    bf3_integrand,
+    brc_integrand_full,
+    btc_integrand_full,
+    bzc_integrand_full_p1,
+)
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
+
+
+@pytest.mark.parametrize(
+    ("integrand", "args", "expected"),
+    [
+        # r_pc * cos(psi) ~ r_j: r_j - r_pc * cos(psi) + sqrt_term cancels
+        (brc_integrand_full, (2.0, 1.0, 0.0), -7.89615915421862e-08),
+        (btc_integrand_full, (2.0, 1.0, 0.0), -1.182149760355191e-16),
+        # sqrt_term ~ z_k: -z_k + sqrt_term cancels
+        (bzc_integrand_full_p1, (1.0, 1.0, 1.0), 4.136709013221299e-08),
+        # r_pc ~ r_j and z_k ~ 0: the expanded sqrt_term radicand
+        # r_pc**2 - 2 * r_pc * r_j * cos(psi) + r_j**2 + z_k**2 cancels
+        (bf3_integrand, (1.0 + 1e-7, 1.0, 1e-7), -2.32320005546327e-18),
+    ],
+)
+def test_near_singular_integrands_avoid_cancellation(integrand, args, expected):
+    # References: the original (develop) expressions integrated over [1e-9, 2e-9]
+    # with mpmath at 50 significant digits (70 digits agree to better than 1e-40).
+    value = quad(integrand, 1e-9, 2e-9, args=args, epsabs=0)[0]
+    assert value == pytest.approx(expected, abs=0, rel=1e-10)
+
+
+def test_gauss_legendre_fallback_matches_axisymmetric_reference():
+    """
+    10 nm above the inner top edge of a full ring, the Bz integration fails to
+    converge and the 8-point Gauss-Legendre fallback is used.
+    """
+    radius, breadth, depth, current = 2.0, 0.25, 0.5, 1e6
+    coil = CircularArcCurrentSource(
+        [0, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], breadth, depth, radius, 360, current
+    )
+    angle = np.deg2rad(15.0)
+    rp, zp = radius - breadth, depth + 10.0e-9
+
+    with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
+        field = coil.field(zp, rp * np.cos(angle), rp * np.sin(angle))
+    warn.assert_called_once()
+    assert "Fallback triggered" in warn.call_args.args[0]
+
+    br = current * semianalytic_Bx(radius, 0.0, rp, zp, breadth, depth)
+    bz = current * semianalytic_Bz(radius, 0.0, rp, zp, breadth, depth)
+    expected = np.array([bz, br * np.cos(angle), br * np.sin(angle)])
+    # The fallback averages over a ~1 um cube, so does not match exactly
+    np.testing.assert_allclose(
+        field, expected, rtol=0, atol=1e-5 * np.linalg.norm(expected)
+    )
+
+
+@pytest.mark.parametrize(
+    ("rp", "zp", "expected"),
+    [
+        pytest.param(
+            1.75,
+            0.5 + 1e-6,
+            [0.27561318358041387, 0.07562127556128435, 0.27978880839924103],
+            id="1um-above-inner-top-edge",
+        ),
+        pytest.param(
+            2.25,
+            0.5 + 1e-6,
+            [0.2623655711286338, 0.06715898584330263, -0.17991927003096395],
+            id="1um-above-outer-top-edge",
+        ),
+        pytest.param(
+            3.0,
+            0.5,
+            [0.033814046759571885, 0.01421576273771245, -0.06803763762499697],
+            id="top-face-plane-outside",
+        ),
+    ],
+)
+def test_field_near_singularities_matches_high_precision_reference(rp, zp, expected):
+    """
+    Field next to the edges of the cross-section, 10 degrees into a 90 degree arc.
+
+    Around psi = 0 the logarithm arguments of the integrands are differences of
+    nearly equal numbers here, and lose all their digits in float64. Without the
+    stable forms, Bz 1 um above the top edges is wrong in the fifth significant
+    digit.
+
+    The references are the same primitives evaluated with mpmath at 50 significant
+    digits (70 digits give identical float64 values).
+    """
+    arc = CircularArcCurrentSource(
+        [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.25, 0.5, 2.0, 90, 1e6
+    )
+    angle = np.deg2rad(10.0)
+    field = arc.field(rp * np.cos(angle), rp * np.sin(angle), zp)
+    np.testing.assert_allclose(
+        field, expected, rtol=0, atol=1e-9 * np.linalg.norm(expected)
+    )
 
 
 class TestCircularArcCurrentSource:
@@ -250,11 +349,15 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
         Somewhat counterintuitively, the remaining singularities occur
         with R_j << R_pc and z_k =0.0, phi = 0.0
 
-        No assertions on values here; just check for errors.
+        Here z_k is rounding noise (~1e-15) and r_j - r_pc * cos(psi) + sqrt_term
+        cancels around psi = 0. The integrands should handle this without the
+        8-point Gauss-Legendre fallback.
         """
         c = deepcopy(self.border_rectangle)
         c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
-        self.two_halves.field(*c.xyz)
+        with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
+            self.two_halves.field(*c.xyz)
+        warn.assert_not_called()
 
     def test_debug_plot(self):
         _debug_plot(self, "arc")
@@ -395,11 +498,15 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
         Somewhat counterintuitively, the remaining singularities occur
         with R_j << R_pc and z_k =0.0, phi = 0.0
 
-        No assertions on values here; just check for errors.
+        Here z_k is rounding noise (~1e-15) and r_j - r_pc * cos(psi) + sqrt_term
+        cancels around psi = 0. The integrands should handle this without the
+        8-point Gauss-Legendre fallback.
         """
         c = deepcopy(self.border_rectangle)
         c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
-        self.two_halves.field(*c.xyz)
+        with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
+            self.two_halves.field(*c.xyz)
+        warn.assert_not_called()
 
     def test_debug_plot(self):
         _debug_plot(self, "arc")
