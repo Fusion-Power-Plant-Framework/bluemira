@@ -342,13 +342,17 @@ class ChargedParticleSolver:
             * x_up_inter[theta_upper == theta_max_upper]
         )
         if len(xyz_wall_mp[0]) > 0:
-            return xyz_wall_mp[0], xyz_wall_mp[2], float(length)
+            return xyz_wall_mp[0], xyz_wall_mp[2], length.item()
 
         # and if there are no wall points between intersections...
-        lower_idx = np.nonzero(xyz_wall[2] < 0)[np.argmax(xyz_wall[2, xyz_wall[2] < 0])]
-        upper_idx = np.nonzero(xyz_wall[2] > 0)[np.argmin(xyz_wall[2, xyz_wall[2] > 0])]
+        lower_idx = np.nonzero(xyz_wall[2] < 0)[0][
+            np.argmax(xyz_wall[2, xyz_wall[2] < 0])
+        ]
+        upper_idx = np.nonzero(xyz_wall[2] > 0)[0][
+            np.argmin(xyz_wall[2, xyz_wall[2] > 0])
+        ]
         mid_point = 0.5 * (xyz_wall[:, lower_idx] + xyz_wall[:, upper_idx])
-        return mid_point[0], mid_point[2], float(length)
+        return mid_point[0], mid_point[2], length.item()
 
     def analyse(self, first_wall: Coordinates):
         """
