@@ -47,6 +47,32 @@ def test_near_singular_integrands_avoid_cancellation(integrand, args, expected):
     assert value == pytest.approx(expected, abs=0, rel=1e-10)
 
 
+def test_gauss_legendre_fallback_matches_axisymmetric_reference():
+    """
+    10 nm above the inner top edge of a full ring, the Bz integration fails to
+    converge and the 8-point Gauss-Legendre fallback is used.
+    """
+    radius, breadth, depth, current = 2.0, 0.25, 0.5, 1e6
+    coil = CircularArcCurrentSource(
+        [0, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], breadth, depth, radius, 360, current
+    )
+    angle = np.deg2rad(15.0)
+    rp, zp = radius - breadth, depth + 10.0e-9
+
+    with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
+        field = coil.field(zp, rp * np.cos(angle), rp * np.sin(angle))
+    warn.assert_called_once()
+    assert "Fallback triggered" in warn.call_args.args[0]
+
+    br = current * semianalytic_Bx(radius, 0.0, rp, zp, breadth, depth)
+    bz = current * semianalytic_Bz(radius, 0.0, rp, zp, breadth, depth)
+    expected = np.array([bz, br * np.cos(angle), br * np.sin(angle)])
+    # The fallback averages over a ~1 um cube, so does not match exactly
+    np.testing.assert_allclose(
+        field, expected, rtol=0, atol=1e-5 * np.linalg.norm(expected)
+    )
+
+
 @pytest.mark.parametrize(
     ("rp", "zp", "expected"),
     [
