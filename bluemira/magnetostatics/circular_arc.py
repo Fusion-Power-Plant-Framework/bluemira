@@ -176,7 +176,7 @@ def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     cos_psi = np.cos(psi)
     sin_psi = np.sin(psi)
     if sin_psi != 0:
-        sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
+        sqrt_term, _ = _sqrt_and_log_arg(sin_psi, cos_psi, r_pc, r_j, z_k)
         # NOTE: Arctan2 not a viable option here
         return (
             r_pc
