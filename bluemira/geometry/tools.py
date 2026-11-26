@@ -2564,7 +2564,7 @@ def check_touching_geos(
         The area and volume tolerances are derived as atol**2 and atol**3,
         respectively.
     show_error_if_overlaps
-        shoe error if overlaps
+        show error if overlaps
 
     Returns
     -------
@@ -2612,7 +2612,7 @@ def check_touching_geos(
     if show_error_if_overlaps:
         raise GeometryError(
             f"\nGeometry overlap detected between "
-            f"'{geo_1.name}' and '{geo_2.name}':"
+            f"'{geo_1.label}' and '{geo_2.label}':"
             f"\n  Distance: {dist:.15e}"
             f"\n  Distance tolerance: {atol:.15e}"
             f"\n  Intersection size: {intersection_size:.15e}"
