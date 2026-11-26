@@ -2611,7 +2611,7 @@ def check_touching_geos(
 
     intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
 
-    if show_error_if_overlaps:
+    if show_error_if_overlaps and not intersection_is_zero:
         raise GeometryError(
             f"\nGeometry overlap detected between "
             f"'{geo_1.label}' and '{geo_2.label}':"
