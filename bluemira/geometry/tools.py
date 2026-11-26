@@ -29,7 +29,7 @@ from scipy.spatial import ConvexHull
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
@@ -2602,6 +2602,17 @@ def check_touching_geos(
         intersection_atol = atol**3
 
     intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
+
+    bluemira_print(
+        f"\nTouching check:"
+        f"\n  Distance: {dist:.15e}"
+        f"\n  Distance tolerance: {atol:.15e}"
+        f"\n  Intersection size: {intersection_size:.15e}"
+        f"\n  Intersection tolerance: {intersection_atol:.15e}"
+        f"\n  Mutual distance: {mutual_distance}"
+        f"\n  Intersection zero: {intersection_is_zero}"
+        f"\n  Result: {mutual_distance and intersection_is_zero}"
+    )
 
     # If both the distance and intersection size are within tolerance
     # of zero, the geometries are considered to touch without overlap.
