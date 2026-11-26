@@ -29,7 +29,7 @@ from scipy.spatial import ConvexHull
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, try_get_bluemira_path
 from bluemira.base.logs import LogLevel, get_log_level
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _geometryapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.compound import BluemiraCompound
@@ -2547,6 +2547,8 @@ def check_touching_geos(
     geo_1: BluemiraSolid | BluemiraFace,
     geo_2: BluemiraSolid | BluemiraFace,
     atol: float = 1e-10,
+    *,
+    show_error_if_overlaps: bool = False,
 ) -> bool:
     """
     Check if two geometries of the same type touch without overlapping.
@@ -2561,6 +2563,8 @@ def check_touching_geos(
         Absolute tolerance for the distance between the geometries.
         The area and volume tolerances are derived as atol**2 and atol**3,
         respectively.
+    show_error_if_overlaps
+        shoe error if overlaps
 
     Returns
     -------
@@ -2574,6 +2578,8 @@ def check_touching_geos(
         If geo_1 and geo_2 are not of the same type.
     ValueError
         If atol is negative or non-finite.
+    GeometryError
+        if there is an overlap
 
     Notes
     -----
@@ -2603,16 +2609,15 @@ def check_touching_geos(
 
     intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
 
-    bluemira_print(
-        f"\nTouching check:"
-        f"\n  Distance: {dist:.15e}"
-        f"\n  Distance tolerance: {atol:.15e}"
-        f"\n  Intersection size: {intersection_size:.15e}"
-        f"\n  Intersection tolerance: {intersection_atol:.15e}"
-        f"\n  Mutual distance: {mutual_distance}"
-        f"\n  Intersection zero: {intersection_is_zero}"
-        f"\n  Result: {mutual_distance and intersection_is_zero}"
-    )
+    if show_error_if_overlaps:
+        raise GeometryError(
+            f"\nGeometry overlap detected between "
+            f"'{geo_1.name}' and '{geo_2.name}':"
+            f"\n  Distance: {dist:.15e}"
+            f"\n  Distance tolerance: {atol:.15e}"
+            f"\n  Intersection size: {intersection_size:.15e}"
+            f"\n  Intersection tolerance: {intersection_atol:.15e}"
+        )
 
     # If both the distance and intersection size are within tolerance
     # of zero, the geometries are considered to touch without overlap.

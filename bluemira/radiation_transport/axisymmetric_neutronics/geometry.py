@@ -134,7 +134,15 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
 
             other_xz_face = other_xz.children[0].shape
 
-            if check_touching_geos(comp_xz_face, other_xz_face, overlap_tolerance):
+            # We do not want overlapping geometries
+            is_touching = check_touching_geos(
+                comp_xz_face,
+                other_xz_face,
+                overlap_tolerance,
+                show_error_if_overlaps=True,
+            )
+
+            if is_touching:
                 touching_components.append(other_comp.name)
 
         return touching_components
