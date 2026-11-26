@@ -165,15 +165,11 @@ def import_mesh(
     boundaries_mf = None
     try:  # noqa: PLW0717
         with io.XDMFFile(MPI.COMM_WORLD, boundary_file.as_posix(), "r") as xdmf:
-            for name in ["boundaries", "FacetTags", "Grid", "boundaries", None]:
+            for name in ["boundaries", "FacetTags", "Grid", "boundaries"]:
                 try:
-                    boundaries_mf = (
-                        xdmf.read_meshtags(mesh, name=name)
-                        if name is not None
-                        else xdmf.read_meshtags(mesh)
-                    )
+                    boundaries_mf = xdmf.read_meshtags(mesh, name=name)
                     break
-                except RuntimeError:
+                except (RuntimeError, IndexError):
                     continue
     except (OSError, RuntimeError):
         boundaries_mf = None
@@ -183,15 +179,11 @@ def import_mesh(
     if subdomains:
         try:  # noqa: PLW0717
             with io.XDMFFile(MPI.COMM_WORLD, domain_file.as_posix(), "r") as xdmf:
-                for name in ["subdomains", "CellTags", "Grid", None]:
+                for name in ["subdomains", "CellTags", "Grid"]:
                     try:
-                        subdomains_mf = (
-                            xdmf.read_meshtags(mesh, name=name)
-                            if name is not None
-                            else xdmf.read_meshtags(mesh)
-                        )
+                        subdomains_mf = xdmf.read_meshtags(mesh, name=name)
                         break
-                    except RuntimeError:
+                    except (RuntimeError, IndexError):
                         continue
         except (OSError, RuntimeError):
             subdomains_mf = None

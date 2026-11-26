@@ -583,7 +583,7 @@ def create_mesh(
     gdim: int | tuple = (0, 2),
     comm=MPI.COMM_WORLD,
     rank: int = 0,
-) -> tuple[tuple[dolfinx.mesh.Mesh, dolfinx.mesh.MeshTags, dolfinx.mesh.MeshTags], dict]:
+) -> tuple[dolfinx.io.gmsh.MeshData, dict]:
     """
     Create mesh
 

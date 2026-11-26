@@ -25,13 +25,11 @@ variables:
 dependencies:
   - python >=3.11,<3.13
   - cmake
-  - fenics-dolfinx=0.9.0
   - freecad=1.0
   - pivy >= 0.6.10
   - h5py
   - openmc!= 0.15.3,>=0.15.0=dagmc_*
   - cherab>=1.5.0=np2*
-  - mpi4py
   - graphviz
   - h5py==3.13.0
   - pytools==2025.2.5

@@ -34,7 +34,7 @@ from dolfinx.fem import (
     functionspace,
     locate_dofs_topological,
 )
-from dolfinx.io import gmshio
+from dolfinx.io import gmsh as d_gmsh
 from dolfinx.mesh import entities_to_geometry
 from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-old_m_to_m = gmshio.model_to_mesh
+old_m_to_m = d_gmsh.model_to_mesh
 
 
 def convert_to_points_array(x: npt.ArrayLike) -> npt.NDArray[np.float64]:
@@ -76,7 +76,7 @@ def model_to_mesh(
     rank: int = 0,
     gdim: int | Sequence[int] = 3,
     **kwargs,
-):
+) -> tuple[d_gmsh.MeshData, dict]:
     """
     Convert gmsh model to dolfinx mesh.
 
@@ -89,7 +89,7 @@ def model_to_mesh(
 
     Notes
     -----
-    Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
+    Patches dolfinx.io.gmsh.model_to_mesh to allow non sequential dimensions
     """
     if isinstance(gdim, Sequence):
         dimensions = gdim
@@ -106,9 +106,9 @@ def model_to_mesh(
     }
 
     extr_geometry = functools.partial(
-        extract_geometry, gmshio.extract_geometry, dimensions
+        extract_geometry, d_gmsh.extract_geometry, dimensions
     )
-    with patch("dolfinx.io.gmshio.extract_geometry", new=extr_geometry):
+    with patch("dolfinx.io.gmsh.extract_geometry", new=extr_geometry):
         result = old_m_to_m(model, comm, rank, gdim, **kwargs)
     return result, labels
 
@@ -121,7 +121,7 @@ def extract_geometry(
     """
     Extract model geometry
 
-    Designed to call dolfinx.io.gmshio.extract_geometry but patch for non
+    Designed to call dolfinx.io.gmsh.extract_geometry but patch for non
     sequential dimensions
 
     Returns
@@ -184,7 +184,7 @@ class BluemiraFemFunction(Function):
             super().interpolate(u0, cells0, cells1)
         calc_bb_tree(self.function_space.mesh)
 
-    def __call__(self, points: np.ndarray):
+    def __call__(self, points: np.ndarray, *args, **kwargs):  # noqa: ARG002
         """
         Call function
 
@@ -252,7 +252,7 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     TODO hopefully remove in dolfinx >0.7.1
     """
     shape = points.shape
-    points = convert_to_points_array(points)
+    points = convert_to_points_array(points).astype(mesh.geometry.x.dtype, copy=False)
 
     tdim = mesh.topology.dim
     num_entities_local = (
@@ -347,17 +347,27 @@ def integrate_f(
     -------
     :
         area of the subdomain
+
+    Raises
+    ------
+    ValueError
+        If the integral contains a significant imaginary component.
     """
     dx = (
         ufl.dx
         if boundaries is None
         else ufl.Measure("dx", subdomain_data=boundaries, domain=mesh)
     )
-    return (
+    integral = (
         assemble_scalar(form(f * dx))
         if tag is None
         else assemble_scalar(form(f * dx(tag)))
     )
+    if isinstance(integral, complex):
+        if not np.isclose(integral.imag, 0.0):
+            raise ValueError(f"Expected a real-valued integral, got {integral}")
+        return float(integral.real)
+    return float(integral)
 
 
 def error_L2(  # noqa: N802
@@ -397,7 +407,7 @@ def error_L2(  # noqa: N802
     # is a ufl expression or a python lambda function
     u_ex_W = BluemiraFemFunction(W)  # noqa: N806
     if not isinstance(u_ex, ufl.core.expr.Expr):  # type:ignore[ty:possibly-missing-submodule]
-        u_expr = Expression(u_ex, W.element.interpolation_points())
+        u_expr = Expression(u_ex, W.element.interpolation_points)
         u_ex_W.interpolate(u_expr)
     else:
         u_ex_W.interpolate(u_ex)
@@ -465,8 +475,11 @@ def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
                 points_on_proc.append(closest_point[0])
                 cells.append(tcc[0])
 
-    points_on_proc = np.array(points_on_proc, dtype=np.float64)
-    values = np.array(function.eval(points_on_proc, cells)).reshape(points.shape[0], -1)
+    points_on_proc = np.asarray(points_on_proc, dtype=np.float64)
+    cells = np.asarray(cells, dtype=np.int32)
+    values = np.asarray(function.eval(points_on_proc, cells)).reshape(
+        points_on_proc.shape[0], -1
+    )
 
     if points.shape != points_on_proc.shape:
         bluemira_debug(
@@ -555,8 +568,8 @@ def read_from_msh(
     rank: int = 0,
     gdim: int | tuple = 3,
     partitioner=None,
-):
-    """Wraps `dolfinx.io.gmshio.read_from_msh` to patch dimensional reading
+) -> tuple[d_gmsh.MeshData, dict]:
+    """Wraps `dolfinx.io.gmsh.read_from_msh` to patch dimensional reading
 
 
     Parameters
@@ -572,8 +585,11 @@ def read_from_msh(
     associated physical groups for cells and facets.
 
     """
-    with patch("dolfinx.io.gmshio.model_to_mesh", new=model_to_mesh):
-        return gmshio.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner)
+    with patch("dolfinx.io.gmsh.model_to_mesh", new=model_to_mesh):
+        return cast(
+            "tuple[d_gmsh.MeshData, dict]",
+            d_gmsh.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner),
+        )
 
 
 @dataclass
@@ -679,7 +695,7 @@ def compute_B_from_Psi(
 
     B_expr = Expression(
         ufl.as_vector((-psi.dx(1) / (2 * np.pi * x_0), psi.dx(0) / (2 * np.pi * x_0))),
-        W0.element.interpolation_points(),
+        W0.element.interpolation_points,
     )
 
     B0.interpolate(B_expr)

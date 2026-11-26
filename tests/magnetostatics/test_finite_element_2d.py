@@ -130,7 +130,8 @@ class TestGetNormal:
                 ]
             )(c_universe, dim=2)
 
-            (mesh, ct, _ft), labels = model_to_mesh(gmsh.model, gdim=2)
+            mesh_data, labels = model_to_mesh(gmsh.model, gdim=2)
+            mesh, ct = mesh_data.mesh, mesh_data.cell_tags
             gmsh.write("Mesh.msh")
 
         em_solver = FemMagnetostatic2d(2)

@@ -9,9 +9,9 @@ from pathlib import Path
 
 import gmsh
 import numpy as np
+from dolfinx import default_scalar_type as ScalarType  # noqa: N812
 from dolfinx.fem import Constant, functionspace
 from mpi4py import MPI
-from petsc4py import PETSc
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.geometry.face import BluemiraFace
@@ -46,7 +46,8 @@ def create_test_mesh(dl: float = 2, lcar: float = 0.1):
         m = meshing.Mesh(meshfile=meshfiles)
         m(c_universe, dim=2)
 
-        (mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+        mesh_data, labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+        mesh, ct, ft = mesh_data.mesh, mesh_data.cell_tags, mesh_data.facet_tags
 
         gmsh.write("Mesh.msh")
 
@@ -73,7 +74,7 @@ class TestFemUtils:
         )
 
     def test_integrate_f(self):
-        func = Constant(self.mesh, PETSc.ScalarType(1))
+        func = Constant(self.mesh, ScalarType(1))
         area = integrate_f(func, self.mesh, self.ct, 1)
         assert np.allclose(area, self.l**2)
 

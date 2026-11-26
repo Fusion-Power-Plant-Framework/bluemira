@@ -155,7 +155,8 @@ meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.
 with meshing.GmshSession():
     meshing.Mesh(meshfile=meshfiles)(c_universe, dim=gdim)
 
-    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=gdim)
+    mesh_data, labels = model_to_mesh(gmsh.model, gdim=gdim)
+    (mesh, ct, ft) = mesh_data.mesh, mesh_data.cell_tags, mesh_data.facet_tags
 
     gmsh.write("Mesh.msh")
 
