@@ -2603,9 +2603,11 @@ def check_touching_geos(
     if isinstance(geo_1, BluemiraFace):
         intersection_size = intersection.Area()
         intersection_atol = atol**2
+        intersection_type = "area"
     else:
         intersection_size = intersection.Volume()
         intersection_atol = atol**3
+        intersection_type = "volume"
 
     intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
 
@@ -2613,10 +2615,7 @@ def check_touching_geos(
         raise GeometryError(
             f"\nGeometry overlap detected between "
             f"'{geo_1.label}' and '{geo_2.label}':"
-            f"\n  Distance: {dist:.15e}"
-            f"\n  Distance tolerance: {atol:.15e}"
-            f"\n  Intersection size: {intersection_size:.15e}"
-            f"\n  Intersection tolerance: {intersection_atol:.15e}"
+            f"\n  Intersection {intersection_type}: {intersection_size:.15e}"
         )
 
     # If both the distance and intersection size are within tolerance

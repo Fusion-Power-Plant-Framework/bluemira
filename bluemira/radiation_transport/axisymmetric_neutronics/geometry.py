@@ -121,6 +121,7 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
             raise ValueError(f"Component 'xz' not found in {comp.name}")
 
         comp_xz_face = comp_xz.children[0].shape
+        comp_xz_face.label = comp.name  # to facilitate overlap err
 
         touching_components = []
 
@@ -129,10 +130,12 @@ class AxisymmetricNeutronicsGeomManager(ComponentManager):
                 continue
 
             other_xz = other_comp.get_component("xz")
+
             if other_xz is None:
                 raise ValueError(f"Component 'xz' not found in {other_comp.name}")
 
             other_xz_face = other_xz.children[0].shape
+            other_xz_face.label = other_comp.name  # to facilitate overlap err
 
             # We do not want overlapping geometries
             is_touching = check_touching_geos(
