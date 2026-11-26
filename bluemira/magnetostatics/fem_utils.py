@@ -252,7 +252,7 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     TODO hopefully remove in dolfinx >0.7.1
     """
     shape = points.shape
-    points = convert_to_points_array(points)
+    points = convert_to_points_array(points).astype(mesh.geometry.x.dtype, copy=False)
 
     tdim = mesh.topology.dim
     num_entities_local = (
