@@ -169,7 +169,7 @@ def import_mesh(
                 try:
                     boundaries_mf = xdmf.read_meshtags(mesh, name=name)
                     break
-                except RuntimeError:
+                except (RuntimeError, IndexError):
                     continue
     except (OSError, RuntimeError):
         boundaries_mf = None
@@ -183,7 +183,7 @@ def import_mesh(
                     try:
                         subdomains_mf = xdmf.read_meshtags(mesh, name=name)
                         break
-                    except RuntimeError:
+                    except (RuntimeError, IndexError):
                         continue
         except (OSError, RuntimeError):
             subdomains_mf = None
