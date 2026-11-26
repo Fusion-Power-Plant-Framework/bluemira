@@ -95,6 +95,10 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.params = make_parameter_frame(params, self.param_cls)
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
+
+        # Double-check overlaps
+        self.geometry.inspect_xyz_overlaps()
+
         self.material_name_mapping = {}
         self.material_library = None  # No need
 
