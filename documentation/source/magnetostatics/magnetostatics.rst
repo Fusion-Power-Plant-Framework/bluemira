@@ -65,25 +65,21 @@ current sources.
 Biot-Savart
 ###########
 
-The `Biot-Savart equation <https://en.wikipedia.org/wiki/Biot%E2%80%93Savart_law>`_
-can be solved assuming the current sources are thin wires, as is done in the
-``BiotSavartFilament`` object.
+Each pair of consecutive points is treated as a straight segment of round wire,
+whose field, vector potential and inductance are evaluated in closed form, so the
+results do not depend on how straight runs of conductor are discretised. Curved
+conductors are approximated by a polygon through the given points.
 
-A ``radius`` argument can be specified, which makes use of a square decay law for values
-inside the filament ``radius``. The field from a filament thus reaches a maximum at the
-surface of the filament.
+A ``radius`` must be specified. Inside it, the current density is taken to be
+uniform, so the field rises linearly from the axis of the wire to a maximum at its
+surface. The inductance accounts for the finite radius through the geometric mean
+distance of a round conductor, :math:`a e^{-1/4}`.
 
 .. literalinclude:: doc_biotsavart.py
     :language: python
 
 .. figure:: pic_biotsavart.png
     :name: fig:biotsavart
-
-
-.. Note::
-    The discretisation of geometry input should be carefully checked. In general, many
-    points will give better approximations to long, thin wires.
-
 
 
 Semi-analytical
