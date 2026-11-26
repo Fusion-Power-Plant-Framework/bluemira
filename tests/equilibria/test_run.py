@@ -4,16 +4,20 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
 from dataclasses import fields
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
 import pytest
 
 from bluemira.base.constants import EPS
+from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.run import (
     BreakdownCOPConfig,
     EQConfig,
+    OptimisedPulsedCoilsetDesign,
     PulsedCoilsetDesign,
     PulsedCoilsetDesignFrame,
     Snapshot,
@@ -135,3 +139,111 @@ class TestPulsedCoilSetDesign:
     # def test_get_sof_eof_opt_problems(self):
 
     # def test_converge_and_snapshot(self):
+
+
+class TestSizePFCoilsToCarriedCurrents:
+    """
+    PF coils are sized 10 MA, the CS 16 MA. Each PF coil is resized to 1.1 times the
+    largest current it carries at breakdown, start and end of flat-top.
+    """
+
+    MA = 1e6
+    CS_SIZE = 16 * MA
+
+    def setup_method(self):
+        coilset = CoilSet(
+            Coil(6, 8, dx=0.5, dz=0.5, ctype="PF", j_max=1e7, name="PF_1"),
+            Coil(14, 2, dx=0.5, dz=0.5, ctype="PF", j_max=1e7, name="PF_2"),
+            Coil(2.5, 0, dx=0.4, dz=1.0, ctype="CS", j_max=1e7, name="CS_1"),
+        )
+        self.design = OptimisedPulsedCoilsetDesign.__new__(OptimisedPulsedCoilsetDesign)
+        self.design.coilset = coilset
+        self.design.snapshots = {}
+        self.problems = []
+        for _ in range(2):
+            problem = mock.MagicMock()
+            problem.eq.coilset = deepcopy(coilset)
+            self.problems.append(problem)
+
+    def _snapshot(self, pf_currents):
+        coilset = deepcopy(self.design.coilset)
+        coilset.get_coiltype("PF").get_control_coils().current = pf_currents
+        return SimpleNamespace(coilset=coilset)
+
+    def _carry(self, breakdown, sof, eof):
+        """Make the design's runs leave snapshots with these PF currents."""
+
+        def converge_and_snapshot(_problems):
+            self.design.snapshots["SOF"] = self._snapshot(sof)
+            self.design.snapshots["EOF"] = self._snapshot(eof)
+
+        def run_premagnetisation():
+            self.design.snapshots["Breakdown"] = self._snapshot(breakdown)
+
+        self.design.converge_and_snapshot = mock.Mock(side_effect=converge_and_snapshot)
+        self.design.run_premagnetisation = mock.Mock(side_effect=run_premagnetisation)
+        converge_and_snapshot(self.problems)
+        run_premagnetisation()
+        self.design.converge_and_snapshot.reset_mock()
+        self.design.run_premagnetisation.reset_mock()
+
+    def _sizes(self, coilset):
+        return coilset.get_coiltype("PF").get_control_coils().get_max_current()
+
+    def test_PF_coils_are_sized_for_the_currents_they_carry(self):
+        # PF_1 carries most at the start of flat-top, PF_2 at breakdown, where it is full
+        self._carry(
+            breakdown=[1 * self.MA, -10 * self.MA],
+            sof=[-4 * self.MA, 2 * self.MA],
+            eof=[2 * self.MA, 3 * self.MA],
+        )
+
+        self.design._size_pf_coils_to_carried_currents(self.problems)
+
+        expected = [4.4 * self.MA, 10 * self.MA]
+        for coilset in (self.design.coilset, *(p.eq.coilset for p in self.problems)):
+            np.testing.assert_allclose(self._sizes(coilset), expected)
+            assert coilset.get_coiltype("CS").get_max_current(0.0) == self.CS_SIZE
+        for problem in self.problems:
+            np.testing.assert_allclose(
+                problem.set_current_bounds.call_args.args[0], [*expected, self.CS_SIZE]
+            )
+            problem.eq._remap_greens.assert_called_once()
+            assert problem.targets.call_args.kwargs["fixed_coils"] is False
+            assert (
+                problem.update_magnetic_constraints.call_args.kwargs["fixed_coils"]
+                is False
+            )
+        # Converged once at the new sizes, then found settled
+        self.design.converge_and_snapshot.assert_called_once_with(self.problems)
+        self.design.run_premagnetisation.assert_called_once_with()
+
+    def test_PF_coils_are_not_made_larger(self):
+        self._carry(
+            breakdown=[10 * self.MA, 0],
+            sof=[0, 9.5 * self.MA],
+            eof=[0, 0],
+        )
+
+        self.design._size_pf_coils_to_carried_currents(self.problems)
+
+        np.testing.assert_allclose(self._sizes(self.design.coilset), [10 * self.MA] * 2)
+        self.design.converge_and_snapshot.assert_not_called()
+        for problem in self.problems:
+            problem.set_current_bounds.assert_not_called()
+
+    def test_warns_if_sizes_do_not_settle(self, caplog):
+        def converge_and_snapshot(_problems):
+            # Each convergence needs half of what the coils are sized for
+            half = 0.5 * self._sizes(self.design.coilset)
+            self.design.snapshots["SOF"] = self._snapshot(half)
+            self.design.snapshots["EOF"] = self._snapshot(half)
+
+        self._carry(breakdown=[0, 0], sof=[5 * self.MA] * 2, eof=[0, 0])
+        self.design.converge_and_snapshot.side_effect = converge_and_snapshot
+
+        self.design._size_pf_coils_to_carried_currents(self.problems)
+
+        n = OptimisedPulsedCoilsetDesign.PF_RESIZE_ITER_MAX
+        assert self.design.converge_and_snapshot.call_count == n
+        assert "had not settled" in caplog.text
