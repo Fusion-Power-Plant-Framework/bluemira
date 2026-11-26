@@ -10,43 +10,15 @@ from unittest.mock import patch
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
-from scipy.integrate import quad
 
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.geometry.coordinates import Coordinates, rotation_matrix
 from bluemira.magnetostatics.baseclass import SourceGroup
-from bluemira.magnetostatics.circular_arc import (
-    CircularArcCurrentSource,
-    bf3_integrand,
-    brc_integrand_full,
-    btc_integrand_full,
-    bzc_integrand_full_p1,
-)
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.greens import greens_psi
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
-
-
-@pytest.mark.parametrize(
-    ("integrand", "args", "expected"),
-    [
-        # r_pc * cos(psi) ~ r_j: r_j - r_pc * cos(psi) + sqrt_term cancels
-        (brc_integrand_full, (2.0, 1.0, 0.0), -7.89615915421862e-08),
-        (btc_integrand_full, (2.0, 1.0, 0.0), -1.182149760355191e-16),
-        # sqrt_term ~ z_k: -z_k + sqrt_term cancels
-        (bzc_integrand_full_p1, (1.0, 1.0, 1.0), 4.136709013221299e-08),
-        # r_pc ~ r_j and z_k ~ 0: the expanded sqrt_term radicand
-        # r_pc**2 - 2 * r_pc * r_j * cos(psi) + r_j**2 + z_k**2 cancels
-        (bf3_integrand, (1.0 + 1e-7, 1.0, 1e-7), -2.32320005546327e-18),
-    ],
-)
-def test_near_singular_integrands_avoid_cancellation(integrand, args, expected):
-    # References: the original (develop) expressions integrated over [1e-9, 2e-9]
-    # with mpmath at 50 significant digits (70 digits agree to better than 1e-40).
-    value = quad(integrand, 1e-9, 2e-9, args=args, epsabs=0)[0]
-    assert value == pytest.approx(expected, abs=0, rel=1e-10)
 
 
 def test_gauss_legendre_fallback_matches_axisymmetric_reference():

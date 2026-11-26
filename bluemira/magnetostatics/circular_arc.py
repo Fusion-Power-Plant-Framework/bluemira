@@ -4,23 +4,23 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Analytical expressions for the field due to a circular current arc of
-rectangular cross-section, following equations as described in:
+Vector potential and magnetic field of a circular current arc of rectangular
+cross-section with uniform azimuthal current density.
 
-.. doi:: 10.1109/TMAG.1985.1064259
+The integrals over the cross-section are done analytically, leaving one integral
+over angle, as in:
 
-The analytical treatment of singularities in Feng's 1988 paper proved,
-despite my best efforts, to be impractical, at the very least. Whilst I
-cannot claim the analytical treatments of the singularities are wrong
-or incomplete, I can say that after many attempts my implementations
-still ran into numerical singularities, and the values returned did not
-correspond well to results found with a 2-D semi-analytical methods.
-Instead, a brute-force integration takes places in the vast majority of
-singular cases (as described by Feng). This is remarkably accurate when
-comparing results to fields obtained by other methods; of the
-order of 10 µT/MA discrepancy at singular points. MC 2026
-"""  # noqa: RUF002, yes I meant micro
+.. doi:: 10.1109/TMAG.1982.1062166
 
+(Urankar, eqs. 3 and 4). The field kernels are the derivatives of the vector potential
+kernel, dG/dz_p and dG/dc. All kernels are written in inverse-hyperbolic form and
+summed over the four corners of the cross-section inside the integrand, so that the
+logarithmic terms that cancel between corners do so analytically. The remaining
+(integrable) logarithmic singularities lie at psi = 0 on the faces of the conductor,
+and are resolved by adaptive quadrature with breakpoints placed from the geometry.
+"""
+
+import warnings
 from itertools import pairwise
 
 import matplotlib.pyplot as plt
@@ -28,403 +28,27 @@ import numba as nb
 import numpy as np
 import numpy.typing as npt
 from scipy import LowLevelCallable
+from scipy.integrate import IntegrationWarning, quad
 
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
-from bluemira.magnetostatics.tools import (
-    integrate,
-    jit_llc4,
-    jit_llc6,
-    process_xyz_array,
-)
+from bluemira.magnetostatics.tools import integrate, jit_llc6, process_xyz_array
 
 __all__ = ["CircularArcCurrentSource"]
 
 
-LOG_EPS = np.finfo(float).tiny
 TWO_PI = 2.0 * np.pi
 SPLIT_TOL = 1e-12  # [rad]
-
-# Full integrands free of singularities
-
-
-@nb.njit(cache=True)
-def _sqrt_and_log_arg(
-    sin_psi: float, cos_psi: float, r_pc: float, r_j: float, z_k: float
-) -> tuple[float, float]:
-    """
-    Calculate the shared square-root and logarithm argument stably.
-
-    Parameters
-    ----------
-    sin_psi:
-        Sine of the angle
-    cos_psi:
-        Cosine of the angle
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-
-    Returns
-    -------
-    :
-        The square-root term and stable logarithm argument.
-    """
-    offset = r_j - r_pc * cos_psi
-    transverse_sq = (r_pc * sin_psi) ** 2 + z_k**2
-    sqrt_term = np.sqrt(offset**2 + transverse_sq)
-
-    if offset < 0 and transverse_sq > 0:
-        log_arg = transverse_sq / (sqrt_term - offset)
-    else:
-        log_arg = offset + sqrt_term
-
-    return sqrt_term, log_arg
-
-
-@jit_llc4
-def brc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the Brc integrand without singularities.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    :
-        The result of the integrand at a single point
-    """
-    sin_psi = np.sin(psi)
-    cos_psi = np.cos(psi)
-    sqrt_term, log_arg = _sqrt_and_log_arg(sin_psi, cos_psi, r_pc, r_j, z_k)
-    if log_arg <= 0:
-        log_arg = LOG_EPS
-    return cos_psi * sqrt_term + r_pc * cos_psi**2 * np.log(log_arg)
-
-
-@jit_llc4
-def bzc_integrand_full_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the Bzc integrand without singularities.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-    """
-    sin_psi = np.sin(psi)
-    cos_psi = np.cos(psi)
-    sqrt_term, log_arg_1 = _sqrt_and_log_arg(sin_psi, cos_psi, r_pc, r_j, z_k)
-    term_1 = 0.0
-    if z_k != 0:
-        if log_arg_1 <= 0:
-            log_arg_1 = LOG_EPS
-
-        term_1 = -z_k * np.log(log_arg_1)
-
-    log_arg_2 = -z_k + sqrt_term
-    if z_k > 0:
-        radial_offset = r_j - r_pc * cos_psi
-        radial_sq = radial_offset**2 + (r_pc * sin_psi) ** 2
-        if radial_sq > 0:
-            log_arg_2 = radial_sq / (sqrt_term + z_k)
-    if log_arg_2 <= 0:
-        log_arg_2 = LOG_EPS
-    return term_1 - r_pc * cos_psi * np.log(log_arg_2)
-
-
-@jit_llc4
-def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the BF3 integrand
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    psi:
-        Angle [rad]
-
-    Returns
-    -------
-    The result of the integrand at a single point
-
-    Notes
-    -----
-    Treats the sin(psi) = 0 singularity
-    """
-    cos_psi = np.cos(psi)
-    sin_psi = np.sin(psi)
-    if sin_psi != 0:
-        sqrt_term, _ = _sqrt_and_log_arg(sin_psi, cos_psi, r_pc, r_j, z_k)
-        # NOTE: Arctan2 not a viable option here
-        return (
-            r_pc
-            * sin_psi
-            * np.arctan((z_k * (r_j - r_pc * cos_psi)) / (r_pc * sin_psi * sqrt_term))
-        )
-    return 0
-
-
-@jit_llc4
-def btc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
-    """
-    Calculate the Btc integrand without singularities.
-
-    Parameters
-    ----------
-    psi:
-        Angle [rad]
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius, inner or outer, of the coil [m]
-    z_k:
-        The z coordinate, upper or lower, of the coil [m]
-
-    Returns
-    -------
-    :
-        The result of the integrand at a single point
-    """
-    sin_psi = np.sin(psi)
-    cos_psi = np.cos(psi)
-    sqrt_term, log_arg = _sqrt_and_log_arg(sin_psi, cos_psi, r_pc, r_j, z_k)
-    return sin_psi * sqrt_term + r_pc * sin_psi * cos_psi * np.log(log_arg)
-
-
-# Primitive functions
-
-
-def primitive_brc(
-    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
-) -> float:
-    """
-    Calculate the Brc primitives and treat singularities.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    phi_pc:
-        Angle of the point at which to evaluate field [rad]
-    theta:
-        Azimuthal angle of the circular arc
-
-    Returns
-    -------
-    The result of the Brc primitive
-    """
-    args = (r_pc, r_j, z_k)  # The function arguments for integration
-    return integrate(brc_integrand_full, args, -phi_pc, theta - phi_pc)
-
-
-def primitive_btc(
-    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
-) -> float:
-    """
-    Calculate the Btc primitives and treat singularities.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius, inner or outer, of the coil [m]
-    z_k:
-        The z coordinate, upper or lower, of the coil [m]
-    phi_pc:
-        Angle of the point at which to evaluate field [rad]
-    theta:
-        Azimuthal angle of the circular arc [rad]
-
-    Returns
-    -------
-    :
-        The result of the Btc primitive.
-    """
-    args = (r_pc, r_j, z_k)
-    return integrate(btc_integrand_full, args, -phi_pc, theta - phi_pc)
-
-
-def primitive_bzc(
-    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
-) -> float:
-    """
-    Calculate the Bzc primitives and treat singularities.
-
-    Parameters
-    ----------
-    r_pc:
-        The radius of the point at which to evaluate field [m]
-    r_j:
-        The radius (inner or outer) of the coil [m]
-    z_k:
-        The z coordinate (upper or lower) of the coil [m]
-    phi_pc:
-        Angle of the point at which to evaluate field [rad]
-    theta:
-        Azimuthal angle of the circular arc
-
-    Returns
-    -------
-    The result of the Bzc primitive
-    """
-    args = (r_pc, r_j, z_k)  # The function arguments for integration
-    result = integrate(bzc_integrand_full_p1, args, -phi_pc, theta - phi_pc)
-    if z_k != 0 and r_pc != 0:
-        # The only singularities we now bother to catch (and they all = 0 if hit)
-        # z_k == 0 -> 0
-        # r_pc == 0 -> 0
-        # This gets rid of zero division errors in the integration
-        result += integrate(bf3_integrand, args, -phi_pc, theta - phi_pc)
-    return result
-
-
-# Full field calculations in working coordinates
-
-
-def Bx_analytical_circular(
-    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
-) -> float:
-    """
-    Calculate magnetic field in the local x coordinate direction due to a
-    circular arc current source.
-
-    Parameters
-    ----------
-    r1:
-        Inner coil radius [m]
-    r2:
-        Outer coil radius [m]
-    z1:
-        The first modified z coordinate [m]
-    z2:
-        The second modified z coordinate [m]
-    theta:
-        Azimuthal angle of the circular arc [rad]
-    r_p:
-        The radius of the point at which to evaluate the field [m]
-    theta_p:
-        The angle of the point at which to evaluate the field [rad]
-
-    Returns
-    -------
-    The magnetic field response in the x coordinate direction
-    """
-    return (
-        primitive_brc(r_p, r1, z1, theta_p, theta)
-        - primitive_brc(r_p, r1, z2, theta_p, theta)
-        - primitive_brc(r_p, r2, z1, theta_p, theta)
-        + primitive_brc(r_p, r2, z2, theta_p, theta)
-    )
-
-
-def Bt_analytical_circular(
-    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
-) -> float:
-    """
-    Calculate magnetic field in the local tangential coordinate direction due
-    to a circular arc current source.
-
-    Parameters
-    ----------
-    r1:
-        Inner coil radius [m]
-    r2:
-        Outer coil radius [m]
-    z1:
-        The first modified z coordinate [m]
-    z2:
-        The second modified z coordinate [m]
-    theta:
-        Azimuthal angle of the circular arc [rad]
-    r_p:
-        The radius of the point at which to evaluate the field [m]
-    theta_p:
-        The angle of the point at which to evaluate the field [rad]
-
-    Returns
-    -------
-    :
-        The magnetic field response in the local tangential direction.
-    """
-    return (
-        primitive_btc(r_p, r1, z1, theta_p, theta)
-        - primitive_btc(r_p, r1, z2, theta_p, theta)
-        - primitive_btc(r_p, r2, z1, theta_p, theta)
-        + primitive_btc(r_p, r2, z2, theta_p, theta)
-    )
-
-
-def Bz_analytical_circular(
-    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
-) -> float:
-    """
-    Calculate magnetic field in the local z coordinate direction due to a
-    circular arc current source.
-
-    Parameters
-    ----------
-    r1:
-        Inner coil radius [m]
-    r2:
-        Outer coil radius [m]
-    z1:
-        The first modified z coordinate [m]
-    z2:
-        The second modified z coordinate [m]
-    theta:
-        Azimuthal angle of the circular arc [rad]
-    r_p:
-        The radius of the point at which to evaluate the field [m]
-    theta_p:
-        The angle of the point at which to evaluate the field [rad]
-
-    Returns
-    -------
-    The magnetic field response in the z coordinate direction
-    """
-    return (
-        primitive_bzc(r_p, r1, z1, theta_p, theta)
-        - primitive_bzc(r_p, r1, z2, theta_p, theta)
-        - primitive_bzc(r_p, r2, z1, theta_p, theta)
-        + primitive_bzc(r_p, r2, z2, theta_p, theta)
-    )
-
+# Absolute quadrature tolerance per unit cross-sectional area: the kernels scale
+# with the area, so a fixed absolute tolerance is too loose for thin conductors
+QUAD_EPSABS_PER_AREA = 1e-9
+# Maximum number of subintervals of each quadrature
+QUAD_LIMIT = 200
+# Graded breakpoints are placed around logarithmic peaks narrower than this [rad]
+MAX_PEAK_WIDTH = 1e-2
 
 # Vector potential
 
@@ -567,12 +191,283 @@ def at_integrand(
     return np.cos(psi) * _potential_kernel(psi, r_pc, r1, r2, z1, z2)
 
 
-def _integrate_split(
-    func: LowLevelCallable, args: tuple[float, ...], bound1: float, bound2: float
+# Field from the derivatives of the vector potential kernel
+
+
+@nb.jit(nopython=True, cache=True)
+def _dfdz_radial_pair(psi: float, r_pc: float, r1: float, r2: float, z_k: float):
+    """
+    Calculate dF/dZ(r2, z_k) - dF/dZ(r1, z_k), where dF/dZ = D + c asinh(u / q).
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the field [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z_k:
+        The z coordinate (upper or lower) of the coil [m]
+
+    Returns
+    -------
+    :
+        The radial difference of the primitive at a single point
+
+    Notes
+    -----
+    The log(q) parts of the two asinh terms cancel analytically when u1 and u2
+    have the same sign. Where q = 0 and they do not, the integrand has a genuine
+    (integrable) logarithmic singularity in psi.
+    """
+    c = r_pc * np.cos(psi)
+    s = r_pc * np.sin(psi)
+    u1 = r1 - c
+    u2 = r2 - c
+    q_sq = s**2 + z_k**2
+    result = np.sqrt(u2**2 + q_sq) - np.sqrt(u1**2 + q_sq)
+    if c != 0:
+        if q_sq > 0:
+            q = np.sqrt(q_sq)
+            result += c * (np.arcsinh(u2 / q) - np.arcsinh(u1 / q))
+        elif u1 * u2 > 0:
+            result += c * np.sign(u2) * np.log(u2 / u1)
+        else:
+            result += c * (np.sign(u2) - np.sign(u1)) * np.inf
+    return result
+
+
+@nb.jit(nopython=True, cache=True)
+def _field_z_kernel(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
 ) -> float:
     """
-    Integrate between bounds, always splitting at multiples of pi, where the
-    vector potential integrands can be kinked or sharply peaked.
+    Calculate dG/dz_p, the z-derivative of the vector potential kernel.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the field [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The cross-section integral of dG/dz_p [m]
+    """
+    return _dfdz_radial_pair(psi, r_pc, r1, r2, z1) - _dfdz_radial_pair(
+        psi, r_pc, r1, r2, z2
+    )
+
+
+@jit_llc6
+def br_integrand_from_potential(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the radial field integrand, Br = -dA_t/dz.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the field [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The result of the integrand at a single point
+    """
+    return -np.cos(psi) * _field_z_kernel(psi, r_pc, r1, r2, z1, z2)
+
+
+@jit_llc6
+def bt_integrand_from_potential(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the tangential field integrand, Bt = dA_r/dz.
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the field [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The result of the integrand at a single point
+    """
+    return -np.sin(psi) * _field_z_kernel(psi, r_pc, r1, r2, z1, z2)
+
+
+@nb.jit(nopython=True, cache=True)
+def _asinh_pair(a: float, b: float, d: float) -> float:
+    """
+    Calculate asinh(a / d) - asinh(b / d) for d >= 0, taking the d -> 0 limit.
+
+    Parameters
+    ----------
+    a:
+        First numerator
+    b:
+        Second numerator
+    d:
+        Common denominator (non-negative)
+
+    Returns
+    -------
+    :
+        The difference, which is infinite where d = 0 and a, b differ in sign
+    """
+    if d > 0:
+        return np.arcsinh(a / d) - np.arcsinh(b / d)
+    if a * b > 0:
+        return np.sign(a) * np.log(a / b)
+    return (np.sign(a) - np.sign(b)) * np.inf
+
+
+@jit_llc6
+def bz_integrand_from_potential(
+    psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
+) -> float:
+    """
+    Calculate the axial field integrand, Bz = e_r'.grad(G), from the corner sum of
+    dF/dc = -c asinh(Z / rho) + Z asinh(u / q) - s arctan(u Z / (s D)).
+
+    Parameters
+    ----------
+    psi:
+        Angle [rad]
+    r_pc:
+        The radius of the point at which to evaluate the field [m]
+    r1:
+        Inner coil radius [m]
+    r2:
+        Outer coil radius [m]
+    z1:
+        The first modified z coordinate [m]
+    z2:
+        The second modified z coordinate [m]
+
+    Returns
+    -------
+    :
+        The result of the integrand at a single point
+
+    Notes
+    -----
+    The asinh terms are grouped in pairs so that their log parts cancel
+    analytically where they should. What remains are genuine (integrable)
+    logarithmic singularities in psi at psi = 0 on the faces of the conductor.
+    """
+    c = r_pc * np.cos(psi)
+    s = r_pc * np.sin(psi)
+    u1 = r1 - c
+    u2 = r2 - c
+    result = 0.0
+
+    # Z asinh(u / q), paired over r_j at fixed z_k
+    if z1 != 0:
+        result += z1 * _asinh_pair(u2, u1, np.sqrt(s**2 + z1**2))
+    if z2 != 0:
+        result -= z2 * _asinh_pair(u2, u1, np.sqrt(s**2 + z2**2))
+
+    # -c asinh(Z / rho), paired over z_k at fixed r_j
+    if c != 0:
+        result -= c * (
+            _asinh_pair(z1, z2, np.sqrt(u2**2 + s**2))
+            - _asinh_pair(z1, z2, np.sqrt(u1**2 + s**2))
+        )
+
+    # -s arctan(u Z / (s D)), corner by corner
+    if s != 0:
+        s_sq = s**2
+        result -= s * (
+            np.arctan(u2 * z1 / (s * np.sqrt(u2**2 + s_sq + z1**2)))
+            - np.arctan(u2 * z2 / (s * np.sqrt(u2**2 + s_sq + z2**2)))
+            - np.arctan(u1 * z1 / (s * np.sqrt(u1**2 + s_sq + z1**2)))
+            + np.arctan(u1 * z2 / (s * np.sqrt(u1**2 + s_sq + z2**2)))
+        )
+    return result
+
+
+def _integrate_interval(
+    func: LowLevelCallable, args: tuple[float, ...], a: float, b: float, epsabs: float
+) -> float:
+    """
+    Integrate over [a, b] with the given absolute tolerance, falling back to the
+    default tolerances and strategies of :func:`integrate` if that fails.
+
+    Parameters
+    ----------
+    func:
+        The function to integrate
+    args:
+        The static arguments to the function
+    a:
+        The lower integration bound [rad]
+    b:
+        The upper integration bound [rad]
+    epsabs:
+        The absolute tolerance
+
+    Returns
+    -------
+    :
+        The value of the integral of the function between the bounds
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", IntegrationWarning)
+        try:
+            return quad(func, a, b, args=args, epsabs=epsabs, limit=QUAD_LIMIT)[0]
+        except IntegrationWarning:
+            pass
+    return integrate(func, args, a, b)
+
+
+def _integrate_field_split(
+    func: LowLevelCallable,
+    args: tuple[float, ...],
+    bound1: float,
+    bound2: float,
+    widths: tuple[float, ...],
+    epsabs: float,
+) -> float:
+    """
+    Integrate between bounds, splitting at multiples of pi and, when the point is
+    close to a face plane, at graded offsets around multiples of 2 pi.
 
     Parameters
     ----------
@@ -584,19 +479,44 @@ def _integrate_split(
         The first integration bound [rad]
     bound2:
         The second integration bound [rad]
+    widths:
+        The angular widths of the logarithmic peaks at psi = 0 [rad]
+    epsabs:
+        The absolute tolerance of each subinterval
 
     Returns
     -------
     :
         The value of the integral of the function between the bounds
+
+    Notes
+    -----
+    Close to a face plane, the integrand has a logarithmic peak of width
+    ~ |z_k| / r_pc (z faces) or ~ |r_j - r_pc| / r_pc (r faces) around
+    psi = 0 (mod 2 pi), which adaptive quadrature can under-resolve with a
+    confident error estimate.
+
+    Breakpoints closer together than SPLIT_TOL are merged: graded offsets from
+    different widths can coincide to within rounding, and the resulting slivers
+    make the quadrature fail.
     """
     lower, upper = min(bound1, bound2), max(bound1, bound2)
     n = np.arange(np.ceil(lower / np.pi), np.floor(upper / np.pi) + 1)
-    splits = n * np.pi
-    # Avoid slivers when a bound is a multiple of pi to within rounding
-    splits = splits[(splits - lower > SPLIT_TOL) & (upper - splits > SPLIT_TOL)]
+    splits = list(n * np.pi)
+    for width in widths:
+        if not 0 < width < MAX_PEAK_WIDTH:
+            continue
+        offsets = width * 10.0 ** np.arange(4)
+        for k in np.arange(np.ceil(lower / TWO_PI), np.floor(upper / TWO_PI) + 1):
+            splits.extend(k * TWO_PI + offsets)
+            splits.extend(k * TWO_PI - offsets)
+    points = [lower]
+    for x in np.sort(splits):
+        if x - points[-1] > SPLIT_TOL and upper - x > SPLIT_TOL:
+            points.append(x)
+    points.append(upper)
     result = sum(
-        integrate(func, args, a, b) for a, b in pairwise([lower, *splits, upper])
+        _integrate_interval(func, args, a, b, epsabs) for a, b in pairwise(points)
     )
     return np.sign(bound2 - bound1) * result
 
@@ -734,6 +654,27 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         z2 = zp - self._depth
         return self._r1, self._r2, z1, z2
 
+    def _quadrature_setup(
+        self, rp: float, zp: float
+    ) -> tuple[tuple[float, ...], float, float, float]:
+        """
+        Arguments, peak widths and absolute tolerance of the psi quadratures.
+
+        Returns
+        -------
+        :
+            Integrand arguments, z-face peak width [rad], r-face peak width [rad],
+            absolute tolerance
+        """
+        r1, r2, z1, z2 = self._cylindrical_to_working(zp)
+        if rp > 0:
+            z_width = min(abs(z1), abs(z2)) / rp
+            r_width = min(abs(r1 - rp), abs(r2 - rp)) / rp
+        else:
+            z_width = r_width = 0.0
+        epsabs = QUAD_EPSABS_PER_AREA * 4.0 * self._breadth * self._depth
+        return (rp, r1, r2, z1, z2), z_width, r_width, epsabs
+
     def _BxByBz(self, rp: float, tp: float, zp: float) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
@@ -743,14 +684,20 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         :
             (Bx, By, Bz) at a point
         """
-        r1, r2, z1, z2 = self._cylindrical_to_working(zp)
-
-        br = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
-        bz = Bz_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+        args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
+        lower, upper = -tp, self._dtheta - tp
+        br = _integrate_field_split(
+            br_integrand_from_potential, args, lower, upper, (z_width,), epsabs
+        )
+        bz = _integrate_field_split(
+            bz_integrand_from_potential, args, lower, upper, (z_width, r_width), epsabs
+        )
         if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
             bt = 0.0
         else:
-            bt = Bt_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+            bt = _integrate_field_split(
+                bt_integrand_from_potential, args, lower, upper, (z_width,), epsabs
+            )
 
         bx = br * np.cos(tp) - bt * np.sin(tp)
         by = br * np.sin(tp) + bt * np.cos(tp)
@@ -832,14 +779,15 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         The potential is calculated without its leading mu_0 J / (4 pi) factor.
         Az is 0.
         """
-        args = (rp, *self._cylindrical_to_working(zp))
+        args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
         lower, upper = -tp, self._dtheta - tp
+        widths = (z_width, r_width)
 
-        at = _integrate_split(at_integrand, args, lower, upper)
+        at = _integrate_field_split(at_integrand, args, lower, upper, widths, epsabs)
         if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
             ar = 0.0
         else:
-            ar = _integrate_split(ar_integrand, args, lower, upper)
+            ar = _integrate_field_split(ar_integrand, args, lower, upper, widths, epsabs)
 
         ax = ar * np.cos(tp) - at * np.sin(tp)
         ay = ar * np.sin(tp) + at * np.cos(tp)
