@@ -272,11 +272,14 @@ def _quad_helper(
     *,
     points=None,
     limit: int = 50,
+    epsabs: float = 1.49e-8,
 ) -> float:
     with warnings.catch_warnings():
         warnings.filterwarnings("error", category=IntegrationWarning)
 
-        result = quad(func, lower, upper, args=args, points=points, limit=limit)[0]
+        result = quad(
+            func, lower, upper, args=args, points=points, limit=limit, epsabs=epsabs
+        )[0]
 
     if not np.isfinite(result):
         raise MagnetostaticsIntegrationError(
@@ -296,7 +299,14 @@ def _shift_if_singular_angle(value: float, eps: float, *, plus: bool) -> float:
 
 
 def integrate(
-    func: Callable | LowLevelCallable, args: Iterable, bound1: float, bound2: float
+    func: Callable | LowLevelCallable,
+    args: Iterable,
+    bound1: float,
+    bound2: float,
+    *,
+    breakpoints: Iterable[float] | None = None,
+    epsabs: float = 1.49e-8,
+    limit: int = 50,
 ) -> float:
     """
     Utility for integration of a function between bounds.
@@ -312,6 +322,15 @@ def integrate(
         The first integration bound.
     bound2:
         The second integration bound.
+    breakpoints:
+        Points at which to split the integration interval before integrating, e.g.
+        at (near-)singularities of the integrand. Points outside the bounds are
+        ignored, and points closer together than 1e-12 are merged. Each piece is
+        integrated separately.
+    epsabs:
+        The absolute tolerance of the first quad attempt on each piece.
+    limit:
+        The maximum number of subintervals of the first quad attempt on each piece.
 
     Returns
     -------
@@ -322,15 +341,41 @@ def integrate(
     ------
     MagnetostaticsIntegrationError
         Integration failed.
+
+    Notes
+    -----
+    If the first quad attempt on a piece fails, it is retried with the default
+    tolerances, and then split at its quarters and at multiples of pi.
     """
     lower, upper = min(bound1, bound2), max(bound1, bound2)
     sign = np.sign(bound2 - bound1)
     if sign == 0:
         return 0.0
 
+    if breakpoints is not None:
+        points = [lower]
+        for x in sorted(breakpoints):
+            if x - points[-1] > 1e-12 and upper - x > 1e-12:  # noqa: PLR2004
+                points.append(x)
+        points.append(upper)
+        args = tuple(args)
+        pieces = []
+        for a, b in pairwise(points):
+            try:
+                pieces.append(
+                    _quad_helper(func, a, b, args, 1.0, epsabs=epsabs, limit=limit)
+                )
+            except (IntegrationWarning, MagnetostaticsIntegrationError):
+                # Default tolerances and fallbacks on this piece
+                pieces.append(integrate(func, args, a, b))
+        # sum() is compensated for floats
+        return sign * sum(pieces)
+
     # 1. Cheap path: try normal quad first.
     try:
-        return _quad_helper(func, lower, upper, tuple(args), sign)
+        return _quad_helper(
+            func, lower, upper, tuple(args), sign, epsabs=epsabs, limit=limit
+        )
     except (
         IntegrationWarning,
         ValueError,

@@ -20,15 +20,10 @@ logarithmic terms that cancel between corners do so analytically. The remaining
 and are resolved by adaptive quadrature with breakpoints placed from the geometry.
 """
 
-import warnings
-from itertools import pairwise
-
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
 import numpy.typing as npt
-from scipy import LowLevelCallable
-from scipy.integrate import IntegrationWarning, quad
 
 from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.base.look_and_feel import bluemira_warn
@@ -423,102 +418,45 @@ def bz_integrand_from_potential(
     return result
 
 
-def _integrate_interval(
-    func: LowLevelCallable, args: tuple[float, ...], a: float, b: float, epsabs: float
-) -> float:
+def _psi_breakpoints(
+    bound1: float, bound2: float, widths: tuple[float, ...]
+) -> list[float]:
     """
-    Integrate over [a, b] with the given absolute tolerance, falling back to the
-    default tolerances and strategies of :func:`integrate` if that fails.
+    Breakpoints of the psi quadratures: multiples of pi and, when the point is
+    close to a face plane, graded offsets around multiples of 2 pi.
 
     Parameters
     ----------
-    func:
-        The function to integrate
-    args:
-        The static arguments to the function
-    a:
-        The lower integration bound [rad]
-    b:
-        The upper integration bound [rad]
-    epsabs:
-        The absolute tolerance
-
-    Returns
-    -------
-    :
-        The value of the integral of the function between the bounds
-    """
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", IntegrationWarning)
-        try:
-            return quad(func, a, b, args=args, epsabs=epsabs, limit=QUAD_LIMIT)[0]
-        except IntegrationWarning:
-            pass
-    return integrate(func, args, a, b)
-
-
-def _integrate_field_split(
-    func: LowLevelCallable,
-    args: tuple[float, ...],
-    bound1: float,
-    bound2: float,
-    widths: tuple[float, ...],
-    epsabs: float,
-) -> float:
-    """
-    Integrate between bounds, splitting at multiples of pi and, when the point is
-    close to a face plane, at graded offsets around multiples of 2 pi.
-
-    Parameters
-    ----------
-    func:
-        The function to integrate
-    args:
-        The static arguments to the function
     bound1:
         The first integration bound [rad]
     bound2:
         The second integration bound [rad]
     widths:
         The angular widths of the logarithmic peaks at psi = 0 [rad]
-    epsabs:
-        The absolute tolerance of each subinterval
 
     Returns
     -------
     :
-        The value of the integral of the function between the bounds
+        The breakpoints [rad]
 
     Notes
     -----
-    Close to a face plane, the integrand has a logarithmic peak of width
-    ~ |z_k| / r_pc (z faces) or ~ |r_j - r_pc| / r_pc (r faces) around
-    psi = 0 (mod 2 pi), which adaptive quadrature can under-resolve with a
-    confident error estimate.
-
-    Breakpoints closer together than SPLIT_TOL are merged: graded offsets from
-    different widths can coincide to within rounding, and the resulting slivers
-    make the quadrature fail.
+    The |sin psi| kinks of the kernels lie at multiples of pi. Close to a face
+    plane, the integrand has a logarithmic peak of width ~ |z_k| / r_pc (z faces) or
+    ~ |r_j - r_pc| / r_pc (r faces) around psi = 0 (mod 2 pi), which adaptive
+    quadrature can under-resolve with a confident error estimate.
     """
     lower, upper = min(bound1, bound2), max(bound1, bound2)
     n = np.arange(np.ceil(lower / np.pi), np.floor(upper / np.pi) + 1)
-    splits = list(n * np.pi)
+    points = list(n * np.pi)
     for width in widths:
         if not 0 < width < MAX_PEAK_WIDTH:
             continue
         offsets = width * 10.0 ** np.arange(4)
         for k in np.arange(np.ceil(lower / TWO_PI), np.floor(upper / TWO_PI) + 1):
-            splits.extend(k * TWO_PI + offsets)
-            splits.extend(k * TWO_PI - offsets)
-    points = [lower]
-    for x in np.sort(splits):
-        if x - points[-1] > SPLIT_TOL and upper - x > SPLIT_TOL:
-            points.append(x)
-    points.append(upper)
-    result = sum(
-        _integrate_interval(func, args, a, b, epsabs) for a, b in pairwise(points)
-    )
-    return np.sign(bound2 - bound1) * result
+            points.extend(k * TWO_PI + offsets)
+            points.extend(k * TWO_PI - offsets)
+    return points
 
 
 class CircularArcCurrentSource(CrossSectionCurrentSource):
@@ -686,17 +624,34 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
         lower, upper = -tp, self._dtheta - tp
-        br = _integrate_field_split(
-            br_integrand_from_potential, args, lower, upper, (z_width,), epsabs
+        quad_kw = {"epsabs": epsabs, "limit": QUAD_LIMIT}
+        z_points = _psi_breakpoints(lower, upper, (z_width,))
+        br = integrate(
+            br_integrand_from_potential,
+            args,
+            lower,
+            upper,
+            breakpoints=z_points,
+            **quad_kw,
         )
-        bz = _integrate_field_split(
-            bz_integrand_from_potential, args, lower, upper, (z_width, r_width), epsabs
+        bz = integrate(
+            bz_integrand_from_potential,
+            args,
+            lower,
+            upper,
+            breakpoints=_psi_breakpoints(lower, upper, (z_width, r_width)),
+            **quad_kw,
         )
         if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
             bt = 0.0
         else:
-            bt = _integrate_field_split(
-                bt_integrand_from_potential, args, lower, upper, (z_width,), epsabs
+            bt = integrate(
+                bt_integrand_from_potential,
+                args,
+                lower,
+                upper,
+                breakpoints=z_points,
+                **quad_kw,
             )
 
         bx = br * np.cos(tp) - bt * np.sin(tp)
@@ -781,13 +736,17 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         """
         args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
         lower, upper = -tp, self._dtheta - tp
-        widths = (z_width, r_width)
+        quad_kw = {
+            "breakpoints": _psi_breakpoints(lower, upper, (z_width, r_width)),
+            "epsabs": epsabs,
+            "limit": QUAD_LIMIT,
+        }
 
-        at = _integrate_field_split(at_integrand, args, lower, upper, widths, epsabs)
+        at = integrate(at_integrand, args, lower, upper, **quad_kw)
         if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
             ar = 0.0
         else:
-            ar = _integrate_field_split(ar_integrand, args, lower, upper, widths, epsabs)
+            ar = integrate(ar_integrand, args, lower, upper, **quad_kw)
 
         ax = ar * np.cos(tp) - at * np.sin(tp)
         ay = ar * np.sin(tp) + at * np.cos(tp)
