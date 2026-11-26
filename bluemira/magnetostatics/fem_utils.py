@@ -76,7 +76,7 @@ def model_to_mesh(
     rank: int = 0,
     gdim: int | Sequence[int] = 3,
     **kwargs,
-):
+) -> tuple[d_gmsh.MeshData, dict]:
     """
     Convert gmsh model to dolfinx mesh.
 
@@ -568,7 +568,7 @@ def read_from_msh(
     rank: int = 0,
     gdim: int | tuple = 3,
     partitioner=None,
-):
+) -> tuple[d_gmsh.MeshData, dict]:
     """Wraps `dolfinx.io.gmsh.read_from_msh` to patch dimensional reading
 
 
@@ -586,7 +586,10 @@ def read_from_msh(
 
     """
     with patch("dolfinx.io.gmsh.model_to_mesh", new=model_to_mesh):
-        return d_gmsh.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner)
+        return cast(
+            "tuple[d_gmsh.MeshData, dict]",
+            d_gmsh.read_from_msh(filename, comm, rank, cast("int", gdim), partitioner),
+        )
 
 
 @dataclass
