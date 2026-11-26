@@ -184,7 +184,7 @@ class BluemiraFemFunction(Function):
             super().interpolate(u0, cells0, cells1)
         calc_bb_tree(self.function_space.mesh)
 
-    def __call__(self, points: np.ndarray):
+    def __call__(self, points: np.ndarray, *args, **kwargs):  # noqa: ARG002
         """
         Call function
 
@@ -347,17 +347,27 @@ def integrate_f(
     -------
     :
         area of the subdomain
+
+    Raises
+    ------
+    ValueError
+        If the integral contains a significant imaginary component.
     """
     dx = (
         ufl.dx
         if boundaries is None
         else ufl.Measure("dx", subdomain_data=boundaries, domain=mesh)
     )
-    return (
+    integral = (
         assemble_scalar(form(f * dx))
         if tag is None
         else assemble_scalar(form(f * dx(tag)))
     )
+    if isinstance(integral, complex):
+        if not np.isclose(integral.imag, 0.0):
+            raise ValueError(f"Expected a real-valued integral, got {integral}")
+        return float(integral.real)
+    return float(integral)
 
 
 def error_L2(  # noqa: N802
@@ -397,7 +407,7 @@ def error_L2(  # noqa: N802
     # is a ufl expression or a python lambda function
     u_ex_W = BluemiraFemFunction(W)  # noqa: N806
     if not isinstance(u_ex, ufl.core.expr.Expr):  # type:ignore[ty:possibly-missing-submodule]
-        u_expr = Expression(u_ex, W.element.interpolation_points())
+        u_expr = Expression(u_ex, W.element.interpolation_points)
         u_ex_W.interpolate(u_expr)
     else:
         u_ex_W.interpolate(u_ex)
@@ -465,8 +475,11 @@ def eval_f(function: Function, points: np.ndarray) -> tuple[np.ndarray, ...]:
                 points_on_proc.append(closest_point[0])
                 cells.append(tcc[0])
 
-    points_on_proc = np.array(points_on_proc, dtype=np.float64)
-    values = np.array(function.eval(points_on_proc, cells)).reshape(points.shape[0], -1)
+    points_on_proc = np.asarray(points_on_proc, dtype=np.float64)
+    cells = np.asarray(cells, dtype=np.int32)
+    values = np.asarray(function.eval(points_on_proc, cells)).reshape(
+        points_on_proc.shape[0], -1
+    )
 
     if points.shape != points_on_proc.shape:
         bluemira_debug(
@@ -679,7 +692,7 @@ def compute_B_from_Psi(
 
     B_expr = Expression(
         ufl.as_vector((-psi.dx(1) / (2 * np.pi * x_0), psi.dx(0) / (2 * np.pi * x_0))),
-        W0.element.interpolation_points(),
+        W0.element.interpolation_points,
     )
 
     B0.interpolate(B_expr)

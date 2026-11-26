@@ -156,7 +156,7 @@ class FemMagnetostatic2d:
                 self.mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
             )
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
-            bcs = [dirichletbc(np.array(0.0, dtype=ScalarType), dofs, self.V)]
+            bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
         else:
             # TODO @ivanmaione: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
