@@ -17,12 +17,14 @@ from typing import TYPE_CHECKING, Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from scipy.interpolate import interp1d
 
 from bluemira.base import constants
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display.plotter import Zorder, plot_2d, plot_coordinates
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find import find_first_closed_flux_surface_psi_n
 from bluemira.equilibria.find_legs import NumNull, split
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.geometry.coordinates import Coordinates
@@ -32,6 +34,7 @@ from bluemira.radiation_transport.flux_surfaces_maker import (
     _process_first_wall,
     analyse_first_wall_flux_surfaces,
 )
+from bluemira.radiation_transport.midplane_temperature_density import midplane_profiles
 from bluemira.radiation_transport.radiation_tools import (
     calculate_line_radiation_loss,
     calculate_total_radiated_power,
@@ -2094,8 +2097,6 @@ class RadiationSource:
         The equilibrium defining flux surfaces.
     firstwall_shape:
         BluemiraWire defining the first wall.
-    midplane_profiles:
-        Electron density and electron temperature profile at the mid-plane.
     core_impurities:
         The dictionary of impurities in the core (e.g. 'H') and their fractions
         (e.g. 1E-2).
@@ -2129,7 +2130,6 @@ class RadiationSource:
         eq: Equilibrium,
         firstwall_shape: Coordinates,
         params: ParameterFrameLike,
-        midplane_profiles: MidplaneProfiles,
         core_impurities: dict[str, float],
         sol_impurities: dict[str, float],
         confinement_time_core: float = np.inf,
@@ -2157,7 +2157,17 @@ class RadiationSource:
         self.imp_data_sol = impurity_data_sol
         self.lcfs = self.eq.get_LCFS()
 
-        self.midplane_profiles = midplane_profiles
+        # Get Electron density and electron temperature profile at the mid-plane.
+        # Equilibrium determines the minimum allowable psi_n value
+        # (affects flux surface contour finding)
+        psi_n_min = find_first_closed_flux_surface_psi_n(
+            self.eq.x,
+            self.eq.z,
+            cast("npt.NDArray", self.eq.psi()),
+            self.eq._o_points,
+            self.eq._x_points,
+        )
+        self.midplane_profiles = midplane_profiles(self.params, psi_n_min)
 
         # Initialising the `FluxSurfaceMaker`
         (
