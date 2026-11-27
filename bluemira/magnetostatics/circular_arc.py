@@ -536,7 +536,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         self._update_r1r2()
 
         self._dtheta = np.deg2rad(dtheta)
-        self._rho = current / (4 * breadth * depth)
+        self._area = 4 * breadth * depth
+        self._rho = current / self._area
         self._dcm = np.array([ds, normal, t_vec], dtype=float)
         self._points = self._calculate_points()
 
@@ -633,7 +634,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
             r_width = min(abs(r1 - rp), abs(r2 - rp)) / rp
         else:
             z_width = r_width = 0.0
-        epsabs = QUAD_EPSABS_PER_AREA * 4.0 * self._breadth * self._depth
+        epsabs = QUAD_EPSABS_PER_AREA * self._area
         return (rp, r1, r2, z1, z2), z_width, r_width, epsabs
 
     def _psi_quadrature(
