@@ -401,7 +401,6 @@ def integrate(
             points.append(x)
     points.append(upper)
 
-    # sum() is compensated for floats
     return sign * sum(
         _integrate_piece(func, args, a, b, epsabs, limit) for a, b in pairwise(points)
     )
