@@ -8,6 +8,7 @@
 Just-in-time compilation and LowLevelCallable speed-up tools.
 """
 
+import math
 import warnings
 from collections.abc import Callable, Iterable
 from itertools import pairwise
@@ -263,39 +264,79 @@ def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
     return LowLevelCallable(wrapped.ctypes)
 
 
-def _quad_helper(
+# scipy.integrate.quad defaults
+QUAD_EPSABS = 1.49e-8
+QUAD_LIMIT = 50
+# Subinterval limit of the split fallback
+FALLBACK_LIMIT = 200
+# Breakpoints closer together than this are merged
+BREAKPOINT_TOL = 1e-12
+
+
+def _quad(
     func: Callable | LowLevelCallable,
     lower: float,
     upper: float,
     args: tuple[float, ...],
-    sign: float,
-    *,
-    points=None,
-    limit: int = 50,
-    epsabs: float = 1.49e-8,
+    epsabs: float = QUAD_EPSABS,
+    limit: int = QUAD_LIMIT,
 ) -> float:
+    """
+    Integrate with quad, raising IntegrationWarning as an error.
+
+    Returns
+    -------
+    :
+        The integral between lower and upper
+    """
     with warnings.catch_warnings():
-        warnings.filterwarnings("error", category=IntegrationWarning)
+        warnings.simplefilter("error", IntegrationWarning)
+        return quad(func, lower, upper, args=args, epsabs=epsabs, limit=limit)[0]
 
-        result = quad(
-            func, lower, upper, args=args, points=points, limit=limit, epsabs=epsabs
-        )[0]
 
-    if not np.isfinite(result):
-        raise MagnetostaticsIntegrationError(
-            f"Infinite integral result! args={[float(a) for a in args]}"
+def _integrate_piece(
+    func: Callable | LowLevelCallable,
+    args: tuple[float, ...],
+    lower: float,
+    upper: float,
+    epsabs: float,
+    limit: int,
+) -> float:
+    """
+    Integrate over [lower, upper] with quad. If that fails or the result is not
+    finite, split at the quarters and at multiples of pi, and integrate each part
+    with the default tolerance.
+
+    Returns
+    -------
+    :
+        The integral between lower and upper
+
+    Raises
+    ------
+    MagnetostaticsIntegrationError
+        Integration failed.
+    """
+    try:
+        result = _quad(func, lower, upper, args, epsabs, limit)
+        if math.isfinite(result):
+            return result
+    except IntegrationWarning:
+        pass
+
+    width = upper - lower
+    n_pi = np.arange(np.ceil(lower / np.pi), np.floor(upper / np.pi) + 1)
+    quarters = lower + width * np.array([0.25, 0.5, 0.75])
+    edges = sorted({lower, upper, *quarters, *(np.pi * n_pi)})
+    try:
+        result = sum(
+            _quad(func, a, b, args, limit=FALLBACK_LIMIT) for a, b in pairwise(edges)
         )
-
-    return sign * result
-
-
-def _shift_if_singular_angle(value: float, eps: float, *, plus: bool) -> float:
-    nearest_pi_multiple = np.round(value / np.pi) * np.pi
-    if np.isclose(value, nearest_pi_multiple, atol=eps, rtol=0.0):
-        if plus:
-            return value + eps
-        return value - eps
-    return value
+    except IntegrationWarning as error:
+        raise MagnetostaticsIntegrationError(f"{error} with args={args}") from error
+    if not math.isfinite(result):
+        raise MagnetostaticsIntegrationError(f"Non-finite integral with args={args}")
+    return result
 
 
 def integrate(
@@ -305,8 +346,8 @@ def integrate(
     bound2: float,
     *,
     breakpoints: Iterable[float] | None = None,
-    epsabs: float = 1.49e-8,
-    limit: int = 50,
+    epsabs: float = QUAD_EPSABS,
+    limit: int = QUAD_LIMIT,
 ) -> float:
     """
     Utility for integration of a function between bounds.
@@ -325,12 +366,12 @@ def integrate(
     breakpoints:
         Points at which to split the integration interval before integrating, e.g.
         at (near-)singularities of the integrand. Points outside the bounds are
-        ignored, and points closer together than 1e-12 are merged. Each piece is
-        integrated separately.
+        ignored, and points closer together than BREAKPOINT_TOL are merged. Each
+        piece is integrated separately.
     epsabs:
-        The absolute tolerance of the first quad attempt on each piece.
+        The absolute tolerance of quad on each piece.
     limit:
-        The maximum number of subintervals of the first quad attempt on each piece.
+        The maximum number of subintervals of quad on each piece.
 
     Returns
     -------
@@ -344,86 +385,26 @@ def integrate(
 
     Notes
     -----
-    If the first quad attempt on a piece fails, it is retried with the default
-    tolerances, and then split at its quarters and at multiples of pi.
+    If quad fails on a piece or its result is not finite, the piece is split at its
+    quarters and at multiples of pi, and each part is integrated with the default
+    tolerance.
     """
-    lower, upper = min(bound1, bound2), max(bound1, bound2)
     sign = np.sign(bound2 - bound1)
-    if sign == 0:
-        return 0.0
+    lower, upper = min(bound1, bound2), max(bound1, bound2)
+    args = tuple(args)
+    if breakpoints is None:
+        return sign * _integrate_piece(func, args, lower, upper, epsabs, limit)
 
-    if breakpoints is not None:
-        points = [lower]
-        for x in sorted(breakpoints):
-            if x - points[-1] > 1e-12 and upper - x > 1e-12:  # noqa: PLR2004
-                points.append(x)
-        points.append(upper)
-        args = tuple(args)
-        pieces = []
-        for a, b in pairwise(points):
-            try:
-                pieces.append(
-                    _quad_helper(func, a, b, args, 1.0, epsabs=epsabs, limit=limit)
-                )
-            except (IntegrationWarning, MagnetostaticsIntegrationError):
-                # Default tolerances and fallbacks on this piece
-                pieces.append(integrate(func, args, a, b))
-        # sum() is compensated for floats
-        return sign * sum(pieces)
+    points = [lower]
+    for x in sorted(breakpoints):
+        if x - points[-1] > BREAKPOINT_TOL and upper - x > BREAKPOINT_TOL:
+            points.append(x)
+    points.append(upper)
 
-    # 1. Cheap path: try normal quad first.
-    try:
-        return _quad_helper(
-            func, lower, upper, tuple(args), sign, epsabs=epsabs, limit=limit
-        )
-    except (
-        IntegrationWarning,
-        ValueError,
-        FloatingPointError,
-        ZeroDivisionError,
-        MagnetostaticsIntegrationError,
-    ):
-        pass
-
-    # 2. Medium path: use simple absolute breakpoints.
-    width = upper - lower
-
-    split_points = sorted({
-        lower,
-        upper,
-        *(lower + f * width for f in (0.25, 0.5, 0.75)),
-        *(
-            np.pi * n
-            for n in range(
-                int(np.floor(lower / np.pi)) - 1, int(np.ceil(upper / np.pi)) + 1
-            )
-        ),
-    })
-
-    split_points = [p for p in split_points if lower <= p <= upper]
-
-    eps = 1e-12 * max(1.0, abs(lower), abs(upper), width)
-
-    result = 0.0
-
-    try:
-        for a, b in pairwise(split_points):
-            aa = _shift_if_singular_angle(a, eps, plus=True)
-            bb = _shift_if_singular_angle(b, eps, plus=False)
-            if bb <= aa:
-                continue
-
-            result += _quad_helper(func, aa, bb, tuple(args), sign=1.0, limit=200)
-
-    except (
-        IntegrationWarning,
-        ValueError,
-        FloatingPointError,
-        ZeroDivisionError,
-    ) as error:
-        raise MagnetostaticsIntegrationError(f"{error} with args={args}") from error
-
-    return sign * result
+    # sum() is compensated for floats
+    return sign * sum(
+        _integrate_piece(func, args, a, b, epsabs, limit) for a, b in pairwise(points)
+    )
 
 
 def n_integrate(
