@@ -749,7 +749,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         y: float | npt.NDArray[np.float64],
         z: float | npt.NDArray[np.float64],
     ) -> npt.NDArray[np.float64]:
-        r"""
+        """
         Calculate the vector potential at a point due to the current source.
 
         Parameters
@@ -768,25 +768,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         Notes
         -----
-        With :math:`\psi = \phi' - \phi_{pc}` and uniform tangential current density:
-
-        .. math::
-            A_r &= -\frac{\mu_0 J}{4\pi}
-            \int_{-\phi_{pc}}^{\theta-\phi_{pc}} \sin\psi~G(\psi)~d\psi
-
-            A_t &= \frac{\mu_0 J}{4\pi}
-            \int_{-\phi_{pc}}^{\theta-\phi_{pc}} \cos\psi~G(\psi)~d\psi
-
-            G(\psi) &= \iint \frac{r'}{R}~dr'dz'
-            = -\sum_{j=1}^{2}\sum_{k=1}^{2}(-1)^{j+k} F(R_j, Z_k)
-
-            F &= \frac{Z_k D}{2} + \frac{R_j^2 - R_{pc}^2\cos 2\psi}{2}
-            \sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
-            + c Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}}
-            - c s\tan^{-1}\frac{u Z_k}{s D}
-
-        where :math:`c = R_{pc}\cos\psi`, :math:`s = R_{pc}\sin\psi`,
-        :math:`u = R_j - c`, and :math:`D = \sqrt{u^2 + s^2 + Z_k^2}`.
+        The derivation is given in the magnetostatics section of the documentation.
 
         The integrands are bounded everywhere, including inside the conductor and
         on its faces, edges and corners.
@@ -794,8 +776,9 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         The curl of this potential is the field of this source. The potential of
         an open arc is not divergence-free at its ends.
 
-        G is a difference of corner values, so precision reduces at points very far
-        from the source relative to the size of its cross-section.
+        The cross-section kernel G is a difference of corner values, so precision
+        reduces at points very far from the source relative to the size of its
+        cross-section.
         """
         point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
