@@ -15,16 +15,28 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import matplotlib.pyplot as plt
+import mcio
+from OCP.BRepBuilderAPI import BRepBuilderAPI_Transform
+from OCP.gp import gp_Pnt, gp_Trsf
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.display.plotter import plot_2d
 from bluemira.radiation_transport.axisymmetric_neutronics.geometry import (
     AxisymmetricNeutronicsGeomManager,
 )
+from bluemira.radiation_transport.axisymmetric_neutronics.materials import (
+    to_mcio_material,
+)
+from bluemira.radiation_transport.axisymmetric_neutronics.plotting import (
+    plot_desplining_comparisons,
+)
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from matproplib.conditions import OperationalConditions
+    from openmc.model.model import Model
+
     from bluemira.base.components import Component
     from bluemira.base.parameter_frame.typed import ParameterFrameLike
     from bluemira.base.reactor import Reactor
@@ -84,6 +96,12 @@ class AxisymmetricNeutronicsReactor(ABC):
         self.model = model
         self.geometry = self.get_desplined_geometry(reactor)
 
+        # Double-check overlaps
+        self.geometry.inspect_xyz_overlaps()
+
+        self.material_name_mapping = {}
+        self.material_library = None  # No need
+
     def get_desplined_geometry(
         self, reactor: Reactor
     ) -> AxisymmetricNeutronicsGeomManager:
@@ -114,7 +132,7 @@ class AxisymmetricNeutronicsReactor(ABC):
             neutronics_output_path = Path(
                 self.config.get("neutronics_output_path", "./outputs/")
             )
-            self.plot_desplining_comparisons(
+            plot_desplining_comparisons(
                 orig_comps=[
                     xz_comp
                     for comp in all_comps
@@ -141,51 +159,123 @@ class AxisymmetricNeutronicsReactor(ABC):
         return self.geometry.plot("xz", *args, ax=ax, show=show, **kwargs)
 
     @staticmethod
-    def plot_desplining_comparisons(
-        orig_comps: list[Component],
-        desplined_comps: list[Component],
-        output_path: Path | None = None,
-    ):
+    def _scale_solid_to_cm(solid):
         """
-        Create comparison plots in the xz plane before and after
-        desplining components.
+        Scale an OCC solid from metres to centimetres.
 
-        Raises
+        Returns
+        -------
+        :
+            Scaled OCC shape with coordinates in centimetres.
+        """
+        transform = gp_Trsf()
+        transform.SetScale(gp_Pnt(0, 0, 0), 100.0)
+
+        return BRepBuilderAPI_Transform(solid, transform, theCopyGeom=True).Shape()
+
+    @staticmethod
+    def _get_global_bounding_box(
+        components: Sequence[Component],
+    ) -> Sequence[float] | None:
+        """
+        Calculate the global bounding box in metres.
+
+        Returns
+        -------
+        :
+            global bounding box in metres
+        """
+        if not components:
+            return None
+
+        boxes = [
+            xyz.children[0].shape.bounding_box
+            for comp in components
+            if (xyz := comp.get_component("xyz")) is not None
+        ]
+
+        r_min = min(box.x_min for box in boxes)
+        r_max = max(box.x_max for box in boxes)
+        z_min = min(box.z_min for box in boxes)
+        z_max = max(box.z_max for box in boxes)
+
+        return z_max, z_min, r_max, r_min
+
+    def run_mcio(
+        self,
+        op_cond: OperationalConditions,
+        mcio_void_max_recursion_depth: int = 5,
+        mcio_void_min_width_cm: float = 50,
+    ) -> tuple[Model, Sequence[float] | None]:
+        """
+        Runs MCIO interface to create openmc geometry for neutronics
+
+        Returns
+        -------
+        :
+            openmc Model
+
+        Note
         ------
-        ValueError
-            if original and desplined components do not have the
-            same length
+        You can try to manipulate number of void cell generation
+        in mcio using mcio_void_max_recursion_depth and
+        mcio_void_min_width
         """
-        if output_path is None:
-            raise ValueError("output_path must be provided.")
+        all_desplined_components = self.geometry.get_all_components()
 
-        output_path.mkdir(parents=True, exist_ok=True)
+        # Calculate global bounding box (m)
+        bounding_box = self._get_global_bounding_box(all_desplined_components)
 
-        if len(orig_comps) != len(desplined_comps):
-            raise ValueError(
-                "original and desplined components must have the same length."
-            )
+        all_names = [comp.name for comp in all_desplined_components]
 
-        fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True, sharey=True)
+        # Convert OCC solids from metres to centimetres for OpenMC uses
+        all_ocp_solids = [
+            self._scale_solid_to_cm(xyz.children[0].shape.shape.wrapped)
+            for comp in all_desplined_components
+            if (xyz := comp.get_component("xyz")) is not None
+        ]
 
-        for orig_comp, desplined_comp in zip(orig_comps, desplined_comps, strict=True):
-            orig_comp.plot_2d(ax=axes[0], show=False)
-            for wire in orig_comp.leaves[0].shape.boundary:
-                plot_2d(wire.vertexes.T, ax=axes[0], show=False)
+        all_materials = [
+            xyz.children[0].material
+            for comp in all_desplined_components
+            if (xyz := comp.get_component("xyz")) is not None
+        ]
 
-            desplined_comp.plot_2d(ax=axes[1], show=False)
-            for wire in desplined_comp.leaves[0].shape.boundary:
-                plot_2d(wire.vertexes.T, ax=axes[1], show=False)
+        # set up empty decomposer (you can also add step files and ocp
+        # solids if you like)
+        decomposer = mcio.decompose.Decomposer()
 
-        axes[0].set_title("Original")
-        axes[1].set_title("Desplined")
+        # Manipulate Void generation in mcio
+        decomposer.decom_params.void_max_recursion_depth = mcio_void_max_recursion_depth
+        decomposer.decom_params.void_min_width = mcio_void_min_width_cm
 
-        fig.tight_layout()
+        # NOTE: Every solid should have its own unique MCIO material name,
+        # even if multiple solids use the same original material.
+        bluemira_print("Adding solids to the decomposer")
+        for mat_number, (solid, mat, name) in enumerate(
+            zip(all_ocp_solids, all_materials, all_names, strict=True)
+        ):
+            # Renames MCIO material to the accepted format, e.g. "m0", "m1", ...
+            mcio_material = to_mcio_material(mat, op_cond, mat_number + 1)
+            decomposer.add_solid(solid, name=name, material=mcio_material)
 
-        plot_path = output_path / "desplining_comparisons.png"
-        fig.savefig(plot_path, bbox_inches="tight")
+            # Map original component name to MCIO material name
+            self.material_name_mapping[name] = mcio_material.name
 
-        bluemira_print(f"Plotted desplining comparisons as {plot_path}")
+        # run decomposer to generate void and model
+        bluemira_print("Running decomposer")
+        decomposer.run()
+
+        return decomposer.model.openmc_model, bounding_box
+
+    @abstractmethod
+    def customised_tallies(self, model):
+        """
+        Abstract Methods for user to be able
+        to add customised tallies for their particular
+        reactor
+        """
+        ...
 
     @abstractmethod
     def get_all_components(self, reactor: Reactor) -> list[Component]:
@@ -194,7 +284,7 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         Returns
         -------
-        list
+        :
             list of components.
         """
         ...
@@ -207,6 +297,7 @@ class AxisymmetricNeutronicsReactor(ABC):
 
         Returns
         -------
-        int
+        :
+            default discretisation
         """
         ...

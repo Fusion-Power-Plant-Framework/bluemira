@@ -2547,6 +2547,8 @@ def check_touching_geos(
     geo_1: BluemiraSolid | BluemiraFace,
     geo_2: BluemiraSolid | BluemiraFace,
     atol: float = 1e-10,
+    *,
+    show_error_if_overlaps: bool = False,
 ) -> bool:
     """
     Check if two geometries of the same type touch without overlapping.
@@ -2561,6 +2563,8 @@ def check_touching_geos(
         Absolute tolerance for the distance between the geometries.
         The area and volume tolerances are derived as atol**2 and atol**3,
         respectively.
+    show_error_if_overlaps
+        show error if overlaps
 
     Returns
     -------
@@ -2574,6 +2578,8 @@ def check_touching_geos(
         If geo_1 and geo_2 are not of the same type.
     ValueError
         If atol is negative or non-finite.
+    GeometryError
+        if there is an overlap
 
     Notes
     -----
@@ -2597,11 +2603,20 @@ def check_touching_geos(
     if isinstance(geo_1, BluemiraFace):
         intersection_size = intersection.Area()
         intersection_atol = atol**2
+        intersection_type = "area"
     else:
         intersection_size = intersection.Volume()
         intersection_atol = atol**3
+        intersection_type = "volume"
 
     intersection_is_zero = bool(np.isclose(intersection_size, 0, atol=intersection_atol))
+
+    if show_error_if_overlaps and not intersection_is_zero:
+        raise GeometryError(
+            f"\nGeometry overlap detected between "
+            f"'{geo_1.label}' and '{geo_2.label}':"
+            f"\n  Intersection {intersection_type}: {intersection_size:.15e}"
+        )
 
     # If both the distance and intersection size are within tolerance
     # of zero, the geometries are considered to touch without overlap.

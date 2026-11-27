@@ -13,12 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
 import numpy as np
 import openmc
+from matplotlib.cm import ScalarMappable
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.plasma_physics.reactions import E_DT_fusion
@@ -36,6 +39,9 @@ if TYPE_CHECKING:
     from bluemira.radiation_transport.neutronics.zero_d_neutronics import (
         ZeroDNeutronicsResult,
     )
+
+MEAN_W = "mean(W)"
+FLUX_UNIT = "flux (m^-2)"
 
 
 def _get_std_dev_iloc(df):
@@ -179,30 +185,35 @@ class OpenMCCSGResult(OpenMCResultBase):
     total_power: float
     total_power_err: float
     mult_power: float
-    peak_bb_fe_damage: float
-    peak_bb_fe_damage_err: float
+
     fluxes: dict
     damage: dict
 
     universe: openmc.Universe
-    cell_arrays: CellStage
+
     src_rate: float
     statepoint: openmc.StatePoint
     statepoint_file: Path
     cell_names: dict
     cell_vols: dict  # [m^3]
     mat_names: dict
+    peak_bb_fe_damage: float | None = None
+    peak_bb_fe_damage_err: float | None = None
+
     photon_heat_flux: dict | None = None
     """Photon heat flux"""
+
+    cell_arrays: CellStage | None = None
+    """None for mcio workflow for now"""
 
     @classmethod
     def from_run(
         cls,
         universe: openmc.Universe,
-        cell_arrays: CellStage,
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: Path,
+        cell_arrays: CellStage | None = None,
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -249,12 +260,20 @@ class OpenMCCSGResult(OpenMCResultBase):
         e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
         mult_power = cls.multiplication_power(e_mult, dt_n_power)
         all_fluxes = cls._load_fluxes(statepoint, cell_names, cell_vols, src_rate)
-        damage = cls._load_damage(
-            statepoint, cell_names, cell_vols, cell_arrays, src_rate
-        )
-        max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
-        peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
-        peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+
+        if cell_arrays is not None:
+            damage = cls._load_damage(
+                statepoint, cell_names, cell_vols, cell_arrays, src_rate
+            )
+
+            max_dmg_arg = np.argmax(damage["blanket damage"]["dpa/fpy"])
+            peak_bb_fe_damage = damage["blanket damage"]["dpa/fpy"][max_dmg_arg]
+            peak_bb_fe_damage_err = damage["blanket damage"]["%err."][max_dmg_arg]
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            damage = {}
+            peak_bb_fe_damage = None
+            peak_bb_fe_damage_err = None
 
         return cls(
             universe=universe,
@@ -644,6 +663,318 @@ class OpenMCDAGMCResult(OpenMCResultBase):
 
 
 @dataclass
+class OpenMCmcioCSGResult(OpenMCResultBase):
+    """Results extracted from an MCIO-generated OpenMC CSG model."""
+
+    tbr: float
+    tbr_err: float
+
+    e_mult: float
+    e_mult_err: float
+    mult_power: float
+
+    power: dict
+    fluxes: dict
+
+    universe: openmc.Universe
+    src_rate: float
+    statepoint: openmc.StatePoint
+    statepoint_file: Path
+
+    model: openmc.Model
+
+    cell_names: dict
+    cell_vols: dict
+    mat_names: dict
+
+    @classmethod
+    def from_run(
+        cls,
+        universe: openmc.Universe,
+        src_rate: float,
+        src_triton_rate: float,
+        statepoint_file: Path,
+        model: openmc.Model,
+    ):
+        """
+        Create results from an MCIO OpenMC statepoint.
+
+        Raises
+        ------
+        ValueError
+            if total_power heating tally is missing
+        """
+        cell_names = {cell_id: cell.name for cell_id, cell in universe.cells.items()}
+
+        mat_names = {
+            cell.fill.id: cell.fill.name
+            for cell in universe.cells.values()
+            if cell.fill is not None
+        }
+
+        cell_vols = {
+            cell_id: raw_uc(cell.volume, "cm^3", "m^3")
+            if isinstance(cell.volume, float)
+            else None
+            for cell_id, cell in universe.cells.items()
+        }
+
+        statepoint = openmc.StatePoint(statepoint_file.as_posix())
+
+        tbr, tbr_err = cls._load_tbr(statepoint, src_rate, src_triton_rate)
+
+        power = {}
+        fluxes = {}
+
+        total_power = None
+        total_power_err = None
+
+        for tally in statepoint.tallies.values():
+            df = tally.get_pandas_dataframe()
+            scores = tally.scores
+
+            if "heating" in scores:
+                df["mean(W)"] = raw_uc(df["mean"].to_numpy() * src_rate, "eV/s", "W")
+                df["err.(W)"] = raw_uc(_get_std_dev_numpy(df) * src_rate, "eV/s", "W")
+
+                power[tally.name] = cls._convert_dict_contents(df.to_dict())
+
+                if tally.name == "total_power":
+                    total_power = df["mean(W)"].sum()
+                    total_power_err = np.sqrt((df["err.(W)"] ** 2).sum())
+
+            elif "flux" in scores:
+                df["cell_name"] = df["cell"].map(cell_names)
+                df["vol (m^3)"] = df["cell"].map(cell_vols)
+
+                df["flux (m^-2)"] = (
+                    raw_uc(df["mean"].to_numpy(), "cm", "m") * src_rate / df["vol (m^3)"]
+                )
+
+                df["%err."] = df.apply(get_percent_err, axis=1)
+
+                fluxes[tally.name] = cls._convert_dict_contents(df.to_dict())
+
+        if total_power is None:
+            raise ValueError(
+                "The total_power heating tally is missing from the statepoint."
+            )
+
+        dt_n_power = cls.dt_neuton_power(src_triton_rate)
+
+        e_mult = cls.energy_multiplication(dt_n_power, total_power)
+
+        e_mult_err = cls.energy_multiplication(dt_n_power, total_power_err)
+
+        mult_power = cls.multiplication_power(e_mult, dt_n_power)
+
+        return cls(
+            universe=universe,
+            src_rate=src_rate,
+            statepoint_file=statepoint_file,
+            statepoint=statepoint,
+            model=model,
+            cell_names=cell_names,
+            cell_vols=cell_vols,
+            mat_names=mat_names,
+            tbr=tbr,
+            tbr_err=tbr_err,
+            e_mult=e_mult,
+            e_mult_err=e_mult_err,
+            mult_power=mult_power,
+            power=power,
+            fluxes=fluxes,
+        )
+
+    @staticmethod
+    def get_cell_tally_data(tally):
+        """
+        Extract cell IDs and mean values from a CellFilter tally.
+
+        Returns
+        -------
+        tuple[list[int], np.ndarray]
+            Cell IDs and corresponding mean tally values.
+
+        Raises
+        ------
+        ValueError
+            If the tally does not contain a CellFilter or the number
+            of cell IDs and values does not match.
+        """
+        cell_filter = tally.find_filter(openmc.CellFilter)
+
+        if cell_filter is None:
+            raise ValueError(f"Tally '{tally.name}' does not contain a CellFilter.")
+
+        cell_ids = [int(b[0] if isinstance(b, tuple) else b) for b in cell_filter.bins]
+
+        values = tally.get_values(scores=[tally.scores[0]], value="mean").flatten()
+
+        if len(cell_ids) != len(values):
+            raise ValueError(f"Tally '{tally.name}': mismatched cell IDs and values.")
+
+        return cell_ids, values
+
+    @staticmethod
+    def get_cell_volumes(cell_vols, cell_ids):
+        """
+        Retrieve existing cell volumes.
+
+        Returns
+        -------
+        :
+            Cell volumes in m3.
+
+        Raises
+        ------
+        ValueError
+            If requested cell volumes are missing or invalid.
+        """
+        missing = [cid for cid in cell_ids if cid not in cell_vols]
+
+        if missing:
+            raise ValueError(f"Volume results missing for cells: {missing}")
+
+        volumes = {cid: cell_vols[cid] for cid in cell_ids}
+
+        invalid = [
+            cid
+            for cid, volume in volumes.items()
+            if volume is None or not np.isfinite(volume) or volume <= 0
+        ]
+
+        if invalid:
+            raise ValueError(f"Invalid volume results for cells: {invalid}")
+
+        return volumes
+
+    def plot_xz_tally(
+        self, cell_ids, values, filename, title, units, cmap_name, pixels=1600
+    ):
+        """
+        Plot cell tally values directly onto XZ CSG geometry.
+
+        Raises
+        ------
+        FileNotFoundError
+            If OpenMC fails to create the geometry plot.
+        """
+        output_dir = self.statepoint_file.parent
+
+        cells = self.model.geometry.get_all_cells()
+        values = np.asarray(values, dtype=float)
+
+        positive = values[np.isfinite(values) & (values > 0)]
+
+        norm = None
+        colours = {}
+
+        if len(positive):
+            vmin = positive.min()
+            vmax = positive.max()
+
+            if np.isclose(vmin, vmax):
+                vmax = vmin * 10.0
+
+            norm = mcolors.LogNorm(vmin=vmin, vmax=vmax)
+            cmap = plt.get_cmap(cmap_name)
+
+        for cell_id, value in zip(cell_ids, values, strict=True):
+            if norm is None or not np.isfinite(value) or value <= 0:
+                rgb = (200, 200, 200)
+            else:
+                rgb = tuple(round(channel * 255) for channel in cmap(norm(value))[:3])
+
+            colours[cells[cell_id]] = rgb
+
+        plot = openmc.Plot()
+        plot.basis = "xz"
+        plot.origin = (0.0, 0.0, 0.0)
+        plot.width = (3000.0, 3000.0)
+        plot.pixels = (pixels, pixels)
+        plot.color_by = "cell"
+        plot.colors = colours
+        plot.background = "white"
+        plot.filename = filename
+
+        self.model.plots = openmc.Plots([plot])
+        self.model.plot_geometry(cwd=str(output_dir))
+
+        png_file = output_dir / f"{filename}.png"
+
+        if not png_file.exists():
+            raise FileNotFoundError(f"OpenMC plot was not created: {png_file}")
+
+        if norm is not None:
+            fig, ax = plt.subplots(figsize=(12, 9))
+            ax.imshow(plt.imread(png_file))
+            ax.axis("off")
+            ax.set_title(title)
+
+            scalar_map = ScalarMappable(norm=norm, cmap=cmap)
+            scalar_map.set_array([])
+
+            fig.colorbar(scalar_map, ax=ax, fraction=0.035, pad=0.02).set_label(units)
+
+            fig.savefig(png_file, dpi=200, bbox_inches="tight")
+            plt.show()
+            plt.close(fig)
+
+        bluemira_print(f"Saved: {png_file}")
+
+    def plot_neutronics_outputs(self, tally_names: dict):
+        """
+        Generate XZ plots for selected neutronics tallies.
+
+        Raises
+        ------
+        ValueError
+            If required tallies or cell volumes are unavailable.
+        FileNotFoundError
+            If geometry plots cannot be created.
+        """
+        with openmc.StatePoint(str(self.statepoint_file)) as sp:
+            for plot_name, tally_name in tally_names.items():
+                tally = sp.get_tally(name=tally_name)
+
+                cell_ids, values = self.get_cell_tally_data(tally)
+
+                title = plot_name.replace("_", " ").title()
+                units = "eV/source particle"
+                cmap_name = "inferno"
+
+                if plot_name == "volume_averaged_flux":
+                    volumes = self.get_cell_volumes(self.cell_vols, cell_ids)
+
+                    values = np.array([
+                        flux / (volumes[cell_id] * 1e6)
+                        for cell_id, flux in zip(cell_ids, values, strict=True)
+                    ])
+
+                    units = "particle/cm2/source particle"
+                    cmap_name = "viridis"
+
+                    bluemira_print("\nVolume-averaged neutron flux:")
+
+                    for cell_id, flux in zip(cell_ids, values, strict=True):
+                        bluemira_print(
+                            f"Cell {cell_id:>5}: "
+                            f"Volume = {volumes[cell_id]:.6e} m3, "
+                            f"Flux = {flux:.6e} {units}"
+                        )
+
+                self.plot_xz_tally(
+                    cell_ids=cell_ids,
+                    values=values,
+                    filename=f"{plot_name}_xz",
+                    title=title,
+                    units=units,
+                    cmap_name=cmap_name,
+                )
+
+
+@dataclass
 class NeutronicsOutputParams(ParameterFrame):
     """
     Neutronics output parameters
@@ -688,16 +1019,47 @@ class NeutronicsOutputParams(ParameterFrame):
         )
 
     @classmethod
+    def from_openmc_mcio_csg_result(cls, result: OpenMCmcioCSGResult):
+        """
+        Produce output parameters from an OpenMC MCIO CSG result.
+        """
+        source = "OpenMC MCIO CSG"
+
+        return cls(
+            Parameter("e_mult", result.e_mult, unit="", source=source),
+            Parameter("TBR", result.tbr, unit="", source=source),
+            Parameter("P_n_blanket", None, unit="W", source=source),
+            Parameter("P_n_divertor", None, unit="W", source=source),
+            Parameter("P_n_vessel", None, unit="W", source=source),
+            # No auxiliaries (e.g. HCD, port plugs modelled here)
+            Parameter("P_n_aux", 0.0, unit="W", source=source),
+            Parameter("P_n_e_mult", result.mult_power, unit="W", source=source),
+            Parameter("P_n_decay", 0.0, unit="W", source=source),
+            Parameter("peak_eurofer_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_bb_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_vv_iron_dpa_rate", None, unit="dpa/fpy", source=source),
+            Parameter("peak_div_cu_dpa_rate", None, unit="dpa/fpy", source=source),
+        )
+
+    @classmethod
     def from_openmc_csg_result(cls, result: OpenMCCSGResult):
         """
         Produce output parameters from an OpenMC CSG result
         """
         source = "OpenMC CSG"
 
-        peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
-        peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
-        peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
-        peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        if result.cell_arrays is not None:
+            peak_eurofer_dpa = result.damage["eurofer damage"]["dpa/fpy"].max()
+            peak_bb_iron_dpa = result.damage["blanket damage"]["dpa/fpy"].max()
+            peak_vv_iron_dpa = result.damage["VV damage"]["dpa/fpy"].max()
+            peak_div_cu_dpa = result.damage["divertor damage"]["dpa/fpy"].max()
+        else:
+            # TODO @athoynilimanew: damage post-processing for MCIO workflow. # noqa: TD003
+            peak_eurofer_dpa = None
+            peak_bb_iron_dpa = None
+            peak_vv_iron_dpa = None
+            peak_div_cu_dpa = None
+
         return cls(
             Parameter("e_mult", result.e_mult, unit="", source=source),
             Parameter("TBR", result.tbr, unit="", source=source),

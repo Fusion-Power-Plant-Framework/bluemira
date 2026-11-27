@@ -11,6 +11,8 @@ from itertools import chain
 from typing import TYPE_CHECKING
 
 import openmc
+from mcio.cell import Cell as MCIOCell
+from mcio.tally import EnergyDepositionTally, VolumeFluenceTally
 
 if TYPE_CHECKING:
     from bluemira.codes.openmc.make_csg import CellStage
@@ -120,3 +122,81 @@ def dagmc_tallys(
         ("tbr_on_mesh", "(n,Xt)", [mesh_filter]),
         ("flux_on_mesh", "flux", [mesh_filter]),
     ]
+
+
+def openmc_tallies_using_mcio(
+    model: openmc.Model, material_name_mapping: dict[str, str]
+) -> list[TALLY_RETURN_TYPE]:
+    """
+    Create default OpenMC tally specifications using MCIO definitions.
+
+    Returns
+    -------
+    :
+        list of tallies
+
+    Raises
+    ------
+    ValueError
+        if the model does not have a geometry
+    """
+    geometry = model.geometry
+    if geometry is None:
+        raise ValueError("OpenMC model geometry is not defined.")
+
+    all_cells = list(geometry.get_all_cells().values())
+
+    # -----------------------------------------------
+    # Adapt OpenMC cells for MCIO
+    # -----------------------------------------------
+    def to_mcio_cell(cell: openmc.Cell) -> MCIOCell:
+        mcio_cell = MCIOCell(name=cell.name)
+        mcio_cell.number = cell.id
+        mcio_cell._openmc_cell = cell
+        return mcio_cell
+
+    mcio_cells = [to_mcio_cell(cell) for cell in all_cells]
+
+    component_cells = {
+        component_name: [cell for cell in mcio_cells if cell.name == component_name]
+        for component_name in material_name_mapping
+    }
+
+    # -----------------------------------------------
+    # Convert MCIO tallies to OpenMC specifications
+    # -----------------------------------------------
+    tallies = []
+
+    def add_mcio_tally(mcio_tally):
+        openmc_tally = mcio_tally.openmc_tally
+
+        tallies.append((openmc_tally.name, openmc_tally.scores[0], openmc_tally.filters))
+
+    # -----------------------------------------------
+    # Energy deposition / power
+    # -----------------------------------------------
+    for component_name, cells in component_cells.items():
+        if cells:
+            add_mcio_tally(
+                EnergyDepositionTally(cells=cells, comment=f"{component_name}_power")
+            )
+
+    add_mcio_tally(EnergyDepositionTally(cells=mcio_cells, comment="total_power"))
+
+    # -----------------------------------------------
+    # Neutron flux
+    # -----------------------------------------------
+    for component_name, cells in component_cells.items():
+        if cells:
+            add_mcio_tally(
+                VolumeFluenceTally(cells=cells, comment=f"{component_name}_neutron_flux")
+            )
+
+    add_mcio_tally(VolumeFluenceTally(cells=mcio_cells, comment="total_neutron_flux"))
+
+    # -----------------------------------------------
+    # Tritium breeding ratio (TBR)
+    # -----------------------------------------------
+    tallies.append(("TBR", "(n,Xt)", []))
+
+    return tallies
