@@ -26,10 +26,8 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import EPS, MU_0_4PI
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry._private_tools import make_circle_arc
 from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
-from bluemira.magnetostatics.error import MagnetostaticsIntegrationError
 from bluemira.magnetostatics.tools import integrate, jit_llc6, process_xyz_array
 
 __all__ = ["CircularArcCurrentSource"]
@@ -688,34 +686,8 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         point = self._global_to_local(np.array([point]))[0]
         rp, tp, zp = self._local_to_cylindrical(point)
         # Calculate field in local coordinates
-        try:
-            b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
-
-        except MagnetostaticsIntegrationError as e:
-            # If all else fails, perform an 8-point Gauss-Legendre volume-averaged
-            # calculation.
-            # So far, these have only been triggered on "surprising" singularities
-            # not located on the surface or inside of the source.
-            bluemira_warn(
-                f"{e!s} \nFallback triggered: 8-point Gauss-Legendre volume-averaged"
-                f" field being return for point at {x=:.6f}, {y=:.6f}, {z=:.6f}"
-            )
-            offset = 1e-6 / np.sqrt(3)
-            quadrature_points = (
-                np.array([x + dx, y + dy, z + dz])
-                for dx in (-offset, offset)
-                for dy in (-offset, offset)
-                for dz in (-offset, offset)
-            )
-
-            b = np.zeros(3)
-            for p in quadrature_points:
-                point = self._global_to_local(np.asarray([p]))[0]
-                rp, tp, zp = self._local_to_cylindrical(point)
-                b += self._BxByBz(rp, tp, zp)
-
-            b_local = MU_0_4PI * self._rho * b / 8
-
+        b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
+        # Convert field back to global coordinates
         return self._dcm.T @ b_local
 
     def _vector_potential_local(

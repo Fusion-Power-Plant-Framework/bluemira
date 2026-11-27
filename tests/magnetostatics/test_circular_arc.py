@@ -21,10 +21,10 @@ from bluemira.utilities.plot_tools import Plot3D
 from tests.magnetostatics.setup_methods import _plot_verification_test
 
 
-def test_gauss_legendre_fallback_matches_axisymmetric_reference():
+def test_gauss_legendre_fallback_no_longer_required():
     """
-    10 nm above the inner top edge of a full ring, the Bz integration fails to
-    converge and the 8-point Gauss-Legendre fallback is used.
+    10 nm above the inner top edge of a full ring, the Bz integration is difficult
+    to converge.
     """
     radius, breadth, depth, current = 2.0, 0.25, 0.5, 1e6
     coil = CircularArcCurrentSource(
@@ -35,8 +35,7 @@ def test_gauss_legendre_fallback_matches_axisymmetric_reference():
 
     with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
         field = coil.field(zp, rp * np.cos(angle), rp * np.sin(angle))
-    warn.assert_called_once()
-    assert "Fallback triggered" in warn.call_args.args[0]
+    warn.assert_not_called()
 
     br = current * semianalytic_Bx(radius, 0.0, rp, zp, breadth, depth)
     bz = current * semianalytic_Bz(radius, 0.0, rp, zp, breadth, depth)
