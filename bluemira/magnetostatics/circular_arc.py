@@ -20,6 +20,8 @@ logarithmic terms that cancel between corners do so analytically. The remaining
 and are resolved by adaptive quadrature with breakpoints placed from the geometry.
 """
 
+from collections.abc import Callable
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -457,6 +459,19 @@ def _psi_breakpoints(
     return points
 
 
+def _rotate_to_cartesian(vr: float, vt: float, theta: float) -> tuple[float, float]:
+    """
+    Rotate (radial, tangential) vector components at angle theta to (x, y).
+
+    Returns
+    -------
+    :
+        The x and y components
+    """
+    cos_t, sin_t = np.cos(theta), np.sin(theta)
+    return vr * cos_t - vt * sin_t, vr * sin_t + vt * cos_t
+
+
 class CircularArcCurrentSource(CrossSectionCurrentSource):
     """
     3-D circular arc prism current source with a rectangular cross-section and
@@ -611,6 +626,41 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         epsabs = QUAD_EPSABS_PER_AREA * 4.0 * self._breadth * self._depth
         return (rp, r1, r2, z1, z2), z_width, r_width, epsabs
 
+    def _psi_quadrature(
+        self, rp: float, tp: float, zp: float
+    ) -> tuple[Callable[[Callable, tuple[float, ...]], float], float, float]:
+        """
+        Build the psi quadrature over the arc for a point in local cylindrical
+        coordinates.
+
+        Returns
+        -------
+        :
+            A function integrating an integrand with breakpoints graded for the
+            given peak widths, the z-face peak width [rad] and the r-face peak
+            width [rad]
+        """
+        args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
+        lower, upper = -tp, self._dtheta - tp
+
+        def quad(integrand: Callable, widths: tuple[float, ...]) -> float:
+            return integrate(
+                integrand,
+                args,
+                lower,
+                upper,
+                breakpoints=_psi_breakpoints(lower, upper, widths),
+                epsabs=epsabs,
+                limit=QUAD_LIMIT,
+            )
+
+        return quad, z_width, r_width
+
+    @property
+    def _full_circle(self) -> bool:
+        """Whether the arc is a full circle, so that the Bt and Ar terms vanish."""
+        return np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS)
+
     def _BxByBz(self, rp: float, tp: float, zp: float) -> npt.NDArray[np.float64]:
         """
         Calculate the field at a point in local coordinates.
@@ -620,42 +670,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         :
             (Bx, By, Bz) at a point
         """
-        args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
-        lower, upper = -tp, self._dtheta - tp
-        quad_kw = {"epsabs": epsabs, "limit": QUAD_LIMIT}
-        z_points = _psi_breakpoints(lower, upper, (z_width,))
-        br = integrate(
-            br_integrand_from_potential,
-            args,
-            lower,
-            upper,
-            breakpoints=z_points,
-            **quad_kw,
-        )
-        bz = integrate(
-            bz_integrand_from_potential,
-            args,
-            lower,
-            upper,
-            breakpoints=_psi_breakpoints(lower, upper, (z_width, r_width)),
-            **quad_kw,
-        )
-        if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
-            bt = 0.0
-        else:
-            bt = integrate(
-                bt_integrand_from_potential,
-                args,
-                lower,
-                upper,
-                breakpoints=z_points,
-                **quad_kw,
-            )
-
-        bx = br * np.cos(tp) - bt * np.sin(tp)
-        by = br * np.sin(tp) + bt * np.cos(tp)
-
-        return np.array([bx, by, bz])
+        quad, z_width, r_width = self._psi_quadrature(rp, tp, zp)
+        br = quad(br_integrand_from_potential, (z_width,))
+        bz = quad(bz_integrand_from_potential, (z_width, r_width))
+        bt = 0.0 if self._full_circle else quad(bt_integrand_from_potential, (z_width,))
+        return np.array([*_rotate_to_cartesian(br, bt, tp), bz])
 
     @process_xyz_array
     def field(
@@ -706,24 +725,11 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         The potential is calculated without its leading mu_0 J / (4 pi) factor.
         Az is 0.
         """
-        args, z_width, r_width, epsabs = self._quadrature_setup(rp, zp)
-        lower, upper = -tp, self._dtheta - tp
-        quad_kw = {
-            "breakpoints": _psi_breakpoints(lower, upper, (z_width, r_width)),
-            "epsabs": epsabs,
-            "limit": QUAD_LIMIT,
-        }
-
-        at = integrate(at_integrand, args, lower, upper, **quad_kw)
-        if np.isclose(abs(self._dtheta), TWO_PI, rtol=0.0, atol=EPS):
-            ar = 0.0
-        else:
-            ar = integrate(ar_integrand, args, lower, upper, **quad_kw)
-
-        ax = ar * np.cos(tp) - at * np.sin(tp)
-        ay = ar * np.sin(tp) + at * np.cos(tp)
-
-        return np.array([ax, ay, 0.0])
+        quad, z_width, r_width = self._psi_quadrature(rp, tp, zp)
+        widths = (z_width, r_width)
+        at = quad(at_integrand, widths)
+        ar = 0.0 if self._full_circle else quad(ar_integrand, widths)
+        return np.array([*_rotate_to_cartesian(ar, at, tp), 0.0])
 
     @process_xyz_array
     def vector_potential(

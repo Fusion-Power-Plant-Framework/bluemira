@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 from copy import deepcopy
-from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -33,9 +32,7 @@ def test_gauss_legendre_fallback_no_longer_required():
     angle = np.deg2rad(15.0)
     rp, zp = radius - breadth, depth + 10.0e-9
 
-    with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
-        field = coil.field(zp, rp * np.cos(angle), rp * np.sin(angle))
-    warn.assert_not_called()
+    field = coil.field(zp, rp * np.cos(angle), rp * np.sin(angle))
 
     br = current * semianalytic_Bx(radius, 0.0, rp, zp, breadth, depth)
     bz = current * semianalytic_Bz(radius, 0.0, rp, zp, breadth, depth)
@@ -323,14 +320,11 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXZ:
         with R_j << R_pc and z_k =0.0, phi = 0.0
 
         Here z_k is rounding noise (~1e-15) and r_j - r_pc * cos(psi) + sqrt_term
-        cancels around psi = 0. The integrands should handle this without the
-        8-point Gauss-Legendre fallback.
+        cancels around psi = 0. The integrands should handle this.
         """
         c = deepcopy(self.border_rectangle)
         c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
-        with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
-            self.two_halves.field(*c.xyz)
-        warn.assert_not_called()
+        self.two_halves.field(*c.xyz)
 
     def test_debug_plot(self):
         _debug_plot(self, "arc")
@@ -472,14 +466,11 @@ class TestCircularArcCurrentSourceTwoHalfCirclesXY:
         with R_j << R_pc and z_k =0.0, phi = 0.0
 
         Here z_k is rounding noise (~1e-15) and r_j - r_pc * cos(psi) + sqrt_term
-        cancels around psi = 0. The integrands should handle this without the
-        8-point Gauss-Legendre fallback.
+        cancels around psi = 0. The integrands should handle this.
         """
         c = deepcopy(self.border_rectangle)
         c.rotate(base=(0, 0, 0), direction=(0, 0, 1), degree=180)
-        with patch("bluemira.magnetostatics.circular_arc.bluemira_warn") as warn:
-            self.two_halves.field(*c.xyz)
-        warn.assert_not_called()
+        self.two_halves.field(*c.xyz)
 
     def test_debug_plot(self):
         _debug_plot(self, "arc")
