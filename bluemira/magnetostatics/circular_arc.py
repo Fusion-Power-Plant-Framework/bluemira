@@ -3,21 +3,91 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""
+r"""
 Vector potential and magnetic field of a circular current arc of rectangular
 cross-section with uniform azimuthal current density.
+
+Formulation
+-----------
+In the local cylindrical frame of the arc, the conductor occupies
+:math:`r_1 = r - b \le r' \le r_2 = r + b`, :math:`|z'| \le d` and
+:math:`0 \le \phi' \le \theta`, and carries a uniform current density :math:`J`
+along :math:`\hat{e}_{\phi'}`.
+For a point at :math:`(r_{pc}, \phi_{pc}, z_p)`, let :math:`\psi = \phi' - \phi_{pc}`
+and define
+
+.. math::
+    c = r_{pc}\cos\psi, \quad s = r_{pc}\sin\psi, \quad u_j = r_j - c,
+    \quad Z_k = z_p \pm d, \quad D = \sqrt{u_j^2 + s^2 + Z_k^2}
 
 The integrals over the cross-section are done analytically, leaving one integral
 over angle, as in:
 
 .. doi:: 10.1109/TMAG.1982.1062166
 
-(Urankar, eqs. 3 and 4). The field kernels are the derivatives of the vector potential
-kernel, dG/dz_p and dG/dc. All kernels are written in inverse-hyperbolic form and
-summed over the four corners of the cross-section inside the integrand, so that the
-logarithmic terms that cancel between corners do so analytically. The remaining
-(integrable) logarithmic singularities lie at psi = 0 on the faces of the conductor,
-and are resolved by adaptive quadrature with breakpoints placed from the geometry.
+(Urankar, eqs. 3 and 4). With the kernel
+
+.. math::
+    G(\psi) = \iint \frac{r'}{R}~dr'dz'
+    = -\sum_{j=1}^{2}\sum_{k=1}^{2}(-1)^{j+k} F(r_j, Z_k)
+
+    F = \frac{Z_k D}{2} + \frac{r_j^2 - c^2 + s^2}{2}\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
+    + c Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}} - c s\tan^{-1}\frac{u Z_k}{s D}
+
+the vector potential is
+
+.. math::
+    A_r = -\frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\sin\psi~G~d\psi,
+    \quad
+    A_t = \frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\cos\psi~G~d\psi,
+    \quad A_z = 0
+
+The field is obtained from derivatives of the same kernel, rather than from a
+separate Biot-Savart kernel. Since :math:`A_z = 0` and :math:`G` depends on
+:math:`z_p` only through :math:`Z_k`:
+
+.. math::
+    B_r = -\frac{\partial A_t}{\partial z_p}
+    = -\frac{\mu_0 J}{4\pi}\int\cos\psi~\frac{\partial G}{\partial z_p}~d\psi,
+    \quad
+    B_t = \frac{\partial A_r}{\partial z_p}
+    = -\frac{\mu_0 J}{4\pi}\int\sin\psi~\frac{\partial G}{\partial z_p}~d\psi
+
+    B_z = \frac{\mu_0 J}{4\pi}\int\left.\frac{\partial G}{\partial c}\right|_{s, Z}d\psi
+
+The axial field does not follow as simply from :math:`\nabla\times\mathbf{A}`.
+Instead, from the Biot-Savart law,
+:math:`(\hat{e}_{\phi'}\times\mathbf{R})_z = -\hat{e}_{r'}\cdot\mathbf{R} = r' - c`,
+and since :math:`R^2 = (r' - c)^2 + s^2 + Z^2`,
+:math:`\partial_c (r'/R) = r'(r' - c)/R^3` is exactly the :math:`B_z` integrand.
+The derivatives are taken corner by corner, with the corner primitives
+
+.. math::
+    \frac{\partial F}{\partial Z} = D + c\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}}
+
+    \frac{\partial F}{\partial c} = -c\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
+    + Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}} - s\tan^{-1}\frac{u Z_k}{s D}
+
+The (radial, tangential) components are rotated to local Cartesian components at
+:math:`\phi_{pc}`, and then to the global frame. For a full circle, :math:`A_r` and
+:math:`B_t` vanish by symmetry and are not integrated.
+
+Numerical treatment
+-------------------
+* The corner sums are evaluated inside the integrand, with the
+  :math:`\sinh^{-1}` terms grouped in pairs that share a denominator, so that their
+  logarithmic parts cancel analytically between corners rather than numerically.
+  Degenerate denominators are replaced by their analytic limits.
+* What remains are genuine, integrable logarithmic singularities at
+  :math:`\psi = 0` when the point lies on a face of the conductor. Close to a face,
+  these become peaks of width :math:`\sim |Z_k| / r_{pc}` (z faces) or
+  :math:`\sim |r_j - r_{pc}| / r_{pc}` (r faces). The adaptive quadrature is given
+  breakpoints at multiples of :math:`\pi` (the :math:`|\sin\psi|` kinks) and, for
+  narrow peaks, at logarithmically graded offsets around multiples of
+  :math:`2\pi`. :math:`B_r`, :math:`B_t` (from :math:`\partial G/\partial z_p`)
+  peak only at the z faces; :math:`B_z`, :math:`A_r` and :math:`A_t` peak at both.
+* The kernels scale with the cross-sectional area, so the absolute quadrature
+  tolerance is scaled by :math:`4 b d`.
 """
 
 from collections.abc import Callable
@@ -268,7 +338,7 @@ def _field_z_kernel(
 
 
 @jit_llc6
-def br_integrand_from_potential(
+def br_integrand(
     psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
 ) -> float:
     """
@@ -298,7 +368,7 @@ def br_integrand_from_potential(
 
 
 @jit_llc6
-def bt_integrand_from_potential(
+def bt_integrand(
     psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
 ) -> float:
     """
@@ -354,7 +424,7 @@ def _asinh_pair(a: float, b: float, d: float) -> float:
 
 
 @jit_llc6
-def bz_integrand_from_potential(
+def bz_integrand(
     psi: float, r_pc: float, r1: float, r2: float, z1: float, z2: float
 ) -> float:
     """
@@ -671,9 +741,9 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
             (Bx, By, Bz) at a point
         """
         quad, z_width, r_width = self._psi_quadrature(rp, tp, zp)
-        br = quad(br_integrand_from_potential, (z_width,))
-        bz = quad(bz_integrand_from_potential, (z_width, r_width))
-        bt = 0.0 if self._full_circle else quad(bt_integrand_from_potential, (z_width,))
+        br = quad(br_integrand, (z_width,))
+        bz = quad(bz_integrand, (z_width, r_width))
+        bt = 0.0 if self._full_circle else quad(bt_integrand, (z_width,))
         return np.array([*_rotate_to_cartesian(br, bt, tp), bz])
 
     @process_xyz_array
