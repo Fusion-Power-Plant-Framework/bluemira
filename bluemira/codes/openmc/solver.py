@@ -971,13 +971,16 @@ class OpenMCmcioCSGSetup(OpenMCBaseSetup, ABC):
 class OpenMCmcioCSGTeardown(CodesTeardown):
     """Teardown task for OpenMC solver using MCIO."""
 
-    def __init__(self, out_path: str, codes_name: str):
+    def __init__(self, out_path: str, codes_name: str, model: openmc.Model):
         super().__init__(None, codes_name)
         self.out_path = out_path
+        self.model = model
 
-    @staticmethod
     def run(
-        universe: openmc.Universe, source_info: SourceInfo, statepoint_file: str | Path
+        self,
+        universe: openmc.Universe,
+        source_info: SourceInfo,
+        statepoint_file: str | Path,
     ) -> tuple[OpenMCmcioCSGResult, NeutronicsOutputParams]:
         """Run stage for teardown task."""
         result = OpenMCmcioCSGResult.from_run(
@@ -985,6 +988,7 @@ class OpenMCmcioCSGTeardown(CodesTeardown):
             src_rate=source_info.rate,
             src_triton_rate=source_info.triton_rate,
             statepoint_file=Path(statepoint_file),
+            model=self.model,
         )
 
         output_params = NeutronicsOutputParams.from_openmc_mcio_csg_result(result)
@@ -1076,7 +1080,7 @@ class OpenMCmcioCSGNeutronicsSolver(OpenMCNeutronicsSolver):
             self.bounding_box,  # type: ignore[ty:too-many-positional-arguments]
         )
         self._run = self.run_cls(self.out_path, self.name)
-        self._teardown = self.teardown_cls(self.out_path, self.name)  # type: ignore[ty:invalid-argument-type]
+        self._teardown = self.teardown_cls(self.out_path, self.name, self.mcio_model)  # type: ignore[ty:invalid-argument-type]
 
         return cast(
             "MCIORunResult",

@@ -13,12 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
 import numpy as np
 import openmc
+from matplotlib.cm import ScalarMappable
 from tabulate import tabulate
 
 from bluemira.base.constants import raw_uc
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame._frame import ParameterFrame
 from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.plasma_physics.reactions import E_DT_fusion
@@ -678,6 +681,8 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
     statepoint: openmc.StatePoint
     statepoint_file: Path
 
+    model: openmc.Model
+
     cell_names: dict
     cell_vols: dict
     mat_names: dict
@@ -689,6 +694,7 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
         src_rate: float,
         src_triton_rate: float,
         statepoint_file: Path,
+        model: openmc.Model,
     ):
         """
         Create results from an MCIO OpenMC statepoint.
@@ -767,6 +773,7 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
             src_rate=src_rate,
             statepoint_file=statepoint_file,
             statepoint=statepoint,
+            model=model,
             cell_names=cell_names,
             cell_vols=cell_vols,
             mat_names=mat_names,
@@ -778,6 +785,193 @@ class OpenMCmcioCSGResult(OpenMCResultBase):
             power=power,
             fluxes=fluxes,
         )
+
+    @staticmethod
+    def get_cell_tally_data(tally):
+        """
+        Extract cell IDs and mean values from a CellFilter tally.
+
+        Returns
+        -------
+        tuple[list[int], np.ndarray]
+            Cell IDs and corresponding mean tally values.
+
+        Raises
+        ------
+        ValueError
+            If the tally does not contain a CellFilter or the number
+            of cell IDs and values does not match.
+        """
+        cell_filter = tally.find_filter(openmc.CellFilter)
+
+        if cell_filter is None:
+            raise ValueError(f"Tally '{tally.name}' does not contain a CellFilter.")
+
+        cell_ids = [int(b[0] if isinstance(b, tuple) else b) for b in cell_filter.bins]
+
+        values = tally.get_values(scores=[tally.scores[0]], value="mean").flatten()
+
+        if len(cell_ids) != len(values):
+            raise ValueError(f"Tally '{tally.name}': mismatched cell IDs and values.")
+
+        return cell_ids, values
+
+    @staticmethod
+    def get_cell_volumes(cell_vols, cell_ids):
+        """
+        Retrieve existing cell volumes.
+
+        Returns
+        -------
+        :
+            Cell volumes in m3.
+
+        Raises
+        ------
+        ValueError
+            If requested cell volumes are missing or invalid.
+        """
+        missing = [cid for cid in cell_ids if cid not in cell_vols]
+
+        if missing:
+            raise ValueError(f"Volume results missing for cells: {missing}")
+
+        volumes = {cid: cell_vols[cid] for cid in cell_ids}
+
+        invalid = [
+            cid
+            for cid, volume in volumes.items()
+            if volume is None or not np.isfinite(volume) or volume <= 0
+        ]
+
+        if invalid:
+            raise ValueError(f"Invalid volume results for cells: {invalid}")
+
+        return volumes
+
+    def plot_xz_tally(
+        self, cell_ids, values, filename, title, units, cmap_name, pixels=1600
+    ):
+        """
+        Plot cell tally values directly onto XZ CSG geometry.
+
+        Raises
+        ------
+        FileNotFoundError
+            If OpenMC fails to create the geometry plot.
+        """
+        output_dir = self.statepoint_file.parent
+
+        cells = self.model.geometry.get_all_cells()
+        values = np.asarray(values, dtype=float)
+
+        positive = values[np.isfinite(values) & (values > 0)]
+
+        norm = None
+        colours = {}
+
+        if len(positive):
+            vmin = positive.min()
+            vmax = positive.max()
+
+            if np.isclose(vmin, vmax):
+                vmax = vmin * 10.0
+
+            norm = mcolors.LogNorm(vmin=vmin, vmax=vmax)
+            cmap = plt.get_cmap(cmap_name)
+
+        for cell_id, value in zip(cell_ids, values, strict=True):
+            if norm is None or not np.isfinite(value) or value <= 0:
+                rgb = (200, 200, 200)
+            else:
+                rgb = tuple(round(channel * 255) for channel in cmap(norm(value))[:3])
+
+            colours[cells[cell_id]] = rgb
+
+        plot = openmc.Plot()
+        plot.basis = "xz"
+        plot.origin = (0.0, 0.0, 0.0)
+        plot.width = (3000.0, 3000.0)
+        plot.pixels = (pixels, pixels)
+        plot.color_by = "cell"
+        plot.colors = colours
+        plot.background = "white"
+        plot.filename = filename
+
+        self.model.plots = openmc.Plots([plot])
+        self.model.plot_geometry(cwd=str(output_dir))
+
+        png_file = output_dir / f"{filename}.png"
+
+        if not png_file.exists():
+            raise FileNotFoundError(f"OpenMC plot was not created: {png_file}")
+
+        if norm is not None:
+            fig, ax = plt.subplots(figsize=(12, 9))
+            ax.imshow(plt.imread(png_file))
+            ax.axis("off")
+            ax.set_title(title)
+
+            scalar_map = ScalarMappable(norm=norm, cmap=cmap)
+            scalar_map.set_array([])
+
+            fig.colorbar(scalar_map, ax=ax, fraction=0.035, pad=0.02).set_label(units)
+
+            fig.savefig(png_file, dpi=200, bbox_inches="tight")
+            plt.show()
+            plt.close(fig)
+
+        bluemira_print(f"Saved: {png_file}")
+
+    def plot_neutronics_outputs(self, tally_names: dict):
+        """
+        Generate XZ plots for selected neutronics tallies.
+
+        Raises
+        ------
+        ValueError
+            If required tallies or cell volumes are unavailable.
+        FileNotFoundError
+            If geometry plots cannot be created.
+        """
+        with openmc.StatePoint(str(self.statepoint_file)) as sp:
+            for plot_name, tally_name in tally_names.items():
+                tally = sp.get_tally(name=tally_name)
+
+                cell_ids, values = self.get_cell_tally_data(tally)
+
+                title = plot_name.replace("_", " ").title()
+                units = "eV/source particle"
+                cmap_name = "inferno"
+
+                if plot_name == "volume_averaged_flux":
+                    volumes = self.get_cell_volumes(self.cell_vols, cell_ids)
+
+                    values = np.array([
+                        flux / (volumes[cell_id] * 1e6)
+                        for cell_id, flux in zip(cell_ids, values, strict=True)
+                    ])
+
+                    units = "particle/cm2/source particle"
+                    cmap_name = "viridis"
+
+                    bluemira_print("\nVolume-averaged neutron flux:")
+
+                    for cell_id, flux in zip(cell_ids, values, strict=True):
+                        bluemira_print(
+                            f"Cell {cell_id:>5}: "
+                            f"Volume = {volumes[cell_id]:.6e} m3, "
+                            f"Flux = {flux:.6e} {units}"
+                        )
+
+                self.plot_xz_tally(
+                    cell_ids=cell_ids,
+                    values=values,
+                    filename=f"{plot_name}_xz",
+                    title=title,
+                    units=units,
+                    cmap_name=cmap_name,
+                )
 
 
 @dataclass
