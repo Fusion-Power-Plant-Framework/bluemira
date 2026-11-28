@@ -137,6 +137,10 @@ In the local cylindrical frame of the arc, the conductor occupies
 along :math:`\hat{e}_{\phi'}`. For a point at :math:`(r_{pc}, \phi_{pc}, z_p)`, let
 :math:`\psi = \phi' - \phi_{pc}` and define
 
+.. figure:: arc_coordinates.png
+    :name: fig:circular_coordinates
+
+
 .. math::
     c = r_{pc}\cos\psi, \quad s = r_{pc}\sin\psi, \quad u_j = r_j - c,
     \quad Z_k = z_p \pm d, \quad D = \sqrt{u_j^2 + s^2 + Z_k^2}
@@ -144,32 +148,42 @@ along :math:`\hat{e}_{\phi'}`. For a point at :math:`(r_{pc}, \phi_{pc}, z_p)`, 
 With the cross-section kernel
 
 .. math::
-    G(\psi) = \iint \frac{r'}{R}~dr'dz'
+    \begin{aligned}
+    G(\psi) &= \iint \frac{r'}{R}~dr'dz'
     = -\sum_{j=1}^{2}\sum_{k=1}^{2}(-1)^{j+k} F(r_j, Z_k)
 
-    F = \frac{Z_k D}{2} + \frac{r_j^2 - c^2 + s^2}{2}\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
+    F &= \frac{Z_k D}{2} + \frac{r_j^2 - c^2 + s^2}{2}\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
     + c Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}} - c s\tan^{-1}\frac{u Z_k}{s D}
+    \end{aligned}
 
 the vector potential is
 
 .. math::
-    A_r = -\frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\sin\psi~G~d\psi,
+    \begin{aligned}
+    A_r &= -\frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\sin\psi~G~d\psi,
     \quad
-    A_t = \frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\cos\psi~G~d\psi,
-    \quad A_z = 0
+
+    A_t &= \frac{\mu_0 J}{4\pi}\int_{-\phi_{pc}}^{\theta-\phi_{pc}}\cos\psi~G~d\psi,
+    \quad
+
+    A_z &= 0
+    \end{aligned}
 
 The field is obtained from derivatives of the same kernel, rather than from a
 separate Biot-Savart kernel. Since :math:`A_z = 0` and :math:`G` depends on
 :math:`z_p` only through :math:`Z_k`:
 
 .. math::
-    B_r = -\frac{\partial A_t}{\partial z_p}
+    \begin{aligned}
+    B_r &= -\frac{\partial A_t}{\partial z_p}
     = -\frac{\mu_0 J}{4\pi}\int\cos\psi~\frac{\partial G}{\partial z_p}~d\psi,
     \quad
-    B_t = \frac{\partial A_r}{\partial z_p}
+
+    B_t &= \frac{\partial A_r}{\partial z_p}
     = -\frac{\mu_0 J}{4\pi}\int\sin\psi~\frac{\partial G}{\partial z_p}~d\psi
 
-    B_z = \frac{\mu_0 J}{4\pi}\int\left.\frac{\partial G}{\partial c}\right|_{s, Z}d\psi
+    B_z &= \frac{\mu_0 J}{4\pi}\int\left.\frac{\partial G}{\partial c}\right|_{s, Z}d\psi
+    \end{aligned}
 
 The axial field does not follow as simply from :math:`\nabla\times\mathbf{A}`.
 Instead, from the Biot-Savart law,
@@ -179,10 +193,13 @@ and since :math:`R^2 = (r' - c)^2 + s^2 + Z^2`,
 The derivatives are taken corner by corner, with the corner primitives
 
 .. math::
-    \frac{\partial F}{\partial Z} = D + c\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}}
+    \begin{aligned}
+    \frac{\partial F}{\partial Z} &= D + c\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}}
 
-    \frac{\partial F}{\partial c} = -c\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
+    \frac{\partial F}{\partial c} &= -c\sinh^{-1}\frac{Z_k}{\sqrt{u^2+s^2}}
     + Z_k\sinh^{-1}\frac{u}{\sqrt{s^2+Z_k^2}} - s\tan^{-1}\frac{u Z_k}{s D}
+
+    \end{aligned}
 
 The (radial, tangential) components are rotated to local Cartesian components at
 :math:`\phi_{pc}`, and then to the global frame. For a full circle, :math:`A_r` and
